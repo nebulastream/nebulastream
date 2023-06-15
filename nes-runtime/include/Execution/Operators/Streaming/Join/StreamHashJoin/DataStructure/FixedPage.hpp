@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_FIXEDPAGE_HPP
-#define NES_FIXEDPAGE_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_
 
 #include <Runtime/BloomFilter.hpp>
 #include <atomic>
@@ -98,4 +98,4 @@ class FixedPage {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_FIXEDPAGE_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_

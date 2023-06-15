@@ -40,12 +40,12 @@ class LocationServiceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Set up LocationServiceTest test class.")
+        NES_INFO2("Set up LocationServiceTest test class.")
         std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
     }
-    static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
+    static void TearDownTestCase(){NES_INFO2("Tear down LocationServiceTest test class")}
 
     nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation loc) {
         nlohmann::json nodeInfo;
@@ -57,7 +57,7 @@ class LocationServiceTest : public Testing::NESBaseTest {
         }
 
         nodeInfo["location"] = locJson;
-        NES_DEBUG(nodeInfo.dump());
+        NES_DEBUG2("{}", nodeInfo.dump());
         return nodeInfo;
     }
 
@@ -178,7 +178,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
         entry = e.get<std::map<std::string, nlohmann::json>>();
         EXPECT_EQ(entry.size(), 2);
         EXPECT_TRUE(entry.find("id") != entry.end());
-        NES_DEBUG("checking element with id " << entry.at("id"));
+        NES_DEBUG2("checking element with id {}", entry.at("id"));
         EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
         if (entry.at("id") == node3Id) {
             cmpLoc[0] = 52.55227464714949;
@@ -210,7 +210,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
-    NES_INFO("start worker 3");
+    NES_INFO2("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
@@ -249,7 +249,7 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
 
     auto invalidLoc = NES::Spatial::DataTypes::Experimental::GeoLocation();
     auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
-    NES_DEBUG("Invalid location json: " << invalidLocJson.dump())
+    NES_DEBUG2("Invalid location json: {}", invalidLocJson.dump())
     EXPECT_EQ(invalidLocJson["id"], 2);
     ASSERT_TRUE(invalidLocJson["location"].empty());
 

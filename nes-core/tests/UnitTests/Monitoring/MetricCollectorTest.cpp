@@ -48,13 +48,13 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup MetricCollectorTest test class.");
+        NES_INFO2("ResourcesReaderTest: Setup MetricCollectorTest test class.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
+        NES_DEBUG2("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;
         nodeId = TopologyNodeId(4711);
@@ -79,11 +79,11 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
 
         Monitoring::NetworkMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
         ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
     } else {
-        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorWrappedMetrics. Abstract reader found.");
+        NES_DEBUG2("MetricCollectorTest: Skipping testNetworkCollectorWrappedMetrics. Abstract reader found.");
     }
 }
 
@@ -108,13 +108,13 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 
         Monitoring::NetworkMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
         ASSERT_EQ(totalMetrics.nodeId, nodeId);
         ASSERT_EQ(readMetrics.getNodeId(), nodeId);
         ASSERT_EQ(parsedMetric.nodeId, nodeId);
     } else {
-        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
+        NES_DEBUG2("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
     }
 }
 
@@ -134,11 +134,11 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 
         Monitoring::CpuMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
         ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
     } else {
-        NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
+        NES_DEBUG2("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
     }
 }
 
@@ -163,13 +163,13 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
 
         Monitoring::CpuMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+        NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
         ASSERT_EQ(totalMetrics.nodeId, nodeId);
         ASSERT_EQ(readMetrics.getNodeId(), nodeId);
         ASSERT_EQ(parsedMetric.nodeId, nodeId);
     } else {
-        NES_DEBUG("MetricCollectorTest: Skipping testcpuCollectorSingleMetrics. Abstract reader found.");
+        NES_DEBUG2("MetricCollectorTest: Skipping testcpuCollectorSingleMetrics. Abstract reader found.");
     }
 }
 
@@ -188,7 +188,7 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
 
     Monitoring::MetricPtr parsedMetric = std::make_shared<Monitoring::Metric>(Monitoring::DiskMetrics{});
     readFromBuffer(parsedMetric, tupleBuffer, 0);
-    NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+    NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric), asJson(parsedMetric));
     ASSERT_EQ(typedMetric, parsedMetric->getValue<Monitoring::DiskMetrics>());
     ASSERT_EQ(parsedMetric->getValue<Monitoring::DiskMetrics>().nodeId, nodeId);
     ASSERT_EQ(typedMetric.nodeId, nodeId);
@@ -210,7 +210,7 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
 
     Monitoring::MemoryMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
-    NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+    NES_DEBUG2("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric), asJson(parsedMetric));
     ASSERT_EQ(typedMetric, parsedMetric);
 }
 

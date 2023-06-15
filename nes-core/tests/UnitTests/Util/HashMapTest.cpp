@@ -34,9 +34,9 @@ class HashMapTest : public Testing::TestWithErrorHandling {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashMapTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("HashMapTest test class SetUpTestCase.");
+        NES_INFO2("HashMapTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("HashMapTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("HashMapTest test class TearDownTestCase."); }
 
     void SetUp() {
         Testing::TestWithErrorHandling::SetUp();

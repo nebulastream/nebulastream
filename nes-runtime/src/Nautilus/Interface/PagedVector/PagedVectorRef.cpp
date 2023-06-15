@@ -17,8 +17,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize)
-    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), entriesPerPage(PagedVector::PAGE_SIZE / entrySize) {}
+PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize, uint64_t pageSize)
+    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), entriesPerPage(pageSize / entrySize) {}
 
 void allocateNewPageProxy(void* pagedVectorPtr) {
     auto* pagedVector = (PagedVector*) pagedVectorPtr;

@@ -17,6 +17,7 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -28,6 +29,8 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // initialize global state variables to keep track of the watermark ts and the origin id
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setOrigin(recordBuffer.getOriginId());
+    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer

@@ -29,10 +29,10 @@ class TestHarnessUtilTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TestHarnessUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TestHarnessUtilTest test class.");
+        NES_INFO2("Setup TestHarnessUtilTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("TestHarnessUtilTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("TestHarnessUtilTest test class TearDownTestCase."); }
 };
 
 /*
@@ -471,7 +471,7 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
                                   .setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);

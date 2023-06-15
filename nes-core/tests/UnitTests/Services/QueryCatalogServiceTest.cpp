@@ -21,9 +21,9 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -40,14 +40,14 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup QueryCatalogServiceTest test class.");
+        NES_DEBUG2("Setup QueryCatalogServiceTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
-        NES_DEBUG("Setup QueryCatalogServiceTest test case.");
+        NES_DEBUG2("FINISHED ADDING 5 Serialization to topology");
+        NES_DEBUG2("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

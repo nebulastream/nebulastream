@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_NLJWINDOW_HPP
-#define NES_NLJWINDOW_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
 
+#include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <atomic>
 #include <cstdint>
 #include <mutex>
@@ -27,10 +28,8 @@ namespace NES::Runtime::Execution {
  * @brief This class represents a single window for the nested loop join. It stores all values for the left and right stream.
  * Later on this class can be reused for a slice.
  */
-class NLJWindow {
+class NLJWindow : public StreamWindow {
   public:
-    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_NLJ_SINK };
-
     /**
      * @brief Constructor for creating a window
      * @param windowStart
@@ -38,19 +37,7 @@ class NLJWindow {
      */
     explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd);
 
-    /**
-     * @brief Compares if two windows are equal
-     * @param rhs
-     * @return Boolean
-     */
-    bool operator==(const NLJWindow& rhs) const;
-
-    /**
-     * @brief Compares if two windows are NOT equal
-     * @param rhs
-     * @return Boolean
-     */
-    bool operator!=(const NLJWindow& rhs) const;
+    ~NLJWindow() = default;
 
     /**
      * @brief Makes sure that enough space is available for writing the tuple. This method returns a pointer to the start
@@ -61,7 +48,7 @@ class NLJWindow {
     uint8_t* allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide);
 
     /**
-     * @brief Returns the
+     * @brief Returns the tuple
      * @param sizeOfTupleInByte
      * @param tuplePos
      * @param leftSide
@@ -75,39 +62,13 @@ class NLJWindow {
      * @param leftSide
      * @return size_t
      */
-    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide);
-
-    /**
-     * @brief Getter for the start ts of the window
-     * @return uint64_t
-     */
-    uint64_t getWindowStart() const;
-
-    /**
-     * @brief Getter for the end ts of the window
-     * @return uint64_t
-     */
-    uint64_t getWindowEnd() const;
-
-    /**
-     * @brief Returns the identifier for this window. For now, the identifier is the windowEnd
-     * @return uint64_t
-     */
-    uint64_t getWindowIdentifier() const;
-
-    /**
-     * @brief Wrapper for std::atomic<T>::compare_exchange_strong
-     * @param expectedState
-     * @param newWindowState
-     * @return Bool
-     */
-    bool compareExchangeStrong(WindowState expectedState, WindowState newWindowState);
+    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) override;
 
     /**
      * @brief Creates a string representation of this window
      * @return String
      */
-    std::string toString();
+    std::string toString() override;
 
   private:
     std::atomic<WindowState> windowState;
@@ -115,9 +76,7 @@ class NLJWindow {
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;
     std::mutex rightTuplesMutex;
-    uint64_t windowStart;
-    uint64_t windowEnd;
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NLJWINDOW_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_

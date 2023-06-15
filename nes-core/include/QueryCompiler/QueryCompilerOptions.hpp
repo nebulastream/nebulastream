@@ -63,7 +63,7 @@ class QueryCompilerOptions {
     };
 
     enum class CompilationStrategy : uint8_t {
-        // Use fast compilation strategy, i.e., dose not apply any optimizations and omits debug output.
+        // Use fast compilation strategy, i.e., does not apply any optimizations and omits debug output.
         FAST,
         // Creates debug output i.e., source code files and applies formatting. No code optimizations.
         DEBUG,
@@ -105,6 +105,68 @@ class QueryCompilerOptions {
         OMIT_OVERFLOW_CHECK_NO_FALLBACK,
         BITMASK
     };
+
+    class StreamHashJoinOptions {
+      public:
+        StreamHashJoinOptions()
+            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024) {}
+
+        /**
+         * @brief getter for max hash table size
+         * @return
+         */
+        uint64_t getTotalSizeForDataStructures() const;
+
+        /**
+         * @brief setter for max hash table size
+         * @param total_size_for_data_structures
+         */
+        void setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures);
+
+        /**
+         * @brief get the number of partitions for the hash join
+         * @return number of partitions
+         */
+        uint64_t getNumberOfPartitions() const;
+
+        /**
+         * @brief get the number of partitions for the hash join
+         * @param num
+         */
+        void setNumberOfPartitions(uint64_t num);
+
+        /**
+         * @brief get the size of each page in the hash table
+         * @return page size
+         */
+        uint64_t getPageSize() const;
+
+        /**
+         * @brief set the size of each page in the hash table
+         * @param size
+         */
+        void setPageSize(uint64_t size);
+
+        /**
+         * @brief get the number of pre-allocated pages in the hash table per bucket
+         * @return number of pages
+         */
+        uint64_t getPreAllocPageCnt() const;
+
+        /**
+        * @brief  get the number of pre-allocated pages in the hash table per bucket
+        * @param cnt
+        */
+        void setPreAllocPageCnt(uint64_t cnt);
+
+      private:
+        uint64_t numberOfPartitions;
+        uint64_t pageSize;
+        uint64_t preAllocPageCnt;
+        uint64_t totalSizeForDataStructures;
+    };
+
+    using StreamHashJoinOptionsPtr = std::shared_ptr<StreamHashJoinOptions>;
 
     /**
      * @brief Creates the default options.
@@ -151,6 +213,18 @@ class QueryCompilerOptions {
 
     WindowingStrategy getWindowingStrategy() const;
 
+    /**
+     * @brief Return hash join options
+     * @return
+     */
+    StreamHashJoinOptionsPtr getHashJoinOptions();
+
+    /**
+     * @brief Set compiler options
+     * @param streamHashJoinOptions
+     */
+    void setHashJoinOptions(StreamHashJoinOptionsPtr streamHashJoinOptions);
+
     void setWindowingStrategy(WindowingStrategy windowingStrategy);
 
     [[nodiscard]] NautilusBackend getNautilusBackend() const;
@@ -168,6 +242,7 @@ class QueryCompilerOptions {
     QueryCompiler queryCompiler;
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
+    StreamHashJoinOptionsPtr hashJoinOptions;
 };
 }// namespace NES::QueryCompilation
 

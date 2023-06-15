@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
+#ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -64,4 +64,4 @@ class Waypoint {
 };
 }// namespace NES::Spatial::DataTypes::Experimental
 
-#endif//NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_

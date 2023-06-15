@@ -73,6 +73,19 @@ class IntInvocationPlugin : public InvocationPlugin {
         });
     }
 
+    std::optional<Value<>> Mod(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            if (Tracing::TraceUtil::inTracer()) {
+                // FIXME avoid modulo in tracing. For now we just substitute with an add.
+                auto result = left.add(right);
+                return Value<>(std::move(result));
+            } else {
+                auto result = left.mod(right);
+                return Value<>(std::move(result));
+            }
+        });
+    }
+
     std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
         return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
             auto result = left.equals(right);
@@ -90,6 +103,41 @@ class IntInvocationPlugin : public InvocationPlugin {
     std::optional<Value<>> GreaterThan(const Value<>& left, const Value<>& right) const override {
         return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
             auto result = left.greaterThan(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> BitWiseAnd(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.bitWiseAnd(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> BitWiseOr(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.bitWiseOr(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> BitWiseXor(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.bitWiseXor(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> BitWiseLeftShift(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.bitWiseLeftShift(right);
+            return Value<>(std::move(result));
+        });
+    }
+
+    std::optional<Value<>> BitWiseRightShift(const Value<>& left, const Value<>& right) const override {
+        return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
+            auto result = left.bitWiseRightShift(right);
             return Value<>(std::move(result));
         });
     }

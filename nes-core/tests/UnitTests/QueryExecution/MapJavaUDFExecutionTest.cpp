@@ -36,7 +36,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup MapJavaUDFQueryExecutionTest test class.");
+        NES_DEBUG2("QueryExecutionTest: Setup MapJavaUDFQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -49,12 +49,12 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void TearDown() override {
         Testing::NESBaseTest::TearDown();
-        NES_DEBUG("QueryExecutionTest: Tear down MapJavaUDFQueryExecutionTest test case.");
+        NES_DEBUG2("QueryExecutionTest: Tear down MapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("MapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("MapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
@@ -97,7 +97,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Open the file
     std::ifstream file(path + className + ".class", std::ios::binary);
     if (!file.is_open()) {
-        NES_ERROR2("Could not open file: {}", path + className + ".class");
+        NES_ERROR2("Could not open file: {} {}.class", path, className);
         return {};
     }
 
@@ -109,7 +109,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Read the file into the buffer
     file.seekg(0, std::ios::beg);
     if (!file.read(buffer.data(), fileSize)) {
-        NES_ERROR2("Could not read file: {}", path + className + ".class");
+        NES_ERROR2("Could not read file: {} {}.class", path, className);
         return {};
     }
     return buffer;
@@ -137,7 +137,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto inputClassName = "java/lang/Integer";
     auto outputClassName = "java/lang/Integer";
-    NES_INFO("testDataPath:" + testDataPath);
+    NES_INFO2("testDataPath:{}", testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
                                  .setClassName(className)
                                  .setMethodName(methodName)

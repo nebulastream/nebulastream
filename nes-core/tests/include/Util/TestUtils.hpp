@@ -332,38 +332,41 @@ template<typename Predicate = std::equal_to<uint64_t>>
 
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        NES_ERROR("Unable to find global query Id for user query id " << queryId);
+        NES_ERROR2("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
 
-    NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+    NES_INFO2("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkCompleteOrTimeout: check result NesWorkerPtr");
+        NES_TRACE2("checkCompleteOrTimeout: check result NesWorkerPtr");
         //FIXME: handle vector of statistics properly in #977
         auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
         if (statistics.empty()) {
-            NES_TRACE("checkCompleteOrTimeout: query=" << sharedQueryId << " stats size=" << statistics.size());
+            NES_TRACE2("checkCompleteOrTimeout: query={} stats size={}", sharedQueryId, statistics.size());
             std::this_thread::sleep_for(sleepDuration);
             continue;
         }
         uint64_t processed = statistics[0]->getProcessedBuffers();
         if (processed >= expectedResult) {
-            NES_TRACE("checkCompleteOrTimeout: results are correct procBuffer="
-                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                      << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            NES_TRACE2("checkCompleteOrTimeout: results are correct procBuffer={} procTasks={} procWatermarks={}",
+                       statistics[0]->getProcessedBuffers(),
+                       statistics[0]->getProcessedTasks(),
+                       statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer="
-                  << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                  << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+        NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer={} procTasks={} procWatermarks={}",
+                   statistics[0]->getProcessedBuffers(),
+                   statistics[0]->getProcessedTasks(),
+                   statistics[0]->getProcessedWatermarks());
         std::this_thread::sleep_for(sleepDuration);
     }
     auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
     uint64_t processed = statistics[0]->getProcessedBuffers();
-    NES_TRACE("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected="
-              << expectedResult << " final result=" << processed);
+    NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected={} final result={}",
+               expectedResult,
+               processed);
     return false;
 }
 
@@ -384,14 +387,14 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                           std::chrono::seconds timeoutSeconds = defaultTimeout) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        NES_ERROR("Unable to find global query Id for user query id " << queryId);
+        NES_ERROR2("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
 
-    NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+    NES_INFO2("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutSeconds) {
-        NES_TRACE("checkCompleteOrTimeout: check result NesCoordinatorPtr");
+        NES_TRACE2("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
         auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
@@ -408,27 +411,32 @@ template<typename Predicate = std::equal_to<uint64_t>>
         if (minOneProcessedTask
             && (statistics[0]->getTimestampLastProcessedTask() == 0 || statistics[0]->getTimestampFirstProcessedTask() == 0
                 || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
-            NES_TRACE("checkCompleteOrTimeout: A task was processed within the last "
-                      << timeoutMillisec.count() << "ms, the query may still be active. Restart the timeout period.");
+            NES_TRACE2("checkCompleteOrTimeout: A task was processed within the last {}ms, the query may still be active. "
+                       "Restart the timeout period.",
+                       timeoutMillisec.count());
         }
         // return if enough buffer have been received
         else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
-            NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
-                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                      << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats={} procTasks={} procWatermarks={}",
+                       statistics[0]->getProcessedBuffers(),
+                       statistics[0]->getProcessedTasks(),
+                       statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
-                  << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                  << " expected=" << expectedResult);
+        NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer={} procTasks={} expected={}",
+                   statistics[0]->getProcessedBuffers(),
+                   statistics[0]->getProcessedTasks(),
+                   expectedResult);
 
         std::this_thread::sleep_for(sleepDuration);
     }
     //FIXME: handle vector of statistics properly in #977
-    NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result="
-              << expectedResult << " processedBuffer=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers()
-              << " processedTasks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks()
-              << " procWatermarks=" << nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+    NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result={}"
+               "processedBuffer={} processedTasks={} procWatermarks={}",
+               expectedResult,
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(),
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(),
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
     return false;
 }
 
@@ -484,12 +492,12 @@ template<typename T>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
-        NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
+        NES_TRACE2("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file {}", outputFilePath);
 
         auto entry = queryCatalogService->getEntryForQuery(queryId);
         if (entry->getQueryStatus() == QueryStatus::FAILED) {
             // the query failed, so we return true as a failure append during execution.
-            NES_TRACE("checkStoppedOrTimeout: status reached failed");
+            NES_TRACE2("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
@@ -498,7 +506,7 @@ template<typename T>
         // check if result is ready.
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
-            NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file " << outputFilePath << " open and good");
+            NES_TRACE2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file {} open and good", outputFilePath);
             std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             // check the length of the output file
             ifs.seekg(0, std::ifstream::end);
@@ -516,28 +524,31 @@ template<typename T>
 
             if (expectedNumberOfContent != currentContentSize) {
                 if (currentContentSize > expectedNumberOfContent) {
-                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
-                              "currentContentSize: "
-                              << currentContentSize << " - expectedNumberOfContent: " << expectedNumberOfContent);
+                    NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
+                               "currentContentSize: {} - expectedNumberOfContent: {}",
+                               currentContentSize,
+                               expectedNumberOfContent);
                     return false;
                 }
 
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
-                          << expectedNumberOfContent << " not reached yet with " << currentContent.size()
-                          << " lines content=" << content);
+                NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines {}"
+                           " not reached yet with {} lines content={}",
+                           expectedNumberOfContent,
+                           currentContent.size(),
+                           content);
 
             } else {
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
-                          "number of content");
+                NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
+                           "number of content");
                 return true;
             }
         }
         if (isQueryStopped) {
-            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
+            NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
             return false;
         }
     }
-    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
+    NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
     return false;
 }
 

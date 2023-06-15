@@ -203,7 +203,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                           nodeEngine,
                                                                                           mobilityConfig);
         //FIXME: currently the worker mobility handler will only work with exactly one parent
-        workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
+        auto parentIds = coordinatorRpcClient->getParents(workerId);
+        if (parentIds.size() > 1) {
+            NES_WARNING2("Attempting to start worker mobility handler for worker with multiple parents. This is"
+                         "currently not supported, mobility handler will not be started");
+        } else {
+            workerMobilityHandler->start(parentIds);
+        }
     }
 
     if (workerConfig->enableStatisticOuput) {

@@ -82,7 +82,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
+        NES_INFO2("SetUpTestCase NetworkStackIntegrationTest");
     }
 
     void SetUp() {
@@ -99,7 +99,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::TearDown();
     }
 
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackIntegrationTest."); }
+    static void TearDownTestCase() { NES_INFO2("TearDownTestCase NetworkStackIntegrationTest."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort1;
@@ -125,7 +125,9 @@ class TestSink : public SinkMedium {
 
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
-        NES_TRACE("TestSink:\n" << dynamicTupleBuffer);
+        std::stringstream dynamicTupleBufferAsString;
+        dynamicTupleBufferAsString << dynamicTupleBuffer;
+        NES_TRACE2("TestSink:\n{}", dynamicTupleBufferAsString.str());
 
         uint64_t sum = 0;
         for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
@@ -224,7 +226,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                   std::forward<ExtraParameters>(extraParams)...);
 
     } catch (std::exception& err) {
-        NES_ERROR("Cannot start node engine " << err.what());
+        NES_ERROR2("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
         return nullptr;
     }
@@ -566,7 +568,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         while (static_cast<std::size_t>(bufferCnt.load()) < numSendingThreads * totalNumBuffer / 2) {
             if (bufferCnt.load() != prevCount) {
                 prevCount = bufferCnt.load();
-                NES_DEBUG("Count before buffer: " << prevCount);
+                NES_DEBUG2("Count before buffer: {}", prevCount);
             }
         }
         auto bufferReconfigMsg = Runtime::ReconfigurationMessage(0,
@@ -579,12 +581,12 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         sleep(1);
         auto lastBufferCnt = bufferCnt.load();
         for (int i = 0; i < 10; ++i) {
-            NES_DEBUG("Count while buffering: " << bufferCnt.load());
+            NES_DEBUG2("Count while buffering: {}", bufferCnt.load());
             EXPECT_EQ(lastBufferCnt, bufferCnt.load());
             sleep(1);
         }
         sendEngine->stopBufferingAllData();
-        NES_DEBUG("Count after buffer: " << bufferCnt.load());
+        NES_DEBUG2("Count after buffer: {}", bufferCnt.load());
         waitBeforeBufferBarrier->wait();
 
         for (std::thread& t : sendingThreads) {
@@ -792,7 +794,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         ASSERT_EQ(10ULL, testSink->completed.get_future().get());
     }
 
-    NES_DEBUG("All network sinks are completed");
+    NES_DEBUG2("All network sinks are completed");
 
     while (true) {
         auto completedSubQueries = 0u;
@@ -810,7 +812,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-    NES_DEBUG("All qeps are completed");
+    NES_DEBUG2("All qeps are completed");
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }
@@ -881,7 +883,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
                 ASSERT_TRUE(future.get());
             } else {
-                NES_ERROR("NetworkStackIntegrationTest: Receiving thread timed out!");
+                NES_ERROR2("NetworkStackIntegrationTest: Receiving thread timed out!");
             }
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
@@ -891,7 +893,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_INFO("NetworkStackIntegrationTest: Error in registering DataChannel!");
+            NES_INFO2("NetworkStackIntegrationTest: Error in registering DataChannel!");
             completedProm.set_value(false);
         } else {
             senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);

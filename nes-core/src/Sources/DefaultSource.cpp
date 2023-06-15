@@ -25,7 +25,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <chrono>
 #include <stdint.h>
 #include <utility>

@@ -55,7 +55,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DistributeWindowRuleTest test case.");
+        NES_INFO2("Setup DistributeWindowRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -73,7 +73,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling {
 };
 
 void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -93,7 +93,7 @@ void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatal
 }
 
 void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -105,7 +105,7 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
     TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4, properties);
     TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4, properties);
 
-    NES_DEBUG("topo=" << topology->toString());
+    NES_DEBUG2("topo={}", topology->toString());
 
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
@@ -129,7 +129,7 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
 }
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup DistributeWindowRuleTest test case.");
+    NES_INFO2("Setup DistributeWindowRuleTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -159,12 +159,12 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    NES_DEBUG(" plan before=" << queryPlan->toString());
+    NES_DEBUG2(" plan before={}", queryPlan->toString());
     // Execute
 
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
-    NES_DEBUG(" plan after=" << queryPlan->toString());
+    NES_DEBUG2(" plan after={}", queryPlan->toString());
     auto windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
     ASSERT_EQ(windowOps.size(), 1u);
 }
@@ -185,14 +185,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
-    NES_DEBUG(" plan before log expand=" << queryPlan->toString());
+    NES_DEBUG2(" plan before log expand={}", queryPlan->toString());
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
-    NES_DEBUG(" plan after log expand=" << queryPlan->toString());
+    NES_DEBUG2(" plan after log expand={}", queryPlan->toString());
 
-    NES_DEBUG(" plan before window distr=" << queryPlan->toString());
+    NES_DEBUG2(" plan before window distr={}", queryPlan->toString());
     updatedPlan = distributeWindowRule->apply(queryPlan);
-    NES_DEBUG(" plan after window distr=" << queryPlan->toString());
+    NES_DEBUG2(" plan after window distr={}", queryPlan->toString());
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
     ASSERT_EQ(compOps.size(), 1u);
@@ -218,14 +218,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
-    NES_DEBUG(" plan before log expand=" << queryPlan->toString());
+    NES_DEBUG2(" plan before log expand={}", queryPlan->toString());
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
-    NES_DEBUG(" plan after log expand=" << queryPlan->toString());
+    NES_DEBUG2(" plan after log expand={}", queryPlan->toString());
 
-    NES_DEBUG(" plan before window distr=" << queryPlan->toString());
+    NES_DEBUG2(" plan before window distr={}", queryPlan->toString());
     updatedPlan = distributeWindowRule->apply(queryPlan);
-    NES_DEBUG(" plan after window distr=" << queryPlan->toString());
+    NES_DEBUG2(" plan after window distr={}", queryPlan->toString());
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
     ASSERT_EQ(compOps.size(), 1u);

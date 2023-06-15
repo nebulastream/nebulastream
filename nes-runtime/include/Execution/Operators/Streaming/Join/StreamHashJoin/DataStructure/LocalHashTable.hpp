@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCALHASHTABLE_HPP
-#define NES_LOCALHASHTABLE_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
 
 #include <atomic>
 
@@ -40,7 +40,11 @@ class LocalHashTable {
      * @param overrunAddress
      * @param pageSize
      */
-    explicit LocalHashTable(size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize);
+    explicit LocalHashTable(size_t sizeOfRecord,
+                            size_t numPartitions,
+                            FixedPagesAllocator& fixedPagesAllocator,
+                            size_t pageSize,
+                            size_t preAllocPageSizeCnt);
 
     LocalHashTable(const LocalHashTable&) = delete;
 
@@ -69,9 +73,20 @@ class LocalHashTable {
      */
     size_t getBucketPos(uint64_t hash) const;
 
+    /**
+     * @brief debug mehtod to print the statistics of the hash table
+     */
+    void printStatistics();
+
+    /**
+     * @brief get number of tuples in hash table
+     * @return
+     */
+    uint64_t getNumberOfTuples();
+
   private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_LOCALHASHTABLE_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_

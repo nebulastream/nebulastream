@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FIXEDPAGESALLOCATOR_HPP
-#define NES_FIXEDPAGESALLOCATOR_HPP
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_
 
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
@@ -67,11 +67,15 @@ class FixedPagesAllocator {
         head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSize);
         overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSize;
         tail.store(reinterpret_cast<uintptr_t>(head));
+        this->totalSize = totalSize;
     }
 
     uint8_t* getNewPage(size_t pageSize) {
         auto ptr = tail.fetch_add(pageSize);
-        NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+        allocCnt++;
+        NES_ASSERT2_FMT(ptr < overrunAddress,
+                        "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
+                                           << " total size=" << totalSize << " allocCnt=" << allocCnt);
 
         return reinterpret_cast<uint8_t*>(ptr);
     }
@@ -82,8 +86,10 @@ class FixedPagesAllocator {
     uint8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
+    uint64_t totalSize;
+    uint64_t allocCnt = 0;
 };
 
 }// namespace NES::Runtime
 
-#endif//NES_FIXEDPAGESALLOCATOR_HPP
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_

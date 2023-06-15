@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
-#define NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_
+#define NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_
 
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
@@ -176,4 +176,4 @@ std::shared_ptr<detail::Logger> getInstance();// singleton is ok here
 }// namespace Logger
 
 }// namespace NES
-#endif//NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_

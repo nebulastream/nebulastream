@@ -20,9 +20,10 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
@@ -41,7 +42,7 @@ class OrOperatorTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OrOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup OrOperatorTest test class.");
+        NES_INFO2("Setup OrOperatorTest test class.");
     }
 
     void SetUp() override {
@@ -56,11 +57,11 @@ class OrOperatorTest : public Testing::NESBaseTest {
  * OR operator standalone
  */
 TEST_F(OrOperatorTest, testPatternOneOr) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("OrOperatorTest: Coordinator started successfully");
+    NES_INFO2("OrOperatorTest: Coordinator started successfully");
 
     //register logical source qnv
     std::string qnv =
@@ -70,7 +71,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     sourceCatalogService->registerLogicalSource("QnV1", qnv);
     sourceCatalogService->registerLogicalSource("QnV2", qnv);
 
-    NES_INFO("OrOperatorTest: Start worker 1 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -85,9 +86,9 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
+    NES_INFO2("OrOperatorTest: Worker1 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 2 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -101,12 +102,12 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
+    NES_INFO2("OrOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternOr1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("OrOperatorTest: Submit orWith pattern");
+    NES_INFO2("OrOperatorTest: Submit orWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").orWith(Query::from("QnV2")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
@@ -122,17 +123,16 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("OrOperatorTest: Remove query");
-    ;
+    NES_INFO2("OrOperatorTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -148,7 +148,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
  * OR operator in combination with additional map and filter
  */
 TEST_F(OrOperatorTest, testPatternOrMap) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -157,9 +157,9 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
-    NES_INFO("OrOperatorTest: Coordinator started successfully");
+    NES_INFO2("OrOperatorTest: Coordinator started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 1 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -173,9 +173,9 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
+    NES_INFO2("OrOperatorTest: Worker1 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 2 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -189,12 +189,12 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
+    NES_INFO2("OrOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternOr2.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("OrOperatorTest: Submit andWith pattern");
+    NES_INFO2("OrOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").map(Attribute("Name")="test").orWith(Query::from("QnV2").map(Attribute("Name")="test").filter(Attribute("velocity")>60)).sink(FileSinkDescriptor::create(")"
@@ -211,17 +211,16 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("OrOperatorTest: Remove query");
-    ;
+    NES_INFO2("OrOperatorTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
     size_t expResult = 130L;
 
     EXPECT_EQ(n, expResult);
@@ -241,7 +240,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
  * //TODO Disabled waiting for issue #2600
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -251,9 +250,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV3", qnv);
-    NES_INFO("OrOperatorTest: Coordinator started successfully");
+    NES_INFO2("OrOperatorTest: Coordinator started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 1 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -267,9 +266,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
+    NES_INFO2("OrOperatorTest: Worker1 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 2 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -283,9 +282,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
+    NES_INFO2("OrOperatorTest: Worker2 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 3 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 3 with physical source");
     auto worker3Configuration = WorkerConfiguration::create();
     worker3Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -299,12 +298,12 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(worker3Configuration));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("OrOperatorTest: Worker3 started successfully");
+    NES_INFO2("OrOperatorTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternOR3.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("OrOperatorTest: Submit andWith pattern");
+    NES_INFO2("OrOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>50)
@@ -324,17 +323,16 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("OrOperatorTest: Remove query");
-    ;
+    NES_INFO2("OrOperatorTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     EXPECT_EQ(n, 365L);
 
@@ -355,7 +353,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
  * OR Operators with filters left and right source
  */
 TEST_F(OrOperatorTest, testOrPatternFilter) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -364,9 +362,9 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
-    NES_INFO("SimplePatternTest: Coordinator started successfully");
+    NES_INFO2("SimplePatternTest: Coordinator started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 1 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -379,9 +377,9 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
+    NES_INFO2("OrOperatorTest: Worker1 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 2 with physical source");
+    NES_INFO2("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
@@ -394,12 +392,12 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
+    NES_INFO2("OrOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testOrPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SimplePatternTest: Submit orWith pattern");
+    NES_INFO2("SimplePatternTest: Submit orWith pattern");
 
     std::string query =
         R"(Query::from("QnV").filter(Attribute("velocity") > 100)
@@ -417,8 +415,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("SimplePatternTest: Remove query");
-    ;
+    NES_INFO2("SimplePatternTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -429,17 +426,17 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     bool resultWrk2 = false;
 
     while (std::getline(ifs, line)) {
-        NES_INFO("print line from content" << line);
+        NES_INFO2("print line from content{}", line);
         std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
         if (content.size() > 1 && content.at(1) == "R2000073") {
-            NES_INFO("First content=" << content.at(2));
-            NES_INFO("First: expContent= 102.629631");
+            NES_INFO2("First content={}", content.at(2));
+            NES_INFO2("First: expContent= 102.629631");
             if (content.at(3) == "102.629631") {
                 resultWrk1 = true;
             }
         } else if (content.size() > 1 && content.at(1) == "R2000070") {
-            NES_INFO("Second: content=" << content.at(2));
-            NES_INFO("Second: expContent= 108.166664");
+            NES_INFO2("Second: content={}", content.at(2));
+            NES_INFO2("Second: expContent= 108.166664");
             if (content.at(3) == "108.166664") {
                 resultWrk2 = true;
             }

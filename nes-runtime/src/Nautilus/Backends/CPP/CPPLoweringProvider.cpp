@@ -14,8 +14,14 @@
 
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
@@ -263,6 +269,10 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
             processBinary<IR::Operations::DivOperation>(opt, "/", blockIndex, frame);
             return;
         }
+        case IR::Operations::Operation::OperationType::ModOp: {
+            processBinary<IR::Operations::ModOperation>(opt, "%", blockIndex, frame);
+            return;
+        }
         case IR::Operations::Operation::OperationType::ReturnOp: {
             auto returnOpt = std::static_pointer_cast<IR::Operations::ReturnOperation>(opt);
             if (returnOpt->hasReturnValue()) {
@@ -320,6 +330,26 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         case IR::Operations::Operation::OperationType::CastOp: {
             auto cast = std::static_pointer_cast<IR::Operations::CastOperation>(opt);
             process(cast, blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::BitWiseAnd: {
+            processBinary<IR::Operations::BitWiseAndOperation>(opt, "&", blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::BitWiseOr: {
+            processBinary<IR::Operations::BitWiseOrOperation>(opt, "|", blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::BitWiseXor: {
+            processBinary<IR::Operations::BitWiseXorOperation>(opt, "^", blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::BitWiseLeftShift: {
+            processBinary<IR::Operations::BitWiseLeftShiftOperation>(opt, "<<", blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::BitWiseRightShift: {
+            processBinary<IR::Operations::BitWiseRightShiftOperation>(opt, ">>", blockIndex, frame);
             return;
         }
         default: {

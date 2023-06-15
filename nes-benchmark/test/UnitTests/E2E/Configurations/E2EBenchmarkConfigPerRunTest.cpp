@@ -57,6 +57,9 @@ namespace NES::Benchmark {
             << "- numberOfSources: " << defaultConfigPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
             << "- numberOfBuffersInGlobalBufferManager: " << defaultConfigPerRun.numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
             << "- numberOfBuffersInSourceLocalBufferPool: " << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString()
+            << "- pageSize: " << defaultConfigPerRun.pageSize->getValueAsString()
+            << "- preAllocPageCnt: " << defaultConfigPerRun.preAllocPageCnt->getValueAsString()
+            << "- numberOfPartitions: " << defaultConfigPerRun.numberOfPartitions->getValueAsString()
             << std::endl;
         auto expectedString = oss.str();
 

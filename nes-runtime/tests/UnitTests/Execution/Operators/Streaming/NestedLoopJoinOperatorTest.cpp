@@ -15,12 +15,14 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -143,7 +145,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
         nljBuildLeft.setup(executionContext);
         nljBuildRight.setup(executionContext);
-        uint64_t maxTimestamp = 0;
+        uint64_t maxTimestamp = 2;
         for (auto& leftRecord : allLeftRecords) {
             maxTimestamp = std::max(leftRecord.read(timestampLeft).getValue().staticCast<UInt64>().getValue(), maxTimestamp);
             nljBuildLeft.execute(executionContext, leftRecord);
@@ -162,8 +164,9 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         auto maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize) * windowSize;
         for (auto windowIdentifier = windowSize; windowIdentifier < maxWindowIdentifier; windowIdentifier += windowSize) {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
-            auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
+            auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
+            NES_DEBUG("Check window=" << windowIdentifier);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true),
                       expectedNumberOfTuplesInWindowLeft);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),
@@ -227,7 +230,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         for (auto& leftRecord : allLeftRecords) {
             auto timestamp = leftRecord.read(timestampFieldnameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
-            auto pointerToRecord = nljOperatorHandler.insertNewTuple(timestamp, /*isLeftSide*/ true);
+            auto pointerToRecord = nljOperatorHandler.allocateNewEntry(timestamp, /*isLeftSide*/ true);
             auto memRefToRecord = Value<MemRef>((int8_t*) pointerToRecord);
             memoryProviderLeft->write(zeroVal, memRefToRecord, leftRecord);
         }
@@ -235,7 +238,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         for (auto& rightRecord : allRightRecords) {
             auto timestamp = rightRecord.read(timestampFieldnameRight).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
-            auto pointerToRecord = nljOperatorHandler.insertNewTuple(timestamp, /*isLeftSide*/ false);
+            auto pointerToRecord = nljOperatorHandler.allocateNewEntry(timestamp, /*isLeftSide*/ false);
             auto memRefToRecord = Value<MemRef>((int8_t*) pointerToRecord);
             memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);
         }
@@ -325,23 +328,30 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
     auto numberOfRecordsRight = 1;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                              leftSchema,
+    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldnameLeft,
                                                                               joinFieldnameRight,
-                                                                              originIds);
+                                                                              originIds,
+                                                                              windowSize);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true);
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false);
+    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
+
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
@@ -369,23 +379,30 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     windowSize = 2000;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                              leftSchema,
+    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldnameLeft,
                                                                               joinFieldnameRight,
-                                                                              originIds);
+                                                                              originIds,
+                                                                              windowSize);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true);
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false);
+    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
+
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
@@ -407,28 +424,35 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto joinFieldnameRight = rightSchema->get(1)->getName();
     auto timestampFieldLeft = leftSchema->get(2)->getName();
     auto timestampFieldRight = leftSchema->get(2)->getName();
-    auto numberOfRecordsLeft = 10000;
-    auto numberOfRecordsRight = 10000;
+    auto numberOfRecordsLeft = 100;
+    auto numberOfRecordsRight = 100;
     windowSize = 50;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                              leftSchema,
+    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldnameLeft,
                                                                               joinFieldnameRight,
-                                                                              originIds);
+                                                                              originIds,
+                                                                              windowSize);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true);
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false);
+    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldRight);
+
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
@@ -456,12 +480,12 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneWindow) {
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldnameLeft);
-    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                              leftSchema,
+    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldnameLeft,
                                                                               joinFieldnameRight,
-                                                                              originIds);
+                                                                              originIds,
+                                                                              windowSize);
     auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                         leftSchema,
                                                         rightSchema,
@@ -495,12 +519,12 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldnameLeft);
-    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                              leftSchema,
+    auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldnameLeft,
                                                                               joinFieldnameRight,
-                                                                              originIds);
+                                                                              originIds,
+                                                                              windowSize);
     auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                         leftSchema,
                                                         rightSchema,

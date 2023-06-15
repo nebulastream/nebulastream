@@ -60,7 +60,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3SignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case.");
+        NES_INFO2("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -257,7 +257,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO(updatedSharedQueryPlan1->toString());
+    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -396,7 +396,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    NES_INFO("Shared Plan After Merging with Query 2\n" << updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
+    NES_INFO2("Shared Plan After Merging with Query 2\n{}", updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
     updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
 
     // execute merging shared query plan 1 and 3
@@ -410,7 +410,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedQueryPlan1 = updatedSharedQueryPlansDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO("Shared Plan After Merging with Query 3\n" << updatedSharedQueryPlan1->toString());
+    NES_INFO2("Shared Plan After Merging with Query 3\n{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -484,7 +484,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO(updatedSharedQueryPlan1->toString());
+    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -502,7 +502,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto changeLog = updatedSharedPlanAfterStopToDeploy[0]->getChangeLog();
 
     EXPECT_TRUE(updatedSharedPlanAfterStop);
-    NES_INFO(updatedSharedPlanAfterStop->toString());
+    NES_INFO2("{}", updatedSharedPlanAfterStop->toString());
 
     ASSERT_EQ(changeLog->getRemoval().size(), 2UL);
 
@@ -578,7 +578,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO(updatedSharedQueryPlan1->toString());
+    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -611,7 +611,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedPlanAfterStop = updatedSharedPlanAfterStopToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO(updatedSharedQueryPlan1->toString());
+    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();

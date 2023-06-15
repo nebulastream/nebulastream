@@ -20,8 +20,9 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <string>
 #include <utility>
@@ -161,7 +162,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
             strcpy(value, inputString.c_str());
         }
     } catch (const std::exception& e) {
-        NES_ERROR("Failed to convert inputString to desired NES data type. Error: " << e.what());
+        NES_ERROR2("Failed to convert inputString to desired NES data type. Error: {}", e.what());
     }
 }
 

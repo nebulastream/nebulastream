@@ -27,7 +27,8 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP::Benchmarking {

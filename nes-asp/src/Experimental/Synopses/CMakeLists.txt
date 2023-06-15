@@ -12,6 +12,7 @@
 
 
 add_subdirectory(Samples)
+add_subdirectory(Histograms)
 
 add_source_files(nes-asp
         AbstractSynopsis.cpp

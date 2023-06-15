@@ -19,8 +19,8 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <nlohmann/json.hpp>
 

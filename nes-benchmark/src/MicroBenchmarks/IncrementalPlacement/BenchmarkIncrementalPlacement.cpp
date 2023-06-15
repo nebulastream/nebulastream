@@ -38,7 +38,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -422,8 +422,7 @@ int main(int argc, const char* argv[]) {
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                bool placed =
-                    queryPlacementPhase->execute(runQueryRequest->getQueryPlacementStrategy(), sharedQueryPlansToDeploy[0]);
+                bool placed = queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();

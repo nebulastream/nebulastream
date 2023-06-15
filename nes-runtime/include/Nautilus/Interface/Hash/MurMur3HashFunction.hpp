@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_MURMUR3HASHFUNCTION_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_MURMUR3HASHFUNCTION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
@@ -26,9 +26,30 @@ class MurMur3HashFunction : public HashFunction {
   public:
     // Seed as an initialisation.
     const uint64_t SEED = 902850234;
+
+    /**
+     * @brief Inits the HashValue with the seed
+     * @return HashValue
+     */
     HashValue init() override;
+
+    /**
+     * @brief Calculates the hash of value and xor-es it with hash
+     * @param hash
+     * @param value
+     * @return HashValue
+     */
     HashValue calculate(HashValue& hash, Value<>& value) override;
+
+    /**
+     * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
+     * @param hash
+     * @param value
+     * @param state
+     * @return HashValue
+     */
+    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 };
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_MURMUR3HASHFUNCTION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_

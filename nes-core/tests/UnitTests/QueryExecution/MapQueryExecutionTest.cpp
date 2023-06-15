@@ -35,7 +35,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
+        NES_DEBUG2("QueryCatalogServiceTest: Setup QueryCatalogServiceTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -46,13 +46,13 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down MapQueryExecutionTest test case.");
+        NES_DEBUG2("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("MapQueryExecutionTest: Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test class."); }
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {

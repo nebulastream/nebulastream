@@ -39,3 +39,7 @@ target_link_libraries(synopsis-pipeline-test PRIVATE nes-asp)
 # Adding unit test for SimpleRandomSampleWithoutReplacementTest.cpp
 add_nes_runtime_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SRSWoRTest.cpp")
 target_link_libraries(simple-sampling-without-replacement-test PRIVATE nes-asp)
+
+# Adding unit test for equi-width 1d hist
+add_nes_runtime_test(equi-width-1d-hist-test "UnitTests/Experimental/Synopses/EquiWidth1DHistTest.cpp")
+target_link_libraries(equi-width-1d-hist-test PRIVATE nes-asp)

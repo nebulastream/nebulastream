@@ -26,9 +26,9 @@ class TimerTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("TimerTest test class SetUpTestCase.");
+        NES_INFO2("TimerTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("TimerTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("TimerTest test class TearDownTestCase."); }
 };
 
 /**

@@ -19,74 +19,78 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-
 namespace NES::Runtime::Execution::Operators {
 
-void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
+    NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+    auto currentWindow = opHandler->getWindowByTimestamp(timeStamp);
 
-    auto localHashTablePointer =
-        static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    //create window because it does not exists
+    if (!currentWindow.has_value()) {
+        opHandler->createNewWindow(timeStamp);
+    }
+    currentWindow = opHandler->getWindowByTimestamp(timeStamp);
+    NES_ASSERT(currentWindow.has_value(), "Window could not be created");
+    if (currentWindow.has_value()) {
+        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
+        return static_cast<void*>(hashWindow);
+    } else {
+        return nullptr;
+    }
+}
+
+void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
+    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
+    auto localHashTablePointer = static_cast<void*>(hashWindow->getLocalHashTable(workerIdx, isLeftSide));
     return localHashTablePointer;
 }
 
-void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
+void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
-
     LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
-
     return localHashTable->insert(key);
 }
 
-void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+/**
+ * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
+ */
+void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
+                                          void* ptrPipelineCtx,
+                                          void* ptrWorkerCtx,
+                                          uint64_t watermarkTs,
+                                          uint64_t sequenceNumber,
+                                          OriginId originId) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    auto& sharedJoinHashTable = opHandler->getWindowToBeFilled(isLeftSide).getSharedJoinHashTable(isLeftSide);
-    auto localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
+    //update last seen watermark by this worker
+    opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
+    auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
-        sharedJoinHashTable.insertBucket(a, localHashTable->getBucketLinkedList(a));
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
+
+    if (windowIdentifiersToBeTriggered.size() > 0) {
+        opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
-
-    // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-    if (opHandler->getWindowToBeFilled(isLeftSide).fetchSubBuild(1) == 1) {
-        for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
-
-            auto buffer = workerCtx->allocateTupleBuffer();
-            auto bufferAs = buffer.getBuffer<JoinPartitionIdTumpleStamp>();
-
-            bufferAs->partitionId = i;
-            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getWindowEnd();
-            buffer.setNumberOfTuples(1);
-            pipelineCtx->emitBuffer(buffer, *workerCtx);
-        }
-    }
-
-    opHandler->incLastTupleTimeStamp(opHandler->getWindowSize(), isLeftSide);
-    opHandler->createNewWindow(isLeftSide);
-}
-
-uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
 void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
@@ -100,32 +104,29 @@ void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
 }
 
 void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
-
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto lastTupleWindowRef =
-        Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef, Value<Boolean>(isLeftSide));
 
-    if (record.read(timeStampField) > lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink",
-                               triggerJoinSink,
-                               operatorHandlerMemRef,
-                               ctx.getPipelineContext(),
-                               ctx.getWorkerContext(),
-                               Value<Boolean>(isLeftSide));
-    }
+    Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
 
-    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableFunctionCall",
-                                                       getLocalHashTableFunctionCall,
-                                                       operatorHandlerMemRef,
+    auto localHashWindowRef = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
+                                                     getStreamHashJoinWindowProxy,
+                                                     operatorHandlerMemRef,
+                                                     Value<UInt64>(tsValue));
+
+    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
+                                                       getLocalHashTableProxy,
+                                                       localHashWindowRef,
                                                        ctx.getWorkerId(),
                                                        Value<Boolean>(isLeftSide));
 
+    //get position in the HT where to write to
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall",
-                                              insertFunctionCall,
+    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
+                                              insertFunctionProxy,
                                               localHashTableMemRef,
                                               record.read(joinFieldName).as<UInt64>());
+    //write data
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -133,6 +134,20 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
+}
+
+void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+
+    // Update the watermark and trigger windows
+    Nautilus::FunctionCall("checkWindowsTriggerProxy",
+                           checkWindowsTriggerProxyForJoinBuild,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerContext(),
+                           ctx.getWatermarkTs(),
+                           ctx.getSequenceNumber(),
+                           ctx.getOriginId());
 }
 
 void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {
@@ -144,8 +159,9 @@ StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
                                          bool isLeftSide,
                                          const std::string& joinFieldName,
                                          const std::string& timeStampField,
-                                         SchemaPtr schema)
+                                         SchemaPtr schema,
+                                         std::shared_ptr<TimeFunction> timeFunction)
     : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      schema(schema) {}
+      schema(schema), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

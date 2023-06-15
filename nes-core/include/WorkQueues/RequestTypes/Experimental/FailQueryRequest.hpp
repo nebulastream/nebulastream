@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
 #include <Common/Identifiers.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 namespace NES {
@@ -41,21 +41,21 @@ class FailQueryRequest : public AbstractRequest {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(std::exception ex, StorageHandler& storageHandler) override;
+    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void rollBack(std::exception& ex, StorageHandler& storageHandle) override;
+    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(std::exception ex, StorageHandler& storageHandler) override;
+    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
@@ -82,4 +82,4 @@ class FailQueryRequest : public AbstractRequest {
 };
 }// namespace Experimental
 }// namespace NES
-#endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_

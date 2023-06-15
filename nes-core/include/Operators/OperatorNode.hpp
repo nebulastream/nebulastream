@@ -99,7 +99,21 @@ class OperatorNode : public Node {
      * @param operatorId : the if of the operator to find
      * @return nullptr if not found else the operator node
      */
-    NodePtr getChildWithOperatorId(uint64_t operatorId);
+    NodePtr getChildWithOperatorId(OperatorId operatorId);
+
+    /**
+     * Check if a node with the id is either a child or a grandchild of this operator
+     * @param operatorNode : the operator node whose id need to be looked up
+     * @return true if operator with the input id is a child or grand child
+     */
+    bool containAsGrandChild(NodePtr operatorNode) override;
+
+    /**
+     * Check if a node with the id is either a parent or a grandparent of this operator
+     * @param operatorNode : the operator node whose id need to be looked up
+     * @return true if operator with the input id is a child or grand child
+     */
+    bool containAsGrandParent(NodePtr operatorNode) override;
 
     /**
      * @brief Method to get the output schema of the operator

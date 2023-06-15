@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NLJSINK_HPP
-#define NES_NLJSINK_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -58,4 +58,4 @@ class NLJSink : public Operator {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NLJSINK_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_

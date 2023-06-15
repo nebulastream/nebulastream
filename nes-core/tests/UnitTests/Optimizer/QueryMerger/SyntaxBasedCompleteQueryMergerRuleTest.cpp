@@ -54,7 +54,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
+        NES_INFO2("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */

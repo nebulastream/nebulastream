@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_STOPQUERYREQUEST_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_STOPQUERYREQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_
 
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
@@ -83,9 +83,9 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
     create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
-    void preRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
-    void postRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
-    void rollBack(std::exception& ex, StorageHandler& storageHandle) override;
+    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
     void preExecution(StorageHandler& storageHandle) override;
     void postExecution(StorageHandler& storageHandle) override;
     std::string toString() override;
@@ -113,4 +113,4 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_STOPQUERYREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_

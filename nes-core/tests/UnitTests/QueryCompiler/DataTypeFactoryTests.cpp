@@ -30,7 +30,7 @@ class DataTypeFactoryTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DataTypeFactory test class.");
+        NES_INFO2("Setup DataTypeFactory test class.");
     }
 };
 

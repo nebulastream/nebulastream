@@ -135,6 +135,19 @@ void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
     }
 }
 
+void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
+    NES_INFO2("GlobalQueryPlan: remove metadata information for empty shared query plan id {}", sharedQueryPlanId);
+    if (sharedQueryPlanId == INVALID_SHARED_QUERY_ID) {
+        throw Exceptions::RuntimeException("GlobalQueryPlan: Cannot remove shared query plan with invalid id.");
+    }
+    auto sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryPlanId];
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped
+        || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
+        NES_TRACE2("Found stopped or failed query plan. Removing query plan from shared query plan.");
+        sharedQueryIdToPlanMap.erase(sharedQueryPlanId);
+    }
+}
+
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     NES_INFO2("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> sharedQueryPlans;
@@ -161,14 +174,16 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
-    //Add Shared Query Plan to the SourceNAme index
-    auto item = sourceNamesToSharedQueryPlanMap.find(queryPlan->getSourceConsumed());
-    if (item != sourceNamesToSharedQueryPlanMap.end()) {
+    std::string sourceNameAndPlacementStrategy =
+        queryPlan->getSourceConsumed() + "_" + std::to_string(magic_enum::enum_integer(queryPlan->getPlacementStrategy()));
+    //Add Shared Query Plan to the SourceName index
+    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNameAndPlacementStrategy);
+    if (item != sourceNamesAndPlacementStrategyToSharedQueryPlanMap.end()) {
         auto sharedQueryPlans = item->second;
         sharedQueryPlans.emplace_back(sharedQueryPlan);
-        sourceNamesToSharedQueryPlanMap[queryPlan->getSourceConsumed()] = sharedQueryPlans;
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = sharedQueryPlans;
     } else {
-        sourceNamesToSharedQueryPlanMap[queryPlan->getSourceConsumed()] = {sharedQueryPlan};
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = {sharedQueryPlan};
     }
 
     return true;
@@ -181,9 +196,12 @@ bool GlobalQueryPlan::clearQueryPlansToAdd() {
     return true;
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansConsumingSources(std::string sourceNames) {
-    auto item = sourceNamesToSharedQueryPlanMap.find(sourceNames);
-    if (item != sourceNamesToSharedQueryPlanMap.end()) {
+std::vector<SharedQueryPlanPtr>
+GlobalQueryPlan::getSharedQueryPlansConsumingSourcesAndPlacementStrategy(std::string sourceNames,
+                                                                         PlacementStrategy placementStrategy) {
+    std::string sourceNameAndPlacementStrategy = sourceNames + "_" + std::to_string(magic_enum::enum_integer(placementStrategy));
+    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNameAndPlacementStrategy);
+    if (item != sourceNamesAndPlacementStrategyToSharedQueryPlanMap.end()) {
         return item->second;
     }
     return {};

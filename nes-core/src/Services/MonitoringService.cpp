@@ -20,8 +20,8 @@
 #include <Services/MonitoringService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 

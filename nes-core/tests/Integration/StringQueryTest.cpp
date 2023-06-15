@@ -93,10 +93,10 @@ class StringQueryTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() noexcept {
         NES::Logger::setupLogging("StringQueryTest.log", NES::LogLevel::LOG_WARNING);
-        NES_INFO("Setup StringQuery test class.");
+        NES_INFO2("Setup StringQuery test class.");
     }
 
-    static void TearDownTestCase() noexcept { NES_INFO("Tear down StringQuery test class."); }
+    static void TearDownTestCase() noexcept { NES_INFO2("Tear down StringQuery test class."); }
 };
 
 /// Test that padding has no influence on the actual size of an element in NES' implementation.

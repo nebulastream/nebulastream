@@ -36,31 +36,13 @@ FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
-void FailQueryRequest::preRollbackHandle(std::exception, NES::StorageHandler&) {}
+void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
 
-void FailQueryRequest::rollBack(std::exception&, StorageHandler&) {}
+void FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {}
 
-void FailQueryRequest::postRollbackHandle(std::exception ex, NES::StorageHandler& storageHandler) {
-    (void) ex;
-    (void) storageHandler;
+void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {
 
-    //todo #3727: perform the below error handling when the specific request type has been implemented
-    /*
-    try {
-        auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
-
-        //undeploy queries
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
-        topology = storageHandler.getTopologyHandle();
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-        queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
-        auto sharedQueryId = undeploymentException.getSharedQueryid();
-
-        for (auto& queryId : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Failed");
-        }
-    } catch (std::bad_cast& e) {}
-     */
+    //todo #3727: perform error handling
 }
 
 void FailQueryRequest::postExecution(NES::StorageHandler&) {}

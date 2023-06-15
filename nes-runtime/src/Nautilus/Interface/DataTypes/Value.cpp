@@ -126,6 +126,91 @@ Value<> DivOp(const Value<>& left, const Value<>& right) {
     });
 }
 
+Value<> ModOp(const Value<>& left, const Value<>& right) {
+    return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+        auto result = plugin->Mod(left, right);
+        if (result.has_value()) {
+            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::MOD, result.value().ref, left.ref, right.ref);
+        }
+        return result;
+    });
+}
+
+Value<> BitWiseAndOp(const Value<>& leftExp, const Value<>& rightExp) {
+    return evalWithCast(leftExp,
+                        rightExp,
+                        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+                            auto result = plugin->BitWiseAnd(left, right);
+                            if (result.has_value()) {
+                                Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::BITWISE_AND,
+                                                                         result.value().ref,
+                                                                         left.ref,
+                                                                         right.ref);
+                            }
+                            return result;
+                        });
+}
+
+Value<> BitWiseOrOp(const Value<>& leftExp, const Value<>& rightExp) {
+    return evalWithCast(leftExp,
+                        rightExp,
+                        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+                            auto result = plugin->BitWiseOr(left, right);
+                            if (result.has_value()) {
+                                Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::BITWISE_OR,
+                                                                         result.value().ref,
+                                                                         left.ref,
+                                                                         right.ref);
+                            }
+                            return result;
+                        });
+}
+
+Value<> BitWiseXorOp(const Value<>& leftExp, const Value<>& rightExp) {
+    return evalWithCast(leftExp,
+                        rightExp,
+                        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+                            auto result = plugin->BitWiseXor(left, right);
+                            if (result.has_value()) {
+                                Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::BITWISE_XOR,
+                                                                         result.value().ref,
+                                                                         left.ref,
+                                                                         right.ref);
+                            }
+                            return result;
+                        });
+}
+
+Value<> BitWiseLeftShiftOp(const Value<>& leftExp, const Value<>& rightExp) {
+    return evalWithCast(leftExp,
+                        rightExp,
+                        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+                            auto result = plugin->BitWiseLeftShift(left, right);
+                            if (result.has_value()) {
+                                Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::BITWISE_LEFT_SHIFT,
+                                                                         result.value().ref,
+                                                                         left.ref,
+                                                                         right.ref);
+                            }
+                            return result;
+                        });
+}
+
+Value<> BitWiseRightShiftOp(const Value<>& leftExp, const Value<>& rightExp) {
+    return evalWithCast(leftExp,
+                        rightExp,
+                        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+                            auto result = plugin->BitWiseRightShift(left, right);
+                            if (result.has_value()) {
+                                Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::BITWISE_RIGHT_SHIFT,
+                                                                         result.value().ref,
+                                                                         left.ref,
+                                                                         right.ref);
+                            }
+                            return result;
+                        });
+}
+
 Value<> EqualsOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Equals(left, right);

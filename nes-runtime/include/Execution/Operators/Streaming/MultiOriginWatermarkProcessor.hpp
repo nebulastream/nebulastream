@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_
-#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <cstdint>
 #include <memory>
@@ -50,6 +50,8 @@ class MultiOriginWatermarkProcessor {
      */
     [[nodiscard]] uint64_t getCurrentWatermark();
 
+    std::string getCurrentStatus();
+
   private:
     const std::vector<OriginId> origins;
     std::vector<std::shared_ptr<NES::Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
@@ -57,4 +59,4 @@ class MultiOriginWatermarkProcessor {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_

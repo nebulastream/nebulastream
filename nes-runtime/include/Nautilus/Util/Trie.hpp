@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_TAGTRIE_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_TAGTRIE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -53,4 +53,4 @@ class TrieNode {
 };
 }// namespace NES::Nautilus::Tracing
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_TAGTRIE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_

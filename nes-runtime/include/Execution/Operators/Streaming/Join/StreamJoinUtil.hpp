@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STREAMJOINUTIL_HPP
-#define NES_STREAMJOINUTIL_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -35,27 +35,20 @@ using SchemaPtr = std::shared_ptr<Schema>;
 namespace NES::Runtime::Execution {
 
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
-static constexpr auto CHUNK_SIZE = 128;
-static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
-static constexpr auto NUM_PARTITIONS = 16;
-static constexpr auto DEFAULT_MEM_SIZE_JOIN = 1 * 1024 * 1024UL;
+
+static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
+static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
+static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 16 * 1024 * 1024;
 
 namespace Operators {
-struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
+struct __attribute__((packed)) JoinPartitionIdTWindowIdentifier {
     size_t partitionId;
-    size_t lastTupleTimeStamp;
+    size_t windowIdentifier;
 };
 }// namespace Operators
 
 namespace Util {
-
-// TODO #3362
-/**
-* @brief hashes the key with murmur hash
- * @param key
- * @return calculated hash
- */
-uint64_t murmurHash(uint64_t key);
 
 /**
  * @brief Creates the join schema from the left and right schema
@@ -65,78 +58,6 @@ uint64_t murmurHash(uint64_t key);
  * @return
  */
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName);
-
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
-namespace detail {
-/**
-* @brief set of helper functions for splitting for different types
-* @return splitting function for a given type
-*/
-template<typename T>
-struct SplitFunctionHelper {};
-
-template<>
-struct SplitFunctionHelper<std::string> {
-    static constexpr auto FUNCTION = [](std::string x) {
-        return x;
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint64_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint64_t(std::atoll(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint32_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint32_t(std::atoi(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<int> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atoi(str.c_str());
-    };
-};
-
-template<>
-struct SplitFunctionHelper<double> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atof(str.c_str());
-    };
-};
-}// namespace detail
-
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
-/**
-* @brief splits a string given a delimiter into multiple substrings stored in a T vector
-* the delimiter is allowed to be a string rather than a char only.
-* @param data - the string that is to be split
-* @param delimiter - the string that is to be split upon e.g. / or -
-* @param fromStringtoT - the function that converts a string to an arbitrary type T
-* @return
-*/
-template<typename T>
-std::vector<T> splitWithStringDelimiter(const std::string& inputString,
-                                        const std::string& delim,
-                                        std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
-    std::string copy = inputString;
-    size_t pos = 0;
-    std::vector<T> elems;
-    while ((pos = copy.find(delim)) != std::string::npos) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
-        copy.erase(0, pos + delim.length());
-    }
-    if (!copy.substr(0, pos).empty()) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
-    }
-
-    return elems;
-}
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
@@ -210,4 +131,4 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
 }// namespace Util
 }// namespace NES::Runtime::Execution
-#endif//NES_STREAMJOINUTIL_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

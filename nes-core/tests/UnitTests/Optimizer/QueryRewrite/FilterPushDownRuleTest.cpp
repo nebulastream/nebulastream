@@ -44,7 +44,7 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FilterPushDownRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FilterPushDownRuleTest test case.");
+        NES_INFO2("Setup FilterPushDownRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -55,7 +55,7 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup FilterPushDownTest test case.");
+    NES_INFO2("Setup FilterPushDownTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -324,9 +324,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -389,9 +389,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -454,9 +454,9 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -526,9 +526,9 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -603,38 +603,50 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
+    // The order of the branches of the union operator matters and should stay the same.
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = updatedQueryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", sinkOperator->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", mapOperatorPQ1->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", mapOperatorPQ2->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mergeOperator->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", mergeOperator->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorPQ->toString(), (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorSQ->toString(), (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorSQ->toString(), (*itr)->toString());
 }
-
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
@@ -649,7 +661,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    NES_INFO("Setup FilterPushDownTest test case.");
+    NES_INFO2("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto csvSourceType = CSVSourceType::create();
@@ -685,9 +697,9 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}", (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);

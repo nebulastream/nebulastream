@@ -12,9 +12,8 @@
     limitations under the License.
 */
 #include <NesBaseTest.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <cstring>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -23,9 +22,9 @@ class UtilFunctionTest : public Testing::TestWithErrorHandling {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("UtilFunctionTest test class SetUpTestCase.");
+        NES_INFO2("UtilFunctionTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("UtilFunctionTest test class TearDownTestCase."); }
 };
 
 TEST(UtilFunctionTest, replaceNothing) {
@@ -60,7 +59,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
     test.emplace_back("This is a random test line with no delimiter.");
     std::string line = "This is a random test line with no delimiter.";
     std::string delimiter = "x";
-    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -71,7 +70,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random test line with x delimiter.";
     std::string delimiter = "x";
-    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -83,7 +82,7 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
     test.emplace_back(" delimiter.");
     std::string line = "This is a random x line with x delimiter.";
     std::string delimiter = "x";
-    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 
@@ -95,7 +94,7 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     test.emplace_back(" delimiter. ");
     std::string line = "This is a random x line with x delimiter. x";
     std::string delimiter = "x";
-    tokens = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+    tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
     EXPECT_TRUE(tokens == test);
 }
 

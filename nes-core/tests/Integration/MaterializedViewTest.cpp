@@ -27,10 +27,10 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Views/MaterializedView.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -40,7 +40,7 @@ class MaterializedViewTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MaterializedViewTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MaterializedViewTest test class.");
+        NES_INFO2("Setup MaterializedViewTest test class.");
     }
 };
 
@@ -49,7 +49,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
+    NES_INFO2("MaterializedViewTupleViewSinkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
@@ -58,12 +58,12 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
 
-    NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
+    NES_INFO2("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -78,25 +78,25 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
 
     Query query = Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(1));
     auto queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(1);
     auto queryId = queryService->addQueryRequest("", queryPlan, "BottomUp");
 
-    NES_INFO("MaterializedViewTupleViewSinkTest: queryId" << queryId);
+    NES_INFO2("MaterializedViewTupleViewSinkTest: queryId {}", queryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    NES_INFO("MaterializedViewTupleViewSinkTest: Remove query");
+    NES_INFO2("MaterializedViewTupleViewSinkTest: Remove query");
     // queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("MaterializedViewTupleViewSinkTest: Stop Coordinator");
+    NES_INFO2("MaterializedViewTupleViewSinkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MaterializedViewTupleViewSinkTest: Test finished");
+    NES_INFO2("MaterializedViewTupleViewSinkTest: Test finished");
 }
 
 /// @brief tests if a query with materialized view source starts properly
@@ -104,7 +104,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
@@ -112,9 +112,9 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -128,7 +128,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -138,18 +138,18 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     adhoc_queryPlan->setQueryId(1);
     auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
 
-    NES_INFO("MaterializedViewTupleBufferSourceTest: queryId" << adhocQueryId);
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: queryId {}", adhocQueryId);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalogService));
 
-    NES_INFO("MaterializedViewTupleBufferSourceTest: Remove query");
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(adhocQueryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalogService));
 
-    NES_INFO("MaterializedViewTupleBufferSourceTest: Stop Coordinator");
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MaterializedViewTupleBufferSourceTest: Test finished");
+    NES_INFO2("MaterializedViewTupleBufferSourceTest: Test finished");
 }
 
 // @brief tests with two concurrent queryIdAndCatalogEntryMapping if writing and reading of MVs works properly
@@ -157,7 +157,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
@@ -165,12 +165,12 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", source);
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -191,7 +191,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
 
     Query maintenance_query =
         Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
@@ -199,7 +199,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     maintenance_queryPlan->setQueryId(1);
     auto maintenanceQueryId = queryService->addQueryRequest("", maintenance_queryPlan, "BottomUp");
 
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << maintenanceQueryId);
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: queryId {}", maintenanceQueryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(maintenanceQueryId, queryCatalogService));
 
@@ -208,16 +208,16 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     adhoc_queryPlan->setQueryId(2);
     auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
 
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << adhocQueryId);
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: queryId {}", adhocQueryId);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalogService));
 
     // check if queries stopped
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(maintenanceQueryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalogService));
 
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Stop Coordinator");
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Test finished");
+    NES_INFO2("MaterializedViewTupleBufferSinkAndSourceTest: Test finished");
 }
 }// namespace NES

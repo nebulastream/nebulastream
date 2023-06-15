@@ -16,9 +16,10 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <fstream>
 #include <iostream>
 

@@ -76,12 +76,11 @@ class QueryPlacementPhase {
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
      * selected query placement strategy
-     * @param placementStrategy : name of the placement strategy
      * @param sharedQueryPlan : the shared query plan to place
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(PlacementStrategy placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
+    bool execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,

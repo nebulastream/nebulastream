@@ -13,11 +13,11 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_EVENTTIMEWATERMARKASSIGNMENT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_EVENTTIMEWATERMARKASSIGNMENT_HPP_
-#include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
  * @brief Watermark assignment operator.
  * Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
@@ -26,16 +26,15 @@ class EventTimeWatermarkAssignment : public ExecutableOperator {
   public:
     /**
      * @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionExpression expression.
-     * @param watermarkExtractionExpression expression.
+     * @param TimeFunctionPtr the time function
      */
-    EventTimeWatermarkAssignment(Runtime::Execution::Expressions::ExpressionPtr watermarkExtractionExpression)
-        : watermarkExtractionExpression(watermarkExtractionExpression){};
+    EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
-    Runtime::Execution::Expressions::ExpressionPtr watermarkExtractionExpression;
+    std::unique_ptr<TimeFunction> timeFunction;
 };
 
 }// namespace NES::Runtime::Execution::Operators

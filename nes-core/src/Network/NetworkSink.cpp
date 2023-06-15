@@ -19,7 +19,8 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Network {
 
@@ -35,13 +36,14 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
-    : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-                 nodeEngine,
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins),
+    : inherited0(
+        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+        nodeEngine,
+        numOfProducers,
+        queryId,
+        querySubPlanId,
+        faultToleranceType,
+        numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
-#define NES_NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#define NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
 #include <memory>
 #include <string>
 namespace NES {
@@ -56,4 +56,4 @@ class DumpHelper {
 };
 }// namespace NES
 
-#endif//NES_NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

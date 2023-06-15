@@ -18,8 +18,8 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/Core.hpp>
 #include <Util/FaultToleranceType.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <string>
 namespace NES {

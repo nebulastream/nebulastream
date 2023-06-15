@@ -24,8 +24,8 @@
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger//Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
 #include <stack>
@@ -105,9 +105,14 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
 #endif
 
         switch (result) {
+            //OK comes from sinks and intermediate operators
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
                 return ExecutionResult::Ok;
+            }
+            //Finished indicate that the processing is done
+            case ExecutionResult::Finished: {
+                return ExecutionResult::Finished;
             }
             default: {
                 return result;
@@ -263,8 +268,9 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 void DynamicQueryManager::updateStatistics(const Task& task,
                                            QueryId queryId,
                                            QuerySubPlanId querySubPlanId,
+                                           PipelineId pipelineId,
                                            WorkerContext& workerContext) {
-    AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, workerContext);
+    AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
@@ -278,8 +284,9 @@ void DynamicQueryManager::updateStatistics(const Task& task,
 void MultiQueueQueryManager::updateStatistics(const Task& task,
                                               QueryId queryId,
                                               QuerySubPlanId querySubPlanId,
+                                              PipelineId pipelineId,
                                               WorkerContext& workerContext) {
-    AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, workerContext);
+    AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
@@ -292,6 +299,7 @@ void MultiQueueQueryManager::updateStatistics(const Task& task,
 void AbstractQueryManager::updateStatistics(const Task& task,
                                             QueryId queryId,
                                             QuerySubPlanId querySubPlanId,
+                                            PipelineId pipelineId,
                                             WorkerContext& workerContext) {
     tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 #ifndef LIGHT_WEIGHT_STATISTICS
@@ -316,6 +324,8 @@ void AbstractQueryManager::updateStatistics(const Task& task,
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 
+        statistics->incTasksPerPipelineId(pipelineId);
+
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
@@ -336,6 +346,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
 
     QuerySubPlanId querySubPlanId = -1;
     QueryId queryId = -1;
+    PipelineId pipelineId = -1;
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
         querySubPlanId = (*sink)->getParentPlanId();
@@ -344,10 +355,11 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
+        pipelineId = (*executablePipeline)->getPipelineId();
         NES_TRACE2("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}",
                    (*executablePipeline)->isReconfiguration());
     }
-    updateStatistics(task, queryId, querySubPlanId, wtx);
+    updateStatistics(task, queryId, querySubPlanId, pipelineId, wtx);
 }
 
 bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,

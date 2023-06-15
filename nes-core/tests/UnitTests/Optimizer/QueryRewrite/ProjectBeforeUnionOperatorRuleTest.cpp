@@ -45,7 +45,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectBeforeUnionOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ProjectBeforeUnionOperatorRuleTest test case.");
+        NES_INFO2("Setup ProjectBeforeUnionOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -56,7 +56,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
     }
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
-        NES_INFO("Setup FilterPushDownTest test case.");
+        NES_INFO2("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;

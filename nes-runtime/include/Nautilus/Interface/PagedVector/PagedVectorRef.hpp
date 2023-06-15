@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 namespace NES::Nautilus::Interface {
 
 // Forward declaration
@@ -31,7 +32,7 @@ class PagedVectorRef {
      * @param pagedVectorRef memref to the list
      * @param entrySize size of entries.
      */
-    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize);
+    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize, uint64_t pageSize = PagedVector::PAGE_SIZE);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -165,4 +166,4 @@ class PagedVectorRefIter {
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_

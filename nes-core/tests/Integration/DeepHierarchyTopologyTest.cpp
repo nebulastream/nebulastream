@@ -34,7 +34,7 @@ class DeepHierarchyTopologyTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DeepTopologyHierarchyTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DeepTopologyHierarchyTest test class.");
+        NES_INFO2("Setup DeepTopologyHierarchyTest test class.");
     }
 };
 
@@ -79,7 +79,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
@@ -146,7 +146,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
@@ -211,7 +211,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     testHarness = testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
@@ -278,7 +278,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
@@ -356,7 +356,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
@@ -437,7 +437,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
                                   .setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
@@ -520,7 +520,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
                                   .setupTopology(crdFunctor);
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
@@ -547,7 +547,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
-    NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n" << queryPlan->toString());
+    NES_INFO2("DeepHierarchyTopologyTest: Executed with plan \n{}", queryPlan->toString());
     ASSERT_TRUE(queryPlan->toString().find("WindowComputationOperator") != std::string::npos);
     ASSERT_TRUE(queryPlan->toString().find("SliceMergingOperator") != std::string::npos);
     ASSERT_TRUE(queryPlan->toString().find("SliceCreationOperator") != std::string::npos);
@@ -627,7 +627,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
                                   .setupTopology(crdFunctor);
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
@@ -654,7 +654,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
 
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
-    NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n" << queryPlan->toString());
+    NES_INFO2("DeepHierarchyTopologyTest: Executed with plan \n{}", queryPlan->toString());
     ASSERT_TRUE(queryPlan->toString().find("CENTRALWINDOW") != std::string::npos);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -715,7 +715,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
@@ -791,7 +791,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
                            .setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);

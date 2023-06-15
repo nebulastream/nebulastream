@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Util/Common.hpp>
 #include <atomic>
 #include <cstring>
 
@@ -33,6 +34,9 @@ uint8_t* FixedPage::append(const uint64_t hash) {
         return nullptr;
     }
 
+    if (bloomFilter == nullptr) {
+        NES_ERROR("Bloomfilter become empty")
+    }
     bloomFilter->add(hash);
     uint8_t* ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
@@ -42,7 +46,7 @@ uint8_t* FixedPage::append(const uint64_t hash) {
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
     uint64_t totalKey;
     memcpy(&totalKey, keyPtr, sizeOfKey);
-    uint64_t hash = Execution::Util::murmurHash(totalKey);
+    uint64_t hash = NES::Util::murmurHash(totalKey);
 
     return bloomFilter->checkContains(hash);
 }
@@ -58,6 +62,7 @@ FixedPage::FixedPage(FixedPage&& otherPage)
     otherPage.data = nullptr;
     otherPage.currentPos = 0;
     otherPage.capacity = 0;
+    otherPage.bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
 }
 FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
     if (this == std::addressof(otherPage)) {
@@ -78,5 +83,8 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
 
 FixedPage::FixedPage(FixedPage* otherPage)
     : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
-      capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
+      capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
+    otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+    //    otherPage->currentPos = 0;
+}
 }// namespace NES::Runtime::Execution::Operators

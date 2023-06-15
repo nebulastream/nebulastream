@@ -22,10 +22,10 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Core.hpp>
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SpatialUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {

@@ -22,7 +22,7 @@ class UnlockDeleterTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnlockDeleterTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup UnlockDeleter test class.");
+        NES_INFO2("Setup UnlockDeleter test class.");
     }
 };
 

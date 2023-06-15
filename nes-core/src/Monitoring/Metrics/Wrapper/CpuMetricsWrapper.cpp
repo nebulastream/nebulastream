@@ -16,8 +16,8 @@
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {

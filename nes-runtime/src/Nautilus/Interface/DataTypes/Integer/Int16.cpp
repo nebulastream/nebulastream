@@ -33,6 +33,10 @@ const std::shared_ptr<Int> Int16::div(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value / otherValue.value);
 }
+const std::shared_ptr<Int> Int16::mod(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value % otherValue.value);
+}
 const std::shared_ptr<Int> Int16::mul(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value * otherValue.value);
@@ -48,6 +52,26 @@ const std::shared_ptr<Boolean> Int16::lessThan(const Int& other) const {
 const std::shared_ptr<Boolean> Int16::greaterThan(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
     return create<Boolean>(value > otherValue.value);
+}
+const std::shared_ptr<Int> Int16::bitWiseAnd(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value & otherValue.value);
+}
+const std::shared_ptr<Int> Int16::bitWiseOr(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value | otherValue.value);
+}
+const std::shared_ptr<Int> Int16::bitWiseXor(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value ^ otherValue.value);
+}
+const std::shared_ptr<Int> Int16::bitWiseLeftShift(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value << otherValue.value);
+}
+const std::shared_ptr<Int> Int16::bitWiseRightShift(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value >> otherValue.value);
 }
 
 int16_t Int16::getValue() const { return value; }

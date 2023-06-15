@@ -12,6 +12,7 @@
 
 add_subdirectory(Aggregation)
 add_subdirectory(Join)
+add_subdirectory(Sort)
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_subdirectory(JavaUDF)
 endif ()

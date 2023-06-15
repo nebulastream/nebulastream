@@ -13,8 +13,8 @@
 */
 #include <string>
 
-#ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
-#define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
 namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
@@ -47,6 +47,7 @@ const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
+
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
@@ -55,6 +56,11 @@ const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
+
+//Configurations for the hash table
+const std::string STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
+const std::string STREAM_HASH_JOIN_PAGE_SIZE_CONFIG = "pageSize";
+const std::string STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
@@ -200,4 +206,4 @@ const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
-#endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

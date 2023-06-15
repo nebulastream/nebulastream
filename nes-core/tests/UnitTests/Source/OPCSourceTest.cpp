@@ -44,11 +44,11 @@ class OPCSourceTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OPCSourceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
+        NES_DEBUG2("OPCSOURCETEST::SetUpTestCase()");
     }
 
     void SetUp() {
-        NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
+        NES_DEBUG2("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
 
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
@@ -71,11 +71,11 @@ class OPCSourceTest : public Testing::TestWithErrorHandling {
     void TearDown() {
         nodeEngine->stop();
         nodeEngine.reset();
-        NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
+        NES_DEBUG2("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("OPCSOURCETEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
 
     static void addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
@@ -138,7 +138,7 @@ class OPCSourceTest : public Testing::TestWithErrorHandling {
         writeVariable(server);
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
-        NES_DEBUG(" retval is=" << retval);
+        NES_DEBUG2(" retval is={}", retval);
         UA_Server_delete(server);
     }
 
@@ -178,7 +178,7 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     EXPECT_EQ(opcSource->toString(), expected);
 
-    NES_DEBUG(opcSource->toString());
+    NES_DEBUG2("{}", opcSource->toString());
 
     SUCCEED();
 }
@@ -205,8 +205,9 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
     uint64_t expected = 43;
-    NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected
-                                                                                         << ". Received value is: " << value);
+    NES_DEBUG2("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: {}. Received value is: {}",
+               expected,
+               value);
     EXPECT_EQ(value, expected);
     tuple_buffer->release();
     stopServer();

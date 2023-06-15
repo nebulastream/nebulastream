@@ -30,8 +30,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef NEARGYE_MAGIC_ENUM_SWITCH_HPP
-#define NEARGYE_MAGIC_ENUM_SWITCH_HPP
+#ifndef NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_
+#define NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_
 
 #include "magic_enum.hpp"
 
@@ -194,5 +194,5 @@ struct std::common_type<T, magic_enum::detail::nonesuch> : magic_enum::detail::i
 template<typename T>
 struct std::common_type<magic_enum::detail::nonesuch, T> : magic_enum::detail::identity<T> {};
 
-#endif// NEARGYE_MAGIC_ENUM_SWITCH_HPP
 // clang-format on
+#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_

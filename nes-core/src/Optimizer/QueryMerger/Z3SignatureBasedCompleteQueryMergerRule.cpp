@@ -50,7 +50,9 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
     for (const auto& targetQueryPlan : queryPlansToAdd) {
 
         bool matched = false;
-        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        auto hostSharedQueryPlans =
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
+                                                                                     targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes

@@ -97,12 +97,6 @@ void RequestProcessorService::start() {
                 continue;
             }
 
-            //FIXME: What to do if a different requests contain different placement strategies within a batch?
-            PlacementStrategy placementStrategy;
-            if (requests[0]->instanceOf<RunQueryRequest>()) {
-                placementStrategy = requests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
-            }
-
             try {
                 if (requests[0]->instanceOf<Experimental::MaintenanceRequest>()) {
                     queryMigrationPhase->execute(requests[0]->as<Experimental::MaintenanceRequest>());
@@ -132,7 +126,7 @@ void RequestProcessorService::start() {
                                 //3.2.1. Perform placement of new shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
                                 NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
-                                bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
+                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
                                     throw QueryPlacementException(sharedQueryId,
                                                                   "QueryProcessingService: Failed to perform query placement for "
@@ -165,7 +159,7 @@ void RequestProcessorService::start() {
                                 //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
                                 NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
-                                bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
+                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
                                     throw QueryPlacementException(sharedQueryId,
                                                                   "QueryProcessingService: Failed to perform query placement for "

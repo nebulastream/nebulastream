@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STREAMJOINBUILD_HPP
-#define NES_STREAMJOINBUILD_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
@@ -22,6 +22,7 @@ namespace NES::Runtime::Execution::Operators {
 class StreamHashJoinBuild;
 using StreamHashJoinBuildPtr = std::shared_ptr<StreamHashJoinBuild>;
 
+class TimeFunction;
 /**
  * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the window is finished.
  * Then, each threads inserts the LocalHashTable into the SharedHashTable.
@@ -42,7 +43,8 @@ class StreamHashJoinBuild : public ExecutableOperator {
                         bool isLeftSide,
                         const std::string& joinFieldName,
                         const std::string& timeStampField,
-                        SchemaPtr schema);
+                        SchemaPtr schema,
+                        std::shared_ptr<TimeFunction> timeFunction);
 
     /**
      * @brief Setting up the pipeline by initializing the operator handler
@@ -57,13 +59,21 @@ class StreamHashJoinBuild : public ExecutableOperator {
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    /**
+     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
+     * @param ctx
+     * @param recordBuffer
+     */
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
   private:
     uint64_t handlerIndex;
     bool isLeftSide;
     std::string joinFieldName;
     std::string timeStampField;
     SchemaPtr schema;
+    std::shared_ptr<TimeFunction> timeFunction;
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_STREAMJOINBUILD_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_

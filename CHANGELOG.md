@@ -1,5 +1,153 @@
 # Changelog
 
+## [v0.5.109](https://github.com/nebulastream/nebulastream/tree/v0.5.109) (2023-06-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.108...v0.5.109)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Add logic to perform change log compaction  [\#3797](https://github.com/nebulastream/nebulastream/issues/3797)
+
+## [v0.5.108](https://github.com/nebulastream/nebulastream/tree/v0.5.108) (2023-06-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.107...v0.5.108)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add bitwise operations to nautilus [\#3648](https://github.com/nebulastream/nebulastream/issues/3648)
+
+### Bug Fixes 🐛
+
+- location-controller-integration-tests randomly fails [\#3349](https://github.com/nebulastream/nebulastream/issues/3349)
+- projection-test randomly fails [\#3348](https://github.com/nebulastream/nebulastream/issues/3348)
+- \[BUG\] source-tests fails randomly [\#3292](https://github.com/nebulastream/nebulastream/issues/3292)
+- \[BUG\] Union deployment test fails randomly [\#3267](https://github.com/nebulastream/nebulastream/issues/3267)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Create a design document to support variable-sized binary blobs [\#2955](https://github.com/nebulastream/nebulastream/issues/2955)
+
+## [v0.5.107](https://github.com/nebulastream/nebulastream/tree/v0.5.107) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.106...v0.5.107)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement 1-D equi-width histogram [\#3784](https://github.com/nebulastream/nebulastream/issues/3784)
+
+## [v0.5.106](https://github.com/nebulastream/nebulastream/tree/v0.5.106) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.105...v0.5.106)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus Modulooperator [\#3843](https://github.com/nebulastream/nebulastream/issues/3843)
+
+## [v0.5.105](https://github.com/nebulastream/nebulastream/tree/v0.5.105) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.104...v0.5.105)
+
+#### Operators 
+
+- \[Feature\] \[Experimental\] Global join [\#3679](https://github.com/nebulastream/nebulastream/issues/3679)
+
+## [v0.5.104](https://github.com/nebulastream/nebulastream/tree/v0.5.104) (2023-06-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.103...v0.5.104)
+
+**Implemented enhancements:**
+
+- \[TASK\] Join Multithreaded [\#3829](https://github.com/nebulastream/nebulastream/issues/3829)
+- \[TASK\] Create change log to record changes in a shared query plan due to query or topological change events [\#3730](https://github.com/nebulastream/nebulastream/issues/3730)
+
+## [v0.5.103](https://github.com/nebulastream/nebulastream/tree/v0.5.103) (2023-06-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.102...v0.5.103)
+
+**Implemented enhancements:**
+
+- \[TASK\] Introduce spdlog syntax in tests [\#3745](https://github.com/nebulastream/nebulastream/issues/3745)
+
+## [v0.5.102](https://github.com/nebulastream/nebulastream/tree/v0.5.102) (2023-06-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.101...v0.5.102)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement H3 hash function [\#3793](https://github.com/nebulastream/nebulastream/issues/3793)
+
+#### User Defined Functions
+
+- \[TASK\] Add JVM to NebulaStream executable image [\#3754](https://github.com/nebulastream/nebulastream/issues/3754)
+
+## [v0.5.101](https://github.com/nebulastream/nebulastream/tree/v0.5.101) (2023-06-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.100...v0.5.101)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor FilterPushdownRule [\#3764](https://github.com/nebulastream/nebulastream/issues/3764)
+- \[TASK\] keep storage handler as a member variable of the request class [\#3725](https://github.com/nebulastream/nebulastream/issues/3725)
+
+## [v0.5.100](https://github.com/nebulastream/nebulastream/tree/v0.5.100) (2023-06-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.99...v0.5.100)
+
+**Implemented enhancements:**
+
+- \[TASK\] Always connect to closest fixed node on mobile worker start [\#3744](https://github.com/nebulastream/nebulastream/issues/3744)
+- \[TASK\] Remove stopped shared query plans [\#3728](https://github.com/nebulastream/nebulastream/issues/3728)
+- \[TASK\] Adding placement strategy to shared query plan [\#3726](https://github.com/nebulastream/nebulastream/issues/3726)
+
+## [v0.5.99](https://github.com/nebulastream/nebulastream/tree/v0.5.99) (2023-06-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.98...v0.5.99)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Reviewer Lottery [\#3795](https://github.com/nebulastream/nebulastream/issues/3795)
+- \[TASK\] Batch Sort Operator [\#3695](https://github.com/nebulastream/nebulastream/issues/3695)
+
+## [v0.5.98](https://github.com/nebulastream/nebulastream/tree/v0.5.98) (2023-06-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.97...v0.5.98)
+
+## [v0.5.97](https://github.com/nebulastream/nebulastream/tree/v0.5.97) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.96...v0.5.97)
+
+## [v0.5.96](https://github.com/nebulastream/nebulastream/tree/v0.5.96) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.95...v0.5.96)
+
+### Bug Fixes 🐛
+
+- \[BUG\] PhysicalMapJavaUDFOperator not lowered to NautilusOperator in nes-executable-image [\#3772](https://github.com/nebulastream/nebulastream/issues/3772)
+
+## [v0.5.95](https://github.com/nebulastream/nebulastream/tree/v0.5.95) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.94...v0.5.95)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create common base class for coordinator request exceptions and instanceOf method [\#3723](https://github.com/nebulastream/nebulastream/issues/3723)
+
+## [v0.5.94](https://github.com/nebulastream/nebulastream/tree/v0.5.94) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.93...v0.5.94)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move UtilityFunctions from nes-core and nes-common [\#3693](https://github.com/nebulastream/nebulastream/issues/3693)
+
+## [v0.5.93](https://github.com/nebulastream/nebulastream/tree/v0.5.93) (2023-05-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.92...v0.5.93)
+
+**Implemented enhancements:**
+
+- \[TASK\] 2-D Datastructure for Synopses [\#3670](https://github.com/nebulastream/nebulastream/issues/3670)
+
 ## [v0.5.92](https://github.com/nebulastream/nebulastream/tree/v0.5.92) (2023-05-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.91...v0.5.92)

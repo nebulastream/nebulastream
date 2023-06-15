@@ -49,7 +49,7 @@ class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTe
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SingleNodeThreadLocalGlobalTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalGlobalTumblingWindowTests test class.");
+        NES_INFO2("Setup SingleNodeThreadLocalGlobalTumblingWindowTests test class.");
     }
 
     void SetUp() override {
@@ -215,7 +215,7 @@ class DataGeneratorMultiValue {
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
                 }
                 counter++;
-                NES_DEBUG("numberOfTuplesToProduce: " << numberOfTuplesToProduce)
+                NES_DEBUG2("numberOfTuplesToProduce: {}", numberOfTuplesToProduce)
                 buffer.setNumberOfTuples(numberOfTuplesToProduce);
             },
             numberOfBuffers,
@@ -241,7 +241,7 @@ class DataGenerator {
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
                 }
                 counter++;
-                NES_DEBUG("Counter: " << counter)
+                NES_DEBUG2("Counter: {}", counter)
                 buffer.setNumberOfTuples(numberOfTuplesToProduce);
             },
             numberOfBuffers,

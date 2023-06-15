@@ -14,7 +14,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/KeyedTimeWindow/GeneratableKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>

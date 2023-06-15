@@ -44,5 +44,4 @@ QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
     }
     return queryPlan;
 }
-
 }// namespace NES::Optimizer

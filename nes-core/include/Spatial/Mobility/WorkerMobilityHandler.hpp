@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
@@ -135,6 +135,14 @@ class WorkerMobilityHandler {
 
 #ifdef S2DEF
     /**
+     * @brief get a fixed location node's geolocation from the downloaded index
+     * @param nodeId: the id of the fixed location node
+     * @return the geolocation of the node or nullopt if no node with the replied id was found in the node index
+     */
+    static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
+    getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap);
+
+    /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
      * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
      * @param currentLocation : the device position
@@ -235,4 +243,4 @@ using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_

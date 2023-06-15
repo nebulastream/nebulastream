@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_NLJBUILD_HPP
-#define NES_NLJBUILD_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_
 
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
@@ -41,7 +43,8 @@ class NLJBuild : public ExecutableOperator {
              const SchemaPtr& schema,
              const std::string& joinFieldName,
              const std::string& timeStampField,
-             bool isLeftSide);
+             bool isLeftSide,
+             TimeFunctionPtr timeFunction);
 
     /**
      * @brief Stores the record in the corresponding window
@@ -63,7 +66,8 @@ class NLJBuild : public ExecutableOperator {
     std::string joinFieldName;
     std::string timeStampField;
     const bool isLeftSide;
+    TimeFunctionPtr timeFunction;
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NLJBUILD_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_

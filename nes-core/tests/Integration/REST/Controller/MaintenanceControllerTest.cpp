@@ -27,20 +27,20 @@ class MaintenanceControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MaintenanceControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES_INFO2("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down MaintenanceControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down MaintenanceControllerTest test class."); }
 
     void startCoordinator() {
-        NES_INFO("QueryControllerTest: Start coordinator");
+        NES_INFO2("QueryControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("QueryControllerTest: Coordinator started successfully");
+        NES_INFO2("QueryControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {

@@ -45,8 +45,10 @@
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
+#include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -82,6 +84,7 @@
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
@@ -119,7 +122,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
-        NES_INFO("Node: " << node->toString());
+        NES_INFO2("Node: {}", node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
@@ -137,7 +140,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-    NES_INFO("Lower node:" << operatorNode->toString() << "to NautilusOperator.");
+    NES_INFO2("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -286,12 +289,28 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
                                      : buildOperator->getOperatorHandler()->getJoinSchemaRight();
 
-        auto joinBuildNautilus =
-            std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                                 isLeftSide,
-                                                                                 joinFieldName,
-                                                                                 buildOperator->getTimeStampFieldName(),
-                                                                                 joinSchema);
+        std::shared_ptr<Runtime::Execution::Operators::StreamHashJoinBuild> joinBuildNautilus;
+        if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
+            auto timeFunction = std::make_shared<Runtime::Execution::Operators::IngestionTimeFunction>();
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                                     isLeftSide,
+                                                                                     joinFieldName,
+                                                                                     buildOperator->getTimeStampFieldName(),
+                                                                                     joinSchema,
+                                                                                     timeFunction);
+        } else {
+            auto timeStampFieldRecord =
+                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
+            auto timeFunction = std::make_shared<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                                     isLeftSide,
+                                                                                     joinFieldName,
+                                                                                     buildOperator->getTimeStampFieldName(),
+                                                                                     joinSchema,
+                                                                                     timeFunction);
+        }
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
@@ -442,12 +461,22 @@ LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Exec
                                                                    const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
     auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
-    auto eventTimeWatermarkStrategy =
-        wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-    auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
-    auto watermarkAssignmentOperator =
-        std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
-    return watermarkAssignmentOperator;
+
+    //Add either event time or ingestion time watermark strategy
+    if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        auto eventTimeWatermarkStrategy =
+            wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+        auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
+        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression));
+        return watermarkAssignmentOperator;
+    } else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(
+            std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>());
+        return watermarkAssignmentOperator;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
@@ -500,12 +529,12 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                        uint64_t handlerIndex) {
-    NES_INFO("lowerThresholdWindow " << operatorPtr->toString() << "and handlerid " << handlerIndex);
+    NES_INFO2("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-    NES_INFO("lowerThresholdWindow Predicate" << thresholdWindowType->getPredicate()->toString());
+    NES_INFO2("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
     auto minCount = thresholdWindowType->getMinimumCount();
 
@@ -554,7 +583,7 @@ LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::Physic
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
-    NES_INFO("Lower Window Aggregations to Nautilus Operator");
+    NES_INFO2("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     std::transform(aggs.cbegin(),
                    aggs.cend(),

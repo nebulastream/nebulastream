@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
-#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_LOCKMANAGER_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_LOCKMANAGER_HPP_
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 //todo #3588: This class is not not needed if we move the mutexes into the data structures itself
@@ -81,4 +81,4 @@ class LockManager {
     std::mutex udfCatalogMutex;
 };
 }// namespace NES
-#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
+#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_LOCKMANAGER_HPP_

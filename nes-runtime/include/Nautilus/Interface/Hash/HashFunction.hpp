@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_HASH_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_HASH_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus::Interface {
@@ -32,6 +32,14 @@ class HashFunction {
      * @return the hash
      */
     HashValue calculate(Value<> value);
+
+    /**
+     * @brief This is only necessary as long as TODO #3648 is not merged
+     * @param value
+     * @param state
+     * @return HashValue
+     */
+    HashValue calculateWithState(Value<> value, Value<MemRef> state);
 
     /**
      * @brief Calculates the hash across a set of values.
@@ -54,6 +62,14 @@ class HashFunction {
      * @return HashValue
      */
     virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;
+
+    /**
+     * @brief This is only necessary as long as TODO #3648 is not merged
+     * @param value
+     * @param state
+     * @return HashValue
+     */
+    virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
 };
 }// namespace NES::Nautilus::Interface
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_HASH_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

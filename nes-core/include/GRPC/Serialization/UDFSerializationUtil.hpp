@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_UDFSERIALIZATIONUTIL_HPP
-#define NES_UDFSERIALIZATIONUTIL_HPP
+#ifndef NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
+#define NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <JavaUdfDescriptorMessage.pb.h>
@@ -44,4 +44,4 @@ class UDFSerializationUtil {
 
 }// namespace NES
 
-#endif//NES_UDFSERIALIZATIONUTIL_HPP
+#endif// NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_

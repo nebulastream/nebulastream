@@ -484,7 +484,6 @@ add_nes_unit_test(config-test "UnitTests/Configurations/ConfigTest.cpp")
 ### Timer Tests ###
 #add_nes_unit_test(timer-test "UnitTests/Util/TimerTest.cpp")
 
-
 ### Adaptive Source Tests ###
 add_nes_unit_test(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
 
@@ -515,6 +514,16 @@ add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/FailQueryRequest
 
 ### Stop Query Request Test ###
 add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTest.cpp")
+
+### Request Execution Exception Test ###
+add_nes_unit_test(request-execution-exception-test "UnitTests/Exceptions/RequestExecutionExceptionTest.cpp")
+
+### ChangeLog Test ###
+add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
+
+### ChangeLogEntry Test ###
+add_nes_unit_test(change-log-entry-test "UnitTests/Plans/ChangeLog/ChangeLogEntryTest.cpp")
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")

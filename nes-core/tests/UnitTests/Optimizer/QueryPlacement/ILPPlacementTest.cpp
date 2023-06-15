@@ -266,6 +266,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
+    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
@@ -277,7 +278,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     //Perform placement
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(sharedQueryPlan);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
@@ -327,6 +328,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
                       .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
@@ -342,7 +344,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     //Perform placement
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(sharedQueryPlan);
 
     //Assertion
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -392,6 +394,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
@@ -406,7 +409,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
@@ -454,6 +457,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -464,6 +468,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -508,7 +513,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                                                                       topologyForILP,
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -555,7 +560,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -635,6 +640,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -645,6 +651,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -655,6 +662,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan3 = query3.getQueryPlan();
     queryPlan3->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan3->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan3->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -702,7 +710,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                                                                       topologyForILP,
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -750,7 +758,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -843,6 +851,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -853,6 +862,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -912,7 +922,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                                                                       topologyForILP,
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 

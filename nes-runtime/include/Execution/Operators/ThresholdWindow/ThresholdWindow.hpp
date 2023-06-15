@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_THRESHOLDWINDOW_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_THRESHOLDWINDOW_HPP_
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -50,4 +50,4 @@ class ThresholdWindow : public ExecutableOperator {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_THRESHOLDWINDOW_HPP_

@@ -26,6 +26,9 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
         ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Overall buffer count");
     numberOfBuffersInSourceLocalBufferPool =
         ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 128, "Buffer per source");
+    pageSize = ConfigurationOption<uint32_t>::create("pageSize", 4096, "pageSize in HT");
+    preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
+    numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -38,8 +41,10 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- numberOfSources: " << getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
         << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
         << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString()
-        << std::endl;
+        << "- pageSize: " << pageSize->getValueAsString() << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString()
+        << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl;
 
+    std::cout << oss.str() << std::endl;
     return oss.str();
 }
 
@@ -63,6 +68,12 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     auto numberOfBuffersInSourceLocalBufferPool =
         Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
                                             configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    auto pageSizes =
+        Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["pageSize"].As<std::string>(), configPerRun.pageSize->getDefaultValue());
+    auto preAllocPageCnts = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["preAllocPageCnt"].As<std::string>(),
+                                                                configPerRun.preAllocPageCnt->getDefaultValue());
+    auto numberOfPartitions = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfPartitions"].As<std::string>(),
+                                                                  configPerRun.numberOfPartitions->getDefaultValue());
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
@@ -76,6 +87,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfQueriesToDeploy.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInSourceLocalBufferPool.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, pageSizes.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, preAllocPageCnts.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfPartitions.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
 
     /* Padding all vectors to the desired size */
@@ -88,6 +102,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool,
                                     totalBenchmarkRuns,
                                     numberOfBuffersInSourceLocalBufferPool.back());
+    Util::padVectorToSize<uint32_t>(pageSizes, totalBenchmarkRuns, pageSizes.back());
+    Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
+    Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -100,6 +117,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy[i]);
         e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
         e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
+        e2EBenchmarkConfigPerRun.pageSize->setValue(pageSizes[i]);
+        e2EBenchmarkConfigPerRun.preAllocPageCnt->setValue(preAllocPageCnts[i]);
+        e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);

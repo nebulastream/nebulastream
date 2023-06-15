@@ -43,7 +43,7 @@ class InferModelDeploymentTest
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MLModelDeploymentTest test class.");
+        NES_INFO2("Setup MLModelDeploymentTest test class.");
     }
 
     // The following methods create the test data for the parameterized test.

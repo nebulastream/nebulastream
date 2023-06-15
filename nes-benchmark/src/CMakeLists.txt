@@ -10,14 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(DataGeneration)
+
 add_source_files(nes-benchmark
         E2E/Configurations/E2EBenchmarkConfig.cpp
         E2E/Configurations/E2EBenchmarkConfigOverAllRuns.cpp
         E2E/Configurations/E2EBenchmarkConfigPerRun.cpp
-        DataGeneration/DataGenerator.cpp
-        DataGeneration/DefaultDataGenerator.cpp
-        DataGeneration/ZipfianDataGenerator.cpp
-        DataGeneration/YSBDataGenerator.cpp
         DataProvider/DataProvider.cpp
         DataProvider/ExternalProvider.cpp
         DataProvider/InternalProvider.cpp
@@ -28,3 +26,4 @@ add_source_files(nes-benchmark
         Measurements.cpp
         E2E/E2ERunner.cpp
         E2E/E2ESingleRun.cpp)
+

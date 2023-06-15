@@ -209,6 +209,9 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
         case IR::Operations::Operation::OperationType::DivOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::DivOperation>(operation), frame);
             break;
+        case IR::Operations::Operation::OperationType::ModOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::ModOperation>(operation), frame);
+            break;
         case IR::Operations::Operation::OperationType::LoadOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), frame);
             break;
@@ -238,6 +241,21 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
             break;
         case IR::Operations::Operation::OperationType::AndOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::AndOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::BitWiseAnd:
+            generateMLIR(std::static_pointer_cast<IR::Operations::BitWiseAndOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::BitWiseOr:
+            generateMLIR(std::static_pointer_cast<IR::Operations::BitWiseOrOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::BitWiseXor:
+            generateMLIR(std::static_pointer_cast<IR::Operations::BitWiseXorOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::BitWiseLeftShift:
+            generateMLIR(std::static_pointer_cast<IR::Operations::BitWiseLeftShiftOperation>(operation), frame);
+            break;
+        case IR::Operations::Operation::OperationType::BitWiseRightShift:
+            generateMLIR(std::static_pointer_cast<IR::Operations::BitWiseRightShiftOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::NegateOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::NegateOperation>(operation), frame);
@@ -273,6 +291,43 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AndOpera
     auto rightInput = frame.getValue(andOperation->getRightInput()->getIdentifier());
     auto mlirAndOp = builder->create<mlir::LLVM::AndOp>(getNameLoc("binOpResult"), leftInput, rightInput);
     frame.setValue(andOperation->getIdentifier(), mlirAndOp);
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseAndOperation> andOperation, ValueFrame& frame) {
+    auto leftInput = frame.getValue(andOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(andOperation->getRightInput()->getIdentifier());
+    auto mlirBitwiseAndOp = builder->create<mlir::arith::AndIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(andOperation->getIdentifier(), mlirBitwiseAndOp);
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseOrOperation> orOperation, ValueFrame& frame) {
+    auto leftInput = frame.getValue(orOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(orOperation->getRightInput()->getIdentifier());
+    auto mlirBitwiseOrOp = builder->create<mlir::arith::OrIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(orOperation->getIdentifier(), mlirBitwiseOrOp);
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseXorOperation> xorOperation, ValueFrame& frame) {
+    auto leftInput = frame.getValue(xorOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(xorOperation->getRightInput()->getIdentifier());
+    auto mlirBitwiseXorOp = builder->create<mlir::arith::XOrIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(xorOperation->getIdentifier(), mlirBitwiseXorOp);
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> leftShiftOperation,
+                                        ValueFrame& frame) {
+    auto leftInput = frame.getValue(leftShiftOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(leftShiftOperation->getRightInput()->getIdentifier());
+    auto mlirBitwiseLeftShiftOp = builder->create<mlir::arith::ShLIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(leftShiftOperation->getIdentifier(), mlirBitwiseLeftShiftOp);
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> rightShiftOperation,
+                                        ValueFrame& frame) {
+    auto leftInput = frame.getValue(rightShiftOperation->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(rightShiftOperation->getRightInput()->getIdentifier());
+    auto mlirBitwiseRightShiftOp = builder->create<mlir::arith::ShRSIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+    frame.setValue(rightShiftOperation->getIdentifier(), mlirBitwiseRightShiftOp);
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp, ValueFrame& frame) {
@@ -460,6 +515,23 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::DivOpera
             auto mlirDivOp = builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
             frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
         }
+    }
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ModOperation> modIntOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(modIntOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(modIntOp->getRightInput()->getIdentifier());
+    auto resultType = leftInput.getType();
+    if (modIntOp->getStamp()->isInteger()) {
+        if (resultType.isSignedInteger()) {
+            auto mlirModOp = builder->create<mlir::LLVM::SRemOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(modIntOp->getIdentifier(), mlirModOp);
+        } else {
+            auto mlirModOp = builder->create<mlir::LLVM::URemOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(modIntOp->getIdentifier(), mlirModOp);
+        }
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 }
 

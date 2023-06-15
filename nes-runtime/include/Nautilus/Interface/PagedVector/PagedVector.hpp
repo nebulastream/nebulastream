@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
@@ -35,9 +35,9 @@ class PagedVector {
      * @brief Creates a new paged vector with a specific entry size
      * @param allocator the allocator
      * @param entrySize the size of an entry.
-     * TODO pass page size dynamically and adjust PagedVectorRef if needed.
+     * @param pageSize the size of a page.
      */
-    PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
+    PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize, uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Return the number of pages in the sequential data
@@ -103,6 +103,7 @@ class PagedVector {
     friend PagedVectorRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
+    uint64_t pageSize;
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;
@@ -111,4 +112,4 @@ class PagedVector {
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_

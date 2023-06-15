@@ -19,6 +19,10 @@ function(add_nes_benchmarks TARGET_NAME FILE_PATH)
 endfunction()
 
 
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
+message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
+
+
 # Include dirs
 include_directories("include/")
 

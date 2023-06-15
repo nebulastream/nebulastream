@@ -19,11 +19,12 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::ASP::Util {
 

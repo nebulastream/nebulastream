@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BOOLCONSTRAINT_HPP
-#define NES_BOOLCONSTRAINT_HPP
+#ifndef NES_CORE_INCLUDE_CONSTRAINTS_NEEDWORKERWITHCONFIGUREDCONSTRAINT_HPP_
+#define NES_CORE_INCLUDE_CONSTRAINTS_NEEDWORKERWITHCONFIGUREDCONSTRAINT_HPP_
 
 #include <Constraints/Constraint.hpp>
 #include <string>
@@ -32,4 +32,4 @@ class NeedWorkerWithConfiguredConstraint : public Constraint {
 
 }// namespace NES::Constraint
 
-#endif//NES_BOOLCONSTRAINT_HPP
+#endif// NES_CORE_INCLUDE_CONSTRAINTS_NEEDWORKERWITHCONFIGUREDCONSTRAINT_HPP_

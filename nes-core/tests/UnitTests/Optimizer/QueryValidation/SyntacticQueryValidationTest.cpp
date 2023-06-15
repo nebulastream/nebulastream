@@ -18,8 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -31,7 +31,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntacticQueryValidationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SyntacticQueryValidationTest class.");
+        NES_INFO2("Setup SyntacticQueryValidationTest class.");
     }
 
     void SetUp() override {
@@ -41,7 +41,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
-    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
+    static void PrintQString(const std::string& s) { NES_DEBUG2("\n QUERY STRING:\n {}", s); }
 
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);
@@ -52,7 +52,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
 
 // Positive tests for a syntactically valid query
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
-    NES_INFO("Valid Query test");
+    NES_INFO2("Valid Query test");
 
     auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
 
@@ -62,7 +62,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 }
 
 TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
-    NES_INFO("Valid Query test");
+    NES_INFO2("Valid Query test");
 
     auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
 
@@ -73,7 +73,7 @@ TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
 
 // Test a query with missing ; at line end
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
-    NES_INFO("Missing semicolon test");
+    NES_INFO2("Missing semicolon test");
 
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100) )";
 
@@ -82,7 +82,7 @@ TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
 
 // Test a query where filter is misspelled as fliter
 TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
-    NES_INFO("Typo in filter test");
+    NES_INFO2("Typo in filter test");
 
     std::string queryString = R"(Query::from("default_logical").fliter(Attribute("id") > 10 && Attribute("id") < 100); )";
 
@@ -91,7 +91,7 @@ TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
 
 // Test a query where a closing parenthesis is missing
 TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
-    NES_INFO("Missing closing parenthesis test");
+    NES_INFO2("Missing closing parenthesis test");
 
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100; )";
 
@@ -100,7 +100,7 @@ TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
 
 // Test a query where a boolean operator is invalid (& instead of &&)
 TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
-    NES_INFO("Invalid bool operator test");
+    NES_INFO2("Invalid bool operator test");
 
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 & Attribute("id") < 100); )";
 
@@ -109,7 +109,7 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
 
 // Test queryIdAndCatalogEntryMapping that calls "Attribute().as()" outside a Projection operator
 TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
-    NES_INFO("Invalid bool operator test");
+    NES_INFO2("Invalid bool operator test");
 
     // Field-rename in Map expression is not allowed
     std::string queryStringWithMap =
@@ -178,7 +178,7 @@ TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
 
 // Positive test for a syntactically valid query
 TEST_F(SyntacticQueryValidationTest, validQueryWithInferModelOperatorTest) {
-    NES_INFO("Valid Query test with Infer model operator");
+    NES_INFO2("Valid Query test with Infer model operator");
 
     auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
 

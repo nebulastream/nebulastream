@@ -16,4 +16,6 @@
 
 namespace NES {
 QueryNotFoundException::QueryNotFoundException(const std::string& message) : std::runtime_error(message) {}
+
+const char* QueryNotFoundException::what() const noexcept { return RequestExecutionException::what(); }
 }// namespace NES

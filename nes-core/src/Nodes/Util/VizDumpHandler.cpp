@@ -20,8 +20,9 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -74,7 +75,7 @@ std::string detail::VizNode::serialize() {
     }
     ss << "\"properties\":[";
     for (auto& tuple : properties) {
-        auto quotedValue = Util::escapeJson(std::get<1>(tuple));
+        auto quotedValue = NES::Util::escapeJson(std::get<1>(tuple));
         ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\"}";
         if (&properties.back() != &tuple) {
             ss << ",";

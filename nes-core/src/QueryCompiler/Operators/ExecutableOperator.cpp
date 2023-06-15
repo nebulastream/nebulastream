@@ -13,7 +13,7 @@
 */
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 namespace NES::QueryCompilation {
 

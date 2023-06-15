@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
 #include <utility>
@@ -266,6 +267,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setFaultToleranceType(faultToleranceType);
     newQueryPlan->setLineageType(lineageType);
+    newQueryPlan->setPlacementStrategy(placementStrategy);
     return newQueryPlan;
 }
 
@@ -280,5 +282,9 @@ void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) { t
 LineageType QueryPlan::getLineageType() const { return lineageType; }
 
 void QueryPlan::setLineageType(LineageType lineageType) { this->lineageType = lineageType; }
+
+PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
+
+void QueryPlan::setPlacementStrategy(PlacementStrategy placementStrategy) { this->placementStrategy = placementStrategy; }
 
 }// namespace NES

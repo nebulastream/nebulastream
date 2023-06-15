@@ -34,7 +34,7 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationControllerIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LocationControllerIntegrationTest test class.");
+        NES_INFO2("Setup LocationControllerIntegrationTest test class.");
         std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.5523, 13.3517}, 0}});
@@ -43,17 +43,17 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
         writeWaypointsToCsv(singleLocationPath2, {{{53.5523, -13.3517}, 0}});
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down LocationControllerIntegrationTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down LocationControllerIntegrationTest test class."); }
 
     void startCoordinator() {
-        NES_INFO("LocationControllerIntegrationTest: Start coordinator");
+        NES_INFO2("LocationControllerIntegrationTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("LocationControllerIntegrationTest: Coordinator started successfully");
+        NES_INFO2("LocationControllerIntegrationTest: Coordinator started successfully");
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
     }
 
@@ -297,7 +297,7 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res);
+    NES_DEBUG2("{}", res);
     ASSERT_TRUE(res.is_array());
     ASSERT_TRUE(res.size() == 2);
     auto locationData = std::vector<double>(2, 0);

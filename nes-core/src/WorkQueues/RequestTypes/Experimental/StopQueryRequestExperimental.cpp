@@ -70,7 +70,9 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
         NES_TRACE2("Phases created. Stop request initialized.");
     } catch (std::exception& e) {
         NES_TRACE2("Failed to acquire resources.");
-        handleError(e, storageHandler);
+        //todo #3611: instead of matching on std::exception, implement a storae access handle excpetion which can be passed on
+        RequestExecutionException executionException;
+        handleError(executionException, storageHandler);
     }
 }
 
@@ -95,17 +97,12 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
                 queryCatalogService->updateQueryStatus(involvedQueryIds, QueryStatus::STOPPED, "Hard Stopped");
             }
-            //todo: #3728 remove shared query plan
+            globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             //3.3.2. Perform placement of updated shared query plan
             auto queryPlan = sharedQueryPlan->getQueryPlan();
             NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
-            //todo: #3726 Where to get the placement strategy? Currently it is supplied with the run query request
-            //todo: #3726 store placement strategy in shared query plan; do this in a separate issue
-            //todo: #3726 add placement strategy to index for sqp identification
-            //could we move it to the SQP? Since one SQP should have the same placement strategy, right?
-            //otherwise maybe add it to an individual query plan?
-            bool placementSuccessful = queryPlacementPhase->execute(PlacementStrategy::TopDown, sharedQueryPlan);
+            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
                 throw QueryPlacementException(sharedQueryId,
                                               "QueryProcessingService: Failed to perform query placement for "
@@ -134,7 +131,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
 
-    } catch (std::exception& e) {
+    } catch (RequestExecutionException& e) {
         handleError(e, storageHandler);
     }
 }
@@ -149,14 +146,16 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
-void StopQueryRequestExperimental::preRollbackHandle(std::exception ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex,
+                                                     [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
 }
-void StopQueryRequestExperimental::postRollbackHandle(std::exception ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
+                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
-void StopQueryRequestExperimental::rollBack(std::exception& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::rollBack(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }

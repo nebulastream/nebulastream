@@ -60,7 +60,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ExpressionNodeTest test class.");
+        NES_DEBUG2("Setup ExpressionNodeTest test class.");
     }
 };
 
@@ -213,7 +213,7 @@ TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
     int bits = intStamp->getBits();
     int64_t lowerBound = intStamp->lowerBound;
     int64_t upperBound = intStamp->upperBound;
-    NES_INFO(upperBound);
+    NES_INFO2("{}", upperBound);
     EXPECT_EQ(bits, 32);
     EXPECT_EQ(lowerBound, 0);
     EXPECT_EQ(
@@ -238,7 +238,7 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
     int bits = floatStamp->getBits();
     int64_t lowerBound = floatStamp->lowerBound;
     int64_t upperBound = floatStamp->upperBound;
-    NES_INFO(upperBound);
+    NES_INFO2("{}", upperBound);
     EXPECT_EQ(bits, 32);
     EXPECT_EQ(lowerBound, 0);         // == lower bound of UINT32, as it is is higher than range spanned by Float divisor
     EXPECT_EQ(upperBound, UINT32_MAX);// == upper bound of UINT32, as it  is lower than range spanned by Float divisor

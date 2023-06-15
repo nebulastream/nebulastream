@@ -13,7 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

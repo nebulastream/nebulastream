@@ -37,7 +37,7 @@ class AssignWatermarkTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AssignWatermarkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AssignWatermarkTest test class.");
+        NES_INFO2("Setup AssignWatermarkTest test class.");
     }
 
     std::string ipAddress = "127.0.0.1";
@@ -55,15 +55,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("AssignWatermarkTest: Start coordinator");
+    NES_INFO2("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AssignWatermarkTest: Coordinator started successfully");
+    NES_INFO2("AssignWatermarkTest: Coordinator started successfully");
 
     //Setup Worker
-    NES_INFO("AssignWatermarkTest: Start worker 1");
+    NES_INFO2("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
@@ -77,7 +77,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AssignWatermarkTest: Worker1 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -86,7 +86,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     remove(outputFilePath.c_str());
 
     // The query contains a watermark assignment with 50 ms allowed lateness
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
     string query = "Query::from(\"window\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
                    "Milliseconds()))"
@@ -110,18 +110,17 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("AssignWatermarkTest: Remove query");
-    ;
+    NES_INFO2("AssignWatermarkTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    NES_INFO2("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    NES_INFO2("AssignWatermarkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("AssignWatermarkTest: Test finished");
+    NES_INFO2("AssignWatermarkTest: Test finished");
 }
 
 /*
@@ -138,16 +137,16 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(0);
     coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(0);
-    NES_INFO("AssignWatermarkTest: Start coordinator");
+    NES_INFO2("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AssignWatermarkTest: Coordinator started successfully");
+    NES_INFO2("AssignWatermarkTest: Coordinator started successfully");
 
     //Setup Worker 1
-    NES_INFO("AssignWatermarkTest: Start worker 1");
+    NES_INFO2("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     //Add Source To Worker
@@ -161,25 +160,25 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AssignWatermarkTest: Worker 1 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 1 started successfully");
     //Setup Worker 2
-    NES_INFO("AssignWatermarkTest: Start worker 2");
+    NES_INFO2("AssignWatermarkTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->physicalSources.add(windowSource);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AssignWatermarkTest: Worker 2 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 2 started successfully");
     //Setup Worker 3
-    NES_INFO("AssignWatermarkTest: Start worker 3");
+    NES_INFO2("AssignWatermarkTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     workerConfig3->physicalSources.add(windowSource);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("AssignWatermarkTest: Worker 3 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentDistributedTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -187,10 +186,10 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
 
     // The query contains a watermark assignment with 50 ms allowed lateness
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
     string query = "Query::from(\"window\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
                    "Milliseconds()))"
@@ -211,22 +210,21 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("AssignWatermarkTest: Remove query");
-    ;
+    NES_INFO2("AssignWatermarkTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    NES_INFO2("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("AssignWatermarkTest: Stop worker 2");
+    NES_INFO2("AssignWatermarkTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    NES_INFO2("AssignWatermarkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("AssignWatermarkTest: Test finished");
+    NES_INFO2("AssignWatermarkTest: Test finished");
 }
 
 /*
@@ -244,15 +242,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(1000);
     coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(1000);
 
-    NES_INFO("AssignWatermarkTest: Start coordinator");
+    NES_INFO2("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AssignWatermarkTest: Coordinator started successfully");
+    NES_INFO2("AssignWatermarkTest: Coordinator started successfully");
 
     //Setup Worker
-    NES_INFO("AssignWatermarkTest: Start worker 1");
+    NES_INFO2("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     //Add Source to Worker
@@ -265,7 +263,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AssignWatermarkTest: Worker1 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -274,7 +272,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     remove(outputFilePath.c_str());
 
     // The query contains a watermark assignment with 50 ms allowed lateness
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
     string query = "Query::from(\"window\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
                    "Milliseconds()))"
@@ -301,18 +299,18 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("AssignWatermarkTest: Remove query");
-    ;
+    NES_INFO2("AssignWatermarkTest: Remove query");
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    NES_INFO2("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    NES_INFO2("AssignWatermarkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("AssignWatermarkTest: Test finished");
+    NES_INFO2("AssignWatermarkTest: Test finished");
 }
 
 /*
@@ -330,15 +328,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     coordinatorConfig->optimizer.distributedWindowChildThreshold.setValue(0);
     coordinatorConfig->optimizer.distributedWindowCombinerThreshold.setValue(0);
 
-    NES_INFO("AssignWatermarkTest: Start coordinator");
+    NES_INFO2("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AssignWatermarkTest: Coordinator started successfully");
+    NES_INFO2("AssignWatermarkTest: Coordinator started successfully");
 
     //Setup Worker 1
-    NES_INFO("AssignWatermarkTest: Start worker 1");
+    NES_INFO2("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     //Add Source to Worker
@@ -352,26 +350,26 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AssignWatermarkTest: Worker 1 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 1 started successfully");
 
     //Setup Worker 2
-    NES_INFO("AssignWatermarkTest: Start worker 2");
+    NES_INFO2("AssignWatermarkTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->physicalSources.add(windowSource1);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AssignWatermarkTest: Worker 2 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 2 started successfully");
 
-    NES_INFO("AssignWatermarkTest: Start worker 3");
+    NES_INFO2("AssignWatermarkTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     workerConfig3->physicalSources.add(windowSource1);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("AssignWatermarkTest: Worker 3 started successfully");
+    NES_INFO2("AssignWatermarkTest: Worker 3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentDistributedSlidingWindow.out";
     remove(outputFilePath.c_str());
@@ -379,10 +377,10 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
 
     // The query contains a watermark assignment with 50 ms allowed lateness
-    NES_INFO("AssignWatermarkTest: Submit query");
+    NES_INFO2("AssignWatermarkTest: Submit query");
     string query =
         "Query::from(\"window\")"
         ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50),Milliseconds()))"
@@ -410,22 +408,22 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("AssignWatermarkTest: Remove query");
-    ;
+    NES_DEBUG2("AssignWatermarkTest: Remove query");
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    NES_INFO2("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("AssignWatermarkTest: Stop worker 2");
+    NES_INFO2("AssignWatermarkTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    NES_INFO2("AssignWatermarkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("AssignWatermarkTest: Test finished");
+    NES_INFO2("AssignWatermarkTest: Test finished");
 }
 
 }// namespace NES

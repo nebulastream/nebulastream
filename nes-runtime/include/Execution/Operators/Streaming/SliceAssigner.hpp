@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_SLICE_ASSIGNER_HPP_
-#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_SLICE_ASSIGNER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_SLICEASSIGNER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_SLICEASSIGNER_HPP_
 
 #include <algorithm>
 #include <cinttypes>
@@ -57,4 +57,4 @@ class SliceAssigner {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_SLICE_ASSIGNER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_SLICEASSIGNER_HPP_

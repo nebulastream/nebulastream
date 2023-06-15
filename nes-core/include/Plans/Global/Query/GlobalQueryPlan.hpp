@@ -17,6 +17,7 @@
 
 #include <Common/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>
@@ -80,6 +81,12 @@ class GlobalQueryPlan {
     void removeFailedOrStoppedSharedQueryPlans();
 
     /**
+     * @brief This method will remove the shared query plan if all involved queries are either stopped or failed
+     * @param sharedQueryPlanId id of the shared query plan to be removed
+     */
+    void removeSharedQueryPlan(QueryId sharedQueryPlanId);
+
+    /**
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
      */
@@ -132,16 +139,18 @@ class GlobalQueryPlan {
     bool clearQueryPlansToAdd();
 
     /**
-     * Fetch the Shared query plan consuming the sources with the input source names
+     * Fetch the Shared query plan consuming the sources and having the same placement strategy with the input source names and the placement strategy
      * @param sourceNames: the concatenated names of the logical sources
+     * @param placementStrategy the placement strategy for the shared query plan
      * @return pointer to the Shared Query Plan or nullptr
      */
-    std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSources(std::string sourceNames);
+    std::vector<SharedQueryPlanPtr>
+    getSharedQueryPlansConsumingSourcesAndPlacementStrategy(std::string sourceNames, NES::PlacementStrategy placementStrategy);
 
   private:
     GlobalQueryPlan();
 
-    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
+    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesAndPlacementStrategyToSharedQueryPlanMap;
     std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;

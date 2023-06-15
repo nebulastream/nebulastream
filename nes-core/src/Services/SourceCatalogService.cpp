@@ -19,8 +19,8 @@
 #include <CoordinatorRPCService.pb.h>
 #include <Services/SourceCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {

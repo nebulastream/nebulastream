@@ -49,7 +49,7 @@ class HashSignatureBasedCompleteQueryMergerRuleTest : public Testing::TestWithEr
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashSignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case.");
+        NES_INFO2("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */

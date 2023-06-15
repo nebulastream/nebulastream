@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_SHAREDJOINHASHTABLE_HPP
-#define NES_SHAREDJOINHASHTABLE_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_SHAREDJOINHASHTABLE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_SHAREDJOINHASHTABLE_HPP_
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
@@ -74,10 +74,16 @@ class SharedJoinHashTable {
      */
     size_t getNumPages(size_t bucketPos) const;
 
+    /**
+     * @brief Returns the number buckets
+     * @return number of buckets
+     */
+    size_t getNumBuckets() const;
+
   private:
     std::vector<std::atomic<InternalNode*>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;
     std::vector<std::atomic<size_t>> bucketNumPages;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_SHAREDJOINHASHTABLE_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_SHAREDJOINHASHTABLE_HPP_

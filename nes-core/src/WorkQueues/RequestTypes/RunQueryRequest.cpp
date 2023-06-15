@@ -20,7 +20,9 @@
 namespace NES {
 
 RunQueryRequest::RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy queryPlacementStrategy)
-    : queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {}
+    : queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {
+    queryPlan->setPlacementStrategy(queryPlacementStrategy);
+}
 
 RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, PlacementStrategy queryPlacementStrategy) {
     return std::make_shared<RunQueryRequest>(RunQueryRequest(std::move(queryPlan), queryPlacementStrategy));
