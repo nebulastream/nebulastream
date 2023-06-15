@@ -144,8 +144,8 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
         return true;
     }
 
-    bool areParentsEqual = 0;
-    bool areChildrenEqual = 0;
+    bool areParentsEqual;
+    bool areChildrenEqual;
 
     NES_TRACE2("SyntaxBasedCompleteQueryMergerRule: Compare address and target operators.");
     if (targetOperator->equal(hostOperator)) {

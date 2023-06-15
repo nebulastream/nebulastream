@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
@@ -153,7 +154,6 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
             if (!matchedTargetToHostOperatorMap.empty()) {
                 NES_TRACE2("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
                 // As upstream matched operators are covered by downstream matched operators. We need to retain only the
@@ -185,22 +185,15 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     }
                 }
 
+                std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
+                matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                    for (const auto& targetParent : targetOperator->getParents()) {
-                        bool addedNewParent = hostOperator->addParent(targetParent);
-                        if (!addedNewParent) {
-                            NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
-                        }
-                        hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
-                        targetOperator->removeParent(targetParent);
-                    }
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator, targetOperator));
                 }
 
-                //Add all root operators from target query plan to host query plan
-                for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
-                    hostQueryPlan->addRootOperator(targetRootOperator);
-                }
+                //add matched operators to the host shared query plan
+                hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
 
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);

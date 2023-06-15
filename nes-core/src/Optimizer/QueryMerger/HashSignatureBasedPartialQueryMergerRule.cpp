@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
@@ -53,13 +54,11 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
                 NES_TRACE2("HashSignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
                 // As upstream matched operators are covered by downstream matched operators. We need to retain only the
                 // downstream matched operator containing any upstream matched operator. This will prevent in computation
                 // of inconsistent shared query plans.
-
                 if (matchedTargetToHostOperatorMap.size() > 1) {
                     //Fetch all the matched target operators.
                     std::vector<LogicalOperatorNodePtr> matchedTargetOperators;
@@ -85,22 +84,15 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
                     }
                 }
 
+                std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
+                matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                    for (const auto& targetParent : targetOperator->getParents()) {
-                        bool addedNewParent = hostOperator->addParent(targetParent);
-                        if (!addedNewParent) {
-                            NES_WARNING2("HashSignatureBasedPartialQueryMergerRule: Failed to add new parent");
-                        }
-                        hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
-                        targetOperator->removeParent(targetParent);
-                    }
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator, targetOperator));
                 }
 
-                //Add all root operators from target query plan to host query plan
-                for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
-                    hostQueryPlan->addRootOperator(targetRootOperator);
-                }
+                //add matched operators to the host shared query plan
+                hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
 
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);

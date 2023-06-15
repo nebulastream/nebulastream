@@ -83,8 +83,8 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
         std::set<OperatorNodePtr> clEntryUpstreamOperators;
         std::set<OperatorNodePtr> clEntryDownstreamOperators;
 
-        //If target operator is of sink type then the handling is a bit different.
-        if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
+        //If host and target operator are of sink type then connect the target sink to the upstream of the host sink.
+        if (hostOperator->instanceOf<SinkLogicalOperatorNode>() && targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
 
             //Make a copy of the target operator so that we do not have to perform additional operation to
             // add it to the shared query plan.
@@ -106,7 +106,11 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             //set target operator as the downstream operator in the change log
             clEntryDownstreamOperators.insert(targetOperatorCopy);
 
-        } else {
+        } else if (hostOperator->instanceOf<SinkLogicalOperatorNode>()) {//If host operator is of sink type then connect the downstream operators of target operator to the upstream of the host operator.
+
+        } else if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) { //If target operator is of sink type then connect the target sink to the host operator.
+
+        } else { //If both host and target operator are not of sink type then connect the downstream operators of target operator to the host operator.
 
             //set host operator as the upstream operator in the change log
             clEntryUpstreamOperators.insert(hostOperator);
