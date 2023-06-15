@@ -27,7 +27,6 @@ OUT customBitCastProxy(IN f)
     return ret;
 }
 
-
 HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
@@ -54,6 +53,7 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
 HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue&, Value<>&) {
     NES_THROW_RUNTIME_ERROR("Wrong function call! Please use calculateWithState() as H3 requires a seed vector");
 }
+
 H3Hash::H3Hash(uint64_t numberOfKeyBits) : entrySizeH3HashSeed(sizeof(uint64_t)), numberOfKeyBits(numberOfKeyBits) {}
 
 }// namespace NES::Nautilus::Interface
