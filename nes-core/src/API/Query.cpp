@@ -320,6 +320,14 @@ Query& Query::flatMapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descripto
     return *this;
 }
 
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+Query& Query::mapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr descriptor) {
+    NES_DEBUG("Query: add map python udf operator to query");
+    this->queryPlan = QueryPlanBuilder::addMapPythonUDF(descriptor, this->queryPlan);
+    return *this;
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
+
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);

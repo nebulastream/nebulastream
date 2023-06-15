@@ -67,6 +67,11 @@ using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+class PythonUDFDescriptor;
+using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 }// namespace Catalogs::UDF
 
 namespace InferModel {

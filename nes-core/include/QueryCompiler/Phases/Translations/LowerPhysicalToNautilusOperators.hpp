@@ -180,8 +180,15 @@ class LowerPhysicalToNautilusOperators {
                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 #endif
 
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerMapPythonUDF(Runtime::Execution::PhysicalOperatorPipeline&,
+                      const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                      uint64_t handlerIndex);
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
+
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;
-};
+    };
 }// namespace NES::QueryCompilation
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

@@ -99,6 +99,13 @@
 #include <string_view>
 #include <utility>
 
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+#include "Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp"
+#include "Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp"
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapPythonUDFOperator.hpp>
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
+
 namespace NES::QueryCompilation {
 
 std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators::create() {
@@ -228,6 +235,26 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(flatMapJavaUDF);
         return flatMapJavaUDF;
 #endif// ENABLE_JNI
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapPythonUDFOperator>()) {
+        const auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapPythonUDFOperator>();
+        const auto mapPythonUDFDescriptor = mapOperator->getPythonUDFDescriptor();
+        const auto functionName = mapPythonUDFDescriptor->getMethodName();
+        const auto functionString = mapPythonUDFDescriptor->getFunctionString();
+        const auto inputSchema = mapPythonUDFDescriptor->getInputSchema();
+        const auto outputSchema = mapPythonUDFDescriptor->getOutputSchema();
+
+        const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
+                                                                                                       functionName,
+                                                                                                       inputSchema,
+                                                                                                       outputSchema);
+        operatorHandlers.push_back(handler);
+        const auto indexForThisHandler = operatorHandlers.size() - 1;
+
+        auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(mapPythonUDF);
+        return mapPythonUDF;
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
                         ->getOperatorHandler()
@@ -654,6 +681,18 @@ LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::Physic
                                                                            operatorOutputSchema);
 }
 #endif// ENABLE_JNI
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerMapPythonUDF(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                  uint64_t handlerIndex) {
+    const auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapPythonUDFOperator>();
+    const auto operatorInputSchema = mapOperator->getInputSchema();
+    const auto operatorOutputSchema = mapOperator->getOutputSchema();
+
+    return std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(handlerIndex, operatorInputSchema, operatorOutputSchema);
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {

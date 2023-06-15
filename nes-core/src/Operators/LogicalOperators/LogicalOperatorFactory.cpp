@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapPythonUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -153,5 +154,12 @@ LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id) {
     return std::make_shared<OpenCLLogicalOperatorNode>(javaUdfDescriptor, id);
 }
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createMapPythonUDFLogicalOperator(const Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor, OperatorId id) {
+    return std::make_shared<MapPythonUDFLogicalOperatorNode>(pythonUDFDescriptor, id);
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 }// namespace NES
