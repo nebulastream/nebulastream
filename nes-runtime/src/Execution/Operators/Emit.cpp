@@ -46,8 +46,6 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
         resultBuffer.setNumRecords(emitState->outputIndex);
-        resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
-        resultBuffer.setOriginId(ctx.getOriginId());
         ctx.emitBuffer(resultBuffer);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);

@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Util/Common.hpp>
+#include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -58,8 +59,9 @@ uint64_t LocalHashTable::getNumberOfTuples() {
 std::string LocalHashTable::getStatistics() {
     size_t cnt = 0;
     std::stringstream ss;
+    ss << " numPartitions=" << numPartitions;
     for (auto& bucket : buckets) {
-        ss << "BUCKET " << cnt++ << bucket->getStatistics();
+        ss << " BUCKET " << cnt++ << bucket->getStatistics();
     }
     return ss.str();
 }

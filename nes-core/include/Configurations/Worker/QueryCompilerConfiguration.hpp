@@ -26,6 +26,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Configurations {
 

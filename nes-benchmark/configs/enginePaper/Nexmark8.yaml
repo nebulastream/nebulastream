@@ -20,6 +20,8 @@ pageSize: 65536
 #pageSize: 8192
 numberOfPartitions: 16
 preAllocPageCnt: 32
+#joinStrategy: HASH_JOIN_LOCAL
+joinStrategy: NESTED_LOOP_JOIN
 
 #maxHashTableSize: 34359738368
 maxHashTableSize: 34359738368
@@ -55,8 +57,8 @@ gatheringValues: 50000
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
 scalability: scale-up
-#logLevel: LOG_DEBUG
-logLevel: LOG_ERROR
+logLevel: LOG_DEBUG
+#logLevel: LOG_ERROR
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 5

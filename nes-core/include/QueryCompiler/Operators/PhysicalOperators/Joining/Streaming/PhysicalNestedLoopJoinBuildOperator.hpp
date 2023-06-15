@@ -34,7 +34,6 @@ class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperato
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
-     * @param timeStampFieldName
      * @return PhysicalStreamJoinSinkOperator
      */
     static PhysicalOperatorPtr create(const OperatorId id,
