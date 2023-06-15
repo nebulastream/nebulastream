@@ -157,7 +157,7 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipl
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+    EXPECT_EQ(updatedRootOperators1.size(), 2);
 
     for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;

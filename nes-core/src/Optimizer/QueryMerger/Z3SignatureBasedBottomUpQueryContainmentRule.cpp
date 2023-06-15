@@ -48,7 +48,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& conte
         Z3SignatureBasedBottomUpQueryContainmentRule(std::move(context)));
 }
 
-//FIXME:  we have issues in this logic and this will be taken care of in #
+//FIXME:  we have issues in this logic and this will be taken care of in #3856
 bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO2("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "

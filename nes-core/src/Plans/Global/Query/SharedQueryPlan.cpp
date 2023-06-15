@@ -71,9 +71,9 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 
     // TODO Handling Fault-Tolerance in case of query merging [#2327]
 
-    //add the query id
-    queryIds.emplace_back(queryId);
+    std::set<OperatorNodePtr> sinkOperators;
 
+    //Iterate over matched operator pairs and
     for (const auto& matchedOperatorPair : matchedOperatorPairs) {
 
         auto hostOperator = matchedOperatorPair->hostOperator;
@@ -106,14 +106,47 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             //set target operator as the downstream operator in the change log
             clEntryDownstreamOperators.insert(targetOperatorCopy);
 
-        } else if (hostOperator->instanceOf<SinkLogicalOperatorNode>()) {//If host operator is of sink type then connect the downstream operators of target operator to the upstream of the host operator.
+            //If host operator is of sink type then connect the downstream operators of target operator to the upstream of the host operator.
+        } else if (hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
 
-        } else if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) { //If target operator is of sink type then connect the target sink to the host operator.
+            //Fetch all sink operators
+            auto targetSinkOperators = targetOperator->getAllRootNodes();
 
-        } else { //If both host and target operator are not of sink type then connect the downstream operators of target operator to the host operator.
+            //Get the downstream operator of the target and add them as the downstream operator to the host operator
+            auto downstreamOperatorsOfTarget = targetOperator->getParents();
+            for (const auto& downstreamOperatorOfTarget : downstreamOperatorsOfTarget) {
+                //Clear as upstream the target operator
+                downstreamOperatorOfTarget->removeChild(targetOperator);
+                //fetch all upstream operators of the host operator and add the target operator as their parent operator
+                for (const auto& hostUpstreamOperator : hostOperator->getChildren()) {
+                    //add target operator as the parent to the host upstream operator
+                    hostUpstreamOperator->addParent(downstreamOperatorOfTarget);
+                    //add the host upstream operator to the change log entry
+                    clEntryUpstreamOperators.insert(hostUpstreamOperator->as<OperatorNode>());
+                }
+            }
+
+            //If target operator is of sink type then connect the target sink to the host operator.
+        } else if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
+
+            //Make a copy of the target operator so that we do not have to perform additional operation to
+            // add it to the shared query plan.
+            // Note: we otherwise have to remove the upstream operator of the target to decouple it from the original target plan.
+            auto targetOperatorCopy = targetOperator->copy();
+            clEntryDownstreamOperators.insert(targetOperatorCopy);
+
+            //add target operator as the downstream to the host operator
+            hostOperator->addParent(targetOperatorCopy);
+            //add the host upstream operator to the change log entry
+            clEntryUpstreamOperators.insert(hostOperator);
+
+            //If both host and target operator are not of sink type then connect the downstream operators of target operator to the host operator.
+        } else {
 
             //set host operator as the upstream operator in the change log
             clEntryUpstreamOperators.insert(hostOperator);
+
+            NES_INFO2("{},    {}", hostOperator->toString(), targetOperator->toString());
 
             //fetch all root operator of the target operator to compute downstream operator list for the change log entry
             for (const auto& newRootOperator : targetOperator->getAllRootNodes()) {
@@ -123,11 +156,13 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             //add all downstream operators of the target operator as downstream operator to the host operator
             auto downstreamTargetOperators = targetOperator->getParents();
             for (const auto& downstreamTargetOperator : downstreamTargetOperators) {
-                //clear all upstream operators of downstreamTargetOperator
-                downstreamTargetOperator->removeChildren();
+                //Clear as upstream the target operator
+                bool success1 = downstreamTargetOperator->removeChild(targetOperator);
 
                 //add host operator as the upstream operator to the downstreamTargetOperator
-                downstreamTargetOperator->addChild(hostOperator);
+                bool success = hostOperator->addParent(downstreamTargetOperator);
+
+                NES_INFO2("{},{}", success, success1);
             }
         }
 
@@ -141,8 +176,11 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             }
         }
 
-        //Add sink list for the newly inserted query
-        queryIdToSinkOperatorMap[queryId] = clEntryDownstreamOperators;
+        //add the sink operators as root to the set
+        for (const auto& targetSinkOperator : clEntryDownstreamOperators) {
+            sinkOperators.insert(targetSinkOperator);
+        }
+
 
         //add change log entry indicating the addition
         long epochInMilliSec =
@@ -150,7 +188,20 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
         changeLog->addChangeLogEntry(
             epochInMilliSec,
             Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
+
+        NES_INFO2("{}", queryPlan->toString());
     }
+
+    //add the new sink operators as root to the query plan
+    for (const auto& targetSinkOperator : sinkOperators) {
+        queryPlan->addRootOperator(targetSinkOperator);
+    }
+
+    //Add sink list for the newly inserted query
+    queryIdToSinkOperatorMap[queryId] = sinkOperators;
+
+    //add the query id
+    queryIds.emplace_back(queryId);
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
@@ -207,68 +258,6 @@ void SharedQueryPlan::clear() {
 std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
 
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
-
-/*void SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlanToAdd) {
-    // TODO Handling Fault-Tolerance in case of query merging [#2327]
-
-    //get the query id of the query plan to add
-    auto queryId = queryPlanToAdd->getQueryId();
-    queryIds.emplace_back(queryId);
-
-    //Fetch the upstream operators of existing shared query plan sink
-    auto upstreamOperatorsOfSharedQueryPlanSink = queryPlan->getRootOperators()[0]->getChildren();
-
-    std::vector<OperatorNodePtr> sinkOperatorsOfQueryPlanToAdd;
-    for (const auto& sinkOperator : queryPlanToAdd->getRootOperators()) {
-
-        //Make copy of the sink operator
-        auto sinkOperatorCopy = sinkOperator->copy();
-        sinkOperatorsOfQueryPlanToAdd.emplace_back(sinkOperatorCopy);
-
-        //iterate over upstream operators of shared query plan sink and
-        // 1. add the new sink operator to them as parent
-        // 2. create the upstream operator set for change log entry
-        std::set<OperatorNodePtr> upstreamOperators;
-        for (const auto& upstreamOperatorOfSharedQueryPlanSink : upstreamOperatorsOfSharedQueryPlanSink) {
-            upstreamOperatorOfSharedQueryPlanSink->addParent(sinkOperatorCopy);
-            upstreamOperators.insert(upstreamOperatorOfSharedQueryPlanSink->as<OperatorNode>());
-        }
-
-        //Update root operator list of query plan
-        queryPlan->addRootOperator(sinkOperatorCopy);
-
-        //add change log entry indicating the addition
-        long epochInMilliSec =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        changeLog->addChangeLogEntry(epochInMilliSec,
-                                     Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
-
-        //Add new signatures to the shared query plan
-        auto hashBasedSignature = sinkOperator->as<LogicalOperatorNode>()->getHashBasedSignature();
-        for (const auto& signatureEntry : hashBasedSignature) {
-            for (const auto& stringValue : signatureEntry.second) {
-                updateHashBasedSignature(signatureEntry.first, stringValue);
-            }
-        }
-    }
-
-    //Add sink list for the newly inserted query
-    queryIdToSinkOperatorMap[queryId] = sinkOperatorsOfQueryPlanToAdd;
-}*/
-
-/*void SharedQueryPlan::addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator) {
-
-    std::set<OperatorNodePtr> downstreamOperators;
-    for (const auto& newRootOperator : newOperator->getAllRootNodes()) {
-        downstreamOperators.insert(newRootOperator->as<OperatorNode>());
-    }
-
-    //add change log entry indicating the addition
-    long epochInMilliSec =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    changeLog->addChangeLogEntry(epochInMilliSec,
-                                 Optimizer::Experimental::ChangeLogEntry::create({upstreamOperator}, downstreamOperators));
-}*/
 
 std::set<OperatorNodePtr> SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
 
