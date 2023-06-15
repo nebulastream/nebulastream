@@ -239,7 +239,7 @@ class BasePlacementStrategy {
      */
     void placeNetworkOperator(QueryId queryId,
                               const OperatorNodePtr& upStreamOperator,
-                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * Check if operator present in the given collection
@@ -248,7 +248,7 @@ class BasePlacementStrategy {
      * @return true if successful
      */
     bool operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
-                                     const std::vector<OperatorNodePtr>& operatorCollection);
+                                     const std::set<OperatorNodePtr>& operatorCollection);
 
     /**
      * @brief Add an execution node as root of the global execution plan

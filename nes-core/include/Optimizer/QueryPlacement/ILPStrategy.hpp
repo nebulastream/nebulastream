@@ -43,8 +43,8 @@ class ILPStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static BasePlacementStrategyPtr
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
@@ -116,7 +116,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param pinnedUpStreamOperators: pinned upstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<uint64_t, double> computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+    std::map<uint64_t, double> computeMileage(const std::set<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node

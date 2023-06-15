@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -51,7 +52,10 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetToHostSinkOperatorMap)) {
                 NES_TRACE2("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+
+                //Compute matched operator pairs
+                std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
+                matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
 
                 std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryPlan->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
@@ -69,21 +73,14 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                         NES_THROW_RUNTIME_ERROR("SyntaxBasedCompleteQueryMergerRule: Unexpected behaviour! matching host sink "
                                                 "pair not found in the host query plan.");
                     }
-                    //Remove all children of target sink global query node
-                    auto targetSinkChildren = targetSinkOperator->getChildren();
-                    auto hostSinkChildren = (*hostSinkOperator)->getChildren();
-                    for (auto& targetSinkChild : targetSinkChildren) {
-                        for (auto& hostSinkChild : hostSinkChildren) {
-                            bool addedNewParent = hostSinkChild->addParent(targetSinkOperator);
-                            if (!addedNewParent) {
-                                NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
-                            }
-                            hostSharedQueryPlan->addAdditionToChangeLog(hostSinkChild->as<OperatorNode>(), targetSinkOperator);
-                        }
-                        targetSinkChild->removeParent(targetSinkOperator);
-                    }
-                    hostQueryPlan->addRootOperator(targetSinkOperator);
+
+                    //add to the matched pair
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create((*hostSinkOperator), targetSinkOperator));
                 }
+
+                //add matched operators to the host shared query plan
+                hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
+
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data

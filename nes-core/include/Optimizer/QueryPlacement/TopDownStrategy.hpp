@@ -31,8 +31,8 @@ class TopDownStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
     TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
@@ -45,8 +45,8 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @throws exception if the operator can't be placed.
      */
     void pinOperators(QueryId queryId,
-                      const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                      const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                      const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -57,7 +57,7 @@ class TopDownStrategy : public BasePlacementStrategy {
     void identifyPinningLocation(QueryId pinnedUpStreamOperator,
                                  const OperatorNodePtr& operatorNode,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+                                 const std::set<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed
