@@ -12,20 +12,19 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
-#include <gtest/gtest.h>
+#include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogram.hpp>
+#include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogramOperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
-#include <Experimental/Synopses/Histograms/EquiWidth1DHist.hpp>
-#include <Experimental/Synopses/Histograms/EquiWidth1DHistOperatorHandler.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 namespace NES::ASP {
 /**
@@ -59,7 +58,7 @@ public:
         bufferManager = std::make_shared<Runtime::BufferManager>();
 
         // Creating the worker context and the pipeline necessary for testing the sampling
-        opHandler = std::make_shared<EquiWidth1DHistOperatorHandler>();
+        opHandler = std::make_shared<EquiWidthOneDimensionalHistogramOperatorHandler>();
         std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
         workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
@@ -87,7 +86,7 @@ public:
     const uint64_t handlerIndex = 0;
 
     SchemaPtr inputSchema;
-    std::shared_ptr<EquiWidth1DHistOperatorHandler> opHandler;
+    std::shared_ptr<EquiWidthOneDimensionalHistogramOperatorHandler> opHandler;
     std::unique_ptr<Runtime::Execution::ExecutionContext> executionContext;
     Runtime::WorkerContextPtr workerContext;
     std::shared_ptr<MockedPipelineExecutionContext> pipelineContext;
@@ -134,7 +133,8 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                         approximateString, timestampFieldName,
                                                                         inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+    EquiWidthOneDimensionalHistogram
+        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
                                  lowerBoundBinName, upperBoundBinName);
 
 
@@ -142,7 +142,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
 
     // Inserting records
     for (auto& record : getInputData(*inputSchema)) {
@@ -199,14 +199,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                         approximateString, timestampFieldName,
                                                                         inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+    EquiWidthOneDimensionalHistogram
+        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
                                  lowerBoundBinName, upperBoundBinName);
 
     // Setting up the synopsis and creating the local operator state
     histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
 
     // Inserting records
     for (auto& record : getInputData(*inputSchema)) {
@@ -262,7 +263,8 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                         approximateString, timestampFieldName,
                                                                         inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+    EquiWidthOneDimensionalHistogram
+        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
                                  lowerBoundBinName, upperBoundBinName);
 
 
@@ -270,7 +272,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
     histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
 
     // Inserting records
     for (auto& record : getInputData(*inputSchema)) {
@@ -326,14 +328,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                         approximateString, timestampFieldName,
                                                                         inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+    EquiWidthOneDimensionalHistogram
+        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
                                  lowerBoundBinName, upperBoundBinName);
 
     // Setting up the synopsis and creating the local operator state
     histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
 
     // Inserting records
     for (auto& record : getInputData(*inputSchema)) {
@@ -388,14 +391,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                         approximateString, timestampFieldName,
                                                                         inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+    EquiWidthOneDimensionalHistogram
+        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
                                  lowerBoundBinName, upperBoundBinName);
 
     // Setting up the synopsis and creating the local operator state
     histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
 
     // Inserting records
     for (auto& record : getInputData(*inputSchema)) {

@@ -12,30 +12,30 @@
     limitations under the License.
 */
 
-#include <Experimental/Synopses/Histograms/EquiWidth1DHist.hpp>
-#include <Experimental/Synopses/Histograms/EquiWidth1DHistOperatorHandler.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogram.hpp>
+#include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogramOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
 
 namespace NES::ASP {
 
 void* getBinsRefProxy(void* opHandlerPtr) {
     NES_ASSERT2_FMT(opHandlerPtr != nullptr, "opHandlerPtr can not be null");
-    auto* opHandler = static_cast<EquiWidth1DHistOperatorHandler*>(opHandlerPtr);
+    auto* opHandler = static_cast<EquiWidthOneDimensionalHistogramOperatorHandler*>(opHandlerPtr);
     return opHandler->getBinsRef();
 }
 
 void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize, uint64_t numberOfBins) {
     NES_ASSERT2_FMT(opHandlerPtr != nullptr, "opHandlerPtr can not be null");
-    auto* opHandler = static_cast<EquiWidth1DHistOperatorHandler*>(opHandlerPtr);
+    auto* opHandler = static_cast<EquiWidthOneDimensionalHistogramOperatorHandler*>(opHandlerPtr);
     opHandler->setup(entrySize, numberOfBins);
 }
 
 
-void EquiWidth1DHist::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&,
+void EquiWidthOneDimensionalHistogram::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&,
                                     Nautilus::Record record,
                                     Runtime::Execution::Operators::OperatorState *pState) {
 
@@ -48,10 +48,10 @@ void EquiWidth1DHist::addToSynopsis(uint64_t, Runtime::Execution::ExecutionConte
     aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
 }
 
-std::vector<Runtime::TupleBuffer>
-EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
-                                std::vector<Nautilus::Value<>>& keyValues,
-                                Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproximate(uint64_t handlerIndex,
+                                                                                   Runtime::Execution::ExecutionContext &ctx,
+                                                                                   std::vector<Nautilus::Value<>>& keys,
+                                                                                   Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -98,7 +98,7 @@ EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::Execu
     return retTupleBuffers;
 }
 
-void EquiWidth1DHist::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
+void EquiWidthOneDimensionalHistogram::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandler,
                            Nautilus::Value<Nautilus::UInt64>(entrySize),
@@ -113,7 +113,7 @@ void EquiWidth1DHist::setup(uint64_t handlerIndex, Runtime::Execution::Execution
     }
 }
 
-bool EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                               Runtime::Execution::ExecutionContext& ctx,
                                               Runtime::Execution::RecordBuffer) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -124,7 +124,7 @@ bool EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runti
     return true;
 }
 
-EquiWidth1DHist::EquiWidth1DHist(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
+EquiWidthOneDimensionalHistogram::EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
                                  const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
                                  const std::string& lowerBinBoundString, const std::string& upperBinBoundString)
         : AbstractSynopsis(aggregationConfig), minValue(minValue), maxValue(maxValue), numberOfBins(numberOfBins),

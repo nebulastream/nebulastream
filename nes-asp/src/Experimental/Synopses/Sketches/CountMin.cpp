@@ -62,7 +62,7 @@ void CountMin::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&, Na
 
 std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex,
                                                            Runtime::Execution::ExecutionContext &ctx,
-                                                           std::vector<Nautilus::Value<>>& keyValues,
+                                                           std::vector<Nautilus::Value<>>& keys,
                                                            Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -89,13 +89,13 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
             auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
             auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
             auto colPos = hash % numberOfCols;
-            aggregationFunctionMergeRows->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
+            combineRowsApproximate->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
         }
 
         // Writing the key and the approximation to the record
         Nautilus::Record retRecord;
         retRecord.write(fieldNameKey, key);
-        aggregationFunctionMergeRows->lower(sketchArray[(uint64_t) 0][colPosFirstRow], retRecord);
+        combineRowsApproximate->lower(sketchArray[(uint64_t) 0][colPosFirstRow], retRecord);
 
         // Write the record to the buffer
         auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
@@ -164,28 +164,25 @@ CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const 
         case Parsing::Aggregation_Type::SUM:
         case Parsing::Aggregation_Type::COUNT:
         {
-            aggregationFunctionMergeRows =  std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType,
+            combineRowsApproximate =  std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType,
                                                                                              readFieldExpression,
                                                                                              resultFieldIdentifier);
             break;
         }
-
         case Parsing::Aggregation_Type::MIN: {
-            aggregationFunctionMergeRows = std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+            combineRowsApproximate = std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
                     inputType, finalType,
                     readFieldExpression,
                     resultFieldIdentifier);
             break;
         }
-
         case Parsing::Aggregation_Type::AVERAGE: {
-            aggregationFunctionMergeRows = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+            combineRowsApproximate = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
                     inputType, finalType,
                     readFieldExpression,
                     resultFieldIdentifier);
             break;
         }
-
         case Parsing::Aggregation_Type::NONE: NES_NOT_IMPLEMENTED();
     }
 }

@@ -101,7 +101,7 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
 
 std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
                                                                                  Runtime::Execution::ExecutionContext& ctx,
-                                                                                 std::vector<Nautilus::Value<>>& keyValues,
+                                                                                 std::vector<Nautilus::Value<>>& keys,
                                                                                  Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
