@@ -90,7 +90,7 @@ TEST_F(H3HashTest, simpleH3testDouble) {
     const auto numberOfKeyBits = sizeof(uint64_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint64_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
@@ -119,7 +119,7 @@ TEST_F(H3HashTest, simpleH3testFloat) {
     const auto numberOfKeyBits = sizeof(uint32_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint32_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
@@ -149,7 +149,7 @@ TEST_F(H3HashTest, simpleH3testUInt64) {
     const auto numberOfKeyBits = sizeof(uint64_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint64_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
@@ -172,10 +172,10 @@ TEST_F(H3HashTest, simpleH3testUInt32) {
                                                                         {0xc799d447, 0x4bd8949c, 0x7c1dd13d},
                                                                         {0xc73e9f4, 0xd0be0c27, 0x563b33f8}};
 
-    const auto numberOfKeyBits = sizeof(uint32_t) * 8;
+    constexpr auto numberOfKeyBits = sizeof(uint32_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint32_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
@@ -201,7 +201,7 @@ TEST_F(H3HashTest, simpleH3testUInt16) {
     const auto numberOfKeyBits = sizeof(uint16_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint16_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
@@ -223,7 +223,7 @@ TEST_F(H3HashTest, simpleH3testUInt8) {
     const auto numberOfKeyBits = sizeof(uint8_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
         maskSeeds(allH3Seeds[row], numberOfKeyBits);
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(numberOfKeyBits));
     }
 
     for (uint8_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
