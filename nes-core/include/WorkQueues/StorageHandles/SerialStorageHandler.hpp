@@ -55,6 +55,8 @@ class SerialStorageHandler : public StorageHandler {
      */
     void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
 
+    void releaseResources(RequestId requestId) override;
+
     /**
      * @brief Obtain a mutable topology handle.
      * @return a handle to the topology

@@ -60,6 +60,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      */
     void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
 
+    void releaseResources(RequestId requestId) override;
+
     /**
      * @brief Obtain a mutable global execution plan handle. Will throw an exception if the resource has not been locked in the
      * acquireResources function
@@ -110,11 +112,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      */
     void lockResource(ResourceType resourceType, RequestId requestId);
 
-    //todo: probably not needed
-    bool checkNoLockAfter(ResourceType resourceType, RequestId requestId);
-
     TwoPhaseLockManagerPtr lockManager;
-    bool resourcesLocked;
 
     //resource pointers
     GlobalExecutionPlanPtr globalExecutionPlan;

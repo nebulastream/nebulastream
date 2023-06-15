@@ -59,4 +59,6 @@ SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle(RequestId) { re
 UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
 
 void SerialStorageHandler::acquireResources(RequestId, std::vector<ResourceType>) {}
+
+void SerialStorageHandler::releaseResources(RequestId) {}
 }// namespace NES

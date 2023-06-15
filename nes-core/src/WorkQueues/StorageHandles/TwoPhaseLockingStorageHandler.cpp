@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <algorithm>
@@ -37,16 +38,38 @@ void TwoPhaseLockingStorageHandler::acquireResources(RequestId requestId, std::v
 
     //lock the resources
     for (const auto& type : requiredResources) {
+        NES_DEBUG2("Request {} trying to acquire resource {}", requestId, (uint8_t) type);
         lockResource(type, requestId);
+    }
+}
+
+void TwoPhaseLockingStorageHandler::releaseResources(RequestId requestId) {
+    for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
+        auto& holder = getHolder((ResourceType) i);
+        /*
+        if (holder == requestId) {
+            holder = INVALID_REQUEST_ID;
+            NES_DEBUG2("Request {}: release resource {}", requestId, i);
+        }
+         */
+        auto expected = requestId;
+        if (holder.compare_exchange_strong(expected, INVALID_REQUEST_ID)) {
+            NES_DEBUG2("Request {}: release resource {}", requestId, i);
+        }
     }
 }
 
 void TwoPhaseLockingStorageHandler::lockResource(std::atomic<uint64_t>& holder, RequestId requestId) {
     auto expected = INVALID_REQUEST_ID;
     while (!holder.compare_exchange_weak(expected, requestId)) {
+        NES_DEBUG2("Request {} could not acquire lock because resource is held by {}", requestId, expected);
+        if (expected == INVALID_REQUEST_ID) {
+            continue;
+        }
         holder.wait(expected);
         expected = INVALID_REQUEST_ID;
     }
+    NES_DEBUG2("Request {} acquired resource", requestId);
 }
 
 //todo: define a function starting at a certain type only
@@ -169,5 +192,6 @@ TwoPhaseLockingStorageHandler::create(GlobalExecutionPlanPtr globalExecutionPlan
                                       Catalogs::UDF::UDFCatalogPtr udfCatalog) {
     return std::make_shared<TwoPhaseLockingStorageHandler>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
 }
+
 
 }// namespace NES

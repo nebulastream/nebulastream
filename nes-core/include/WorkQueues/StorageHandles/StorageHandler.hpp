@@ -75,6 +75,8 @@ class StorageHandler {
      */
     virtual void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) = 0;
 
+    virtual void releaseResources(RequestId requestId) = 0;
+
     /**
      * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
