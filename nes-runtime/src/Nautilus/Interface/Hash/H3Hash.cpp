@@ -16,7 +16,7 @@
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <bit>
 namespace NES::Nautilus::Interface {
 
 HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
