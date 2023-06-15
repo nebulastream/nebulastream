@@ -480,11 +480,13 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
                 auto colExpr = schemaFieldToExprMap[containedAttributes[index]];
                 auto otherColExpr = (*otherSchemaMapItr)[containedAttributes[index]];
                 auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
+                NES_TRACE2("Equivalence check for transformations: {} on attribute {}", equivalenceCheck.to_string(), containedAttributes[index]);
                 colChecks.push_back(equivalenceCheck);
             }
 
             solver->push();
             solver->add(!z3::mk_and(colChecks).simplify());
+            NES_TRACE2("Content of equivalence solver: {}", solver->to_smt2());
             schemaMatched = solver->check() == z3::unsat;
             solver->pop();
             counter++;

@@ -111,11 +111,16 @@ void RequestProcessorService::start() {
                     //3. Iterate over shared query plans and take decision to a. deploy, b. undeploy, or c. redeploy
                     for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
 
+                        for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                            NES_INFO2("Setting status to Running for query {}", queryId);
+                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
+                        }
+
                         // Check if experimental feature for reconfiguring shared query plans without redeployment is disabled
                         if (!queryReconfiguration) {
 
                             //3.1. Fetch the shared query plan id
-                            SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
+                            /*SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
                             NES_DEBUG2("QueryProcessingService: Updating Query Plan with global query id : {}", sharedQueryId);
 
                             //3.2. If the shared query plan is newly created
@@ -193,7 +198,7 @@ void RequestProcessorService::start() {
                                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                     queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
                                 }
-                            }
+                            }*/
 
                         } else {
                             //Yet another cool feature under development
