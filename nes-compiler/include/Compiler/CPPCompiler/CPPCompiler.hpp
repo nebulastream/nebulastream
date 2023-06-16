@@ -51,13 +51,6 @@ class CPPCompiler : public LanguageCompiler {
     [[nodiscard]] Language getLanguage() const override;
 
   private:
-    /**
-     * @brief Compiles a source code file to a shared lib.
-     * @param flags compilation flags
-     * @param sourceFile the source code file
-     * @param libraryFileName the target lib name
-     */
-    void compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const;
     std::unique_ptr<ClangFormat> format;
     ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
