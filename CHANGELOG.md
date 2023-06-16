@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.110](https://github.com/nebulastream/nebulastream/tree/v0.5.110) (2023-06-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.109...v0.5.110)
+
+**Implemented enhancements:**
+
+- \[TASK\] NLJ Integration into Executionengine [\#3749](https://github.com/nebulastream/nebulastream/issues/3749)
+- \[TASK\] Use sequence number and originId in NLJ  [\#3741](https://github.com/nebulastream/nebulastream/issues/3741)
+- \[TASK\] Class for checking if we have to trigger a window [\#3722](https://github.com/nebulastream/nebulastream/issues/3722)
+- \[Feature\] Store tuples in FixedPage for StreamJoin [\#3363](https://github.com/nebulastream/nebulastream/issues/3363)
+- \[Feature\] Out-of-order Support for StreamJoin [\#3354](https://github.com/nebulastream/nebulastream/issues/3354)
+
+#### Operators 
+
+- \[Feature\] Nested Loop Join Out-of-Order and Ingestion Time [\#3652](https://github.com/nebulastream/nebulastream/issues/3652)
+
 ## [v0.5.109](https://github.com/nebulastream/nebulastream/tree/v0.5.109) (2023-06-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.108...v0.5.109)
