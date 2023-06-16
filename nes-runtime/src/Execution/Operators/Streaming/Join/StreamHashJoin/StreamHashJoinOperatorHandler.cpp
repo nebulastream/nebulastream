@@ -31,14 +31,15 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchem
                                                              size_t totalSizeForDataStructures,
                                                              size_t pageSize,
                                                              size_t preAllocPageSizeCnt,
-                                                             size_t numPartitions)
+                                                             size_t numPartitions,
+                                                             JoinStrategy joinStrategy)
     : StreamJoinOperatorHandler(joinSchemaLeft,
                                 joinSchemaRight,
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 origins,
                                 windowSize,
-                                NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL),
+                                joinStrategy),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
@@ -95,7 +96,8 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const Sch
                                                                        size_t totalSizeForDataStructures,
                                                                        size_t pageSize,
                                                                        size_t preAllocPageSizeCnt,
-                                                                       size_t numPartitions) {
+                                                                       size_t numPartitions,
+                                                                       JoinStrategy joinStrategy) {
 
     return std::make_shared<StreamHashJoinOperatorHandler>(joinSchemaLeft,
                                                            joinSchemaRight,
@@ -106,7 +108,8 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const Sch
                                                            totalSizeForDataStructures,
                                                            pageSize,
                                                            preAllocPageSizeCnt,
-                                                           numPartitions);
+                                                           numPartitions,
+                                                           joinStrategy);
 }
 size_t StreamHashJoinOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 size_t StreamHashJoinOperatorHandler::getPageSize() const { return pageSize; }

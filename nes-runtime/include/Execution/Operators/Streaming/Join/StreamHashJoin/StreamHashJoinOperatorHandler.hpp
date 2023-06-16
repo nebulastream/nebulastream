@@ -67,7 +67,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                            size_t totalSizeForDataStructures,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
-                                           size_t numPartitions);
+                                           size_t numPartitions,
+                                           JoinStrategy joinStrategy);
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
@@ -92,7 +93,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                                    size_t totalSizeForDataStructures,
                                                    size_t pageSize,
                                                    size_t preAllocPageSizeCnt,
-                                                   size_t numPartitions);
+                                                   size_t numPartitions,
+                                                   JoinStrategy joinStrategy);
 
     /**
      * @brief Starts the operator handler
@@ -154,4 +156,3 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_
-

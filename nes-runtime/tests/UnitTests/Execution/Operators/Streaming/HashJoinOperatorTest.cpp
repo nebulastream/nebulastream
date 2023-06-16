@@ -105,7 +105,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
                                                                               buildHelper.joinSizeInByte,
                                                                               buildHelper.pageSize,
                                                                               1,
-                                                                              buildHelper.numPartitions);
+                                                                              buildHelper.numPartitions,
+                                                                              JoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -246,7 +247,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                                               hashJoinSinkHelper.joinSizeInByte,
                                                                               hashJoinSinkHelper.pageSize,
                                                                               1,
-                                                                              hashJoinSinkHelper.numPartitions);
+                                                                              hashJoinSinkHelper.numPartitions,
+                                                                              JoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -694,7 +696,6 @@ TEST_F(HashJoinOperatorTest, joinSinkTestMultipleWindows) {
                                  ->addField("f1_right", BasicType::UINT64)
                                  ->addField("f2_right", BasicType::UINT64)
                                  ->addField("timestamp", BasicType::UINT64);
-
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinSinkHelper hashJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);

@@ -407,7 +407,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NodePtr leftJoinBuildOperator;
         NodePtr rightJoinBuildOperator;
         auto joinStrategy = options->getJoinStratgy();
-        if (joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL) {
+        if (joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL || joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL) {
             auto joinOperatorHandler =
                 StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
                                                       joinOperator->getRightInputSchema(),
@@ -418,7 +418,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                       options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                       options->getHashJoinOptions()->getPageSize(),
                                                       options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                      options->getHashJoinOptions()->getNumberOfPartitions());
+                                                      options->getHashJoinOptions()->getNumberOfPartitions(),
+                                                      joinStrategy);
 
             leftJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
                                                                                              joinOperator->getOutputSchema(),

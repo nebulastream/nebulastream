@@ -306,7 +306,8 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                                          NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
+                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
+                                                         JoinStrategy::HASH_JOIN_LOCAL);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
