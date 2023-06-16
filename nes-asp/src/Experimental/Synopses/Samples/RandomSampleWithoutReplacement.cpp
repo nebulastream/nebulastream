@@ -219,8 +219,7 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
 }
 
 bool RandomSampleWithoutReplacement::storeLocalOperatorState(const uint64_t, const Runtime::Execution::Operators::Operator*,
-                                                             Runtime::Execution::ExecutionContext&,
-                                                             const Runtime::Execution::RecordBuffer) {
+                                                             Runtime::Execution::ExecutionContext&) {
     // TODO this will be used in issue #3743
     return false;
 }

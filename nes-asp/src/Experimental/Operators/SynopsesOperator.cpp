@@ -38,8 +38,8 @@ void SynopsesOperator::setup(ExecutionContext& ctx) const {
     synopses->setup(handlerIndex, ctx);
 }
 
-void SynopsesOperator::open(ExecutionContext &executionCtx, RecordBuffer &recordBuffer) const {
-    hasLocalState = synopses->storeLocalOperatorState(handlerIndex, this, executionCtx, recordBuffer);
+void SynopsesOperator::open(ExecutionContext &executionCtx, RecordBuffer&) const {
+    hasLocalState = synopses->storeLocalOperatorState(handlerIndex, this, executionCtx);
 }
 
 } // namespace NES::Runtime::Execution::Operators

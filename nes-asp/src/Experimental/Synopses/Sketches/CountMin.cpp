@@ -136,8 +136,7 @@ void CountMin::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionC
 }
 
 bool CountMin::storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
-                                       Runtime::Execution::ExecutionContext &ctx,
-                                       const Runtime::Execution::RecordBuffer) {
+                                       Runtime::Execution::ExecutionContext &ctx) {
 
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, opHandler);

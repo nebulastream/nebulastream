@@ -85,8 +85,7 @@ class AbstractSynopsis {
      * @return True if a state has been added
      */
     virtual bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
-                                         Runtime::Execution::ExecutionContext& ctx,
-                                         const Runtime::Execution::RecordBuffer buffer) = 0;
+                                         Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments

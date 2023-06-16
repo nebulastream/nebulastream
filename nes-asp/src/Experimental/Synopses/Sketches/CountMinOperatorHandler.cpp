@@ -36,7 +36,6 @@ void CountMinOperatorHandler::setup(uint64_t entrySize, uint64_t numberOfRows, u
     // Creating the h3Seeds
     std::mt19937 gen(Nautilus::Interface::H3Hash::H3_SEED);
     std::uniform_int_distribution<uint64_t> distribution;
-    auto numberOfBitsInKey = sizeof(uint64_t) * 8;
     for (auto row = 0UL; row < numberOfRows; ++row) {
         for (auto col = 0UL; col < numberOfCols; ++col) {
             h3Seeds.emplace_back(distribution(gen));

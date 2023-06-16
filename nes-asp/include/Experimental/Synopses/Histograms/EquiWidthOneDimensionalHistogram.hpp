@@ -87,8 +87,7 @@ public:
      * @param buffer: Current record buffer
      */
     bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
-                                 Runtime::Execution::ExecutionContext &ctx,
-                                 const Runtime::Execution::RecordBuffer buffer) override;
+                                 Runtime::Execution::ExecutionContext &ctx) override;
 
 private:
     const int64_t minValue;
