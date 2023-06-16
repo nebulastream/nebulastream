@@ -50,6 +50,7 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
         const auto jniName = handler->convertToJNIName(className);
+        NES_DEBUG2("Injecting Java class into JVM: {}", jniName);
         handler->getEnvironment()->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
