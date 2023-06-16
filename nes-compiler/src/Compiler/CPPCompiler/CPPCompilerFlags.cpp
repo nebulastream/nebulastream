@@ -54,8 +54,5 @@ void CPPCompilerFlags::enableOptimizationFlags() {
 #endif
 }
 
-std::vector<std::string> CPPCompilerFlags::getFlags() const { return compilerFlags; }
-
-void CPPCompilerFlags::addFlag(const std::string& flag) { compilerFlags.emplace_back(flag); }
 
 }// namespace NES::Compiler
