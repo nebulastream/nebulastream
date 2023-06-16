@@ -13,14 +13,15 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILERFLAGS_HPP_
-#include <string>
-#include <vector>
+
+#include <Compiler/CompilerFlags.hpp>
+
 namespace NES::Compiler {
 
 /**
  * @brief Represents compilation flags available to the C++ compiler.
  */
-class CPPCompilerFlags {
+class CPPCompilerFlags : public CompilerFlags {
   public:
     // sets the cpp language version for the code
 #if defined(__APPLE__)
@@ -64,12 +65,8 @@ class CPPCompilerFlags {
     void enableOptimizationFlags();
     void enableDebugFlags();
 
-    [[nodiscard]] std::vector<std::string> getFlags() const;
-    void addFlag(const std::string& flag);
-
   private:
     CPPCompilerFlags() = default;
-    std::vector<std::string> compilerFlags;
 };
 
 }// namespace NES::Compiler

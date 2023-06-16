@@ -17,6 +17,7 @@ add_source_files(nes-compiler
         DynamicObject.cpp
         CompilationRequest.cpp
         CompilationResult.cpp
+        CompilerFlags.cpp
         SourceCode.cpp
         File.cpp
         CompilationCache.cpp
