@@ -35,22 +35,22 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize, uint64_t number
 }
 
 
-void EquiWidthOneDimensionalHistogram::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&,
-                                    Nautilus::Record record,
-                                    Runtime::Execution::Operators::OperatorState *pState) {
+void EquiWidthOneDimensionalHistogram::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContext&,
+                                                     Nautilus::Record record,
+                                                     const Runtime::Execution::Operators::OperatorState *pState) {
 
     // Retrieving the reference to the bins
     NES_ASSERT2_FMT(pState != nullptr, "Local state was null, but we expected it not to be null!");
-    auto localState = dynamic_cast<LocalBinsOperatorState*>(pState);
+    auto localState = dynamic_cast<const LocalBinsOperatorState*>(pState);
     auto& bins = localState->bins;
 
     auto binDimensionPos = ((readKeyExpression->execute(record) - minValue) / binWidth);
     aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
 }
 
-std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproximate(uint64_t handlerIndex,
+std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproximate(const uint64_t handlerIndex,
                                                                                    Runtime::Execution::ExecutionContext &ctx,
-                                                                                   std::vector<Nautilus::Value<>>& keys,
+                                                                                   const std::vector<Nautilus::Value<>>& keys,
                                                                                    Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -98,7 +98,7 @@ std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproxima
     return retTupleBuffers;
 }
 
-void EquiWidthOneDimensionalHistogram::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
+void EquiWidthOneDimensionalHistogram::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandler,
                            Nautilus::Value<Nautilus::UInt64>(entrySize),
@@ -113,9 +113,10 @@ void EquiWidthOneDimensionalHistogram::setup(uint64_t handlerIndex, Runtime::Exe
     }
 }
 
-bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
-                                              Runtime::Execution::ExecutionContext& ctx,
-                                              Runtime::Execution::RecordBuffer) {
+bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(const uint64_t handlerIndex,
+                                                               const Runtime::Execution::Operators::Operator* op,
+                                                               Runtime::Execution::ExecutionContext& ctx,
+                                                               const Runtime::Execution::RecordBuffer) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
     auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);

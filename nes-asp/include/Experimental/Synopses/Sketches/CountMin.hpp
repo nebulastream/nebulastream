@@ -59,8 +59,8 @@ class CountMin : public AbstractSynopsis {
      * @param record: Input record
      * @param pState: State that contains the sketch array and the h3 seeds
      */
-    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
-                       Runtime::Execution::Operators::OperatorState *pState) override;
+    void addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
+                       const Runtime::Execution::Operators::OperatorState *pState) override;
 
     /**
      * @brief Retrieves the approximated value by iterating over each row and combining the values of all rows
@@ -70,8 +70,8 @@ class CountMin : public AbstractSynopsis {
      * @param keys: Keys for which to approximate
      * @return Vector of TupleBuffers, which contain the approximation for the keys
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
-                                                     std::vector<Nautilus::Value<>>& keys,
+    std::vector<Runtime::TupleBuffer> getApproximate(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                                     const std::vector<Nautilus::Value<>>& keys,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     /**
@@ -80,7 +80,7 @@ class CountMin : public AbstractSynopsis {
      * @param handlerIndex: Index for the operator handler
      * @param ctx: Execution context that stores the bins
      */
-    void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
+    void setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
 
     /**
      * @brief Allows the count-min to store a memRef to the sketch array and a memref to the h3 seed
@@ -89,7 +89,7 @@ class CountMin : public AbstractSynopsis {
      * @param ctx: Execution context that stores the bins
      * @param buffer: Current record buffer
      */
-    bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+    bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;
 
