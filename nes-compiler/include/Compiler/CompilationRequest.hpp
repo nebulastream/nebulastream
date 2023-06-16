@@ -16,6 +16,9 @@
 
 #include <Compiler/CompilerForwardDeclarations.hpp>
 
+#include <memory>
+#include <vector>
+
 namespace NES::Compiler {
 
 /**
@@ -39,7 +42,8 @@ class CompilationRequest {
                        bool profileCompilation,
                        bool profileExecution,
                        bool optimizeCompilation,
-                       bool debug);
+                       bool debug,
+                       std::vector<std::shared_ptr<ExternalAPI>> externalApis);
     bool operator==(const CompilationRequest& rhs) const;
     bool operator!=(const CompilationRequest& rhs) const;
 
@@ -51,6 +55,7 @@ class CompilationRequest {
      * @param profileExecution enables profiling for the execution
      * @param optimizeCompilation enables optimizations
      * @param debug enables debug options
+     * @param externalApis enables debug options
      * @return std::unique_ptr<CompilationRequest>
      */
     static std::shared_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
@@ -58,7 +63,8 @@ class CompilationRequest {
                                                       bool profileCompilation,
                                                       bool profileExecution,
                                                       bool optimizeCompilation,
-                                                      bool debug);
+                                                      bool debug,
+                                                      std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
 
     /**
      * @brief Returns the source code artifact
@@ -96,6 +102,12 @@ class CompilationRequest {
      */
     [[nodiscard]] std::string getName() const;
 
+    /**
+     * @brief Returns the external APIs
+     * @return std::vector<std::shared_ptr<ExternalAPI>>
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<ExternalAPI>> getExternalAPIs() const;
+
   private:
     const std::shared_ptr<SourceCode> sourceCode;
     const std::string name;
@@ -103,6 +115,7 @@ class CompilationRequest {
     const bool profileExecution;
     const bool optimizeCompilation;
     const bool debug;
+    const std::vector<std::shared_ptr<ExternalAPI>> externalApis;
 };
 
 }// namespace NES::Compiler

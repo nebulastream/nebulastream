@@ -15,6 +15,7 @@
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
+#include <Compiler/ExternalAPI.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Compiler/Util/ExecutablePath.hpp>
@@ -108,6 +109,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DTFDEF=1");
 #endif// TFDEF
 
+    for (auto api : request->getExternalAPIs()) {
+        compilationFlags.mergeFlags(api->getCompilerFlags());
+    }
 
     // lock file, such that no one can operate on the file at the same time
     const std::lock_guard<std::mutex> fileLock(file->getFileMutex());

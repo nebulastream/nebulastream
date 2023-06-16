@@ -11,22 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
-#define NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
-#include <memory>
-#include <string>
+
+#ifndef NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_
+#define NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_
+
+#include <Compiler/CompilerFlags.hpp>
+
 namespace NES::Compiler {
 
-class SourceCode;
-enum class Language;
-class DynamicObject;
-class LanguageCompiler;
-class CompilationResult;
-class CompilationRequest;
-class LanguageCompiler;
-class JITCompiler;
-class ExternalAPI;
+/**
+ * @brief Any external API has to inherit from this class if it requires specific compiler arguments.
+ */
+class ExternalAPI {
+public:
+    /**
+     * @brief Get the compiler flags specific to the external API.
+     * @return CompilerFlags
+     */
+    virtual const CompilerFlags getCompilerFlags() const = 0;
 
-}// namespace NES::Compiler
+    virtual ~ExternalAPI() = default;
+};
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
+} // namespace NES::Compiler
+
+#endif // NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_

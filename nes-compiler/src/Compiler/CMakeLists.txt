@@ -18,6 +18,7 @@ add_source_files(nes-compiler
         CompilationRequest.cpp
         CompilationResult.cpp
         CompilerFlags.cpp
+        ExternalAPI.cpp
         SourceCode.cpp
         File.cpp
         CompilationCache.cpp
