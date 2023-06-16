@@ -77,7 +77,6 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
-    std::condition_variable cv;
 
 };
 }// namespace NES::Runtime::Execution::Operators
