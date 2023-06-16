@@ -63,7 +63,10 @@ class FixedPagesLinkedList {
     std::string getStatistics();
 
   private:
-    size_t pos;
+
+    uint8_t* insertOnParticularPage(size_t position);
+
+    std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
@@ -73,6 +76,9 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
+    std::atomic<bool> insertInProgress;
+    std::condition_variable cv;
+
 };
 }// namespace NES::Runtime::Execution::Operators
 

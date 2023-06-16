@@ -41,29 +41,88 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
 
 uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
     //try to insert on current Page
-    uint8_t* retPointer = pages[pos]->append(hash);
-    if (retPointer != nullptr) {
-        return retPointer;
+    size_t oldPos = pos;
+    uint8_t* retPointer = nullptr;
+    if (pages[pos] != nullptr) {
+        retPointer = pages[pos]->append(hash);
     } else {
-        size_t oldPos = pos;
-        std::unique_lock<std::recursive_mutex> lock(pageAddMutex);
-        if (pos != oldPos) {
-            //this means somebody else already allocated a new page
-            return appendConcurrent(hash);
-        }
-
-        if (pos + 1 >= pages.size()) {
-            //we need a new page
-            auto ptr = fixedPagesAllocator.getNewPage(pageSize);
-            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
-        } else {
-            //there is a free page left
-        }
-        retPointer = pages[++pos]->append(hash);
+        return nullptr;
     }
 
-    return retPointer;
+    if (retPointer == nullptr) {
+        bool expected = false;
+        if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed)) {
+            if (oldPos != pos) {
+                NES_ERROR("something happened in the meantime " << hash << " thread=" << std::this_thread::get_id());
+                insertInProgress = false;
+                return nullptr;
+            }
+            //only one thread wins and does the following
+            if (pos + 1 >= pages.size()) {
+                NES_ERROR("create new page " << hash << " thread=" << std::this_thread::get_id());
+                //we need a new page
+                auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+                pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+            } else {
+                //there is a free page left
+                NES_ERROR("use existing page " << hash << " thread=" << std::this_thread::get_id());
+            }
+
+            //this thread is the first to insert on the new page so it is guaranteed to succeed
+            retPointer = pages[pos + 1]->append(hash);
+            pos++;
+            insertInProgress = false;
+            return retPointer;
+        } else {
+            //all other threads spin here to wait until the new page is added and they can access it
+            while (insertInProgress) {
+            }
+        }
+    } else {
+        //got valid pointer
+        return retPointer;
+    }
+    return nullptr;
 }
+//
+//
+//uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
+//    //try to insert on current Page
+//    size_t oldPos = pos;
+//    //    NES_ERROR("try insert page pos " << pos << hash << " thread=" << std::this_thread::get_id());
+//    uint8_t* retPointer = pages[pos]->append(hash);
+//    if (retPointer != nullptr) {
+//        //        NES_ERROR("Return valid Pointer " << hash);
+//        return retPointer;
+//    }
+//
+//    if (insertInProgress) {
+//        return nullptr;
+//    }
+//
+//    //this means the current page is full
+//    bool expected = false;
+//    //One thread must insert
+//    if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed)) {
+//        if (pos + 1 >= pages.size()) {
+//            NES_ERROR("create new page " << hash << " thread=" << std::this_thread::get_id());
+//
+//            //we need a new page
+//            auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+//            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+//        } else {
+//            //there is a free page left
+//            NES_ERROR("use existing page " << hash << " thread=" << std::this_thread::get_id());
+//        }
+//
+//        pos++;
+//        insertInProgress = false;
+//        return nullptr;
+//    } else {
+//        //the looser just returns
+//        return nullptr;
+//    }
+//}
 
 const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
@@ -71,7 +130,7 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
                                            size_t sizeOfRecord,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt)
-    : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
+    : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize), insertInProgress(false) {
 
     //pre allocate pages
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {

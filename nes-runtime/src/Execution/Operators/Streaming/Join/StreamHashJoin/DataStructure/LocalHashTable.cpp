@@ -40,7 +40,12 @@ uint8_t* LocalHashTable::insert(uint64_t key) const {
     if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
         return buckets[getBucketPos(hashedKey)]->append(hashedKey);
     } else {
-        return buckets[getBucketPos(hashedKey)]->appendConcurrent(hashedKey);
+        while (true) {
+            auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrent(hashedKey);
+            if (entry != nullptr) {
+                return entry;
+            }
+        }
     }
 }
 

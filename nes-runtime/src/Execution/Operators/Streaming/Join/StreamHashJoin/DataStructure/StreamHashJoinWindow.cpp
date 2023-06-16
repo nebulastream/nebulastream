@@ -16,6 +16,10 @@
 namespace NES::Runtime::Execution {
 
 Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
+    if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL) {
+        index = 0;
+    }
+
     if (leftSide) {
         index = index % localHashTableLeftSide.size();
         return localHashTableLeftSide[index].get();
@@ -61,17 +65,34 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
       rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 
-    //TODO they all take the same allocator
-    for (auto i = 0UL; i < numberOfWorker; ++i) {
+    if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
+
+        //TODO they all take the same allocator
+        for (auto i = 0UL; i < numberOfWorker; ++i) {
+            localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+                                                                                            numPartitions,
+                                                                                            fixedPagesAllocator,
+                                                                                            pageSize,
+                                                                                            preAllocPageSizeCnt,
+                                                                                            joinStrategy));
+        }
+
+        for (auto i = 0UL; i < numberOfWorker; ++i) {
+            localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
+                                                                                             numPartitions,
+                                                                                             fixedPagesAllocator,
+                                                                                             pageSize,
+                                                                                             preAllocPageSizeCnt,
+                                                                                             joinStrategy));
+        }
+    } else {
         localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
                                                                                         numPartitions,
                                                                                         fixedPagesAllocator,
                                                                                         pageSize,
                                                                                         preAllocPageSizeCnt,
                                                                                         joinStrategy));
-    }
 
-    for (auto i = 0UL; i < numberOfWorker; ++i) {
         localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
                                                                                          numPartitions,
                                                                                          fixedPagesAllocator,
