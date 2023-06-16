@@ -11,22 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
-#define NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
-#include <memory>
-#include <string>
+
+#include <Compiler/ExternalAPI.hpp>
+
 namespace NES::Compiler {
 
-class SourceCode;
-enum class Language;
-class DynamicObject;
-class LanguageCompiler;
-class CompilationResult;
-class CompilationRequest;
-class LanguageCompiler;
-class JITCompiler;
-class ExternalAPI;
-
-}// namespace NES::Compiler
-
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFORWARDDECLARATIONS_HPP_
+} // namespace NES::Compiler

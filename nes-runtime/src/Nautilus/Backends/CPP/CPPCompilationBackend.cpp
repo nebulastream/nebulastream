@@ -38,12 +38,15 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     auto compiler = Compiler::CPPCompiler::create();
     auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, code);
 
+    std::vector<std::shared_ptr<Compiler::ExternalAPI>> externalApis;
+
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "cppQuery",
                                                         options.isDebug(),
                                                         false,
                                                         options.isOptimize(),
-                                                        options.isDebug());
+                                                        options.isDebug(),
+                                                        externalApis);
     auto res = compiler->compile(request);
     timer.snapshot("CCPCompilation");
     return std::make_unique<CPPExecutable>(res.getDynamicObject());
