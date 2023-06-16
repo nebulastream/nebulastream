@@ -121,6 +121,17 @@ class CompilationOptions {
      */
     uint8_t getOptimizationLevel() const;
 
+    /**
+     * @brief Enable/disable the inclusion of CUDA.
+     */
+    void useCUDA(bool cuda);
+
+    /**
+     * @brief Indicate if we are using CUDA.
+     * @return bool
+     */
+    bool usingCUDA() const;
+
   private:
     std::string identifier;
     std::string dumpOutputPath;
@@ -131,6 +142,7 @@ class CompilationOptions {
     bool optimize = false;
     bool debug = true;
     bool proxyInlining = false;
+    bool cuda = false;
     uint8_t optimizationLevel = 1;
 };
 }// namespace NES::Nautilus

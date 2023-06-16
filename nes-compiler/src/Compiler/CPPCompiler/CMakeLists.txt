@@ -14,4 +14,5 @@
 add_source_files(nes-compiler
         CPPCompiler.cpp
         CPPCompilerFlags.cpp
+        CUDAPlatform.cpp
 )

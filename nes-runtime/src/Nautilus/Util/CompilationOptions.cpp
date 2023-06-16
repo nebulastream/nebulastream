@@ -50,4 +50,7 @@ void CompilationOptions::setOptimizationLevel(const uint8_t optimizationLevel) {
 };
 uint8_t CompilationOptions::getOptimizationLevel() const { return optimizationLevel; };
 
+void CompilationOptions::useCUDA(bool cuda) { CompilationOptions::cuda = cuda; }
+bool CompilationOptions::usingCUDA() const { return cuda; }
+
 }// namespace NES::Nautilus
