@@ -267,15 +267,15 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -333,15 +333,15 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -399,15 +399,15 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -803,35 +803,31 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
             // map should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId);
             ASSERT_EQ(querySubPlans.size(), 3U);
-            //Assertion for first subquery plan
-            auto querySubPlan1 = querySubPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = querySubPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
 
-            //Assertion for second subquery plan
-            auto querySubPlan2 = querySubPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = querySubPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+            for (const auto& querySubPlan : querySubPlans) {
 
-            //Assertion for third subquery plan
-            auto querySubPlan3 = querySubPlans[2U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan3 = querySubPlan3->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan3.size(), 1U);
-            OperatorNodePtr rootOperator3 = rootOperatorsForPlan3[0];
-            ASSERT_EQ(rootOperator3->getId(), queryPlan3->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator3->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator3->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator3->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                //Assertion for all subquery plans
+                std::vector<OperatorNodePtr> rootOperatorsForPlan = querySubPlan->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan.size(), 1U);
+                OperatorNodePtr rootOperator = rootOperatorsForPlan[0];
+
+                if (rootOperator->getId() == queryPlan1->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                } else if (rootOperator->getId() == queryPlan2->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                } else if (rootOperator->getId() == queryPlan3->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                } else{
+                    //Sub query plan should contain for one of the three sink operator as its root
+                    FAIL();
+                }
+            }
         }
     }
 }
