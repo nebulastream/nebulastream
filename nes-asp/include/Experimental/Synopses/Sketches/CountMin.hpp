@@ -90,8 +90,7 @@ class CountMin : public AbstractSynopsis {
      * @param buffer: Current record buffer
      */
     bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
-                                 Runtime::Execution::ExecutionContext &ctx,
-                                 Runtime::Execution::RecordBuffer buffer) override;
+                                 Runtime::Execution::ExecutionContext &ctx) override;
 
   private:
     const uint64_t numberOfRows;

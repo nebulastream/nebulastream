@@ -115,8 +115,7 @@ void EquiWidthOneDimensionalHistogram::setup(const uint64_t handlerIndex, Runtim
 
 bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(const uint64_t handlerIndex,
                                                                const Runtime::Execution::Operators::Operator* op,
-                                                               Runtime::Execution::ExecutionContext& ctx,
-                                                               const Runtime::Execution::RecordBuffer) {
+                                                               Runtime::Execution::ExecutionContext& ctx) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
     auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
