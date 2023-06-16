@@ -37,11 +37,19 @@ class FixedPagesLinkedList {
                                   size_t preAllocPageSizeCnt);
 
     /**
-     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is NOT thread safe
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
     uint8_t* append(const uint64_t hash);
+
+
+    /**
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe
+     * @param hash
+     * @return Pointer to a free memory space where to write the data
+     */
+    uint8_t* appendConcurrent(const uint64_t hash);
 
     /**
      * @brief Returns all pages belonging to this list
@@ -60,7 +68,7 @@ class FixedPagesLinkedList {
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
-
+    std::recursive_mutex pageAddMutex;
     //used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;

@@ -29,17 +29,13 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t ) {
-    if (currentPos >= capacity) {
+uint8_t* FixedPage::append(const uint64_t) {
+    currentPos++;
+    if (currentPos > capacity) {
         return nullptr;
     }
-
-    if (bloomFilter == nullptr) {
-        NES_ERROR("Bloomfilter become empty")
-    }
-//    bloomFilter->add(hash);
-    uint8_t* ptr = &data[currentPos * sizeOfRecord];
-    currentPos++;
+    //    bloomFilter->add(hash);
+    uint8_t* ptr = &data[currentPos - 1 * sizeOfRecord];
     return ptr;
 }
 
@@ -56,8 +52,9 @@ uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeO
 size_t FixedPage::size() const { return currentPos; }
 
 FixedPage::FixedPage(FixedPage&& otherPage)
-    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos), capacity(otherPage.capacity),
-      bloomFilter(std::move(otherPage.bloomFilter)) {
+    //    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos), capacity(otherPage.capacity),
+    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos.load()),
+      capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
     otherPage.sizeOfRecord = 0;
     otherPage.data = nullptr;
     otherPage.currentPos = 0;
@@ -76,15 +73,16 @@ FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
 void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
     std::swap(lhs.data, rhs.data);
-    std::swap(lhs.currentPos, rhs.currentPos);
+    lhs.currentPos.store(rhs.currentPos.load());
+    //    std::swap(lhs.currentPos, rhs.currentPos);
     std::swap(lhs.capacity, rhs.capacity);
     std::swap(lhs.bloomFilter, rhs.bloomFilter);
 }
 
 FixedPage::FixedPage(FixedPage* otherPage)
-    : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
+    //    : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
+    : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos.load()),
       capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
     otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
-    //    otherPage->currentPos = 0;
 }
 }// namespace NES::Runtime::Execution::Operators

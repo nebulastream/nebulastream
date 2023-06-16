@@ -46,7 +46,8 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
                                                                 ptr->getTotalSizeForDataStructures(),
                                                                 ptr->getPageSize(),
                                                                 ptr->getPreAllocPageSizeCnt(),
-                                                                ptr->getNumPartitions());
+                                                                ptr->getNumPartitions(),
+                                                                joinStrategy);
         windows.emplace_back(newWindow);
         NES_DEBUG2("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         return newWindow;

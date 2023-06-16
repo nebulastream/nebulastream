@@ -52,7 +52,8 @@ class StreamHashJoinWindow : public StreamWindow {
                                   size_t maxHashTableSize,
                                   size_t pageSize,
                                   size_t preAllocPageSizeCnt,
-                                  size_t numPartitions);
+                                  size_t numPartitions,
+                                  JoinStrategy joinStrategy);
 
     ~StreamHashJoinWindow() = default;
 
@@ -108,6 +109,7 @@ class StreamHashJoinWindow : public StreamWindow {
     Operators::SharedJoinHashTable rightSideHashTable;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
     std::atomic<uint64_t> partitionFinishedCounter;
+    JoinStrategy joinStrategy;
 };
 
 }// namespace NES::Runtime::Execution

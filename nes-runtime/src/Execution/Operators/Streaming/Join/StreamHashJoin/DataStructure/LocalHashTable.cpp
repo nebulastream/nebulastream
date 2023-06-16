@@ -24,8 +24,9 @@ LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                size_t numPartitions,
                                FixedPagesAllocator& fixedPagesAllocator,
                                size_t pageSize,
-                               size_t preAllocPageSizeCnt)
-    : mask(numPartitions - 1), numPartitions(numPartitions){
+                               size_t preAllocPageSizeCnt,
+                               JoinStrategy joinStrategy)
+    : mask(numPartitions - 1), numPartitions(numPartitions), joinStrategy(joinStrategy) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
         buckets.emplace_back(
@@ -36,7 +37,11 @@ LocalHashTable::LocalHashTable(size_t sizeOfRecord,
 uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_DEBUG2("into key={} bucket={}", key, getBucketPos(hashedKey));
-    return buckets[getBucketPos(hashedKey)]->append(hashedKey);
+    if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
+        return buckets[getBucketPos(hashedKey)]->append(hashedKey);
+    } else {
+        return buckets[getBucketPos(hashedKey)]->appendConcurrent(hashedKey);
+    }
 }
 
 size_t LocalHashTable::getBucketPos(uint64_t hash) const {
@@ -48,7 +53,6 @@ size_t LocalHashTable::getBucketPos(uint64_t hash) const {
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
-
     return buckets[bucketPos].get();
 }
 

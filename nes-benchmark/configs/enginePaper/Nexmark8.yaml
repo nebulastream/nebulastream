@@ -24,6 +24,7 @@ preAllocPageCnt: 32
 maxHashTableSize: 34359738368
 #maxHashTableSize: 17179869184
 joinStrategy: HASH_JOIN_LOCAL
+#joinStrategy: HASH_JOIN_GLOBAL
 #joinStrategy: NESTED_LOOP_JOIN
 #
 logicalSources:

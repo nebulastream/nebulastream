@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -44,7 +45,8 @@ class LocalHashTable {
                             size_t numPartitions,
                             FixedPagesAllocator& fixedPagesAllocator,
                             size_t pageSize,
-                            size_t preAllocPageSizeCnt);
+                            size_t preAllocPageSizeCnt,
+                            JoinStrategy joinStrategy);
 
     LocalHashTable(const LocalHashTable&) = delete;
 
@@ -89,6 +91,7 @@ class LocalHashTable {
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
     size_t numPartitions;
+    JoinStrategy joinStrategy;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_

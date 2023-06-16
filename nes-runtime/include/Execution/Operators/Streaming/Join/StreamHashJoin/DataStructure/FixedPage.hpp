@@ -92,7 +92,8 @@ class FixedPage {
   private:
     size_t sizeOfRecord;
     uint8_t* data;
-    size_t currentPos;
+    std::atomic<size_t> currentPos;
+//    size_t currentPos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };

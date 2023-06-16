@@ -54,18 +54,21 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t maxHashTableSize,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
-                                           size_t numPartitions)
+                                           size_t numPartitions,
+                                           JoinStrategy joinStrategy)
     : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
       leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
       rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
-      partitionFinishedCounter(numPartitions) {
+      partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 
+    //TODO they all take the same allocator
     for (auto i = 0UL; i < numberOfWorker; ++i) {
         localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
                                                                                         numPartitions,
                                                                                         fixedPagesAllocator,
                                                                                         pageSize,
-                                                                                        preAllocPageSizeCnt));
+                                                                                        preAllocPageSizeCnt,
+                                                                                        joinStrategy));
     }
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {
@@ -73,7 +76,8 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                                                                          numPartitions,
                                                                                          fixedPagesAllocator,
                                                                                          pageSize,
-                                                                                         preAllocPageSizeCnt));
+                                                                                         preAllocPageSizeCnt,
+                                                                                         joinStrategy));
     }
     NES_DEBUG2("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
                "sizeOfRecordLeft={} sizeOfRecordRight={}",

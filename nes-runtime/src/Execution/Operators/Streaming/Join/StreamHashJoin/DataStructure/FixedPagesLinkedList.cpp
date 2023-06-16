@@ -18,18 +18,48 @@
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
+    //try to insert on current Page
     uint8_t* retPointer = pages[pos]->append(hash);
+
     //check page is full
     if (retPointer == nullptr) {
         pageFullCnt++;
         if (++pos >= pages.size()) {
+            //we need a new page
             allocateNewPageCnt++;
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
             pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
         } else {
+            //we still have an empty page left
             emptyPageStillExistsCnt++;
         }
         retPointer = pages[pos]->append(hash);
+    }
+
+    return retPointer;
+}
+
+uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
+    //try to insert on current Page
+    uint8_t* retPointer = pages[pos]->append(hash);
+    if (retPointer != nullptr) {
+        return retPointer;
+    } else {
+        size_t oldPos = pos;
+        std::unique_lock<std::recursive_mutex> lock(pageAddMutex);
+        if (pos != oldPos) {
+            //this means somebody else already allocated a new page
+            return appendConcurrent(hash);
+        }
+
+        if (pos + 1 >= pages.size()) {
+            //we need a new page
+            auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+        } else {
+            //there is a free page left
+        }
+        retPointer = pages[++pos]->append(hash);
     }
 
     return retPointer;
