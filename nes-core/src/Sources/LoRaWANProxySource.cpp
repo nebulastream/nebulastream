@@ -7,10 +7,51 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/LoRaWANProxySource.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/UtilityFunctions.hpp>
+
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <Util/Common.hpp>
 #include <utility>
+
+// some utility function shamelessly taken from https://stackoverflow.com/a/34571089
+static std::string base64_encode(const std::string &in) {
+
+    std::string out;
+
+    int val = 0, valb = -6;
+    for (unsigned char c : in) {
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(val>>valb)&0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb>-6) out.push_back("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[((val<<8)>>(valb+8))&0x3F]);
+    while (out.size()%4) out.push_back('=');
+    return out;
+}
+
+static std::string base64_decode(const std::string &in) {
+
+    std::string out;
+
+    std::vector<int> T(256,-1);
+    for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
+
+    int val=0, valb=-8;
+    for (unsigned char c : in) {
+        if (T[c] == -1) break;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            out.push_back(char((val>>valb)&0xFF));
+            valb -= 8;
+        }
+    }
+    return out;
+}
+
 
 namespace NES {
 
@@ -18,7 +59,7 @@ LoRaWANProxySource::NetworkServer::NetworkServer(const std::string& url,
                                                  const std::string& user,
                                                  const std::string& password,
                                                  const std::string& appId,
-                                                 std::vector<std::string>& deviceEUIs)
+                                                 const std::vector<std::string>& deviceEUIs)
     : url(url), user(user), password(password), appId(appId), deviceEUIs(deviceEUIs) {}
 
 #pragma region chirpstack
@@ -26,7 +67,7 @@ LoRaWANProxySource::ChirpStackServer::ChirpStackServer(const std::string& url,
                                                        const std::string& user,
                                                        const std::string& password,
                                                        const std::string& appId,
-                                                       std::vector<std::string>& deviceEUIs)
+                                                       const std::vector<std::string>& deviceEUIs)
     : NetworkServer(url, user,password, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("application/" + appId),
       topicAll(topicBase + "/#"), topicDevice(topicBase + "/device"), topicReceiveSuffix("/event/up"),
       topicSendSuffix("/command/down"), topicAllDevicesReceive(topicDevice + "/+" + topicReceiveSuffix) {}
@@ -128,7 +169,7 @@ EndDeviceProtocol::Output LoRaWANProxySource::ChirpStackServer::receiveData() {
             if (!js.contains("data")) {
                 NES_WARNING("LoRaWANProxySource: parsed json does not contain data field");
             } else {
-                output.ParseFromString(Util::base64Decode(js["data"]));
+                output.ParseFromString(base64_decode(js["data"]));
             }
         } catch (nlohmann::json::parse_error& ex) {
             NES_WARNING("LoRaWANProxySource: JSON parse error " << ex.what());
@@ -138,7 +179,7 @@ EndDeviceProtocol::Output LoRaWANProxySource::ChirpStackServer::receiveData() {
 }
 
 bool LoRaWANProxySource::ChirpStackServer::sendMessage(EndDeviceProtocol::Message message) {
-    auto pbEncoded = Util::base64Encode(message.SerializeAsString());
+    auto pbEncoded = base64_encode(message.SerializeAsString());
 
     for (const auto& devEUI : deviceEUIs) {
         //JSON payload must conform to:
@@ -160,7 +201,7 @@ bool LoRaWANProxySource::ChirpStackServer::sendMessage(EndDeviceProtocol::Messag
     }
     return true;//TODO: Handle errors
 }
-LoRaWANProxySource::ChirpStackServer::~ChirpStackServer() {}
+LoRaWANProxySource::ChirpStackServer::~ChirpStackServer() = default;
 LoRaWANProxySource::ChirpStackServer::ChirpStackEvent LoRaWANProxySource::ChirpStackServer::strToEvent(const std::string& s) {
     return magic_enum::enum_cast<ChirpStackEvent>(s).value();
 }
@@ -171,12 +212,11 @@ LoRaWANProxySource::TheThingsNetworkServer::TheThingsNetworkServer(const std::st
                                                                    const std::string& user,
                                                                    const std::string& password,
                                                                    const std::string& appId,
-                                                                   std::vector<std::string>& deviceEUIs,
-                                                                   const std::string& tenantId)
-    : NetworkServer(url, user, password, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("v3/" + appId + "@" + tenantId),
+                                                                   const std::vector<std::string>& deviceEUIs)
+    : NetworkServer(url, user, password, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("v3/" + user),
       topicAll(topicBase + "/#"), topicDevice(topicBase + "/devices"), topicReceiveSuffix("/up"), topicSendSuffix("/down/push"),
       topicAllDevicesReceive(topicDevice + "/+" + topicReceiveSuffix) {}
-LoRaWANProxySource::TheThingsNetworkServer::~TheThingsNetworkServer() {}
+LoRaWANProxySource::TheThingsNetworkServer::~TheThingsNetworkServer() = default;
 //might be refactored out
 bool LoRaWANProxySource::TheThingsNetworkServer::isConnected() { return client.is_connected(); }
 bool LoRaWANProxySource::TheThingsNetworkServer::connect() {
@@ -216,6 +256,10 @@ bool LoRaWANProxySource::TheThingsNetworkServer::connect() {
             }
         } catch (const mqtt::exception& error) {
             NES_ERROR("LoRaWANProxySource::connect: " << error);
+            NES_ERROR(error.what());
+            NES_ERROR(error.to_string());
+            NES_ERROR(error.get_message());
+            NES_ERROR(error.get_reason_code_str());
             return false;
         }
     }
@@ -253,15 +297,14 @@ EndDeviceProtocol::Output LoRaWANProxySource::TheThingsNetworkServer::receiveDat
     auto output = EndDeviceProtocol::Output();
     auto count = 0;
     while (true) {
-        mqtt::const_message_ptr msg;
-        auto msgReceived = client.try_consume_message_for(&msg, std::chrono::seconds(1));
+        auto msgReceived = client.consume_message();
         if (!msgReceived) {
             NES_TRACE("no messages received")
             break;//Exit if no new messages
         }
         ++count;
-        auto rcvStr = msg->get_payload_str();
-        std::string rcvTopic = msg->get_topic();
+        auto rcvStr = msgReceived->get_payload_str();
+        std::string rcvTopic = msgReceived->get_topic();
         NES_TRACE("Received msg no. " << count << " on topic: \"" << rcvTopic << "\" with payload: \"" << rcvStr << "\"")
 
         // v3/{application id}@{tenant id}/devices/{device id}/EVENT
@@ -278,7 +321,7 @@ EndDeviceProtocol::Output LoRaWANProxySource::TheThingsNetworkServer::receiveDat
             } else if (!js["uplink_message"].contains("frm_payload")) {
                 NES_WARNING("LoRaWANProxySource: parsed json does not contain uplink_message.frm_payload field");
             } else {
-                output.ParseFromString(Util::base64Decode(js["uplink_message"]["frm_payload"]));
+                output.ParseFromString(base64_decode(js["uplink_message"]["frm_payload"]));
             }
 
         } catch (nlohmann::json::parse_error& ex) {
@@ -290,9 +333,10 @@ EndDeviceProtocol::Output LoRaWANProxySource::TheThingsNetworkServer::receiveDat
 }
 
 bool LoRaWANProxySource::TheThingsNetworkServer::sendMessage(EndDeviceProtocol::Message message) {
-    auto pbEncoded = Util::base64Encode(message.SerializeAsString());
+    auto pbEncoded = base64_encode(message.SerializeAsString());
 
     for (const auto& devEUI : deviceEUIs) {
+        NES_DEBUG(devEUI);
         //JSON payload must conform to:
         //        {
         //            "downlinks": [{
@@ -341,15 +385,15 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                  executableSuccessors),
       sourceConfig(sourceConfig),
       server(*new TheThingsNetworkServer(sourceConfig->getUrl()->getValue(), sourceConfig->getUserName()->getValue(), sourceConfig->getPassword()->getValue(), sourceConfig->getAppId()->getValue(), sourceConfig->getDeviceEUIs()->getValue())) {
-    topicBase = "application/" + sourceConfig->getAppId()->getValue();
-    topicAll = topicBase + "/#";
-    topicDevice = topicBase + "/device";
-    topicReceiveSuffix = "/event/up";
-    topicSendSuffix = "/command/down";
-    topicAllDevicesReceive = topicDevice + "/+" + topicReceiveSuffix;
-    capath = sourceConfig->getCapath()->getValue();
-    certpath = sourceConfig->getCertpath()->getValue();
-    keypath = sourceConfig->getKeypath()->getValue();
+//    topicBase = "application/" + sourceConfig->getAppId()->getValue();
+//    topicAll = topicBase + "/#";
+//    topicDevice = topicBase + "/device";
+//    topicReceiveSuffix = "/event/up";
+//    topicSendSuffix = "/command/down";
+//    topicAllDevicesReceive = topicDevice + "/+" + topicReceiveSuffix;
+//    capath = sourceConfig->getCapath()->getValue();
+//    certpath = sourceConfig->getCertpath()->getValue();
+//    keypath = sourceConfig->getKeypath()->getValue();
 
     //region initialize parser
     //    std::vector<std::string> schemaKeys;
@@ -426,7 +470,7 @@ bool LoRaWANProxySource::connect() {
         //        }
 
         if (server.isConnected()) {
-            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicAll);
+            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: ");
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": connected");
 
             NES_DEBUG("Sending Queries...");
@@ -459,45 +503,45 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
     NES_DEBUG("LoRaWANProxySource " << this << ": receiveData");
     auto buffer = allocateBuffer();
     int count = 0;
-    if (connect()) {//connects if not connected, or return true if already connected. Might be bad design
-        NES_TRACE("Connected and listening for mqtt messages for 1 sec")
-        auto output = server.receiveData();
-        for (const auto& queryResponse : output.responses()) {
-            auto id = queryResponse.id();
-            auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
-            //TODO: actually use the resulttype
-            auto resultArray = queryResponse.response();
-            auto tupCount = buffer.getNumberOfTuples();
-            for (int i = 0; i < resultArray.size(); ++i) {
-                auto result = resultArray[i];
-                auto bufferCell = buffer[tupCount][i];
-                if (result.has__int8())
-                    bufferCell.write<int8_t>(result._int8());
-                if (result.has__int16())
-                    bufferCell.write<int16_t>(result._int16());
-                if (result.has__int32())
-                    bufferCell.write<int32_t>(result._int32());
-                if (result.has__int64())
-                    bufferCell.write<int64_t>(result._int64());
+    connect();//connects if not connected, or return true if already connected. Might be bad design
+    NES_TRACE("Connected and listening for mqtt messages for 1 sec")
+    auto output = server.receiveData();
+    for (const auto& queryResponse : output.responses()) {
+        auto id = queryResponse.id();
+        auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
+        //TODO: actually use the resulttype
+        auto resultArray = queryResponse.response();
+        auto tupCount = buffer.getNumberOfTuples();
+        for (int i = 0; i < resultArray.size(); ++i) {
+            auto result = resultArray[i];
+            auto bufferCell = buffer[tupCount][i];
+            if (result.has__int8())
+                bufferCell.write<int8_t>(result._int8());
+            if (result.has__int16())
+                bufferCell.write<int16_t>(result._int16());
+            if (result.has__int32())
+                bufferCell.write<int32_t>(result._int32());
+            if (result.has__int64())
+                bufferCell.write<int64_t>(result._int64());
 
-                if (result.has__uint8())
-                    bufferCell.write<u_int8_t>(result._uint8());
-                if (result.has__uint16())
-                    bufferCell.write<u_int16_t>(result._uint16());
-                if (result.has__uint32())
-                    bufferCell.write<u_int32_t>(result._uint32());
-                if (result.has__uint64())
-                    bufferCell.write<u_int64_t>(result._uint64());
+            if (result.has__uint8())
+                bufferCell.write<u_int8_t>(result._uint8());
+            if (result.has__uint16())
+                bufferCell.write<u_int16_t>(result._uint16());
+            if (result.has__uint32())
+                bufferCell.write<u_int32_t>(result._uint32());
+            if (result.has__uint64())
+                bufferCell.write<u_int64_t>(result._uint64());
 
-                if (result.has__float())
-                    bufferCell.write<float_t>(result._float());
-                if (result.has__double())
-                    bufferCell.write<float_t>(result._double());
-            }
-            buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
+            if (result.has__float())
+                bufferCell.write<float_t>(result._float());
+            if (result.has__double())
+                bufferCell.write<float_t>(result._double());
         }
-        ++count;
+        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
     }
+    ++count;
+
     buffer.setNumberOfTuples(count);
     return buffer.getBuffer();
 }

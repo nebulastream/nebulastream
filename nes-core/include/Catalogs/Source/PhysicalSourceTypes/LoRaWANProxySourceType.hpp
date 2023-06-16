@@ -24,6 +24,7 @@ using LoRaWANProxySourceTypePtr = std::shared_ptr<LoRaWANProxySourceType>;
 using EDQueryMapPtr = std::shared_ptr<std::map<QueryId, std::shared_ptr<EndDeviceProtocol::Query>>>;
 class LoRaWANProxySourceType : public PhysicalSourceType {
   public:
+    ~LoRaWANProxySourceType() noexcept override = default;
     /**
      * @brief create an LoRaWANProxySourceTypePtr object
      * @param sourceConfigMap inputted config options
@@ -103,7 +104,6 @@ class LoRaWANProxySourceType : public PhysicalSourceType {
     Configurations::StringConfigOption certpath;
     Configurations::StringConfigOption keypath;
 
-  private:
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> deviceEUIs;
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> sensorFields;
     EDQueryMapPtr queries;

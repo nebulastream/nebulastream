@@ -67,7 +67,11 @@ class LoRaWANProxySource : public DataSource {
     //Classes to handle network communication
     class NetworkServer {
       public:
-        NetworkServer(const std::string&, const std::string&, const std::string&, const std::string&, std::vector<std::string>&);
+        NetworkServer(const std::string& url,
+                      const std::string& user,
+                      const std::string& password,
+                      const std::string& appId,
+                      const std::vector<std::string>& deviceEUIs);
         virtual ~NetworkServer() = default;
         virtual bool connect() = 0;
         virtual bool isConnected() = 0;
@@ -76,11 +80,11 @@ class LoRaWANProxySource : public DataSource {
         virtual bool sendMessage(EndDeviceProtocol::Message) = 0;
 
       protected:
-        std::string url;
-        std::string user;
-        std::string password;
-        std::string appId;
-        std::vector<std::string>& deviceEUIs;
+        const std::string url;
+        const std::string user;
+        const std::string password;
+        const std::string appId;
+        const std::vector<std::string> deviceEUIs;
     };
     class ChirpStackServer : public NetworkServer {
       private:
@@ -100,7 +104,7 @@ class LoRaWANProxySource : public DataSource {
                          const std::string& user,
                          const std::string& password,
                          const std::string& appId,
-                         std::vector<std::string>& deviceEUIs);
+                         const std::vector<std::string>& deviceEUIs);
         ~ChirpStackServer() override;
         bool connect() override;
         bool isConnected() override;
@@ -124,7 +128,7 @@ class LoRaWANProxySource : public DataSource {
                                const std::string& user,
                                const std::string& password,
                                const std::string& appId,
-                               std::vector<std::string>& deviceEUIs);
+                               const std::vector<std::string>& deviceEUIs);
         ~TheThingsNetworkServer() override;
 
         bool connect() override;
