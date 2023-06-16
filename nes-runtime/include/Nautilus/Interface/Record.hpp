@@ -33,7 +33,7 @@ class Record {
     explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
     ~Record() = default;
     Value<>& read(RecordFieldIdentifier fieldName);
-    void write(RecordFieldIdentifier fieldName, Value<>& value);
+    void write(RecordFieldIdentifier fieldName, const Value<>& value);
     uint64_t numberOfFields();
     bool hasField(RecordFieldIdentifier fieldName);
     std::vector<RecordFieldIdentifier> getAllFields();

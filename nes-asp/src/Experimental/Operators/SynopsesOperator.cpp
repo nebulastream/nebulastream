@@ -25,6 +25,7 @@ SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSyn
 void SynopsesOperator::execute(ExecutionContext& ctx, Record& record) const {
     // Retrieve operator state
     Runtime::Execution::Operators::OperatorState* state = nullptr;
+    // TODO if #3858 has been merged, then this might not be necessary anymore.
     if (hasLocalState) {
         state = ctx.getLocalState(this);
     }

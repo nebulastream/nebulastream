@@ -43,11 +43,11 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize, uint64_t number
 }
 
 
-void CountMin::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&, Nautilus::Record record,
-                         Runtime::Execution::Operators::OperatorState *pState) {
+void CountMin::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContext&, Nautilus::Record record,
+                             const Runtime::Execution::Operators::OperatorState *pState) {
 
     NES_ASSERT2_FMT(pState != nullptr, "Local state was null, but we expected it not to be null!");
-    auto localState = dynamic_cast<LocalCountMinState*>(pState);
+    auto localState = dynamic_cast<const LocalCountMinState*>(pState);
     auto& sketchArray = localState->sketchArray;
     auto& h3SeedsMemRef = localState->h3SeedsMemRef;
 
@@ -60,9 +60,9 @@ void CountMin::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&, Na
     }
 }
 
-std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex,
+std::vector<Runtime::TupleBuffer> CountMin::getApproximate(const uint64_t handlerIndex,
                                                            Runtime::Execution::ExecutionContext &ctx,
-                                                           std::vector<Nautilus::Value<>>& keys,
+                                                           const std::vector<Nautilus::Value<>>& keys,
                                                            Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -119,7 +119,7 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
     return retTupleBuffers;
 }
 
-void CountMin::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
+void CountMin::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandler,
                            Nautilus::Value<Nautilus::UInt64>(entrySize),
@@ -135,9 +135,9 @@ void CountMin::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext
     }
 }
 
-bool CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
+bool CountMin::storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
                                        Runtime::Execution::ExecutionContext &ctx,
-                                       Runtime::Execution::RecordBuffer) {
+                                       const Runtime::Execution::RecordBuffer) {
 
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, opHandler);

@@ -79,9 +79,9 @@ RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::Synopsis
     AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), entrySize(entrySize) {
 }
 
-void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+void RandomSampleWithoutReplacement::addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
                                                    Nautilus::Record record,
-                                                   Runtime::Execution::Operators::OperatorState*) {
+                                                   const Runtime::Execution::Operators::OperatorState*) {
 
     // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -99,9 +99,9 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
     }
 }
 
-std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
+std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate(const uint64_t handlerIndex,
                                                                                  Runtime::Execution::ExecutionContext& ctx,
-                                                                                 std::vector<Nautilus::Value<>>& keys,
+                                                                                 const std::vector<Nautilus::Value<>>& keys,
                                                                                  Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -169,7 +169,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
     return retTupleBuffers;
 }
 
-void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
+void RandomSampleWithoutReplacement::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
@@ -218,9 +218,9 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
     }
 }
 
-bool RandomSampleWithoutReplacement::storeLocalOperatorState(uint64_t, const Runtime::Execution::Operators::Operator*,
+bool RandomSampleWithoutReplacement::storeLocalOperatorState(const uint64_t, const Runtime::Execution::Operators::Operator*,
                                                              Runtime::Execution::ExecutionContext&,
-                                                             Runtime::Execution::RecordBuffer) {
+                                                             const Runtime::Execution::RecordBuffer) {
     // TODO this will be used in issue #3743
     return false;
 }

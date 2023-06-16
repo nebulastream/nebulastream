@@ -51,6 +51,8 @@ class SynopsesOperator : public ExecutableOperator {
 private:
     uint64_t handlerIndex;
     ASP::AbstractSynopsesPtr synopses;
+
+    // TODO if #3858 has been merged, then this might not be necessary anymore.
     mutable bool hasLocalState;
 };
 

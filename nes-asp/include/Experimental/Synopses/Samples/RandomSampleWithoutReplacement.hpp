@@ -42,7 +42,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
     /**
      * @brief Initializes the sample by calling the setup method of the operator handler
      */
-    void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) override;
+    void setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) override;
 
     /**
      * @brief Adds the record to this sample
@@ -51,8 +51,8 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param record: The record that should be processed.
      * @param pState: State that stores the local state
      */
-    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
-                       Runtime::Execution::Operators::OperatorState *pState) override;
+    void addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
+                       const Runtime::Execution::Operators::OperatorState *pState) override;
 
     /**
      * @brief Once we have finished building our sample, we can ask for an approximate
@@ -61,9 +61,9 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param keyValues
      * @return Record(s) with the approximation
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
+    std::vector<Runtime::TupleBuffer> getApproximate(const uint64_t handlerIndex,
                                                      Runtime::Execution::ExecutionContext& ctx,
-                                                     std::vector<Nautilus::Value<>>& keys,
+                                                     const std::vector<Nautilus::Value<>>& keys,
                                                      Runtime::BufferManagerPtr bufferManager) override;
     /**
      * @brief For now this does not store any local state and therefore returns False #3743
@@ -73,9 +73,9 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param buffer: RecordBuffer for this state
      * @return False
      */
-    bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+    bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                  Runtime::Execution::ExecutionContext &ctx,
-                                 Runtime::Execution::RecordBuffer buffer) override;
+                                 const Runtime::Execution::RecordBuffer buffer) override;
 
     /**
      * @brief Deconstructor
