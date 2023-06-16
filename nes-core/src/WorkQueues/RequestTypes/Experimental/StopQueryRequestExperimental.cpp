@@ -23,9 +23,11 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
 #include <string>
+
 namespace NES {
 
 StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,

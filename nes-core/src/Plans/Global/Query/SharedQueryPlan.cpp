@@ -18,9 +18,7 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,10 +53,8 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     for (const auto& sourceOperator : this->queryPlan->getLeafOperators()) {
         upstreamOperators.insert(sourceOperator);
     }
-    long epochInMilliSec =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    changeLog->addChangeLogEntry(epochInMilliSec,
-                                 Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
+    long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
@@ -178,12 +174,11 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             sinkOperators.insert(targetSinkOperator);
         }
 
-
         //add change log entry indicating the addition
-        long epochInMilliSec =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto now =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         changeLog->addChangeLogEntry(
-            epochInMilliSec,
+            now,
             Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
 
         NES_INFO2("{}", queryPlan->toString());
@@ -222,10 +217,9 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
         queryPlan->removeAsRootOperator(sinkOperator);
 
         //add change log entry indicating the addition
-        long epochInMilliSec =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        changeLog->addChangeLogEntry(epochInMilliSec,
-                                     Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
+        long now =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
 
     queryIdToSinkOperatorMap.erase(queryId);
@@ -299,10 +293,12 @@ void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::stri
 
 SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
 
-void SharedQueryPlan::setStatus(SharedQueryPlanStatus sharedQueryPlanStatus) {
-    this->sharedQueryPlanStatus = sharedQueryPlanStatus;
-}
+void SharedQueryPlan::setStatus(SharedQueryPlanStatus newStatus) { this->sharedQueryPlanStatus = newStatus; }
 
 PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
+
+void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
+    changeLog->updateProcessedChangeLogTimestamp(timestamp);
+}
 
 }// namespace NES

@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
 #include <Common/Identifiers.hpp>
-#include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
