@@ -74,6 +74,32 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
         entrySize = inputSchema->getSchemaSizeInBytes();
     }
 
+    std::pair<std::vector<Runtime::TupleBuffer>, SchemaPtr> fillRandomSample(const Parsing::Aggregation_Type& aggregationType,
+                                                                             const std::vector<Nautilus::Record>& inputRecords,
+                                                                             const std::vector<Nautilus::Value<>>& queryKeys) {
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
+                                                                                idString, aggregationString,
+                                                                                idString, approximateString);
+
+        // Creating aggregation config and the histogram
+        auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                            approximateString, timestampFieldName,
+                                                                            inputSchema, outputSchema);
+        RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
+
+        // Setting up the synopsis and creating the local operator state
+        randomSample.setup(handlerIndex, *executionContext);
+        auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
+        auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
+
+        // Inserting records
+        for (auto& record : inputRecords) {
+            randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
+        }
+        
+        return {randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager), outputSchema};
+    }
+
     Runtime::BufferManagerPtr bufferManager;
 
     // Input and output variables
@@ -125,33 +151,13 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
 
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    randomSample.setup(handlerIndex, *executionContext);
-    auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-    auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
-
-    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    
+    auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -174,33 +180,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestCount) {
 
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    randomSample.setup(handlerIndex, *executionContext);
-    auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-    auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
-
-    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    
+    auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -223,33 +209,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
 
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    randomSample.setup(handlerIndex, *executionContext);
-    auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-    auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
-
-    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    
+    auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -272,33 +238,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
 
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    randomSample.setup(handlerIndex, *executionContext);
-    auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-    auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
-
-    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    
+    auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -321,33 +267,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestSum) {
 
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    randomSample.setup(handlerIndex, *executionContext);
-    auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-    auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
-
-    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    
+    auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 

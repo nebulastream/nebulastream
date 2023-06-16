@@ -125,7 +125,10 @@ CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const 
     auto readFieldExpression = aggregationConfig.getReadFieldAggregationExpression();
     auto resultFieldIdentifier = aggregationConfig.fieldNameApproximate;
 
-
+    /**
+     * @brief For each aggregation type, we might have different keys mapped to the same column for each row. Therefore, we
+     * choose the combining aggregation function, such that we reduce the error.
+     */
     switch (aggregationType) {
         case Parsing::Aggregation_Type::MAX:
         case Parsing::Aggregation_Type::SUM:
@@ -136,6 +139,7 @@ CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const 
                                                                                              resultFieldIdentifier);
             break;
         }
+
         case Parsing::Aggregation_Type::MIN: {
             combineRowsApproximate = std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
                     inputType, finalType,
