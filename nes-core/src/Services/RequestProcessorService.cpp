@@ -34,7 +34,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>

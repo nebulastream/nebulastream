@@ -33,9 +33,6 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class SharedQueryPlanChangeLog;
-using SharedQueryPlanChangeLogPtr = std::shared_ptr<SharedQueryPlanChangeLog>;
-
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
@@ -170,18 +167,13 @@ class SharedQueryPlan {
      */
     std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>> getChangeLogEntries(Timestamp timestamp);
 
+    void updateProcessedChangeLogTimestamp(Timestamp timestamp);
+
     /**
      * @brief Get the hash based signature for the shared query plan
      * @return collection of hash based signatures
      */
     std::map<size_t, std::set<std::string>> getHashBasedSignature();
-
-    /**
-     * @brief Update the hash based signatures with new values
-     * @param hashValue: The hash value
-     * @param stringSignature: The string signature
-     */
-    void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
 
     /**
      * Get the status of the shared query plan
@@ -191,9 +183,9 @@ class SharedQueryPlan {
 
     /**
      * Set the status of the shared query plan
-     * @param sharedQueryPlanStatus : the status of the shared query plan
+     * @param newStatus : the status of the shared query plan
      */
-    void setStatus(SharedQueryPlanStatus sharedQueryPlanStatus);
+    void setStatus(SharedQueryPlanStatus newStatus);
 
     /**
      * @brief Get the placement strategy for the shared query plan
@@ -211,6 +203,13 @@ class SharedQueryPlan {
      * @return last upstream operators that are not removed
      */
     std::set<OperatorNodePtr> removeOperator(const OperatorNodePtr& operatorToRemove);
+
+    /**
+     * @brief Update the hash based signatures with new values
+     * @param hashValue: The hash value
+     * @param stringSignature: The string signature
+     */
+    void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
 
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;

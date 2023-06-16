@@ -62,7 +62,11 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     auto lineageType = queryPlan->getLineageType();
     NES_DEBUG2("QueryPlacementPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
-    for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(1)) {
+    // Get current time stamp
+    uint64_t nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
 
         //1. Fetch all upstream pinned operators
         auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
@@ -80,6 +84,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                                                                        lineageType,
                                                                        pinnedUpstreamOperators,
                                                                        pinnedDownStreamOperators);
+
         if (!success) {
             return false;
         }
