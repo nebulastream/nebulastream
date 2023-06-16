@@ -71,6 +71,39 @@ public:
                         ->addField(timestampFieldName, BasicType::UINT64);
     }
 
+    std::pair<std::vector<Runtime::TupleBuffer>, SchemaPtr> fillHistogram(const Parsing::Aggregation_Type& aggregationType,
+                                                                          const std::vector<Nautilus::Record>& inputRecords,
+                                                                          const std::vector<Nautilus::Value<>>& queryKeys,
+                                                                          const uint64_t entrySize) {
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
+                                                                                idString, aggregationString,
+                                                                                idString, approximateString);
+        outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+        outputSchema->addField(upperBoundBinName, BasicType::INT64);
+
+        // Creating aggregation config and the histogram
+        auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                            approximateString, timestampFieldName,
+                                                                            inputSchema, outputSchema);
+        EquiWidthOneDimensionalHistogram
+            histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                         lowerBoundBinName, upperBoundBinName);
+
+
+        // Setting up the synopsis and creating the local operator state
+        histSynopsis.setup(handlerIndex, *executionContext);
+        auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
+        auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
+        auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
+
+        // Inserting records
+        for (auto& record : inputRecords) {
+            histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
+        }
+
+        return { histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager), outputSchema};
+    }
+
     Runtime::BufferManagerPtr bufferManager;
 
     // Input and output variables
@@ -123,39 +156,14 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
 TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
     const auto entrySize = sizeof(double_t);
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
-    outputSchema->addField(upperBoundBinName, BasicType::INT64);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    EquiWidthOneDimensionalHistogram
-        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName);
-
-
-    // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, *executionContext);
-    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
-    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -189,38 +197,14 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestCount) {
 TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
     const auto entrySize = sizeof(double_t);
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
-    outputSchema->addField(upperBoundBinName, BasicType::INT64);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    EquiWidthOneDimensionalHistogram
-        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName);
-
-    // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, *executionContext);
-    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
-    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -253,39 +237,14 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestSum) {
 TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
     const auto entrySize = sizeof(double_t);
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
-    outputSchema->addField(upperBoundBinName, BasicType::INT64);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    EquiWidthOneDimensionalHistogram
-        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName);
-
-
-    // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, *executionContext);
-    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
-    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -318,38 +277,14 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
 TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
     const auto entrySize = sizeof(double_t);
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
-    outputSchema->addField(upperBoundBinName, BasicType::INT64);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    EquiWidthOneDimensionalHistogram
-        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName);
-
-    // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, *executionContext);
-    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
-    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -382,37 +317,14 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
 TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
     const auto entrySize = sizeof(double_t) * 2; // one for the count and one for the sum
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
-    outputSchema->addField(upperBoundBinName, BasicType::INT64);
-
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    EquiWidthOneDimensionalHistogram
-        histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName);
-
-    // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, *executionContext);
-    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
-    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
-    auto opState = std::make_unique<EquiWidthOneDimensionalHistogram::LocalBinsOperatorState>(bins);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        histSynopsis.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 

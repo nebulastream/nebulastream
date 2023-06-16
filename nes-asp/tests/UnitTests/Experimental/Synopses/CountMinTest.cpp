@@ -75,6 +75,35 @@ class CountMinTest : public Testing::NESBaseTest {
             ->addField(timestampFieldName, BasicType::UINT64);
     }
 
+    std::pair<std::vector<Runtime::TupleBuffer>, SchemaPtr> fillCountMinSketch(const Parsing::Aggregation_Type& aggregationType,
+                                                                               const std::vector<Nautilus::Record>& inputRecords,
+                                                                               const std::vector<Nautilus::Value<>>& queryKeys) {
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
+                                                                                idString, aggregationString,
+                                                                                idString, approximateString);
+
+        // Creating aggregation config and the histogram
+        auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
+                                                                            approximateString, timestampFieldName,
+                                                                            inputSchema, outputSchema);
+        CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
+
+
+        // Setting up the synopsis and creating the local operator state
+        countMin.setup(handlerIndex, *executionContext);
+        auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
+        auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
+        auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
+        auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
+
+        // Inserting records
+        for (auto& record : inputRecords) {
+            countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
+        }
+
+        return {countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager), outputSchema};
+    }
+
     Runtime::BufferManagerPtr bufferManager;
 
     // Input and output variables
@@ -129,36 +158,13 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
 
 TEST_F(CountMinTest, countMinTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
-
-
-    // Setting up the synopsis and creating the local operator state
-    countMin.setup(handlerIndex, *executionContext);
-    auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
-    auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
-    auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
-    auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-                                                Nautilus::Value<>((int64_t)4),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillCountMinSketch(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -182,36 +188,13 @@ TEST_F(CountMinTest, countMinTestCount) {
 
 TEST_F(CountMinTest, countMinTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
-
-
-    // Setting up the synopsis and creating the local operator state
-    countMin.setup(handlerIndex, *executionContext);
-    auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
-    auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
-    auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
-    auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
         Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillCountMinSketch(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -235,28 +218,6 @@ TEST_F(CountMinTest, countMinTestSum) {
 
 TEST_F(CountMinTest, countMinTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
-
-
-    // Setting up the synopsis and creating the local operator state
-    countMin.setup(handlerIndex, *executionContext);
-    auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
-    auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
-    auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
-    auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
 
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
@@ -264,7 +225,7 @@ TEST_F(CountMinTest, countMinTestMin) {
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillCountMinSketch(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -288,47 +249,15 @@ TEST_F(CountMinTest, countMinTestMin) {
 
 TEST_F(CountMinTest, countMinTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType,
-                                                                            *inputSchema,
-                                                                            idString,
-                                                                            aggregationString,
-                                                                            idString,
-                                                                            approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType,
-                                                                        idString,
-                                                                        aggregationString,
-                                                                        approximateString,
-                                                                        timestampFieldName,
-                                                                        inputSchema,
-                                                                        outputSchema);
-    CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
-
-    // Setting up the synopsis and creating the local operator state
-    countMin.setup(handlerIndex, *executionContext);
-    auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
-    auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
-    auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
-    auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
-
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {
-        Nautilus::Value<>((int64_t) 0),
-        Nautilus::Value<>((int64_t) 1),
-        Nautilus::Value<>((int64_t) 2),
-        Nautilus::Value<>((int64_t) 3),
-        Nautilus::Value<>((int64_t) 4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
-    auto dynamicBuffer =
-        Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0], outputSchema);
+    auto [approximateBuffers, outputSchema] = fillCountMinSketch(aggregationType, getInputData(*inputSchema), queryKeys);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
 
     // Checking for correctness
     EXPECT_EQ(dynamicBuffer[0][idString].read<int64_t>(), 0);
@@ -349,36 +278,13 @@ TEST_F(CountMinTest, countMinTestMax) {
 
 TEST_F(CountMinTest, countMinTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
-                                                                            idString, aggregationString,
-                                                                            idString, approximateString);
-
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
-                                                                        approximateString, timestampFieldName,
-                                                                        inputSchema, outputSchema);
-    CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
-
-
-    // Setting up the synopsis and creating the local operator state
-    countMin.setup(handlerIndex, *executionContext);
-    auto h3SeedsMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getH3SeedsRef());
-    auto sketchMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getSketchRef());
-    auto sketch = Nautilus::Interface::Fixed2DArrayRef(sketchMemRef, entrySize, numberOfCols);
-    auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, h3SeedsMemRef);
-
-    // Inserting records
-    for (auto& record : getInputData(*inputSchema)) {
-        countMin.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
-    }
-
     // Creating query keys for all histograms
     std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
         Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto [approximateBuffers, outputSchema] = fillCountMinSketch(aggregationType, getInputData(*inputSchema), queryKeys);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
