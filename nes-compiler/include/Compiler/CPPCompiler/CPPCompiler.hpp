@@ -48,7 +48,7 @@ class CPPCompiler : public LanguageCompiler {
     * @brief Returns the language for, which this compiler can handle compilation requests
     * @return language
     */
-    [[nodiscard]] std::string getLanguage() const override;
+    [[nodiscard]] Language getLanguage() const override;
 
   private:
     /**

@@ -13,15 +13,15 @@
 */
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Compiler/SourceCode.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
 JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler) {
     NES_ASSERT(languageCompiler, "Language compiler should not be null.");
-    NES_ASSERT(!languageCompiler->getLanguage().empty(), "Invalid language provided.");
     NES_ASSERT(languageCompilers.find(languageCompiler->getLanguage()) == languageCompilers.end(),
-               "Compiler for " << languageCompiler->getLanguage() << " was already registered");
+               "Compiler for " << getLanguageAsString(languageCompiler->getLanguage()) << " was already registered");
     this->languageCompilers[languageCompiler->getLanguage()] = languageCompiler;
     return *this;
 }

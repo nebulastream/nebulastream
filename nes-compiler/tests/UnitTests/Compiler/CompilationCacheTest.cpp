@@ -53,7 +53,7 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling {
  */
 TEST_F(CompilationCacheTest, cacheSource) {
     CompilationCache compilationCache;
-    auto sourceCode = SourceCode("cpp", "TestSource");
+    auto sourceCode = SourceCode(Language::CPP, "TestSource");
     ASSERT_FALSE(compilationCache.contains(sourceCode));
     auto result = CompilationResult(std::shared_ptr<DynamicObject>(), Timer(""));
     compilationCache.insert(sourceCode, result);

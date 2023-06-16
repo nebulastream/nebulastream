@@ -32,7 +32,7 @@ class JITCompiler {
      * @param languageCompilers set of language compilers.
      * @param useCompilationCache
      */
-    JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers, bool useCompilationCache);
+    JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers, bool useCompilationCache);
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
      * @param request Compilation request
@@ -49,7 +49,7 @@ class JITCompiler {
      * @return Future of the CompilationResult
      */
     [[nodiscard]] std::future<CompilationResult> handleRequest(std::shared_ptr<const CompilationRequest> request);
-    const std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
+    const std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
     bool useCompilationCache;
     CompilationCachePtr compilationCache;
 };
