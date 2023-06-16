@@ -56,14 +56,13 @@ void CountMin::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContex
         auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
         auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
         auto colPos = hash % numberOfCols;
+        NES_DEBUG2("Colpos {} for key {}", colPos.getValue().toString(), key.getValue().toString());
         aggregationFunction->lift(sketchArray[row][colPos], record);
     }
 }
 
-std::vector<Runtime::TupleBuffer> CountMin::getApproximate(const uint64_t handlerIndex,
-                                                           Runtime::Execution::ExecutionContext &ctx,
-                                                           const std::vector<Nautilus::Value<>>& keys,
-                                                           Runtime::BufferManagerPtr bufferManager) {
+void CountMin::getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                    const Nautilus::Value<>& key, Nautilus::Record& outputRecord) {
     using namespace Runtime::Execution;
 
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -71,52 +70,21 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(const uint64_t handle
     auto sketchArrayMemRef = Nautilus::FunctionCall("getSketchArrayProxy", getSketchArrayProxy, opHandler);
     auto sketchArray = Nautilus::Interface::Fixed2DArrayRef(sketchArrayMemRef, entrySize, numberOfCols);
 
-    auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
-                                                                                     outputSchema);
+    // Calculating the position
+    auto hashFirstRow = h3HashFunction->calculateWithState(key, h3SeedsMemRef);
+    auto colPosFirstRow = hashFirstRow % numberOfCols;
 
-    auto buffer = bufferManager->getBufferBlocking();
-    auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
-    std::vector<Runtime::TupleBuffer> retTupleBuffers;
-    Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
-
-    for(auto& key : keys) {
-        // Calculating the position
-        auto hashFirstRow = h3HashFunction->calculateWithState(key, h3SeedsMemRef);
-        auto colPosFirstRow = hashFirstRow % numberOfCols;
-
-        // Getting the actual value out over all rows
-        for (Nautilus::Value<> row = 1; row < numberOfRows; row = row + 1) {
-            auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
-            auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
-            auto colPos = hash % numberOfCols;
-            combineRowsApproximate->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
-        }
-
-        // Writing the key and the approximation to the record
-        Nautilus::Record retRecord;
-        retRecord.write(fieldNameKey, key);
-        combineRowsApproximate->lower(sketchArray[(uint64_t) 0][colPosFirstRow], retRecord);
-
-        // Write the record to the buffer
-        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
-        auto bufferAddress = recordBuffer.getBuffer();
-        memoryProviderOutput->write(recordIndex, bufferAddress, retRecord);
-        recordIndex = recordIndex + 1;
-        recordBuffer.setNumRecords(recordIndex);
-
-        if (recordIndex >= maxRecordsPerBuffer) {
-            retTupleBuffers.emplace_back(buffer);
-            buffer = bufferManager->getBufferBlocking();
-            recordIndex = (uint64_t) 0;
-        }
+    // Getting the actual value out over all rows
+    for (Nautilus::Value<> row = 1; row < numberOfRows; row = row + 1) {
+        auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
+        auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
+        auto colPos = hash % numberOfCols;
+        combineRowsApproximate->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
     }
 
-
-    if (recordIndex > 0) {
-        retTupleBuffers.emplace_back(buffer);
-    }
-
-    return retTupleBuffers;
+    // Writing the key and the approximation to the record
+    outputRecord.write(fieldNameKey, key);
+    combineRowsApproximate->lower(sketchArray[(uint64_t) 0][colPosFirstRow], outputRecord);
 }
 
 void CountMin::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {

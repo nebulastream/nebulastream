@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
@@ -32,6 +34,44 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
     }
 }
 
+std::vector<Runtime::TupleBuffer> AbstractSynopsis::getApproximateForKeys(const uint64_t handlerIndex,
+                                                                          Runtime::Execution::ExecutionContext& ctx,
+                                                                          const std::vector<Nautilus::Value<>>& keys,
+                                                                          Runtime::BufferManagerPtr bufferManager) {
+    using namespace Runtime::Execution;
+
+    std::vector<Runtime::TupleBuffer> retTupleBuffers;
+
+    auto buffer = bufferManager->getBufferBlocking();
+    auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
+    auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                     outputSchema);
+    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
+    for (auto& key : keys) {
+        // Retrieving the approximation for the record
+        Nautilus::Record record;
+        getApproximateRecord(handlerIndex, ctx, key, record);
+
+        // Writing the values to the buffer
+        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+        auto bufferAddress = recordBuffer.getBuffer();
+        memoryProviderOutput->write(recordIndex, bufferAddress, record);
+        recordIndex = recordIndex + 1;
+        recordBuffer.setNumRecords(recordIndex);
+
+        if (recordIndex >= maxRecordsPerBuffer) {
+            retTupleBuffers.emplace_back(buffer);
+            buffer = bufferManager->getBufferBlocking();
+            recordIndex = (uint64_t) 0;
+        }
+    }
+
+    if (recordIndex > 0) {
+        retTupleBuffers.emplace_back(buffer);
+    }
+
+    return retTupleBuffers;
+}
 
 AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
     : readKeyExpression(aggregationConfig.getReadFieldKeyExpression()),

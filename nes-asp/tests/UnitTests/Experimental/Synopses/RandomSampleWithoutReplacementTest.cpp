@@ -151,7 +151,7 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestCount) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = randomSample.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -200,7 +200,7 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = randomSample.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -249,7 +249,7 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = randomSample.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -298,7 +298,7 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestSum) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = randomSample.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -347,7 +347,7 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestAverage) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = randomSample.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 

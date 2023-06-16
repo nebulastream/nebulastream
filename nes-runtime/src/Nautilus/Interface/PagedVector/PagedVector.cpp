@@ -56,6 +56,7 @@ void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
     auto newPosEntry = getEntry(newPos);
     std::memcpy(newPosEntry, oldPosEntry, entrySize);
+    NES_DEBUG2("Moved from {} to {}", oldPos, newPos);
 }
 
 void PagedVector::clear() { pages.clear(); }

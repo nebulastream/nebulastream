@@ -37,7 +37,7 @@ void CountMinOperatorHandler::setup(uint64_t entrySize, uint64_t numberOfRows, u
     std::mt19937 gen(Nautilus::Interface::H3Hash::H3_SEED);
     std::uniform_int_distribution<uint64_t> distribution;
     for (auto row = 0UL; row < numberOfRows; ++row) {
-        for (auto col = 0UL; col < numberOfCols; ++col) {
+        for (auto col = 0UL; col < numberOfKeyBits; ++col) {
             h3Seeds.emplace_back(distribution(gen));
         }
     }
@@ -50,5 +50,7 @@ void *CountMinOperatorHandler::getSketchRef() {
 void *CountMinOperatorHandler::getH3SeedsRef() {
     return h3Seeds.data();
 }
+
+CountMinOperatorHandler::CountMinOperatorHandler(const uint64_t numberOfKeyBits) : numberOfKeyBits(numberOfKeyBits) {}
 
 } // namespace NES::ASP

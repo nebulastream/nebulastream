@@ -57,13 +57,26 @@ class AbstractSynopsis {
     /**
      * @brief Once all records have been inserted, we can ask for an approximation
      * @param ctx: The RuntimeExecutionContext
-     * @param bufferManager
+     * @param bufferManager: Buffermanager to allocate return buffers
+     * @param keys: The keys to provide an approximation for
+     * @param handlerIndex: Index for the operator handler
      * @return Record that stores the approximation
      */
-    virtual std::vector<Runtime::TupleBuffer> getApproximate(const uint64_t handlerIndex,
-                                                             Runtime::Execution::ExecutionContext& ctx,
-                                                             const std::vector<Nautilus::Value<>>& keys,
-                                                             Runtime::BufferManagerPtr bufferManager) = 0;
+    std::vector<Runtime::TupleBuffer> getApproximateForKeys(const uint64_t handlerIndex,
+                                                            Runtime::Execution::ExecutionContext& ctx,
+                                                            const std::vector<Nautilus::Value<>>& keys,
+                                                            Runtime::BufferManagerPtr bufferManager);
+
+
+    /**
+     * @brief Provides an approximation for the given key and returns a record containing the approximation
+     * @param ctx: The RuntimeExecutionContext
+     * @param key: The key to provide an approximation for
+     * @param handlerIndex: Index for the operator handler
+     * @param outputRecord: Record that should store the approximation
+     */
+    virtual void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                      const Nautilus::Value<>& key, Nautilus::Record& outputRecord) = 0;
 
     /**
      * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
@@ -78,7 +91,7 @@ class AbstractSynopsis {
     /**
      * @brief This method gets called in open() of the synopses operator class and gives the synopses a possibility
      * to store a local state, for example a reference to a data structure
-     * @param handlerIndex:Index for the operator handler
+     * @param handlerIndex: Index for the operator handler
      * @param op: Operator for which to store the local state
      * @param ctx: The RuntimeExecutionContext
      * @param buffer: RecordBuffer for this state

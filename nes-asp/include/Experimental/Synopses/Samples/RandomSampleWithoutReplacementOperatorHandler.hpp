@@ -48,6 +48,7 @@ class RandomSampleWithoutReplacementOperatorHandler : public Runtime::Execution:
   private:
     std::unique_ptr<Nautilus::Interface::PagedVector> pagedVector;
 
+
 };
 } // namespace NES::ASP
 

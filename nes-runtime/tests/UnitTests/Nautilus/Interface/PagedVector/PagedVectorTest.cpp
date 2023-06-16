@@ -92,4 +92,38 @@ TEST_F(PagedVectorTest, storeAndRetrieveValues) {
     }
 }
 
+TEST_F(PagedVectorTest, storeAndRetrieveValuesAfterMoveFromTo) {
+    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto entrySize = 32;
+    auto pagedVector = PagedVector(std::move(allocator), entrySize);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
+
+    for (auto i = 0UL; i < 1000UL; i++) {
+        Value<UInt64> val((uint64_t) i);
+        auto ref = pagedVectorRef.allocateEntry();
+        ref.store(val);
+    }
+
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), 1000);
+    ASSERT_EQ(pagedVector.getNumberOfPages(), 8);
+
+    pagedVector.moveFromTo(0, 30);
+    pagedVector.moveFromTo(10, 40);
+    pagedVector.moveFromTo(100, 130);
+
+
+    uint64_t i = 0;
+    for (auto it : pagedVectorRef) {
+        uint64_t expected = i++;
+
+        // We replaced the value at these given positions, and therefore have to calculate the new expected value
+        if (expected == 30 || expected == 40 || expected == 130) {
+            expected -= 30;
+        }
+        Value<UInt64> expectedVal(expected);
+        auto resultVal = it.load<UInt64>();
+        ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());
+    }
+}
+
 }// namespace NES::Nautilus::Interface

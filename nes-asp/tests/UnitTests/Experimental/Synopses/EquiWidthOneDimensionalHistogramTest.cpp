@@ -155,7 +155,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestCount) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -215,12 +215,12 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestSum) {
     }
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1), 
-                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3), 
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
+                                                Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -285,7 +285,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -349,7 +349,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -412,7 +412,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestAverage) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 

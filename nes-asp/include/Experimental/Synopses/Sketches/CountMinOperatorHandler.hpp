@@ -26,6 +26,12 @@ namespace NES::ASP {
  */
 class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
+    /**
+     * @brief Constructor for a Count-Min operator handler object
+     * @param numberOfKeyBits: Number of bits for the key
+     */
+    explicit CountMinOperatorHandler(const uint64_t numberOfKeyBits);
+
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
 
@@ -55,6 +61,7 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
 private:
     std::unique_ptr<Nautilus::Interface::Fixed2DArray> sketchArray;
     std::vector<uint64_t> h3Seeds;
+    const uint64_t numberOfKeyBits;
 
 };
 } // namespace NES::ASP
