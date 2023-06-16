@@ -89,21 +89,6 @@ class QueryPlacementPhase {
                                  TypeInferencePhasePtr typeInferencePhase,
                                  bool queryReconfiguration);
 
-    /*    *//**
-     * This method extracts the upstream pinned operators from the shared query plan. IF the reconfiguration is enabled then the
-     * method brows through the change log to extract the upstream operators
-     * @param sharedQueryPlan : shared query plan to investigate
-     * @return collection of upstream operators
-     *//*
-    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan);
-
-    *//**
-     * This method extracts the downstream pinned operators connected to the collection of upstream operators.
-     * @param upStreamPinnedOperators : collection of upstream pinned operators
-     * @return collection of downstream operators
-     *//*
-    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);*/
-
     /**
      * This method checks if the operators in the list are pinned or not
      * @param pinnedOperators: operators to check

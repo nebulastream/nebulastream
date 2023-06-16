@@ -351,10 +351,6 @@ add_nes_integration_test(seq-operator-test "Integration/SEQOperatorTest.cpp")
 #
 #
 
-### Global Query Node Tests ###
-add_nes_unit_test(global-query-node-tests "UnitTests/Plans/Global/Query/GlobalQueryNodeTest.cpp")
-
-
 ### Global Query Plan Tests ###
 add_nes_unit_test(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQueryPlanTest.cpp")
 

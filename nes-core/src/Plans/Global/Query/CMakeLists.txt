@@ -13,7 +13,5 @@
 
 add_source_files(nes-core
         GlobalQueryPlan.cpp
-        GlobalQueryNode.cpp
         SharedQueryPlan.cpp
-        SharedQueryPlanChangeLog.cpp
 )
