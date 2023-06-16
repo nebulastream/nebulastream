@@ -241,7 +241,7 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
 
         //Add remaining downstream operators to the temp upstream operator set.
         if (!firstDownstreamOperators.empty()) {
-            tempUpstreamOperators.insert(firstDownstreamOperators.begin(), firstDownstreamOperators.end());
+            tempDownstreamOperators.insert(firstDownstreamOperators.begin(), firstDownstreamOperators.end());
         }
         if (!nextDownstreamOperators.empty()) {
             tempDownstreamOperators.insert(nextDownstreamOperators.begin(), nextDownstreamOperators.end());

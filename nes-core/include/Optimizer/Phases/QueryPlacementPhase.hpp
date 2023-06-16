@@ -90,11 +90,17 @@ class QueryPlacementPhase {
                                  bool queryReconfiguration);
 
     /**
+     * @brief: analyze the list and pin all unpinned sink operators
+     * @param operators: set of operators to check
+     */
+    void pinAllSinkOperators(const std::set<OperatorNodePtr>& operators);
+
+    /**
      * This method checks if the operators in the list are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool checkPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators);
+    bool checkForPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

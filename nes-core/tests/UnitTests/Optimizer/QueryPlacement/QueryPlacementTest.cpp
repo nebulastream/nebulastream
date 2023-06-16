@@ -860,7 +860,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
                                                      {false, true, true, false, false},
                                                      {false, false, false, true, true}};
 
-    NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::BasePlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -922,7 +922,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
                                                      {false, true, true, false, false},
                                                      {false, false, false, true, true}};
 
-    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::ManualPlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -983,7 +983,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
                                                      {false, false, true, false, false},
                                                      {false, false, false, false, true}};
 
-    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::ManualPlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);

@@ -13,6 +13,7 @@
 */
 
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -66,16 +67,50 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     uint64_t nowInMicroSec =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
+    if (queryReconfiguration) {
+        for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
 
+            //1. Fetch all upstream pinned operators
+            auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
+
+            //2. Fetch all downstream pinned operators
+            auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+
+            //3. Pin all sink operators
+            pinAllSinkOperators(pinnedDownStreamOperators);
+
+            //4. Check if all operators are pinned
+            if (!checkForPinnedOperators(pinnedDownStreamOperators) || !checkForPinnedOperators(pinnedUpstreamOperators)) {
+                throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+            }
+
+            bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
+                                                                           faultToleranceType,
+                                                                           lineageType,
+                                                                           pinnedUpstreamOperators,
+                                                                           pinnedDownStreamOperators);
+
+            if (!success) {
+                NES_ERROR2("Unable to perform query placement for the change log entry");
+                return false;
+            }
+        }
+        //Update the change log's till processed timestamp and clear all entries before the timestamp
+        sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
+    } else {
         //1. Fetch all upstream pinned operators
-        auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
+        const auto& leafOperators = queryPlan->getLeafOperators();
+        std::set<OperatorNodePtr> pinnedUpstreamOperators(leafOperators.begin(), leafOperators.end());
 
         //2. Fetch all downstream pinned operators
-        auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+        const auto& rootOperators = queryPlan->getRootOperators();
+        std::set<OperatorNodePtr> pinnedDownStreamOperators(rootOperators.begin(), rootOperators.end());
 
-        //3. Check if all operators are pinned
-        if (!checkPinnedOperators(pinnedDownStreamOperators) || !checkPinnedOperators(pinnedUpstreamOperators)) {
+        //3. Pin all sink operators
+        pinAllSinkOperators(pinnedDownStreamOperators);
+
+        //4. Check if all operators are pinned
+        if (!checkForPinnedOperators(pinnedDownStreamOperators) || !checkForPinnedOperators(pinnedUpstreamOperators)) {
             throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
         }
 
@@ -86,18 +121,29 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                                                                        pinnedDownStreamOperators);
 
         if (!success) {
+            NES_ERROR2("Unable to perform query placement for the change log entry");
             return false;
         }
     }
+
     NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
     return true;
 }
 
-bool QueryPlacementPhase::checkPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementPhase::checkForPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
 
     //Find if anyone of the operator does not have PINNED_NODE_ID property
-    return std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
+    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_NODE_ID);
     });
+}
+
+void QueryPlacementPhase::pinAllSinkOperators(const std::set<OperatorNodePtr>& operators) {
+    uint64_t rootNodeId = topology->getRoot()->getId();
+    for (const auto& operatorToCheck : operators) {
+        if (!operatorToCheck->hasProperty(PINNED_NODE_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
+            operatorToCheck->addProperty(PINNED_NODE_ID, rootNodeId);
+        }
+    }
 }
 }// namespace NES::Optimizer
