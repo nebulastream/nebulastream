@@ -4465,7 +4465,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                         PipelineContextPtr code,
                         QueryCompilerOptions::CompilationStrategy compilationStrategy) {
     std::string src = generateCode(code);
-    auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, src);
     auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::CompilationStrategy::DEBUG;
     auto enableOptimizations = compilationStrategy == QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),

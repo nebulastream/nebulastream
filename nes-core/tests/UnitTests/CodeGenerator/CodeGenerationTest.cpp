@@ -571,7 +571,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", file.code);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, file.code);
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, true);
     auto result = jitCompiler->compile(std::move(request));
     auto compiledCode = result.get().getDynamicObject();

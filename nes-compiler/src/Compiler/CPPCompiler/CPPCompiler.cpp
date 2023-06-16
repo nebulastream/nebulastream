@@ -43,7 +43,7 @@ CPPCompiler::CPPCompiler()
 
 CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG2("~CPPCompiler"); }
 
-std::string CPPCompiler::getLanguage() const { return "cpp"; }
+Language CPPCompiler::getLanguage() const { return Language::CPP; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     Timer timer("CPPCompiler");

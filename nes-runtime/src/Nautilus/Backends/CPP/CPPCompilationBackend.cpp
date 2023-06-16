@@ -36,7 +36,7 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     timer.snapshot("CPPCodeGeneration");
 
     auto compiler = Compiler::CPPCompiler::create();
-    auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, code);
 
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "cppQuery",

@@ -47,7 +47,7 @@ class JITCompilerBuilder {
     std::shared_ptr<JITCompiler> build();
 
   private:
-    std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
+    std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers;
     bool useCompilationCache = false;
 };
 

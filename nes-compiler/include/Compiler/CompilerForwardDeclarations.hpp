@@ -18,6 +18,7 @@
 namespace NES::Compiler {
 
 class SourceCode;
+enum class Language;
 class DynamicObject;
 class LanguageCompiler;
 class CompilationResult;

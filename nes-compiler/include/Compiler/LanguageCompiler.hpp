@@ -35,7 +35,7 @@ class LanguageCompiler {
      * @brief Returns the language for, which this compiler can handle compilation requests
      * @return language
      */
-    [[nodiscard]] virtual std::string getLanguage() const = 0;
+    [[nodiscard]] virtual Language getLanguage() const = 0;
 
     /**
      * @brief Destructor for the language compiler.
