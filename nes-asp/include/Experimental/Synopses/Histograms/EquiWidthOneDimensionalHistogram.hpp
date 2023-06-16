@@ -63,13 +63,11 @@ public:
      * @brief Calculates the position for each key and then the lower operation on all bins and writes each bin into a record
      * @param handlerIndex: Index for the operator handler
      * @param ctx: Execution context that stores the bins
-     * @param bufferManager: Buffermanager to allocate return buffers
      * @param keys: Keys for which to approximate
-     * @return Vector of TupleBuffers, which contain the approximation for the keys
+     * @param outputRecord: Record that should store the approximation
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
-                                                     const std::vector<Nautilus::Value<>>& keys,
-                                                     Runtime::BufferManagerPtr bufferManager) override;
+    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
+                              Nautilus::Record& outputRecord) override;
 
     /**
      * @brief Sets the histogram up, by calling the setup method of the operator handler, as well as resetting the

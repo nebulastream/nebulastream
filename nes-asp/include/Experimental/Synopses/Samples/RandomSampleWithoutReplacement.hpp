@@ -56,15 +56,13 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     /**
      * @brief Once we have finished building our sample, we can ask for an approximate
-     * @param ctx
-     * @param bufferManager
-     * @param keyValues
-     * @return Record(s) with the approximation
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     * @param keys: Keys for which to approximate
+     * @param outputRecord: Record that should store the approximation
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(const uint64_t handlerIndex,
-                                                     Runtime::Execution::ExecutionContext& ctx,
-                                                     const std::vector<Nautilus::Value<>>& keys,
-                                                     Runtime::BufferManagerPtr bufferManager) override;
+    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
+                             Nautilus::Record& outputRecord) override;
     /**
      * @brief For now this does not store any local state and therefore returns False #3743
      * @param handlerIndex:Index for the operator handler
@@ -85,10 +83,10 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
   private:
     /**
      * @brief Calculates the scaling factor from the current number of samples and stored records
-     * @param listRef
+     * @param numberOfTuplesInWindow: Number of tuples in the window for the current active sample
      * @return Scaling factor
      */
-    double getScalingFactor(Nautilus::Interface::PagedVectorRef& pagedVecRef);
+    Nautilus::Value<Nautilus::Double> getScalingFactor(Nautilus::Value<>& numberOfTuplesInWindow);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor
@@ -101,6 +99,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     const size_t sampleSize;
     const size_t entrySize;
+    bool firstRunGetApproximate{false};
 };
 } // namespace NES::ASP
 

@@ -48,54 +48,27 @@ void EquiWidthOneDimensionalHistogram::addToSynopsis(const uint64_t, Runtime::Ex
     aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
 }
 
-std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproximate(const uint64_t handlerIndex,
-                                                                                   Runtime::Execution::ExecutionContext &ctx,
-                                                                                   const std::vector<Nautilus::Value<>>& keys,
-                                                                                   Runtime::BufferManagerPtr bufferManager) {
+void EquiWidthOneDimensionalHistogram::getApproximateRecord(const uint64_t handlerIndex,
+                                                            Runtime::Execution::ExecutionContext& ctx,
+                                                            const Nautilus::Value<>& key,
+                                                            Nautilus::Record& outputRecord) {
     using namespace Runtime::Execution;
 
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
     auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
 
-    auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
-                                                                                     outputSchema);
-    auto buffer = bufferManager->getBufferBlocking();
-    auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
-    std::vector<Runtime::TupleBuffer> retTupleBuffers;
-    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
+    // Calculating the bin position and then lowering the approximation
+    auto binDimensionPos = ((key - minValue) / binWidth);
+    aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], outputRecord);
 
-    for (auto& key : keys) {
-        auto binDimensionPos = ((key - minValue) / binWidth);
-        Nautilus::Record record;
-        aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], record);
+    // Writing the key, lower and upper value of the current bin
+    auto lowerBinBound = binDimensionPos * binWidth;
+    auto upperBinBound = (binDimensionPos + 1) * binWidth;
+    outputRecord.write(lowerBinBoundString, lowerBinBound);
+    outputRecord.write(upperBinBoundString, upperBinBound);
+    outputRecord.write(fieldNameKey, key);
 
-        // Writing the key, lower and upper value of the current bin
-        auto lowerBinBound = binDimensionPos * binWidth;
-        auto upperBinBound = (binDimensionPos + 1) * binWidth;
-        record.write(lowerBinBoundString, lowerBinBound);
-        record.write(upperBinBoundString, upperBinBound);
-        record.write(fieldNameKey, key);
-
-        // Writing the values to the buffer
-        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
-        auto bufferAddress = recordBuffer.getBuffer();
-        memoryProviderOutput->write(recordIndex, bufferAddress, record);
-        recordIndex = recordIndex + 1;
-        recordBuffer.setNumRecords(recordIndex);
-
-        if (recordIndex >= maxRecordsPerBuffer) {
-            retTupleBuffers.emplace_back(buffer);
-            buffer = bufferManager->getBufferBlocking();
-            recordIndex = (uint64_t) 0;
-        }
-    }
-
-    if (recordIndex > 0) {
-        retTupleBuffers.emplace_back(buffer);
-    }
-
-    return retTupleBuffers;
 }
 
 void EquiWidthOneDimensionalHistogram::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {

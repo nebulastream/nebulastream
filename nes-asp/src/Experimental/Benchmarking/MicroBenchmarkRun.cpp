@@ -82,8 +82,8 @@ void MicroBenchmarkRun::run() {
         timer.snapshot(executePipelineSnapshotName);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
-        auto allApproximateBuffers = synopsis->getApproximate(handlerIndex, executionContext, queryKeyValues,
-                                                              bufferManager);
+        auto allApproximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeyValues,
+                                                                     bufferManager);
 
         timer.snapshot(getApproximateSnapshotName);
         timer.pause();

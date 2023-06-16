@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
 PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize, uint64_t pageSize)
@@ -57,8 +58,7 @@ Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
     auto pagePos = (pos / entriesPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 
-    auto page =
-        Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
+    auto page = Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos.as<MemRef>();

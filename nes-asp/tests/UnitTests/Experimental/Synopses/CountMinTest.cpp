@@ -60,7 +60,7 @@ class CountMinTest : public Testing::NESBaseTest {
         readKeyExpression = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
 
         // Creating the worker context and the pipeline necessary for testing the sampling
-        opHandler = std::make_shared<CountMinOperatorHandler>();
+        opHandler = std::make_shared<CountMinOperatorHandler>(numberOfKeyBits);
         std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
         workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
@@ -86,6 +86,8 @@ class CountMinTest : public Testing::NESBaseTest {
     const uint64_t numberOfRows = 3;
     const uint64_t numberOfCols = 32;
     const uint64_t handlerIndex = 0;
+    const uint64_t entrySize = sizeof(uint64_t);
+    const uint64_t numberOfKeyBits = entrySize * 8;
 
     SchemaPtr inputSchema;
     std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression;
@@ -127,7 +129,6 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
 
 TEST_F(CountMinTest, countMinTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
-    const auto entrySize = sizeof(uint64_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
                                                                             idString, aggregationString,
                                                                             idString, approximateString);
@@ -157,7 +158,7 @@ TEST_F(CountMinTest, countMinTestCount) {
                                                 Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -181,7 +182,6 @@ TEST_F(CountMinTest, countMinTestCount) {
 
 TEST_F(CountMinTest, countMinTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
-    const auto entrySize = sizeof(uint64_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
                                                                             idString, aggregationString,
                                                                             idString, approximateString);
@@ -211,7 +211,7 @@ TEST_F(CountMinTest, countMinTestSum) {
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -235,7 +235,6 @@ TEST_F(CountMinTest, countMinTestSum) {
 
 TEST_F(CountMinTest, countMinTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
-    const auto entrySize = sizeof(uint64_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
                                                                             idString, aggregationString,
                                                                             idString, approximateString);
@@ -265,7 +264,7 @@ TEST_F(CountMinTest, countMinTestMin) {
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -289,7 +288,6 @@ TEST_F(CountMinTest, countMinTestMin) {
 
 TEST_F(CountMinTest, countMinTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
-    const auto entrySize = sizeof(uint64_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType,
                                                                             *inputSchema,
                                                                             idString,
@@ -328,7 +326,7 @@ TEST_F(CountMinTest, countMinTestMax) {
         Nautilus::Value<>((int64_t) 4),
     };
 
-    auto approximateBuffers = countMin.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer =
         Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0], outputSchema);
 
@@ -351,7 +349,6 @@ TEST_F(CountMinTest, countMinTestMax) {
 
 TEST_F(CountMinTest, countMinTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
-    const auto entrySize = sizeof(uint64_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
                                                                             idString, aggregationString,
                                                                             idString, approximateString);
@@ -381,7 +378,7 @@ TEST_F(CountMinTest, countMinTestAverage) {
         Nautilus::Value<>((int64_t)4),
     };
 
-    auto approximateBuffers = countMin.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
+    auto approximateBuffers = countMin.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
