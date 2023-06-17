@@ -147,17 +147,17 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
 
     //Assert
     NES_DEBUG2("GlobalQueryPlanTest: should 1 global query node with logical sink");
-    auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
+    auto listOfSQPsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(listOfSQPsToDeploy.size() == 1);
 
     NES_DEBUG2("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");
     globalQueryPlan->removeQuery(1, NES::RequestType::Stop);
 
     //Assert
     NES_DEBUG2("GlobalQueryPlanTest: Should return empty global query nodes");
-    listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
-    EXPECT_TRUE(listOfGQMsToDeploy[0]->isEmpty());
+    listOfSQPsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(listOfSQPsToDeploy.size() == 1);
+    EXPECT_TRUE(listOfSQPsToDeploy[0]->isEmpty());
 }
 
 /**
