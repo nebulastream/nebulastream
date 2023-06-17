@@ -257,18 +257,32 @@ std::set<OperatorNodePtr> SharedQueryPlan::removeOperator(const OperatorNodePtr&
 
     //Iterate over all child operator
     auto upstreamOperators = operatorToRemove->getChildren();
+
+    //If it is the most upstream operator then return this operator
+    if (!operatorToRemove->getChildren().empty()) {
+        upstreamOperatorsToReturn.insert(operatorToRemove);
+        return upstreamOperatorsToReturn;
+    }
+
     for (const auto& optr : upstreamOperators) {
         //If the upstream operator is shared by multiple downstream operators then remove the operator to remove and add this operator
         // to the operators to return.
         auto upstreamOperator = optr->as<OperatorNode>();
-        if (upstreamOperator->getParents().size() > 1) {
+        if (upstreamOperator->getParents().size() > 1) { // If the upstream operator is connected to multiple downstream operator
+                                                         // then remove the downstream operator to remove and terminate recursion.
+            //Recursively call removal of this upstream operator
             upstreamOperator->removeParent(operatorToRemove);
+            //add this upstream operator to operators to return
             upstreamOperatorsToReturn.insert(upstreamOperator);
-        } else {
-            auto lastUpstreamOperators = removeOperator(upstreamOperator);
-            upstreamOperatorsToReturn.insert(lastUpstreamOperators.begin(), lastUpstreamOperators.end());
+        } else { // If the upstream operator is only connected to one downstream operator
+                 // then remove the downstream operator and recursively call operator removal
+                 // for this upstream operator.
             //Remove the parent and call remove operator for children
             upstreamOperator->removeParent(operatorToRemove);
+            //Recursively call removal of this upstream operator
+            auto lastUpstreamOperators = removeOperator(upstreamOperator);
+            //add returned operators to operators to return
+            upstreamOperatorsToReturn.insert(lastUpstreamOperators.begin(), lastUpstreamOperators.end());
         }
     }
     return upstreamOperatorsToReturn;
