@@ -51,6 +51,12 @@ uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeO
 
 size_t FixedPage::size() const { return currentPos; }
 
+
+bool FixedPage::isSizeLeft(uint64_t requiredSpace) const
+{
+    return currentPos + requiredSpace < capacity;
+}
+
 FixedPage::FixedPage(FixedPage&& otherPage)
     //    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos), capacity(otherPage.capacity),
     : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos.load()),

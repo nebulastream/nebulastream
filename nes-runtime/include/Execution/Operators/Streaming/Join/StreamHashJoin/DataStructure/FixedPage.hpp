@@ -81,6 +81,8 @@ class FixedPage {
      */
     size_t size() const;
 
+    bool isSizeLeft(uint64_t requiredSpace) const;
+
   private:
     /**
      * @brief Swapping lhs FixedPage with rhs FixedPage
