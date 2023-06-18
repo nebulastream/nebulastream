@@ -12,16 +12,15 @@
     limitations under the License.
 */
 
+#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
-#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
 
 template<typename IN, typename OUT>
-OUT customBitCastProxy(IN f)
-{
+OUT customBitCastProxy(IN f) {
     OUT ret;
     std::memcpy(&ret, &f, sizeof(IN));
     return ret;
@@ -34,11 +33,15 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
     // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
     // This is okay, as we are only interested in the bits as-is and not the represented value
     if (value->isType<Double>()) {
-        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Double::RawType, typename UInt64::RawType>, value.as<Double>());
+        value = FunctionCall("customBitCastProxy",
+                             customBitCastProxy<typename Double::RawType, typename UInt64::RawType>,
+                             value.as<Double>());
     } else if (value->isType<Float>()) {
-        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Float::RawType, typename UInt32::RawType>, value.as<Float>());
+        value = FunctionCall("customBitCastProxy",
+                             customBitCastProxy<typename Float::RawType, typename UInt32::RawType>,
+                             value.as<Float>());
     }
-    
+
     for (Value<UInt8> i((uint8_t) 0); i < numberOfKeyBits; i = i + 1) {
         auto isBitSet = (value >> i) & 1;
         auto h3SeedMemRef = (state + (entrySizeH3HashSeed * i)).as<MemRef>();
