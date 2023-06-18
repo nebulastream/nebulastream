@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include "Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp"
-#include "Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp"
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
@@ -68,6 +68,12 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
             NES_TRACE("Check projection containment returned: {}", magic_enum::enum_name(containmentRelationship));
             if (containmentRelationship == ContainmentType::EQUALITY) {
                 containmentRelationship = checkFilterContainment(leftSignature, rightSignature);
+                if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED
+                    || containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
+                    if (!checkFilterContainmentPossible(rightSignature, leftSignature)) {
+                        containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                    }
+                }
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
             }
         }
@@ -348,12 +354,10 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
         if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE("Equal filters.");
             return ContainmentType::EQUALITY;
-        } else if (checkFilterContainmentPossible(leftSignature, rightSignature)) {
-            NES_TRACE("left sig contains right sig for filters.");
-            return ContainmentType::RIGHT_SIG_CONTAINED;
         }
-    } else if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)
-               && checkFilterContainmentPossible(rightSignature, leftSignature)) {
+        NES_TRACE("left sig contains right sig for filters.");
+        return ContainmentType::RIGHT_SIG_CONTAINED;
+    } else if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
         NES_TRACE("right sig contains left sig for filters.");
         return ContainmentType::LEFT_SIG_CONTAINED;
     }
@@ -386,7 +390,8 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
             NES_TRACE("Window containment possible.");
         }
     }
-    if (!checkDownstreamOperatorChainForSingleParent(containedOperator, containmentOperators.back())) {
+    if (!containmentOperators.empty()
+        && !checkDownstreamOperatorChainForSingleParent(containedOperator, containmentOperators.back())) {
         return {};
     }
     return containmentOperators;
@@ -406,33 +411,85 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
 
 std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
                                                                                     const LogicalOperatorNodePtr& containee) {
-    //check if there was a map function applied to the filter attribute
-    //if that was the case, we cannot safely extract the filter anymore and therefore return an empty set
-    for (const auto& [attributeName, isMapFunctionApplied] :
-         containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied()) {
-        NES_TRACE("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
-        //if a map function was applied to the attribute after the filter operation, we cannot safely extract the filters anymore
-        //since their transformations might have changed. Therefore, we return an empty set.
-        if (!isMapFunctionApplied) {
-            auto attributeStillPresent = std::binary_search(container->getZ3Signature()->getColumns().begin(),
-                                                            container->getZ3Signature()->getColumns().end(),
-                                                            attributeName);
-            //if the attribute is not present in the container's output schema anymore we return an empty set
-            if (!attributeStillPresent) {
-                return {};
-            }
-        }
-        return {};
-    }
+    NES_DEBUG("Check if filter containment is possible for container {}, containee {}.", container->toString(), containee->toString());
     //if all checks pass, we extract the filter operators
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    for (const auto& filter : containee->getNodesByType<FilterLogicalOperatorNode>()) {
-        containmentOperators.push_back(filter);
-    }
-    if (!checkDownstreamOperatorChainForSingleParent(containee, containmentOperators.back())) {
+    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
+    if (upstreamFilterOperators.empty()) {
         return {};
+    } else if (upstreamFilterOperators.size() == 1) {
+        containmentOperators.push_back(upstreamFilterOperators.front());
+        std::vector<std::string> mapAttributeNames = {};
+        if (!checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.front(), mapAttributeNames)) {
+            return {};
+        }
+        if (!mapAttributeNames.empty()
+            && !filterPredicateStillApplicable(upstreamFilterOperators.front(),
+                                               mapAttributeNames,
+                                               container->getOutputSchema())) {
+            return {};
+        }
+        return containmentOperators;
+    } else {
+        std::vector<std::string> mapAttributeNames = {};
+        NES_DEBUG2("Filter predicate: {}", upstreamFilterOperators.back()->toString());
+        if (checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.back(), mapAttributeNames)) {
+            NES_DEBUG2("Filter predicate: {}", upstreamFilterOperators.back()->toString());
+            auto predicate = upstreamFilterOperators.front()->getPredicate();
+            if (!mapAttributeNames.empty()
+                && !filterPredicateStillApplicable(upstreamFilterOperators.front(),
+                                                   mapAttributeNames,
+                                                   container->getOutputSchema())) {
+                return {};
+            }
+            for (size_t i = 1; i < upstreamFilterOperators.size(); ++i) {
+                if (!mapAttributeNames.empty()
+                    && !filterPredicateStillApplicable(upstreamFilterOperators.at(i),
+                                                       mapAttributeNames,
+                                                       container->getOutputSchema())) {
+                    return {};
+                }
+                predicate = AndExpressionNode::create(predicate, upstreamFilterOperators.at(i)->getPredicate());
+            }
+            NES_DEBUG2("Filter predicate: {}", predicate->toString());
+            upstreamFilterOperators.front()->setPredicate(predicate);
+            return {upstreamFilterOperators.front()};
+        } else {
+            return {};
+        }
     }
     return containmentOperators;
+}
+
+bool SignatureContainmentUtil::filterPredicateStillApplicable(FilterLogicalOperatorNodePtr const& filterOperator,
+                                                              const std::vector<std::string>& fieldNames,
+                                                              const SchemaPtr& containerOutputSchema) {
+
+    NES_TRACE2("Create an iterator for traversing the filter predicates");
+    const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
+    DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
+    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
+        NES_TRACE2("Iterate and find the predicate with FieldAccessExpression Node");
+        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            NES_TRACE2("Check if the input field name is same as the FieldAccessExpression field name");
+            for (const auto& fieldName : fieldNames) {
+                if (accessExpressionNode->getFieldName() == fieldName
+                    && !containerOutputSchema->contains(accessExpressionNode->getFieldName())) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+std::string SignatureContainmentUtil::getFieldNameUsedByMapOperator(const NodePtr& node) {
+    NES_TRACE2("Find the field name used in map operator");
+    MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
+    const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
+    const FieldAccessExpressionNodePtr field = mapExpression->getField();
+    return field->getFieldName();
 }
 
 void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
@@ -458,7 +515,7 @@ void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& sign
     } else {
         projectionFOL = orFOlForUnion;
     }
-    NES_TRACE2("Projection FOL: {}", projectionFOL.to_string());
+    NES_TRACE("Projection FOL: {}", projectionFOL.to_string());
 }
 
 bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
@@ -480,13 +537,15 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
                 auto colExpr = schemaFieldToExprMap[containedAttributes[index]];
                 auto otherColExpr = (*otherSchemaMapItr)[containedAttributes[index]];
                 auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
-                NES_TRACE2("Equivalence check for transformations: {} on attribute {}", equivalenceCheck.to_string(), containedAttributes[index]);
+                NES_TRACE("Equivalence check for transformations: {} on attribute {}",
+                           equivalenceCheck.to_string(),
+                           containedAttributes[index]);
                 colChecks.push_back(equivalenceCheck);
             }
 
             solver->push();
             solver->add(!z3::mk_and(colChecks).simplify());
-            NES_TRACE2("Content of equivalence solver: {}", solver->to_smt2());
+            NES_TRACE("Content of equivalence solver: {}", solver->to_smt2());
             schemaMatched = solver->check() == z3::unsat;
             solver->pop();
             counter++;
@@ -503,7 +562,7 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
 
         //If the transformations are not equal two signatures are different and cannot be contained or equal
         if (!schemaMatched) {
-            NES_WARNING2("QuerySignature: Both signatures have different column entries");
+            NES_TRACE("Both signatures have different transformations.");
             return false;
         }
     }
@@ -639,6 +698,7 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
 bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator) {
+    NES_INFO2("What's up with the extracted contained operator: {}", extractedContainedOperator->toString());
     if (extractedContainedOperator->getParents().size() != 1) {
         return false;
     }
@@ -647,6 +707,35 @@ bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
         if (parent->getParents().size() != 1) {
             return false;
         } else {
+            parent = parent->getParents()[0];
+        }
+    }
+    return true;
+}
+
+bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
+    const LogicalOperatorNodePtr& containedOperator,
+    const LogicalOperatorNodePtr& extractedContainedOperator,
+    std::vector<std::string>& mapAttributeNames) {
+    NES_DEBUG2("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
+    if (extractedContainedOperator->getParents().size() != 1) {
+        return false;
+    }
+    auto parent = extractedContainedOperator->getParents()[0];
+    NES_DEBUG2("Parent: {}", parent->toString());
+    if (parent->instanceOf<UnionLogicalOperatorNode>()) {
+        return false;
+    }
+    while (!parent->equal(containedOperator)) {
+        NES_DEBUG2("Parent: {}", parent->toString());
+        if (parent->getParents().size() != 1 || parent->instanceOf<WindowLogicalOperatorNode>()
+            || parent->instanceOf<UnionLogicalOperatorNode>()) {
+            return false;
+        } else {
+            if (parent->instanceOf<MapLogicalOperatorNode>()) {
+                auto mapOperator = parent->as<MapLogicalOperatorNode>();
+                mapAttributeNames.push_back(getFieldNameUsedByMapOperator(mapOperator));
+            }
             parent = parent->getParents()[0];
         }
     }

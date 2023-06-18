@@ -27,6 +27,7 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
 }
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() const { return predicate; }
+void FilterLogicalOperatorNode::setPredicate(ExpressionNodePtr const& newPredicate) { predicate = newPredicate; }
 
 void FilterLogicalOperatorNode::setPredicate(ExpressionNodePtr newPredicate) { predicate = std::move(newPredicate); }
 
