@@ -32,6 +32,12 @@ using ExprPtr = std::shared_ptr<expr>;
 namespace NES {
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+
+class FilterLogicalOperatorNode;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -74,7 +80,8 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature,
+                                                       const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -154,7 +161,8 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature,
+                                                                const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief extracts the contained window operator together with its watermark operator
@@ -162,7 +170,8 @@ class SignatureContainmentUtil {
      * @param containedWindowIndex index of the contained window operator
      * @return contained window operator and its watermark operator
      */
-    std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator, const uint8_t containedWindowIndex);
+    std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
+                                                                      const uint8_t containedWindowIndex);
 
     /**
      * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
@@ -177,7 +186,25 @@ class SignatureContainmentUtil {
      * @param containee the current operator from the contained query
      * @return all filter upstream filter operations from the contained query
      */
-    std::vector<LogicalOperatorNodePtr> createFilterOperators(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee);
+    std::vector<LogicalOperatorNodePtr> createFilterOperators(const LogicalOperatorNodePtr& container,
+                                                              const LogicalOperatorNodePtr& containee);
+
+    /**
+     * @brief Get the name of the field manipulated by the Map operator
+     * @param Operator pointer
+     * @return name of the field
+     */
+    static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
+
+    /**
+     * @brief Validate if the input field is used in the filter predicate of the operator
+     * @param filterOperator : filter operator whose predicate need to be checked
+     * @param fieldName :  name of the field to be checked
+     * @return true if field use in the filter predicate else false
+     */
+    static bool filterPredicateStillApplicable(FilterLogicalOperatorNodePtr const& filterOperator,
+                                               const std::vector<std::string>& fieldNames,
+                                               const SchemaPtr& containerOutputSchema);
 
     /**
      * @brief creates conditions for checking projection containment:
@@ -217,8 +244,7 @@ class SignatureContainmentUtil {
      * @param rightSignature right query signature for transformation check
      * @return true if same transformations, false otherwise
      */
-    bool checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
-                                                                const QuerySignaturePtr& rightSignature);
+    bool checkForEqualTransformations(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief combines window and projection FOLs
@@ -256,7 +282,19 @@ class SignatureContainmentUtil {
      * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
      * @return true, if the container chain has only one parent relationship, false otherwise
      */
-    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator, const LogicalOperatorNodePtr& extractedContainedOperator);
+    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
+                                                     const LogicalOperatorNodePtr& extractedContainedOperator);
+    /**
+     * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
+     * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
+     * therefore this method returns true, if the container chain has only one parent relationship, false otherwise
+     * @param containedOperator the operator for which we identified a containment relationship
+     * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
+     * @return true, if the container chain has only one parent relationship, false otherwise
+     */
+    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
+                                                     const LogicalOperatorNodePtr& extractedContainedOperator,
+                                                     std::vector<std::string>& mapAttributeNames);
 
     /**
      * @brief Reset z3 solver

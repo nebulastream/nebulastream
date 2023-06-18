@@ -50,10 +50,7 @@ class ExpressionToZ3ExprUtil {
      * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression,
-                                                    const z3::ContextPtr& context,
-                                                    std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
-                                                    bool isMapExpression);
+    static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
 
   private:
     /**
@@ -65,10 +62,7 @@ class ExpressionToZ3ExprUtil {
      * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression,
-                                                            const z3::ContextPtr& context,
-                                                            std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
-                                                            bool isMapExpression);
+    static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
 
     /**
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
@@ -79,11 +73,8 @@ class ExpressionToZ3ExprUtil {
      * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr
-    createForArithmeticalExpressions(const ExpressionNodePtr& expression,
-                                     const z3::ContextPtr& context,
-                                     std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
-                                     bool isMapExpression);
+    static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(const ExpressionNodePtr& expression,
+                                                                 const z3::ContextPtr& context);
 };
 }// namespace NES::Optimizer
 

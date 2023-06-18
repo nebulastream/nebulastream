@@ -392,7 +392,7 @@ int main(int argc, const char* argv[]) {
                 }
 
                 //Compute efficiency
-                auto efficiency = ((totalOperators - mergedOperators) / totalOperators) * 100;
+                float efficiency = (((float) totalOperators - (float) mergedOperators) / (float) totalOperators) * 100;
 
                 //Add the information in the log
                 benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","
