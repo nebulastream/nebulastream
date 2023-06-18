@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.111](https://github.com/nebulastream/nebulastream/tree/v0.5.111) (2023-06-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.110...v0.5.111)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor H3 to implement in Nautilus [\#3846](https://github.com/nebulastream/nebulastream/issues/3846)
+
 ## [v0.5.110](https://github.com/nebulastream/nebulastream/tree/v0.5.110) (2023-06-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.109...v0.5.110)
