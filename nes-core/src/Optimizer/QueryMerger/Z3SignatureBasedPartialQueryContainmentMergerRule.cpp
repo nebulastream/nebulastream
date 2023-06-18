@@ -71,7 +71,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             //Iterate over the target query plan from sink to source and compare the operator signatures with the host query plan
             //When a match is found then store the matching operators in the matchedTargetToHostOperatorMap
             for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
-                //Iterate the target query plan in BFS order.
+                //Iterate the target query plan in DFS order.
                 auto targetChildren = targetRootOperator->getChildren();
                 std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
                 //Iterate till target operators are remaining to be matched
@@ -245,7 +245,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
         }
     }
     for (const auto& item : globalQueryPlan->getAllSharedQueryPlans()) {
-        NES_TRACE2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
+        NES_INFO2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();

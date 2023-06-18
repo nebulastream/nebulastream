@@ -71,7 +71,7 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 
@@ -343,17 +343,11 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "  WINDOW AGGREGATION(OP-152, Sum;)\n"
                                                                                    "    WATERMARKASSIGNER(151)\n"
                                                                                    "      FILTER(150)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(154,windTurbines,"
-                                                                                   "LogicalSourceDescriptor("
-                                                                                   "windTurbines, ))\n"
+                                                                                   "        SOURCE(149,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "SINK(157: {PrintSinkDescriptor()})\n"
                                                                                    "  WINDOW AGGREGATION(OP-156, Sum;)\n"
                                                                                    "    WATERMARKASSIGNER(155)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(154,windTurbines,"
-                                                                                   "LogicalSourceDescriptor("
-                                                                                   "windTurbines, ))\n"),
+                                                                                   "      SOURCE(149,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
@@ -362,23 +356,15 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "  Join(163)\n"
                                                                                    "    WATERMARKASSIGNER(161)\n"
                                                                                    "      FILTER(159)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(165,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "        SOURCE(158,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "    WATERMARKASSIGNER(162)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(160,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "      SOURCE(160,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "SINK(170: {PrintSinkDescriptor()})\n"
                                                                                    "  Join(169)\n"
                                                                                    "    WATERMARKASSIGNER(167)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(165,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "      SOURCE(158,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "    WATERMARKASSIGNER(162)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(160,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"),
+                                                                                   "      SOURCE(160,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
@@ -513,32 +499,19 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value1") < 3).unionWith(Query::from("solarPanels")).unionWith(Query::from("test")).sink(PrintSinkDescriptor::create());)",
                                                                                    "SINK(247: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(246)\n"
-                                                                                   "    FILTER(241)\n"
-                                                                                   "      unionWith(253)\n"
-                                                                                   "        unionWith(251)\n"
-                                                                                   "          FILTER(249)\n"
-                                                                                   "            "
-                                                                                   "SOURCE(248,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "          "
-                                                                                   "SOURCE(250,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "        "
-                                                                                   "SOURCE(252,test,LogicalSourceDescriptor(test,"
-                                                                                   " ))\n"
+                                                                                   "    unionWith(245)\n"
+                                                                                   "      unionWith(243)\n"
+                                                                                   "        FILTER(241)\n"
+                                                                                   "          SOURCE(240,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "        SOURCE(242,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "      SOURCE(244,test,LogicalSourceDescriptor(test, ))\n"
                                                                                    "SINK(254: {PrintSinkDescriptor()})\n"
-                                                                                   "  unionWith(253)\n"
-                                                                                   "    unionWith(251)\n"
-                                                                                   "      FILTER(249)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(248,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "      "
-                                                                                   "SOURCE(250,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "    "
-                                                                                   "SOURCE(252,test,LogicalSourceDescriptor(test,"
-                                                                                   " ))\n"),
+                                                                                   "  unionWith(245)\n"
+                                                                                   "    unionWith(243)\n"
+                                                                                   "      FILTER(241)\n"
+                                                                                   "        SOURCE(240,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "      SOURCE(242,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "    SOURCE(244,test,LogicalSourceDescriptor(test, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value1") < 3).unionWith(Query::from("test")).filter(Attribute("value") == 1).sink(PrintSinkDescriptor::create());)",
@@ -547,29 +520,17 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "  FILTER(261)\n"
                                                                                    "    unionWith(260)\n"
                                                                                    "      FILTER(258)\n"
-                                                                                   "        unionWith(265)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(263,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "          "
-                                                                                   "SOURCE(264,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "      "
-                                                                                   "SOURCE(259,test,LogicalSourceDescriptor(test,"
-                                                                                   " ))\n"
+                                                                                   "        unionWith(257)\n"
+                                                                                   "          SOURCE(255,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "          SOURCE(256,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "      SOURCE(259,test,LogicalSourceDescriptor(test, ))\n"
                                                                                    "SINK(269: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(268)\n"
                                                                                    "    unionWith(267)\n"
-                                                                                   "      unionWith(265)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(263,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "        "
-                                                                                   "SOURCE(264,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "      "
-                                                                                   "SOURCE(266,test,LogicalSourceDescriptor(test,"
-                                                                                   " ))\n"),
+                                                                                   "      SOURCE(266,test,LogicalSourceDescriptor(test, ))\n"
+                                                                                   "      unionWith(257)\n"
+                                                                                   "        SOURCE(255,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "        SOURCE(256,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value") != 4).unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
@@ -579,94 +540,43 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "    WATERMARKASSIGNER(275)\n"
                                                                                    "      unionWith(273)\n"
                                                                                    "        FILTER(271)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(279,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "        "
-                                                                                   "SOURCE(272,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "          SOURCE(270,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "        SOURCE(272,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "    WATERMARKASSIGNER(276)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(274,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"
+                                                                                   "      SOURCE(274,households,LogicalSourceDescriptor(households, ))\n"
                                                                                    "SINK(287: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(286)\n"
                                                                                    "    Join(285)\n"
                                                                                    "      WATERMARKASSIGNER(283)\n"
                                                                                    "        unionWith(281)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(279,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "          "
-                                                                                   "SOURCE(272,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "          SOURCE(272,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "          SOURCE(270,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "      WATERMARKASSIGNER(276)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(274,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"),
+                                                                                   "        SOURCE(274,households,LogicalSourceDescriptor(households, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                                                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"),Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"),Attribute("windTurbines$ts"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
                                                                                    "SINK(298: {PrintSinkDescriptor()})\n"
-                                                                                   "  Join(297)\n"
-                                                                                   "    WATERMARKASSIGNER(295)\n"
-                                                                                   "      PROJECTION(292, "
-                                                                                   "schema=windTurbines$value:INTEGER "
-                                                                                   "windTurbines$id1:INTEGER "
-                                                                                   "windTurbines$value1:INTEGER "
-                                                                                   "windTurbines$ts:INTEGER )\n"
-                                                                                   "        FILTER(291)\n"
-                                                                                   "          unionWith(290)\n"
-                                                                                   "            "
-                                                                                   "SOURCE(288,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "            "
-                                                                                   "SOURCE(289,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "    WATERMARKASSIGNER(296)\n"
-                                                                                   "      PROJECTION(294, "
-                                                                                   "schema=households$value:INTEGER "
-                                                                                   "households$id:INTEGER "
-                                                                                   "households$value1:(Float) "
-                                                                                   "households$ts:INTEGER )\n"
-                                                                                   "        "
-                                                                                   "SOURCE(293,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"
+                                                                                   "  PROJECTION(292, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER windTurbines$value1:INTEGER windTurbines$ts:INTEGER )\n"
+                                                                                   "    FILTER(306)\n"
+                                                                                   "      Join(305)\n"
+                                                                                   "        WATERMARKASSIGNER(303)\n"
+                                                                                   "          unionWith(301)\n"
+                                                                                   "            SOURCE(299,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "            SOURCE(300,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "        WATERMARKASSIGNER(304)\n"
+                                                                                   "          SOURCE(302,households,LogicalSourceDescriptor(households, ))\n"
                                                                                    "SINK(308: {PrintSinkDescriptor()})\n"
-                                                                                   "  PROJECTION(307, "
-                                                                                   "schema=windTurbines$value:INTEGER "
-                                                                                   "windTurbines$id1:INTEGER "
-                                                                                   "windTurbines$value1:INTEGER "
-                                                                                   "households$value:INTEGER "
-                                                                                   "households$id:INTEGER "
-                                                                                   "households$value1:(Float) "
-                                                                                   "windTurbines$ts:INTEGER "
-                                                                                   "households$ts:INTEGER )\n"
-                                                                                   "    Join(297)\n"
-                                                                                   "      WATERMARKASSIGNER(295)\n"
-                                                                                   "        PROJECTION(292, "
-                                                                                   "schema=windTurbines$value:INTEGER "
-                                                                                   "windTurbines$id1:INTEGER "
-                                                                                   "windTurbines$value1:INTEGER "
-                                                                                   "windTurbines$ts:INTEGER )\n"
-                                                                                   "          FILTER(291)\n"
-                                                                                   "            unionWith(290)\n"
-                                                                                   "              "
-                                                                                   "SOURCE(288,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "              "
-                                                                                   "SOURCE(289,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                   "      WATERMARKASSIGNER(296)\n"
-                                                                                   "        PROJECTION(294, "
-                                                                                   "schema=households$value:INTEGER "
-                                                                                   "households$id:INTEGER "
-                                                                                   "households$value1:(Float) "
-                                                                                   "households$ts:INTEGER )\n"
-                                                                                   "          "
-                                                                                   "SOURCE(293,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"),
+                                                                                   "  PROJECTION(307, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER windTurbines$value1:INTEGER households$value:INTEGER households$id:INTEGER households$value1:(Float) windTurbines$ts:INTEGER households$ts:INTEGER )\n"
+                                                                                   "    FILTER(306)\n"
+                                                                                   "      Join(305)\n"
+                                                                                   "        WATERMARKASSIGNER(303)\n"
+                                                                                   "          unionWith(301)\n"
+                                                                                   "            SOURCE(299,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "            SOURCE(300,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "        WATERMARKASSIGNER(304)\n"
+                                                                                   "          SOURCE(302,households,LogicalSourceDescriptor(households, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry("TestMixedContainmentCases",
                                                                                                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).sink(PrintSinkDescriptor::create());)",
                                                                                                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).sink(PrintSinkDescriptor::create());)",
@@ -674,18 +584,18 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                                                                           "  Join(316)\n"
                                                                                                                                           "    WATERMARKASSIGNER(314)\n"
                                                                                                                                           "      FILTER(312)\n"
-                                                                                                                                          "        unionWith(320)\n"
-                                                                                                                                          "          SOURCE(318,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                                                                          "          SOURCE(319,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                                                                          "        unionWith(311)\n"
+                                                                                                                                          "          SOURCE(309,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                                                                          "          SOURCE(310,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                                                                           "    WATERMARKASSIGNER(315)\n"
                                                                                                                                           "      SOURCE(313,households,LogicalSourceDescriptor(households, ))\n"
                                                                                                                                           "SINK(326: {PrintSinkDescriptor()})\n"
                                                                                                                                           "  FILTER(325)\n"
                                                                                                                                           "    Join(324)\n"
                                                                                                                                           "      WATERMARKASSIGNER(322)\n"
-                                                                                                                                          "        unionWith(320)\n"
-                                                                                                                                          "          SOURCE(318,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                                                                          "          SOURCE(319,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                                                                          "        unionWith(311)\n"
+                                                                                                                                          "          SOURCE(309,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                                                                          "          SOURCE(310,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                                                                           "      WATERMARKASSIGNER(315)\n"
                                                                                                                                           "        SOURCE(313,households,LogicalSourceDescriptor(households, ))\n"),
                                                                                //Limit of our algorithm, cannot detect equivalence among these windows
@@ -731,14 +641,14 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                                                                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)",
                                                                                                                                           "SINK(357: {PrintSinkDescriptor()})\n"
-                                                                                                                                          "  Join(356)\n"
-                                                                                                                                          "    WATERMARKASSIGNER(354)\n"
-                                                                                                                                          "      FILTER(352)\n"
+                                                                                                                                          "  FILTER(352)\n"
+                                                                                                                                          "    Join(364)\n"
+                                                                                                                                          "      WATERMARKASSIGNER(362)\n"
                                                                                                                                           "        unionWith(360)\n"
                                                                                                                                           "          SOURCE(358,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                                                                           "          SOURCE(359,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                                                                          "    WATERMARKASSIGNER(355)\n"
-                                                                                                                                          "      SOURCE(353,households,LogicalSourceDescriptor(households, ))\n"
+                                                                                                                                          "      WATERMARKASSIGNER(363)\n"
+                                                                                                                                          "        SOURCE(361,households,LogicalSourceDescriptor(households, ))\n"
                                                                                                                                           "SINK(366: {PrintSinkDescriptor()})\n"
                                                                                                                                           "  PROJECTION(365, schema=windTurbines$value:INTEGER )\n"
                                                                                                                                           "    Join(364)\n"
@@ -746,8 +656,8 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                                                                           "        unionWith(360)\n"
                                                                                                                                           "          SOURCE(358,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                                                                           "          SOURCE(359,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                                                                                                                                          "      WATERMARKASSIGNER(355)\n"
-                                                                                                                                          "        SOURCE(353,households,LogicalSourceDescriptor(households, ))\n"),
+                                                                                                                                          "      WATERMARKASSIGNER(363)\n"
+                                                                                                                                          "        SOURCE(361,households,LogicalSourceDescriptor(households, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value") < 10).unionWith(Query::from("solarPanels").filter(Attribute("value") < 10)).sink(PrintSinkDescriptor::create());)",
@@ -755,25 +665,15 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "SINK(372: {PrintSinkDescriptor()})\n"
                                                                                    "  unionWith(371)\n"
                                                                                    "    FILTER(368)\n"
-                                                                                   "      FILTER(374)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(373,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "      SOURCE(367,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "    FILTER(370)\n"
-                                                                                   "      FILTER(376)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(375,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "      SOURCE(369,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "SINK(378: {PrintSinkDescriptor()})\n"
                                                                                    "  unionWith(377)\n"
                                                                                    "    FILTER(374)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(373,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "      SOURCE(367,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "    FILTER(376)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(375,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"),
+                                                                                   "      SOURCE(369,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).sink(PrintSinkDescriptor::create());)",
@@ -782,32 +682,20 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "  Join(386)\n"
                                                                                    "    WATERMARKASSIGNER(384)\n"
                                                                                    "      FILTER(382)\n"
-                                                                                   "        unionWith(390)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(388,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "          "
-                                                                                   "SOURCE(389,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "        unionWith(381)\n"
+                                                                                   "          SOURCE(379,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "          SOURCE(380,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "    WATERMARKASSIGNER(385)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(383,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"
+                                                                                   "      SOURCE(383,households,LogicalSourceDescriptor(households, ))\n"
                                                                                    "SINK(396: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(395)\n"
                                                                                    "    Join(394)\n"
                                                                                    "      WATERMARKASSIGNER(392)\n"
-                                                                                   "        unionWith(390)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(388,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "          "
-                                                                                   "SOURCE(389,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"
+                                                                                   "        unionWith(381)\n"
+                                                                                   "          SOURCE(379,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "          SOURCE(380,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "      WATERMARKASSIGNER(385)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(383,households,"
-                                                                                   "LogicalSourceDescriptor(households, ))\n"),
+                                                                                   "        SOURCE(383,households,LogicalSourceDescriptor(households, ))\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestMixedContainmentCases",
                                                                                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
@@ -908,32 +796,33 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                                                                                    "LogicalSourceDescriptor(solarPanels, ))\n"
                                                                                    "SINK(450: {PrintSinkDescriptor()})\n"
                                                                                    "  WINDOW AGGREGATION(OP-449, Sum;Min;Max;)\n"
-                                                                                   "    WATERMARKASSIGNER(448)\n"
-                                                                                   "      unionWith(447)\n"
-                                                                                   "        "
-                                                                                   "SOURCE(445,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
-                                                                                   "        "
-                                                                                   "SOURCE(446,solarPanels,"
-                                                                                   "LogicalSourceDescriptor(solarPanels, ))\n"),
+                                                                                   "    WATERMARKASSIGNER(448)\n"),
                                                                                Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                                                                                    "TestFilterContainment",
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value") == 5).filter(Attribute("value1") == 8).sink(PrintSinkDescriptor::create());)",
                                                                                    R"(Query::from("windTurbines").filter(Attribute("value") >= 4).filter(Attribute("value1") > 3).sink(PrintSinkDescriptor::create());)",
                                                                                    "SINK(454: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(453)\n"
-                                                                                   "    FILTER(452)\n"
-                                                                                   "      FILTER(457)\n"
-                                                                                   "        FILTER(456)\n"
-                                                                                   "          "
-                                                                                   "SOURCE(455,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "    FILTER(457)\n"
+                                                                                   "      FILTER(456)\n"
+                                                                                   "        SOURCE(455,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
                                                                                    "SINK(458: {PrintSinkDescriptor()})\n"
                                                                                    "  FILTER(457)\n"
                                                                                    "    FILTER(456)\n"
-                                                                                   "      "
-                                                                                   "SOURCE(455,windTurbines,"
-                                                                                   "LogicalSourceDescriptor(windTurbines, ))\n")};
+                                                                                   "      SOURCE(455,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+                                                                               Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
+                                                                                   "TestFilterContainment",
+                                                                                   R"(Query::from("windTurbines").filter(Attribute("value") == 5).filter(Attribute("value1") == 8).filter(Attribute("id") < 4).sink(PrintSinkDescriptor::create());)",
+                                                                                   R"(Query::from("windTurbines").filter(Attribute("value") >= 4).filter(Attribute("value1") > 3).sink(PrintSinkDescriptor::create());)",
+                                                                                   "SINK(463: {PrintSinkDescriptor()})\n"
+                                                                                   "  FILTER(462)\n"
+                                                                                   "    FILTER(466)\n"
+                                                                                   "      FILTER(465)\n"
+                                                                                   "        SOURCE(464,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                                                                                   "SINK(467: {PrintSinkDescriptor()})\n"
+                                                                                   "  FILTER(466)\n"
+                                                                                   "    FILTER(465)\n"
+                                                                                   "      SOURCE(464,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n")};
     }
 
     static auto createProjectionContainmentCases() {
@@ -942,61 +831,58 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
                 "TestProjectionContainment",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
-                "SINK(462: {PrintSinkDescriptor()})\n"
-                "  PROJECTION(461, schema=windTurbines$newValue:INTEGER )\n"
-                "    MAP(460)\n"
-                "      SOURCE(459,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                "SINK(465: {PrintSinkDescriptor()})\n"
-                "  MAP(460)\n"
-                "    SOURCE(459,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+                "SINK(471: {PrintSinkDescriptor()})\n"
+                "  PROJECTION(470, schema=windTurbines$newValue:INTEGER )\n"
+                "    MAP(469)\n"
+                "      SOURCE(468,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(474: {PrintSinkDescriptor()})\n"
+                "  MAP(469)\n"
+                "    SOURCE(468,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
             Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                 "TestProjectionContainment",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("households$value"), Attribute("households$id"), Attribute("windTurbines$ts"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
-                "SINK(476: {PrintSinkDescriptor()})\n"
-                "  Join(475)\n"
-                "    WATERMARKASSIGNER(473)\n"
-                "      PROJECTION(470, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER windTurbines$value1:INTEGER windTurbines$ts:INTEGER )\n"
-                "        FILTER(469)\n"
-                "          unionWith(468)\n"
-                "            SOURCE(466,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                "            SOURCE(467,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                "    WATERMARKASSIGNER(474)\n"
-                "      PROJECTION(472, schema=households$value:INTEGER households$id:INTEGER households$value1:(Float) households$ts:INTEGER )\n"
-                "        SOURCE(471,households,LogicalSourceDescriptor(households, ))\n"
-                "SINK(486: {PrintSinkDescriptor()})\n"
-                "  PROJECTION(485, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER households$value:INTEGER households$id:INTEGER windTurbines$ts:INTEGER households$ts:INTEGER )\n"
-                "    Join(475)\n"
-                "      WATERMARKASSIGNER(473)\n"
-                "        PROJECTION(470, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER windTurbines$value1:INTEGER windTurbines$ts:INTEGER )\n"
-                "          FILTER(469)\n"
-                "            unionWith(468)\n"
-                "              SOURCE(466,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                "              SOURCE(467,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                "      WATERMARKASSIGNER(474)\n"
-                "        PROJECTION(472, schema=households$value:INTEGER households$id:INTEGER households$value1:(Float) households$ts:INTEGER )\n"
-                "          SOURCE(471,households,LogicalSourceDescriptor(households, ))\n"),
+                "SINK(485: {PrintSinkDescriptor()})\n"
+                "  PROJECTION(479, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER windTurbines$value1:INTEGER windTurbines$ts:INTEGER )\n"
+                "    FILTER(493)\n"
+                "      Join(492)\n"
+                "        WATERMARKASSIGNER(490)\n"
+                "          unionWith(488)\n"
+                "            SOURCE(486,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "            SOURCE(487,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "        WATERMARKASSIGNER(491)\n"
+                "          SOURCE(489,households,LogicalSourceDescriptor(households, ))\n"
+                "SINK(495: {PrintSinkDescriptor()})\n"
+                "  PROJECTION(494, schema=windTurbines$value:INTEGER windTurbines$id1:INTEGER households$value:INTEGER households$id:INTEGER windTurbines$ts:INTEGER households$ts:INTEGER )\n"
+                "    FILTER(493)\n"
+                "      Join(492)\n"
+                "        WATERMARKASSIGNER(490)\n"
+                "          unionWith(488)\n"
+                "            SOURCE(486,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "            SOURCE(487,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "        WATERMARKASSIGNER(491)\n"
+                "          SOURCE(489,households,LogicalSourceDescriptor(households, ))\n"),
             Z3SignatureBasedPartialQueryContainmentMergerRuleTestEntry(
                 "TestProjectionContainment",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)",
-                "SINK(494: {PrintSinkDescriptor()})\n"
-                "  Join(493)\n"
-                "    WATERMARKASSIGNER(491)\n"
-                "      unionWith(489)\n"
-                "        SOURCE(487,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                "        SOURCE(488,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                "    WATERMARKASSIGNER(492)\n"
-                "      SOURCE(490,households,LogicalSourceDescriptor(households, ))\n"
                 "SINK(503: {PrintSinkDescriptor()})\n"
-                "  PROJECTION(502, schema=windTurbines$value:INTEGER )\n"
-                "    Join(493)\n"
-                "      WATERMARKASSIGNER(491)\n"
-                "        unionWith(489)\n"
-                "          SOURCE(487,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                "          SOURCE(488,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                "      WATERMARKASSIGNER(492)\n"
-                "        SOURCE(490,households,LogicalSourceDescriptor(households, ))\n")};
+                "  Join(502)\n"
+                "    WATERMARKASSIGNER(500)\n"
+                "      unionWith(498)\n"
+                "        SOURCE(496,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "        SOURCE(497,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "    WATERMARKASSIGNER(501)\n"
+                "      SOURCE(499,households,LogicalSourceDescriptor(households, ))\n"
+                "SINK(512: {PrintSinkDescriptor()})\n"
+                "  PROJECTION(511, schema=windTurbines$value:INTEGER )\n"
+                "    Join(502)\n"
+                "      WATERMARKASSIGNER(500)\n"
+                "        unionWith(498)\n"
+                "          SOURCE(496,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "          SOURCE(497,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "      WATERMARKASSIGNER(501)\n"
+                "        SOURCE(499,households,LogicalSourceDescriptor(households, ))\n")};
     }
 };
 

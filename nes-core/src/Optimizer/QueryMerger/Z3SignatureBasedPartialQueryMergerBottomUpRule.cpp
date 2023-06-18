@@ -111,7 +111,6 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
                 for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
                     hostQueryPlan->addRootOperator(targetRootOperator);
                 }
-
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data

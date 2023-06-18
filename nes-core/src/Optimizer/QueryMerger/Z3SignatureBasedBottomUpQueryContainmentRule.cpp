@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -108,6 +109,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                 auto matchedTargetToHostOperatorMap = areQueryPlansContained(targetQueryPlan, hostQueryPlan);
                 NES_DEBUG2("matchedTargetToHostOperatorMap empty? {}", matchedTargetToHostOperatorMap.empty());
                 if (!matchedTargetToHostOperatorMap.empty()) {
+                    bool unionOrJoin = false;
                     hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                     if (matchedTargetToHostOperatorMap.size() > 1) {
                         //Fetch all the matched target operators.
@@ -171,6 +173,11 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 hostOperator = hostOperator->getChildren()[0]->as<LogicalOperatorNode>();
                             }
                             NES_TRACE2("Adding parent {} to {}", targetOperator->toString(), hostOperator->toString());
+                            //in case target operator has more than one child (e.g. join or union) obtain the parent operator
+                            if (targetOperator->getChildren().size() > 1) {
+                                //will only have one parent operator
+                                targetOperator = targetOperator->getParents()[0]->as<LogicalOperatorNode>();
+                            }
                             targetOperator->removeChildren();
                             NES_TRACE2("Current host operator: {}", hostOperator->toString());
                             bool addedNewParent = hostOperator->addParent(targetOperator);
@@ -195,6 +202,11 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 targetOperator = targetOperator->getChildren()[0]->as<LogicalOperatorNode>();
                             }
                             NES_TRACE2("Adding parent {} to {}", hostOperator->toString(), targetOperator->toString());
+                            //we cannot match union or logical operator nodes because they cannot be safely merged as the sqp is not a tree
+                            if (hostOperator->instanceOf<UnionLogicalOperatorNode>() || hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+                                unionOrJoin = true;
+                                break;
+                            }
                             hostOperator->removeChildren();
                             NES_TRACE2("Current host operator: {}", targetOperator->toString());
                             bool addedNewParent = targetOperator->addParent(hostOperator);
@@ -215,7 +227,9 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                    targetRootOperator->toString(),
                                    hostQueryPlan->toString());
                     }
-                    matched = true;
+                    if (!unionOrJoin) {
+                        matched = true;
+                    }
                 }
             }
             //Update the shared query metadata
@@ -323,7 +337,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         }
         return targetHostOperatorMap;
     } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
-        NES_DEBUG2("Target and host operators are contained. Host (leftSig): {}, Target (rightSig): {}, ContainmentType: {}",
+        NES_TRACE2("Target and host operators are contained. Host (leftSig): {}, Target (rightSig): {}, ContainmentType: {}",
                    hostOperator->toString(),
                    targetOperator->toString(),
                    magic_enum::enum_name(containmentType));

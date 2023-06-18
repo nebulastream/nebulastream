@@ -152,10 +152,9 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
 void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
-    NES::Testing::BorrowedPortPtr restPort = NES::Testing::detail::getPortDispatcher().getNextPort();
-    NES::Testing::BorrowedPortPtr rpcCoordinatorPort = NES::Testing::detail::getPortDispatcher().getNextPort();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->rpcPort = 3001;
+    coordinatorConfig->restPort = 8082;
+
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
     optimizerConfiguration.queryBatchSize = batchSize;
@@ -377,7 +376,6 @@ int main(int argc, const char* argv[]) {
                 auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries + queryIter);
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryStatus() != QueryStatus::RUNNING) {
-                    std::cout << "Query status " << lastQuery->getQueryStatus() << std::endl;
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
@@ -395,7 +393,7 @@ int main(int argc, const char* argv[]) {
                 }
 
                 //Compute efficiency
-                auto efficiency = ((totalOperators - mergedOperators) / totalOperators) * 100;
+                float efficiency = (((float) totalOperators - (float) mergedOperators) / (float) totalOperators) * 100;
 
                 //Add the information in the log
                 benchmarkOutput << endTime << "," << file.path().filename() << "," << queryMergerRules[configNum] << ","

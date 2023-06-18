@@ -72,7 +72,6 @@ class QuerySignature {
      * @param schemaFieldToExprMaps: map of tuple schemas expected at the operator
      * @param windowsExpressions: vector with maps containing window expressions
      * @param unionExpressions: Keeps track of predicates applied to a stream before a union operation happens
-     * @param filterAttributesAndIsMapFunctionApplied: Keeps track of all predicates in a stream, bool is true if a map
      * operation was applied to the attribute otherwise it is false
      * @return Shared instance of the query plan signature.
      */
@@ -80,8 +79,7 @@ class QuerySignature {
                                     std::vector<std::string>&& columns,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
-                                    std::map<std::string, z3::ExprPtr>&& unionExpressions,
-                                    std::map<std::string, bool>&& filterAttributesAndIsMapFunctionApplied);
+                                    std::map<std::string, z3::ExprPtr>&& unionExpressions);
 
     /**
      * @brief Get the conditions
@@ -113,13 +111,6 @@ class QuerySignature {
      */
     const std::map<std::string, z3::ExprPtr>& getUnionExpressions();
 
-    /**
-     * @brief Get the map that indicates if it is possible to reorder the filters
-     * @return map of filter attribute names and boolean values indicating if there was a map function applied to that attribute
-     * true if there was a map function applied, false otherwise
-     */
-    const std::map<std::string, bool>& getFilterAttributesAndIsMapFunctionApplied();
-
   private:
     /**
      * @brief a query signature instance
@@ -128,15 +119,13 @@ class QuerySignature {
      * @param schemaFieldToExprMaps map of tuple schemas expected at the operator
      * @param windowsExpressions vector containing multiple maps representing the window operations for this query
      * @param unionExpressions: Keeps track of predicates applied to a stream before a union operation happens
-     * @param filterAttributesAndIsMapFunctionApplied: Keeps track of all predicates in a stream, bool is true if a map
      * operation was applied to the attribute otherwise it is false
      */
     QuerySignature(z3::ExprPtr&& conditions,
                    std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
-                   std::map<std::string, z3::ExprPtr>&& unionExpressions,
-                   std::map<std::string, bool>&& filterAttributesAndIsMapFunctionApplied);
+                   std::map<std::string, z3::ExprPtr>&& unionExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
@@ -151,7 +140,6 @@ class QuerySignature {
     std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
     std::vector<std::map<std::string, z3::ExprPtr>> windowsExpressions;
     std::map<std::string, z3::ExprPtr> unionExpressions;
-    std::map<std::string, bool> filterAttributesAndIsMapFunctionApplied;
 };
 }// namespace NES::Optimizer
 

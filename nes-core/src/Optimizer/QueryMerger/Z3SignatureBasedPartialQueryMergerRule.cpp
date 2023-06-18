@@ -53,6 +53,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
                                                                                      targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
+            NES_INFO2("HostSharedQueryPlan: {}", hostSharedQueryPlan->getQueryPlan()->toString());
+            NES_INFO2("targetQueryPlan: {}", targetQueryPlan->toString());
 
             //Fetch the host query plan to merge
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
@@ -114,6 +116,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                             }
 
                             //Match the target and host operator signatures to see if a match is present
+                            NES_INFO2("Check eq for target: {}, and host: {}", targetOperator->toString(), hostOperator->toString());
                             if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
                                                                      hostOperator->getZ3Signature())) {
                                 //Add the matched host operator to the map
@@ -187,6 +190,11 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
+                    NES_INFO2("targetOperator: {}", targetOperator->toString());
+                    NES_INFO2("hostOperator: {}", hostOperator->toString());
+                    NES_INFO2("SQP Plan: {}", hostSharedQueryPlan->getQueryPlan()->toString());
+                    NES_INFO2("Target Plan: {}", targetQueryPlan->toString());
+                    NES_INFO2("Target Plan: {}", targetQueryPlan->getQueryId());
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
@@ -201,7 +209,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
                     hostQueryPlan->addRootOperator(targetRootOperator);
                 }
-
+                NES_INFO2("Updated SQP: {}", hostSharedQueryPlan->getQueryPlan()->toString());
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
