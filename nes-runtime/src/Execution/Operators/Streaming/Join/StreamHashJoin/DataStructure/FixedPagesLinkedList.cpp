@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
@@ -40,23 +41,24 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
 }
 
 uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
+    size_t oldPos = pos;
     //try to insert on current Page
-    auto retPointer = pages[pos]->append(hash);
+    auto retPointer = currentPage.load()->append(hash);
     if (retPointer != nullptr) {
-        return nullptr;
+        return retPointer;
     }
 
-    //page is full we have to allocate one
-    {
-        std::unique_lock lock(pageAddMutex);
-
-        //recheck if we really need a new page as we could be the second threa3d here
-        if (pages[pos]->isSizeLeft(sizeOfRecord)) {
-            //retry insert
+    //one thread wins and do the replacement
+    bool expected = false;
+    if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed)) {
+        // check if in the meantime somebody else alrady did it
+        if(pos != oldPos)
+        {
+            NES_ERROR("somebody else inserted already " << hash << " thread=" << std::this_thread::get_id());
+            insertInProgress = false;
             return nullptr;
         }
 
-        //yes we really need one
         if (pos + 1 >= pages.size()) {
             NES_ERROR("create new page " << hash << " thread=" << std::this_thread::get_id());
             //we need a new page
@@ -66,10 +68,53 @@ uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
             //there is a free page left
             NES_ERROR("use existing page " << hash << " thread=" << std::this_thread::get_id());
         }
-        pos++;
-        return nullptr;
+        //TODO this does not have to be amtoic anmore
+        pos.fetch_add(1);
+
+        FixedPage* oldPtr = pages[pos - 1].get();
+        FixedPage* newPtr = pages[pos].get();
+        while (!currentPage.compare_exchange_strong(oldPtr, newPtr, std::memory_order::release, std::memory_order::relaxed)) {
+        }
+        insertInProgress = false;
     }
+    return nullptr;
 }
+
+//uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
+//    //try to insert on current Page
+//    if (pos < pages.size()) {
+//        auto retPointer = pages[pos.load()]->append(hash);
+//        if (retPointer != nullptr) {
+//            //            NES_ERROR("insert " << hash << " thread=" << std::this_thread::get_id());
+//            return retPointer;
+//        }
+//    }
+//
+//    //page is full we have to allocate one
+//    {
+//        std::unique_lock lock(pageAddMutex);
+//
+//        //recheck if we really need a new page as we could be the second threa3d here
+//        if (pages[pos]->isSizeLeft(sizeOfRecord)) {
+//            NES_ERROR("space left " << hash << " thread=" << std::this_thread::get_id());
+//            //retry insert
+//            return nullptr;
+//        }
+//
+//        //yes we really need one
+//        if (pos + 1 >= pages.size()) {
+//            NES_ERROR("create new page " << hash << " thread=" << std::this_thread::get_id());
+//            //we need a new page
+//            auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+//            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+//        } else {
+//            //there is a free page left
+//            NES_ERROR("use existing page " << hash << " thread=" << std::this_thread::get_id());
+//        }
+//        pos.fetch_add(1);
+//        return nullptr;
+//    }
+//}
 
 //uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
 //    std::unique_lock lock(pageAddMutex);
@@ -141,7 +186,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
 //}
 //
 //
-//uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
+//uint8_t* FixedPaesLinkedList::appendConcurrent(const uint64_t hash) {
 //    //try to insert on current Page
 //    size_t oldPos = pos;
 //    //    NES_ERROR("try insert page pos " << pos << hash << " thread=" << std::this_thread::get_id());
@@ -179,7 +224,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrent(const uint64_t hash) {
 //    }
 //}
 
-const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
+const folly::fbvector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
 FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
                                            size_t sizeOfRecord,
@@ -187,11 +232,13 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
                                            size_t preAllocPageSizeCnt)
     : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize), insertInProgress(false) {
 
+    NES_ASSERT2_FMT(preAllocPageSizeCnt >= 1, "We need at least one page preallocated");
     //pre allocate pages
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
     }
+    currentPage = pages[0].get();
 }
 
 std::string FixedPagesLinkedList::getStatistics() {

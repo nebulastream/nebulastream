@@ -17,7 +17,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <vector>
-
+#include <folly/FBVector.h>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -55,7 +55,7 @@ class FixedPagesLinkedList {
      * @brief Returns all pages belonging to this list
      * @return Vector containing pointer to the FixedPages
      */
-    const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
+    const folly::fbvector<std::unique_ptr<FixedPage>>& getPages() const;
 
     /**
      * @brief debug method to print the statistics of the Linked list
@@ -68,7 +68,7 @@ class FixedPagesLinkedList {
 
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
-    std::vector<std::unique_ptr<FixedPage>> pages;
+    folly::fbvector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
     std::recursive_mutex pageAddMutex;
@@ -77,6 +77,7 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
+    std::atomic<FixedPage*> currentPage;
 
 };
 }// namespace NES::Runtime::Execution::Operators
