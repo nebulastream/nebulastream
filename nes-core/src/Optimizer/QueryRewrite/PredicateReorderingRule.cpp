@@ -23,16 +23,16 @@ namespace NES::Optimizer {
 PredicateReorderingRulePtr PredicateReorderingRule::create() { return std::make_shared<PredicateReorderingRule>(); }
 
 QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
-    std::vector<NodeId> visitedNodesIds;
+    std::set<NodeId> visitedNodesIds;
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
     NES_DEBUG2("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
     for (auto& filter : filterOperators) {
-        if(std::find(visitedNodesIds.begin(), visitedNodesIds.end(), filter->getId()) == visitedNodesIds.end() ) {
+        if(visitedNodesIds.find(filter->getId()) == visitedNodesIds.end() ) {
             std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_DEBUG2("PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2){
                 NES_DEBUG2("PredicateReorderingRule: Copy consecutive filters");
-                std::vector<FilterLogicalOperatorNodePtr> orderedFilters(filterOperators);
+                std::vector<FilterLogicalOperatorNodePtr> orderedFilters(consecutiveFilters.begin(), consecutiveFilters.end());
                 NES_DEBUG2("PredicateReorderingRule: Sort all filter nodes in increasing order of selectivity");
                 std::sort(orderedFilters.begin(),
                           orderedFilters.end(),
@@ -45,17 +45,19 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
                 std::vector<NodePtr> filterChainChildren = consecutiveFilters.back()->getChildren();
                 orderedFilters.at(0)->removeAllParent();
                 for(auto& firstFilterParent : filterChainParent){
-                    orderedFilters.at(0)->addParent(firstFilterParent);
+                     orderedFilters.at(0)->addParent(firstFilterParent);
                 }
                 NES_DEBUG2("PredicateReorderingRule: For each filter, reassign parents according to new order");
                 for (unsigned int i = 1; i < orderedFilters.size(); i++) {
-                     std::shared_ptr<OperatorNode> filterToUpdate = queryPlan->getOperatorWithId(orderedFilters.at(i)->getId());
-                    if(filterToUpdate == nullptr){
-                        NES_ERROR2("PredicateReorderingRule: Filter to update not found in the plan, something is wrong'");
+                    auto filterToReassign =  orderedFilters.at(i);
+                    std::shared_ptr<OperatorNode> filterToUpdate = queryPlan->getOperatorWithId(filterToReassign->getId());
+                    if(filterToUpdate != nullptr){
+                        filterToUpdate->removeAllParent();
+                        filterToUpdate->addParent(orderedFilters.at(i-1));
+                    } else{
+                        NES_DEBUG2("PredicateReorderingRule: Filter to update not found in the plan, something is wrong");
                         continue;
                     }
-                    filterToUpdate->removeAllParent();
-                    filterToUpdate->addParent(orderedFilters.at(i-1));
                 }
                 NES_DEBUG2("PredicateReorderingRule: Most selective filter goes to the bottom (close to the source), his new children will be the last filter children'");
                 orderedFilters.back()->removeChildren();
@@ -64,9 +66,8 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
                 }
                 NES_DEBUG2("PredicateReorderingRule: Mark the involved nodes as visited");
                 for (auto& orderedFilter : orderedFilters){
-                    visitedNodesIds.push_back(orderedFilter->getId());
+                    visitedNodesIds.insert(orderedFilter->getId());
                 }
-                NES_DEBUG2("PredicateReorderingRule: Finished re-writing query plan");
             }
             else{
                 NES_DEBUG2("PredicateReorderingRule: No consecutive filters found");
