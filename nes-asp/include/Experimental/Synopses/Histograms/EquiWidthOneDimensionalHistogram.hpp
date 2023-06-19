@@ -46,8 +46,8 @@ public:
      * @param upperBinBoundString: Name of the upper bound field, which stores the upper bound of the bin corresponding to a key query
      */
     EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
-                    const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
-                    const std::string& lowerBinBoundString, const std::string& upperBinBoundString);
+                                     const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
+                                     const std::string& lowerBinBoundString, const std::string& upperBinBoundString);
 
     /**
      * @brief Adds the record to the histogram, by first calculating the position and then calling the aggregation function
@@ -58,16 +58,6 @@ public:
      */
     void addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        const Runtime::Execution::Operators::OperatorState *pState) override;
-
-    /**
-     * @brief Calculates the position for each key and then the lower operation on all bins and writes each bin into a record
-     * @param handlerIndex: Index for the operator handler
-     * @param ctx: Execution context that stores the bins
-     * @param keys: Keys for which to approximate
-     * @param outputRecord: Record that should store the approximation
-     */
-    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
-                              Nautilus::Record& outputRecord) override;
 
     /**
      * @brief Sets the histogram up, by calling the setup method of the operator handler, as well as resetting the
@@ -88,8 +78,17 @@ public:
                                  Runtime::Execution::ExecutionContext &ctx) override;
 
 private:
+    /**
+     * @brief Calculates the position for each key and then the lower operation on all bins and writes each bin into a record
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     * @param keys: Keys for which to approximate
+     * @param outputRecord: Record that should store the approximation
+     */
+    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                            const Nautilus::Value<>& key, Nautilus::Record& outputRecord) override;
+
     const int64_t minValue;
-    const int64_t maxValue;
     const uint64_t numberOfBins;
     const uint64_t binWidth;
     const uint64_t entrySize;

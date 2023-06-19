@@ -67,17 +67,6 @@ class AbstractSynopsis {
                                                             const std::vector<Nautilus::Value<>>& keys,
                                                             Runtime::BufferManagerPtr bufferManager);
 
-
-    /**
-     * @brief Provides an approximation for the given key and returns a record containing the approximation
-     * @param ctx: The RuntimeExecutionContext
-     * @param key: The key to provide an approximation for
-     * @param handlerIndex: Index for the operator handler
-     * @param outputRecord: Record that should store the approximation
-     */
-    virtual void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
-                                      const Nautilus::Value<>& key, Nautilus::Record& outputRecord) = 0;
-
     /**
      * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
      * can be done. Couple examples are:
@@ -115,6 +104,16 @@ class AbstractSynopsis {
     virtual ~AbstractSynopsis() = default;
 
   protected:
+    /**
+     * @brief Provides an approximation for the given key and returns a record containing the approximation
+     * @param ctx: The RuntimeExecutionContext
+     * @param key: The key to provide an approximation for
+     * @param handlerIndex: Index for the operator handler
+     * @param outputRecord: Record that should store the approximation
+     */
+    virtual void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                      const Nautilus::Value<>& key, Nautilus::Record& outputRecord) = 0;
+
     Runtime::Execution::Expressions::ReadFieldExpressionPtr readKeyExpression;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     Parsing::Aggregation_Type aggregationType;

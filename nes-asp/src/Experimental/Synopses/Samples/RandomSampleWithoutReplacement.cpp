@@ -34,7 +34,7 @@ namespace NES::ASP {
 
 void createSampleProxy(void* pagedVectorPtr, uint64_t sampleSize) {
     auto* pagedVector = (Nautilus::Interface::PagedVector*) pagedVectorPtr;
-    const auto numberOfTuples = pagedVector->getNumberOfEntries();
+    const uint64_t numberOfTuples = pagedVector->getNumberOfEntries();
 
     // Generating a uniform random distribution
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -73,7 +73,7 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
 }
 
 RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                                               size_t sampleSize, uint64_t entrySize):
+                                                               uint64_t sampleSize, uint64_t entrySize):
     AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), entrySize(entrySize) {
 }
 
@@ -131,7 +131,7 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
     // Iterating over the sample and creating the aggregation for all keys
     Nautilus::Value<Nautilus::MemRef> aggregationValueMemRef = pagedVectorRef.getEntry(numberOfTuplesInWindow.as<Nautilus::UInt64>());
     aggregationFunction->reset(aggregationValueMemRef);
-    Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
+    Nautilus::Value<Nautilus::UInt64> zeroValue((uint64_t) 0);
     for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.at(numberOfRecordsInSample); ++it) {
         auto entryMemRef = *it;
         auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);

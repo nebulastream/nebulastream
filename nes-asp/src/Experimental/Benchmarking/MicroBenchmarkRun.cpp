@@ -268,7 +268,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
     auto outputMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
     auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
-    Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
+    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
     outputMemoryProvider->write(recordIndex, outputRecordBuffer, record);
     outputBuffer.setNumberOfTuples(1);
 

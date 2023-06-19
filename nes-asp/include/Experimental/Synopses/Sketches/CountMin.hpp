@@ -63,16 +63,6 @@ class CountMin : public AbstractSynopsis {
                        const Runtime::Execution::Operators::OperatorState *pState) override;
 
     /**
-     * @brief Retrieves the approximated value by iterating over each row and combining the values of all rows
-     * @param handlerIndex: Index for the operator handler
-     * @param ctx: Execution context that stores the bins
-     * @param keys: Keys for which to approximate
-     * @param outputRecord: Record that should store the approximation
-     */
-    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
-                             Nautilus::Record& outputRecord) override;
-
-    /**
      * @brief Sets the count-min sketch up, by calling the setup method of the operator handler, as well as resetting the
      * values in the cells with the aggregation function
      * @param handlerIndex: Index for the operator handler
@@ -91,6 +81,16 @@ class CountMin : public AbstractSynopsis {
                                  Runtime::Execution::ExecutionContext &ctx) override;
 
   private:
+    /**
+     * @brief Retrieves the approximated value by iterating over each row and combining the values of all rows
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     * @param keys: Keys for which to approximate
+     * @param outputRecord: Record that should store the approximation
+     */
+    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
+                              Nautilus::Record& outputRecord) override;
+
     const uint64_t numberOfRows;
     const uint64_t numberOfCols;
     const uint64_t entrySize;
