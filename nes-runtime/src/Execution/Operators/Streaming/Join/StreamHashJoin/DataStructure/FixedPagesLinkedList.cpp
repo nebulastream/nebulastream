@@ -19,7 +19,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
-    std::unique_lock lock(pageAddMutex);
+    const std::lock_guard<std::mutex> lock(pageAddMutex);
     //try to insert on current Page
     uint8_t* retPointer = pages[pos]->append(hash);
 

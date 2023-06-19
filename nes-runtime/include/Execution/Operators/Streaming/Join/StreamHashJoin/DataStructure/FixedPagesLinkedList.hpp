@@ -71,7 +71,7 @@ class FixedPagesLinkedList {
     folly::fbvector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
-    std::recursive_mutex pageAddMutex;
+    std::mutex pageAddMutex;
     //used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;

@@ -22,11 +22,11 @@ numberOfPartitions: 16
 preAllocPageCnt: 32
 
 #maxHashTableSize: 34359738368
-#maxHashTableSize: 34359738368
+maxHashTableSize: 34359738368
 #for node55
-maxHashTableSize: 137438953472
-#joinStrategy: HASH_JOIN_LOCAL
-joinStrategy: HASH_JOIN_GLOBAL
+#maxHashTableSize: 137438953472
+joinStrategy: HASH_JOIN_LOCAL
+#joinStrategy: HASH_JOIN_GLOBAL
 #joinStrategy: NESTED_LOOP_JOIN
 #
 logicalSources:
