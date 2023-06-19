@@ -199,8 +199,11 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
 
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::AddParent: request =" << request);
-
-    bool success = topologyManagerService->addParent(request->childid(), request->parentid());
+    auto childId = request->childid();
+    if (childId == 15) {
+        replicationService->resendDataToAllSources(1);
+    }
+    bool success = topologyManagerService->addParent(childId, request->parentid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
