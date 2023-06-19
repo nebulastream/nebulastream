@@ -74,6 +74,10 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributed
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
+//Elegant Configurations
+const std::string ELEGANT = "elegant";                        // elegant configurations are initialize with this constant
+const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";// accelerate java udfs supplied in Map UDF operator
+
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";

@@ -15,7 +15,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <map>
 #include <string>
-#include <utility>
 
 namespace NES {
 

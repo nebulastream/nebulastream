@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/Coordinator/ElegantConfigurations.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -125,6 +126,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN,
                                                 "",
                                                 "The allowed origins to be set in the header of the responses to rest requests"};
+
+    /**
+     * @brief elegant related configuration parameters
+     */
+    ElegantConfigurations elegantConfiguration = {ELEGANT, "Define elegant configuration"};
 
     /**
      * Create a CoordinatorConfiguration object with default values.
