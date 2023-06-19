@@ -73,8 +73,10 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL;
-    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL") {
-        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCKING") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCK_FREE") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
     } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
         coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN;
     } else {

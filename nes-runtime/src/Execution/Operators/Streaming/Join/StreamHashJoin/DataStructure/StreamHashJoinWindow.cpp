@@ -16,7 +16,7 @@
 namespace NES::Runtime::Execution {
 
 Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
-    if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL) {
+    if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCKING || joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         index = 0;
     }
 

@@ -19,7 +19,7 @@
 #include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
-
+const bool LOCKFREE = true;
 LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                size_t numPartitions,
                                FixedPagesAllocator& fixedPagesAllocator,
@@ -38,10 +38,12 @@ uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_DEBUG2("into key={} bucket={}", key, getBucketPos(hashedKey));
     if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
-        return buckets[getBucketPos(hashedKey)]->append(hashedKey);
+        return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
+    } else if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+        return buckets[getBucketPos(hashedKey)]->appendConcurrentUsingLocking(hashedKey);
     } else {
         while (true) {
-            auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrent(hashedKey);
+            auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
             if (entry != nullptr) {
                 return entry;
             }

@@ -129,7 +129,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         JOIN_STRATEGY,
         NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL,
         "Indicates the windowingStrategy"
-        "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL|NESTED_LOOP_JOIN]. "};
+        "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
