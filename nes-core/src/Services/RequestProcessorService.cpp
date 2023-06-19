@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
@@ -54,14 +55,12 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const QueryCatalogServicePtr& queryCatalogService,
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                  const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
-                                                 const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                 bool queryReconfiguration,
-                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
-    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
-      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
-      udfCatalog(udfCatalog) {
+                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration)
+    : queryProcessorRunning(true), queryCatalogService(queryCatalogService), queryRequestQueue(std::move(queryRequestQueue)),
+      globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog) {
 
     NES_DEBUG2("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -70,6 +69,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     cfg.set("model", false);
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
+    queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
     queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, queryReconfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
@@ -80,7 +80,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
-                                                                               optimizerConfiguration,
+                                                                               coordinatorConfiguration,
                                                                                udfCatalog);
 
     queryMigrationPhase =
