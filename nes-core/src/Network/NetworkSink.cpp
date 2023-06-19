@@ -158,6 +158,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ResendData: {
+            NES_DEBUG("NetworkSink: ResendData called " << nesPartition.toString() << " parent plan " << querySubPlanId);
             auto tuplesToResend = workerContext.resendDataFromDataStorage(this->nesPartition);
             while (!tuplesToResend.empty()) {
                 auto tupleBuffer = tuplesToResend.top();

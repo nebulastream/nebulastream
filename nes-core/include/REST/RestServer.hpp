@@ -89,6 +89,7 @@ class RestServer {
                QueryCatalogServicePtr queryCatalogService,
                SourceCatalogServicePtr sourceCatalogService,
                TopologyManagerServicePtr topologyManagerService,
+               ReplicationServicePtr replicationService,
                GlobalExecutionPlanPtr globalExecutionPlan,
                QueryServicePtr queryService,
                MonitoringServicePtr monitoringService,
@@ -126,6 +127,7 @@ class RestServer {
     GlobalQueryPlanPtr globalQueryPlan;
     SourceCatalogServicePtr sourceCatalogService;
     TopologyManagerServicePtr topologyManagerService;
+    ReplicationServicePtr replicationService;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     LocationServicePtr locationService;
     Experimental::MaintenanceServicePtr maintenanceService;

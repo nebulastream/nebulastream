@@ -45,6 +45,7 @@ RestServer::RestServer(std::string host,
                        QueryCatalogServicePtr queryCatalogService,
                        SourceCatalogServicePtr sourceCatalogService,
                        TopologyManagerServicePtr topologyManagerService,
+                       ReplicationServicePtr replicationService,
                        GlobalExecutionPlanPtr globalExecutionPlan,
                        QueryServicePtr queryService,
                        MonitoringServicePtr monitoringService,
@@ -56,7 +57,7 @@ RestServer::RestServer(std::string host,
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
-      topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
+      topologyManagerService(std::move(topologyManagerService)), replicationService(replicationService), udfCatalog(std::move(udfCatalog)),
       locationService(std::move(locationService)), maintenanceService(std::move(maintenanceService)),
       monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)) {}
 
@@ -113,7 +114,7 @@ void RestServer::run() {
                                                                                    "/queryCatalog",
                                                                                    errorHandler);
     auto topologyController =
-        REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
+        REST::Controller::TopologyController::create(objectMapper, topologyManagerService, replicationService, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,

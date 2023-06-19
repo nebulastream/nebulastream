@@ -137,11 +137,6 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
 bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
     NES_DEBUG("TopologyManagerService::addParent: childId=" << childId << " parentId=" << parentId);
 
-    if (childId == parentId) {
-        NES_ERROR("TopologyManagerService::AddParent: cannot add link to itself");
-        return false;
-    }
-
     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
     if (!childPhysicalNode) {
         NES_ERROR("TopologyManagerService::AddParent: source node " << childId << " does not exists");

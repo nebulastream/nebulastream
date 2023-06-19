@@ -214,6 +214,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               queryCatalogService,
                                               sourceCatalogService,
                                               topologyManagerService,
+                                              replicationService,
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
