@@ -28,8 +28,9 @@ using ContextPtr = std::shared_ptr<context>;
 namespace NES {
 
 namespace Configurations {
-class OptimizerConfiguration;
-}
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
 
 namespace Catalogs {
 
@@ -95,7 +96,7 @@ class GlobalQueryPlanUpdatePhase {
      * @param queryCatalogService: the catalog of queryIdAndCatalogEntryMapping
      * @param sourceCatalog: the catalog of sources
      * @param globalQueryPlan: the input global query plan
-     * @param optimizerConfiguration: configuration for the optimizer
+     * @param coordinatorConfiguration: configuration of the coordinator
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
@@ -103,7 +104,7 @@ class GlobalQueryPlanUpdatePhase {
                                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                                const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
                                                 Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
@@ -119,7 +120,7 @@ class GlobalQueryPlanUpdatePhase {
                                         const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                        const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
                                         const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
 
     TopologyPtr topology;
