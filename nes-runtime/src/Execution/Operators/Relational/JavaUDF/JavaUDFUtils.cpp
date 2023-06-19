@@ -43,6 +43,7 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
+    NES_DEBUG2("Have to inject {} classes into the JVM", byteCodeList.size());
     for (auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
