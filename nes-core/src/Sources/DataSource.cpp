@@ -530,6 +530,11 @@ bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) con
     return queryManager->injectEpochBarrier(epochBarrier, queryId, this->operatorId);
 }
 
+bool DataSource::resendData(uint64_t queryId) const {
+    NES_DEBUG("DataSource::resendData for queryId " << queryId);
+    return queryManager->resendData(queryId, this->operatorId);
+}
+
 // debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const { return generatedTuples; };
 uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffers; };

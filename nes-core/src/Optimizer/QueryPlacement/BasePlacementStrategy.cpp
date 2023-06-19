@@ -225,8 +225,6 @@ BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyN
         if (currentScoreIterator != individualScores.end()) {
             double networkToReduce = currentScoreIterator->second.first;
             double memoryToReduce = currentScoreIterator->second.second;
-            std::cout << "networkToReduce" << networkToReduce;
-            std::cout << "memoryToReduce" << memoryToReduce;
             if (memoryToReduce > currentTopologyNode->getAvailableMemory()
                 || networkToReduce > currentTopologyNode->getAvailableNetwork()) {
                 NES_ERROR("BasePlacementStrategy::Cannot place fault tolerance. Not enough resources.");
@@ -309,7 +307,7 @@ PlacementScore BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNo
 //    }
 
     //iterate over nodes that are left, starting with the biggest one (heuristics solution)
-    std::vector<TopologyNodePtr> finalPlacement;
+    std::vector<TopologyNodePtr> finalPlacement = {};
     std::vector<TopologyNodePtr> currentPlacement;
     for (auto pathIterator = subPathForPlacement.begin();
          pathIterator != subPathForPlacement.end();
@@ -324,7 +322,8 @@ PlacementScore BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNo
             continue;
         }
         else {
-            finalPlacement.insert(initialPlacement.end(), currentPlacement.rbegin(), currentPlacement.rend());
+            finalPlacement = initialPlacement;
+            finalPlacement.insert(finalPlacement.end(), currentPlacement.rbegin(), currentPlacement.rend());
             resourcesPerPath = findResourcesAvailable(finalPlacement, originalPath);
             double score = w_network
                     * ((resourcesPerPath.maxNetwork - resourcesPerPath.requiredNetwork)
@@ -355,11 +354,9 @@ ResourcesPerPath BasePlacementStrategy::findResourcesAvailable(const std::vector
 
         resourcesPerPath.maxNetwork += currentNodeNetwork;
         resourcesPerPath.requiredNetwork += ingestionRate / epochValue * TUPLE_SIZE;
-        std::cout << "requiredNetwork" << resourcesPerPath.requiredNetwork;
 
         resourcesPerPath.maxMemory += currentNodeMemory;
         resourcesPerPath.requiredMemory += (ingestionRate * distanceScore(originalPath, currentTopologyNode) + epochValue) * TUPLE_SIZE;
-        std::cout << "requiredMemory" << resourcesPerPath.requiredMemory;
 
         auto failureProbability = currentTopologyNode->calculateReliability();
 
@@ -388,6 +385,7 @@ void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlace
     auto initialMemoryCapacity = firstNode->getInitialMemoryCapacity();
     auto initialNetworkCapacity = firstNode->getInitialNetworkCapacity();
     double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) * currentEpoch;
+    newEpoch = std::max(newEpoch, 1.0);
     while (nodeIterator != pathForPlacement.rend()) {
         auto currentNode = (*nodeIterator)->as<TopologyNode>();
         currentNode->addNodeProperty("epoch", newEpoch);

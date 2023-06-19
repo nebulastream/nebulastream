@@ -22,6 +22,7 @@
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>

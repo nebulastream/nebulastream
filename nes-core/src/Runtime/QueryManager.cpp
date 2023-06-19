@@ -356,4 +356,30 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t qu
         return false;
     }
 }
+
+bool AbstractQueryManager::resendData(uint64_t queryId, OperatorId sourceOperatorId) {
+    std::unique_lock lock(queryMutex);
+    auto qep = sourceToQEPMapping.find(sourceOperatorId);
+    if (qep != sourceToQEPMapping.end()) {
+        //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
+        auto executionPlans = qep->second;
+        for (auto executionPlan : executionPlans) {
+            auto sinks = executionPlan->getSinks();
+            for (auto sink : sinks) {
+                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                    NES_DEBUG("AbstractQueryManager::resendData queryId= " << queryId);
+                    auto newReconf = ReconfigurationMessage(queryId,
+                                                            executionPlan->getQuerySubPlanId(),
+                                                            Runtime::ReconfigurationType::ResendData,
+                                                            sink);
+                    addReconfigurationMessage(queryId, executionPlan->getQuerySubPlanId(), newReconf);
+                }
+            }
+        }
+        return true;
+    } else {
+        NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no source was found");
+        return false;
+    }
+}
 }// namespace NES::Runtime

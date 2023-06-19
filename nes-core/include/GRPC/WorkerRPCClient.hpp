@@ -212,6 +212,14 @@ class WorkerRPCClient {
     bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
     /**
+     * @brief method to resend data from all sources
+     * @param queryId: query id which sources belong to
+     * @param address: ip address of the source
+     * @return bool indicating success
+     */
+    bool resendData(uint64_t queryId, const std::string& address);
+
+    /**
      * @brief method to check the health of the worker
      * @param address: ip address of the source
      * @return bool indicating success

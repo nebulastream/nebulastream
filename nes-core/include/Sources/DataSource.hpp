@@ -247,6 +247,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const;
 
+    /**
+     * @brief method to resend data from all source nodes
+     * @param queryId currect query id
+     * @return success is the message was sent
+     */
+    virtual bool resendData(uint64_t queryId) const;
+
     [[nodiscard]] virtual bool fail();
 
     /**

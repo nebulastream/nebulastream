@@ -163,7 +163,15 @@ class WorkerContext {
      */
     void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay);
 
+
     /**
+     * @brief This method resends all tuple buffers from the storage
+     * @param nesPartitionId partition id
+     * @return vector of buffers to resend
+     */
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> resendDataFromDataStorage(Network::NesPartition nesPartitionId);
+
+        /**
      * @brief get the oldest buffered tuple for the specified partition
      * @param nesPartition partition
      * @return an optional containing the tuple or nullopt if the storage is empty

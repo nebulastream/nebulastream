@@ -31,6 +31,8 @@ enum ReconfigurationType : uint8_t {
     FailEndOfStream,
     /// use PropagateEpoch to pass epoch barrier to all network sinks
     PropagateEpoch,
+    /// use ResendData to resend stored data from all sources
+    ResendData,
     /// start buffering the data
     StartBuffering,
     /// stop buffering data

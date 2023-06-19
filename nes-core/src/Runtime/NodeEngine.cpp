@@ -392,6 +392,22 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
     }
 }
 
+void NodeEngine::resendData(uint64_t queryId) const {
+    std::unique_lock lock(engineMutex);
+    std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
+    for (auto& subQueryPlanId : subQueryPlanIds) {
+        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId " << subQueryPlanId);
+        auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
+        for (auto& source : sources) {
+            if (source->resendData(queryId)) {
+                NES_DEBUG("NodeEngine: resendData for the query " << queryId);
+            } else {
+                NES_ERROR("NodeEngine: Couldn't resendData for the query" << queryId);
+            }
+        }
+    }
+}
+
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }

@@ -145,6 +145,18 @@ Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNot
     }
 }
 
+Status WorkerRPCServer::ResendData(ServerContext*, const ResendDataNotification* request, ResendDataNotificationReply* reply) {
+    try {
+        NES_ERROR("WorkerRPCServer::ResendData request received with queryId " << request->queryid());
+        reply->set_success(true);
+        nodeEngine->resendData(request->queryid());
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received invalid resendData request: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 

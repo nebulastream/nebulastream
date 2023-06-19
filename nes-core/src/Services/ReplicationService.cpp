@@ -96,4 +96,31 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
     return false;
 }
 
+bool ReplicationService::resendDataToAllSources(uint64_t queryId) const {
+    std::unique_lock lock(replicationServiceMutex);
+    std::vector<SourceLogicalOperatorNodePtr> sources = getLogicalSources(queryId);
+    if (!sources.empty()) {
+        for (auto& sourceOperator : sources) {
+            std::vector<TopologyNodePtr> sourceLocations = getPhysicalSources(sourceOperator);
+            if (!sourceLocations.empty()) {
+                bool success = false;
+                for (auto& sourceLocation : sourceLocations) {
+                    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+                    auto ipAddress = sourceLocation->getIpAddress();
+                    auto grpcPort = sourceLocation->getGrpcPort();
+                    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+                    success = workerRpcClient->resendData(queryId, rpcAddress);
+                    NES_ASSERT(success, false);
+                    NES_DEBUG("ReplicationService: success=" << success);
+                }
+                return success;
+            } else {
+                NES_ERROR("ReplicationService: no physical sources found for the queryId " << queryId);
+            }
+        }
+    } else {
+        NES_ERROR("ReplicationService: no sources found for the queryId " << queryId);
+    }
+    return false;
+}
 }// namespace NES

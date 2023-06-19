@@ -359,6 +359,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
+    /**
+     * @brief resend data from all network sinks
+     * @param queryId query id
+     * @param source current operator
+     */
+    bool resendData(uint64_t queryId, OperatorId source);
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;

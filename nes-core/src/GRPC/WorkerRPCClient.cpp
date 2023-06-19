@@ -374,6 +374,22 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     return false;
 }
 
+bool WorkerRPCClient::resendData(uint64_t queryId, const std::string& address) {
+    ResendDataNotification request;
+    request.set_queryid(queryId);
+    ResendDataNotificationReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->ResendData(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        return true;
+    }
+    return false;
+}
+
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
     BufferRequest request;

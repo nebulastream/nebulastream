@@ -134,6 +134,10 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
     storage[nesPartitionId].push(buffer);
 }
 
+std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> WorkerContext::resendDataFromDataStorage(Network::NesPartition nesPartitionId){
+    return this->storage[nesPartitionId];
+}
+
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay) {
     NES_DEBUG("BufferStorage: Received trimming message with a timestamp " << timestamp);
     auto iteratorPartitionId = this->storage.find(nesPartitionId);

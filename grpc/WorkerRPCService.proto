@@ -31,6 +31,8 @@ service WorkerRPCService {
 
   rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
+  rpc ResendData (ResendDataNotification) returns (ResendDataNotificationReply) {}
+
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
@@ -113,6 +115,14 @@ message EpochBarrierNotification{
 }
 
 message EpochBarrierReply{
+  bool success = 1;
+}
+
+message ResendDataNotification{
+  uint64 queryId = 1;
+}
+
+message ResendDataNotificationReply{
   bool success = 1;
 }
 

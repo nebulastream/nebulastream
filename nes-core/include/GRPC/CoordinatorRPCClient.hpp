@@ -100,6 +100,13 @@ class CoordinatorRPCClient {
     bool addParent(uint64_t parentId);
 
     /**
+     * @brief method to resend data of a worker in case of a failure
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool resendData(uint64_t queryId);
+
+    /**
      * @brief method to replace old with new parent
      * @param oldParentId id of the old parent
      * @param newParentId id of the new parent

@@ -211,6 +211,18 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
     return Status::CANCELLED;
 }
 
+Status CoordinatorRPCServer::ResendData(ServerContext*, const ResendDataRequest* request, ResendDataReply* reply) {
+    try {
+        NES_INFO("CoordinatorRPCServer::ResendData: resend data from sources querySubPlanId " << request->queryid());
+        this->replicationService->resendDataToAllSources(request->queryid());
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("CoordinatorRPCServer: received wrong resend data message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request =" << request);
 

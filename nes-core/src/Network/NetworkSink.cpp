@@ -157,6 +157,15 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             deleteFromStorageCallback(epochMessage, workerContext);
             break;
         }
+        case Runtime::ResendData: {
+            auto tuplesToResend = workerContext.resendDataFromDataStorage(this->nesPartition);
+            while (!tuplesToResend.empty()) {
+                auto tupleBuffer = tuplesToResend.top();
+                writeData(tupleBuffer, workerContext);
+                tuplesToResend.pop();
+            }
+            break;
+        }
         default: {
             break;
         }

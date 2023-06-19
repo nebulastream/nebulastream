@@ -41,6 +41,13 @@ class ReplicationService {
     bool notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const;
 
     /**
+     * @brief method to resend data from all source nodes
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool resendDataToAllSources(uint64_t queryId) const;
+
+    /**
      * @brief getter of current epoch barrier for a given query id
      * @param queryId current query id
      * @return current epoch barrier

@@ -238,6 +238,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
 
     /**
+     * @brief method to resend data from all sources
+     * @param queryId: identifies what query sends punctuation
+     */
+    void resendData(uint64_t queryId) const;
+
+
+    /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return vector of queryStatistics

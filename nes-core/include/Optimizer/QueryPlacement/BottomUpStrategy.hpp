@@ -17,6 +17,7 @@
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
+#include <fstream>
 
 namespace NES::Catalogs::Source {
 

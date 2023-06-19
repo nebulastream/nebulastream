@@ -144,6 +144,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status AddParent(ServerContext* context, const AddParentRequest* request, AddParentReply* reply) override;
 
     /**
+     * @brief RPC Call to resend all data from sources
+     * @param context: the server context
+     * @param request: resend data request
+     * @param reply: resend data reply
+     * @return success
+     */
+    Status ResendData(ServerContext* context, const ResendDataRequest* request, ResendDataReply* reply) override;
+    /**
      * @brief RPC Call to replace parent
      * @param context: the server context
      * @param request: replace parent request

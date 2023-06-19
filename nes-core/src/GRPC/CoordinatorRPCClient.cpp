@@ -267,6 +267,22 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
         });
 }
 
+bool CoordinatorRPCClient::resendData(uint64_t queryId) {
+    NES_DEBUG("CoordinatorRPCClient: resendData from all sources");
+
+    ResendDataRequest request;
+    request.set_queryid(queryId);
+    NES_DEBUG("CoordinatorRPCClient::AddParentRequest request=" << request.DebugString());
+
+    return detail::processGenericRpc<bool, ResendDataRequest, ResendDataReply>(
+        request,
+        rpcRetryAttemps,
+        rpcBackoff,
+        [this](ClientContext* context, const ResendDataRequest& request, ResendDataReply* reply) {
+            return coordinatorStub->ResendData(context, request, reply);
+        });
+}
+
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId
                                                                  << " workerId=" << workerId);

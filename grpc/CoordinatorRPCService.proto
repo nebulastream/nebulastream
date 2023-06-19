@@ -38,6 +38,9 @@ service CoordinatorRPCService {
   // Sends an add new parent request for to the coordinator
   rpc AddParent (AddParentRequest) returns (AddParentReply) {}
 
+  // Sends an add new parent request for to the coordinator
+  rpc ResendData (ResendDataRequest) returns (ResendDataReply) {}
+
   // Sends a remove parent request to the coordinator
   rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
 
@@ -148,6 +151,14 @@ message AddParentRequest {
 }
 
 message AddParentReply {
+  bool success = 1;
+}
+
+message ResendDataRequest {
+  uint64 queryId = 1;
+}
+
+message ResendDataReply {
   bool success = 1;
 }
 

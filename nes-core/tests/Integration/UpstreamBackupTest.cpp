@@ -13,18 +13,29 @@
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
@@ -38,6 +49,18 @@ using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
 
+// ((1934 + 1) * 15 + 1) * 5
+//const uint64_t numberOfNodesPerLevel3 = 1934;
+//const uint64_t numberOfNodesPerLevel2 = 15;
+//const uint64_t numberOfNodesPerLevel1 = 5;
+//const uint64_t numberOfNodes = 145130;
+
+const uint64_t numberOfNodesPerLevel3 = 56;
+const uint64_t numberOfNodesPerLevel2 = 7;
+const uint64_t numberOfNodesPerLevel1 = 3;
+const uint64_t numberOfNodes = 1200;
+
+
 class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
     std::string ipAddress = "127.0.0.1";
@@ -49,6 +72,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
     Runtime::BufferManagerPtr bufferManager;
+    QueryParsingServicePtr queryParsingService;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UpstreamBackupTest.log", NES::LogLevel::LOG_DEBUG);
@@ -59,6 +87,10 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
 
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        queryParsingService = QueryParsingService::create(jitCompiler);
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -336,15 +368,15 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     //    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
     //    workerConfig1->physicalSources.add(physicalSource1);
 
-//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart1);
-//    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-//
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     workerConfig3->lambdaSource = 1;
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
@@ -358,10 +390,10 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
-//    crd->getTopologyManagerService()->removeParent(4, 1);
-//    crd->getTopologyManagerService()->removeParent(3, 1);
-//    crd->getTopologyManagerService()->addParent(3, 2);
-//    crd->getTopologyManagerService()->addParent(4, 3);
+    crd->getTopologyManagerService()->removeParent(4, 1);
+    crd->getTopologyManagerService()->removeParent(3, 1);
+    crd->getTopologyManagerService()->addParent(3, 2);
+    crd->getTopologyManagerService()->addParent(4, 3);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
@@ -378,21 +410,24 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     LineageType::IN_MEMORY,
                                                                     FaultTolerancePlacement::MFTP);
 
-    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-                                                                    "BottomUp",
-                                                                    FaultToleranceType::AT_LEAST_ONCE,
-                                                                    LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTP);
 
-    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-                                                            "BottomUp",
-                                                            FaultToleranceType::AT_LEAST_ONCE,
-                                                            LineageType::IN_MEMORY,
-                                                            FaultTolerancePlacement::MFTP);
+
+//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+//                                                                    "BottomUp",
+//                                                                    FaultToleranceType::AT_LEAST_ONCE,
+//                                                                    LineageType::IN_MEMORY,
+//                                                                    FaultTolerancePlacement::MFTP);
+//
+//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+//                                                            "BottomUp",
+//                                                            FaultToleranceType::AT_LEAST_ONCE,
+//                                                            LineageType::IN_MEMORY,
+//                                                            FaultTolerancePlacement::MFTP);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    crd->getReplicationService()->resendDataToAllSources(queryId);
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
@@ -416,5 +451,80 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("UpstreamBackupTest: Test finished");
+}
+
+TEST_F(UpstreamBackupTest, testDecisionTime) {
+    auto topology = Topology::create();
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    uint64_t var = 1;
+    TopologyNodePtr rootNode = TopologyNode::create(var++, "localhost", 123, 124, 4, 4, 4, 4, 4, 4, 4, properties);
+    rootNode->addNodeProperty("tf_installed", true);
+    topology->setAsRoot(rootNode);
+
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64);";
+    const std::string sourceName = "car";
+
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setGatheringInterval(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+
+    std::cout << "var" << var << " " << numberOfNodes;
+    while (var < numberOfNodes) {
+        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+        childNode->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(rootNode, childNode);
+        for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
+            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+            subChildNode->addNodeProperty("tf_installed", true);
+            topology->addNewTopologyNodeAsChild(childNode, subChildNode);
+            for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
+                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+                subSubChildNode->addNodeProperty("tf_installed", true);
+                topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
+                for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
+                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+                    sourceNode->addNodeProperty("tf_installed", true);
+                    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
+
+                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+
+
+                    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+                }
+            }
+        }
+    }
+    std::cout << "numberOfNodes" << var;
+
+    globalExecutionPlan = GlobalExecutionPlan::create();
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::MFTP);
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
 }
 }// namespace NES
