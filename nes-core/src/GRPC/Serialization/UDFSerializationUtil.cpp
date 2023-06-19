@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/Serialization/UDFSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
