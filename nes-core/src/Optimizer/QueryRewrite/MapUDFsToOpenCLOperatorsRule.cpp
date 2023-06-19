@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <memory>
 
 namespace NES::Optimizer {
@@ -27,12 +28,20 @@ QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
 
     auto mapJavaUDFOperatorsToReplace = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
 
-    if(mapJavaUDFOperatorsToReplace.empty()){
+    if (mapJavaUDFOperatorsToReplace.empty()) {
         return queryPlan;
     }
 
-    return nullptr;
-
+    for (const auto& mapJavaUDFOperator : mapJavaUDFOperatorsToReplace) {
+        auto openCLOperator =
+            std::make_shared<OpenCLLogicalOperatorNode>(mapJavaUDFOperator->getJavaUDFDescriptor(), mapJavaUDFOperator->getId());
+        if (!mapJavaUDFOperator->replace(openCLOperator)) {
+            NES_ERROR2("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
+            throw Exceptions::RuntimeException(
+                "MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
+        }
+    }
+    return queryPlan;
 }
 
 }// namespace NES::Optimizer
