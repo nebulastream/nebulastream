@@ -62,13 +62,13 @@ class TopologyManagerService {
                             int64_t grpcPort,
                             int64_t dataPort,
                             uint64_t numberOfSlots,
-                            uint64_t memoryCapacity,
-                            uint64_t mtbfValue,
-                            uint64_t launchTime,
-                            uint64_t epochValue,
-                            uint64_t ingestionRate,
-                            uint64_t networkCapacity,
-                            std::map<std::string, std::any> workerProperties);
+                            std::map<std::string, std::any> workerProperties,
+                            const uint64_t memoryCapacity = 1000,
+                            const uint64_t mtbfValue = 100,
+                            const uint64_t launchTime = 100,
+                            const uint64_t epochValue = 100,
+                            const uint64_t ingestionRate = 100,
+                            const uint64_t networkCapacity = 1000);
 
     /**
      * Add GeoLocation of a worker node

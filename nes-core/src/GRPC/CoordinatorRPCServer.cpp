@@ -71,13 +71,13 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                                                grpcPort,
                                                                dataPort,
                                                                slots,
+                                                               workerProperties,
                                                                memoryCapacity,
                                                                mtbfValue,
                                                                launchTime,
                                                                epochValue,
                                                                ingestionRate,
-                                                               networkCapacity,
-                                                               workerProperties);
+                                                               networkCapacity);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());

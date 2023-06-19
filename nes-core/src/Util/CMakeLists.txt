@@ -16,6 +16,7 @@ add_source_files(nes-core
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
         FaultToleranceType.cpp
+        FaultTolerancePlacement.cpp
         LineageType.cpp
         PlacementStrategy.cpp
         GatheringMode.cpp

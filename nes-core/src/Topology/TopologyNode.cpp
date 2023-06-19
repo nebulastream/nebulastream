@@ -46,13 +46,13 @@ TopologyNodePtr TopologyNode::create(const uint64_t id,
                                      const uint32_t grpcPort,
                                      const uint32_t dataPort,
                                      const uint64_t resources,
+                                     std::map<std::string, std::any> properties,
                                      const uint64_t memoryCapacity,
                                      const uint64_t mtbfValue,
                                      const uint64_t launchTime,
                                      const uint64_t epochValue,
                                      const uint64_t ingestionRate,
-                                     const uint64_t networkCapacity,
-                                     std::map<std::string, std::any> properties) {
+                                     const uint64_t networkCapacity) {
     NES_DEBUG("TopologyNode: Creating node with ID " << id << " and resources " << resources);
     return std::make_shared<TopologyNode>(id,
                                           ipAddress,

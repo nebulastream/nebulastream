@@ -51,13 +51,13 @@ class TopologyNode : public Node {
                                   const uint32_t grpcPort,
                                   const uint32_t dataPort,
                                   const uint64_t resources,
-                                  const uint64_t memoryCapacity,
-                                  const uint64_t mtbfValue,
-                                  const uint64_t launchTime,
-                                  const uint64_t epochValue,
-                                  const uint64_t ingestionRate,
-                                  const uint64_t networkCapacity,
-                                  std::map<std::string, std::any> properties);
+                                  std::map<std::string, std::any> properties,
+                                  const uint64_t memoryCapacity = 1000,
+                                  const uint64_t mtbfValue = 100,
+                                  const uint64_t launchTime = 100,
+                                  const uint64_t epochValue = 100,
+                                  const uint64_t ingestionRate = 100,
+                                  const uint64_t networkCapacity = 1000);
 
     virtual ~TopologyNode() = default;
 

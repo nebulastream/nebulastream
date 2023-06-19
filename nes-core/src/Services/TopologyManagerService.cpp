@@ -44,13 +44,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
                                                 const uint64_t numberOfSlots,
+                                                std::map<std::string, std::any> workerProperties,
                                                 const uint64_t memoryCapacity,
                                                 const uint64_t mtbfValue,
                                                 const uint64_t launchTime,
                                                 const uint64_t epochValue,
                                                 const uint64_t ingestionRate,
-                                                const uint64_t networkCapacity,
-                                                std::map<std::string, std::any> workerProperties) {
+                                                const uint64_t networkCapacity) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -71,13 +71,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
                                                            grpcPort,
                                                            dataPort,
                                                            numberOfSlots,
+                                                           workerProperties,
                                                            memoryCapacity,
                                                            mtbfValue,
                                                            launchTime,
                                                            epochValue,
                                                            ingestionRate,
-                                                           networkCapacity,
-                                                           workerProperties);
+                                                           networkCapacity);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");

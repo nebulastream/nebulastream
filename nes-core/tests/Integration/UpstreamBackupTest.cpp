@@ -459,7 +459,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
 
     uint64_t var = 1;
-    TopologyNodePtr rootNode = TopologyNode::create(var++, "localhost", 123, 124, 4, 4, 4, 4, 4, 4, 4, properties);
+    TopologyNodePtr rootNode = TopologyNode::create(var++, "localhost", 123, 124, 4, properties);
     rootNode->addNodeProperty("tf_installed", true);
     topology->setAsRoot(rootNode);
 
@@ -478,19 +478,19 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
 
     std::cout << "var" << var << " " << numberOfNodes;
     while (var < numberOfNodes) {
-        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
         childNode->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, childNode);
         for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
-            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
             subChildNode->addNodeProperty("tf_installed", true);
             topology->addNewTopologyNodeAsChild(childNode, subChildNode);
             for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
-                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
                 subSubChildNode->addNodeProperty("tf_installed", true);
                 topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
                 for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
-                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, 1000, 300, 300, 300, 300, 300, properties);
+                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
                     sourceNode->addNodeProperty("tf_installed", true);
                     topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
 
