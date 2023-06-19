@@ -370,6 +370,8 @@ add_nes_unit_test(global-query-plan-update-phase-tests "UnitTests/Optimizer/Phas
 ### Logical Source Expansion Rule Tests ###
 add_nes_unit_test(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewrite/LogicalSourceExpansionRuleTest.cpp")
 
+### Map UDFs Open CL Operators Rule Tests ###
+add_nes_unit_test(map-udf-to-opencl-rule-test "UnitTests/Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRuleTest.cpp")
 
 ### Syntax Based Equal Query Merger Rule Test ###
 add_nes_unit_test(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp")

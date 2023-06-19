@@ -33,8 +33,10 @@ QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
     }
 
     for (const auto& mapJavaUDFOperator : mapJavaUDFOperatorsToReplace) {
+        //Create new open cl operator
         auto openCLOperator =
-            std::make_shared<OpenCLLogicalOperatorNode>(mapJavaUDFOperator->getJavaUDFDescriptor(), mapJavaUDFOperator->getId());
+            std::make_shared<OpenCLLogicalOperatorNode>(mapJavaUDFOperator->getJavaUDFDescriptor(), Util::getNextOperatorId());
+        //replace map java udf operator with open cl operator
         if (!mapJavaUDFOperator->replace(openCLOperator)) {
             NES_ERROR2("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
             throw Exceptions::RuntimeException(
