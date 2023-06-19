@@ -19,6 +19,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -159,7 +160,8 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::MlHeuristic);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

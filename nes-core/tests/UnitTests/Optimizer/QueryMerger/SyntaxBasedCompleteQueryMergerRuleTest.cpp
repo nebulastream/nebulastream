@@ -22,6 +22,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -648,9 +649,11 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto rewriteRule = Optimizer::QueryRewritePhase::create(true);
-    queryPlan1 = rewriteRule->execute(queryPlan1);
-    queryPlan2 = rewriteRule->execute(queryPlan2);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
@@ -704,9 +707,11 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto rewriteRule = Optimizer::QueryRewritePhase::create(true);
-    queryPlan1 = rewriteRule->execute(queryPlan1);
-    queryPlan2 = rewriteRule->execute(queryPlan2);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,

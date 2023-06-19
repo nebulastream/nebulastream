@@ -13,3 +13,26 @@
 */
 
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <memory>
+
+namespace NES::Optimizer {
+
+MapUDFsToOpenCLOperatorsRulePtr NES::Optimizer::MapUDFsToOpenCLOperatorsRule::create() {
+    return std::make_shared<MapUDFsToOpenCLOperatorsRule>(MapUDFsToOpenCLOperatorsRule());
+}
+
+QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
+
+    auto mapJavaUDFOperatorsToReplace = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
+
+    if(mapJavaUDFOperatorsToReplace.empty()){
+        return queryPlan;
+    }
+
+    return nullptr;
+
+}
+
+}// namespace NES::Optimizer
