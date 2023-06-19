@@ -55,7 +55,7 @@ parseAggregations(const Yaml::Node& aggregationsNode, const std::filesystem::pat
  * @param windowSizesNode
  * @return Vector of different window sizes
  */
-std::vector<size_t> parseWindowSizes(const Yaml::Node& windowSizesNode);
+std::vector<uint64_t> parseWindowSizes(const Yaml::Node& windowSizesNode);
 
 /**
  * @brief Parses the number of Buffers for the buffer manager

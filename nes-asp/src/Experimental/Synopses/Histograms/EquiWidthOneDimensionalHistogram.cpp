@@ -100,7 +100,7 @@ bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(const uint64_t ha
 EquiWidthOneDimensionalHistogram::EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
                                  const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
                                  const std::string& lowerBinBoundString, const std::string& upperBinBoundString)
-        : AbstractSynopsis(aggregationConfig), minValue(minValue), maxValue(maxValue), numberOfBins(numberOfBins),
+        : AbstractSynopsis(aggregationConfig), minValue(minValue), numberOfBins(numberOfBins),
         binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), lowerBinBoundString(lowerBinBoundString),
         upperBinBoundString(upperBinBoundString){
 }

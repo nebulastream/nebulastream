@@ -37,7 +37,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param entrySize: Size of a single entry/tuple
      */
     explicit RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                            size_t sampleSize, uint64_t entrySize);
+                                            uint64_t sampleSize, uint64_t entrySize);
 
     /**
      * @brief Initializes the sample by calling the setup method of the operator handler
@@ -54,15 +54,6 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
     void addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        const Runtime::Execution::Operators::OperatorState *pState) override;
 
-    /**
-     * @brief Once we have finished building our sample, we can ask for an approximate
-     * @param handlerIndex: Index for the operator handler
-     * @param ctx: Execution context that stores the bins
-     * @param keys: Keys for which to approximate
-     * @param outputRecord: Record that should store the approximation
-     */
-    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
-                             Nautilus::Record& outputRecord) override;
     /**
      * @brief For now this does not store any local state and therefore returns False #3743
      * @param handlerIndex:Index for the operator handler
@@ -82,6 +73,16 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
   private:
     /**
+     * @brief Once we have finished building our sample, we can ask for an approximate
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     * @param keys: Keys for which to approximate
+     * @param outputRecord: Record that should store the approximation
+     */
+    void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, const Nautilus::Value<>& key,
+                              Nautilus::Record& outputRecord) override;
+
+    /**
      * @brief Calculates the scaling factor from the current number of samples and stored records
      * @param numberOfTuplesInWindow: Number of tuples in the window for the current active sample
      * @return Scaling factor
@@ -97,8 +98,8 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
     Nautilus::Value<>
     multiplyWithScalingFactor(Nautilus::Value<> approximatedValue, Nautilus::Value<Nautilus::Double> scalingFactor);
 
-    const size_t sampleSize;
-    const size_t entrySize;
+    const uint64_t sampleSize;
+    const uint64_t entrySize;
     bool firstRunGetApproximate{false};
 };
 } // namespace NES::ASP
