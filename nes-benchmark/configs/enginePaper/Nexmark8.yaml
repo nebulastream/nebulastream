@@ -6,7 +6,7 @@ outputFile: nexmark8.csv
 #numberOfWorkerThreads: 1,2,3,4,5,6,7,8
 #numberOfSources: 1,1,1,1,2,2,2,2
 #numberOfWorkerThreads: 1,2,4,8,16
-numberOfWorkerThreads: 4
+numberOfWorkerThreads: 1,2,4,8,16
 numberOfSources: 1
 
 # engine configuration parameter
@@ -22,7 +22,9 @@ numberOfPartitions: 16
 preAllocPageCnt: 32
 
 #maxHashTableSize: 34359738368
-maxHashTableSize: 34359738368
+#maxHashTableSize: 34359738368
+#for node55
+maxHashTableSize: 137438953472
 #joinStrategy: HASH_JOIN_LOCAL
 joinStrategy: HASH_JOIN_GLOBAL
 #joinStrategy: NESTED_LOOP_JOIN
