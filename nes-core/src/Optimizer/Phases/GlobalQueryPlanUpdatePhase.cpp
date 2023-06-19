@@ -53,15 +53,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
-    //then apply special rewrite rules for improving the match identification
-    bool applyRulesImprovingSharingIdentification =
-        optimizerConfigurations.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
-        || optimizerConfigurations.queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule
-        || optimizerConfigurations.queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
-        || optimizerConfigurations.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
 
-    queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
+    queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
     originIdInferencePhase = OriginIdInferencePhase::create();
     topologySpecificQueryRewritePhase =
         TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);

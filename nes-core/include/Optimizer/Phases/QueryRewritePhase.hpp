@@ -21,6 +21,14 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Configurations {
+
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+
+}// namespace Configurations
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -43,12 +51,15 @@ using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 class BinaryOperatorSortRule;
 using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
+class MapUDFsToOpenCLOperatorsRule;
+using MapUDFsToOpenCLOperatorsRulePtr = std::shared_ptr<MapUDFsToOpenCLOperatorsRule>;
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
 class QueryRewritePhase {
   public:
-    static QueryRewritePhasePtr create(bool applyRulesImprovingSharingIdentification);
+    static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -58,13 +69,16 @@ class QueryRewritePhase {
     QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
   private:
-    explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
+    explicit QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification);
+
+    bool elegantAccelerationEnabled;
     bool applyRulesImprovingSharingIdentification;
     FilterPushDownRulePtr filterPushDownRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
+    MapUDFsToOpenCLOperatorsRulePtr mapUDFsToOpenCLOperatorsRule;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_

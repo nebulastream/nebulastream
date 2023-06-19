@@ -21,6 +21,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -208,7 +209,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan);
@@ -267,7 +269,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::TopDown);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -337,7 +340,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -411,7 +415,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -487,7 +492,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -545,7 +551,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
 
     setupTopologyAndSourceCatalog({4, 4, 4});
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificReWrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -659,7 +666,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificReWrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -773,7 +781,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     queryPlan->addRootOperator(sinkOperator1);
     queryPlan->addRootOperator(sinkOperator2);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -834,7 +843,8 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::Manual);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -895,7 +905,8 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::Manual);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -955,7 +966,8 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::Manual);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -1073,7 +1085,8 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                                                                               typeInferencePhase);
 
     // Execute optimization phases prior to placement
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1208,7 +1221,8 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                                                                               typeInferencePhase);
 
     // Execute optimization phases prior to placement
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1343,7 +1357,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1461,7 +1476,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
