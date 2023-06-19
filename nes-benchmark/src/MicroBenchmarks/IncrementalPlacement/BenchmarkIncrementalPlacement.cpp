@@ -20,6 +20,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -369,9 +370,11 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "Parsed all queries." << std::endl;
 
+    auto coordinatorConfiguration = CoordinatorConfiguration::create();
     //Set optimizer configuration
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfiguration->optimizer = optimizerConfiguration;
 
     //Perform benchmark for each run configuration
     auto runConfig = configs["RunConfig"];
@@ -400,7 +403,7 @@ int main(int argc, const char* argv[]) {
                                                                                         sourceCatalog,
                                                                                         globalQueryPlan,
                                                                                         z3Context,
-                                                                                        optimizerConfiguration,
+                                                                                        coordinatorConfiguration,
                                                                                         udfCatalog);
 
             auto globalExecutionPlan = GlobalExecutionPlan::create();

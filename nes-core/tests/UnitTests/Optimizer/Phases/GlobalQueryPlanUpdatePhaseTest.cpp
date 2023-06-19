@@ -20,6 +20,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -92,15 +93,19 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
 
+    //Coordinator configuration
     const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
     auto catalogEntry1 =
         Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::OPTIMIZING);
@@ -122,15 +127,20 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     q1.getQueryPlan()->setQueryId(1);
     queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -155,15 +165,20 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     q1.getQueryPlan()->setQueryId(1);
     queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
@@ -187,17 +202,24 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     q2.getQueryPlan()->setQueryId(2);
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
@@ -226,16 +248,24 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
     queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Random reason");
+
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1};
@@ -259,16 +289,22 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
@@ -310,16 +346,24 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
         auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
+
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
+
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
@@ -386,15 +430,22 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
     sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
+
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
 
     auto resultPlan = phase->execute(batchOfNesRequests);
@@ -436,17 +487,24 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     q2.getQueryPlan()->setQueryId(2);
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    const auto globalQueryPlan = GlobalQueryPlan::create();
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
-                                                               optimizerConfiguration,
+                                                               coordinatorConfig,
                                                                udfCatalog);
+
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
