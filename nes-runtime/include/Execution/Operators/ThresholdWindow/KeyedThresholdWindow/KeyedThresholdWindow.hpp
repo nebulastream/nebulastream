@@ -57,8 +57,6 @@ class KeyedThresholdWindow : public ExecutableOperator {
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
-
-    // add key field name, try Nautilus::Record::RecordFieldIdentifier
 };
 }// namespace NES::Runtime::Execution::Operators
 
