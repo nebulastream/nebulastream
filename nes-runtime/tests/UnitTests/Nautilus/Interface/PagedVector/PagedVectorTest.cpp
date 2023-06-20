@@ -111,7 +111,6 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesAfterMoveFromTo) {
     pagedVector.moveFromTo(10, 40);
     pagedVector.moveFromTo(100, 130);
 
-
     uint64_t i = 0;
     for (auto it : pagedVectorRef) {
         uint64_t expected = i++;

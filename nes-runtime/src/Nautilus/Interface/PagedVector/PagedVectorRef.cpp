@@ -58,7 +58,8 @@ Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
     auto pagePos = (pos / entriesPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 
-    auto page = Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
+    auto page =
+        Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos.as<MemRef>();
