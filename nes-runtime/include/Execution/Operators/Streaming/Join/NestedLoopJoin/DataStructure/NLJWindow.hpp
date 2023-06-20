@@ -33,19 +33,27 @@ class NLJWindow : public StreamWindow {
   public:
     /**
      * @brief Constructor for creating a window
-     * @param windowStart
-     * @param windowEnd
+     * @param windowStart: Start timestamp of this window
+     * @param windowEnd: End timestamp of this window
+     * @param numWorkerThreads: The number of worker threads that will operate on this window
      */
-    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd);
+    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads);
 
     ~NLJWindow() = default;
 
     /**
      * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param leftSide
+     * @param leftSide: If the side is the left or right side
+     * @param workerId: The id of the worker, which request the PagedVectorRef
      * @return Void pointer to the pagedVector
      */
-    void* getPagedVectorRef(bool leftSide);
+    void* getPagedVectorRef(bool leftSide, uint64_t workerId);
+
+    /**
+     * @brief combines the PagedVectors for the left and right side. Afterwards, all tuples are stored in the first
+     * index of the vectors
+     */
+    void combinePagedVectors();
 
     /**
      * @brief Returns the number of tuples in this window
@@ -62,8 +70,9 @@ class NLJWindow : public StreamWindow {
     std::string toString() override;
 
   private:
-    std::unique_ptr<Nautilus::Interface::PagedVector> leftTuples;
-    std::unique_ptr<Nautilus::Interface::PagedVector> rightTuples;
+    uint64_t numWorkerThreads;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftTuples;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightTuples;
 };
 }// namespace NES::Runtime::Execution
 

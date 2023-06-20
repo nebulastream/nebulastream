@@ -44,6 +44,7 @@ PagedVector::~PagedVector() {
         allocator->deallocate(page, pageSize);
     }
 }
+
 size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }
 
 void PagedVector::setNumberOfEntries(size_t entries) { totalNumberOfEntries = entries; }
@@ -64,5 +65,18 @@ void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
 void PagedVector::clear() { pages.clear(); }
 
 size_t PagedVector::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
+
+void PagedVector::combinePagedVectors(const PagedVector& other) {
+    NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes");
+
+    pages.reserve(pages.size + other.pages.size());
+    for (auto& page : other.pages) {
+        pages.emplace_back(page);
+    }
+
+    currentPage = pages[pages.size() - 1];
+    numberOfEntries = other.numberOfEntries;
+    totalNumberOfEntries += other.totalNumberOfEntries;
+}
 
 }// namespace NES::Nautilus::Interface
