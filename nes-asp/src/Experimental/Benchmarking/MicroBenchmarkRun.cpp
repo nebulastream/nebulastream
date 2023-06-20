@@ -42,11 +42,11 @@ void MicroBenchmarkRun::run() {
         NES_INFO2("Creating input buffer...");
         auto allRecordBuffers = this->createInputRecords(bufferManager);
 
-        NES_INFO2("Creating accuracy buffer...");
-        auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, bufferManager);
-
         NES_INFO2("Creating the query keys...");
         auto queryKeyValues = this->createQueryKeyValues(allRecordBuffers, bufferManager);
+
+        NES_INFO2("Creating accuracy buffer...");
+        auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, queryKeyValues, bufferManager);
 
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
         NES_INFO2("Creating the synopsis...");
@@ -58,12 +58,10 @@ void MicroBenchmarkRun::run() {
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
 
-
         Nautilus::CompilationOptions compilationOptions;
         compilationOptions.setDumpToConsole(true);
         compilationOptions.setDebug(true);
         auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler").get();
-//        auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineInterpreter").get();
         auto executablePipeline = provider->create(pipeline, compilationOptions);
 
         // Creating strings here for the snapshots
@@ -233,73 +231,108 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime:
 
 
 
-std::vector<Nautilus::Value<>> MicroBenchmarkRun::createQueryKeyValues(std::vector<Runtime::TupleBuffer>&,
-                                                                       Runtime::BufferManagerPtr) {
-    // TODO we will implement this as part of the issue #3837
-    NES_NOT_IMPLEMENTED();
-}
+std::vector<Nautilus::Value<>> MicroBenchmarkRun::createQueryKeyValues(std::vector<Runtime::TupleBuffer>& inputBuffers,
+                                                                       Runtime::BufferManagerPtr bufferManager) {
+    // For now, we just use all keys that we observe
 
-std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
-                                                                           Runtime::BufferManagerPtr bufferManager) {
+    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                                   aggregation.inputSchema);
+    auto readKeyFieldExpression = aggregation.getReadFieldKeyExpression();
+    std::vector<Nautilus::Value<>> queryKeyValues;
 
-    auto aggregationFunction = aggregation.createAggregationFunction();
-    auto aggregationValueBuffer = bufferManager->getBufferBlocking();
-    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValueBuffer.getBuffer());
-
-    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
-
-    // TODO for now we can ignore windows #3628
-    aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : inputBuffers) {
-        NES_INFO2("buffer: {}", NES::Util::printTupleBufferAsCSV(buffer, aggregation.inputSchema));
         auto numberOfRecords = buffer.getNumberOfTuples();
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read({}, bufferAddress, i);
-            aggregationFunction->lift(aggregationValueMemRef, record);
+            auto key = readKeyFieldExpression->execute(record);
+            queryKeyValues.emplace_back(key);
         }
     }
 
-    // Writes the output into a Nautilus::Record
-    Nautilus::Record record;
-    aggregationFunction->lower(aggregationValueMemRef, record);
+    return queryKeyValues;
+}
 
-    // Create an output buffer and write the approximation into it
-    auto outputMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
+std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
+                                                                           std::vector<Nautilus::Value<>>& queryKeyValues,
+                                                                           Runtime::BufferManagerPtr bufferManager) {
+    using namespace Runtime::Execution;
+    auto aggregationFunction = aggregation.createAggregationFunction();
+    auto aggregationValueBuffer = bufferManager->getBufferBlocking();
+    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValueBuffer.getBuffer());
+    auto readKeyFieldExpression = aggregation.getReadFieldKeyExpression();
+
+    auto inputMemoryProvider = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                    aggregation.inputSchema);
+    auto outputMemoryProvider = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                     aggregation.outputSchema);
+
+    // TODO for now we can ignore windows #3628
+    std::vector<Runtime::TupleBuffer> accuracyBuffers;
+    auto maxRecordsPerBuffer = bufferManager->getBufferSize() / aggregation.outputSchema->getSchemaSizeInBytes();
     auto outputBuffer = bufferManager->getBufferBlocking();
-    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
-    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
-    outputMemoryProvider->write(recordIndex, outputRecordBuffer, record);
-    outputBuffer.setNumberOfTuples(1);
+    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t)0);
 
-    return {outputBuffer};
+    for (auto& key : queryKeyValues) {
+        aggregationFunction->reset(aggregationValueMemRef);
+        NES_INFO2("buffer: {}", NES::Util::printTupleBufferAsCSV(buffer, aggregation.inputSchema));
+
+        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
+        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < buffer.getNumberOfTuples(); i = i + (uint64_t) 1) {
+            auto record = memoryProvider->read({}, bufferAddress, i);
+            if (readKeyFieldExpression->execute(record) == key) {
+                aggregationFunction->lift(aggregationValueMemRef, record);
+            }
+        }
+
+        auto outputBufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
+        Nautilus::Record outputRecord;
+        outputRecord.write(fieldNameKey, key);
+        aggregationFunction->lower(aggregationValueMemRef, record);
+        outputMemoryProvider->write(recordIndex,outputBufferAddress, record);
+        recordIndex = recordIndex + 1;
+        outputBuffer.setNumberOfTuples(recordIndex.getValue().getValue());
+
+        if (recordIndex >= maxRecordsPerBuffer) {
+            accuracyBuffers.emplace_back(outputBuffer);
+            outputBuffer = bufferManager->getBufferBlocking();
+            recordIndex = (uint64_t) 0;
+        }
+    }
+
+    if (recordIndex > 0) {
+        accuracyBuffers.emplace_back(outputBuffer);
+    }
+
+    return accuracyBuffers;
 }
 
 double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& allAccuracyRecords,
                                           std::vector<Runtime::TupleBuffer>& allApproximateBuffers) {
-
+    // This is not the fastest implementation, but we can optimize it later one, if necessary
     double sumError = 0.0;
-    auto numTuples = 0UL;
+    uint64_t numTuples = 0;
 
     for (auto& accBuf : allAccuracyRecords) {
-        auto dynamicAccBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
-        NES_DEBUG2("dynamicAccBuf: {}", NES::Util::printTupleBufferAsCSV(dynamicAccBuf.getBuffer(), aggregation.outputSchema));
-        for (auto& approxBuf : allApproximateBuffers) {
-            auto dynamicApproxBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
-            NES_DEBUG2("dynamicApproxBuf: {}", NES::Util::printTupleBufferAsCSV(dynamicApproxBuf.getBuffer(), aggregation.outputSchema));
-            NES_ASSERT(dynamicAccBuf.getNumberOfTuples() == dynamicApproxBuf.getNumberOfTuples(),
-                       "Approximate Buffer and Accuracy Buffer must have the same number of tuples");
+        auto dynAccBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
+        /* Iterating over all tuples in the current accuracy buffer, trying to find the record in the approximate buffer and then
+         * calculating the relative accuracy */
+        for (auto accTuple = 0UL; accTuple < dynAccBuf.getNumberOfTuples(); ++accTuple) {
+            for (auto& approxBuf : allApproximateBuffers) {
+                auto dynApproxBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
+                for (auto approxTuple = 0UL; approxTuple < dynApproxBuf.getNumberOfTuples(); ++approxTuple) {
+                    if (dynAccBuf[accTuple][aggregation.fieldNameKey] == dynApproxBuf[approxTuple][aggregation.fieldNameKey]) {
+                        auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
+                        auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
 
-            for (auto i = 0UL; i < dynamicApproxBuf.getNumberOfTuples(); ++i) {
-                auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
-                auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
-
-                sumError += Util::calculateRelativeError(approxAgg, exactAgg);
-                ++numTuples;
+                        sumError += Util::calculateRelativeError(approxAgg, exactAgg);
+                        ++numTuples;
+                    }
+                }
             }
         }
     }
-
+    
     return 1.0 - (sumError / numTuples);
 }
 

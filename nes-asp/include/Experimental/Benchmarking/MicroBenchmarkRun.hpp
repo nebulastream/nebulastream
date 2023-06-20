@@ -134,11 +134,13 @@ class MicroBenchmarkRun {
     /**
      * @brief Creates a vector of type TupleBuffer by executing the exact query
      * @param inputBuffers: that contain the (key, value, timestamp) for creating the approximation
+     * @param queryKeyValues: Vector of all keys
      * @param bufferManager: for giving us access to buffers
      * @return Vector of records stored in multiple TupleBuffers
      */
     std::vector<Runtime::TupleBuffer> createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
-                                                                        Runtime::BufferManagerPtr bufferManager);
+                                                            std::vector<Nautilus::Value<>>& queryKeyValues,
+                                                            Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Creates a vector of keys to be queried after the synopses has been filled
