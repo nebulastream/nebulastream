@@ -59,9 +59,9 @@ class NLJWindow : public StreamWindow {
      * @brief Returns the number of tuples in this window
      * @param sizeOfTupleInByte
      * @param leftSide
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide);
+    uint64_t getNumberOfTuples(bool leftSide) override;
 
     /**
      * @brief Creates a string representation of this window

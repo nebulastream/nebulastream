@@ -63,9 +63,9 @@ class StreamHashJoinWindow : public StreamWindow {
      * @brief Returns the number of tuples in this window
      * @param workerIdx
      * @param leftSide
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfTuples(uint64_t workerIdx, bool leftSide);
+    uint64_t getNumberOfTuples(bool leftSide) override;
 
     /**
      * @brief Creates a string representation of this window

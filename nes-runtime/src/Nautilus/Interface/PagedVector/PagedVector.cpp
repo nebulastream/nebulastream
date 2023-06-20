@@ -69,7 +69,7 @@ size_t PagedVector::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; 
 void PagedVector::combinePagedVectors(const PagedVector& other) {
     NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes");
 
-    pages.reserve(pages.size + other.pages.size());
+    pages.reserve(pages.size() + other.pages.size());
     for (auto& page : other.pages) {
         pages.emplace_back(page);
     }
@@ -77,6 +77,12 @@ void PagedVector::combinePagedVectors(const PagedVector& other) {
     currentPage = pages[pages.size() - 1];
     numberOfEntries = other.numberOfEntries;
     totalNumberOfEntries += other.totalNumberOfEntries;
+}
+uint64_t PagedVector::getEntrySize() const {
+    return entrySize;
+}
+uint64_t PagedVector::getPageSize() const {
+    return pageSize;
 }
 
 }// namespace NES::Nautilus::Interface

@@ -26,24 +26,9 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-class LocalNestedLoopJoinState : public Operators::OperatorState {
-  public:
-    LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler, const Value<MemRef>& windowReference,
-                             const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
-        : joinOperatorHandler(operatorHandler),  windowReference(windowReference), pagedVectorRef(pagedVectorRef),
-          windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
-    Value<MemRef> joinOperatorHandler;
-    Value<MemRef> windowReference;
-    Nautilus::Interface::PagedVectorRef pagedVectorRef;
-    Value<UInt64> windowStart;
-    Value<UInt64> windowEnd;
-};
 
 void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -52,19 +37,13 @@ void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     return opHandler->getWindowByTimestampOrCreateIt2(timestamp);
 }
 
-void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
-    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
-    return nljWindow->getPagedVectorRef(isLeftSide, workerId);
-}
-
-void* getNLJWindowStartProxy(void* ptrNljWindow) {
+uint64_t getNLJWindowStartProxy(void* ptrNljWindow) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
     return nljWindow->getWindowStart();
 }
 
-void* getNLJWindowEndProxy(void* ptrNljWindow) {
+uint64_t getNLJWindowEndProxy(void* ptrNljWindow) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
     return nljWindow->getWindowEnd();
@@ -97,13 +76,21 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
 void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                     Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
                                     Nautilus::Value<Nautilus::UInt64>& timestamp,
-                                    Nautilus::Value<Nautilus::UInt64>& workerId) {
+                                    Nautilus::Value<Nautilus::UInt64>& workerId) const {
     // Retrieving the window of the current watermark, as we expect that more tuples will be inserted into this window
     localJoinState->windowReference = Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy,
                                                              operatorHandlerMemRef, timestamp);
-    localJoinState->pagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
-                                                            localJoinState->windowReference, workerId,
-                                                            Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+    auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
+                                                       localJoinState->windowReference, workerId,
+                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+    Nautilus::Value<UInt64> entrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
+                                                                    nljPagedVectorMemRef);
+    Nautilus::Value<UInt64> pageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
+                                                                  nljPagedVectorMemRef);
+    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef,
+                                                                         entrySize.getValue().getValue(),
+                                                                         pageSize.getValue().getValue());
+
     localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
                                                          localJoinState->windowReference);
     localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
@@ -118,7 +105,8 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     if (!(localJoinState->windowStart <= timestampVal && timestampVal < localJoinState->windowEnd)) {
         // We have to get the window for the current timestamp
-        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, ctx.getWorkerId());
+        auto workerId = ctx.getWorkerId();
+        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, workerId);
     }
 
     // Get the memRef to the new entry
@@ -139,7 +127,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
     auto opHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
-    auto pagedVectorRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(Nautilus::Value<Nautilus::MemRef>(nullptr), 42);
 
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandler, windowRef, pagedVectorRef);
     ctx.setLocalOperatorState(this, std::move(localJoinState));
@@ -151,7 +139,8 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto watermarkTs = recordBuffer.getWatermarkTs();
     if (!(localJoinState->windowStart <= watermarkTs && watermarkTs < localJoinState->windowEnd)) {
-        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, ctx.getWorkerId());
+        auto workerId = ctx.getWorkerId();
+        updateLocalJoinState(localJoinState, operatorHandlerMemRef, watermarkTs, workerId);
     }
 
     ctx.setWatermarkTs(watermarkTs);
