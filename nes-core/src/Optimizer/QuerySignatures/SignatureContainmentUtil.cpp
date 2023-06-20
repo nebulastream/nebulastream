@@ -411,7 +411,9 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
 
 std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
                                                                                     const LogicalOperatorNodePtr& containee) {
-    NES_DEBUG("Check if filter containment is possible for container {}, containee {}.", container->toString(), containee->toString());
+    NES_DEBUG("Check if filter containment is possible for container {}, containee {}.",
+               container->toString(),
+               containee->toString());
     //if all checks pass, we extract the filter operators
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
@@ -423,8 +425,7 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
         if (!checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.front(), mapAttributeNames)) {
             return {};
         }
-        if (!mapAttributeNames.empty()
-            && !filterPredicateStillApplicable(upstreamFilterOperators.front(),
+        if (!filterPredicateStillApplicable(upstreamFilterOperators.front(),
                                                mapAttributeNames,
                                                container->getOutputSchema())) {
             return {};
@@ -432,26 +433,24 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
         return containmentOperators;
     } else {
         std::vector<std::string> mapAttributeNames = {};
-        NES_DEBUG2("Filter predicate: {}", upstreamFilterOperators.back()->toString());
+        NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
         if (checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.back(), mapAttributeNames)) {
-            NES_DEBUG2("Filter predicate: {}", upstreamFilterOperators.back()->toString());
+            NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
             auto predicate = upstreamFilterOperators.front()->getPredicate();
-            if (!mapAttributeNames.empty()
-                && !filterPredicateStillApplicable(upstreamFilterOperators.front(),
+            if (!filterPredicateStillApplicable(upstreamFilterOperators.front(),
                                                    mapAttributeNames,
                                                    container->getOutputSchema())) {
                 return {};
             }
             for (size_t i = 1; i < upstreamFilterOperators.size(); ++i) {
-                if (!mapAttributeNames.empty()
-                    && !filterPredicateStillApplicable(upstreamFilterOperators.at(i),
+                if (!filterPredicateStillApplicable(upstreamFilterOperators.at(i),
                                                        mapAttributeNames,
                                                        container->getOutputSchema())) {
                     return {};
                 }
                 predicate = AndExpressionNode::create(predicate, upstreamFilterOperators.at(i)->getPredicate());
             }
-            NES_DEBUG2("Filter predicate: {}", predicate->toString());
+            NES_DEBUG("Filter predicate: {}", predicate->toString());
             upstreamFilterOperators.front()->setPredicate(predicate);
             return {upstreamFilterOperators.front()};
         } else {
@@ -465,17 +464,26 @@ bool SignatureContainmentUtil::filterPredicateStillApplicable(FilterLogicalOpera
                                                               const std::vector<std::string>& fieldNames,
                                                               const SchemaPtr& containerOutputSchema) {
 
-    NES_TRACE2("Create an iterator for traversing the filter predicates");
+    NES_INFO("Create an iterator for traversing the filter {} predicates {}, and check output schema {}",
+              filterOperator->toString(),
+              filterOperator->getPredicate()->toString(),
+              containerOutputSchema->toString());
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-        NES_TRACE2("Iterate and find the predicate with FieldAccessExpression Node");
+        NES_TRACE("Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            NES_TRACE2("Check if the input field name is same as the FieldAccessExpression field name");
+            NES_INFO2("Is field {} still in container output schema {}? {}",
+                      accessExpressionNode->getFieldName(),
+                      containerOutputSchema->toString(),
+                      containerOutputSchema->contains(accessExpressionNode->getFieldName()));
+            if (!containerOutputSchema->contains(accessExpressionNode->getFieldName())) {
+                return false;
+            }
+            NES_TRACE("Check if the input field name is same as the FieldAccessExpression field name");
             for (const auto& fieldName : fieldNames) {
-                if (accessExpressionNode->getFieldName() == fieldName
-                    && !containerOutputSchema->contains(accessExpressionNode->getFieldName())) {
+                if (accessExpressionNode->getFieldName() == fieldName) {
                     return false;
                 }
             }
@@ -485,7 +493,7 @@ bool SignatureContainmentUtil::filterPredicateStillApplicable(FilterLogicalOpera
 }
 
 std::string SignatureContainmentUtil::getFieldNameUsedByMapOperator(const NodePtr& node) {
-    NES_TRACE2("Find the field name used in map operator");
+    NES_TRACE("Find the field name used in map operator");
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
