@@ -42,8 +42,8 @@ class MapJavaUdfOperatorTest : public testing::Test {
 
 std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData";
 std::string method = "map";
-std::unordered_map<std::string, std::vector<char>> byteCodeList;
-std::vector<char> serializedInstance;
+JavaUDFByteCodeList byteCodeList;
+JavaSerializedInstance serializedInstance;
 SchemaPtr input, output;
 std::string clazz, inputClass, outputClass;
 

@@ -44,7 +44,10 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
     if (byteCodeList.empty()) {
         throw UDFException("The bytecode list of classes implementing the UDF must not be empty");
     }
-    if (byteCodeList.find(className) == byteCodeList.end()) {
+    auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const JavaClassDefinition& c) {
+        return c.first == className;
+    });
+    if (classByteCode == byteCodeList.end()) {
         throw UDFException("The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF");
         // We could also check whether the input and output types are contained in the bytecode list.
         // But then we would have to distinguish between custom types (i.e., newly defined POJOs) and existing Java types.

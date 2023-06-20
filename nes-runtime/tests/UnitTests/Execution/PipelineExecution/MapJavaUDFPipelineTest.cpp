@@ -116,8 +116,8 @@ auto initMapHandler(std::string className,
                     std::string outputProxyName,
                     SchemaPtr schema,
                     std::string testDataPath) {
-    std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
-    std::vector<char> serializedInstance = {};
+    Operators::JavaUDFByteCodeList byteCodeList;
+    Operators::JavaSerializedInstance serializedInstance;
     return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
                                                                methodName,
                                                                inputProxyName,
