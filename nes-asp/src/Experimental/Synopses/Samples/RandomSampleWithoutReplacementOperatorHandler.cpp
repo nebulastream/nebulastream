@@ -20,9 +20,9 @@ namespace NES::ASP {
 
 void* RandomSampleWithoutReplacementOperatorHandler::getPagedVectorRef() { return pagedVector.get(); }
 
-void RandomSampleWithoutReplacementOperatorHandler::setup(uint64_t entrySize) {
+void RandomSampleWithoutReplacementOperatorHandler::setup(uint64_t entrySize, uint64_t pageSize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
+    pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize, pageSize);
 }
 void RandomSampleWithoutReplacementOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                           Runtime::StateManagerPtr,

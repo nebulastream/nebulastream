@@ -41,7 +41,7 @@ int8_t* PagedVector::getEntry(uint64_t pos) {
 
 PagedVector::~PagedVector() {
     for (auto* page : pages) {
-        allocator->deallocate(page, PAGE_SIZE);
+        allocator->deallocate(page, pageSize);
     }
 }
 size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }

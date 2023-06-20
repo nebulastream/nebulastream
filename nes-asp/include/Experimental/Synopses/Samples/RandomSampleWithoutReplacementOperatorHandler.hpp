@@ -35,8 +35,9 @@ class RandomSampleWithoutReplacementOperatorHandler : public Runtime::Execution:
     /**
      * @brief Initializes the pagedVector
      * @param entrySize: Size of a single tuple/entry
+     * @param pageSize: Size of a single page for the PagedVector
      */
-    void setup(uint64_t entrySize);
+    void setup(uint64_t entrySize, uint64_t pageSize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
