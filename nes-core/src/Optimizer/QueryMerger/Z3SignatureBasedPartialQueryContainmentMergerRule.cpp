@@ -24,6 +24,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -40,7 +41,7 @@ Z3SignatureBasedPartialQueryContainmentMergerRule::create(z3::ContextPtr context
 
 bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO2("Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO2("Applying Z3SignatureBasedPartialQueryContainmentMergerRule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING2("Found only a single query metadata in the global query plan."
@@ -74,8 +75,10 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                 //Iterate the target query plan in DFS order.
                 auto targetChildren = targetRootOperator->getChildren();
                 std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
+                auto timerStart = std::chrono::system_clock::now();
+                bool timeBudgetReached = false;
                 //Iterate till target operators are remaining to be matched
-                while (!targetOperators.empty()) {
+                while (!targetOperators.empty() && !timeBudgetReached) {
 
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
@@ -106,7 +109,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         }
 
                         //Iterate till a matching host operator is not found or till the host operators are available to
-                        // perform matching
+                        //perform matching
                         while (!hostOperators.empty()) {
                             //Take out the front of the queue and add the host operator to the visited list
                             auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
@@ -132,7 +135,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                 break;
                             }
 
-                            //Check for the children operators if a host operator with matching is found on the host
+                            //Check for the children operators of a host operator with matching is found on the host
                             auto hostOperatorChildren = hostOperator->getChildren();
                             for (const auto& hostChild : hostOperatorChildren) {
                                 //Only add the host operators in the back of the queue which were not traversed earlier
@@ -152,9 +155,16 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         continue;
                     }
 
-                    //Check for the children operators if a host operator with matching is found on the host
+                    //Check for the children operators if no host operator with matching is found on the host
                     for (const auto& targetChild : targetOperator->getChildren()) {
                         targetOperators.push_front(targetChild);
+                    }
+                    if ((std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - timerStart)
+                             .count()
+                         >= 10)) {
+                        NES_DEBUG2("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                                   "TupleBuffer.");
+                        timeBudgetReached = true;
                     }
                 }
             }
@@ -243,9 +253,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             NES_DEBUG2("Z3SignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
-    }
-    for (const auto& item : globalQueryPlan->getAllSharedQueryPlans()) {
-        NES_INFO2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
