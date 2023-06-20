@@ -19,4 +19,6 @@ endif ()
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
+        BatchDistinct.cpp
+        BatchDistinctScan.cpp
         )
