@@ -35,7 +35,7 @@ QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
                                std::map<std::string, z3::ExprPtr>&& unionExpressions)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
-      windowsExpressions(std::move(windowsExpressions)), unionExpressions(std::move(unionExpressions))) {}
+      windowsExpressions(std::move(windowsExpressions)), unionExpressions(std::move(unionExpressions)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
