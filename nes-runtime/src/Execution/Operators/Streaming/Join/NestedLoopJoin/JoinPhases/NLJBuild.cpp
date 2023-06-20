@@ -77,6 +77,8 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                     Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
                                     Nautilus::Value<Nautilus::UInt64>& timestamp,
                                     Nautilus::Value<Nautilus::UInt64>& workerId) const {
+    NES_DEBUG2("Updating LocalJoinState!");
+
     // Retrieving the window of the current watermark, as we expect that more tuples will be inserted into this window
     localJoinState->windowReference = Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy,
                                                              operatorHandlerMemRef, timestamp);
