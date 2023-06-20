@@ -85,16 +85,17 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
                                                                             approximateString, timestampFieldName,
                                                                             inputSchema, outputSchema);
-        RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize);
+        RandomSampleWithoutReplacement randomSample(aggregationConfig, numberOfSamples, entrySize, pageSize);
 
         // Setting up the synopsis and creating the local operator state
         randomSample.setup(handlerIndex, *executionContext);
         auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-        auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, numberOfSamples);
+        auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, pageSize);
+        auto opState = std::make_unique<RandomSampleWithoutReplacement::LocalRandomSampleOperatorState>(samples);
 
         // Inserting records
         for (auto& record : inputRecords) {
-            randomSample.addToSynopsis(handlerIndex, *executionContext, record, nullptr);
+            randomSample.addToSynopsis(handlerIndex, *executionContext, record, opState.get());
         }
         
         return {randomSample.getApproximateForKeys(handlerIndex, *executionContext, queryKeys, bufferManager), outputSchema};
@@ -111,6 +112,7 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
     const uint64_t minValue = 0;
     const uint64_t handlerIndex = 0;
     const uint64_t maxValue = 5;
+    const uint64_t pageSize = 4096;
 
     uint64_t entrySize;
     SchemaPtr inputSchema;

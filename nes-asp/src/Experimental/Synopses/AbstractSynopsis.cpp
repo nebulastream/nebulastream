@@ -27,8 +27,9 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
     // TODO For now this is okay, but later on we want to have a separate factory class, see issue #3734
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
         auto entrySize = aggregationConfig.inputSchema->getSchemaSizeInBytes();
+        auto pageSize = Nautilus::Interface::PagedVector::PAGE_SIZE;
         return std::make_shared<RandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue(),
-                                                                entrySize);
+                                                                entrySize, pageSize);
     } else {
         NES_NOT_IMPLEMENTED();
     }

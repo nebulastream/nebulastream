@@ -31,13 +31,24 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
   public:
     /**
+     * @brief This class acts as a simple storage container for the local state, which contains the PagedVectorRef
+     */
+    class LocalRandomSampleOperatorState : public Runtime::Execution::Operators::OperatorState {
+      public:
+        explicit LocalRandomSampleOperatorState(const Nautilus::Interface::PagedVectorRef& sampleStorage)
+            : sampleStorage(sampleStorage) {}
+        Nautilus::Interface::PagedVectorRef sampleStorage;
+    };
+
+    /**
      * @brief Constructor for a SampleRandomWithReplacement
      * @param aggregationConfig: Configuration for the aggregation
      * @param sampleSize: Size of the tuples in the sample
      * @param entrySize: Size of a single entry/tuple
+     * @param pageSize: Size of a single page of the sample
      */
     explicit RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                            uint64_t sampleSize, uint64_t entrySize);
+                                            uint64_t sampleSize, uint64_t entrySize, uint64_t pageSize);
 
     /**
      * @brief Initializes the sample by calling the setup method of the operator handler
@@ -100,6 +111,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     const uint64_t sampleSize;
     const uint64_t entrySize;
+    const uint64_t pageSize;
     bool firstRunGetApproximate{false};
 };
 } // namespace NES::ASP

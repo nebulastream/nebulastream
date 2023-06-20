@@ -86,7 +86,7 @@ class CountMinTest : public Testing::NESBaseTest {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString,  aggregationString,
                                                                             approximateString, timestampFieldName,
                                                                             inputSchema, outputSchema);
-        CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize);
+        CountMin countMin(aggregationConfig, numberOfRows, numberOfCols, entrySize, numberOfKeyBits);
 
 
         // Setting up the synopsis and creating the local operator state

@@ -48,9 +48,10 @@ class CountMin : public AbstractSynopsis {
      * @param numberOfRows: Number of rows for the sketch, the larger the less the probability for an error
      * @param numberOfCols: Number of columns for the sketch, the larger the less relativ error
      * @param entrySize: Datatype size of an entry
+     * @param numberOfKeyBits: Number of bits for the key
      */
-    CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig,
-             const uint64_t numberOfRows, const uint64_t numberOfCols, const uint64_t entrySize);
+    CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows, const uint64_t numberOfCols,
+             const uint64_t entrySize, const uint64_t numberOfKeyBits);
 
     /**
      * @brief Adds the record to the sketch by selecting a column for each row and executing the

@@ -67,26 +67,26 @@ void* getPagedVectorRefProxy(void* opHandlerPtr) {
     return opHandler->getPagedVectorRef();
 }
 
-void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
+void setupSampleOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize, uint64_t pageSize) {
     auto* opHandler = (RandomSampleWithoutReplacementOperatorHandler*) opHandlerPtr;
-    opHandler->setup(entrySize);
+    opHandler->setup(entrySize, pageSize);
 }
 
 RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                                               uint64_t sampleSize, uint64_t entrySize):
-    AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), entrySize(entrySize) {
+                                                               uint64_t sampleSize, uint64_t entrySize, uint64_t pageSize):
+    AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), entrySize(entrySize), pageSize(pageSize) {
 }
 
-void RandomSampleWithoutReplacement::addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+void RandomSampleWithoutReplacement::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContext &,
                                                    Nautilus::Record record,
-                                                   const Runtime::Execution::Operators::OperatorState*) {
+                                                   const Runtime::Execution::Operators::OperatorState* pState) {
 
-    // TODO this can be pulled out of this function and into the open() #3743
-    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
+    // Retrieving the reference to the sampleStorage
+    NES_ASSERT2_FMT(pState != nullptr, "Local state was null, but we expected it not to be null!");
+    auto localState = dynamic_cast<const LocalRandomSampleOperatorState*>(pState);
+    auto& sampleStorage = const_cast<LocalRandomSampleOperatorState*>(localState)->sampleStorage;
 
-    auto entryMemRef = pagedVectorRef.allocateEntry();
+    auto entryMemRef = sampleStorage.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (const auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
@@ -105,7 +105,7 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize, pageSize);
 
     // The buffer size does not matter to us, as the record always lie in a row
     auto memoryProviderInput = MemoryProvider::MemoryProvider::createMemoryProvider(inputSchema->getSchemaSizeInBytes(),
@@ -144,7 +144,6 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
     // Lower the aggregation
     aggregationFunction->lower(aggregationValueMemRef, outputRecord);
     auto scalingFactor = getScalingFactor(numberOfTuplesInWindow);
-//    auto approximatedValue = multiplyWithScalingFactor(outputRecord.read(fieldNameApproximate), scalingFactor);
     auto approximatedValue = outputRecord.read(fieldNameApproximate) * scalingFactor;
     NES_DEBUG2("approximatedValue {}", approximatedValue.getValue().toString());
 
@@ -155,8 +154,9 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
 
 void RandomSampleWithoutReplacement::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
-                           Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
+    Nautilus::FunctionCall("setupSampleOpHandlerProxy", setupSampleOpHandlerProxy, opHandlerMemRef,
+                           Nautilus::Value<Nautilus::UInt64>(entrySize),
+                           Nautilus::Value<Nautilus::UInt64>(pageSize));
 }
 
 Nautilus::Value<Nautilus::Double> RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Value<>& numberOfTuplesInWindow){
@@ -202,9 +202,15 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
     }
 }
 
-bool RandomSampleWithoutReplacement::storeLocalOperatorState(const uint64_t, const Runtime::Execution::Operators::Operator*,
-                                                             Runtime::Execution::ExecutionContext&) {
-    // TODO this will be used in issue #3743
-    return false;
+bool RandomSampleWithoutReplacement::storeLocalOperatorState(const uint64_t handlerIndex,
+                                                             const Runtime::Execution::Operators::Operator* op,
+                                                             Runtime::Execution::ExecutionContext& ctx) {
+
+    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize, pageSize);
+
+    ctx.setLocalOperatorState(op, std::make_unique<LocalRandomSampleOperatorState>(pagedVectorRef));
+    return true;
 }
 } // namespace NES::ASP

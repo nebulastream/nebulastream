@@ -116,9 +116,9 @@ bool CountMin::storeLocalOperatorState(const uint64_t handlerIndex, const Runtim
 }
 
 CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
-                   const uint64_t numberOfCols, const uint64_t entrySize)
+                   const uint64_t numberOfCols, const uint64_t entrySize, const uint64_t numberOfKeyBits)
                    : AbstractSynopsis(aggregationConfig), numberOfRows(numberOfRows), numberOfCols(numberOfCols),
-                   entrySize(entrySize), h3HashFunction(std::make_unique<Nautilus::Interface::H3Hash>()) {
+                   entrySize(entrySize), h3HashFunction(std::make_unique<Nautilus::Interface::H3Hash>(numberOfKeyBits)) {
 
     auto inputType = aggregationConfig.getInputType();
     auto finalType = aggregationConfig.getFinalType();

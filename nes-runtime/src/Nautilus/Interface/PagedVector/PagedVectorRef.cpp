@@ -41,6 +41,8 @@ Value<MemRef> PagedVectorRef::allocateEntry() {
     auto entry = page + (getNumberOfEntries() * entrySize);
     setNumberOfEntries(getNumberOfEntries() + (uint64_t) 1);
     setNumberOfTotalEntries(getTotalNumberOfEntries() + (uint64_t) 1);
+
+    NES_DEBUG2("getNumberOfEntries() after insert is {}", getNumberOfEntries().getValue().toString());
     return entry.as<MemRef>();
 }
 
