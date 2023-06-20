@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.113](https://github.com/nebulastream/nebulastream/tree/v0.5.113) (2023-06-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.112...v0.5.113)
+
+**Implemented enhancements:**
+
+- \[TASK\] GetApproximate Vector of Keys [\#3833](https://github.com/nebulastream/nebulastream/issues/3833)
+- \[TASK\] Implement Count-Min [\#3779](https://github.com/nebulastream/nebulastream/issues/3779)
+
+## [v0.5.112](https://github.com/nebulastream/nebulastream/tree/v0.5.112) (2023-06-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.111...v0.5.112)
+
 ## [v0.5.111](https://github.com/nebulastream/nebulastream/tree/v0.5.111) (2023-06-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.110...v0.5.111)
