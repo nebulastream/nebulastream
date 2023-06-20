@@ -85,7 +85,7 @@ class FilterUDF {
         pipeline->setRootOperator(scan);
         std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
         std::vector<char> serializedInstance = {};
-        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/CrimeIndexFunction",
+        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/FilterMapFunction",
                                                                            "map",
                                                                            "java/lang/Integer",
                                                                            "java/lang/Boolean",

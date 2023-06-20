@@ -697,7 +697,7 @@ bool BCLoweringProvider::LoweringContext::processNativeCall(const std::shared_pt
             }
         } else {
             // TODO support void function
-            NES_NOT_IMPLEMENTED();
+            return false;
         }
     } else if (getType(opt->getStamp()) == Type::i64) {
         if (arguments.empty()) {

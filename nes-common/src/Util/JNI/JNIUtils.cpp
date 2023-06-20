@@ -38,12 +38,14 @@ jobject allocateObject(jclass clazz) { return getEnv()->AllocObject(clazz); }
 
 void freeObject(jobject object) {
     auto env = getEnv();
+    env->DeleteLocalRef(object);
+    /*auto env = getEnv();
     switch (env->GetObjectRefType(object)) {
         case JNIInvalidRefType: NES_THROW_RUNTIME_ERROR("Can't delete invalid ref!");
         case JNILocalRefType: env->DeleteLocalRef(object); break;
         case JNIGlobalRefType: env->DeleteGlobalRef(object); break;
         case JNIWeakGlobalRefType: env->DeleteGlobalRef(object); break;
-    }
+    }*/
 }
 
 jclass findClass(const std::string_view& clazzName) {

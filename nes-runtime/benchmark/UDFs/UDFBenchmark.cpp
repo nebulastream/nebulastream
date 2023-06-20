@@ -108,14 +108,13 @@ class BenchmarkRunner {
             NES_INFO2("Run {} warmup time {}", i, executionTimeTimer.getPrintTime());
         }
 
-        auto avgCompilationTime = (sumCompilation / (double) bmOptions.compileIterations);
         auto avgExecutionTime = (sumExecution / (double) bmOptions.executionBenchmark);
-        NES_INFO2("Final {} compilation time {}, execution time {} ", bmOptions.compiler, avgCompilationTime, avgExecutionTime);
+        NES_INFO2("Final {} compilation time {}, execution time {} ", bmOptions.compiler, 0, avgExecutionTime);
 
         std::ofstream file(bmOptions.identifier, std::ios::app);
         if (file.is_open()) {
             // Append the file: query, compiler, compiletime, execution time
-            file << fmt::format("{},{},{},{}", bmOptions.query, bmOptions.compiler, avgCompilationTime, avgExecutionTime)
+            file << fmt::format("1,{},{},{},{}", bmOptions.query, bmOptions.compiler, 0, avgExecutionTime)
                  << std::endl;
             file.flush();
             file.close();
@@ -150,7 +149,7 @@ class SimpleMapRunner : public BenchmarkRunner {
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 1024 * 5) / sizeof(int32_t);
+        int32_t integers = (1024 * 1024) / sizeof(int32_t);
         for (int32_t i = 0; i < integers; i++) {
             tb.append(std::make_tuple((int32_t) i));
         }
@@ -247,7 +246,7 @@ class UppercaseMapRunner : public BenchmarkRunner {
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 10) / sizeof(int32_t);
+        int32_t integers = (1024 * 1024) / sizeof(int32_t);
         for (int32_t i = 0; i < integers; i++) {
             auto text = TextValue::create("hello");
             tb.append(std::make_tuple(text));
@@ -296,7 +295,7 @@ class FilterUDFRunner : public BenchmarkRunner {
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 100) / sizeof(int32_t);
+        int32_t integers = (1024 * 1024) / sizeof(int32_t);
         for (int32_t i = 0; i < integers; i++) {
             tb.append(std::make_tuple((int32_t) i));
         }
@@ -347,7 +346,7 @@ class CrimeIndexUDFRunner : public BenchmarkRunner {
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 100) / sizeof(int32_t);
+        int32_t integers = (1024 * 1024) / sizeof(int32_t);
         for (int32_t i = 0; i < integers; i++) {
             auto total_population = i % 100 == 0 ? 100000 : 255;
             total_population = (total_population * (i%42)) / 2;
