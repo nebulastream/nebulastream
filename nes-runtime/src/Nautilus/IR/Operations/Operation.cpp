@@ -13,11 +13,12 @@
 */
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
 
 namespace NES::Nautilus::IR::Operations {
 Operation::Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp)
     : opType(opType), identifier(identifier), stamp(stamp) {}
-Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(""), stamp(stamp) {}
+Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(0,0), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
 OperationIdentifier Operation::getIdentifier() { return identifier; }
 OperationIdentifier& Operation::getIdentifierRef() { return identifier; }
@@ -27,4 +28,27 @@ void Operation::addUsage(const Operation* operation) { usages.emplace_back(opera
 
 const std::vector<const Operation*>& Operation::getUsages() { return usages; }
 
+OperationIdentifier::OperationIdentifier(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId) {}
+std::ostream& operator<<(std::ostream& os, const OperationIdentifier& identifier) {
+    os << identifier.blockId << "_" << identifier.operationId;
+    return os;
+}
+bool OperationIdentifier::operator==(const OperationIdentifier& rhs) const {
+    return blockId == rhs.blockId && operationId == rhs.operationId;
+}
+bool OperationIdentifier::operator!=(const OperationIdentifier& rhs) const { return !(rhs == *this); }
+
+std::string OperationIdentifier::toString() const {
+    return std::to_string(blockId) + "_" + std::to_string(operationId);
+}
+bool OperationIdentifier::operator<(const OperationIdentifier& rhs) const {
+    if (blockId < rhs.blockId)
+        return true;
+    if (rhs.blockId < blockId)
+        return false;
+    return operationId < rhs.operationId;
+}
+bool OperationIdentifier::operator>(const OperationIdentifier& rhs) const { return rhs < *this; }
+bool OperationIdentifier::operator<=(const OperationIdentifier& rhs) const { return !(rhs < *this); }
+bool OperationIdentifier::operator>=(const OperationIdentifier& rhs) const { return !(*this < rhs); }
 }// namespace NES::Nautilus::IR::Operations

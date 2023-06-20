@@ -56,7 +56,7 @@ class CPPLoweringProvider {
     static std::string lower(std::shared_ptr<IR::IRGraph> ir);
 
   private:
-    using RegisterFrame = Frame<std::string, std::string>;
+    using RegisterFrame = Frame<IR::Operations::OperationIdentifier, std::string>;
     using Code = std::stringstream;
 
     class LoweringContext {
@@ -82,7 +82,7 @@ class CPPLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::NegateOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, short block, RegisterFrame& frame);
-        static std::string getVariable(const std::string& id);
+        static std::string getVariable(const IR::Operations::OperationIdentifier& id);
         static std::string getType(const IR::Types::StampPtr& stamp);
 
         template<class Type>

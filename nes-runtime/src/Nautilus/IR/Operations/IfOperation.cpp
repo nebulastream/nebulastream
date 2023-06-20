@@ -38,19 +38,19 @@ void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = m
 
 std::string IfOperation::toString() {
     std::string baseString =
-        "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
+        "if " + getValue()->getIdentifier().toString() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
     if (trueBlockInvocation.getArguments().size() > 0) {
-        baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
+        baseString += trueBlockInvocation.getArguments()[0]->getIdentifier().toString();
         for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {
-            baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier();
+            baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier().toString();
         }
     }
     if (falseBlockInvocation.getBlock()) {
         baseString += ") : Block_" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
         if (falseBlockInvocation.getArguments().size() > 0) {
-            baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
+            baseString += falseBlockInvocation.getArguments()[0]->getIdentifier().toString();
             for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {
-                baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier();
+                baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier().toString();
             }
         }
     }

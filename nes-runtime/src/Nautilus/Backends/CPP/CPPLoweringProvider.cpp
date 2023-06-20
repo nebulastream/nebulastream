@@ -23,6 +23,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -381,6 +382,6 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blocks[blockIndex] << var << " = (" << targetType << ")" << input << ";\n";
 }
 
-std::string CPPLoweringProvider::LoweringContext::getVariable(const std::string& id) { return "var_" + id; }
+std::string CPPLoweringProvider::LoweringContext::getVariable(const IR::Operations::OperationIdentifier& id) { return "var_" + id.toString(); }
 
 }// namespace NES::Nautilus::Backends::CPP

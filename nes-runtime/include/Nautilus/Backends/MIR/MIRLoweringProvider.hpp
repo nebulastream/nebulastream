@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_MIRLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_MIRLOWERINGPROVIDER_HPP_
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include "Nautilus/IR/Types/Stamp.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -47,17 +48,15 @@ class MIRLoweringProvider {
     MIR_item_t lower(std::shared_ptr<IR::IRGraph> ir, const NES::DumpHelper& helper, MIR_context_t ctx, MIR_module_t* m);
 
   private:
-    using MIRFrame = Frame<std::string, MIR_reg_t>;
+    using MIRFrame = Frame<IR::Operations::OperationIdentifier, MIR_reg_t>;
     class LoweringContext {
       public:
         LoweringContext(MIR_context_t ctx, MIR_module_t* m, std::shared_ptr<IR::IRGraph> ir);
         MIR_item_t process(const NES::DumpHelper&);
         void process(const std::shared_ptr<IR::Operations::FunctionOperation>&);
-        void process(const std::shared_ptr<IR::BasicBlock>&, MIRFrame& frame);
-        void processInline(const std::shared_ptr<IR::BasicBlock>&, MIRFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::Operation>&, MIRFrame& frame);
-        MIRFrame processBlockInvocation(IR::Operations::BasicBlockInvocation&, MIRFrame& frame);
-        MIRFrame processInlineBlockInvocation(IR::Operations::BasicBlockInvocation&, MIRFrame& frame);
+        void processBlock(const std::shared_ptr<IR::BasicBlock>& block, MIRFrame& frame);
+        void processOperations(const std::shared_ptr<IR::Operations::Operation>& opt, MIRFrame& frame);
+        MIRFrame& processBlockInvocation(IR::Operations::BasicBlockInvocation&, MIRFrame& frame);
 
       private:
         struct Functions {
@@ -82,11 +81,10 @@ class MIRLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::AndOperation>& opt, MIRFrame& frame);
         void process(const std::shared_ptr<IR::Operations::OrOperation>& opt, MIRFrame& frame);
         void process(const std::shared_ptr<IR::Operations::BranchOperation>& opt, MIRFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::LoopOperation>& opt, MIRFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, MIRFrame& frame);
         void process(const std::shared_ptr<IR::Operations::StoreOperation>& opt, MIRFrame& frame);
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, MIRFrame& frame);
-        MIR_reg_t getReg(const std::string& identifier, const std::shared_ptr<IR::Types::Stamp>& stamp, MIRFrame& frame);
+        MIR_reg_t getReg(const IR::Operations::OperationIdentifier& identifier, const std::shared_ptr<IR::Types::Stamp>& stamp, MIRFrame& frame);
         MIR_type_t getType(const std::shared_ptr<IR::Types::Stamp>& stamp);
     };
 };

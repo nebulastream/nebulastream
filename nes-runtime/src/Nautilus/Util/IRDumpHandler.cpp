@@ -93,7 +93,7 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
         visitedBlocks.emplace(basicBlock->getIdentifier());
         out << '\n' << "Block_" << basicBlock->getIdentifier() << '(';
         if (basicBlock->getArguments().size() > 0) {
-            out << basicBlock->getArguments().at(0)->getIdentifier() + ":"
+            out << basicBlock->getArguments().at(0)->getIdentifier() << ":"
                 << basicBlock->getArguments().at(0)->getStamp()->toString();
             for (int i = 1; i < (int) basicBlock->getArguments().size(); ++i) {
                 out << ", " << basicBlock->getArguments().at(i)->getIdentifier() << ":"

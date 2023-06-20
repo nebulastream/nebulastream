@@ -25,7 +25,7 @@ ReturnOperation::ReturnOperation(OperationPtr returnValue)
 
 std::string ReturnOperation::toString() {
     if (hasReturnValue()) {
-        return "return (" + getReturnValue()->getIdentifier() + ")";
+        return "return (" + getReturnValue()->getIdentifier().toString() + ")";
     } else {
         return "return";
     }

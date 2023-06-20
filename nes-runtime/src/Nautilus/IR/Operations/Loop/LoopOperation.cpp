@@ -39,9 +39,9 @@ std::string LoopOperation::toString() {
     std::string baseString = "loop " + loopHeadBlock.getBlock()->getIdentifier() + "(";
     auto loopBlockArgs = loopHeadBlock.getArguments();
     if (loopBlockArgs.size() > 0) {
-        baseString += loopBlockArgs[0]->getIdentifier();
+        baseString += loopBlockArgs[0]->getIdentifier().toString();
         for (int i = 1; i < (int) loopBlockArgs.size(); ++i) {
-            baseString += ", " + loopBlockArgs.at(i)->getIdentifier();
+            baseString += ", " + loopBlockArgs.at(i)->getIdentifier().toString();
         }
     }
     return baseString + ")";

@@ -24,7 +24,7 @@ OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput,
 }
 
 std::string OrOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " or " + getRightInput()->getIdentifier();
+    return getIdentifier().toString() + " = " + getLeftInput()->getIdentifier().toString() + " or " + getRightInput()->getIdentifier().toString();
     ;
 }
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }

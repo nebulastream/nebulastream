@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
@@ -227,8 +228,8 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     currentIrBlock->addOperation(ifOperation);
 }
 
-std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBlockArguments(BlockRef val) {
-    std::vector<std::string> blockArgumentIdentifiers;
+std::vector<IR::Operations::OperationIdentifier> TraceToIRConversionPhase::IRConversionContext::createBlockArguments(BlockRef val) {
+    std::vector<IR::Operations::OperationIdentifier> blockArgumentIdentifiers;
     for (auto& arg : val.arguments) {
         blockArgumentIdentifiers.emplace_back(createValueIdentifier(arg));
     }
@@ -245,12 +246,12 @@ void TraceToIRConversionPhase::IRConversionContext::createBlockArguments(
     }
 }
 
-std::string TraceToIRConversionPhase::IRConversionContext::createValueIdentifier(InputVariant val) {
+IR::Operations::OperationIdentifier TraceToIRConversionPhase::IRConversionContext::createValueIdentifier(InputVariant val) {
     if (holds_alternative<ValueRef>(val)) {
         auto valueRef = std::get<ValueRef>(val);
-        return std::to_string(valueRef.blockId) + "_" + std::to_string(valueRef.operationId);
+        return IR::Operations::OperationIdentifier(valueRef.blockId, valueRef.operationId);
     } else
-        return "";
+        return IR::Operations::OperationIdentifier(0,0);
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t,

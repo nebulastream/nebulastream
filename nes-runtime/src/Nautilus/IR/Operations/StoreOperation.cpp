@@ -29,6 +29,6 @@ OperationPtr StoreOperation::getValue() { return value.lock(); }
 OperationPtr StoreOperation::getAddress() { return address.lock(); }
 
 std::string StoreOperation::toString() {
-    return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
+    return "store(" + getValue()->getIdentifier().toString() + ", " + getAddress()->getIdentifier().toString() + ")";
 }
 }// namespace NES::Nautilus::IR::Operations

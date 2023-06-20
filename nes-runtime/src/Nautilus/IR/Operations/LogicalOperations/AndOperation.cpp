@@ -24,7 +24,7 @@ AndOperation::AndOperation(OperationIdentifier identifier, OperationPtr leftInpu
 }
 
 std::string AndOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " and " + getRightInput()->getIdentifier();
+    return getIdentifier().toString() + " = " + getLeftInput()->getIdentifier().toString() + " and " + getRightInput()->getIdentifier().toString();
 }
 bool AndOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 

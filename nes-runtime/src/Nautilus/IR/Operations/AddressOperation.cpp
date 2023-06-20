@@ -33,7 +33,7 @@ std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
 std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
 
 std::string AddressOperation::toString() {
-    return "AddressOperation_" + identifier + "(" + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset) + ", "
+    return "AddressOperation_" + identifier.toString() + "(" + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset) + ", "
         + recordIdxName + ", " + addressSourceName + ")";
 }
 

@@ -17,7 +17,9 @@
 
 #include <Nautilus/IR/Types/BasicTypes.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
+#include <cstdint>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 namespace NES::Nautilus::IR::Types {
@@ -26,7 +28,25 @@ using StampPtr = std::shared_ptr<Stamp>;
 }// namespace NES::Nautilus::IR::Types
 
 namespace NES::Nautilus::IR::Operations {
-using OperationIdentifier = std::string;
+//using OperationIdentifier = std::string;
+class OperationIdentifier {
+  public:
+    OperationIdentifier(uint32_t blockId, uint32_t operationId);
+    friend std::ostream& operator<<(std::ostream& os, const OperationIdentifier& identifier);
+    bool operator==(const OperationIdentifier& rhs) const;
+    bool operator!=(const OperationIdentifier& rhs) const;
+    friend std::hash<NES::Nautilus::IR::Operations::OperationIdentifier>;
+    std::string toString() const;
+    bool operator<(const OperationIdentifier& rhs) const;
+    bool operator>(const OperationIdentifier& rhs) const;
+    bool operator<=(const OperationIdentifier& rhs) const;
+    bool operator>=(const OperationIdentifier& rhs) const;
+
+  private:
+    uint32_t blockId;
+    uint32_t operationId;
+};
+
 class Operation {
   public:
     enum class ProxyCallType : uint8_t { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
@@ -79,4 +99,15 @@ using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
 }// namespace NES::Nautilus::IR::Operations
+
+namespace std {
+template<>
+struct std::hash<NES::Nautilus::IR::Operations::OperationIdentifier> {
+    std::size_t operator()(const NES::Nautilus::IR::Operations::OperationIdentifier& k) const {
+        using std::hash;
+        using std::size_t;
+        return ((hash<uint16_t>()(k.blockId) ^ (hash<uint16_t>()(k.operationId) << 1)) >> 1);
+    }
+};
+}// namespace std
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_

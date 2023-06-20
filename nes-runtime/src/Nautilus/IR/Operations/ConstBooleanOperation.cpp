@@ -27,6 +27,6 @@ ConstBooleanOperation::ConstBooleanOperation(OperationIdentifier identifier, boo
 bool ConstBooleanOperation::getValue() { return constantValue; }
 bool ConstBooleanOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstBooleanOp; }
 
-std::string ConstBooleanOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstBooleanOperation::toString() { return identifier.toString() + " = " + std::to_string(constantValue); }
 
 }// namespace NES::Nautilus::IR::Operations

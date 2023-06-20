@@ -25,17 +25,17 @@ namespace NES::Nautilus {
 template<class K, class V>
 class Frame {
   public:
-    V getValue(const K& key) {
+    V& getValue(const K& key) {
         auto value = frameMap.find(key);
         if (value == frameMap.end()) {
-            throw Exceptions::RuntimeException("Key " + key + " does not exists in frame.");
+            throw Exceptions::RuntimeException("Key " + key.toString() + " does not exists in frame.");
         }
         return value->second;
     }
 
     bool contains(const K& key) { return frameMap.contains(key); }
 
-    void setValue(const K& key, V value) { frameMap.emplace(std::make_pair(key, value)); }
+    void setValue(const K& key, const V& value) { frameMap.emplace(std::make_pair(key, value)); }
     std::unordered_map<K, V>& getContent() { return frameMap; }
 
   private:

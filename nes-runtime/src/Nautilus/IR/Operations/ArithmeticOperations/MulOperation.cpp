@@ -23,7 +23,7 @@ MulOperation::MulOperation(OperationIdentifier identifier, OperationPtr leftInpu
 }
 
 std::string MulOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " * " + getRightInput()->getIdentifier();
+    return getIdentifier().toString() + " = " + getLeftInput()->getIdentifier().toString() + " * " + getRightInput()->getIdentifier().toString();
 }
 bool MulOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::MulOp; }
 

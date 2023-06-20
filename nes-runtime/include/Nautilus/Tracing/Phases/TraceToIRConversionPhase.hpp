@@ -44,7 +44,7 @@ class TraceToIRConversionPhase {
     std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<ExecutionTrace> trace);
 
   private:
-    using ValueFrame = Frame<std::string, IR::Operations::OperationPtr>;
+    using ValueFrame = Frame<IR::Operations::OperationIdentifier, IR::Operations::OperationPtr>;
 
     /**
      * @brief Internal context object, which maintains statue during IR creation.
@@ -83,9 +83,9 @@ class TraceToIRConversionPhase {
         void processConst(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processCast(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         bool isBlockInLoop(uint32_t parentBlock, uint32_t currentBlock);
-        std::vector<std::string> createBlockArguments(BlockRef val);
+        std::vector<IR::Operations::OperationIdentifier> createBlockArguments(BlockRef val);
         void createBlockArguments(ValueFrame& frame, IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);
-        std::string createValueIdentifier(InputVariant val);
+        IR::Operations::OperationIdentifier createValueIdentifier(InputVariant val);
 
       private:
         std::shared_ptr<ExecutionTrace> trace;

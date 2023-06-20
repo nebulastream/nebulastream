@@ -323,7 +323,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressO
     if (addressOp->getRecordIdxName() != "") {
         recordOffset = builder->create<mlir::LLVM::MulOp>(
             getNameLoc("recordOffset"),
-            frame.getValue(addressOp->getRecordIdxName()),
+            frame.getValue(addressOp->getIdentifier()),
             getConstInt("1", IR::Types::StampFactory::createInt64Stamp(), addressOp->getRecordWidthInBytes()));
     } else {
         recordOffset = getConstInt("0", IR::Types::StampFactory::createInt64Stamp(), 0);
@@ -335,7 +335,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressO
     // Return I8* to first byte of field data
     mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                                     mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                                    frame.getValue(addressOp->getAddressSourceName()),
+                                                                    frame.getValue(addressOp->getIdentifier()),
                                                                     mlir::ArrayRef<mlir::Value>({fieldOffset}));
     auto mlirBitcast =
         builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),

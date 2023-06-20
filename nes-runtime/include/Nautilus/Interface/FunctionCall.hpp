@@ -158,9 +158,10 @@ void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 
 template<typename... ValueArguments>
-auto getArgumentReferences(std::string_view functionName, void* fnptr, ValueArguments... arguments) {
+auto getArgumentReferences(std::string_view& functionName, void* fnptr, const ValueArguments&... arguments) {
     std::vector<Nautilus::Tracing::InputVariant> functionArgumentReferences = {
         Nautilus::Tracing::FunctionCallTarget(functionName, fnptr)};
+    functionArgumentReferences.reserve(sizeof...(ValueArguments));
     if constexpr (sizeof...(ValueArguments) > 0) {
         for (const Nautilus::Tracing::InputVariant& p : {getRefs(arguments)...}) {
             functionArgumentReferences.emplace_back(p);
@@ -170,17 +171,17 @@ auto getArgumentReferences(std::string_view functionName, void* fnptr, ValueArgu
 }
 
 template<typename R, typename... FunctionArguments, typename... ValueArguments>
-auto FunctionCall(std::string_view functionName, R (*fnptr)(FunctionArguments...), ValueArguments... arguments) {
+auto FunctionCall(std::string_view functionName, R (*fnptr)(FunctionArguments...), const ValueArguments&... arguments) {
     if constexpr (std::is_void_v<R>) {
         if (Tracing::TraceUtil::inInterpreter()) {
-            fnptr(transform(std::forward<ValueArguments>(arguments))...);
+            fnptr(transform(std::forward<const ValueArguments&>(arguments))...);
         } else {
             auto functionArgumentReferences = getArgumentReferences(functionName, (void*) fnptr, arguments...);
             traceVoidFunctionCall(functionArgumentReferences);
         }
     } else {
         if (Tracing::TraceUtil::inInterpreter()) {
-            auto functionResult = fnptr(transform(std::forward<ValueArguments>(arguments))...);
+            auto functionResult = fnptr(transform(std::forward<const ValueArguments&>(arguments))...);
             return transformReturnValues(functionResult);
         } else {
             auto resultValue = createDefault<R>();

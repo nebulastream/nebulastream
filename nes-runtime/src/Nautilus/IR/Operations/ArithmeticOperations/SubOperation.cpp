@@ -22,7 +22,7 @@ SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInpu
     rightInput->addUsage(this);
 }
 std::string SubOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " - " + getRightInput()->getIdentifier();
+    return getIdentifier().toString() + " = " + getLeftInput()->getIdentifier().toString() + " - " + getRightInput()->getIdentifier().toString();
 }
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
 OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }

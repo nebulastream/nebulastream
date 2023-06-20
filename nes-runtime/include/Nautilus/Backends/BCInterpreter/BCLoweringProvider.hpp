@@ -55,7 +55,7 @@ class BCLoweringProvider {
     std::tuple<Code, RegisterFile> lower(std::shared_ptr<IR::IRGraph> ir);
 
   private:
-    using RegisterFrame = Frame<std::string, short>;
+    using RegisterFrame = Frame<IR::Operations::OperationIdentifier, short>;
     class RegisterProvider {
       public:
         short allocRegister();

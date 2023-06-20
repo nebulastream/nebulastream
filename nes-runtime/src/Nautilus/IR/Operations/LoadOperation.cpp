@@ -23,6 +23,6 @@ LoadOperation::LoadOperation(OperationIdentifier identifier, OperationPtr addres
 
 OperationPtr LoadOperation::getAddress() { return address.lock(); }
 
-std::string LoadOperation::toString() { return identifier + " = load(" + getAddress()->getIdentifier() + ")"; }
+std::string LoadOperation::toString() { return identifier .toString()+ " = load(" + getAddress()->getIdentifier().toString() + ")"; }
 
 }// namespace NES::Nautilus::IR::Operations

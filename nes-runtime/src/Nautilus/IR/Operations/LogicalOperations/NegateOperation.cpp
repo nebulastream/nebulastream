@@ -21,7 +21,7 @@ NegateOperation::NegateOperation(OperationIdentifier identifier, OperationPtr in
     input->addUsage(this);
 }
 
-std::string NegateOperation::toString() { return identifier + "= not " + getInput()->getIdentifier(); }
+std::string NegateOperation::toString() { return identifier.toString() + "= not " + getInput()->getIdentifier().toString(); }
 bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 OperationPtr NegateOperation::getInput() { return input.lock(); }
 }// namespace NES::Nautilus::IR::Operations

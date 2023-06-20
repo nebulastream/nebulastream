@@ -80,13 +80,15 @@ MIR_item_t MIRLoweringProvider::LoweringContext::process(const NES::DumpHelper&)
 void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::FunctionOperation>& functionOperation) {
     MIRFrame rootFrame;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
-    auto arguments = functionBasicBlock->getArguments();
-    std::vector<const char*> args;
+    auto& arguments = functionBasicBlock->getArguments();
+    std::vector<std::string> argumentNames;
+    argumentNames.reserve(arguments.size());
     MIR_var_t* mirArgs = (MIR_var_t*) alloca(sizeof(MIR_var_t) * arguments.size());
     for (auto i = 0ull; i < arguments.size(); i++) {
         auto& argument = arguments[i];
+        auto& name = argumentNames.emplace_back(argument->getIdentifier().toString());
         mirArgs[i].type = MIR_T_I64;
-        mirArgs[i].name = argument->getIdentifierRef().data();
+        mirArgs[i].name = name.c_str();
     }
 
     if (functionOperation->getStamp()->isVoid()) {
@@ -97,14 +99,15 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         func = MIR_new_func_arr(ctx, "loop", 1, &res_type, arguments.size(), mirArgs);
     }
     for (auto i = 0ull; i < arguments.size(); i++) {
-        auto argument = functionBasicBlock->getArguments()[i];
-        auto mirArg = MIR_reg(ctx, argument->getIdentifierRef().c_str(), func->u.func);
+        auto& name = argumentNames[i];
+        auto& argument = arguments[i];
+        auto mirArg = MIR_reg(ctx, name.c_str(), func->u.func);
         rootFrame.setValue(argument->getIdentifierRef(), mirArg);
     }
-    this->process(functionBasicBlock, rootFrame);
+    this->processBlock(functionBasicBlock, rootFrame);
 }
 
-void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block, MIRFrame& frame) {
+void MIRLoweringProvider::LoweringContext::processBlock(const std::shared_ptr<IR::BasicBlock>& block, MIRFrame& frame) {
 
     if (!this->activeBlocks.contains(block->getIdentifier())) {
         this->activeBlocks.emplace(block->getIdentifier());
@@ -116,25 +119,19 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Bas
         MIR_append_insn(ctx, func, labels[block->getIdentifier()]);
 
         for (const auto& operation : block->getOperations()) {
-            this->process(operation, frame);
+            this->processOperations(operation, frame);
         }
     }
 }
 
-void MIRLoweringProvider::LoweringContext::processInline(const std::shared_ptr<IR::BasicBlock>& block, MIRFrame& frame) {
-    for (const auto& operation : block->getOperations()) {
-        this->process(operation, frame);
-    }
-}
-
-MIRLoweringProvider::MIRFrame
+MIRLoweringProvider::MIRFrame&
 MIRLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations::BasicBlockInvocation& bi, MIRFrame& frame) {
-
-    auto blockInputArguments = bi.getArguments();
-    auto blockTargetArguments = bi.getBlock()->getArguments();
+    // todo add per block frame
+    auto& blockInputArguments = bi.getArguments();
+    auto& blockTargetArguments = bi.getBlock()->getArguments();
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
-        auto blockArgument = blockInputArguments[i]->getIdentifierRef();
-        auto blockTargetArgument = blockTargetArguments[i]->getIdentifierRef();
+        auto& blockArgument = blockInputArguments[i]->getIdentifierRef();
+        auto& blockTargetArgument = blockTargetArguments[i]->getIdentifierRef();
         auto frameFlounderValue = frame.getValue(blockArgument);
         if (frame.contains(blockTargetArgument)) {
             auto targetFrameFlounderValue = frame.getValue(blockTargetArgument);
@@ -156,23 +153,10 @@ MIRLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations::Bas
     return frame;
 }
 
-MIRLoweringProvider::MIRFrame
-MIRLoweringProvider::LoweringContext::processInlineBlockInvocation(IR::Operations::BasicBlockInvocation& bi, MIRFrame& frame) {
 
-    auto blockInputArguments = bi.getArguments();
-    auto blockTargetArguments = bi.getBlock()->getArguments();
-    auto inputArguments = std::set<std::string>();
-    for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
-        inputArguments.emplace(blockInputArguments[i]->getIdentifierRef());
-        frame.setValue(blockTargetArguments[i]->getIdentifierRef(), frame.getValue(blockInputArguments[i]->getIdentifierRef()));
-    }
-    return frame;
-}
 void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CastOperation>& castOp,
                                                    MIRFrame& frame) {
     auto inputReg = frame.getValue(castOp->getInput()->getIdentifierRef());
-    auto inputType = getType(castOp->getInput()->getStamp());
-    auto resultType = getType(castOp->getInput()->getStamp());
 
     auto resultReg = getReg(castOp->getIdentifierRef(), castOp->getStamp(), frame);
 
@@ -290,11 +274,11 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     MIR_insn_t targetLabel = labels[targetBlockName];
 
     // prepate args
-    auto targetFrame = processBlockInvocation(branchOp->getNextBlockInvocation(), frame);
+    auto& targetFrame = processBlockInvocation(branchOp->getNextBlockInvocation(), frame);
     auto mirJumpTrue = MIR_new_insn(ctx, MIR_JMP, MIR_new_label_op(ctx, targetLabel));
     MIR_append_insn(ctx, func, mirJumpTrue);
 
-    process(branchOp->getNextBlockInvocation().getBlock(), frame);
+    processBlock(branchOp->getNextBlockInvocation().getBlock(), targetFrame);
 }
 
 void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::IfOperation>& ifOpt, MIRFrame& frame) {
@@ -322,8 +306,8 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     auto mirJumpFalse = MIR_new_insn(ctx, MIR_JMP, MIR_new_label_op(ctx, falseLabel));
     MIR_append_insn(ctx, func, mirJumpFalse);
 
-    process(ifOpt->getTrueBlockInvocation().getBlock(), frame);
-    process(ifOpt->getFalseBlockInvocation().getBlock(), frame);
+    processBlock(ifOpt->getTrueBlockInvocation().getBlock(), frame);
+    processBlock(ifOpt->getFalseBlockInvocation().getBlock(), frame);
 }
 
 void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
@@ -350,11 +334,14 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         function.address = MIR_new_import(ctx, function.name.data());
 
         auto arguments = opt->getInputArguments();
+        std::vector<std::string> argumentNames;
+        argumentNames.reserve(arguments.size());
         MIR_var_t* args = (MIR_var_t*) alloca(sizeof(MIR_var_t) * arguments.size());
         for (auto i = 0ull; i < arguments.size(); i++) {
             auto& argument = arguments[i];
+            auto& name = argumentNames.emplace_back(argument->getIdentifierRef().toString());
             args[i].type = getType(argument->getStamp());
-            args[i].name = argument->getIdentifierRef().data();
+            args[i].name = name.c_str();
         }
 
         if (!opt->getStamp()->isVoid()) {
@@ -398,11 +385,6 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     MIR_append_insn(ctx, func, call);
 }
 
-void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::LoopOperation>& opt, MIRFrame& frame) {
-    auto loopHead = opt->getLoopHeadBlock();
-    auto targetFrame = processInlineBlockInvocation(loopHead, frame);
-    processInline(loopHead.getBlock(), targetFrame);
-}
 
 MIR_type_t MIRLoweringProvider::LoweringContext::getType(const IR::Types::StampPtr& stamp) {
     if (stamp->isInteger()) {
@@ -497,7 +479,7 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
                                  MIR_new_reg_op(ctx, rightInput)));
 }
 
-MIR_reg_t MIRLoweringProvider::LoweringContext::getReg(const std::string& identifier,
+MIR_reg_t MIRLoweringProvider::LoweringContext::getReg(const IR::Operations::OperationIdentifier& identifier,
                                                        const std::shared_ptr<IR::Types::Stamp>& stamp,
                                                        MIRFrame& frame) {
     if (frame.contains(identifier))
@@ -517,11 +499,12 @@ MIR_reg_t MIRLoweringProvider::LoweringContext::getReg(const std::string& identi
         case MIR_T_D: regType = MIR_T_D; break;
         default: NES_THROW_RUNTIME_ERROR("wrong reg type");
     }
-    auto reg = MIR_new_func_reg(ctx, func->u.func, regType, identifier.c_str());
+    auto name = identifier.toString();
+    auto reg = MIR_new_func_reg(ctx, func->u.func, regType, name.c_str());
     return reg;
 }
 
-void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::Operation>& opt, MIRFrame& frame) {
+void MIRLoweringProvider::LoweringContext::processOperations(const std::shared_ptr<IR::Operations::Operation>& opt, MIRFrame& frame) {
     switch (opt->getOperationType()) {
         case IR::Operations::Operation::OperationType::ConstBooleanOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
@@ -588,11 +571,6 @@ void MIRLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         case IR::Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(opt);
             process(branchOp, frame);
-            return;
-        }
-        case IR::Operations::Operation::OperationType::LoopOp: {
-            auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(opt);
-            process(loopOp, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::LoadOp: {

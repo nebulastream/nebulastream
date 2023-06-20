@@ -23,7 +23,7 @@ CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input,
 OperationPtr CastOperation::getInput() { return input.lock(); }
 
 std::string CastOperation::toString() {
-    return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
+    return identifier.toString() + " = " + getInput()->getIdentifier().toString() + " cast_to " + getStamp()->toString();
 }
 
 }// namespace NES::Nautilus::IR::Operations

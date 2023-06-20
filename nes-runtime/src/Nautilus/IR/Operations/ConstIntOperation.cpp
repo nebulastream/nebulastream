@@ -26,6 +26,6 @@ ConstIntOperation::ConstIntOperation(OperationIdentifier identifier, int64_t con
 int64_t ConstIntOperation::getValue() { return constantValue; }
 bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
 
-std::string ConstIntOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstIntOperation::toString() { return identifier.toString() + " = " + std::to_string(constantValue); }
 
 }// namespace NES::Nautilus::IR::Operations

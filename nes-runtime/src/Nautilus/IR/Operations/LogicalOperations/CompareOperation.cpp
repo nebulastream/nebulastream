@@ -49,7 +49,7 @@ std::string CompareOperation::toString() {
         case GE: comperator = ">="; break;
     }
 
-    return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
+    return identifier.toString() + " = " + getLeftInput()->getIdentifier().toString() + " " + comperator + " " + getRightInput()->getIdentifier().toString();
 }
 
 }// namespace NES::Nautilus::IR::Operations

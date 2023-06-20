@@ -172,7 +172,7 @@ flounder::VregInstruction FlounderLoweringProvider::LoweringContext::requestVreg
 flounder::Register FlounderLoweringProvider::LoweringContext::createVreg(const IR::Operations::OperationIdentifier& id,
                                                                          IR::Types::StampPtr stamp,
                                                                          FlounderFrame& frame) {
-    auto result = program.vreg(id.c_str());
+    auto result = program.vreg(id.toString());
     frame.setValue(id, result);
     program << requestVreg(result, stamp);
     return result;
@@ -194,7 +194,7 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
             program << program.mov(targetFrameFlounderValue, frameFlounderValue);
             blockFrame.setValue(blockTargetArgument, frameFlounderValue);
         } else {
-            auto targetVreg = program.vreg(blockTargetArgument.data());
+            auto targetVreg = program.vreg(blockTargetArgument.toString());
             program << requestVreg(targetVreg, blockTargetArguments[i]->getStamp());
             program << program.mov(targetVreg, frameFlounderValue);
             blockFrame.setValue(blockTargetArgument, targetVreg);
@@ -211,7 +211,7 @@ FlounderLoweringProvider::LoweringContext::processInlineBlockInvocation(IR::Oper
     auto blockTargetArguments = bi.getBlock()->getArguments();
     auto inputArguments = std::set<std::string>();
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
-        inputArguments.emplace(blockInputArguments[i]->getIdentifier());
+        inputArguments.emplace(blockInputArguments[i]->getIdentifier().toString());
         blockFrame.setValue(blockTargetArguments[i]->getIdentifier(), frame.getValue(blockInputArguments[i]->getIdentifier()));
     }
     return blockFrame;
@@ -221,7 +221,7 @@ void FlounderLoweringProvider::LoweringContext::process(
     NES::Nautilus::Backends::Flounder::FlounderLoweringProvider::FlounderFrame& frame) {
     auto inputReg = frame.getValue(castOp->getInput()->getIdentifier());
     auto inputStamp = castOp->getInput()->getStamp();
-    auto resultReg = program.vreg(castOp->getIdentifier());
+    auto resultReg = program.vreg(castOp->getIdentifier().toString());
     program << requestVreg(resultReg, castOp->getStamp());
     program << program.mov(resultReg, inputReg);
     frame.setValue(castOp->getIdentifier(), resultReg);
@@ -314,7 +314,7 @@ void FlounderLoweringProvider::LoweringContext::processAnd(const std::shared_ptr
                                                            FlounderFrame& frame,
                                                            flounder::Label& trueCase,
                                                            flounder::Label& falseCase) {
-    auto andSecondCaseLabel = program.label("And_tmp_label" + andOpt->getIdentifier());
+    auto andSecondCaseLabel = program.label("And_tmp_label" + andOpt->getIdentifier().toString());
     auto left = andOpt->getLeftInput();
     processCmp(left, frame, andSecondCaseLabel, falseCase);
     program << program.section(andSecondCaseLabel);
@@ -328,7 +328,7 @@ void FlounderLoweringProvider::LoweringContext::processOr(
     NES::Nautilus::Backends::Flounder::FlounderLoweringProvider::FlounderFrame& frame,
     flounder::Label& trueCase,
     flounder::Label& falseCase) {
-    auto orSecondCaseLabel = program.label("Or_tmp_label" + orOpt->getIdentifier());
+    auto orSecondCaseLabel = program.label("Or_tmp_label" + orOpt->getIdentifier().toString());
     auto left = orOpt->getLeftInput();
     processCmp(left, frame, trueCase, orSecondCaseLabel);
     program << program.jmp(trueCase);

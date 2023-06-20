@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
@@ -49,7 +50,7 @@ class FlounderLoweringProvider {
     std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::IRGraph> ir, const NES::DumpHelper& helper);
 
   private:
-    using FlounderFrame = Frame<std::string, flounder::Register>;
+    using FlounderFrame = Frame<IR::Operations::OperationIdentifier, flounder::Register>;
     class LoweringContext {
       public:
         LoweringContext(std::shared_ptr<IR::IRGraph> ir);

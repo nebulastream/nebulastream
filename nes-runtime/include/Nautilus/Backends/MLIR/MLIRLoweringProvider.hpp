@@ -54,7 +54,7 @@ class MLIRLoweringProvider {
     // A ValueFrame is hashmap that binds operation names to MLIR values.
     // It is used to 'pass' values between mlir operations.
     // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
-    using ValueFrame = Frame<std::string, mlir::Value>;
+    using ValueFrame = Frame<IR::Operations::OperationIdentifier, mlir::Value>;
 
     /**
      * @brief Allows to lower Nautilus IR to MLIR.
@@ -88,7 +88,7 @@ class MLIRLoweringProvider {
     NES::ProxyFunctions ProxyFunctions;
     std::vector<std::string> jitProxyFunctionSymbols;
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
-    std::unordered_set<std::string> inductionVars;
+    std::unordered_set<IR::Operations::OperationIdentifier> inductionVars;
     // Utility
     mlir::RewriterBase::InsertPoint* globalInsertPoint;
     mlir::Value globalString;

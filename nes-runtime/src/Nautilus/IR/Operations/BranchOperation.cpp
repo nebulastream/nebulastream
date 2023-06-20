@@ -24,9 +24,9 @@ BasicBlockInvocation& BranchOperation::getNextBlockInvocation() { return basicBl
 std::string BranchOperation::toString() {
     std::string baseString = "br Block_" + basicBlock.getBlock()->getIdentifier() + "(";
     if (basicBlock.getBlock()->getArguments().size() > 0) {
-        baseString += basicBlock.getArguments().at(0)->getIdentifier();
+        baseString += basicBlock.getArguments().at(0)->getIdentifier().toString();
         for (int i = 1; i < (int) basicBlock.getArguments().size(); ++i) {
-            baseString += ", " + basicBlock.getArguments().at(i)->getIdentifier();
+            baseString += ", " + basicBlock.getArguments().at(i)->getIdentifier().toString();
         }
     }
     return baseString + ")";

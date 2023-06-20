@@ -23,7 +23,7 @@ AddOperation::AddOperation(OperationIdentifier identifier, OperationPtr leftInpu
 }
 
 std::string AddOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " + " + getRightInput()->getIdentifier();
+    return getIdentifier().toString() + " = " + getLeftInput()->getIdentifier().toString() + " + " + getRightInput()->getIdentifier().toString();
 }
 bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
