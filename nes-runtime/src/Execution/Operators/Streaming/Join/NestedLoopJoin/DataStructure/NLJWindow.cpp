@@ -18,7 +18,8 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : StreamWindow(windowStart, windowEnd) {}
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads)
+                    : StreamWindow(windowStart, windowEnd), numWorkerThreads(numWorkerThreads) {}
 
 
 size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
@@ -35,11 +36,27 @@ std::string NLJWindow::toString() {
     return basicOstringstream.str();
 }
 
-void* NLJWindow::getPagedVectorRef(bool leftSide) {
+void* NLJWindow::getPagedVectorRef(bool leftSide, uint64_t workerId) {
     if (leftSide) {
-        return leftTuples.get();
+        return leftTuples[workerId % numWorkerThreads].get();
     } else {
-        return rightTuples.get();
+        return rightTuples[workerId % numWorkerThreads].get();
+    }
+}
+
+void NLJWindow::combinePagedVectors() {
+    // Combing all PagedVectors on the left side
+    auto& leftSourcePagedVector = leftTuples[0];
+    for (auto i = 1; i < leftTuples.size(); ++i) {
+        leftSourcePagedVector.combinePagedVectors(leftTuples[i]);
+        leftTuples[i].release();
+    }
+
+    // Combing all PagedVectors on the right side
+    auto& rightSourcePagedVector = rightTuples[0];
+    for (auto i = 1; i < rightTuples.size(); ++i) {
+        rightSourcePagedVector.combinePagedVectors(rightTuples[i]);
+        rightTuples[i].release();
     }
 }
 

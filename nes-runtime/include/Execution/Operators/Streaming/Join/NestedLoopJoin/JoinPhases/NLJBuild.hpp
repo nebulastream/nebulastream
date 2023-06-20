@@ -63,6 +63,18 @@ class NLJBuild : public ExecutableOperator {
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
+    /**
+     * @brief Updates the localJoinState by getting the values via Nautilus::FunctionCalls()
+     * @param localJoinState: The pointer to the joinstate that we want to update
+     * @param operatorHandlerMemRef: Memref to the operator handler
+     * @param timestamp: Timestamp, for which to get the windowRef, windowStart, and windowEnd
+     * @param workerId: WorkerId necessary for getting the correct pagedVectorRef
+     */
+    void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
+                              Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
+                              Nautilus::Value<Nautilus::UInt64>& timestamp,
+                              Nautilus::Value<Nautilus::UInt64>& workerId);
+
   private:
     const uint64_t operatorHandlerIndex;
     SchemaPtr schema;

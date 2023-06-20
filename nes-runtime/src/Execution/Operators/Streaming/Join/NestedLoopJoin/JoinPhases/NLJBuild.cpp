@@ -32,18 +32,42 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t timestampRecord) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+class LocalNestedLoopJoinState : public Operators::OperatorState {
+  public:
+    LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler, const Value<MemRef>& windowReference,
+                             const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
+        : joinOperatorHandler(operatorHandler),  windowReference(windowReference), pagedVectorRef(pagedVectorRef),
+          windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+    Value<MemRef> joinOperatorHandler;
+    Value<MemRef> windowReference;
+    Nautilus::Interface::PagedVectorRef pagedVectorRef;
+    Value<UInt64> windowStart;
+    Value<UInt64> windowEnd;
+};
 
-    NLJOperatorHandler* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->allocateNewEntry(timestampRecord, isLeftSide);
+void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+
+    return opHandler->getWindowByTimestampOrCreateIt2(timestamp);
 }
 
-void* getPagedVectorRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t timestampRecord) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getPagedVectorRef(isLeftSide, workerId);
+}
 
-    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->getPagedVectorRef(timestampRecord, isLeftSide);
+void* getNLJWindowStartProxy(void* ptrNljWindow) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getWindowStart();
+}
+
+void* getNLJWindowEndProxy(void* ptrNljWindow) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getWindowEnd();
 }
 
 /**
@@ -70,23 +94,35 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     }
 }
 
+void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
+                                    Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
+                                    Nautilus::Value<Nautilus::UInt64>& timestamp,
+                                    Nautilus::Value<Nautilus::UInt64>& workerId) {
+    // Retrieving the window of the current watermark, as we expect that more tuples will be inserted into this window
+    localJoinState->windowReference = Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy,
+                                                             operatorHandlerMemRef, timestamp);
+    localJoinState->pagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
+                                                            localJoinState->windowReference, workerId,
+                                                            Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+    localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
+                                                         localJoinState->windowReference);
+    localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
+                                                       localJoinState->windowReference);
+}
+
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-
-    check here if the state is nullptr;
-    if it is null, then store the window of the current timestampVal in the state
-    this is only necessary for the first buffer as afterwards, the state is always set through the close call
-    but we have still have to check if the timestamp lies in the current state
-
+    auto* localJoinState = static_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
+    auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
+    if (!(localJoinState->windowStart <= timestampVal && timestampVal < localJoinState->windowEnd)) {
+        // We have to get the window for the current timestamp
+        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, ctx.getWorkerId());
+    }
+
     // Get the memRef to the new entry
-    auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy",
-                                              insertEntryMemRefProxy,
-                                              operatorHandlerMemRef,
-                                              Value<Boolean>(isLeftSide),
-                                              timestampVal);
+    auto entryMemRef = localJoinState->pagedVectorRef.allocateEntry();
 
 
     // Write Record at entryMemRef
@@ -102,24 +138,27 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 
 void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
     auto opHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    think here about what pagedvectorRefs to store actually in the localoperatorstate...maybe assume that the timestamp is monotenous and therefore we only have a single window that we require
+    auto windowRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
+    auto pagedVectorRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
 
-    maybe also get in the close the new window/pagedvectorref, as the close contains the largest timestamp
-
-
-
-    auto leftTuplesPagedVectorRef = Nautilus::FunctionCall()
-
-    ctx.setLocalOperatorState()
+    auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandler, windowRef, pagedVectorRef);
+    ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto* localJoinState = static_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
+    auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
 
-    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+    auto watermarkTs = recordBuffer.getWatermarkTs();
+    if (!(localJoinState->windowStart <= watermarkTs && watermarkTs < localJoinState->windowEnd)) {
+        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, ctx.getWorkerId());
+    }
+
+    ctx.setWatermarkTs(watermarkTs);
     ctx.setOrigin(recordBuffer.getOriginId());
+
     // Update the watermark for the nlj operator and trigger windows
-    Nautilus::FunctionCall("checkWindowsTriggerProxy",
+    Nautilus::FunctionCall("checkWindowsTriggerProxyForNLJBuild",
                            checkWindowsTriggerProxyForNLJBuild,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),

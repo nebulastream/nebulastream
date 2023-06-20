@@ -117,7 +117,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     /**
      * @brief Retrieves the window by a window timestamp. If no window exists for the timestamp, the optional has no value.
      * @param timestamp
-     * @return
+     * @return StreamWindowPtr
      */
     StreamWindowPtr getWindowByTimestampOrCreateIt(uint64_t timestamp);
 

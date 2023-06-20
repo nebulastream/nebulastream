@@ -101,6 +101,12 @@ class PagedVector {
     int8_t* getEntry(uint64_t pos);
 
     /**
+     * @brief Combines this PagedVector with another one by adding the other.pages to these pages
+     * @param other: PagedVector that contains pages, which should be added to this one
+     */
+    void combinePagedVectors(const PagedVector& other);
+
+    /**
      * @brief Deconstructor
      */
     ~PagedVector();

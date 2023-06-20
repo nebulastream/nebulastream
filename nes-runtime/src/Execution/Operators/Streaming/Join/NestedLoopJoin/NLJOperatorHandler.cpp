@@ -59,6 +59,9 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
                                         WorkerContext* workerCtx,
                                         PipelineExecutionContext* pipelineCtx) {
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
+        auto& nljWindow = getWindowByWindowIdentifier(windowIdentifier);
+        nljWindow.combinePagedVectors();
+
         auto buffer = workerCtx->allocateTupleBuffer();
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
         buffer.setNumberOfTuples(1);
