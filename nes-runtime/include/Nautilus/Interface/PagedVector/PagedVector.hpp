@@ -107,6 +107,18 @@ class PagedVector {
     void combinePagedVectors(const PagedVector& other);
 
     /**
+     * @brief Getter for the entry size
+     * @return uint64_t
+     */
+    uint64_t getEntrySize() const;
+
+    /**
+     * @brief Getter for the page size
+     * @return uint64_t
+     */
+    uint64_t getPageSize() const;
+
+    /**
      * @brief Deconstructor
      */
     ~PagedVector();

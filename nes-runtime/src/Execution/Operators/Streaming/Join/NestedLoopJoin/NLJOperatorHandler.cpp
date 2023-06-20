@@ -22,12 +22,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* NLJOperatorHandler::getPagedVectorRef(uint64_t timestamp, bool leftSide) {
-    auto currentWindow = getWindowByTimestampOrCreateIt(timestamp);
-    auto* windowPtr = static_cast<NLJWindow*>(currentWindow.get());
-    return windowPtr->getPagedVectorRef(leftSide);
-}
-
 NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                        size_t windowSize,
                                        uint64_t sizeOfTupleInByteLeft,
@@ -59,8 +53,12 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
                                         WorkerContext* workerCtx,
                                         PipelineExecutionContext* pipelineCtx) {
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
-        auto& nljWindow = getWindowByWindowIdentifier(windowIdentifier);
-        nljWindow.combinePagedVectors();
+        auto nljWindow = getWindowByWindowIdentifier(windowIdentifier);
+        if (!nljWindow.has_value()) {
+            NES_ERROR2("Could not find window for {}. Therefor, the window will not be triggered!!!", windowIdentifier);
+            continue;
+        }
+        std::dynamic_pointer_cast<NLJWindow>(nljWindow.value())->combinePagedVectors();
 
         auto buffer = workerCtx->allocateTupleBuffer();
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
@@ -89,4 +87,23 @@ uint8_t* NLJOperatorHandler::getFirstTuple(uint64_t windowIdentifier, bool isLef
     }
     return std::nullptr_t();
 }
+
+uint64_t getEntrySizePagedVector(void* ptrPagedVector) {
+    NES_ASSERT2_FMT(ptrPagedVector != nullptr, "paged vector should not be null");
+    auto* pagedVector = static_cast<Nautilus::Interface::PagedVector*>(ptrPagedVector);
+    return pagedVector->getEntrySize();
+}
+
+uint64_t getPageSizePagedVector(void* ptrPagedVector) {
+    NES_ASSERT2_FMT(ptrPagedVector != nullptr, "paged vector should not be null");
+    auto* pagedVector = static_cast<Nautilus::Interface::PagedVector*>(ptrPagedVector);
+    return pagedVector->getPageSize();
+}
+
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getPagedVectorRef(isLeftSide, workerId);
+}
+
 }// namespace NES::Runtime::Execution::Operators

@@ -22,11 +22,19 @@ NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorke
                     : StreamWindow(windowStart, windowEnd), numWorkerThreads(numWorkerThreads) {}
 
 
-size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
+uint64_t NLJWindow::getNumberOfTuples(bool leftSide) {
     if (leftSide) {
-        return leftTuples.getNumberOfEntries();
+        uint64_t sum = 0;
+        for (auto& pagedVec : leftTuples) {
+            sum += pagedVec->getNumberOfEntries();
+        }
+        return sum;
     } else {
-        return rightTuples.getNumberOfEntries();
+        uint64_t sum = 0;
+        for (auto& pagedVec : rightTuples) {
+            sum += pagedVec->getNumberOfEntries();
+        }
+        return sum;
     }
 }
 
@@ -47,15 +55,15 @@ void* NLJWindow::getPagedVectorRef(bool leftSide, uint64_t workerId) {
 void NLJWindow::combinePagedVectors() {
     // Combing all PagedVectors on the left side
     auto& leftSourcePagedVector = leftTuples[0];
-    for (auto i = 1; i < leftTuples.size(); ++i) {
-        leftSourcePagedVector.combinePagedVectors(leftTuples[i]);
+    for (auto i = (uint64_t )1; i < leftTuples.size(); ++i) {
+        leftSourcePagedVector->combinePagedVectors(*leftTuples[i]);
         leftTuples[i].release();
     }
 
     // Combing all PagedVectors on the right side
     auto& rightSourcePagedVector = rightTuples[0];
-    for (auto i = 1; i < rightTuples.size(); ++i) {
-        rightSourcePagedVector.combinePagedVectors(rightTuples[i]);
+    for (auto i = (uint64_t )1; i < rightTuples.size(); ++i) {
+        rightSourcePagedVector->combinePagedVectors(*rightTuples[i]);
         rightTuples[i].release();
     }
 }

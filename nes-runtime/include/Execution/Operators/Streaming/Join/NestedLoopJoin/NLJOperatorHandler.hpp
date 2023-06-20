@@ -32,20 +32,6 @@ class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 class NLJOperatorHandler : public StreamJoinOperatorHandler {
   public:
-    /**
-     * @brief This class acts as a simple storage container for the paged vectors of the left and right tuples for a given window
-     */
-    class LocalNestedLoopJoinState : public Runtime::Execution::Operators::OperatorState {
-      public:
-        LocalNestedLoopJoinState(const Interface::PagedVectorRef &leftTuples,
-                                 const Interface::PagedVectorRef &rightTuples, uint64_t windowStart, uint64_t windowEnd)
-            : leftTuples(leftTuples), rightTuples(rightTuples), windowStart(windowStart), windowEnd(windowEnd) {}
-
-        Nautilus::Interface::PagedVectorRef leftTuples;
-        Nautilus::Interface::PagedVectorRef rightTuples;
-        uint64_t windowStart;
-        uint64_t windowEnd;
-    };
 
     /**
      * @brief Constructor for a NLJOperatorHandler
@@ -124,6 +110,13 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                                         uint64_t sizeOfTupleInByteLeft,
                                         uint64_t sizeOfTupleInByteRight);
 };
+
+uint64_t getEntrySizePagedVector(void* ptrPagedVector);
+
+uint64_t getPageSizePagedVector(void* ptrPagedVector);
+
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
+
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

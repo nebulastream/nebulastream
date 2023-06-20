@@ -27,25 +27,22 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getFirstTupleProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
+void* getNLJWindowRefProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
     auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
-    return opHandler->getFirstTuple(windowIdentifier, isLeftSide);
-}
-
-uint64_t getNumberOfTuplesProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
-    return opHandler->getNumberOfTuplesInWindow(windowIdentifier, isLeftSide);
+    auto window = opHandler->getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        return window.value().get();
+    } else {
+        return nullptr;
+    }
 }
 
 void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
@@ -97,28 +94,27 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifierMemRef = recordBuffer.getBuffer();
+    auto windowReference = Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy,
+                                                  operatorHandlerMemRef, windowIdentifierMemRef);
+    auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
+                                                     windowReference, Nautilus::Value<UInt64>((uint64_t) 0),
+                                                     Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ true));
+    auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
+                                                      windowReference, Nautilus::Value<UInt64>((uint64_t) 0),
+                                                      Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ false));
+    Nautilus::Value<UInt64> leftEntrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
+                                                                   leftPagedVectorRef);
+    Nautilus::Value<UInt64> rightEntrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
+                                                                    rightPagedVectorRef);
+    Nautilus::Value<UInt64> leftPageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
+                                                                  leftPagedVectorRef);
+    Nautilus::Value<UInt64> rightPageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
+                                                                   rightPagedVectorRef);
 
-    auto firstTupleLeft = Nautilus::FunctionCall("getFirstTupleProxyForNestedLoopJoin",
-                                                 getFirstTupleProxyForNestedLoopJoin,
-                                                 operatorHandlerMemRef,
-                                                 windowIdentifierMemRef,
-                                                 Value<Boolean>(/*isLeftSide*/ true));
-    auto firstTupleRight = Nautilus::FunctionCall("getFirstTupleProxyForNestedLoopJoin",
-                                                  getFirstTupleProxyForNestedLoopJoin,
-                                                  operatorHandlerMemRef,
-                                                  windowIdentifierMemRef,
-                                                  Value<Boolean>(/*isLeftSide*/ false));
-
-    auto numberOfTuplesLeft = Nautilus::FunctionCall("getNumberOfTuplesProxyForNestedLoopJoin",
-                                                     getNumberOfTuplesProxyForNestedLoopJoin,
-                                                     operatorHandlerMemRef,
-                                                     windowIdentifierMemRef,
-                                                     Value<Boolean>(/*isLeftSide*/ true));
-    auto numberOfTuplesRight = Nautilus::FunctionCall("getNumberOfTuplesProxyForNestedLoopJoin",
-                                                      getNumberOfTuplesProxyForNestedLoopJoin,
-                                                      operatorHandlerMemRef,
-                                                      windowIdentifierMemRef,
-                                                      Value<Boolean>(/*isLeftSide*/ false));
+    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize.getValue().getValue(),
+                                                        leftPageSize.getValue().getValue());
+    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize.getValue().getValue(),
+                                                         rightEntrySize.getValue().getValue());
 
     // TODO ask Philipp why do I need this here and can not use auto?
     Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin",
@@ -139,14 +135,16 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
         Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
     ctx.setOrigin(originId);
 
-    // As we know that the data is of type rowLayout, we do not have to provide a buffer size
     auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);
     auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema);
 
-    for (Value<UInt64> leftPos((uint64_t) 0); leftPos < numberOfTuplesLeft; leftPos = leftPos + 1) {
-        for (Value<UInt64> rightPos((uint64_t) 0); rightPos < numberOfTuplesRight; rightPos = rightPos + 1) {
-            auto leftRecord = leftMemProvider->read({}, firstTupleLeft, leftPos);
-            auto rightRecord = rightMemProvider->read({}, firstTupleRight, rightPos);
+    Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
+    for (auto leftIt = leftPagedVector.begin(); leftIt != leftPagedVector.end(); ++leftIt) {
+        for (auto rightIt = rightPagedVector.begin(); rightIt != rightPagedVector.end(); ++rightIt) {
+            auto leftRecordMemRef = *leftIt;
+            auto rightRecordMemRef = *rightIt;
+            auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
+            auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
 
             /* This can be later replaced by an interface that returns bool and getys passed the
                  * two Nautilus::Records (left and right) #3691 */

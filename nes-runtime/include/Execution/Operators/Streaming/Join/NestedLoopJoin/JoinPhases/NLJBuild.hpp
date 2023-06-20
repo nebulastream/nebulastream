@@ -18,6 +18,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class TimeFunction;
@@ -31,6 +33,23 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 class NLJBuild : public ExecutableOperator {
 
   public:
+    /**
+     * @brief Local state, which stores the window start, window end, joinOpHandlerReference, windowReference, and pagedVectorRef
+     */
+    class LocalNestedLoopJoinState : public Operators::OperatorState {
+      public:
+        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler, const Value<MemRef>& windowReference,
+                                 const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
+            : joinOperatorHandler(operatorHandler),  windowReference(windowReference), pagedVectorRef(pagedVectorRef),
+              windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+        Value<MemRef> joinOperatorHandler;
+        Value<MemRef> windowReference;
+        Nautilus::Interface::PagedVectorRef pagedVectorRef;
+        Value<UInt64> windowStart;
+        Value<UInt64> windowEnd;
+    };
+
+
     /**
      * @brief Constructor for a NLJBuild
      * @param operatorHandlerIndex
@@ -73,7 +92,7 @@ class NLJBuild : public ExecutableOperator {
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                               Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
                               Nautilus::Value<Nautilus::UInt64>& timestamp,
-                              Nautilus::Value<Nautilus::UInt64>& workerId);
+                              Nautilus::Value<Nautilus::UInt64>& workerId) const;
 
   private:
     const uint64_t operatorHandlerIndex;
