@@ -39,7 +39,7 @@ void freeObject(void* state, void* object) {
 
 inline bool dirExists(const std::string& path) { return std::filesystem::exists(path.c_str()); }
 
-void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
+void loadClassesFromByteList(void* state, const JavaUDFByteCodeList& byteCodeList) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 

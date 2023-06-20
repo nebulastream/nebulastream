@@ -28,6 +28,12 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+// Utility types
+using JavaSerializedInstance = std::vector<char>;
+using JavaByteCode = std::vector<char>;
+using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
+using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
+
 /**
  * @brief This handler stores states of a MapJavaUDF operator during its execution.
  */
@@ -49,8 +55,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     const std::string& methodName,
                                     const std::string& inputClassName,
                                     const std::string& outputClassName,
-                                    const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
-                                    const std::vector<char>& serializedInstance,
+                                    const JavaUDFByteCodeList& byteCodeList,
+                                    const JavaSerializedInstance& serializedInstance,
                                     SchemaPtr udfInputSchema,
                                     SchemaPtr udfOutputSchema,
                                     const std::optional<std::string>& javaPath)
@@ -113,13 +119,13 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @brief This method returns the byte code list of the java udf
      * @return std::unordered_map<std::string, std::vector<char>> byte code list
      */
-    const std::unordered_map<std::string, std::vector<char>>& getByteCodeList() const { return byteCodeList; }
+    const JavaUDFByteCodeList& getByteCodeList() const { return byteCodeList; }
 
     /**
      * @brief This method returns the serialized instance of the java udf
      * @return std::vector<char> serialized instance
      */
-    const std::vector<char>& getSerializedInstance() const { return serializedInstance; }
+    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
      * @brief This method returns the input schema of the Java UDF.
@@ -186,8 +192,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::string inputClassJNIName;
     const std::string outputClassName;
     const std::string outputClassJNIName;
-    const std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    const std::vector<char> serializedInstance;
+    const JavaUDFByteCodeList byteCodeList;
+    const JavaSerializedInstance serializedInstance;
     const SchemaPtr udfInputSchema;
     const SchemaPtr udfOutputSchema;
     const SchemaPtr operatorInputSchema;

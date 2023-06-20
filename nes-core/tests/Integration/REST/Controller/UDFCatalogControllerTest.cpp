@@ -60,7 +60,9 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
                        const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
         ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
         for (const auto& classDefinition : expected) {
-            auto actualByteCode = actual.find(classDefinition.class_name());
+            auto actualByteCode = std::find_if(actual.cbegin(), actual.cend(), [&](const UDF::JavaClassDefinition& c) {
+                return c.first == classDefinition.class_name();
+            });
             ASSERT_TRUE(actualByteCode != actual.end());
             auto converted = UDF::JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
             ASSERT_EQ(actualByteCode->second, converted);

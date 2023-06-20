@@ -51,9 +51,8 @@ UDFSerializationUtil::deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessag
     javaUdfByteCodeList.reserve(JavaUdfDescriptorMessage.classes().size());
     for (const auto& classDefinition : JavaUdfDescriptorMessage.classes()) {
         NES_DEBUG2("Deserialized Java UDF class: {}", classDefinition.class_name());
-        javaUdfByteCodeList.insert(
-            {classDefinition.class_name(),
-             Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
+        javaUdfByteCodeList.emplace_back(classDefinition.class_name(),
+             Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()});
     }
     // Deserialize the input and output schema.
     auto inputSchema = SchemaSerializationUtil::deserializeSchema(JavaUdfDescriptorMessage.inputschema());
