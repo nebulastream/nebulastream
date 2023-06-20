@@ -20,6 +20,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Network {
 
@@ -159,12 +160,14 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ResendData: {
             NES_DEBUG("NetworkSink: ResendData called " << nesPartition.toString() << " parent plan " << querySubPlanId);
+            NES_WARNING("Start resending data");
             auto tuplesToResend = workerContext.resendDataFromDataStorage(this->nesPartition);
             while (!tuplesToResend.empty()) {
                 auto tupleBuffer = tuplesToResend.top();
                 writeData(tupleBuffer, workerContext);
                 tuplesToResend.pop();
             }
+            NES_WARNING("End resending data");
             break;
         }
         default: {
