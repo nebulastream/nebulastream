@@ -12,13 +12,10 @@
     limitations under the License.
 */
 
-#include "Common/Identifiers.hpp"
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Topology/Predictions/Edge.hpp>
 #include <Topology/Predictions/TopologyDelta.hpp>
 #include <Topology/Predictions/TopologyVersionTimeline.hpp>
 #include <Topology/Topology.hpp>
@@ -39,26 +36,7 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         NES_DEBUG("Setup TopologyVersionTimeline test class.");
     }
 
-    void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-
-        std::map<std::string, std::any> properties;
-        /*
-        properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-         */
-
-        rootNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
-        mid1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
-        mid2 = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
-        mid3 = TopologyNode::create(3, "localhost", 4003, 5003, 4, properties);
-        src1 = TopologyNode::create(4, "localhost", 4004, 5004, 4, properties);
-        src2 = TopologyNode::create(5, "localhost", 4005, 5005, 4, properties);
-        src3 = TopologyNode::create(6, "localhost", 4006, 5006, 4, properties);
-        src4 = TopologyNode::create(7, "localhost", 4007, 5007, 4, properties);
-    }
-
-    std::vector<TopologyNodeId> getIdVector(std::vector<NodePtr> nodes) {
+    static std::vector<TopologyNodeId> getIdVector(const std::vector<NodePtr>& nodes) {
         std::vector<TopologyNodeId> ids;
         ids.reserve(nodes.size());
         for (auto& node : nodes) {
@@ -67,643 +45,194 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         return ids;
     }
 
-    void compareIdVectors(std::vector<NodePtr> original, std::vector<NodePtr> copy) {
-        EXPECT_EQ(original.size(), copy.size());
-        std::vector<TopologyNodeId> originalIds = getIdVector(original);
-        std::vector<TopologyNodeId> copiedIds = getIdVector(copy);
+    static void compareNodeAt(Experimental::TopologyPrediction::TopologyVersionTimeline versions, Timestamp time, uint64_t id, std::vector<uint64_t> parents, std::vector<uint64_t> children) {
+        std::cout << "compare node " << id << std::endl;
+        auto predictedNode = versions.getTopologyVersion(time)->findNodeWithId(id);
 
-        std::sort(originalIds.begin(), originalIds.end());
-        std::sort(copiedIds.begin(), copiedIds.end());
-
-        ASSERT_EQ(originalIds, copiedIds);
-    }
-
-    void testTopologyEquality(TopologyPtr original, TopologyPtr copy) {
-        NES_DEBUG2("comparing topologies");
-        (void ) copy;
-
-        std::queue<TopologyNodePtr> originalQueue;
-        originalQueue.push(original->getRoot());
-        std::set<uint64_t> visited;
-
-        while (!originalQueue.empty()) {
-            auto originalNode = originalQueue.front();
-            originalQueue.pop();
-            ASSERT_TRUE(originalNode);
-            NES_DEBUG2("checking node {}", originalNode->getId());
-            auto copiedNode = copy->findNodeWithId(originalNode->getId());
-            NES_DEBUG2("copied node id {}", copiedNode->getId());
-            ASSERT_NE(copiedNode, nullptr);
-
-            //ASSERT_EQ(originalNode->getId(), copiedNode->getId());
-            ASSERT_NE(originalNode, copiedNode);
-
-            compareIdVectors(originalNode->getChildren(), copiedNode->getChildren());
-            compareIdVectors(originalNode->getParents(), copiedNode->getParents());
-
-
-            for (const auto& child : originalNode->getChildren()) {
-                auto id = child->as<TopologyNode>()->getId();
-                if (!visited.contains(id)) {
-                    visited.insert(id);
-                    originalQueue.push(child->as<TopologyNode>());
-                }
-            }
+        //check if the node is predicted to be removed
+        if (children.empty() && parents.empty()) {
+            EXPECT_EQ(predictedNode, nullptr);
+            return ;
         }
 
-        /*
-        auto originalIterator = BreadthFirstNodeIterator(original->getRoot()).begin();
-        //auto copyIterator = BreadthFirstNodeIterator(copy->getRoot()).begin();
-
-        while (originalIterator != BreadthFirstNodeIterator(original->getRoot()).end()) {
-            //while (originalIterator != NES::BreadthFirstNodeIterator::end()) {
-            auto originalNode = (*originalIterator)->as<TopologyNode>();
-            //auto copiedNode = (*copyIterator)->as<TopologyNode>();
-            ASSERT_TRUE(originalNode);
-            (void) copy;
-            auto copiedNode = copy->findNodeWithId(originalNode->getId());
-            ASSERT_TRUE(copiedNode);
-            NES_DEBUG2("checking original node {}", originalNode->getId());
-
-            //ASSERT_EQ(originalNode->getId(), copiedNode->getId());
-            ASSERT_NE(originalNode, copiedNode);
-
-            compareIdVectors(originalNode->getChildren(), copiedNode->getChildren());
-            compareIdVectors(originalNode->getParents(), copiedNode->getParents());
-
-            ++originalIterator;
-            //++copyIterator;
-        }
-*/
-    }
-
-    TopologyPtr constructTopologyFromJson(std::string path) {
-        std::map<std::string, std::any> properties;
-        std::ifstream i(path);
-        json j;
-        i >> j;
-        uint64_t grpcPort = 4000;
-        uint64_t dataPort = 5000;
-
-        std::map<uint64_t, std::vector<uint64_t>> graphMap;
-        //auto topology = std::make_shared<Topology>();
-        auto topology = Topology::create();
-        topology->setAsRoot(TopologyNode::create(1, "localhost", grpcPort, dataPort, 4, properties));
-        ++grpcPort;
-        ++dataPort;
-        auto nodes = j["nodes"].get<std::vector<uint64_t>>();
-        auto edges = j["edges"].get<std::vector<json>>();
-        for (auto e : edges) {
-            auto childId = nodes[e[0].get<uint64_t>()];
-            auto parentId = nodes[e[1].get<uint64_t>()];
-            //topology->addNewTopologyNodeAsChild(topology->findNodeWithId(parentId), TopologyNode::create(childId));
-            graphMap[parentId].push_back(childId);
-        }
-
-        std::stack<uint64_t> stack;
-
-        size_t nodeCount = 0;
-        std::set<uint64_t> visited;
-        stack.push(1);
-        while (!stack.empty()) {
-            auto id = stack.top();
-            stack.pop();
-
-            if (graphMap.contains(id)) {
-                auto children = graphMap.at(id);
-                for (auto child : children) {
-                    auto childNode = topology->findNodeWithId(child);
-                    if (!childNode) {
-                        topology->addNewTopologyNodeAsChild(
-                            topology->findNodeWithId(id),
-                            TopologyNode::create(child, "localhost", grpcPort, dataPort, 4, properties));
-                        ++grpcPort;
-                        ++dataPort;
-                        stack.push(child);
-                    } else {
-                        childNode->addParent(topology->findNodeWithId(id));
-                    }
-                }
-            }
-        }
-
-        return topology;
-    }
-
-    Experimental::TopologyPrediction::TopologyDelta getDeltaFromJson(json json) {
-        Experimental::TopologyPrediction::TopologyDelta changeLog({}, {});
-        for (auto add : json["added"]) {
-            changeLog.added.push_back(getEdgeFromJson(add));
-        }
-        for (auto rem : json["removed"]) {
-            changeLog.removed.push_back(getEdgeFromJson(rem));
-        }
-        return changeLog;
-    }
-
-    Experimental::TopologyPrediction::Edge getEdgeFromJson(json json) {
-        EXPECT_TRUE(json.is_array());
-        return {json[0], json[1]};
+        //compare links
+        std::sort(children.begin(), children.end());
+        std::sort(parents.begin(), parents.end());
+        EXPECT_EQ(getIdVector(predictedNode->getChildren()), children);
+        EXPECT_EQ(getIdVector(predictedNode->getParents()), parents);
     }
 
   protected:
     TopologyNodePtr rootNode, mid1, mid2, mid3, src1, src2, src3, src4;
 };
 
-/**
- * @brief Test on a linear topology
- * --- root --- mid1 --- src1
- */
-TEST_F(TopologyVersionTimelineTest, testLinearTopology) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-/**
- * @brief Test on topology with multiple sources
- * --- root --- mid1 --- src1
- *                   \
- *                    --- src2
- */
-TEST_F(TopologyVersionTimelineTest, testMultipleSources) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-/**
- * @brief Test on a topology with different depths on its branches
- * --- root --- mid1 --- src1
- *                   \
- *                    --- mid2 -- src2
- */
-TEST_F(TopologyVersionTimelineTest, testTopologyWithDiffernetDepths) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src2));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-/**
- * @brief Test on a topology with longer first branch
- * --- root --- mid1 --- mid2 -- src1
- *                   \
- *                    --- src2
- */
-TEST_F(TopologyVersionTimelineTest, testTopologyWithLongerFirstBranch) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-/**
- * @brief Test on a branched and merged topology
- *                       --- mid2 ---
- *                     /              \
- * --- root--- mid1 ---                --- src1
- *                     \              /
- *                       --- mid3 ---
- */
-TEST_F(TopologyVersionTimelineTest, testBranchedAndMergedTopology) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, mid3);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid3));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid3, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid3->containAsChild(src1));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-/**
- * @brief Test on a hierarchical topology
- *
- *                              --- src1
- *                            /
- *               --- mid1 ---
- *             /              \
- *            /                --- src2
- * --- root---
- *            \                --- src3
- *             \             /
- *              --- mid2 ---
- *                           \
- *                             --- src4
- */
-TEST_F(TopologyVersionTimelineTest, testWithHiearchicalTopology) {
-    TopologyPtr topology = Topology::create();
-
-    topology->setAsRoot(rootNode);
-
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
-
-    success = topology->addNewTopologyNodeAsChild(rootNode, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src3);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src3));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src4);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src4));
-
-    NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
-
-    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
-    testTopologyEquality(topology, topologyCopy);
-}
-
-TEST_F(TopologyVersionTimelineTest, testPredictionsBigGraph) {
-    std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/test_data/";
-
-    std::string filename = TEST_DIR + "graph_time0.json";
-    auto topology = constructTopologyFromJson(filename);
-    std::cout << topology->toString() << std::endl;
-
-    Experimental::TopologyPrediction::TopologyVersionTimeline versionDeltaList(topology);
-
-    std::ifstream i(TEST_DIR + "timeline.json");
-    json j;
-    i >> j;
-
-    auto timeline = j.get<std::map<std::string, json>>();
-
-    for (auto [timeString, changelog] : timeline) {
-        auto delta = getDeltaFromJson(changelog);
-        versionDeltaList.addTopologyChange(std::stoi(timeString), delta);
-    }
-
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
-
-    for (uint64_t i = 1; i <= timeline.size(); ++i) {
-        //std::cout << versionDeltaList.toString(i) << std::endl;
-        //std::cout << versionDeltaList.getTopologyVersion(i)->toString() << std::endl;
-
-        std::string filename = TEST_DIR + "graph_time" + std::to_string(i) + ".json";
-        auto topology = constructTopologyFromJson(filename);
-        //EXPECT_TRUE(versionDeltaList.getTopologyView(i).matches(*topology));
-        //EXPECT_TRUE(matches(versionDeltaList.getTopologyView(i), *topology));
-        //testTopologyEquality(versionDeltaList.getTopologyVersion(i), topology);
-        testTopologyEquality(topology, versionDeltaList.getTopologyVersion(i));
-        NES_DEBUG2("tested equality");
-    }
-    NES_DEBUG2("tested all predictions");
-}
-
-TEST_F(TopologyVersionTimelineTest, testBigDAG) {
-    Logger::getInstance()->changeLogLevel(LogLevel::LOG_NONE);
-    //std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/test_data_dag/";
-    //std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/workingDAG/";
-    //std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/DAGwithoutOrphanRemoval/";
-    //std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/mobileNodeMovingOnly/";
-    std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/mobileNodeMovingOnlyWithOrphanRemoval/";
-
-    std::string filename = TEST_DIR + "graph_time0.json";
-    auto topology = constructTopologyFromJson(filename);
-    std::cout << topology->toString() << std::endl;
-
-    Experimental::TopologyPrediction::TopologyVersionTimeline versionDeltaList(topology);
-
-    std::ifstream i(TEST_DIR + "timeline.json");
-    json j;
-    i >> j;
-
-    auto timeline = j.get<std::map<std::string, json>>();
-
-    for (auto [timeString, changelog] : timeline) {
-        auto delta = getDeltaFromJson(changelog);
-        versionDeltaList.addTopologyChange(std::stoi(timeString), delta);
-    }
-
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
-
-    for (uint64_t i = 1; i <= timeline.size(); ++i) {
-        std::cout << versionDeltaList.getTopologyVersion(i)->toString() << std::endl;
-
-        std::string filename = TEST_DIR + "graph_time" + std::to_string(i) + ".json";
-        auto topology = constructTopologyFromJson(filename);
-        //EXPECT_TRUE(versionDeltaList.getTopologyView(i).matches(*topology));
-        //ASSERT_TRUE(matches(versionDeltaList.getTopologyView(i), *topology));
-        testTopologyEquality(topology, versionDeltaList.getTopologyVersion(i));
-    }
-    NES_DEBUG2("tested all predictions");
-}
-
-#if not_enabled
 TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
-    auto topology = std::make_shared<Topology>();
-    topology->setAsRoot(TopologyNode::create(1));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4));
+    auto topology = Topology::create();
+    std::map<std::string, std::any> properties;
+    topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
     std::cout << "Original Topology" << std::endl;
     std::cout << topology->toString() << std::endl;
-    TopologyPredictionTimeline versionDeltaList(topology);
+    Experimental::TopologyPrediction::TopologyVersionTimeline versionTimeline(topology);
 
     //create new prediction for node 3 to reconnect to node 4
     std::cout << "adding new prediction that node 3 will reconnect to node 4 at time 7" << std::endl;
-
-    //todo: check that all edges are also properly removed
-    /*
-  TopologyDeltaPtr delta3ptr = std::make_shared<TopologyDelta>(std::vector<uint64_t>({4}),
-                                               std::vector<uint64_t>(),
-                                               std::vector<uint64_t>({2}),
-                                               std::vector<uint64_t>());
-                                               */
-    TopologyDelta delta3({{3, 4}}, {{3, 2}});
-    //versionDeltaList.addTopologyChange(7, 3, delta3ptr);
-    versionDeltaList.addTopologyChange(7, delta3);
+    Experimental::TopologyPrediction::TopologyDelta delta3({{3, 4}}, {{3, 2}});
+    versionTimeline.addTopologyChange(7, delta3);
 
     Timestamp viewTime;
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
+    std::cout << versionTimeline.predictionsToString() << std::endl;
 
     std::cout << "views: " << std::endl;
     //check values
     //view at time 6
     viewTime = 6;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {3, 4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {3, 4});
+    compareNodeAt(versionTimeline, viewTime, 3, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {});
 
     //view at time 7
     viewTime = 7;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
 
     //changing time of prediction of node 3 to happen at 4 instead of 7
     std::cout << "updating prediction that node 3 will reconnect to node 4 at time 4 instead of time 7" << std::endl;
-    //versionDeltaList.addTopologyChange(4, 3, delta3ptr);
-    versionDeltaList.removeTopologyChange(7, delta3);
-    versionDeltaList.addTopologyChange(4, delta3);
+    versionTimeline.removeTopologyChange(7, delta3);
+    versionTimeline.addTopologyChange(4, delta3);
 
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {3, 4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {3, 4});
+    compareNodeAt(versionTimeline, viewTime, 3, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {});
 
     //view at time 4
     viewTime = 4;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
 
     //adding new prediction for node 4 to reconnect to node 1 at time 6
     std::cout << "adding new prediction that node 4 will reconnect to node 1 at time 6" << std::endl;
-    //TopologyDeltaPtr delta4ptr = std::make_shared<TopologyDelta>(std::vector<uint64_t>({1}), std::vector<uint64_t>(), std::vector<uint64_t>({2}), std::vector<uint64_t>());
-    TopologyDelta delta4({{4, 1}}, {{4, 2}});
-    //versionDeltaList.addTopologyChange(6, 4, delta4ptr);
-    versionDeltaList.addTopologyChange(6, delta4);
+    Experimental::TopologyPrediction::TopologyDelta delta4({{4, 1}}, {{4, 2}});
+    versionTimeline.addTopologyChange(6, delta4);
 
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
+    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {3, 4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {3, 4});
+    compareNodeAt(versionTimeline, viewTime, 3, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {});
 
     //view at time 4
     viewTime = 4;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
 
     //view at time 6
     viewTime = 6;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2, 4});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {1}, {3});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2, 4});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {1}, {3});
 
     //predicting adding of node 5 as child of 1 at time 5
     std::cout << "adding prediction that a new node with id 5 will connect to the system at time 5" << std::endl;
-    //TopologyDeltaPtr delta5ptr = std::make_shared<TopologyDelta>(std::vector<uint64_t>({1}), std::vector<uint64_t>(), std::vector<uint64_t>({}), std::vector<uint64_t>());
-    TopologyDelta delta5({{5, 1}}, {});
-    //versionDeltaList.addTopologyChange(5, 5, delta5ptr);
-    versionDeltaList.addTopologyChange(5, delta5);
+    Experimental::TopologyPrediction::TopologyDelta delta5({{5, 1}}, {});
+    versionTimeline.addTopologyChange(5, delta5);
 
     std::cout << "node 4 changes prediction that it will connect to node 5 at time 7 instead of to 1 at time 6" << std::endl;
     //changing predciction for node 4 to connect to 5 at time 7 instead of to 1 at time 6 (old prediction should not be visible anymore)
-    //TopologyDeltaPtr delta4ptrNew = std::make_shared<TopologyDelta>(std::vector<uint64_t>({5}), std::vector<uint64_t>(), std::vector<uint64_t>({2}), std::vector<uint64_t>());
-    TopologyDelta delta4New({{4, 5}}, {{4, 2}});
-    //versionDeltaList.addTopologyChange(7, 4, delta4ptrNew);
-    versionDeltaList.removeTopologyChange(6, delta4);
-    versionDeltaList.addTopologyChange(7, delta4New);
+    Experimental::TopologyPrediction::TopologyDelta delta4New({{4, 5}}, {{4, 2}});
+    versionTimeline.removeTopologyChange(6, delta4);
+    versionTimeline.addTopologyChange(7, delta4New);
 
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
+    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {3, 4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 5, {}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {3, 4});
+    compareNodeAt(versionTimeline, viewTime, 3, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 5, {}, {});
 
     //view at time 4
     viewTime = 4;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {}, {});
 
     //view at time 6
     viewTime = 6;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2, 5});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {1}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2, 5});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {1}, {});
 
     //view at time 7
     viewTime = 7;
-    std::cout << versionDeltaList.toString(viewTime) << std::endl;
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2, 5});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {5}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2, 5});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {5}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {1}, {4});
 
     //schedule 2 to connect to 5 at 7, the same time when 4 connects to 5
     std::cout << std::endl;
     std::cout << "schedule 2 to connect to 5 at 7, the same time when 4 connects to 5" << std::endl;
-    //TopologyDeltaPtr delta2ptr = std::make_shared<TopologyDelta>(std::vector<uint64_t>({5}), std::vector<uint64_t>(), std::vector<uint64_t>({1}), std::vector<uint64_t>());
-    TopologyDelta delta2({{2, 5}}, {{2, 1}});
-    //versionDeltaList.addTopologyChange(7, 2, delta2ptr);
-    versionDeltaList.addTopologyChange(7, delta2);
+    Experimental::TopologyPrediction::TopologyDelta delta2({{2, 5}}, {{2, 1}});
+    versionTimeline.addTopologyChange(7, delta2);
 
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
+    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {3, 4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {});
-    compareNodeAt(versionDeltaList, viewTime, 5, {}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {3, 4});
+    compareNodeAt(versionTimeline, viewTime, 3, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {});
+    compareNodeAt(versionTimeline, viewTime, 5, {}, {});
 
     //view at time 4
     viewTime = 4;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {}, {});
 
     //view at time 6
     viewTime = 6;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {2, 5});
-    compareNodeAt(versionDeltaList, viewTime, 2, {1}, {4});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {2}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {1}, {});
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {2, 5});
+    compareNodeAt(versionTimeline, viewTime, 2, {1}, {4});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {1}, {});
 
     //view at time 7
     viewTime = 7;
-    std::cout << versionDeltaList.toString(viewTime);
-    compareNodeAt(versionDeltaList, viewTime, 1, {}, {5});
-    compareNodeAt(versionDeltaList, viewTime, 2, {5}, {});
-    compareNodeAt(versionDeltaList, viewTime, 3, {4}, {});
-    compareNodeAt(versionDeltaList, viewTime, 4, {5}, {3});
-    compareNodeAt(versionDeltaList, viewTime, 5, {1}, {4, 2});
-
-    //todo: why do we need this?
-    versionDeltaList.removeTopologyChange(7, delta4New);
-    versionDeltaList.removeTopologyChange(7, delta2);
-    versionDeltaList.removeTopologyChange(5, delta5);
-    versionDeltaList.removeTopologyChange(4, delta3);
-    std::cout << versionDeltaList.predictionsToString() << std::endl;
-
-    std::cout << "test done" << std::endl;
+    compareNodeAt(versionTimeline, viewTime, 1, {}, {5});
+    compareNodeAt(versionTimeline, viewTime, 2, {5}, {});
+    compareNodeAt(versionTimeline, viewTime, 3, {4}, {});
+    compareNodeAt(versionTimeline, viewTime, 4, {5}, {3});
+    compareNodeAt(versionTimeline, viewTime, 5, {1}, {4, 2});
 }
-#endif
 
 }// namespace NES

@@ -38,10 +38,6 @@ TopologyPtr TopologyVersionTimeline::getTopologyVersion(Timestamp time) {
 TopologyVersionTimeline::TopologyVersionTimeline(TopologyPtr originalTopology)
     :  originalTopology(originalTopology), time(0) {}
 
-Timestamp TopologyVersionTimeline::getTime() {
-  return time;
-}
-
 [[maybe_unused]] void TopologyVersionTimeline::incrementTime(Timestamp increment) {
   time += increment;
 }

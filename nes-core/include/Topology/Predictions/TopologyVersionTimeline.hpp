@@ -21,11 +21,7 @@ class TopologyVersionTimeline {
 
   TopologyPtr getTopologyVersion(Timestamp time);
 
-  std::string toString(Timestamp viewTime);
-
   std::string predictionsToString();
-
-  Timestamp getTime();
 
   bool removeTopologyChange(Timestamp predictedTime, const TopologyDelta &delta);
 
