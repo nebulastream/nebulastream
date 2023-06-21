@@ -364,7 +364,7 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
 
     // Merge
     // TODO ? if (swap) {
-    kWayMerge(handler->getState(), handler->getTempState(), count, compWidth, rowWidth);
+    kWayMerge(handler->getState(), handler->getTempState(), handler->getState()->getNumberOfPages(), compWidth, rowWidth);
 }
 
 void* getStateProxy(void* op) {
