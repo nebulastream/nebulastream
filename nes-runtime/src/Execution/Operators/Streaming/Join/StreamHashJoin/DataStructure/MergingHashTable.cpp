@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/MergingHashTable.hpp>
 #include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
-void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
+void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
     auto& head = bucketHeads[bucketPos];
     auto& numItems = bucketNumItems[bucketPos];
     auto& numPages = bucketNumPages[bucketPos];
@@ -31,7 +31,7 @@ void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedL
     numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);
 }
 
-std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) const {
+std::vector<FixedPage> MergingHashTable::getPagesForBucket(size_t bucketPos) const {
     std::vector<FixedPage> ret;
     ret.reserve(getNumPages(bucketPos));
     auto head = bucketHeads[bucketPos].load();
@@ -43,13 +43,13 @@ std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) 
 
     return ret;
 }
-size_t SharedJoinHashTable::getNumBuckets() const { return bucketNumPages.size(); }
+size_t MergingHashTable::getNumBuckets() const { return bucketNumPages.size(); }
 
-size_t SharedJoinHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }
+size_t MergingHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }
 
-size_t SharedJoinHashTable::getNumPages(size_t bucketPos) const { return bucketNumPages[bucketPos].load(); }
+size_t MergingHashTable::getNumPages(size_t bucketPos) const { return bucketNumPages[bucketPos].load(); }
 
-SharedJoinHashTable::SharedJoinHashTable(size_t numBuckets)
+MergingHashTable::MergingHashTable(size_t numBuckets)
     : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets) {}
 
 }// namespace NES::Runtime::Execution::Operators

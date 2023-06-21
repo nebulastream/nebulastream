@@ -32,9 +32,6 @@ limitations under the License.
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Runtime::Execution::Operators {
 //
-//uint64_t lastTimeStamp = std::numeric_limits<uint64_t>::max();
-//StreamHashJoinWindow* lastHashWindow;
-//void* LastlocalHashTablePointer;
 class LocalGlobalJoinState : public Operators::OperatorState {
   public:
     LocalGlobalJoinState(Value<MemRef>& operatorHandler, Value<MemRef>& hashTableReference, Value<MemRef>& windowReference)
@@ -72,7 +69,7 @@ void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftS
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
     StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
     NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
-    auto ptr = hashWindow->getLocalHashTable(workerIdx, isLeftSide);
+    auto ptr = hashWindow->getHashTable(workerIdx, isLeftSide);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
@@ -106,6 +103,7 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
 
     auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
 
+    //TODO I am not sure do we have to make sure that only one thread do this?
     if (windowIdentifiersToBeTriggered.size() > 0) {
         opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
@@ -142,7 +140,8 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
         joinState->windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, joinState->windowReference);
-        NES_ERROR("reinit join state with start=" << joinState->windowStart << " end=" << joinState->windowEnd << " for ts=" << tsValue);
+        NES_ERROR("reinit join state with start=" << joinState->windowStart << " end=" << joinState->windowEnd
+                                                  << " for ts=" << tsValue);
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -199,37 +198,3 @@ StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
       schema(schema), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
-
-//
-//
-//void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
-//    if (timeStamp == lastTimeStamp) {
-//        return static_cast<void*>(lastHashWindow);
-//    } else {
-//        NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
-//        StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-//        auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
-//        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow.get());
-//
-//        lastTimeStamp = timeStamp;
-//        lastHashWindow = hashWindow;
-//        return static_cast<void*>(hashWindow);
-//    }
-//}
-//
-//void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
-//    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
-//    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
-//    if (hashWindow == lastHashWindow) {
-//        return LastlocalHashTablePointer;
-//    } else {
-//        NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}",
-//                   hashWindow->getWindowIdentifier(),
-//                   isLeftSide,
-//                   workerIdx);
-//        auto localHashTablePointer = static_cast<void*>(hashWindow->getLocalHashTable(workerIdx, isLeftSide));
-//        lastHashWindow = hashWindow;
-//        LastlocalHashTablePointer = localHashTablePointer;
-//        return localHashTablePointer;
-//    }
-//}

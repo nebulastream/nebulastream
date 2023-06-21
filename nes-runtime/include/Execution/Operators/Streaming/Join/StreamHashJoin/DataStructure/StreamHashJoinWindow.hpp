@@ -15,8 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMHASHJOINWINDOW_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMHASHJOINWINDOW_HPP_
 
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLockFree.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/MergingHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -86,14 +88,14 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::LocalHashTable* getLocalHashTable(size_t index, bool leftSide);
+    Operators::HashTable* getHashTable(size_t index, bool leftSide);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
      * @param isLeftSide
      * @return Reference to the shared hash table
      */
-    Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
+    Operators::MergingHashTable& getMergingHashTable(bool isLeftSide);
 
     /**
      * @brief this method marks that one partition of this window was finally processed by the sink
@@ -103,10 +105,10 @@ class StreamHashJoinWindow : public StreamWindow {
 
   private:
     uint64_t numberOfWorker;
-    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
-    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableRightSide;
-    Operators::SharedJoinHashTable leftSideHashTable;
-    Operators::SharedJoinHashTable rightSideHashTable;
+    std::vector<std::unique_ptr<Operators::HashTable>> hashTableLeftSide;
+    std::vector<std::unique_ptr<Operators::HashTable>> hashTableRightSide;
+    Operators::MergingHashTable mergingHashTableLeftSide;
+    Operators::MergingHashTable mergingHashTableRightSide;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
     std::atomic<uint64_t> partitionFinishedCounter;
     JoinStrategy joinStrategy;

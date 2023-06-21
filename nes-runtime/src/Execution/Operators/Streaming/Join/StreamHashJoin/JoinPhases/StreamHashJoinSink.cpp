@@ -191,17 +191,16 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     const auto windowIdentifier = joinPartTimestamp->windowIdentifier;
 
     NES_DEBUG("Joining for partition " << partitionId << " and windowIdentifier " << windowIdentifier);
-
     auto streamWindow = opHandler->getWindowByWindowIdentifier(windowIdentifier).value();
     auto hashWindow = static_cast<StreamHashJoinWindow*>(streamWindow.get());
 
-    auto& leftHashTable = hashWindow->getSharedJoinHashTable(true /* isLeftSide */);
+    //DEBUG CODE
+    auto& leftHashTable = hashWindow->getMergingHashTable(true /* isLeftSide */);
     NES_DEBUG("left HT stats")
     for (size_t i = 0; i < leftHashTable.getNumBuckets(); i++) {
         NES_DEBUG("Bucket=" << i << " pages=" << leftHashTable.getNumPages(i) << " items=" << leftHashTable.getNumItems(i));
     }
-
-    auto& rightHashTable = hashWindow->getSharedJoinHashTable(false /* isLeftSide */);
+    auto& rightHashTable = hashWindow->getMergingHashTable(false /* isLeftSide */);
     NES_DEBUG("right HT stats")
     for (size_t i = 0; i < rightHashTable.getNumBuckets(); i++) {
         NES_DEBUG("Bucket=" << i << " pages=" << rightHashTable.getNumPages(i) << " items=" << rightHashTable.getNumItems(i));

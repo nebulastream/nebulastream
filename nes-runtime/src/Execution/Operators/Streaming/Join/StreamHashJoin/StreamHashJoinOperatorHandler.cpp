@@ -63,16 +63,16 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
         auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
         NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
-        auto& sharedJoinHashTableLeft = hashWindow->getSharedJoinHashTable(true);
-        auto& sharedJoinHashTableRight = hashWindow->getSharedJoinHashTable(false);
+        auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(true);
+        auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(false);
 
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
             //push actual bucket from local to global hash table for left side
-            auto localHashTableLeft = hashWindow->getLocalHashTable(workerCtx->getId(), true);
+            auto localHashTableLeft = hashWindow->getHashTable(workerCtx->getId(), true);
             sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
             //push actual bucket from local to global hash table for right side
-            auto localHashTableRight = hashWindow->getLocalHashTable(workerCtx->getId(), false);
+            auto localHashTableRight = hashWindow->getHashTable(workerCtx->getId(), false);
             sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
 
             //create task for current window and current partition

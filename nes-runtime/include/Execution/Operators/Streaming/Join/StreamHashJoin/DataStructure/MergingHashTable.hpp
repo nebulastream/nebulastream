@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class represents a hash map that is thread safe. It consists of multiple buckets each
  * consisting of a linked list of FixedPages
  */
-class SharedJoinHashTable {
+class MergingHashTable {
   private:
     /**
      * @brief class that stores all pages for a single bucket
@@ -44,7 +44,7 @@ class SharedJoinHashTable {
      * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
      * @param numBuckets
      */
-    explicit SharedJoinHashTable(size_t numBuckets);
+    explicit MergingHashTable(size_t numBuckets);
 
     /**
      * @brief inserts the pages into the bucket at the bucketPos

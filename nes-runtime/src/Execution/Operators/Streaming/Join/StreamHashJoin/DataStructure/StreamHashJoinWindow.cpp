@@ -15,38 +15,38 @@
 
 namespace NES::Runtime::Execution {
 
-Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
+Operators::HashTable* StreamHashJoinWindow::getHashTable(size_t index, bool leftSide) {
     if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCKING || joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         index = 0;
     }
 
     if (leftSide) {
-        index = index % localHashTableLeftSide.size();
-        return localHashTableLeftSide[index].get();
+        index = index % hashTableLeftSide.size();
+        return hashTableLeftSide[index].get();
     } else {
-        index = index % localHashTableRightSide.size();
-        return localHashTableRightSide[index].get();
+        index = index % hashTableRightSide.size();
+        return hashTableRightSide[index].get();
     }
 }
 
 size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) {
     //TODO: implement this function
     size_t cnt = 0;
-    for (auto& leftBucket : localHashTableLeftSide) {
+    for (auto& leftBucket : hashTableLeftSide) {
         cnt += leftBucket->getNumberOfTuples();
     }
-    for (auto& rightBucket : localHashTableRightSide) {
+    for (auto& rightBucket : hashTableRightSide) {
         cnt += rightBucket->getNumberOfTuples();
     }
 
     return cnt;
 }
 
-Operators::SharedJoinHashTable& StreamHashJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
+Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLeftSide) {
     if (isLeftSide) {
-        return leftSideHashTable;
+        return mergingHashTableLeftSide;
     } else {
-        return rightSideHashTable;
+        return mergingHashTableRightSide;
     }
 }
 
@@ -61,45 +61,55 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t numPartitions,
                                            JoinStrategy joinStrategy)
     : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
-      leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
+      mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+      mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 
     if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
-
         //TODO they all take the same allocator
         for (auto i = 0UL; i < numberOfWorker; ++i) {
-            localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
-                                                                                            numPartitions,
-                                                                                            fixedPagesAllocator,
-                                                                                            pageSize,
-                                                                                            preAllocPageSizeCnt,
-                                                                                            joinStrategy));
+            hashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+                                                                                       numPartitions,
+                                                                                       fixedPagesAllocator,
+                                                                                       pageSize,
+                                                                                       preAllocPageSizeCnt));
         }
 
         for (auto i = 0UL; i < numberOfWorker; ++i) {
-            localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
-                                                                                             numPartitions,
-                                                                                             fixedPagesAllocator,
-                                                                                             pageSize,
-                                                                                             preAllocPageSizeCnt,
-                                                                                             joinStrategy));
-        }
-    } else {
-        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+            hashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
                                                                                         numPartitions,
                                                                                         fixedPagesAllocator,
                                                                                         pageSize,
-                                                                                        preAllocPageSizeCnt,
-                                                                                        joinStrategy));
+                                                                                        preAllocPageSizeCnt));
+        }
+    } else if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordLeft,
+                                                                                           numPartitions,
+                                                                                           fixedPagesAllocator,
+                                                                                           pageSize,
+                                                                                           preAllocPageSizeCnt));
 
-        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
-                                                                                         numPartitions,
-                                                                                         fixedPagesAllocator,
-                                                                                         pageSize,
-                                                                                         preAllocPageSizeCnt,
-                                                                                         joinStrategy));
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordRight,
+                                                                                            numPartitions,
+                                                                                            fixedPagesAllocator,
+                                                                                            pageSize,
+                                                                                            preAllocPageSizeCnt));
+    } else if (joinStrategy == JoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordLeft,
+                                                                                            numPartitions,
+                                                                                            fixedPagesAllocator,
+                                                                                            pageSize,
+                                                                                            preAllocPageSizeCnt));
+
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordRight,
+                                                                                             numPartitions,
+                                                                                             fixedPagesAllocator,
+                                                                                             pageSize,
+                                                                                             preAllocPageSizeCnt));
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
+
     NES_DEBUG2("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
                "sizeOfRecordLeft={} sizeOfRecordRight={}",
                numberOfWorker,

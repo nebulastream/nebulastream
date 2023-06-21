@@ -13,24 +13,24 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
 #include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
 
-LocalHashTable::LocalHashTable(size_t sizeOfRecord,
-                               size_t numPartitions,
-                               FixedPagesAllocator& fixedPagesAllocator,
-                               size_t pageSize,
-                               size_t preAllocPageSizeCnt)
+GlobalHashTableLocking::GlobalHashTableLocking(size_t sizeOfRecord,
+                                               size_t numPartitions,
+                                               FixedPagesAllocator& fixedPagesAllocator,
+                                               size_t pageSize,
+                                               size_t preAllocPageSizeCnt)
     : HashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
 
-uint8_t* LocalHashTable::insert(uint64_t key) const {
+uint8_t* GlobalHashTableLocking::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE2("into key={} bucket={}", key, getBucketPos(hashedKey));
-    return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
+    return buckets[getBucketPos(hashedKey)]->appendConcurrentUsingLocking(hashedKey);
 }
 
 }// namespace NES::Runtime::Execution::Operators

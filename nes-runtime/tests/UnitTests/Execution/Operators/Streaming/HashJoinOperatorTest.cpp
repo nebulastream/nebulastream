@@ -140,7 +140,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         auto window = hashJoinOpHandler->getWindowByTimestampOrCreateIt(timeStamp);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(window.get());
 
-        auto hashTable = hashWindow->getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
+        auto hashTable = hashWindow->getHashTable(workerContext->getId(), buildHelper.isLeftSide);
 
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 

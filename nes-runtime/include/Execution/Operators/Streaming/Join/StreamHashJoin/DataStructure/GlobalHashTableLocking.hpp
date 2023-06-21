@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
 
 #include <atomic>
 
@@ -28,31 +28,30 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
- * consisting of a FixedPagesLinkedList.
+ * @brief This class represents a hash map and ensures thread safety by a mutex
  */
-class LocalHashTable : public HashTable {
+class GlobalHashTableLocking : public HashTable {
 
   public:
     /**
-     * @brief Constructor for a LocalHashTable
+     * @brief Constructor for a GlobalHashTableLocking that
      * @param sizeOfRecord
      * @param numPartitions
      * @param fixedPagesAllocator
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit LocalHashTable(size_t sizeOfRecord,
+    explicit GlobalHashTableLocking(size_t sizeOfRecord,
                             size_t numPartitions,
                             FixedPagesAllocator& fixedPagesAllocator,
                             size_t pageSize,
                             size_t preAllocPageSizeCnt);
 
-    LocalHashTable(const LocalHashTable&) = delete;
+    GlobalHashTableLocking(const GlobalHashTableLocking&) = delete;
 
-    LocalHashTable& operator=(const LocalHashTable&) = delete;
+    GlobalHashTableLocking& operator=(const GlobalHashTableLocking&) = delete;
 
-    virtual ~LocalHashTable() = default;
+    virtual ~GlobalHashTableLocking() = default;
 
     /**
      * @brief Inserts the key into this hash table by returning a pointer to a free memory space
@@ -62,4 +61,4 @@ class LocalHashTable : public HashTable {
     virtual uint8_t* insert(uint64_t key) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
