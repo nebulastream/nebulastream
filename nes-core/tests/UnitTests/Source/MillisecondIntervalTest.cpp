@@ -99,7 +99,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
 
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 

@@ -38,7 +38,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
 
     void startCoordinator() {
         NES_INFO2("QueryControllerTest: Start coordinator");
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
@@ -186,7 +186,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -227,7 +227,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 //Check if getting an execution-plan returns as expected
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -304,7 +304,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 //Check if getting an execution-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -363,7 +363,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 //Check if getting a query-plan returns as expected
 TEST_F(QueryControllerTest, testGetQueryPlan) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -427,7 +427,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 //Check if getting a query-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 

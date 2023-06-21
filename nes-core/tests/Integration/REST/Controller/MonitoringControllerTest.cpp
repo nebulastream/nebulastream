@@ -103,7 +103,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
 
 TEST_F(MonitoringControllerTest, testStartMonitoring) {
     NES_INFO2("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -141,7 +141,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
 
 TEST_F(MonitoringControllerTest, testStopMonitoring) {
     NES_INFO2("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -164,7 +164,7 @@ TEST_F(MonitoringControllerTest, testStopMonitoring) {
 
 TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotEnabled) {
     NES_INFO2("Tests for Oatpp Monitoring Controller start monitoring: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -188,7 +188,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
 
 TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEnabled) {
     NES_INFO2("Tests for Oatpp Monitoring Controller: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -212,7 +212,7 @@ TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEn
 
 TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     NES_INFO2("Tests for Oatpp Monitoring Controller - testRequestAllMetrics: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -250,7 +250,7 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     NES_INFO2("Tests for Oatpp Monitoring Controller - testGetMonitoringControllerDataFromOneNode: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -287,7 +287,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     NES_INFO2("Tests for Oatpp Monitoring Controller - testGetMonitoringControllerStorage: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -327,7 +327,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     NES_INFO2("Tests for Oatpp Monitoring Controller - testGetMonitoringControllerStreams: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 

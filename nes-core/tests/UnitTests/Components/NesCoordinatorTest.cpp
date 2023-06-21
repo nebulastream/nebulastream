@@ -27,7 +27,7 @@ class NesCoordinatorTest : public Testing::NESBaseTest {
 // Test that the worker configuration from the coordinator configuration is passed to the internal worker.
 TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfiguration) {
     // given
-    auto configuration = CoordinatorConfiguration::create();
+    auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
     configuration->worker.numWorkerThreads = 3;
@@ -46,7 +46,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
 TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     // given: Set up the coordinator IP and ports, and enable monitoring
     auto coordinatorIp = "127.0.0.1";
-    auto configuration = CoordinatorConfiguration::create();
+    auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
     configuration->coordinatorIp = coordinatorIp;

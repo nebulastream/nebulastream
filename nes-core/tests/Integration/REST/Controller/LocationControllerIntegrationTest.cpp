@@ -47,7 +47,7 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
 
     void startCoordinator() {
         NES_INFO2("LocationControllerIntegrationTest: Start coordinator");
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 

@@ -71,7 +71,7 @@ class QueryRewritePhase {
   private:
     explicit QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification);
 
-    bool elegantAccelerationEnabled;
+    bool isElegantAccelerationEnabled;
     bool applyRulesImprovingSharingIdentification;
     FilterPushDownRulePtr filterPushDownRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;

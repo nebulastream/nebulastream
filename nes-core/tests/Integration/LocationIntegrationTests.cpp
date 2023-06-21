@@ -195,7 +195,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
 };
 
 TEST_F(LocationIntegrationTests, testFieldNodes) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -304,7 +304,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
 }
 
 TEST_F(LocationIntegrationTests, testMobileNodes) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -415,7 +415,7 @@ TEST_F(LocationIntegrationTests, testInvalidLocationFromCmd) {
 }
 
 TEST_F(LocationIntegrationTests, testMovingDevice) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -499,7 +499,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 }
 
 TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -583,7 +583,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
 }
 
 TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -671,7 +671,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
 }
 
 TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator");
@@ -823,7 +823,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 #ifdef S2DEF
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     size_t coverage = 5000;
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("start coordinator")
@@ -951,7 +951,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
 // even if no parent was specified in the worker configuration, the worker should reconnect to the closest parent on startup
 TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
     size_t coverage = 5000;
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("start coordinator")
@@ -1049,7 +1049,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     NES_INFO2("rest port = {}", *restPort);
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
 
@@ -1149,7 +1149,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     NES_INFO2("rest port = {}", *restPort);
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
     NES_INFO2("start coordinator")
@@ -1240,7 +1240,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     NES_INFO2(" start coordinator");
     NES_INFO2("rest port = {}", *restPort);
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
     NES_INFO2("start coordinator")
@@ -1291,7 +1291,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     NES_INFO2("rest port = {}", *restPort);
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
     NES_INFO2("start coordinator")

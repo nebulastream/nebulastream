@@ -161,7 +161,7 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
 // This test checks that a deployed StaticDataSource can be initialized and queries with a simple query
 // Worker and coordinator on different nodes.
 TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -264,7 +264,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
 // This test checks that a deployed StaticDataSource can be initialized and wueried with a simple query.
 // Worker on ame node as coordinator. Otherwise equivalent to above.
 TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -342,7 +342,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
 }
 
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
 
@@ -421,7 +421,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
 
 // simple test for nation table (distributed)
 TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -493,7 +493,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
 
 // simple test for table with artificial data - integers only
 TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -565,7 +565,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
 // incomplete
 // this test is supposed to join two table sources relying on the streaming join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -647,7 +647,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1213,7 +1213,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
 // join two static data sources together with the batch join operator.
 // Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
     crdConf->worker.numWorkerThreads = 8;
 
@@ -1302,7 +1302,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1384,7 +1384,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartitioned) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1472,7 +1472,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperations) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1555,7 +1555,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemoteProbeSource) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConfRemote = WorkerConfiguration::create();
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -1644,7 +1644,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 
 // join two static data sources together with the batch join operator. CUSTOMER with an artificial table.
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
     // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
     crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
     crdConf->worker.numWorkerThreads = 8;
@@ -1794,7 +1794,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
                 myfile.close();
             }
 
-            CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+            CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::createDefault();
             // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
             crdConf->worker.numberOfBuffersInGlobalBufferManager = 1000000;
             crdConf->worker.numWorkerThreads = 2;

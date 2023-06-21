@@ -95,7 +95,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
 
     //Coordinator configuration
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -130,7 +130,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -168,7 +168,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -207,7 +207,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -253,7 +253,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -292,7 +292,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -351,7 +351,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -435,7 +435,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
@@ -492,7 +492,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
     //Coordinator configuration
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;

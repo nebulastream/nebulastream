@@ -73,7 +73,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
     }
 
     NesCoordinatorPtr createCoordinator() {
-        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;

@@ -128,15 +128,15 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                                 "The allowed origins to be set in the header of the responses to rest requests"};
 
     /**
-     * @brief elegant related configuration parameters
+     * @brief ELEGANT related configuration parameters
      */
-    ElegantConfigurations elegantConfiguration = {ELEGANT, "Define elegant configuration"};
+    ElegantConfigurations elegantConfiguration = {ELEGANT, "Define ELEGANT configuration"};
 
     /**
-     * Create a CoordinatorConfiguration object with default values.
+     * @brief Create a default CoordinatorConfiguration object with default values.
      * @return A CoordinatorConfiguration object with default values.
      */
-    static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
+    static std::shared_ptr<CoordinatorConfiguration> createDefault() { return std::make_shared<CoordinatorConfiguration>(); }
 
     /**
      * Create a CoordinatorConfiguration object and set values from the POSIX command line parameters stored in argv.

@@ -32,7 +32,7 @@ class ConnectivityControllerTest : public Testing::NESBaseTest {
 
 TEST_F(ConnectivityControllerTest, testCORSRequest) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     std::string corsOrigin = "https://www.nebula.stream";
@@ -64,7 +64,7 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
 
 TEST_F(ConnectivityControllerTest, testGetRequest) {
     NES_INFO2("TestsForOatppEndpoints: Start coordinator");
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 

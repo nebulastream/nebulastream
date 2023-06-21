@@ -36,7 +36,7 @@ class WorkerCoordinatorStarterTest : public Testing::NESBaseTest {
 };
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -70,7 +70,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
     cout << "start coordinator" << endl;
     for (uint64_t i = 0; i < 10; i++) {
-        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -107,7 +107,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
     }
 }
 TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -139,7 +139,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -171,7 +171,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -203,7 +203,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -241,7 +241,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

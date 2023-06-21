@@ -24,11 +24,11 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -109,6 +109,12 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
 
     auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
     EXPECT_TRUE(openCLOperators.size() == 1);
+
+    //Check if the insertion happened at the correct location
+    EXPECT_EQ(openCLOperators[0]->getParents().size(), 1);
+    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_EQ(openCLOperators[0]->getChildren().size(), 1);
+    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
 }
 
 TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator) {
@@ -140,4 +146,14 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
     auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
     EXPECT_EQ(openCLOperators.size(), 2);
 
+    //Check if the insertion happened at the correct location
+    EXPECT_EQ(openCLOperators[0]->getParents().size(), 1);
+    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_EQ(openCLOperators[0]->getChildren().size(), 1);
+    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+
+    EXPECT_EQ(openCLOperators[1]->getParents().size(), 1);
+    EXPECT_TRUE(openCLOperators[1]->getParents()[0]->instanceOf<MapLogicalOperatorNode>());
+    EXPECT_EQ(openCLOperators[1]->getChildren().size(), 1);
+    EXPECT_TRUE(openCLOperators[1]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
 }

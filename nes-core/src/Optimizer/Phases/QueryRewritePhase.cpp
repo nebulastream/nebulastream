@@ -46,7 +46,7 @@ QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::Coordinator
 }
 
 QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification)
-    : elegantAccelerationEnabled(elegantAccelerationEnabled),
+    : isElegantAccelerationEnabled(elegantAccelerationEnabled),
       applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
     filterPushDownRule = FilterPushDownRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
@@ -62,7 +62,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
 
     //apply elegant specific rule for accelerating  Java Map UDFs
-    if(elegantAccelerationEnabled){
+    if(isElegantAccelerationEnabled){
         mapUDFsToOpenCLOperatorsRule->apply(duplicateQueryPlan);
     }
 
