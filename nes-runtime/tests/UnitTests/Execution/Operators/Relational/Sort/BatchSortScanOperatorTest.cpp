@@ -91,13 +91,13 @@ void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler,
         for (size_t i = 0; i < sortFieldIndexes.size(); ++i) {
             Value<> encodedVal(encodeData<T>(recordValues[sortFieldIndexes[i]], descending));
             entry.store(encodedVal);
-            entry = entry + sizeof(T);
+            entry = entry + (uint64_t) sizeof(T);
         }
 
         for (size_t i = 0; i < numberOfFields; ++i) {
             Value<> val(recordValues[i]);
             entry.store(val);
-            entry = entry + sizeof(T);
+            entry = entry + (uint64_t) sizeof(T);
         }
     }
 }
