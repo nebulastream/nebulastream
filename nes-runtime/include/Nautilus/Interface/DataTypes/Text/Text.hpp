@@ -15,8 +15,6 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
 
 #include <Nautilus/Interface/DataTypes/Any.hpp>
-#include <Nautilus/Interface/DataTypes/List/List.hpp>
-#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>

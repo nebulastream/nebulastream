@@ -24,6 +24,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+extern "C" __attribute__((always_inline)) 
 void* getKeyedStateProxy(void* op, uint64_t workerId) {
     auto handler = static_cast<BatchKeyedAggregationHandler*>(op);
     return handler->getThreadLocalStore(workerId);

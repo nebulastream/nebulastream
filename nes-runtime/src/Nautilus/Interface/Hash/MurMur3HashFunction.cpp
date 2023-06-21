@@ -11,7 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 
@@ -94,6 +96,7 @@ uint64_t hashBytes(void* data, uint64_t length) {
     h ^= h >> r;
     return h;
 }
+
 
 template<typename T>
 uint64_t hashValue(uint64_t seed, T value) {

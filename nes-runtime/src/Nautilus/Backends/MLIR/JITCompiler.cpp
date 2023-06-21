@@ -18,7 +18,8 @@
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
 namespace NES::Nautilus::Backends::MLIR {
-
+    
+//Todo remove?
 void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper) {
     // Convert the module to LLVM IR in a new LLVM IR context.
     llvm::LLVMContext llvmContext;
@@ -58,9 +59,10 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
 
-    if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile()) {
-        dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
-    }
+    (void) dumpHelper;
+    // if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile()) {
+    //     dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
+    // }
 
     // Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
     mlir::ExecutionEngineOptions options;
@@ -71,7 +73,8 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
 
     // TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
     // right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
-    const std::unordered_set<std::string> ProxyInliningFunctions{"NES__Runtime__TupleBuffer__getNumberOfTuples",
+    const std::unordered_set<std::string> ProxyInliningFunctions{
+                                                                 "NES__Runtime__TupleBuffer__getNumberOfTuples",
                                                                  "NES__Runtime__TupleBuffer__setNumberOfTuples",
                                                                  "NES__Runtime__TupleBuffer__getBuffer",
                                                                  "NES__Runtime__TupleBuffer__getBufferSize",
@@ -80,7 +83,19 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
                                                                  "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
                                                                  "NES__Runtime__TupleBuffer__setSequenceNumber",
                                                                  "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                                                 "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
+                                                                 "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
+                                                                "NES__Runtime__TupleBuffer__getOriginId",
+                                                                "NES__Runtime__TupleBuffer__setOriginId",
+                                                                "getProbeHashMapProxy",
+                                                                "findChainProxy",
+                                                                "insertProxy",
+                                                                "hashValueI32",
+                                                                "getWorkerIdProxy",
+                                                                "getPagedVectorProxy",
+                                                                "allocateNewPageProxy",
+                                                                "getKeyedStateProxy",
+                                                                // "getGlobalOperatorHandlerProxy"
+                                                                };
     // We register all external functions (symbols) that we do not inline.
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();

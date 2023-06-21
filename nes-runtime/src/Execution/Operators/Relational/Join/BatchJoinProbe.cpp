@@ -26,7 +26,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getProbeHashMapProxy(void* op) {
+extern "C" __attribute__((always_inline)) void* getProbeHashMapProxy(void* op) {
     auto handler = static_cast<BatchJoinHandler*>(op);
     return handler->getGlobalHashMap();
 }

@@ -54,6 +54,7 @@ void GroupedAggregation::execute(RuntimeExecutionContext& executionCtx, Record& 
         keyValues.push_back(keyValue);
     }
 
+    // Todo adapt for DISTINCT: use lambda function
     auto entry = hashMap.findOrCreate(keyValues);
     auto valuePtr = entry.getValuePtr();
     for (auto& aggregationFunction : aggregationFunctions) {

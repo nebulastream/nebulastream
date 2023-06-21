@@ -52,6 +52,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -59,8 +60,8 @@ namespace NES::Runtime::Execution {
 
 class BenchmarkRunner {
   public:
-    BenchmarkRunner(TPCH_Scale_Factor targetScaleFactor, std::string compiler)
-        : targetScaleFactor(targetScaleFactor), compiler(compiler) {
+    BenchmarkRunner(TPCH_Scale_Factor targetScaleFactor, std::string compiler, uint64_t iterations, bool proxyInlining)
+        : iterations(iterations), targetScaleFactor(targetScaleFactor), compiler(compiler) {
 
         NES::Logger::setupLogging("BenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
@@ -70,6 +71,8 @@ class BenchmarkRunner {
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
         options.setOptimize(true);
         options.setDumpToFile(false);
+        options.setDumpToConsole(true);
+        options.setProxyInlining(proxyInlining);
     }
     void run() {
         double sumCompilation = 0;
@@ -108,7 +111,7 @@ class BenchmarkRunner {
 
 class Query6Runner : public BenchmarkRunner {
   public:
-    Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler, uint64_t iterations, bool proxyInlining) : BenchmarkRunner(targetScaleFactor, compiler, iterations, proxyInlining){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
@@ -137,7 +140,7 @@ class Query6Runner : public BenchmarkRunner {
 
 class Query1Runner : public BenchmarkRunner {
   public:
-    Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler, uint64_t iterations, bool proxyInlining) : BenchmarkRunner(targetScaleFactor, compiler, iterations, proxyInlining){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -160,7 +163,7 @@ class Query1Runner : public BenchmarkRunner {
 
 class Query3Runner : public BenchmarkRunner {
   public:
-    Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler, uint64_t iterations, bool proxyInlining) : BenchmarkRunner(targetScaleFactor, compiler, iterations, proxyInlining){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& customers = tables[TPCHTable::Customer];
@@ -212,9 +215,12 @@ class Query3Runner : public BenchmarkRunner {
 }// namespace NES::Runtime::Execution
 
 int main(int, char**) {
-    NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
-    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
-    for (const auto& c : compilers) {
-        NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
+    uint64_t iterations = 1;
+    bool proxyInlining = true;
+    NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
+    std::vector<std::string> compilers = {"PipelineCompiler"};
+    // std::vector<std::string> compilers = {"PipelineCompiler", "CppPipelineCompiler"};
+    for (const auto& compiler : compilers) {
+        NES::Runtime::Execution::Query1Runner(targetScaleFactor, compiler, iterations, proxyInlining).run();
     }
 }

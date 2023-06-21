@@ -25,6 +25,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+extern "C" __attribute__((always_inline)) 
 void* getPagedVectorProxy(void* op, uint64_t workerId) {
     auto handler = static_cast<BatchJoinHandler*>(op);
     return handler->getThreadLocalState(workerId);

@@ -81,6 +81,8 @@ endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # include MLIR. This is currently required
+    # Todo: use different warning flags?
+    # set(NES_WARNINGS "-Wall -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-invalid-offsetof ")
     find_package(MLIR REQUIRED CONFIG)
     if (MLIR_FOUND)
         message(STATUS MLIR_INCLUDE_DIRS=${MLIR_INCLUDE_DIRS})
@@ -112,7 +114,39 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp)
+        add_library(nes-runtime-proxy 
+            # getSequenceNumber, getNumberOfTuples, getBuffer, getWatermark, getOriginID declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp 
+            # getSequenceNumber, getNumberOfTuples, getBuffer, getWatermark, getOriginID implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp 
+            # getProbeHashMapProxy declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Join/BatchJoinProbe.cpp
+            # getPagedVectorProxy declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Join/BatchJoinBuild.cpp
+            # getProbeHashMapProxy & getPagedVectorProxy implementation 
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Join/BatchJoinHandler.cpp #Leads to function names that cannot be demangled
+            # insertProxy & findChainProxy declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.cpp
+            # insertProxy & findChainProxy implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.cpp
+            # hashValueI32 declaration and implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/Hash/MurMur3HashFunction.cpp
+            # getWorkerIdProxy & getGlobalOperatorHandlerProxy declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/ExecutionContext.cpp
+            # getWorkerIdProxy implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/WorkerContext.cpp
+            # allocateNewPageProxy declaration
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/PagedVector/PagedVectorRef.cpp
+            # allocateNewPageProxy implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/PagedVector/PagedVector.cpp
+            # getKeyedStateProxy implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.cpp
+            # getGlobalOperatorHandlerProxy implementation
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/Execution/PipelineExecutionContext.cpp
+            
+        )
+        # add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/RecordBuffer.cpp)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
         target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
 

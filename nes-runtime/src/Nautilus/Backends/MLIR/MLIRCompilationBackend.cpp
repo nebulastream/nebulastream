@@ -39,14 +39,15 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
 
+    // Todo: remove?
     // 2.a dump MLIR to console or a file
-    if (options.isDumpToConsole() || options.isDumpToFile()) {
-        mlir::OpPrintingFlags flags;
-        std::string result;
-        auto output = llvm::raw_string_ostream(result);
-        mlirModule->print(output, flags);
-        dumpHelper.dump("3. MLIR.mlir", result);
-    }
+    // if (options.isDumpToConsole() || options.isDumpToFile()) {
+    //     mlir::OpPrintingFlags flags;
+    //     std::string result;
+    //     auto output = llvm::raw_string_ostream(result);
+    //     mlirModule->print(output, flags);
+    //     dumpHelper.dump("3. MLIR.mlir", result);
+    // }
 
     // 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {})) {

@@ -68,7 +68,7 @@ void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber) {
 }
 
 Value<UInt64> RecordBuffer::getWatermarkTs() {
-    return FunctionCall<>("NES__Runtime__TupleBuffer__Watermark",
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getWatermark", //Todo renamed
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,
                           tupleBufferRef);
 }

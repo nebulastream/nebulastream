@@ -28,8 +28,12 @@
 #include <optional>
 #include <vector>
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-this-capture"
+#pragma clang diagnostic ignored "-Wdeprecated"
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
+#pragma clang diagnostic pop
 #endif
 
 namespace NES::Runtime {
