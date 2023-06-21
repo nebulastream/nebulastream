@@ -13,6 +13,7 @@
 */
 
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
 #include <Topology/Topology.hpp>
@@ -116,6 +117,12 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
             auto operatorToPin = item->getChildWithOperatorId(operatorId)->as<OperatorNode>();
             if (operatorToPin) {
                 operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
+
+                if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
+                    std::string deviceId = placement["deviceId"];
+                    operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
+                }
+
                 pinned = true;
                 break;
             }
