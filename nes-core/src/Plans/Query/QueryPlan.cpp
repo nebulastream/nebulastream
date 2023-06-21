@@ -283,8 +283,8 @@ LineageType QueryPlan::getLineageType() const { return lineageType; }
 
 void QueryPlan::setLineageType(LineageType lineageType) { this->lineageType = lineageType; }
 
-PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
+Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
-void QueryPlan::setPlacementStrategy(PlacementStrategy placementStrategy) { this->placementStrategy = placementStrategy; }
+void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy) { this->placementStrategy = placementStrategy; }
 
 }// namespace NES

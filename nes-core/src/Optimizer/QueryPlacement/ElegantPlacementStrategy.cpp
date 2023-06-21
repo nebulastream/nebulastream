@@ -15,6 +15,7 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpr/api.h>
@@ -78,6 +79,8 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
 
         //Make a rest call to elegant planner
         //TODO: Write code to properly call the service URL
+        // Convert topology to a json. Look at TopologyManagerService:getTopologyAsJson(); Add network related information as well
+        // Convert query plan into json with required c++ and java UDF code. Look at PlanJsonGenerator::getQueryPlanAsJson
         cpr::Response response = cpr::Get(cpr::Url{serviceURL}, cpr::Timeout(3000));
 
         //2. Parse the response of the external placement service
@@ -91,7 +94,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
 
         // 5. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (std::exception ex) {
+    } catch (const std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
