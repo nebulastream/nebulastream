@@ -41,7 +41,7 @@ class TimeUnit : public WindowMeasure {
     bool equals(const TimeUnit& other) const;
 
   private:
-    const uint64_t multiplier;
+    uint64_t multiplier;
 };
 
 }// namespace NES::Windowing
