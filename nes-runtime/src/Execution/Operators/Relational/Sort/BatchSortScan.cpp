@@ -47,9 +47,9 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <queue>
 
 namespace NES::Runtime::Execution::Operators {
-
 // We perform a radix sort on the byte level
 // 256 is the number of possible byte values ranging from 0 to 255
 constexpr uint64_t VALUES_PER_RADIX = 256;
@@ -270,6 +270,78 @@ void RadixSortMSD(void* orig_ptr,
     }
 }
 
+/**
+ * @brief Simple implementation of a K-way merge using std::priority_queue
+ * Future implementations should consider a cascade merge sort
+ * @brief origin pointer to original data
+ * @brief tmp pointer to temporary data
+ * @brief k number of pages to merge
+ * @brief compWidth size of the column
+ * @brief rowWidth size of a row
+ */
+Nautilus::Interface::PagedVector* kWayMerge(Nautilus::Interface::PagedVector* origin,
+                                            Nautilus::Interface::PagedVector* tmp,
+                                            uint32_t k,
+                                            uint32_t compWidth,
+                                            uint32_t rowWidth) {
+    // Structure to represent an element with its value and index
+    struct Element {
+        int8_t* value;
+        uint32_t arrayIndex;
+        uint32_t elementIndex;
+
+        Element(int8_t* val, uint32_t arrIndex, uint32_t elemIndex) : value(val), arrayIndex(arrIndex), elementIndex(elemIndex) {}
+    };
+
+    // Custom comparator for the priority queue
+    struct ElementComparator {
+        uint32_t compWidth;
+        explicit ElementComparator(uint32_t width) { compWidth = width; }
+        bool operator()(Element a, Element b) const { return std::memcmp(a.value, b.value, compWidth); }
+    };
+
+    ElementComparator comp(compWidth);
+    std::priority_queue<Element, std::vector<Element>, ElementComparator> minHeap(comp);
+
+    // Initialize the heap with the first element from each page
+    auto numPages = origin->getNumberOfPages();
+    for (uint32_t i = 0; i < k; ++i) {
+        // We assume here that the pages cannot be empty
+        minHeap.emplace(origin->getPages()[i], i, 0);
+    }
+
+    auto resultCnt = 0;
+    // Merge the arrays until the min heap is empty
+    while (!minHeap.empty()) {
+        // Get the minimum element from the min heap
+        Element minElement = minHeap.top();
+        minHeap.pop();
+
+        uint32_t arrayIndex = minElement.arrayIndex;
+        uint32_t elementIndex = minElement.elementIndex;
+
+        // Add the minimum element to the merged array
+        if (resultCnt++ % tmp->capacityPerPage() == 0) {
+            tmp->appendPage();
+        }
+        std::memcpy(tmp->getEntry(resultCnt), minElement.value, rowWidth);
+
+        // Move to the next element in the array
+
+        // Last page
+        if (arrayIndex + 1 == origin->getNumberOfPages()) {
+            if (elementIndex + 1 < origin->getNumberOfEntriesOnCurrentPage()) {
+                minHeap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+            }
+        } else {
+            if (elementIndex + 1 < origin->capacityPerPage()) {
+                minHeap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+            }
+        }
+    }
+    return tmp;
+}
+
 void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // TODO issue #3773 add support for data larger than page size
@@ -277,7 +349,7 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
     auto rowWidth = handler->getStateEntrySize();
-    auto offset = 0;// init to 0
+    auto offset = 0;  // init to 0
     auto swap = false;// init false
 
     if (count <= INSERTION_SORT_THRESHOLD) {
@@ -289,6 +361,10 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
         RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
         delete[] locations;
     }
+
+    // Merge
+    // TODO ? if (swap) {
+    kWayMerge(handler->getState(), handler->getTempState(), count, compWidth, rowWidth);
 }
 
 void* getStateProxy(void* op) {
