@@ -36,8 +36,7 @@ class KeyedThresholdWindowState {
         isWindowOpen = other.isWindowOpen;
     }
 
-
-    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggregationValues {};
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggregationValues{};
     uint64_t recordCount = 0;// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;

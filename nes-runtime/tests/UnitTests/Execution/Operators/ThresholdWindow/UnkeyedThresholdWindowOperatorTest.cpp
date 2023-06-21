@@ -72,10 +72,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -124,10 +124,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -178,10 +178,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          3,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 3,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -225,10 +225,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     aggVector.push_back(minAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -278,10 +278,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     aggVector.push_back(maxAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -331,10 +331,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     aggVector.push_back(avgAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -388,10 +388,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     aggVector.push_back(countAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -464,14 +464,14 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     aggVector.push_back(countAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldNameSum,
-                                                                                     aggregationResultFieldNameMax,
-                                                                                     aggregationResultFieldNameMin,
-                                                                                     aggregationResultFieldNameMean,
-                                                                                     aggregationResultFieldNameCount},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldNameSum,
+                                                                                            aggregationResultFieldNameMax,
+                                                                                            aggregationResultFieldNameMin,
+                                                                                            aggregationResultFieldNameMean,
+                                                                                            aggregationResultFieldNameCount},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -539,10 +539,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
         std::make_shared<UnkeyedThresholdWindow>(greaterThanExpression,
-                                          std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                          0,
-                                          aggVector,
-                                          0);
+                                                 std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                 0,
+                                                 aggVector,
+                                                 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);

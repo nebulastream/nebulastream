@@ -266,10 +266,12 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto sumAggregationResultFieldName = "sum";
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, sumAggregationResultFieldName);
+    auto sumAgg =
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, sumAggregationResultFieldName);
 
     auto maxAggregationResultFieldName = "max";
-    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, maxAggregationResultFieldName);
+    auto maxAgg =
+        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, maxAggregationResultFieldName);
 
     aggVector.push_back(sumAgg);
     aggVector.push_back(maxAgg);

@@ -97,7 +97,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
     locationJson = nodeLocationInfoJson.at("location");
     EXPECT_EQ(locationJson["latitude"], 13.4);
-    EXPECT_EQ(locationJson["longitude"],-23);
+    EXPECT_EQ(locationJson["longitude"], -23);
 
     //test getting location of a mobile node
     nodeLocationInfoJson = locationService->requestNodeLocationDataAsJson(node3Id);
@@ -114,7 +114,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto rpcPortWrk4 = getAvailablePort();
 
     nlohmann::json locationJson;
-    
+
     //create topology and services
     TopologyPtr topology = Topology::create();
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
@@ -122,8 +122,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
     //get mobile node info
-    auto response = locationService->requestLocationAndParentDataFromAllMobileNodes()
-        .get<allMobileResponse>();
+    auto response = locationService->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
 
     //check that the json does not contain any nodes or edges
     ASSERT_EQ(response["nodes"].size(), 0);
@@ -149,8 +148,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto node4Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties);
 
     //get mobile node info
-    response = locationService->requestLocationAndParentDataFromAllMobileNodes()
-        .get<allMobileResponse>();
+    response = locationService->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
 
     //while no location is known, the mobile nodes should not appear in the list
     ASSERT_EQ(response["nodes"].size(), 0);

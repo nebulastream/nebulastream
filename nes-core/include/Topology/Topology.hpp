@@ -15,13 +15,13 @@
 #ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <any>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <vector>
-#include <Common/Identifiers.hpp>
 
 namespace NES {
 

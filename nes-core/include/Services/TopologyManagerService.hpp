@@ -60,11 +60,11 @@ class TopologyManagerService {
      * @return unique identifier of the worker
      */
     TopologyNodeId registerWorker(TopologyNodeId workerId,
-                            const std::string& address,
-                            int64_t grpcPort,
-                            int64_t dataPort,
-                            uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties);
+                                  const std::string& address,
+                                  int64_t grpcPort,
+                                  int64_t dataPort,
+                                  uint16_t numberOfSlots,
+                                  std::map<std::string, std::any> workerProperties);
 
     /**
      * Add GeoLocation of a worker node

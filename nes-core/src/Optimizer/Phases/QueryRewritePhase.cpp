@@ -20,9 +20,9 @@
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
-#include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
@@ -62,7 +62,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
 
     //apply elegant specific rule for accelerating  Java Map UDFs
-    if(isElegantAccelerationEnabled){
+    if (isElegantAccelerationEnabled) {
         mapUDFsToOpenCLOperatorsRule->apply(duplicateQueryPlan);
     }
 

@@ -41,11 +41,11 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
 }
 
 TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
-                                                const std::string& address,
-                                                const int64_t grpcPort,
-                                                const int64_t dataPort,
-                                                const uint16_t numberOfSlots,
-                                                std::map<std::string, std::any> workerProperties) {
+                                                      const std::string& address,
+                                                      const int64_t grpcPort,
+                                                      const int64_t dataPort,
+                                                      const uint16_t numberOfSlots,
+                                                      std::map<std::string, std::any> workerProperties) {
     NES_TRACE2("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -58,7 +58,9 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
     if (workerId != INVALID_TOPOLOGY_NODE_ID) {
         // check if an active worker with workerId already exists
         if (topology->nodeWithWorkerIdExists(workerId)) {
-            NES_WARNING2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new worker id will be assigned.", workerId);
+            NES_WARNING2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
+                         "worker id will be assigned.",
+                         workerId);
             id = getNextTopologyNodeId();
         }
         // check if an inactive worker with workerId already exists

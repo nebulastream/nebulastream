@@ -33,8 +33,7 @@ class KeyedThresholdWindowOperatorHandler : public OperatorHandler {
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    std::unordered_map<uint32_t, KeyedThresholdWindowState> keyedAggregationStates {};
-
+    std::unordered_map<uint32_t, KeyedThresholdWindowState> keyedAggregationStates{};
 };
 }// namespace NES::Runtime::Execution::Operators
 

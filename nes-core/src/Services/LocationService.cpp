@@ -93,10 +93,7 @@ nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes()
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
             locationMapJson[count] = nodeInfo;
             for (const auto& parent : topologyNode->getParents()) {
-                const nlohmann::json edge {
-                    { "source", nodeId },
-                    {"target", parent->as<TopologyNode>()->getId()}
-                };
+                const nlohmann::json edge{{"source", nodeId}, {"target", parent->as<TopologyNode>()->getId()}};
                 /*
                 edge["source"] = nodeId;
                 edge["target"] = parent->as<TopologyNode>()->getId();

@@ -34,10 +34,10 @@ class UnkeyedThresholdWindow : public ExecutableOperator {
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
     UnkeyedThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
-                    const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
-                    uint64_t minCount,
-                    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                    uint64_t operatorHandlerIndex);
+                           const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
+                           uint64_t minCount,
+                           const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                           uint64_t operatorHandlerIndex);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
