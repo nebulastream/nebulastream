@@ -52,14 +52,6 @@ AggregatedTopologyChangeLog TopologyChangeLog::getChangeLog() {
   return delta;
 }
 
-TopologyChangeLogPtr TopologyChangeLog::getPreviousChange() {
-  return previousChange;
-}
-
-void TopologyChangeLog::setPreviousChange(TopologyChangeLogPtr change) {
-  previousChange = change;
-}
-
 bool TopologyChangeLog::empty() {
   return changelogAdded.empty() && changelogRemoved.empty();
 }

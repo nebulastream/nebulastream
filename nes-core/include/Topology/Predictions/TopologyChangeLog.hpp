@@ -25,9 +25,9 @@ class TopologyChangeLog {
 
     AggregatedTopologyChangeLog getChangeLog();
 
-    TopologyChangeLogPtr getPreviousChange();
+    //TopologyChangeLogPtr getPreviousChange();
 
-    void setPreviousChange(TopologyChangeLogPtr change);
+    //void setPreviousChange(TopologyChangeLogPtr change);
 
     bool empty();
 
