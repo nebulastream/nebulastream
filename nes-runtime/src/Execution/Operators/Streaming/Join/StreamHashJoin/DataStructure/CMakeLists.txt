@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        HashTable.cpp
+        StreamJoinHashTable.cpp
         GlobalHashTableLockFree.cpp
         GlobalHashTableLocking.cpp
         FixedPage.cpp

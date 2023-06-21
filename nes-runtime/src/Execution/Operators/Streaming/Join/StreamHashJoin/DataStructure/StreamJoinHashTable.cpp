@@ -13,17 +13,17 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/HashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
 #include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
-HashTable::HashTable(size_t sizeOfRecord,
-                     size_t numPartitions,
-                     FixedPagesAllocator& fixedPagesAllocator,
-                     size_t pageSize,
-                     size_t preAllocPageSizeCnt)
+StreamJoinHashTable::StreamJoinHashTable(size_t sizeOfRecord,
+                                         size_t numPartitions,
+                                         FixedPagesAllocator& fixedPagesAllocator,
+                                         size_t pageSize,
+                                         size_t preAllocPageSizeCnt)
     : mask(numPartitions - 1), numPartitions(numPartitions) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
@@ -32,19 +32,19 @@ HashTable::HashTable(size_t sizeOfRecord,
     }
 }
 
-size_t HashTable::getBucketPos(uint64_t hash) const {
+size_t StreamJoinHashTable::getBucketPos(uint64_t hash) const {
     if (mask == 0) {
         return 0;
     }
     return hash % mask;
 }
 
-FixedPagesLinkedList* HashTable::getBucketLinkedList(size_t bucketPos) {
-    NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in HashTable!");
+FixedPagesLinkedList* StreamJoinHashTable::getBucketLinkedList(size_t bucketPos) {
+    NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in StreamJoinHashTable!");
     return buckets[bucketPos].get();
 }
 
-uint64_t HashTable::getNumberOfTuples() {
+uint64_t StreamJoinHashTable::getNumberOfTuples() {
     size_t cnt = 0;
     for (auto& bucket : buckets) {
         NES_TRACE2("BUCKET ", cnt++);
@@ -55,7 +55,7 @@ uint64_t HashTable::getNumberOfTuples() {
     return cnt;
 }
 
-std::string HashTable::getStatistics() {
+std::string StreamJoinHashTable::getStatistics() {
     size_t cnt = 0;
     std::stringstream ss;
     ss << " numPartitions=" << numPartitions;
@@ -64,5 +64,20 @@ std::string HashTable::getStatistics() {
     }
     return ss.str();
 }
+
+const std::vector<std::unique_ptr<FixedPage>>& StreamJoinHashTable::getPagesForBucket(size_t bucketPos) const {
+    return buckets[bucketPos]->getPages();
+}
+
+size_t StreamJoinHashTable::getNumItems(size_t bucketPos) const {
+    const std::vector<std::unique_ptr<FixedPage>>& pages = getPagesForBucket(bucketPos);
+    uint64_t cnt = 0;
+    for (auto& elem : pages) {
+        cnt += elem->size();
+    }
+    return cnt;
+}
+
+size_t StreamJoinHashTable::getNumPages(size_t bucketPos) const { return buckets[bucketPos]->getPages().size(); }
 
 }// namespace NES::Runtime::Execution::Operators

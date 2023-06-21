@@ -20,17 +20,17 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/HashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief This class represents a hash map and ensures thread safety by a mutex
  */
-class GlobalHashTableLocking : public HashTable {
+class GlobalHashTableLocking : public StreamJoinHashTable {
 
   public:
     /**

@@ -20,10 +20,10 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/HashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -31,7 +31,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
  * consisting of a FixedPagesLinkedList.
  */
-class LocalHashTable : public HashTable {
+class LocalHashTable : public StreamJoinHashTable {
 
   public:
     /**

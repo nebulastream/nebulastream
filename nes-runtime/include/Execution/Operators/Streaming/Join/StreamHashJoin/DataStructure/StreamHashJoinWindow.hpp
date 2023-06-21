@@ -88,7 +88,7 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::HashTable* getHashTable(size_t index, bool leftSide);
+    Operators::StreamJoinHashTable* getHashTable(size_t index, bool leftSide);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
@@ -105,8 +105,8 @@ class StreamHashJoinWindow : public StreamWindow {
 
   private:
     uint64_t numberOfWorker;
-    std::vector<std::unique_ptr<Operators::HashTable>> hashTableLeftSide;
-    std::vector<std::unique_ptr<Operators::HashTable>> hashTableRightSide;
+    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
+    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
     Operators::MergingHashTable mergingHashTableLeftSide;
     Operators::MergingHashTable mergingHashTableRightSide;
     Runtime::FixedPagesAllocator fixedPagesAllocator;

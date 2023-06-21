@@ -44,7 +44,7 @@ class ChainedHashMap {
     using hash_t = uint64_t;
     static const size_t DEFAULT_PAGE_SIZE = 8024;
     /**
-     * @brief HashTable Entry
+     * @brief StreamJoinHashTable Entry
      * Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
      * The physical layout is the following
      * | --- Entry* --- | --- hash_t --- | --- keys ---     | --- values ---    |

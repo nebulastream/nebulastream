@@ -209,6 +209,8 @@ class StreamJoinOperatorHandler : public OperatorHandler {
 
     uint64_t getNextSequenceNumber();
 
+    JoinStrategy getJoinStrategy();
+
   protected:
     size_t numberOfWorkerThreads = 1;
     std::list<StreamWindowPtr> windows;

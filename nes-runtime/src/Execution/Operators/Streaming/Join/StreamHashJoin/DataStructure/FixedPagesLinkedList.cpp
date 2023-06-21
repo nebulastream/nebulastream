@@ -105,7 +105,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
     return nullptr;
 }
 
-const folly::fbvector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
+const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
 FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
                                            size_t sizeOfRecord,

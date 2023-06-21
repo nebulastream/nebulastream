@@ -17,32 +17,37 @@
 
 namespace NES::Runtime::Execution::Operators {
 void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
+    //TODO: This function creates a new Fixpage (that only moves ptr) but still why not using the existing one?
     auto& head = bucketHeads[bucketPos];
     auto& numItems = bucketNumItems[bucketPos];
     auto& numPages = bucketNumPages[bucketPos];
 
     for (auto&& page : pagesLinkedList->getPages()) {
         auto oldHead = head.load(std::memory_order::relaxed);
-        auto node = new InternalNode{FixedPage(page.get()), oldHead};
+        auto node = new InternalNode{std::make_unique<FixedPage>(page.get()), oldHead};
         while (!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::relaxed)) {
         }
         numItems.fetch_add(page->size(), std::memory_order::relaxed);
     }
     numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);
 }
-
-std::vector<FixedPage> MergingHashTable::getPagesForBucket(size_t bucketPos) const {
-    std::vector<FixedPage> ret;
+//We should really think of unite this in the same layout as the other hash table
+const std::vector<std::unique_ptr<FixedPage>> MergingHashTable::getPagesForBucket(size_t bucketPos) const {
+    std::vector<std::unique_ptr<FixedPage>> ret;
+    //TODO: I do not think we have to copy pages here as ptrs should be enough
     ret.reserve(getNumPages(bucketPos));
     auto head = bucketHeads[bucketPos].load();
     while (head != nullptr) {
         auto* tmp = head;
+        //        Old code moves I would just reference it
+        //        ret.insert(ret.begin(), std::move(tmp->dataPage));
         ret.insert(ret.begin(), std::move(tmp->dataPage));
         head = tmp->next;
     }
 
     return ret;
 }
+
 size_t MergingHashTable::getNumBuckets() const { return bucketNumPages.size(); }
 
 size_t MergingHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }

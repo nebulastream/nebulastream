@@ -25,7 +25,7 @@ GlobalHashTableLockFree::GlobalHashTableLockFree(size_t sizeOfRecord,
                                                  FixedPagesAllocator& fixedPagesAllocator,
                                                  size_t pageSize,
                                                  size_t preAllocPageSizeCnt)
-    : HashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
+    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
 
 uint8_t* GlobalHashTableLockFree::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);

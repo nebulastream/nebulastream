@@ -89,8 +89,8 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
 size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              WorkerContext* workerCtx,
                              StreamHashJoinOperatorHandler* operatorHandler,
-                             std::vector<FixedPage>&& probeSide,
-                             std::vector<FixedPage>&& buildSide,
+                             const std::vector<std::unique_ptr<FixedPage>>&& probeSide,
+                             const std::vector<std::unique_ptr<FixedPage>>&& buildSide,
                              uint64_t windowStart,
                              uint64_t windowEnd) {
 
@@ -113,26 +113,26 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
     const auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
     for (auto& lhsPage : probeSide) {
-        auto lhsLen = lhsPage.size();
+        auto lhsLen = lhsPage->size();
         for (auto i = 0UL; i < lhsLen; ++i) {
-            auto lhsRecordPtr = lhsPage[i];
+            auto lhsRecordPtr = lhsPage.get()->operator[](i);
             auto lhsKeyPtr =
                 getField(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
             for (auto& rhsPage : buildSide) {
-                auto rhsLen = rhsPage.size();
+                auto rhsLen = rhsPage->size();
 
                 if (rhsLen == 0) {
                     continue;
                 }
 
-                if (!rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
+                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
                     continue;
                 }
 
                 // Iterating through all tuples of the page as we do not know where the exact tuple is
                 for (auto j = 0UL; j < rhsLen; ++j) {
-                    auto rhsRecordPtr = rhsPage[j];
+                    auto rhsRecordPtr = rhsPage.get()->operator[](j);
                     auto rhsRecordKeyPtr =
                         getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
                     NES_TRACE("right key==" << (uint64_t) *rhsRecordKeyPtr << " left key=" << (uint64_t) *lhsKeyPtr
@@ -186,43 +186,64 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
     auto joinPartTimestamp = static_cast<JoinPartitionIdTWindowIdentifier*>(JoinPartitionIdTWindowIdentifierPtr);
-
+    auto joinStrategy = opHandler->getJoinStrategy();
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto windowIdentifier = joinPartTimestamp->windowIdentifier;
 
     NES_DEBUG("Joining for partition " << partitionId << " and windowIdentifier " << windowIdentifier);
     auto streamWindow = opHandler->getWindowByWindowIdentifier(windowIdentifier).value();
     auto hashWindow = static_cast<StreamHashJoinWindow*>(streamWindow.get());
-
-    //DEBUG CODE
-    auto& leftHashTable = hashWindow->getMergingHashTable(true /* isLeftSide */);
-    NES_DEBUG("left HT stats")
-    for (size_t i = 0; i < leftHashTable.getNumBuckets(); i++) {
-        NES_DEBUG("Bucket=" << i << " pages=" << leftHashTable.getNumPages(i) << " items=" << leftHashTable.getNumItems(i));
-    }
-    auto& rightHashTable = hashWindow->getMergingHashTable(false /* isLeftSide */);
-    NES_DEBUG("right HT stats")
-    for (size_t i = 0; i < rightHashTable.getNumBuckets(); i++) {
-        NES_DEBUG("Bucket=" << i << " pages=" << rightHashTable.getNumPages(i) << " items=" << rightHashTable.getNumItems(i));
-    }
-
-    auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
-    auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
-    auto leftBucketSize = leftHashTable.getNumItems(partitionId);
-    auto rightBucketSize = rightHashTable.getNumItems(partitionId);
     const auto windowStart = hashWindow->getWindowStart();
     const auto windowEnd = hashWindow->getWindowEnd();
 
+    size_t leftBucketSize = 0;
+    size_t rightBucketSize = 0;
     size_t joinedTuples = 0;
-    if (leftBucketSize && rightBucketSize) {
-        //TODO: here we can potentially add an optimization to check if (leftBucketSize > rightBucketSize)  and switch orders but this adds a lot of complexitiy
-        joinedTuples = executeJoinForBuckets(pipelineCtx,
-                                             workerCtx,
-                                             opHandler,
-                                             std::move(leftBucket),
-                                             std::move(rightBucket),
-                                             windowStart,
-                                             windowEnd);
+
+    if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
+        auto& leftHashTable = hashWindow->getMergingHashTable(true /* isLeftSide */);
+        auto& rightHashTable = hashWindow->getMergingHashTable(false /* isLeftSide */);
+
+        NES_TRACE("left HT stats")
+        for (size_t i = 0; i < leftHashTable.getNumBuckets(); i++) {
+            NES_TRACE("Bucket=" << i << " pages=" << leftHashTable.getNumPages(i) << " items=" << leftHashTable.getNumItems(i));
+        }
+        NES_TRACE("right HT stats")
+        for (size_t i = 0; i < rightHashTable.getNumBuckets(); i++) {
+            NES_TRACE("Bucket=" << i << " pages=" << rightHashTable.getNumPages(i) << " items=" << rightHashTable.getNumItems(i));
+        }
+        auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
+        auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
+
+        leftBucketSize = leftHashTable.getNumItems(partitionId);
+        rightBucketSize = rightHashTable.getNumItems(partitionId);
+
+        if (leftBucketSize && rightBucketSize) {
+            //TODO: here we can potentially add an optimization to check if (leftBucketSize > rightBucketSize)  and switch orders but this adds a lot of complexitiy
+            joinedTuples = executeJoinForBuckets(pipelineCtx,
+                                                 workerCtx,
+                                                 opHandler,
+                                                 std::move(leftBucket),
+                                                 std::move(rightBucket),
+                                                 windowStart,
+                                                 windowEnd);
+        }
+    } else {
+        //global joins
+        auto leftHashTable = hashWindow->getHashTable(0, true /* isLeftSide */);
+        auto rightHashTable = hashWindow->getHashTable(0, false /* isLeftSide */);
+
+        const std::vector<std::unique_ptr<FixedPage>>& leftBucket = leftHashTable->getPagesForBucket(partitionId);
+        const std::vector<std::unique_ptr<FixedPage>>& rightBucket = rightHashTable->getPagesForBucket(partitionId);
+
+        auto leftBucketSize = leftHashTable->getNumItems(partitionId);
+        auto rightBucketSize = rightHashTable->getNumItems(partitionId);
+
+        if (leftBucketSize && rightBucketSize) {
+            //TODO: here we can potentially add an optimization to check if (leftBucketSize > rightBucketSize)  and switch orders but this adds a lot of complexitiy
+            joinedTuples =
+                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket), windowStart, windowEnd);
+        }
     }
 
     if (joinedTuples > 0) {

@@ -30,28 +30,28 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
  * consisting of a FixedPagesLinkedList.
  */
-class HashTable {
+class StreamJoinHashTable {
 
   public:
     /**
-     * @brief Constructor for a HashTable that
+     * @brief Constructor for a StreamJoinHashTable that
      * @param sizeOfRecord
      * @param numPartitions
      * @param fixedPagesAllocator
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit HashTable(size_t sizeOfRecord,
+    explicit StreamJoinHashTable(size_t sizeOfRecord,
                        size_t numPartitions,
                        FixedPagesAllocator& fixedPagesAllocator,
                        size_t pageSize,
                        size_t preAllocPageSizeCnt);
 
-    HashTable(const HashTable&) = delete;
+    StreamJoinHashTable(const StreamJoinHashTable&) = delete;
 
-    HashTable& operator=(const HashTable&) = delete;
+    StreamJoinHashTable& operator=(const StreamJoinHashTable&) = delete;
 
-    virtual ~HashTable() = default;
+    virtual ~StreamJoinHashTable() = default;
 
     /**
      * @brief Inserts the key into this hash table by returning a pointer to a free memory space
@@ -85,6 +85,27 @@ class HashTable {
      * @return
      */
     uint64_t getNumberOfTuples();
+
+    /**
+     * @brief returns all fixed pages
+     * @param bucket
+     * @return vector of fixed pages
+     */
+    const std::vector<std::unique_ptr<FixedPage>>& getPagesForBucket(size_t bucketPos) const;
+
+    /**
+     * @brief Returns the number of pages belonging to the bucketPos
+     * @param bucketPos
+     * @return number of pages
+     */
+    size_t getNumPages(size_t bucketPos) const;
+
+    /**
+     * @brief retrieves the number of items in the bucket
+     * @param bucketPos
+     * @return no. items of the bucket
+     */
+    size_t getNumItems(size_t bucketPos) const;
 
   protected:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;

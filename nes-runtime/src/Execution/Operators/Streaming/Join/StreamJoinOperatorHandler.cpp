@@ -188,6 +188,7 @@ uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
+JoinStrategy StreamJoinOperatorHandler::getJoinStrategy() { return joinStrategy; }
 std::vector<uint64_t>
 StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
     std::vector<uint64_t> triggerableWindowIdentifiers;

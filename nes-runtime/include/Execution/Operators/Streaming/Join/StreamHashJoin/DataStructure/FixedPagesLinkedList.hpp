@@ -62,7 +62,7 @@ class FixedPagesLinkedList {
      * @brief Returns all pages belonging to this list
      * @return Vector containing pointer to the FixedPages
      */
-    const folly::fbvector<std::unique_ptr<FixedPage>>& getPages() const;
+    const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
 
     /**
      * @brief debug method to print the statistics of the Linked list
@@ -75,7 +75,9 @@ class FixedPagesLinkedList {
 
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
-    folly::fbvector<std::unique_ptr<FixedPage>> pages;
+    //TODO: think about replacing this with folly vector
+//    folly::fbvector<std::unique_ptr<FixedPage>> pages;
+    std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
     std::mutex pageAddMutex;

@@ -35,7 +35,7 @@ class MergingHashTable {
      */
     class InternalNode {
       public:
-        FixedPage dataPage;
+        std::unique_ptr<FixedPage> dataPage;
         std::atomic<InternalNode*> next{nullptr};
     };
 
@@ -58,7 +58,7 @@ class MergingHashTable {
      * @param bucket
      * @return vector of fixed pages
      */
-    std::vector<FixedPage> getPagesForBucket(size_t bucketPos) const;
+    const std::vector<std::unique_ptr<FixedPage>> getPagesForBucket(size_t bucketPos) const;
 
     /**
      * @brief retrieves the number of items in the bucket
