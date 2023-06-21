@@ -145,8 +145,8 @@ class BasePlacementStrategy {
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
      * designated topology node
      * @param queryId id of the query containing operators to place
-     * @param pinnedUpStreamOperators the upstream operators preceeding operators to place
-     * @param pinnedDownStreamOperators the downstream operators succeeding operators to place
+     * @param pinnedUpStreamOperators the upstream operators preceeding all operators to place
+     * @param pinnedDownStreamOperators the downstream operators succeeding all operators to place
      */
     void placePinnedOperators(QueryId queryId,
                               const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
@@ -169,6 +169,8 @@ class BasePlacementStrategy {
     /**
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
+     * @param pinnedUpStreamOperators: the upstream operators of the query plan
+     * @param pinnedDownStreamOperators: the downstream operators of the query plan
      */
     void addNetworkSourceAndSinkOperators(QueryId queryId,
                                           const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
