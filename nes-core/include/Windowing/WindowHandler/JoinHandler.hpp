@@ -75,9 +75,9 @@ class JoinHandler : public AbstractJoinHandler {
             StateId leftStateId = {stateManager->getNodeId(), id, localStateVariableId};
             localStateVariableId++;
             StateId rightStateId = {stateManager->getNodeId(), id, localStateVariableId};
-            //TODO FIX THIS --> with "this" its not working atm
-            //NES_DEBUG2("JoinHandler start id={} {}", id, this);
-            NES_DEBUG2("JoinHandler start id={}", id);
+            std::stringstream thisAsString;
+            thisAsString << this;
+            NES_DEBUG2("JoinHandler start id={} {}", id, thisAsString.str());
             //Defines a callback to execute every time a new key-value pair is created
             auto leftDefaultCallback = [](const KeyType&) {
                 return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();

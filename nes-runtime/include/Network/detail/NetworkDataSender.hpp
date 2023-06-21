@@ -86,7 +86,7 @@ class NetworkDataSender : public BaseChannelType {
                                                                           childBuffer.getControlBlock()),
                                                            kZmqSendMore);
             res &= !!sentBytesOpt;
-            NES_TRACE2("Sending child #{} was{}", i, ((!!sentBytesOpt) ? " successful " : " not successful"));
+            NES_TRACE2("Sending child #{} was {}", i, ((!!sentBytesOpt) ? " successful " : " not successful"));
         }
 
         if (!res) {

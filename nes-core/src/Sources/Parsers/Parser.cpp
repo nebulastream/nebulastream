@@ -106,7 +106,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     if (inputString.size() > 1) {
                         NES_FATAL_ERROR2(
                             "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                            inputString.c_str());
+                            inputString);
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);

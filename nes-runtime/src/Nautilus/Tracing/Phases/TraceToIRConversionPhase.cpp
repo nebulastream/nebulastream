@@ -259,11 +259,6 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
     auto falseCaseBlockRef = get<BlockRef>(operation.input[1]);
 
-    //  if (isBlockInLoop(scope, currentBlock.blockId, trueCaseBlockRef.block)) {
-    //     NES_DEBUG2("1. found loop");
-    //} else if (isBlockInLoop(scope, currentBlock.blockId, falseCaseBlockRef.block)) {
-    //    NES_DEBUG2("2. found loop");
-    //} else {
     auto booleanValue = frame.getValue(createValueIdentifier(valueRef));
     auto ifOperation = std::make_shared<NES::Nautilus::IR::Operations::IfOperation>(booleanValue);
     auto trueCaseBlock = processBlock(scope + 1, trace->getBlock(trueCaseBlockRef.block));
