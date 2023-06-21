@@ -250,7 +250,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.arch }}"
+          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.arch }}"
           echo $build_dir
           mkdir -p $build_dir
           $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
