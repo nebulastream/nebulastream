@@ -1,0 +1,74 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_EXTERNALICCSPLACEMENTSTRATEGY_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_EXTERNALICCSPLACEMENTSTRATEGY_HPP_
+
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Util/PlacementStrategy.hpp>
+#include <cpr/response.h>
+
+namespace NES::Optimizer {
+
+class ElegantPlacementStrategy : public BasePlacementStrategy {
+  public:
+    ~ElegantPlacementStrategy() override = default;
+
+    /**
+     * @brief
+     * @param serviceURL
+     * @param placementStrategy
+     * @param globalExecutionPlan
+     * @param topology
+     * @param typeInferencePhase
+     * @return
+     */
+    static std::unique_ptr<ElegantPlacementStrategy> create(const std::string& serviceURL,
+                                                            PlacementStrategy placementStrategy,
+                                                            GlobalExecutionPlanPtr globalExecutionPlan,
+                                                            TopologyPtr topology,
+                                                            TypeInferencePhasePtr typeInferencePhase);
+
+    bool updateGlobalExecutionPlan(QueryId queryId,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+
+  private:
+    explicit ElegantPlacementStrategy(std::string serviceURL,
+                                      uint16_t performanceRatio,
+                                      uint16_t energyRatio,
+                                      GlobalExecutionPlanPtr globalExecutionPlan,
+                                      TopologyPtr topology,
+                                      TypeInferencePhasePtr typeInferencePhase);
+
+    /**
+     * @brief
+     * @param queryId
+     * @param pinnedDownStreamOperators
+     * @param response
+     */
+    void pinOperatorsBasedOnElegantService(QueryId queryId,
+                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                           cpr::Response& response) const;
+
+    std::string serviceURL;
+    uint16_t performanceRatio;
+    uint16_t energyRatio;
+};
+
+}// namespace NES::Optimizer
+
+#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_EXTERNALICCSPLACEMENTSTRATEGY_HPP_
