@@ -392,18 +392,23 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     wrkConf2->coordinatorPort = port;
     wrkConf2->workerId = 2u;
     NesWorkerPtr wrk2copy = std::make_shared<NesWorker>(std::move(wrkConf2));
-    bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ false);
+    bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2copy);
-    // expected behavior: this worker cannot connect because its workerId is not valid
-    bool connected = wrk2copy->connect();
-    EXPECT_FALSE(connected);
-    NES_DEBUG2("Could not connect a new worker with an id that belongs to an active worker");
+    // expected behavior: this workerId belongs to an active worker, therefore the next available workerId will be assigned
+    EXPECT_EQ(wrk2copy->getWorkerId(), 3u);
+    NES_DEBUG2("Worker 2 started successfully with workerId {}", wrk2copy->getWorkerId());
 
     // stop worker 1
     NES_DEBUG2("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
     NES_DEBUG2("Worker 1 stopped successfully");
+
+    // stop worker 2
+    NES_DEBUG2("Stopping worker 2");
+    bool retStopWrk2 = wrk2copy->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG2("Worker 2 stopped successfully");
 
     NES_DEBUG2("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
