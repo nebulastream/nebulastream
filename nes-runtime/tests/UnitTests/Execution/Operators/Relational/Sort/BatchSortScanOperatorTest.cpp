@@ -18,6 +18,7 @@
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -149,6 +150,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i) {
         Value<NautilusType> cur = collector->records[i].read("f1").as<NautilusType>();
+        std::cout << "prev: " << prev << " cur: " << cur << std::endl;
         ASSERT_LE(prev, cur);
         prev = cur;
     }
@@ -283,6 +285,49 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest) {
         }
         prev1 = cur1;
         prev2 = cur2;
+    }
+}
+
+/**
+ * @brief Tests if the sort operator sorts records when there are multiple pages
+ */
+TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage) {
+    using NativeType = typename TypeParam::first_type;
+    using NautilusType = typename TypeParam::second_type;
+    constexpr int NUM_RECORDS =
+        Interface::PagedVector::PAGE_SIZE / sizeof(NativeType) * 2 + sizeof(NativeType);// 2 full pages + 1 record -> 3 Pages
+    constexpr auto NUM_FIELDS = 1;
+
+    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+
+    auto handler =
+        std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
+                                                   std::vector<Record::RecordFieldIdentifier>({"f1"}),
+                                                   std::vector<Record::RecordFieldIdentifier>({"f1"}));
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    handler->setup(pipelineContext);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
+
+    auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
+    auto collector = std::make_shared<CollectOperator>();
+    sortScanOperator.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    sortScanOperator.setup(ctx);
+    auto tupleBuffer = bm->getBufferBlocking();
+    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    sortScanOperator.open(ctx, record);
+
+    ASSERT_EQ(collector->records.size(), NUM_RECORDS);
+    ASSERT_EQ(collector->records[0].numberOfFields(), 1);
+
+    // Records should be in ascending order
+    auto prev = collector->records[0].read("f1").as<NautilusType>();
+    for (int i = 1; i < NUM_RECORDS; ++i) {
+        Value<NautilusType> cur = collector->records[i].read("f1").as<NautilusType>();
+        std::cout << "prev: " << prev << " cur: " << cur << std::endl;
+        ASSERT_LE(prev, cur);
+        prev = cur;
     }
 }
 
