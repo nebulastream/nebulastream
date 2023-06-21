@@ -275,21 +275,25 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
 
     for (auto& key : queryKeyValues) {
         aggregationFunction->reset(aggregationValueMemRef);
-        NES_INFO2("buffer: {}", NES::Util::printTupleBufferAsCSV(buffer, aggregation.inputSchema));
 
-        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
-        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < buffer.getNumberOfTuples(); i = i + (uint64_t) 1) {
-            auto record = memoryProvider->read({}, bufferAddress, i);
-            if (readKeyFieldExpression->execute(record) == key) {
-                aggregationFunction->lift(aggregationValueMemRef, record);
+        for (auto& buf : inputBuffers) {
+            auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buf.getBuffer());
+            for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < buf.getNumberOfTuples(); i = i + (uint64_t) 1) {
+                auto record = inputMemoryProvider->read({}, bufferAddress, i);
+                if (readKeyFieldExpression->execute(record) == key) {
+                    aggregationFunction->lift(aggregationValueMemRef, record);
+                }
             }
         }
 
+        // Lowering the exact aggregation
         auto outputBufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
         Nautilus::Record outputRecord;
-        outputRecord.write(fieldNameKey, key);
-        aggregationFunction->lower(aggregationValueMemRef, record);
-        outputMemoryProvider->write(recordIndex,outputBufferAddress, record);
+        outputRecord.write(aggregation.fieldNameKey, key);
+        aggregationFunction->lower(aggregationValueMemRef, outputRecord);
+
+        // Writing the exact aggregation to the buffer
+        outputMemoryProvider->write(recordIndex, outputBufferAddress, outputRecord);
         recordIndex = recordIndex + 1;
         outputBuffer.setNumberOfTuples(recordIndex.getValue().getValue());
 
@@ -322,8 +326,8 @@ double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& all
                 auto dynApproxBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
                 for (auto approxTuple = 0UL; approxTuple < dynApproxBuf.getNumberOfTuples(); ++approxTuple) {
                     if (dynAccBuf[accTuple][aggregation.fieldNameKey] == dynApproxBuf[approxTuple][aggregation.fieldNameKey]) {
-                        auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
-                        auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
+                        auto exactAgg = dynAccBuf[accTuple][aggregation.fieldNameApproximate];
+                        auto approxAgg = dynApproxBuf[approxTuple][aggregation.fieldNameApproximate];
 
                         sumError += Util::calculateRelativeError(approxAgg, exactAgg);
                         ++numTuples;
@@ -332,7 +336,7 @@ double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& all
             }
         }
     }
-    
+
     return 1.0 - (sumError / numTuples);
 }
 

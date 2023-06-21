@@ -37,7 +37,9 @@ namespace NES::ASP::Benchmarking {
 
         auto inputSchema = inputFileSchemas["uniform_key_value_timestamp.csv"];
         auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema, "value")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema,
+                                                                     "id", "value",
+                                                                     "id", "aggregation")->toString();
 
         std::stringstream expectedToStringStream;
         expectedToStringStream << std::endl << " - synopsis arguments: "

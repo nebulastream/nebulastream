@@ -42,6 +42,7 @@ namespace NES::ASP::Parsing {
 
             Yaml::Node aggregationNode;
             aggregationNode["type"] = std::string(magic_enum::enum_name(type));
+            aggregationNode["fieldNameKey"] = fieldNameKey;
             aggregationNode["fieldNameAgg"] = fieldNameAggregation;
             aggregationNode["fieldNameApprox"] = fieldNameApprox;
             aggregationNode["inputFile"] = inputFile;
@@ -51,12 +52,13 @@ namespace NES::ASP::Parsing {
             synopsisAggregationConfig = synopsisConfig.first;
         }
 
-        Aggregation_Type type = Aggregation_Type::MAX;
-        std::string fieldNameAggregation = "value";
-        std::string fieldNameApprox = "aggregation";
-        std::string inputFile = "uniform_key_value_timestamp.csv";
-        std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
-        std::string timeStampFieldName = "ts";
+        const Aggregation_Type type = Aggregation_Type::MAX;
+        const std::string fieldNameKey = "key";
+        const std::string fieldNameAggregation = "value";
+        const std::string fieldNameApprox = "aggregation";
+        const std::string inputFile = "uniform_key_value_timestamp.csv";
+        const std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
+        const std::string timeStampFieldName = "ts";
         Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
     };
 
@@ -66,11 +68,14 @@ namespace NES::ASP::Parsing {
         auto type = magic_enum::enum_cast<Aggregation_Type>(rand() % numberOfTypes).value();
 
         auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
-        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema,
+                                                                                fieldNameKey, fieldNameAggregation,
+                                                                                fieldNameKey, fieldNameApprox);
 
 
         Yaml::Node aggregationNode;
         aggregationNode["type"] = std::string(magic_enum::enum_name(type));
+        aggregationNode["fieldNameKey"] = fieldNameKey;
         aggregationNode["fieldNameAgg"] = fieldNameAggregation;
         aggregationNode["fieldNameApprox"] = fieldNameApprox;
         aggregationNode["inputFile"] = inputFile;
@@ -78,6 +83,7 @@ namespace NES::ASP::Parsing {
 
         auto synopsisAggregation = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
         EXPECT_EQ(synopsisAggregation.first.type, type);
+        EXPECT_EQ(synopsisAggregation.first.fieldNameKey, fieldNameKey);
         EXPECT_EQ(synopsisAggregation.first.fieldNameAggregation, fieldNameAggregation);
         EXPECT_EQ(synopsisAggregation.first.fieldNameApproximate, fieldNameApprox);
         EXPECT_EQ(synopsisAggregation.first.timeStampFieldName, timeStampFieldName);
@@ -89,7 +95,9 @@ namespace NES::ASP::Parsing {
     TEST_F(SynopsisAggregationConfigTest, testgetHeaderCsvAndValuesCsvAndToString) {
         auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
         auto inputSchemaStr = Benchmarking::inputFileSchemas[inputFile]->toString();
-        auto outputSchemaStr = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation)->toString();
+        auto outputSchemaStr = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema,
+                                                                                   fieldNameKey, fieldNameAggregation,
+                                                                                   fieldNameKey, fieldNameApprox)->toString();
 
         auto headerCsv = synopsisAggregationConfig.getHeaderAsCsv();
         auto valuesCsv = synopsisAggregationConfig.getValuesAsCsv();
