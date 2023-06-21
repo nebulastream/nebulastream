@@ -416,7 +416,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records
-    for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
+    for (uint64_t entryIndex = 0; entryIndex < state.getTotalNumberOfEntries(); entryIndex++) {
         Record record;
         auto entry = state.getEntry(Value<UInt64>(entryIndex));
         // skip encoded data
