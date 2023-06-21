@@ -327,7 +327,6 @@ Nautilus::Interface::PagedVector* kWayMerge(Nautilus::Interface::PagedVector* or
         std::memcpy(tmp->getEntry(resultCnt), minElement.value, rowWidth);
 
         // Move to the next element in the array
-
         // Last page
         if (arrayIndex + 1 == origin->getNumberOfPages()) {
             if (elementIndex + 1 < origin->getNumberOfEntriesOnCurrentPage()) {
@@ -344,22 +343,28 @@ Nautilus::Interface::PagedVector* kWayMerge(Nautilus::Interface::PagedVector* or
 
 void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
-    // TODO issue #3773 add support for data larger than page size
-    auto origPtr = handler->getState()->getEntry(0);
-    auto tempPtr = handler->getTempState()->getEntry(0);
-    auto count = handler->getState()->getNumberOfEntries();
     auto rowWidth = handler->getStateEntrySize();
-    auto offset = 0;  // init to 0
-    auto swap = false;// init false
 
-    if (count <= INSERTION_SORT_THRESHOLD) {
-        InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
-    } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
-        RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
-    } else {
-        auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
-        RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
-        delete[] locations;
+    for (uint32_t i = 0; i < handler->getState()->getNumberOfPages(); ++i) {
+        auto origPtr = handler->getState()->getEntry(i);
+        auto tempPtr = handler->getTempState()->getEntry(i);
+
+        auto count = handler->getState()->capacityPerPage();
+        if (i + 1 == handler->getState()->getNumberOfPages()) {
+            count = handler->getState()->getNumberOfEntriesOnCurrentPage();
+        }
+        auto offset = 0;  // init to 0
+        auto swap = false;// init false
+
+        if (count <= INSERTION_SORT_THRESHOLD) {
+            InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
+        } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
+            RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
+        } else {
+            auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
+            RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+            delete[] locations;
+        }
     }
 
     // Merge
