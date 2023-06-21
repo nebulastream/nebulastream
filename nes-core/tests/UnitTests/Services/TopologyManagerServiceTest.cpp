@@ -84,8 +84,10 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     EXPECT_EQ(nodeId1, 2u);
 
     //test register existing node
+    // when trying to register with a workerId belonging to an active worker,
+    // the next available workerId will be assigned instead
     uint64_t nodeId2 = topologyManagerService->registerWorker(2, ip, publish_port + 4, 5000, 6, properties);
-    EXPECT_EQ(nodeId2, 0u);
+    EXPECT_EQ(nodeId2, 3u);
 
     //test unregister not existing node
     bool successUnregisterNotExistingNode = topologyManagerService->unregisterNode(552);
@@ -97,9 +99,11 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
 
     //test register new node
     uint64_t nodeId3 = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port + 6, 5000, 6, properties);
-    EXPECT_EQ(nodeId3, 3u);
+    EXPECT_EQ(nodeId3, 4u);
 
     //test register new node with misconfigured worker id
+    //when trying to register with a workerId that does not belong to an already active/inactive worker,
+    //the next available workerId will be assigned
     uint64_t nodeId4 = topologyManagerService->registerWorker(123, ip, publish_port + 8, 5000, 6, properties);
-    EXPECT_EQ(nodeId4, 4u);
+    EXPECT_EQ(nodeId4, 5u);
 }

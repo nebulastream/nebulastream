@@ -58,11 +58,11 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
     if (workerId != INVALID_TOPOLOGY_NODE_ID) {
         // check if an active worker with workerId already exists
         if (topology->nodeWithWorkerIdExists(workerId)) {
-            NES_ERROR2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running", workerId);
-            return INVALID_TOPOLOGY_NODE_ID;
+            NES_WARNING2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new worker id will be assigned.", workerId);
+            id = getNextTopologyNodeId();
         }
         // check if an inactive worker with workerId already exists
-        if (healthCheckService && healthCheckService->isWorkerInactive(workerId)) {
+        else if (healthCheckService && healthCheckService->isWorkerInactive(workerId)) {
             // node is reregistering (was inactive and became active again)
             NES_TRACE2("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
             id = workerId;
