@@ -83,11 +83,11 @@ jobs:
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: "Build Debian Packages"
         run: |
-          cache_dir="/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "cache_dir=$cache_dir"
           mkdir -p $cache_dir
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           echo "build_dir=$build_dir" >> $GITHUB_ENV     
           mkdir -p $build_dir
