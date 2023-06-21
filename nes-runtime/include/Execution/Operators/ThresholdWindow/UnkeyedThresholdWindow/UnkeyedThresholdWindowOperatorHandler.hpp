@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_UNKEYED_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_UNKEYED_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -22,11 +22,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This handler stores states of a global threshold window during its execution
+ * @brief This handler stores states of an unkeyed threshold window during its execution
  */
-class GlobalThresholdWindowOperatorHandler : public OperatorHandler {
+class UnkeyedThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    explicit GlobalThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
+    explicit UnkeyedThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
         : AggregationValues(std::move(AggregationValues)) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
@@ -41,4 +41,4 @@ class GlobalThresholdWindowOperatorHandler : public OperatorHandler {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_UNKEYED_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_

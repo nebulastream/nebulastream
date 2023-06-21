@@ -49,8 +49,8 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -233,7 +233,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
         }
         // pass aggValues to ThresholdWindowHandler
-        auto handler = std::make_shared<Runtime::Execution::Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
+        auto handler = std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -548,7 +548,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                        return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
                    });
 
-    return std::make_shared<Runtime::Execution::Operators::GlobalThresholdWindow>(predicate,
+    return std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindow>(predicate,
                                                                             aggregationResultFieldNames,
                                                                             minCount,
                                                                             aggregationFunctions,

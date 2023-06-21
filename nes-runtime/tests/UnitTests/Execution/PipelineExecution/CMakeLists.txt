@@ -13,7 +13,7 @@
 
 add_nes_runtime_test(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_runtime_test(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
-add_nes_runtime_test(runtime-global-threshold-window-pipeline-test "GlobalThresholdWindowPipelineTest.cpp")
+add_nes_runtime_test(runtime-global-threshold-window-pipeline-test "UnkeyedThresholdWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-keyed-threshold-window-pipeline-test "KeyedThresholdWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-global-window-pipeline-test "GlobalTimeWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-keyed-window-pipeline-test "KeyedTimeWindowPipelineTest.cpp")
