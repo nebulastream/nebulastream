@@ -53,7 +53,7 @@ namespace NES::ASP::Parsing {
         }
 
         const Aggregation_Type type = Aggregation_Type::MAX;
-        const std::string fieldNameKey = "key";
+        const std::string fieldNameKey = "id";
         const std::string fieldNameAggregation = "value";
         const std::string fieldNameApprox = "aggregation";
         const std::string inputFile = "uniform_key_value_timestamp.csv";
@@ -103,12 +103,12 @@ namespace NES::ASP::Parsing {
         auto valuesCsv = synopsisAggregationConfig.getValuesAsCsv();
         auto toString = synopsisAggregationConfig.toString();
 
-        EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
-                             "aggregation_timeStampFieldName,aggregation_inputSchema,aggregation_outputSchema");
-        EXPECT_EQ(valuesCsv, "MAX,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
-        EXPECT_EQ(toString, "type (MAX) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "
-                            "timeStampFieldName (ts) inputSchema (" +
-                            inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
+        EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameKey,aggregation_fieldNameAggregation,"
+                             "aggregation_fieldNameApproximate,aggregation_timeStampFieldName,aggregation_inputSchema,"
+                             "aggregation_outputSchema");
+        EXPECT_EQ(valuesCsv, "MAX,id,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
+        EXPECT_EQ(toString, "type (MAX) fieldNameKey (id) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "
+                            "timeStampFieldName (ts) inputSchema (" + inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
     }
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFunction) {

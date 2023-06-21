@@ -65,6 +65,10 @@ namespace NES::ASP::Util {
         EXPECT_EQ(parsedAggregations[1].second, data / "uniform_key_value_timestamp.csv");
         EXPECT_EQ(parsedAggregations[2].second, data / "uniform_key_multiple_values_timestamp.csv");
 
+        EXPECT_EQ(parsedAggregations[0].first.fieldNameKey, "id");
+        EXPECT_EQ(parsedAggregations[1].first.fieldNameKey, "id");
+        EXPECT_EQ(parsedAggregations[2].first.fieldNameKey, "id");
+
         EXPECT_EQ(parsedAggregations[0].first.fieldNameAggregation, "value");
         EXPECT_EQ(parsedAggregations[1].first.fieldNameAggregation, "value");
         EXPECT_EQ(parsedAggregations[2].first.fieldNameAggregation, "value1");
