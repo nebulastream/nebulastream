@@ -415,7 +415,8 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records
-    for (uint64_t entryIndex = 0; entryIndex < state.getTotalNumberOfEntries(); entryIndex++) {
+    // We start here with index 1. We may want to investigate why the content of the paged vector is shifted by 1
+    for (uint64_t entryIndex = 1; entryIndex < state.getTotalNumberOfEntries() + 1; entryIndex++) {
         Record record;
         auto entry = state.getEntry(Value<UInt64>(entryIndex));
         // skip encoded data
