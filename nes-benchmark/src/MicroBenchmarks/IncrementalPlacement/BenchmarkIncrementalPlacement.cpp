@@ -370,7 +370,7 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "Parsed all queries." << std::endl;
 
-    auto coordinatorConfiguration = CoordinatorConfiguration::create();
+    auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
     //Set optimizer configuration
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;

@@ -161,7 +161,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
         // Execute optimization phases prior to placement
         queryPlan = typeInferencePhase->execute(queryPlan);
 
-        auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+        auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
         auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         queryPlan = queryReWritePhase->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);

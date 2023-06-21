@@ -38,7 +38,7 @@ class LambdaSourceIntegrationTest : public Testing::NESBaseTest {
 };
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
@@ -125,7 +125,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
-    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::createDefault();
 
     NES_DEBUG2("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
@@ -215,7 +215,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     //    coordinatorConfig->worker.setNumberOfBuffersInGlobalBufferManager(3000);

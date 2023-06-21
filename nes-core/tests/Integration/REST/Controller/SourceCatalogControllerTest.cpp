@@ -51,7 +51,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
      */
     void startCoordinator() {
         NES_INFO2("SourceCatalogControllerTest: Start coordinator");
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);

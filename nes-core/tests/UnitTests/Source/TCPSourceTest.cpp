@@ -176,7 +176,7 @@ TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
 TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

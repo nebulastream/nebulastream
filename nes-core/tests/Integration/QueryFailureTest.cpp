@@ -41,7 +41,7 @@ class QueryFailureTest : public Testing::NESBaseTest {
 };
 
 TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("QueryFailureTest: Start coordinator");
@@ -88,7 +88,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
  * This test checks if we can run a valid query after a query failed
  */
 TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("QueryFailureTest: Start coordinator");
@@ -176,7 +176,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 
 // This test will be enabled when fixing #2857
 TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 2;

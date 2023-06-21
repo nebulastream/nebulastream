@@ -47,7 +47,7 @@ class WindowDeploymentTest : public Testing::NESBaseTest {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("WindowDeploymentTest: Start coordinator");
@@ -347,7 +347,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
 TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->optimizer.distributedWindowChildThreshold = 0;
@@ -741,7 +741,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeySlidingWindowEventTim
 // TODO this test needs rethinking as we just check if the file sink creates a file, there is no ingestion time windowing currently
 TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTime) {
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -811,7 +811,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
  * @brief tests window with ingestion time, for now disabled see issue #3324
  */
 TEST_F(WindowDeploymentTest, DISABLED_testDistributedWindowIngestionTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -896,7 +896,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedWindowIngestionTime) {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -964,7 +964,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  * @brief test central tumbling window and event time, for now disabled see issue #3324
  */
 TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
@@ -1100,7 +1100,7 @@ TEST_F(WindowDeploymentTest,
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
 TEST_F(WindowDeploymentTest, DISABLED_testDistributedTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     //register logical source qnv
@@ -1245,7 +1245,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedTumblingWindowQueryEventTim
  * @brief test tumbling window with multiple aggregations
  */
 TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 

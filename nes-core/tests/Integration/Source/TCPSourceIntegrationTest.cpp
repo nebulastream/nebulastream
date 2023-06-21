@@ -243,7 +243,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
  * @brief tests TCPSource read of csv data that is seperated by a given token. Here \n is used
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -344,7 +344,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
  * @brief tests TCPSource read of JSON data that is seperated by a given token. Here \n is used
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -445,7 +445,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Constant length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -546,7 +546,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -647,7 +647,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
  * @brief tests TCPSource read of JSON data when obtaining the size of the data from the socket. Constant length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -748,7 +748,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -849,7 +849,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
@@ -950,7 +950,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("TCPSourceIntegrationTest: Start coordinator");

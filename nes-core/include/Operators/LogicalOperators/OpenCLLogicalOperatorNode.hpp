@@ -15,16 +15,11 @@
 #ifndef NES_OPENCLLOGICALOPERATORNODE_HPP
 #define NES_OPENCLLOGICALOPERATORNODE_HPP
 
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/JavaUDFLogicalOperator.hpp>
 
 namespace NES {
 
-namespace Catalogs::UDF {
-class JavaUDFDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
-}// namespace Catalogs::UDF
-
-class OpenCLLogicalOperatorNode : public LogicalUnaryOperatorNode {
+class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
 
   public:
     OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
@@ -40,12 +35,6 @@ class OpenCLLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param deviceId
      */
     void setDeviceId(const std::string& deviceId);
-
-    /**
-     * Get Java UDF descriptor
-     * @return Java UDF descriptor
-     */
-    Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor();
 
     /**
      * @see Node#toString
@@ -69,12 +58,7 @@ class OpenCLLogicalOperatorNode : public LogicalUnaryOperatorNode {
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
-    void inferStringSignature() override;
-
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
-
   private:
-    Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
     std::string openCLCode;
     std::string deviceId;
 };

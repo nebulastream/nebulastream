@@ -41,7 +41,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        coConf = CoordinatorConfiguration::create();
+        coConf = CoordinatorConfiguration::createDefault();
         wrkConf = WorkerConfiguration::create();
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;

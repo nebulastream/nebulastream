@@ -35,7 +35,7 @@ namespace NES::Benchmark {
 
 void E2ESingleRun::setupCoordinatorConfig() {
     NES_INFO2("Creating coordinator and worker configuration...");
-    coordinatorConf = Configurations::CoordinatorConfiguration::create();
+    coordinatorConf = Configurations::CoordinatorConfiguration::createDefault();
 
     // Coordinator configuration
     coordinatorConf->rpcPort = rpcPortSingleRun;

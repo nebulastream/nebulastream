@@ -649,7 +649,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
@@ -707,7 +707,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::create();
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan1 = queryReWritePhase->execute(queryPlan1);

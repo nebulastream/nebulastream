@@ -67,7 +67,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
 
 //test successful execution of fail query request for a single query
 TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("Fail Query Request Test: Start coordinator");
@@ -217,7 +217,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
 
 //test error handling if a fail query request is executed but no query with the supplied id exists
 TEST_F(FailQueryRequestTest, testInvalidQueryId) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("Fail Query Request Test: Start coordinator");
@@ -326,7 +326,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
 //test error handling when trying to let a query fail after it has already been set to the status STOPPED
 TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("Fail Query Request Test: Start coordinator");
@@ -438,7 +438,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
 
 //test if exception is thrown when the undeployment did not succeed
 TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO2("Fail Query Request Test: Start coordinator");

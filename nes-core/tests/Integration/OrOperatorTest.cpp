@@ -47,7 +47,7 @@ class OrOperatorTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        coordinatorConfiguration = CoordinatorConfiguration::create();
+        coordinatorConfiguration = CoordinatorConfiguration::createDefault();
         coordinatorConfiguration->rpcPort = (*rpcCoordinatorPort);
         coordinatorConfiguration->restPort = *restPort;
     }

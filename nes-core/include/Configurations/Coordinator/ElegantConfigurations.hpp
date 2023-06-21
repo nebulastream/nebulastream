@@ -22,7 +22,7 @@
 namespace NES::Configurations {
 
 /**
- * Define all elegant related configuration parameters
+ * Define all ELEGANT related configuration parameters
  */
 class ElegantConfigurations : public BaseConfiguration {
 

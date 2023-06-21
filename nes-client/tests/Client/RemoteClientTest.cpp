@@ -45,7 +45,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
 
-        auto crdConf = CoordinatorConfiguration::create();
+        auto crdConf = CoordinatorConfiguration::createDefault();
         auto wrkConf = WorkerConfiguration::create();
 
         crdConf->rpcPort = (*rpcCoordinatorPort);

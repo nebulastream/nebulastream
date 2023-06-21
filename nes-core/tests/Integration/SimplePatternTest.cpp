@@ -44,7 +44,7 @@ class SimplePatternTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        coConf = CoordinatorConfiguration::create();
+        coConf = CoordinatorConfiguration::createDefault();
 
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;

@@ -46,7 +46,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        coConf = CoordinatorConfiguration::create();
+        coConf = CoordinatorConfiguration::createDefault();
         srcConf1 = CSVSourceType::create();
         srcConf2 = CSVSourceType::create();
         srcConf3 = CSVSourceType::create();

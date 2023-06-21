@@ -63,8 +63,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
 
-        coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 

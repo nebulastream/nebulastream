@@ -254,7 +254,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     }
 
     //Start Coordinator
-    auto coordinatorConfiguration = CoordinatorConfiguration::create();
+    auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;

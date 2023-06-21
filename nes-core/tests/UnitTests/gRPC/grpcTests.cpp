@@ -54,7 +54,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     std::string window =
         R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     NES_INFO2("GrpcNotifyQueryFailureTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -120,7 +120,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     std::string window =
         R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
-    auto coordinatorConfig = CoordinatorConfiguration::create();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfBuffersInGlobalBufferManager = 2 * 1024;

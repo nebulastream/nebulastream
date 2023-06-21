@@ -37,7 +37,7 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
 
     void startCoordinator() {
         NES_INFO2("QueryCatalogControllerTest: Start coordinator");
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
