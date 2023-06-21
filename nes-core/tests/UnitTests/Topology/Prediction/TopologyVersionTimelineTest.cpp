@@ -42,6 +42,7 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         for (auto& node : nodes) {
             ids.push_back(node->as<TopologyNode>()->getId());
         }
+        std::sort(ids.begin(), ids.end());
         return ids;
     }
 
@@ -58,6 +59,7 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         //compare links
         std::sort(children.begin(), children.end());
         std::sort(parents.begin(), parents.end());
+
         EXPECT_EQ(getIdVector(predictedNode->getChildren()), children);
         EXPECT_EQ(getIdVector(predictedNode->getParents()), parents);
     }
@@ -80,7 +82,7 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     //create new prediction for node 3 to reconnect to node 4
     std::cout << "adding new prediction that node 3 will reconnect to node 4 at time 7" << std::endl;
     Experimental::TopologyPrediction::TopologyDelta delta3({{3, 4}}, {{3, 2}});
-    versionTimeline.addTopologyChange(7, delta3);
+    versionTimeline.addTopologyDelta(7, delta3);
 
     Timestamp viewTime;
     std::cout << versionTimeline.predictionsToString() << std::endl;
@@ -103,8 +105,8 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
 
     //changing time of prediction of node 3 to happen at 4 instead of 7
     std::cout << "updating prediction that node 3 will reconnect to node 4 at time 4 instead of time 7" << std::endl;
-    versionTimeline.removeTopologyChange(7, delta3);
-    versionTimeline.addTopologyChange(4, delta3);
+    versionTimeline.removeTopologyDelta(7, delta3);
+    versionTimeline.addTopologyDelta(4, delta3);
 
     //check values
     //view at time 3
@@ -124,7 +126,7 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     //adding new prediction for node 4 to reconnect to node 1 at time 6
     std::cout << "adding new prediction that node 4 will reconnect to node 1 at time 6" << std::endl;
     Experimental::TopologyPrediction::TopologyDelta delta4({{4, 1}}, {{4, 2}});
-    versionTimeline.addTopologyChange(6, delta4);
+    versionTimeline.addTopologyDelta(6, delta4);
 
     std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
@@ -152,13 +154,13 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     //predicting adding of node 5 as child of 1 at time 5
     std::cout << "adding prediction that a new node with id 5 will connect to the system at time 5" << std::endl;
     Experimental::TopologyPrediction::TopologyDelta delta5({{5, 1}}, {});
-    versionTimeline.addTopologyChange(5, delta5);
+    versionTimeline.addTopologyDelta(5, delta5);
 
     std::cout << "node 4 changes prediction that it will connect to node 5 at time 7 instead of to 1 at time 6" << std::endl;
     //changing predciction for node 4 to connect to 5 at time 7 instead of to 1 at time 6 (old prediction should not be visible anymore)
     Experimental::TopologyPrediction::TopologyDelta delta4New({{4, 5}}, {{4, 2}});
-    versionTimeline.removeTopologyChange(6, delta4);
-    versionTimeline.addTopologyChange(7, delta4New);
+    versionTimeline.removeTopologyDelta(6, delta4);
+    versionTimeline.addTopologyDelta(7, delta4New);
 
     std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
@@ -198,7 +200,7 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     std::cout << std::endl;
     std::cout << "schedule 2 to connect to 5 at 7, the same time when 4 connects to 5" << std::endl;
     Experimental::TopologyPrediction::TopologyDelta delta2({{2, 5}}, {{2, 1}});
-    versionTimeline.addTopologyChange(7, delta2);
+    versionTimeline.addTopologyDelta(7, delta2);
 
     std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values

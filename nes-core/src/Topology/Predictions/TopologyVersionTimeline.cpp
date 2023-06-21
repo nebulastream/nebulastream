@@ -1,13 +1,7 @@
 #include <Topology/Predictions/TopologyVersionTimeline.hpp>
 #include <Topology/Predictions/TopologyDelta.hpp>
-//todo: predicted node state con probably be omitted if we always reconstruct the whole topology
-//#include <PredictedNodeState.hpp>
 #include <Topology/Topology.hpp>
-//todo: replace this with nes time measurement
-//#include <TimeMeasurement.hpp>
 #include <Topology/Predictions/TopologyChangeLog.hpp>
-//todo: we do not need a topology view if we will completely reconstruct a new topology
-//#include <TopologyView.h>
 #include <Topology/Predictions/AggregatedTopologyChangeLog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -18,15 +12,19 @@
 namespace NES::Experimental::TopologyPrediction {
 TopologyPtr TopologyVersionTimeline::getTopologyVersion(Timestamp time) {
   //we need to get the node changes with equal or less timestamp
-  auto topologyChange = latestChange;
-  while (topologyChange && topologyChange->getTime() > time) {
-    topologyChange = topologyChange->getPreviousChange();
-  }
-  //todo: can this be moved up?
+  //auto topologyChange = getTopologyChangeLogBefore(time);
+  //auto topologyChange = changeMap.;
+
+  //todo: do we still need to handle this case extra
+  /*
   if (!topologyChange) {
     return copyTopology(originalTopology);
   }
-  auto nodeChanges = topologyChange->getChangeLog();
+   */
+
+  //auto nodeChanges = topologyChange->getChangeLog();
+  auto nodeChanges = createAggregatedChangeLog(time);
+
   /*
   auto topologyCopy = copyTopology(originalTopology);
   applyAggregatedChangeLog(topologyCopy, nodeChanges);
@@ -35,83 +33,144 @@ TopologyPtr TopologyVersionTimeline::getTopologyVersion(Timestamp time) {
   return createTopologyVersion(originalTopology, nodeChanges);
 }
 
-TopologyVersionTimeline::TopologyVersionTimeline(TopologyPtr originalTopology)
-    :  originalTopology(originalTopology), time(0) {}
-
-[[maybe_unused]] void TopologyVersionTimeline::incrementTime(Timestamp increment) {
-  time += increment;
-}
-
-void TopologyVersionTimeline::addTopologyChange(Timestamp predictedTime, const TopologyDelta &delta) {
-  //todo: garbeage collect also latest change
-  if (!latestChange) {
-    latestChange = std::make_shared<TopologyChangeLog>(predictedTime);
-    latestChange->insert(delta);
-    return;
+//todo: make references out of these
+std::optional<AggregatedTopologyChangeLog> TopologyVersionTimeline::getTopologyChangeLogBefore(Timestamp time) {
+  //get the first element that has a greater timestamp than the one we are looking for and take the one before
+  auto iterator = changeMap.upper_bound(time);
+  if (iterator != changeMap.begin()) {
+    --iterator;
+    return iterator->second;
   }
-  if (latestChange->getTime() < predictedTime) {
-    auto newChange = std::make_shared<TopologyChangeLog>(predictedTime);
-    newChange->setPreviousChange(latestChange);
-    latestChange = newChange;
-    newChange->insert(delta);
-    return;
-  }
-  if (latestChange->getTime() == predictedTime) {
-    latestChange->insert(delta);
-    return;
-  }
-  auto nextChange = latestChange;
-  auto previousChange = nextChange->getPreviousChange();
-  while (previousChange && previousChange->getTime() > predictedTime) {
-
-    //todo: garbage collect?
-    nextChange = nextChange->getPreviousChange();
-    previousChange = nextChange->getPreviousChange();
-  }
-
-  auto newChange = std::make_shared<TopologyChangeLog>(predictedTime);
-  if (!previousChange) {
-    newChange = std::make_shared<TopologyChangeLog>(predictedTime);
-    nextChange->setPreviousChange(newChange);
-  } else if (previousChange->getTime() == predictedTime) {
-    nextChange = previousChange;
-  } else {
-    newChange = std::make_shared<TopologyChangeLog>(predictedTime);
-    nextChange->setPreviousChange(newChange);
-    newChange->setPreviousChange(previousChange);
-  }
-  newChange->insert(delta);
-}
-
-bool TopologyVersionTimeline::removeTopologyChange(Timestamp predictedTime, const TopologyDelta &delta) {
-  if (!latestChange) {
-    return false;
-  }
-  if (predictedTime > latestChange->getTime()) {
-    return false;
-  }
-  if (predictedTime == latestChange->getTime()) {
-    latestChange->erase(delta);
-    //todo: what is going on here with the empty if?
-    //if (latestChange->empty());
-    if (latestChange->empty()) {
-        latestChange = latestChange->getPreviousChange();
+  return std::nullopt;
+  /*
+    auto topologyChange = latestChange;
+    while (topologyChange && topologyChange->getTime() > time) {
+        topologyChange = topologyChange->getPreviousChange();
     }
-    //latestChange = latestChange->getPreviousChange();
-    return true;
+    return topologyChange;
+    */
+}
+
+//std::optional<AggregatedTopologyChangeLog&> TopologyVersionTimeline::getTopologyChangeLogAt(Timestamp time) {
+    /*
+    if (!latestChange) {
+        return false;
+    }
+    if (predictedTime > latestChange->getTime()) {
+        return false;
+    }
+     */
+
+  /*
+    auto changeLog = latestChange;
+    while (changeLog != nullptr && changeLog->getTime() >= time) {
+        changeLog = changeLog->getPreviousChange();
+    }
+    if (changeLog->getTime() != time) {
+        return nullptr;
+    }
+    return changeLog;
+    */
+
+
+  //todo: fix and reactivete the following block
+  /*
+    auto iterator = changeMap.find(time);
+    if (iterator == changeMap.end()) {
+    return std::nullopt;
+    }
+    return iterator->second;
+    */
+
+  /*
+  if (changeMap.contains(time)) {
+    return changeMap.at(time);
   }
-  auto nextChange = latestChange;
-  auto previousChange = nextChange->getPreviousChange();
-  while (previousChange && previousChange->getTime() > predictedTime) {
-    //todo: garbage collect?
+  return std::nullopt;
+   */
+//}
+
+bool TopologyVersionTimeline::removeTopologyChangeLogAt(Timestamp time) {
+    //auto changeLog = getTopologyChangeLogAt(time);
+    return changeMap.erase(time);
+}
+
+//TopologyChangeLogPtr TopologyVersionTimeline::getOrCreateTopologyChangeLogAt(Timestamp predictedTime) {
+    /*
+    if (!latestChange) {
+        latestChange = std::make_shared<TopologyChangeLog>(predictedTime);
+        //latestChange->insert(delta);
+        return latestChange;
+    }
+    if (latestChange->getTime() < predictedTime) {
+        auto newChange = std::make_shared<TopologyChangeLog>(predictedTime);
+        newChange->setPreviousChange(latestChange);
+        latestChange = newChange;
+        //newChange->insert(delta);
+        return newChange;
+    }
+    if (latestChange->getTime() == predictedTime) {
+        //latestChange->insert(delta);
+        return latestChange;
+    }
+    auto nextChange = latestChange;
+    auto previousChange = nextChange->getPreviousChange();
+    while (previousChange && previousChange->getTime() > predictedTime) {
+
+        //todo: garbage collect?
+        nextChange = nextChange->getPreviousChange();
+        previousChange = nextChange->getPreviousChange();
+    }
+
+    auto newChange = std::make_shared<TopologyChangeLog>(predictedTime);
+    if (!previousChange) {
+        newChange = std::make_shared<TopologyChangeLog>(predictedTime);
+        nextChange->setPreviousChange(newChange);
+    } else if (previousChange->getTime() == predictedTime) {
+        nextChange = previousChange;
+    } else {
+        newChange = std::make_shared<TopologyChangeLog>(predictedTime);
+        nextChange->setPreviousChange(newChange);
+        newChange->setPreviousChange(previousChange);
+    }
+    return newChange;
+     */
+   // return changeMap[predictedTime];
+//}
+
+
+TopologyVersionTimeline::TopologyVersionTimeline(TopologyPtr originalTopology)
+    :  originalTopology(originalTopology) {}
+
+void TopologyVersionTimeline::addTopologyDelta(Timestamp predictedTime, const TopologyDelta &delta) {
+  //todo: garbeage collect also latest change
+    //auto newChange = getOrCreateTopologyChangeLogAt(predictedTime);
+  //newChange->insert(delta);
+    auto& newChange = changeMap[predictedTime];
+    /*
+    if (!newChange) {
+    //todo: remove time from the constructor of the changelog
+    //todo: when we make this not contain pointers, this will also be way more elegant
+        newChange = std::make_shared<TopologyChangeLog>(predictedTime);
+    }
+     */
+    newChange.insert(delta);
+}
+
+bool TopologyVersionTimeline::removeTopologyDelta(Timestamp predictedTime, const TopologyDelta &delta) {
+    /*
+  auto changeLog = getTopologyChangeLogAt(predictedTime);
+  if (!changeLog) {
+        return false;
   }
-  if (!previousChange || previousChange->getTime() == predictedTime) {
-    NES_DEBUG2("Trying to remove prediction at time {} but no topology change was predicted at that time", predictedTime);
+     */
+    if (!changeMap.contains(predictedTime)) {
     return false;
-  }
-  previousChange->erase(delta);
-  if (previousChange->empty()) {
-    nextChange->setPreviousChange(previousChange->getPreviousChange());
+    }
+    auto& changeLog = changeMap[predictedTime];
+  changeLog.erase(delta);
+  if (changeLog.empty()) {
+        removeTopologyChangeLogAt(predictedTime);
   }
   return true;
 }
@@ -122,70 +181,22 @@ std::string TopologyVersionTimeline::predictionsToString() {
   std::stringstream predictionsString;
   predictionsString << std::endl;
   predictionsString << "Predictions: " << std::endl;
+  //todo: reenable with map
+  /*
   for (auto change = latestChange; change; change = change->getPreviousChange()) {
     predictionsString << "Time " << change->getTime() << ": " << std::endl;
     predictionsString << std::string(indent, ' ');
     predictionsString << change->toString() << std::endl;
   }
+   */
   return predictionsString.str();
 }
 
-//todo: remove
-/*
-std::string TopologyVersionTimeline::toString(Timestamp viewTime) {
-  //we do not allow changing root node
-  auto rootId = originalTopology->getRoot()->getId();
-  auto topologyView = getTopologyVersion(viewTime);
-  auto rootNode = topologyView.findNodeStateWithId(rootId);
-
-  std::stringstream topologyInfo;
-  topologyInfo << std::endl;
-  topologyInfo << "prediction at timestamp: " << viewTime << std::endl;
-
-  // store pair of TopologyNodePtr and its depth in when printed
-  std::deque < std::pair < std::pair < uint64_t, PredictedNodeState >, uint64_t >>
-                                                                                parentToPrint{
-                                                                                    std::make_pair(std::make_pair(rootId,
-                                                                                                                  rootNode),
-                                                                                                   0)};
-
-  // indent offset
-  int indent = 2;
-
-  // perform dfs traverse
-  while (!parentToPrint.empty()) {
-    std::pair <std::pair<uint64_t, PredictedNodeState>, uint64_t> nodeToPrint = parentToPrint.front();
-    parentToPrint.pop_front();
-    for (std::size_t i = 0; i < indent * nodeToPrint.second; i++) {
-      if (i % indent == 0) {
-        topologyInfo << '|';
-      } else {
-        if (i >= indent * nodeToPrint.second - 1) {
-          topologyInfo << std::string(indent, '-');
-        } else {
-          topologyInfo << std::string(indent, ' ');
-        }
-      }
-    }
-    topologyInfo << nodeToPrint.first.first << std::endl;
-
-    for (const auto &childId : nodeToPrint.first.second.getChildren()) {
-      auto child = topologyView.findNodeStateWithId(childId);
-      parentToPrint.emplace_front(std::make_pair(childId, child), nodeToPrint.second + 1);
-    }
-  }
-  return topologyInfo.str();
-}
- */
-
-//todo: implement
 TopologyPtr TopologyVersionTimeline::copyTopology(const TopologyPtr& originalTopology) {
     auto copiedTopology = Topology::create();
     copiedTopology->setAsRoot(originalTopology->getRoot()->copy());
     auto originalIterator = BreadthFirstNodeIterator(originalTopology->getRoot()).begin();
 
-    std::cout << originalTopology->toString() << std::endl;
-    std::cout << "------------" << std::endl;
     while (originalIterator != NES::BreadthFirstNodeIterator::end()) {
         std::cout << copiedTopology->toString() << std::endl;
         auto originalNode = (*originalIterator)->as<TopologyNode>();
@@ -205,21 +216,10 @@ TopologyPtr TopologyVersionTimeline::copyTopology(const TopologyPtr& originalTop
         }
         ++originalIterator;
     }
-
     return copiedTopology;
 }
 
 TopologyPtr TopologyVersionTimeline::createTopologyVersion(TopologyPtr originalTopology, AggregatedTopologyChangeLog changeLog) {
-    /*
-     * todo: this needs to be done differently: iterate over the new originalTopology and add only if:
-     * - exists in original and not removed
-     * - exists in added
-     * case which are guaranteed to not happen:
-     * - exists in added and removed
-     * - exists in removed but not in original
-     */
-    //todo: make aggregated originalTopology changelog use maps
-
     auto copiedTopology = Topology::create();
     copiedTopology->setAsRoot(originalTopology->getRoot()->copy());
 
@@ -232,7 +232,6 @@ TopologyPtr TopologyVersionTimeline::createTopologyVersion(TopologyPtr originalT
         auto nodeId = copiedNode->getId();
 
         auto originalNode = originalTopology->findNodeWithId(nodeId);
-        //std::vector<TopologyNodeId> originalChildren;
         if (originalNode) {
             auto removedChildren = changeLog.getRemoveChildren(nodeId);
             for (auto& originalChild : originalNode->getChildren()) {
@@ -278,76 +277,15 @@ TopologyPtr TopologyVersionTimeline::createTopologyVersion(TopologyPtr originalT
             NES_DEBUG2("adding edge based on prediction from {} to {}", nodeId, childNode->getId());
             copiedTopology->addNewTopologyNodeAsChild(copiedNode, childNode);
         }
-
-
     }
-
-    /*
-
-    auto originalIterator = BreadthFirstNodeIterator(originalTopology->getRoot()).begin();
-
-    std::cout << originalTopology->toString() << std::endl;
-    std::cout << "------------" << std::endl;
-    while (originalIterator != NES::BreadthFirstNodeIterator::end()) {
-        std::cout << copiedTopology->toString() << std::endl;
-        auto originalNode = (*originalIterator)->as<TopologyNode>();
-        auto copyNode = copiedTopology->findNodeWithId(originalNode->getId());
-
-        //check if the node exists in the changed originalTopology
-        if (!copyNode) {
-            continue;
-        }
-
-        for (auto& originalChild : originalNode->getChildren()) {
-            //todo: this is not very efficient anymore now that we have to construct a whole new originalTopology
-            //todo: continue with out adding if the edge has been removed
-            //if (std::find(changeLog.getRemoved().begin(), changeLog.getRemoved().end(), {originalChild->}))
-            auto copiedChild = copiedTopology->findNodeWithId(originalChild->as<TopologyNode>()->getId());
-
-            //check if the node was already added as the child of another node
-            if (copiedChild) {
-                NES_DEBUG2("Adding node {} as additional parent of existing node {}", copyNode->getId(), copiedChild->getId());
-            } else {
-                //create new copy of the node because it was not found in the copied originalTopology
-                copiedChild = originalChild->as<TopologyNode>()->copy();
-                NES_DEBUG2("Adding new node {} as child of {}", copiedChild->getId(), copyNode->getId());
-            }
-            copiedTopology->addNewTopologyNodeAsChild(copyNode, copiedChild);
-        }
-
-
-        ++originalIterator;
-    }
-     */
     return copiedTopology;
 }
-
-//todo: check in both cases if parent and child exist, in first case create them if needed
-//todo: probably not needed anymore now that we have the new function`
-/*
-void TopologyVersionTimeline::applyAggregatedChangeLog(TopologyPtr topology, AggregatedTopologyChangeLog changeLog) {
-    for (auto &addedEdge : changeLog.getAdded()) {
-        //todp: check that nodes exist?
-        //topology->findNodeWithId(addedEdge.parent)->addChild(topology->findNodeWithId(addedEdge.child));
-        auto parent = topology->findNodeWithId(addedEdge.parent);
-        if (!parent) {
-
-        }
-        auto child = topology->findNodeWithId(addedEdge.child);
-        topology->addNewTopologyNodeAsChild(parent, child);
-    }
-    for (auto &removedEdge : changeLog.getRemoved()) {
-        auto child = topology->findNodeWithId(removedEdge.child);
-        if (!child) {
-            NES_DEBUG2("Node with id {} not found, possibly because its only parents was removed", removedEdge.child);
-            continue;
-        }
-        topology->findNodeWithId(removedEdge.parent)->removeChild(child);
-        if (child->getParents().empty()) {
-            topology->removePhysicalNode(child);
-        }
-        //todo: do we nned to remove nodes without parents here?
-    }
+AggregatedTopologyChangeLog TopologyVersionTimeline::createAggregatedChangeLog(Timestamp time) {
+     AggregatedTopologyChangeLog aggregatedTopologyChangeLog;
+     for (auto changeLog = changeMap.begin(); changeLog != changeMap.end() && changeLog->first <= time; ++changeLog) {
+        //todo: this can be optimized to use less calls
+        aggregatedTopologyChangeLog.add(changeLog->second);
+     }
+     return aggregatedTopologyChangeLog;
 }
- */
 }

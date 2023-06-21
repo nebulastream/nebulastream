@@ -1,11 +1,12 @@
 #include <Topology/Predictions/AggregatedTopologyChangeLog.hpp>
+#include <Topology/Predictions/TopologyDelta.hpp>
 #include <utility>
 
 
 namespace NES::Experimental {
 
 TopologyPrediction::AggregatedTopologyChangeLog::AggregatedTopologyChangeLog(std::unordered_set<Edge> added,
-                                                                             std::unordered_set<Edge> removed){
+                                                                             std::unordered_set<Edge> removed) {
     for (auto& addedEdge : added) {
         if (removed.contains(addedEdge)) {
             removed.erase(addedEdge);
@@ -31,11 +32,13 @@ TopologyPrediction::AggregatedTopologyChangeLog::AggregatedTopologyChangeLog(con
     }
 }
 
-void addMap(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap, std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget, std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
-    for (auto& [parentToAdd, childrenToAdd] : newMap)  {
+void addMap(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
+            std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
+            std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
+    for (const auto& [parentToAdd, childrenToAdd] : newMap) {
         auto& additionTargetChildren = additionTarget[parentToAdd];
         auto& childrenToSubstract = toSubtract[parentToAdd];
-        for (auto childToAdd : childrenToAdd) {
+        for (const auto childToAdd : childrenToAdd) {
             auto childToSubstract = std::find(childrenToSubstract.begin(), childrenToSubstract.end(), childToAdd);
             if (childToSubstract != childrenToSubstract.end()) {
                 //if the child that is to be added, is also subtracted, remove it from the subtraction list and do not added to the addition target
@@ -45,7 +48,8 @@ void addMap(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>
 
 #ifndef NDEBUG
             //if the edge to be added is also added as part of another changelog, this means our data is corrupted
-            if (std::find(additionTargetChildren.begin(), additionTargetChildren.end(), childToAdd) != additionTargetChildren.end()) {
+            if (std::find(additionTargetChildren.begin(), additionTargetChildren.end(), childToAdd)
+                != additionTargetChildren.end()) {
                 throw std::exception();
             }
 #endif
@@ -144,4 +148,48 @@ std::vector<TopologyNodeId> TopologyPrediction::AggregatedTopologyChangeLog::get
     }
     return {};
 }
+
+void TopologyPrediction::AggregatedTopologyChangeLog::insert(const TopologyDelta& newDelta) {
+    //todo: add error handling here to prevent edges being added multiple times/
+    //todo: this will break if we have the same edge being added and removed and added again in the same step
+    for (auto addedEdge : newDelta.added) {
+        //changelogAdded.insert(addedEdge);
+        changelogAdded[addedEdge.parent].push_back(addedEdge.child);
+    }
+    for (auto removedEdge : newDelta.removed) {
+        //changelogRemoved.insert(removedEdge);
+        changelogRemoved[removedEdge.parent].push_back(removedEdge.child);
+    }
+}
+
+void TopologyPrediction::AggregatedTopologyChangeLog::erase(const TopologyDelta& delta) {
+    /*
+    for (auto addedEdge : delta.added) {
+        changelogAdded.erase(addedEdge);
+    }
+     */
+    removeEdgesFromMap(changelogAdded, delta.added);
+    /*
+    for (auto removedEdge : delta.removed) {
+        changelogRemoved.erase(removedEdge);
+    }
+     */
+    removeEdgesFromMap(changelogRemoved, delta.removed);
+}
+
+void TopologyPrediction::AggregatedTopologyChangeLog::removeEdgesFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
+    const std::vector<Edge> edges) {
+    for (auto edge : edges) {
+        auto& children = map[edge.parent];
+        auto iterator = std::find(children.begin(), children.end(), edge.child);
+        children.erase(iterator);
+        if (children.empty()) {
+            map.erase(edge.parent);
+        }
+    }
+}
+bool TopologyPrediction::AggregatedTopologyChangeLog::empty() {
+    return changelogAdded.empty() && changelogRemoved.empty();
+}
+
 }

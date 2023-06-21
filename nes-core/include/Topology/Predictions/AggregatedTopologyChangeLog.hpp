@@ -4,6 +4,7 @@
 #include "Common/Identifiers.hpp"
 #include <Topology/Predictions/Edge.hpp>
 #include <unordered_set>
+#include <Topology/Predictions/TopologyDelta.hpp>
 namespace NES::Experimental {
 
 namespace TopologyPrediction {
@@ -15,6 +16,8 @@ class TopologyChangeLog;
  */
 class AggregatedTopologyChangeLog {
   public:
+    AggregatedTopologyChangeLog() = default;
+
     AggregatedTopologyChangeLog(std::unordered_set<Edge> added, std::unordered_set<Edge> removed);
 
     AggregatedTopologyChangeLog(const std::vector<Edge>& added, const std::vector<Edge>& removed);
@@ -25,8 +28,15 @@ class AggregatedTopologyChangeLog {
 
     //const std::unordered_set<Edge>& getRemoved();
 
+    void insert(const TopologyDelta& newDelta);
+
+    void erase(const TopologyDelta& delta);
+
+    bool empty();
+
     std::vector<TopologyNodeId> getAddedChildren(TopologyNodeId nodeId);
     std::vector<TopologyNodeId> getRemoveChildren(TopologyNodeId nodeId);
+    void removeEdgesFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map, const std::vector<Edge> edges);
   private:
     //std::unordered_set<Edge> changelogAdded;
     //std::unordered_set<Edge> changelogRemoved;
