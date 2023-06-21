@@ -26,7 +26,10 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
  */
 class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName, NesWorkerPtr worker);
+    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient,
+                             WorkerRPCClientPtr workerRpcClient,
+                             std::string healthServiceName,
+                             NesWorkerPtr worker);
 
     /**
      * Method to start the health checking
@@ -35,6 +38,7 @@ class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
+    WorkerRPCClientPtr workerRpcClient;
     NesWorkerPtr worker;
 };
 
