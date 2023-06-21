@@ -73,6 +73,8 @@ class TimeCharacteristic final {
     std::string getTypeAsString();
     TimeUnit getTimeUnit();
 
+    void setTimeUnit(const TimeUnit unit);
+
   private:
     Type type;
     AttributeFieldPtr field;

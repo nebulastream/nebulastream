@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -21,6 +22,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
@@ -28,6 +30,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
@@ -94,6 +97,10 @@ std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
 SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator,
                                                               const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
+    if (leftOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>() || rightOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        NES_TRACE("Watermark assigner detected. Skipping containment check.");
+        return {ContainmentType::NO_CONTAINMENT, {}};
+    }
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     try {
@@ -148,12 +155,12 @@ SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOpera
                 }
             }
         } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-            containmentOperators = createContainedWindowOperator(rightOperator, get<0>(windowContainment));
+            containmentOperators = createContainedWindowOperator(rightOperator, leftOperator, get<0>(windowContainment));
             if (containmentOperators.empty()) {
                 containmentRelationship = ContainmentType::NO_CONTAINMENT;
             }
         } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-            containmentOperators = createContainedWindowOperator(leftOperator, get<0>(windowContainment));
+            containmentOperators = createContainedWindowOperator(leftOperator, rightOperator, get<0>(windowContainment));
             if (containmentOperators.empty()) {
                 containmentRelationship = ContainmentType::NO_CONTAINMENT;
             }
@@ -366,26 +373,57 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
 
 std::vector<LogicalOperatorNodePtr>
 SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
+                                                        const LogicalOperatorNodePtr& containerOperator,
                                                         const uint8_t containedWindowIndex) {
+    NES_INFO2("Contained operator: {}", containedOperator->toString());
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    auto windowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
+    auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
+    //obtain the most downstream window operator from the container query plan
+    auto containerWindowOperators = containerOperator->getNodesByType<WindowLogicalOperatorNode>().front();
+    Windowing::TimeBasedWindowTypePtr containerTimeBasedWindow;
+    if (containerWindowOperators->as<WindowLogicalOperatorNode>()
+            ->getWindowDefinition()
+            ->getWindowType()
+            ->isTimeBasedWindowType()) {
+        containerTimeBasedWindow =
+            containerWindowOperators->as<WindowLogicalOperatorNode>()
+                ->getWindowDefinition()
+                ->getWindowType()
+                ->asTimeBasedWindowType(
+                    containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType());
+    }
+    NES_INFO2("Contained operator: {}", containedOperator->toString());
+    if (containerTimeBasedWindow == nullptr) {
+        return {};
+    }
     //get the correct window operator
-    if (containedWindowIndex > 0 && containedWindowIndex <= windowOperators.size()) {
-        LogicalOperatorNodePtr windowOperator = windowOperators[windowOperators.size() - containedWindowIndex];
+    if (containedWindowIndex > 0 && containedWindowIndex <= containedWindowOperators.size()) {
+        auto windowOperator = containedWindowOperators[containedWindowOperators.size() - containedWindowIndex]->copy();
+        auto watermarkOperatorNode = containedWindowOperators[containedWindowOperators.size() - containedWindowIndex]->getChildren()[0]->as<WatermarkAssignerLogicalOperatorNode>()->copy();
         auto windowDefinition = windowOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition();
         //check that containee is a time based window, else return false
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto timeBasedWindow = windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType());
             //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
-            auto field = windowOperator->getOutputSchema()->hasFieldName("start");
+            auto field = containerOperator->getOutputSchema()->hasFieldName("start");
             //return false if this is not possible
             if (field == nullptr) {
                 return {};
             }
             timeBasedWindow->getTimeCharacteristic()->setField(field);
-            containmentOperators.push_back(windowOperator);
+            timeBasedWindow->getTimeCharacteristic()->setTimeUnit(containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
+            containmentOperators.push_back(windowOperator->as<LogicalOperatorNode>());
             //obtain the watermark operator
-            auto watermarkOperator = windowOperator->getChildren()[0]->as<LogicalOperatorNode>();
+            auto watermarkOperator = watermarkOperatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+            if (watermarkOperator->getWatermarkStrategyDescriptor()
+                    ->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+                auto watermarkStrategyDescriptor =
+                    watermarkOperator->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+                watermarkStrategyDescriptor->setOnField(Attribute("start").getExpressionNode());
+                watermarkStrategyDescriptor->setTimeUnit(containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
+            } else {
+                return {};
+            }
             containmentOperators.push_back(watermarkOperator);
             NES_TRACE("Window containment possible.");
         }
@@ -404,7 +442,7 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
         if (!checkDownstreamOperatorChainForSingleParent(containedOperator, projectionOperators.at(0))) {
             return {};
         }
-        return projectionOperators.at(0);
+        return projectionOperators.at(0)->copy()->as<LogicalOperatorNode>();
     }
     return nullptr;
 }
@@ -416,43 +454,53 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
                containee->toString());
     //if all checks pass, we extract the filter operators
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperatorsCopy = {};
     std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
+    for (const auto& filterOperator : upstreamFilterOperators) {
+        upstreamFilterOperatorsCopy.push_back(filterOperator->copy()->as<FilterLogicalOperatorNode>());
+    }
+    containee->getNodesByType<FilterLogicalOperatorNode>();
     if (upstreamFilterOperators.empty()) {
         return {};
     } else if (upstreamFilterOperators.size() == 1) {
         containmentOperators.push_back(upstreamFilterOperators.front());
-        std::vector<std::string> mapAttributeNames = {};
-        if (!checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.front(), mapAttributeNames)) {
+        std::map<std::string, ExpressionNodePtr> mapAttributeNamesAndAssignment = {};
+        if (!checkDownstreamOperatorChainForSingleParent(containee,
+                                                         upstreamFilterOperators.front(),
+                                                         mapAttributeNamesAndAssignment)) {
             return {};
         }
-        if (!filterPredicateStillApplicable(upstreamFilterOperators.front(),
-                                               mapAttributeNames,
-                                               container->getOutputSchema())) {
+        auto predicate = upstreamFilterOperatorsCopy.front()->getPredicate();
+        if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.front(),
+                                                mapAttributeNamesAndAssignment,
+                                                container->getOutputSchema())) {
             return {};
         }
         return containmentOperators;
     } else {
-        std::vector<std::string> mapAttributeNames = {};
+        std::map<std::string, ExpressionNodePtr> mapAttributeNamesAndAssignment = {};
         NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
-        if (checkDownstreamOperatorChainForSingleParent(containee, upstreamFilterOperators.back(), mapAttributeNames)) {
+        if (checkDownstreamOperatorChainForSingleParent(containee,
+                                                        upstreamFilterOperators.back(),
+                                                        mapAttributeNamesAndAssignment)) {
             NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
-            auto predicate = upstreamFilterOperators.front()->getPredicate();
-            if (!filterPredicateStillApplicable(upstreamFilterOperators.front(),
-                                                   mapAttributeNames,
-                                                   container->getOutputSchema())) {
+            auto predicate = upstreamFilterOperatorsCopy.front()->getPredicate();
+            if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.front(),
+                                                    mapAttributeNamesAndAssignment,
+                                                    container->getOutputSchema())) {
                 return {};
             }
-            for (size_t i = 1; i < upstreamFilterOperators.size(); ++i) {
-                if (!filterPredicateStillApplicable(upstreamFilterOperators.at(i),
-                                                       mapAttributeNames,
-                                                       container->getOutputSchema())) {
+            for (size_t i = 1; i < upstreamFilterOperatorsCopy.size(); ++i) {
+                if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.at(i),
+                                                        mapAttributeNamesAndAssignment,
+                                                        container->getOutputSchema())) {
                     return {};
                 }
-                predicate = AndExpressionNode::create(predicate, upstreamFilterOperators.at(i)->getPredicate());
+                predicate = AndExpressionNode::create(predicate, upstreamFilterOperatorsCopy.at(i)->getPredicate());
             }
             NES_DEBUG("Filter predicate: {}", predicate->toString());
-            upstreamFilterOperators.front()->setPredicate(predicate);
-            return {upstreamFilterOperators.front()};
+            upstreamFilterOperatorsCopy.front()->setPredicate(predicate);
+            return {upstreamFilterOperatorsCopy.front()};
         } else {
             return {};
         }
@@ -460,21 +508,21 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
     return containmentOperators;
 }
 
-bool SignatureContainmentUtil::filterPredicateStillApplicable(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                              const std::vector<std::string>& fieldNames,
-                                                              const SchemaPtr& containerOutputSchema) {
+bool SignatureContainmentUtil::mapPredicateSupstitutionSuccessful(FilterLogicalOperatorNodePtr const& filterOperator,
+                                                                  const std::map<std::string, ExpressionNodePtr>& fieldNames,
+                                                                  const SchemaPtr& containerOutputSchema) {
 
-    NES_INFO("Create an iterator for traversing the filter {} predicates {}, and check output schema {}",
-              filterOperator->toString(),
-              filterOperator->getPredicate()->toString(),
-              containerOutputSchema->toString());
+    NES_TRACE("Create an iterator for traversing the filter {} predicates {}, and check output schema {}",
+               filterOperator->toString(),
+               filterOperator->getPredicate()->toString(),
+               containerOutputSchema->toString());
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
         NES_TRACE("Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            NES_INFO2("Is field {} still in container output schema {}? {}",
+            NES_INFO("Is field {} still in container output schema {}? {}",
                       accessExpressionNode->getFieldName(),
                       containerOutputSchema->toString(),
                       containerOutputSchema->contains(accessExpressionNode->getFieldName()));
@@ -482,22 +530,35 @@ bool SignatureContainmentUtil::filterPredicateStillApplicable(FilterLogicalOpera
                 return false;
             }
             NES_TRACE("Check if the input field name is same as the FieldAccessExpression field name");
-            for (const auto& fieldName : fieldNames) {
-                if (accessExpressionNode->getFieldName() == fieldName) {
-                    return false;
+            if (fieldNames.find(accessExpressionNode->getFieldName()) != fieldNames.end()) {
+                DepthFirstNodeIterator mapDepthFirstNodeIterator(fieldNames.at(accessExpressionNode->getFieldName()));
+                //check if the accessed field is still in the output schema
+                for (auto mapExpItr = mapDepthFirstNodeIterator.begin(); mapExpItr != NES::DepthFirstNodeIterator::end();
+                     ++mapExpItr) {
+                    if ((*mapExpItr)->instanceOf<FieldAccessExpressionNode>()) {
+                        const FieldAccessExpressionNodePtr mapAccessExpressionNode =
+                            (*mapExpItr)->as<FieldAccessExpressionNode>();
+                        if (!containerOutputSchema->contains(mapAccessExpressionNode->getFieldName())) {
+                            return false;
+                        }
+                    }
                 }
+                NES_TRACE2("Replace the FieldAccessExpression {} with the ExpressionNodePtr {}",
+                           (*itr)->toString(),
+                           fieldNames.at(accessExpressionNode->getFieldName())->toString());
+                itr.operator*()->replace(fieldNames.at(accessExpressionNode->getFieldName()), itr.operator*());
             }
         }
     }
     return true;
 }
 
-std::string SignatureContainmentUtil::getFieldNameUsedByMapOperator(const NodePtr& node) {
+std::pair<std::string, ExpressionNodePtr> SignatureContainmentUtil::getFieldNameUsedByMapOperator(const NodePtr& node) {
     NES_TRACE("Find the field name used in map operator");
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
-    return field->getFieldName();
+    return std::pair<std::string, ExpressionNodePtr>(field->getFieldName(), mapExpression->getAssignment());
 }
 
 void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
@@ -706,7 +767,7 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
 bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator) {
-    NES_INFO2("What's up with the extracted contained operator: {}", extractedContainedOperator->toString());
+    NES_INFO("Extracted contained operator: {}", extractedContainedOperator->toString());
     if (extractedContainedOperator->getParents().size() != 1) {
         return false;
     }
@@ -724,25 +785,26 @@ bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
 bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator,
-    std::vector<std::string>& mapAttributeNames) {
-    NES_DEBUG2("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
-    if (extractedContainedOperator->getParents().size() != 1) {
+    std::map<std::string, ExpressionNodePtr>& mapAttributeNames) {
+    NES_DEBUG("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
+    if (extractedContainedOperator->hasMultipleParents()) {
         return false;
     }
-    auto parent = extractedContainedOperator->getParents()[0];
-    NES_DEBUG2("Parent: {}", parent->toString());
+    NodePtr parent = extractedContainedOperator;
+    NES_DEBUG("Parent: {}", parent->toString());
     if (parent->instanceOf<UnionLogicalOperatorNode>()) {
         return false;
     }
     while (!parent->equal(containedOperator)) {
-        NES_DEBUG2("Parent: {}", parent->toString());
+        NES_DEBUG("Parent: {}", parent->toString());
         if (parent->getParents().size() != 1 || parent->instanceOf<WindowLogicalOperatorNode>()
             || parent->instanceOf<UnionLogicalOperatorNode>()) {
             return false;
         } else {
             if (parent->instanceOf<MapLogicalOperatorNode>()) {
                 auto mapOperator = parent->as<MapLogicalOperatorNode>();
-                mapAttributeNames.push_back(getFieldNameUsedByMapOperator(mapOperator));
+                auto attributeAndAssignmentPair = getFieldNameUsedByMapOperator(mapOperator);
+                mapAttributeNames.insert(attributeAndAssignmentPair);
             }
             parent = parent->getParents()[0];
         }

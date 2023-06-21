@@ -47,6 +47,8 @@ TimeCharacteristic::Type TimeCharacteristic::getType() { return type; }
 
 TimeUnit TimeCharacteristic::getTimeUnit() { return unit; }
 
+void TimeCharacteristic::setTimeUnit(const TimeUnit newUnit) { this->unit = newUnit; }
+
 std::string TimeCharacteristic::toString() {
     std::stringstream ss;
     ss << "TimeCharacteristic: ";

@@ -29,9 +29,13 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
     ExpressionNodePtr getOnField() const;
 
+    void setOnField(const ExpressionNodePtr& newField);
+
     TimeMeasure getAllowedLateness() const;
 
     TimeUnit getTimeUnit() const;
+
+    void setTimeUnit(const TimeUnit& newUnit);
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 
