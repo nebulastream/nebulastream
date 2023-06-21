@@ -237,7 +237,6 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
         return matchedFields[0];
     }
     if (matchedFields.size() > 1) {
-        //        NES_ERROR2("Schema: Found ambiguous field with name {}", fieldName);
         //        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
         //TODO: workaround we choose the first one to join we will replace this in issue #1543
         return matchedFields[0];

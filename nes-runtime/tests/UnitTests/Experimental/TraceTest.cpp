@@ -375,7 +375,6 @@ void longEmptyLoop() {
     Value iw = Value(1);
     Value iw2 = Value(2);
     for (auto start = iw; start < 20000; start = start + 1) {
-        //NES_INFO2("{}", "loop" );
     }
     auto iw3 = iw2 - 5;
 }

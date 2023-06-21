@@ -94,7 +94,7 @@ class EmitOperatorTest : public Testing::NESBaseTest, public ::testing::WithPara
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
-        NES_INFO2("Setup QueryExecutionTest test case.{}", param);
+        NES_INFO2("Setup QueryExecutionTest test case. {}", param);
         if (param == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (param == "MLIR") {

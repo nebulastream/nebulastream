@@ -96,7 +96,7 @@ class Query6Test : public Testing::NESBaseTest,
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO2("Setup Query6Test test case.{}", compiler);
+        NES_INFO2("Setup Query6Test test case. {}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {

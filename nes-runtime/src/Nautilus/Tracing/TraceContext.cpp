@@ -221,11 +221,10 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
             initializeTraceIteration();
             auto result = function();
             traceReturnOperation(result);
-            //NES_DEBUG2("ExecutionTrace: {}", *executionTrace);
         } catch (const TraceTerminationException& ex) {
         }
     }
-    NES_DEBUG2("Iterations:{}", symbolicExecutionContext.getIterations());
+    NES_DEBUG2("Iterations: {}", symbolicExecutionContext.getIterations());
     return executionTrace;
 }
 
