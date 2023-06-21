@@ -289,7 +289,6 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
         int8_t* value;
         uint32_t arrayIndex;
         uint32_t elementIndex;
-
         Element(int8_t* val, uint32_t arrIndex, uint32_t elemIndex) : value(val), arrayIndex(arrIndex), elementIndex(elemIndex) {}
     };
 
@@ -297,49 +296,46 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
     struct ElementComparator {
         uint32_t compWidth;
         explicit ElementComparator(uint32_t width) { compWidth = width; }
-        bool operator()(Element a, Element b) const { return std::memcmp(a.value, b.value, compWidth); }
+        bool operator()(Element a, Element b) const { return std::memcmp(a.value, b.value, compWidth) > 0; }
     };
 
     ElementComparator comp(compWidth);
-    std::priority_queue<Element, std::vector<Element>, ElementComparator> minHeap(comp);
+    std::priority_queue<Element, std::vector<Element>, ElementComparator> heap(comp);
 
     // Initialize the heap with the first element from each page
-    auto numPages = origin->getNumberOfPages();
     for (uint32_t i = 0; i < k; ++i) {
         // We assume here that the pages cannot be empty
-        minHeap.emplace(origin->getPages()[i], i, 0);
+        heap.emplace(origin->getPages()[i], i, 0);
     }
 
     auto resultCnt = 0;
-    // Merge the arrays until the min heap is empty
-    while (!minHeap.empty()) {
-        // Get the minimum element from the min heap
-        Element minElement = minHeap.top();
-        minHeap.pop();
+    // Merge the pages until the heap is empty
+    while (!heap.empty()) {
+        // Get the max element from the heap
+        Element maxElement = heap.top();
+        heap.pop();
 
-        uint32_t arrayIndex = minElement.arrayIndex;
-        uint32_t elementIndex = minElement.elementIndex;
+        uint32_t arrayIndex = maxElement.arrayIndex;
+        uint32_t elementIndex = maxElement.elementIndex;
 
-        // Add the minimum element to the merged array
+        // Add the max element to the merged array
         if (resultCnt++ % tmp->capacityPerPage() == 0) {
             tmp->appendPage();
         }
-        std::memcpy(tmp->getEntry(resultCnt), minElement.value, rowWidth);
+        std::memcpy(tmp->getEntry(resultCnt), maxElement.value, rowWidth);
 
         // Move to the next element in the array
         // Last page
         if (arrayIndex + 1 == origin->getNumberOfPages()) {
             if (elementIndex + 1 < origin->getNumberOfEntriesOnCurrentPage()) {
-                minHeap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+                heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
-        } else {
+        } else {// other pages
             if (elementIndex + 1 < origin->capacityPerPage()) {
-                minHeap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+                heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
         }
     }
-    // Swap the pointers
-    origin = tmp;
 }
 
 void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
@@ -349,6 +345,7 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     for (uint32_t i = 0; i < handler->getState()->getNumberOfPages(); ++i) {
         auto origPtr = handler->getState()->getPages()[i];
         auto tempPtr = handler->getTempState()->getPages()[i];
+        // append page if not existing
         if (handler->getTempState()->getPages().size() <= i) {
             tempPtr = handler->getTempState()->appendPage();
         }
@@ -378,7 +375,9 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
 
 void* getStateProxy(void* op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
-    return handler->getState();
+    // return here the temp state holding the merged fields
+    handler->getTempState()->setNumberOfEntries(handler->getState()->getNumberOfEntries());
+    return handler->getTempState();
 }
 
 uint64_t getSortStateEntrySizeProxy(void* op) {
