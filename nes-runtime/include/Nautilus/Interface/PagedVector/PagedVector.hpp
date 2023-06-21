@@ -49,7 +49,7 @@ class PagedVector {
      * @brief Returns the set of pages
      * @return std::vector<int8_t*>
      */
-    std::vector<int8_t*> getPages();
+    const std::vector<int8_t*> getPages();
 
     /**
      * @brief Clear the sequential data of pages
