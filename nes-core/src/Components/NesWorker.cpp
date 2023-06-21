@@ -18,6 +18,7 @@
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -363,6 +364,7 @@ bool NesWorker::connect() {
         connected = true;
         nodeEngine->setNodeId(workerId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
+                                                                        std::make_shared<WorkerRPCClient>(),
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
