@@ -158,7 +158,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                             if ((std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
                                                                                        - timerStart)
                                      .count()
-                                 >= 1000)) {
+                                 >= 10000000000000)) {
                                 NES_DEBUG2(
                                     "MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
                                     "TupleBuffer.");
@@ -289,13 +289,14 @@ void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorCh
     NES_TRACE2("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
     auto parents = containedOperator->getParents();
     for (const auto& parent : parents) {
-        parent->removeChildren();
+        parent->removeChild(containedOperator);
         NES_TRACE2("Parent: {}", parent->toString());
         downstreamOperator->addParent(parent);
     }
     //add the contained operator chain to the host operator
     bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
-    NES_TRACE2("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren().size());
+    NES_TRACE2("Children upstreamContainedOperator size: {}", upstreamContainedOperator->getChildren().size());
+    NES_TRACE2("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren()[0]->toString());
     if (!addedNewParent) {
         NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
     }
