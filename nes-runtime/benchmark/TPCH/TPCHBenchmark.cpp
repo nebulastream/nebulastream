@@ -53,6 +53,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>

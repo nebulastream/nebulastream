@@ -19,12 +19,12 @@
 
 namespace NES::Nautilus::Interface {
 
-extern "C" void* findChainProxy(void* state, uint64_t hash) {
+extern "C" __attribute__((always_inline)) void* findChainProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->findChain(hash);
 }
 
-extern "C" void* insetProxy(void* state, uint64_t hash) {
+extern "C" __attribute__((always_inline)) void* insertProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->insertEntry(hash);
 }
@@ -63,7 +63,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const Value<UInt64>& ha
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash) {
-    auto entry = FunctionCall<>("insertProxy", insetProxy, hashTableRef, hash);
+    auto entry = FunctionCall<>("insertProxy", insertProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 

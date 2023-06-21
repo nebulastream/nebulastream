@@ -61,6 +61,7 @@ void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& b
     FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
+extern "C" __attribute__((always_inline)) 
 uint64_t getWorkerIdProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
     return wc->getId();
@@ -83,6 +84,7 @@ void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std:
     localStateMap.emplace(op, std::move(state));
 }
 
+extern "C"
 void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto handlers = pipelineCtx->getOperatorHandlers();

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Runtime/TupleBuffer.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 namespace NES::Runtime::ProxyFunctions {
 void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
@@ -25,8 +26,7 @@ uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getNumberOfTuples();
 };
-extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr,
-                                                                                            uint64_t numberOfTuples) {
+void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples) {
     NES::Runtime::TupleBuffer* tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
@@ -62,5 +62,10 @@ void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestampInMS(value);
 }
+
+// void* getProbeHashMapProxy(void* op) {
+//     auto handler = static_cast<Execution::Operators::BatchJoinHandler*>(op);
+//     return handler->getGlobalHashMap();
+// }
 
 }// namespace NES::Runtime::ProxyFunctions

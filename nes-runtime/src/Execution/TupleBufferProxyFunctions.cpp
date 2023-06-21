@@ -12,12 +12,14 @@
     limitations under the License.
 */
 #include <Runtime/TupleBuffer.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
+
 namespace NES::Runtime::ProxyFunctions {
 extern "C" __attribute__((always_inline)) void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getBuffer();
 };
-uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
+extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getBufferSize();
 };
@@ -38,29 +40,42 @@ extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNum
 //    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
 //    tupleBuffer->setNumberOfTuples(numberOfTuples);
 // }
-uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
+extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getWatermark();
 };
-void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value) {
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setWatermark(value);
 };
-uint64_t NES__Runtime__TupleBuffer__getCreationTimestampInMS(void* thisPtr) {
+extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getCreationTimestampInMS(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getCreationTimestampInMS();
 };
-void NES__Runtime__TupleBuffer__setSequenceNumber(void* thisPtr, uint64_t sequenceNumber) {
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setSequenceNumber(void* thisPtr, uint64_t sequenceNumber) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setSequenceNumber(sequenceNumber);
 };
-uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
+extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getSequenceNumber();
 }
-void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value) {
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestampInMS(value);
 }
+extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->getOriginId();
+};
+extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    thisPtr_->setOriginId(value);
+};
+
+// extern "C" __attribute__((always_inline)) void* getProbeHashMapProxy(void* op) {
+//     auto handler = static_cast<Execution::Operators::BatchJoinHandler*>(op);
+//     return handler->getGlobalHashMap();
+// }
 
 }// namespace NES::Runtime::ProxyFunctions

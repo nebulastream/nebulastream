@@ -21,7 +21,11 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-this-capture"
+#pragma clang diagnostic ignored "-Wdeprecated"
 #include <folly/ThreadLocal.h>
+#pragma clang diagnostic pop
 #include <memory>
 #include <queue>
 #include <unordered_map>

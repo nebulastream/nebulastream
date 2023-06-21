@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <exception>
 #include <filesystem>
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
@@ -48,9 +49,80 @@
 #include <unordered_map>
 #include <utility>
 
+// #include <iostream>
+// #include <sstream>
+#include <fstream>
+
 using namespace llvm;
 
+/**
+ * @brief Tries to find a substring a line. If it finds one, it replaces a substring with another one.
+ * 
+ * @param line: The line in the LLVM IR that we want to replace a substring in.
+ * @param toReplace: The substring that we want to replace.
+ * @param replacement: The string that we want to replace 'toReplace' with.
+ */
+bool replaceString(std::string& line, const std::string toReplace, const std::string replacement) {
+    auto toReplacePosition = line.find(toReplace);
+    if (toReplacePosition != std::string::npos) {
+        line.replace(toReplacePosition, toReplace.length(), replacement);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @brief A custom pass that iterates over the generated proxy function file and adds information that gets lost
+ *        during function extraction. A clean solution would be to use the LLVM passes correctly. We use this custom
+ *        pass for now, because finding the correct LLVM approach could take very long.
+ * 
+ * @param filename: The name of the file that we want to fix @.str nad @__PRETTY_FUNCTION lines for.
+ */
+bool strAndPrettyFunctionFixPass(const std::string& filename) {
+    std::ifstream inputFile(filename);
+
+    if (!inputFile) {
+        std::cout << "Failed to open input file." << std::endl;
+        return false;
+    }
+
+    std::stringstream modifiedContent; // Store modified content in a stringstream
+    std::string line;
+
+    while (std::getline(inputFile, line)) {
+        // if (line.substr(0, 13) == "@.str.80.151") {
+        if (line.substr(0, 5) == "@.str" || line.substr(0, 20) == "@__PRETTY_FUNCTION__") {
+            // Replace "external" with "private" and add "unnamed_addr" after "private"
+            const std::string toReplaceString = "external hidden";
+            size_t position = line.find(toReplaceString);
+            if (position != std::string::npos) {
+                line.replace(position, toReplaceString.length(), "private");
+            }
+            if(!replaceString(line, "[110 x i8], align 1", "[110 x i8] c\"/home/rudi/dima/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
+                if(!replaceString(line, "[15 x i8], align 1", "[15 x i8] c\"pos < capacity\\00\", align 1")) {
+                    if(!replaceString(line, "[26 x i8], align 1", "[26 x i8] c\"vector::_M_realloc_insert\\00\", align 1")) {
+                        replaceString(line, "[71 x i8], align 1", "[71 x i8] c\"void NES::Nautilus::Interface::ChainedHashMap::insert(Entry *, hash_t)\\00\", align 1");
+                    }
+                }
+            }
+        }
+        modifiedContent << line << std::endl;
+    }
+    inputFile.close();
+
+    // Overwrite input file with modified file content.
+    std::ofstream outputFile(filename);
+    if (!outputFile) {
+        std::cout << "Failed to open output file." << std::endl;
+        return false;
+    }
+    outputFile << modifiedContent.str(); // Overwrite the content of the input file
+    outputFile.close();
+    return true;
+}
+
 std::string demangleToBaseName(const std::string& functionName) {
+    (void) functionName;
     const char* mangled = functionName.c_str();
     size_t Size = functionName.size();
     char* Buf = static_cast<char*>(std::malloc(Size));
@@ -60,11 +132,15 @@ std::string demangleToBaseName(const std::string& functionName) {
         return "";
     }
     char* Result = Mangler.getFunctionBaseName(Buf, &Size);
-    return std::string(Result);
+    if(!Result) {
+        std::cout << "Could not demangle function with name: " << functionName << '\n';
+        return "";
+    } else {
+        return std::string(Result);
+    }
 }
 
 int main(int argc, char** argv) {
-    InitLLVM X(argc, argv);
     bool Recursive = true;
     LLVMContext Context;
 
@@ -74,7 +150,9 @@ int main(int argc, char** argv) {
         getLazyIRFileModule(std::string(IR_FILE_DIR) + "/" + std::string(IR_FILE_FILE), Err, Context);
 
     if (!LLVMModule.get()) {
-        Err.print(argv[0], errs());
+        if(argc > 0) {
+            Err.print(argv[0], errs());
+        }
         return 1;
     }
 
@@ -84,8 +162,19 @@ int main(int argc, char** argv) {
     // Get unmangled function names from LLVM IR module.
     std::unordered_map<std::string, std::string> unmangledToMangledNamesMap;
     for (auto func = LLVMModule->getFunctionList().begin(); func != LLVMModule->getFunctionList().end(); func++) {
-        unmangledToMangledNamesMap.emplace(
-            std::pair<std::string, std::string>{demangleToBaseName(func->getName().str()), func->getName().str()});
+        std::string functionName = func->getName().str();
+        std::string demangledName = "";
+        // The hashValue function is a templated function that is created. During build time, several versions of the 
+        // function are created (one for each allowed data type). Currently, we only need the i32 version.
+        if(functionName == "_ZN3NES8Nautilus9Interface9hashValueIiEEmmT_") {
+            func->setName("hashValueI32");
+        } else {
+            demangledName = demangleToBaseName(functionName);
+        }
+        if(!demangledName.empty()) {
+            unmangledToMangledNamesMap.emplace(
+                std::pair<std::string, std::string>{demangledName, functionName});
+        }
     }
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
@@ -93,13 +182,25 @@ int main(int argc, char** argv) {
                                           "NES__Runtime__TupleBuffer__setNumberOfTuples",
                                           "NES__Runtime__TupleBuffer__getBuffer",
                                           "NES__Runtime__TupleBuffer__getBufferSize",
-                                          "NES__Runtime__TupleBuffer__getWatermark",
+                                          "NES__Runtime__TupleBuffer__getWatermark", // Does this cover NES__Runtime__TupleBuffer__Watermark? -> Why does it have a different name in 'RecordBuffer'?
                                           "NES__Runtime__TupleBuffer__setWatermark",
                                           "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
                                           "NES__Runtime__TupleBuffer__setSequenceNumber",
                                           "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                          "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
-
+                                          "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
+                                         "NES__Runtime__TupleBuffer__getOriginId",
+                                         "NES__Runtime__TupleBuffer__setOriginId",
+                                         "getProbeHashMapProxy",
+                                         "findChainProxy",
+                                         "insertProxy",
+                                         "hashValueI32",
+                                         "getWorkerIdProxy",
+                                         "getPagedVectorProxy",
+                                         "allocateNewPageProxy",
+                                         "getKeyedStateProxy",
+                                        //  "getGlobalOperatorHandlerProxy"
+                                        };
+ 
     for (size_t i = 0; i != ExtractFuncs.size(); ++i) {
         GlobalValue* GV = LLVMModule->getFunction(ExtractFuncs[i]);
         if (!GV) {
@@ -162,7 +263,8 @@ int main(int argc, char** argv) {
 
     std::error_code EC;
     // We statically write proxy functions to /tmp/proxiesReduced.ll (we might change this behavior in #3710)
-    ToolOutputFile Out(std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll", EC, sys::fs::OF_None);
+    const std::string filename = std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll";
+    ToolOutputFile Out(filename, EC, sys::fs::OF_None);
     if (EC) {
         errs() << EC.message() << '\n';
         return 1;
@@ -174,5 +276,8 @@ int main(int argc, char** argv) {
     // Declare success.
     Out.keep();
 
-    return 0;
+    if(strAndPrettyFunctionFixPass(filename)) {
+        return 0;
+    }
+    return 1;
 }
