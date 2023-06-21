@@ -277,10 +277,8 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest) {
         Value<NautilusType> cur1 = collector->records[i].read("f1").as<NautilusType>();
         Value<NautilusType> cur2 = collector->records[i].read("f2").as<NautilusType>();
         ASSERT_LE(prev2, cur2);
-        std::cout << "1: " << prev2 << " " << cur2 << "\n";
         // If the first fields are equal we compare the second field
         if (prev2 == cur2) {
-            std::cout << "2: " << prev1 << " " << cur1 << "\n";
             ASSERT_LE(prev1, cur1);
         }
         prev1 = cur1;
