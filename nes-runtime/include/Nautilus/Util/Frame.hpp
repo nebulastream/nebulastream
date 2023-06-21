@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
 #include <Exceptions/RuntimeException.hpp>
 #include <unordered_map>
+#include <folly/container/F14Map.h>
 namespace NES::Nautilus {
 
 /**
@@ -36,10 +37,10 @@ class Frame {
     bool contains(const K& key) { return frameMap.contains(key); }
 
     void setValue(const K& key, const V& value) { frameMap.emplace(std::make_pair(key, value)); }
-    std::unordered_map<K, V>& getContent() { return frameMap; }
+    folly::F14NodeMap<K, V>& getContent() { return frameMap; }
 
   private:
-    std::unordered_map<K, V> frameMap;
+    folly::F14NodeMap<K, V> frameMap;
 };
 
 }// namespace NES::Nautilus

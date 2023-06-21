@@ -29,7 +29,7 @@ class ValueRef {
 
     uint32_t blockId;
     uint32_t operationId;
-    IR::Types::StampPtr type;
+   // IR::Types::StampPtr type;
 };
 
 /**

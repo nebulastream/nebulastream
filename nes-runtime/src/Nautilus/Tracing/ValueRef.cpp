@@ -24,7 +24,7 @@ ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr& stamp) {
         return ctx->createNextRef(stamp);
     }
     // create default value.
-    return ValueRef(0 /* blockId */, 0 /*operationId */, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
+    return ValueRef(0 /* blockId */, 0 /*operationId */);
 }
 
 std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {

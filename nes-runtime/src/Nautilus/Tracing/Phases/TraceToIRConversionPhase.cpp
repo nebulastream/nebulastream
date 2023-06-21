@@ -48,7 +48,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversi
     auto rootIrBlock = processBlock(0, rootBlock);
 
     auto& returnOperation = trace->getBlock(trace->getReturn()->blockId).operations.back();
-    auto& returnType = std::get<ValueRef>(returnOperation.result).type;
+    auto returnType = IR::Types::StampFactory::createInt32Stamp();
     auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(returnType);
     auto functionOperation = std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>(
         "execute",
@@ -66,7 +66,7 @@ NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::
     std::vector<std::shared_ptr<NES::Nautilus::IR::Operations::BasicBlockArgument>> blockArguments;
     for (auto& arg : block.arguments) {
         auto argumentIdentifier = createValueIdentifier(arg);
-        auto blockArgument = std::make_shared<NES::Nautilus::IR::Operations::BasicBlockArgument>(argumentIdentifier, arg.type);
+        auto blockArgument = std::make_shared<NES::Nautilus::IR::Operations::BasicBlockArgument>(argumentIdentifier, IR::Types::StampFactory::createInt32Stamp() );
         blockArguments.emplace_back(blockArgument);
         blockFrame.setValue(argumentIdentifier, blockArgument);
     }
@@ -144,14 +144,11 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
         };
         case OpCode::ASSIGN: break;
         case OpCode::RETURN: {
-            if (std::get<ValueRef>(operation.result).type->isVoid()) {
-                auto operation = std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>();
-                currentIrBlock->addOperation(operation);
-            } else {
+
                 auto returnValue = frame.getValue(createValueIdentifier(operation.input[0]));
                 auto operation = std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>(returnValue);
                 currentIrBlock->addOperation(operation);
-            }
+
 
             return;
         };
@@ -395,7 +392,7 @@ void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t,
     //currentBlock->addOperation(constOperation);
     auto address = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto resultType = std::get<ValueRef>(operation.result).type;
+    auto resultType = IR::Types::StampFactory::createInt32Stamp();
     auto loadOperation = std::make_shared<NES::Nautilus::IR::Operations::LoadOperation>(resultIdentifier, address, resultType);
     frame.setValue(resultIdentifier, loadOperation);
     currentBlock->addOperation(loadOperation);
@@ -424,11 +421,11 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     }
 
     auto resultType = std::holds_alternative<None>(operation.result) ? NES::Nautilus::IR::Types::StampFactory::createVoidStamp()
-                                                                     : std::get<ValueRef>(operation.result).type;
+                                                                     : IR::Types::StampFactory::createInt32Stamp();
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto proxyCallOperation = std::make_shared<NES::Nautilus::IR::Operations::ProxyCallOperation>(
         NES::Nautilus::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
-        functionCallTarget.mangledName,
+        std::string(functionCallTarget.mangledName),
         functionCallTarget.functionPtr,
         resultIdentifier,
         inputArguments,
@@ -509,7 +506,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCast(int32_t,
 
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto input = frame.getValue(createValueIdentifier(operation.input[0]));
-    auto resultType = std::get<ValueRef>(operation.result).type;
+    auto resultType = IR::Types::StampFactory::createInt32Stamp();
     auto castOperation = std::make_shared<NES::Nautilus::IR::Operations::CastOperation>(resultIdentifier, input, resultType);
     currentBlock->addOperation(castOperation);
     frame.setValue(resultIdentifier, castOperation);

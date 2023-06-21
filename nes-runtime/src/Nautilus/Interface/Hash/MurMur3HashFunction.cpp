@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 

@@ -14,6 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#include "Util/Logger/Logger.hpp"
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
@@ -37,7 +38,9 @@ class TraceOperation {
     TraceOperation(const TraceOperation&& other);
     TraceOperation& operator=(const TraceOperation& other);
     TraceOperation& operator=(const TraceOperation&& other);
-    ~TraceOperation() = default;
+    ~TraceOperation()  {
+        NES_DEBUG("test");
+    };
     OpCode op;
     InputVariant result;
     std::vector<InputVariant> input;

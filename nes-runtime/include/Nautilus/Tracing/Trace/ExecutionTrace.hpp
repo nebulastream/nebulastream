@@ -14,8 +14,10 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 
+#include "Nautilus/Tracing/ValueRef.hpp"
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 namespace NES::Nautilus::Tracing {
@@ -31,7 +33,8 @@ class ExecutionTrace {
      * @brief Adds an operation to the current block
      * @param operation TraceOperation
      */
-    void addOperation(TraceOperation& operation);
+    TraceOperation& addOperation(TraceOperation&& operation);
+    TraceOperation& addCMPOperation(const ValueRef& operation, uint32_t trueBlock, uint32_t falseBlock);
 
     /**
      * @brief Adds arguments that are passed to the traced function

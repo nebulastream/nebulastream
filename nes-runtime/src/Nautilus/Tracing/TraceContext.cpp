@@ -70,9 +70,9 @@ void TraceContext::traceUnaryOperation(const OpCode& op, const ValueRef& input, 
 void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
     trace(OpCode::RETURN, [&]() {
         TraceOperation result = TraceOperation(OpCode::RETURN);
-        if (!resultRef.type->isVoid()) {
+       // if (!resultRef.type->isVoid()) {
             result.input.emplace_back(resultRef);
-        }
+       // }
         result.result = resultRef;
         return result;
     });
@@ -107,8 +107,7 @@ void TraceContext::traceAssignmentOperation(const ValueRef& targetRef, const Val
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(OpCode::ASSIGN)) {
         auto tag = tagRecorder.createTag();
-        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::OpCode::ASSIGN, targetRef, {sourceRef});
-        executionTrace->addOperation(operation);
+        auto operation = executionTrace->addOperation(Nautilus::Tracing::TraceOperation(Nautilus::Tracing::OpCode::ASSIGN, targetRef, {sourceRef}));
         localTagMap.emplace(tag, operation.operationRef);
     }
     incrementOperationCounter();
@@ -123,8 +122,7 @@ void TraceContext::trace(const OpCode& opCode, Functor createOperation) {
     if (!isExpectedOperation(opCode)) {
         auto tag = tagRecorder.createTag();
         if (!isKnownOperation(tag)) {
-            auto operation = createOperation();
-            executionTrace->addOperation(operation);
+            auto operation = executionTrace->addOperation(createOperation());
             localTagMap.emplace(tag, operation.operationRef);
             incrementOperationCounter();
         }
@@ -141,8 +139,7 @@ bool TraceContext::traceCMP(const ValueRef& valueRef) {
         falseBlock = executionTrace->createBlock();
         executionTrace->getBlock(trueBlock).predecessors.emplace_back(executionTrace->getCurrentBlockIndex());
         executionTrace->getBlock(falseBlock).predecessors.emplace_back(executionTrace->getCurrentBlockIndex());
-        auto operation = TraceOperation(OpCode::CMP, valueRef, {BlockRef(trueBlock), BlockRef(falseBlock)});
-        executionTrace->addOperation(operation);
+        executionTrace->addCMPOperation(valueRef, trueBlock, falseBlock);
     } else {
         // we repeat the operation
         auto operation = executionTrace->getCurrentBlock().operations[currentOperationCounter];
@@ -162,18 +159,16 @@ bool TraceContext::traceCMP(const ValueRef& valueRef) {
     return result;
 }
 
-ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr& type) {
+ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr&) {
     // If the next operation already exists, we have to create the same value ref.
     // Currently, we assume that it is correctly set.
     // TODO this should be handled better at a fundamental level, which ensures that value references are always correct.
     auto& currentBlock = executionTrace->getCurrentBlock();
     if (currentBlock.operations.size() > currentOperationCounter) {
         auto& operation = currentBlock.operations[currentOperationCounter];
-        if (auto* valRef = std::get_if<ValueRef>(&operation.result)) {
-            return *valRef;
-        }
+        return std::get<ValueRef>(operation.result);
     }
-    return {executionTrace->getCurrentBlockIndex(), currentOperationCounter, type};
+    return {executionTrace->getCurrentBlockIndex(), currentOperationCounter};
 }
 
 void TraceContext::incrementOperationCounter() { currentOperationCounter++; }

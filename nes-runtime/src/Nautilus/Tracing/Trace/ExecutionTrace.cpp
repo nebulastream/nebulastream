@@ -23,15 +23,32 @@ namespace NES::Nautilus::Tracing {
 
 ExecutionTrace::ExecutionTrace() : blocks() { createBlock(); };
 
-void ExecutionTrace::addOperation(TraceOperation& operation) {
+TraceOperation& ExecutionTrace::addCMPOperation(const ValueRef& valueRef, uint32_t trueBlock, uint32_t falseBlock) {
     if (blocks.empty()) {
         createBlock();
     }
-    operation.operationRef = std::make_shared<OperationRef>(currentBlock, blocks[currentBlock].operations.size());
-    blocks[currentBlock].operations.emplace_back(operation);
-    if (operation.op == OpCode::RETURN) {
-        returnRef = operation.operationRef;
+    auto& op = blocks[currentBlock].operations.emplace_back(OpCode::CMP);
+    op.input = {BlockRef(trueBlock), BlockRef(falseBlock)};
+    op.result = valueRef;
+    op.operationRef = std::make_shared<OperationRef>(currentBlock, blocks[currentBlock].operations.size()-1);
+
+    if (op.op == OpCode::RETURN) {
+        returnRef = op.operationRef;
     }
+    return op;
+}
+
+TraceOperation& ExecutionTrace::addOperation(TraceOperation&& operation) {
+    if (blocks.empty()) {
+        createBlock();
+    }
+    auto& op = blocks[currentBlock].operations.emplace_back(std::forward<TraceOperation>(operation));
+    op.operationRef = std::make_shared<OperationRef>(currentBlock, blocks[currentBlock].operations.size()-1);
+
+    if (op.op == OpCode::RETURN) {
+        returnRef = op.operationRef;
+    }
+    return op;
 }
 
 void ExecutionTrace::addArgument(const ValueRef& argument) {
@@ -78,11 +95,10 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(
-        TraceOperation(OpCode::JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
-    auto operation = TraceOperation(OpCode::JMP,
-                                    ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()),
-                                    {BlockRef(mergedBlockId)});
-    addOperation(operation);
+        TraceOperation(OpCode::JMP, ValueRef(0, 0), {oldBlockRef}));
+    addOperation(TraceOperation(OpCode::JMP,
+                                ValueRef(0, 0),
+                                {BlockRef(mergedBlockId)}));
 
     mergeBlock.predecessors.emplace_back(blockIndex);
     mergeBlock.predecessors.emplace_back(currentBlock);

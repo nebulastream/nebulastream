@@ -23,7 +23,7 @@ namespace NES::Nautilus::Tracing {
 class FunctionCallTarget {
   public:
     FunctionCallTarget(const std::string_view& mangledFunctionName, void* functionPtr);
-    std::string mangledName;
+    std::string_view mangledName;
     void* functionPtr;
     friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
 };

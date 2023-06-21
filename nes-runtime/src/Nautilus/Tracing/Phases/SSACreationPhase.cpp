@@ -14,6 +14,7 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {
@@ -169,7 +170,7 @@ void SSACreationPhase::SSACreationPhaseContext::makeBlockArgumentsUnique() {
         for (uint64_t argIndex = 0; argIndex < block.arguments.size(); argIndex++) {
             auto argRef = block.arguments[argIndex];
             if (argRef.blockId != block.blockId) {
-                auto newLocalRef = ValueRef(block.blockId, block.operations.size() + blockArgumentMap.size() + 100, argRef.type);
+                auto newLocalRef = ValueRef(block.blockId, block.operations.size() + blockArgumentMap.size() + 100);
                 blockArgumentMap[argRef] = newLocalRef;
                 block.arguments[argIndex] = newLocalRef;
             }

@@ -63,7 +63,7 @@ auto transform(Arg argument) {
 }
 
 template<typename Arg>
-Nautilus::Tracing::InputVariant getRefs(Arg& argument) {
+Nautilus::Tracing::InputVariant getRefs(const Arg& argument) {
     if constexpr (std::is_base_of<BaseTypedRef, Arg>::value) {
         return argument.value->ref;
     } else {

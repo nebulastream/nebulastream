@@ -53,12 +53,12 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     timer.start();
     auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) nullptr);
     pipelineExecutionContextRef.ref =
-        Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+        Nautilus::Tracing::ValueRef(INT32_MAX, 0);
     auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
     workerContextRef.ref =
-        Nautilus::Tracing::ValueRef(INT32_MAX, 1, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+        Nautilus::Tracing::ValueRef(INT32_MAX, 1);
     auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
-    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2);
     auto recordBuffer = RecordBuffer(memRef);
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();

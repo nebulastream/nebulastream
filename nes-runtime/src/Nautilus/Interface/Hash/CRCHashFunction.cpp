@@ -14,6 +14,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/CRCHashFunction.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <x86intrin.h>
 namespace NES::Nautilus::Interface {
 

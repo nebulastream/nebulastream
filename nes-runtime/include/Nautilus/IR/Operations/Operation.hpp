@@ -80,7 +80,7 @@ class Operation {
     explicit Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp);
     explicit Operation(OperationType opType, Types::StampPtr stamp);
     virtual ~Operation() = default;
-    OperationIdentifier getIdentifier();
+    const OperationIdentifier& getIdentifier();
     OperationIdentifier& getIdentifierRef();
     virtual std::string toString() = 0;
     OperationType getOperationType() const;

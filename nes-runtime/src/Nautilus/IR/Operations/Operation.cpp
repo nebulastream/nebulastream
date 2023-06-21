@@ -14,13 +14,14 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <string>
+#include <fmt/format.h>
 
 namespace NES::Nautilus::IR::Operations {
 Operation::Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp)
     : opType(opType), identifier(identifier), stamp(stamp) {}
 Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(0,0), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
-OperationIdentifier Operation::getIdentifier() { return identifier; }
+const OperationIdentifier& Operation::getIdentifier() { return identifier; }
 OperationIdentifier& Operation::getIdentifierRef() { return identifier; }
 const Types::StampPtr& Operation::getStamp() const { return stamp; }
 
@@ -39,7 +40,7 @@ bool OperationIdentifier::operator==(const OperationIdentifier& rhs) const {
 bool OperationIdentifier::operator!=(const OperationIdentifier& rhs) const { return !(rhs == *this); }
 
 std::string OperationIdentifier::toString() const {
-    return std::to_string(blockId) + "_" + std::to_string(operationId);
+    return fmt::format("{}_{}", blockId, operationId);
 }
 bool OperationIdentifier::operator<(const OperationIdentifier& rhs) const {
     if (blockId < rhs.blockId)

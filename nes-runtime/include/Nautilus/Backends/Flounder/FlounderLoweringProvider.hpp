@@ -56,12 +56,12 @@ class FlounderLoweringProvider {
         LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         std::unique_ptr<flounder::Executable> process(flounder::Compiler& compiler, const NES::DumpHelper&);
         void process(const std::shared_ptr<IR::Operations::FunctionOperation>&);
-        void process(const std::shared_ptr<IR::BasicBlock>&, FlounderFrame& frame);
+        void processBlock(const std::shared_ptr<IR::BasicBlock>& block, FlounderFrame& frame);
         void processInline(const std::shared_ptr<IR::BasicBlock>&, FlounderFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::Operation>&, FlounderFrame& frame);
-        FlounderFrame processBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
-        FlounderFrame processInlineBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
-        flounder::Register createVreg(const IR::Operations::OperationIdentifier& id, IR::Types::StampPtr stamp, FlounderFrame& frame);
+        void processOperation(const std::shared_ptr<IR::Operations::Operation>& opt, FlounderFrame& frame);
+        FlounderFrame& processBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
+        FlounderFrame& processInlineBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
+        flounder::Register createVreg(const IR::Operations::OperationIdentifier& id, const IR::Types::StampPtr& stamp, FlounderFrame& frame);
         flounder::VregInstruction requestVreg(flounder::Register& reg, const IR::Types::StampPtr& stamp);
 
       private:
@@ -73,7 +73,7 @@ class FlounderLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::SubOperation>& subOp, FlounderFrame& frame);
-        void process(std::shared_ptr<IR::Operations::IfOperation> opt, FlounderFrame& frame);
+        void processIf(std::shared_ptr<IR::Operations::IfOperation> ifOpt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::BranchOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoopOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, FlounderFrame& frame);

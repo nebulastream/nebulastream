@@ -26,7 +26,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
     std::optional<Value<>>
     performBinaryOperationAndCast(const Value<>& left,
                                   const Value<>& right,
-                                  std::function<Value<>(const Any& left, const Any& right)> function) const {
+                                  std::function<Value<>(const Any& left, const Any& right)>&& function) const {
         auto& leftValue = left.getValue();
         auto& rightValue = right.getValue();
         if ((isa<Float>(leftValue) && isa<Float>(rightValue)) || (isa<Double>(leftValue) && isa<Double>(rightValue))) {

@@ -25,7 +25,7 @@ Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampP
     if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
         return ctx->createNextRef(stamp);
     }
-    return {0, 0, nullptr};
+    return {0, 0};
 }
 
 std::optional<Value<>> CastToOp(const Value<>& left, const TypeIdentifier* toType) {
