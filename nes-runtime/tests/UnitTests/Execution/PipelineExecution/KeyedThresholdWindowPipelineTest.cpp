@@ -206,15 +206,15 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     aggVector.emplace_back(sumAgg);
     aggVector.emplace_back(maxAgg);
 
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::KeyedThresholdWindow>(greaterThanExpression,
-                                                          0,
-                                                          std::vector<Expressions::ExpressionPtr>{readF2},
-                                                          readKey,
-                                                          keyFieldName,
-                                                          std::vector<Record::RecordFieldIdentifier>{sumAggregationResultFieldName, maxAggregationResultFieldName},
-                                                          aggVector,
-                                                          0);
+    auto thresholdWindowOperator = std::make_shared<Operators::KeyedThresholdWindow>(
+        greaterThanExpression,
+        0,
+        std::vector<Expressions::ExpressionPtr>{readF2},
+        readKey,
+        keyFieldName,
+        std::vector<Record::RecordFieldIdentifier>{sumAggregationResultFieldName, maxAggregationResultFieldName},
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

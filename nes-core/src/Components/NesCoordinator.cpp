@@ -99,16 +99,15 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    queryRequestProcessorService =
-        std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                  topology,
-                                                  queryCatalogService,
-                                                  globalQueryPlan,
-                                                  sourceCatalog,
-                                                  udfCatalog,
-                                                  workerRpcClient,
-                                                  queryRequestQueue,
-                                                  this->coordinatorConfiguration);
+    queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
+                                                                             topology,
+                                                                             queryCatalogService,
+                                                                             globalQueryPlan,
+                                                                             sourceCatalog,
+                                                                             udfCatalog,
+                                                                             workerRpcClient,
+                                                                             queryRequestQueue,
+                                                                             this->coordinatorConfiguration);
 
     queryService = std::make_shared<QueryService>(queryCatalogService,
                                                   queryRequestQueue,

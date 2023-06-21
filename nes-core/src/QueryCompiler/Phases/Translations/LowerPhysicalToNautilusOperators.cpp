@@ -233,7 +233,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
         }
         // pass aggValues to ThresholdWindowHandler
-        auto handler = std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindowOperatorHandler>(std::move(aggValues));
+        auto handler =
+            std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -549,10 +550,10 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                    });
 
     return std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindow>(predicate,
-                                                                            aggregationResultFieldNames,
-                                                                            minCount,
-                                                                            aggregationFunctions,
-                                                                            handlerIndex);
+                                                                                   aggregationResultFieldNames,
+                                                                                   minCount,
+                                                                                   aggregationFunctions,
+                                                                                   handlerIndex);
 }
 
 #ifdef ENABLE_JNI

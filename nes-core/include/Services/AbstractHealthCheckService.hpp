@@ -15,14 +15,14 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <future>
 #include <map>
 #include <memory>
+#include <set>
 #include <stdint.h>
 #include <thread>
-#include <set>
-#include <Common/Identifiers.hpp>
 
 namespace NES {
 

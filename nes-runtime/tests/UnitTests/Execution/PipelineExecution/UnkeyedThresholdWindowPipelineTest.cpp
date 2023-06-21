@@ -101,12 +101,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
                                                                         aggregationResultFieldName);
 
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -182,12 +182,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
                                                                             readF2,
                                                                             aggregationResultFieldName);
     aggVector.emplace_back(countAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -262,12 +262,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
                                                                         readF2,
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(minAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -342,12 +342,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
                                                                         readF2,
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(maxAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -422,12 +422,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
                                                                         readF2,
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -500,12 +500,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
                                                                         readF2,
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -580,12 +580,12 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
                                                                         readF2,
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::UnkeyedThresholdWindow>(greaterThanExpression,
-                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
-                                                     0,
-                                                     aggVector,
-                                                     0);
+    auto thresholdWindowOperator = std::make_shared<Operators::UnkeyedThresholdWindow>(
+        greaterThanExpression,
+        std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+        0,
+        aggVector,
+        0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

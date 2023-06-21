@@ -72,11 +72,12 @@ extern "C" void* getAggregationValue(void* state, uint64_t i) {
     return (void*) handler->AggregationValues[i].get();
 }
 
-UnkeyedThresholdWindow::UnkeyedThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
-                                 const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
-                                 uint64_t minCount,
-                                 const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                                 uint64_t operatorHandlerIndex)
+UnkeyedThresholdWindow::UnkeyedThresholdWindow(
+    Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+    const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
+    uint64_t minCount,
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+    uint64_t operatorHandlerIndex)
     : predicateExpression(std::move(predicateExpression)), aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers),
       minCount(minCount), operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
