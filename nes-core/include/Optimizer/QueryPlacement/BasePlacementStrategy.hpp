@@ -132,14 +132,6 @@ class BasePlacementStrategy {
      */
     static void pinOperators(QueryPlanPtr queryPlan, const TopologyPtr& topology, NES::Optimizer::PlacementMatrix& matrix);
 
-
-    /**
-     * @brief Create placement matrix from a JSON string, input from the ICCS planner
-     * @param iccsInput the plan in JSON format
-     * @return matrix 2D matrix with the pinning information
-     */
-    static void pinICCSPlacement(QueryPlanPtr queryPlan, TopologyPtr topology, const std::string& iccsInput);
-
   protected:
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators

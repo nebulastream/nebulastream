@@ -36,6 +36,11 @@ class ElegantConfigurations : public BaseConfiguration {
      */
     BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS, false, "Accelerate java UDFs."};
 
+    /**
+     * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
+     */
+    StringOption plannerURL = {PLANNER_URL, "Complete URL for connecting with the ELEGANT planner."};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
 };

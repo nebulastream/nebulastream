@@ -737,7 +737,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
                           .sink(PrintSinkDescriptor::create())
                           .getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::TopDown);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
 
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
@@ -903,7 +903,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     setupTopologyAndSourceCatalog({4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::Manual);
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::Manual);
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);

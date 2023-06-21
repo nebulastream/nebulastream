@@ -1,0 +1,131 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Exceptions/QueryPlacementException.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <cpr/api.h>
+#include <nlohmann/json.hpp>
+#include <utility>
+
+namespace NES::Optimizer {
+
+std::unique_ptr<ElegantPlacementStrategy>
+ElegantPlacementStrategy::create(const std::string& serviceURL,
+                                 PlacementStrategy placementStrategy,
+                                 NES::GlobalExecutionPlanPtr globalExecutionPlan,
+                                 NES::TopologyPtr topology,
+                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
+
+    uint16_t performanceRatio = 0, energyRatio = 0;
+
+    switch (placementStrategy) {
+        case PlacementStrategy::ELEGANT_PERFORMANCE:
+            performanceRatio = 100;
+            energyRatio = 0;
+            break;
+        case PlacementStrategy::ELEGANT_ENERGY:
+            performanceRatio = 0;
+            energyRatio = 100;
+            break;
+        case PlacementStrategy::ELEGANT_BALANCED:
+            performanceRatio = 50;
+            energyRatio = 50;
+            break;
+        default: NES_ERROR2("Unknown placement strategy for elegant {}", magic_enum::enum_name(placementStrategy));
+    }
+
+    return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
+                                                                               performanceRatio,
+                                                                               energyRatio,
+                                                                               std::move(globalExecutionPlan),
+                                                                               std::move(topology),
+                                                                               std::move(typeInferencePhase)));
+}
+
+ElegantPlacementStrategy::ElegantPlacementStrategy(std::string serviceURL,
+                                                   uint16_t performanceRatio,
+                                                   uint16_t energyRatio,
+                                                   NES::GlobalExecutionPlanPtr globalExecutionPlan,
+                                                   NES::TopologyPtr topology,
+                                                   NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)),
+      serviceURL(std::move(serviceURL)), performanceRatio(performanceRatio), energyRatio(energyRatio) {}
+
+bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
+    QueryId queryId /*queryId*/,
+    FaultToleranceType faultToleranceType /*faultToleranceType*/,
+    LineageType lineageType /*lineageType*/,
+    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
+    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+
+    try {
+
+        //1. Make rest call to get the external operator placement service.
+
+        //Make a rest call to elegant planner
+        //TODO: Write code to properly call the service URL
+        cpr::Response response = cpr::Get(cpr::Url{serviceURL}, cpr::Timeout(3000));
+
+        //2. Parse the response of the external placement service
+        pinOperatorsBasedOnElegantService(queryId, pinnedDownStreamOperators, response);
+
+        // 3. Place the operators
+        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 4. add network source and sink operators
+        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 5. Perform type inference on all updated query plans
+        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+    } catch (std::exception ex) {
+        throw QueryPlacementException(queryId, ex.what());
+    }
+}
+
+void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId,
+                                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                                                 cpr::Response& response) const {
+    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+    //Fetch the placement data
+    auto placementData = jsonResponse["placement"];
+
+    // fill with true where nodeId is present
+    for (const auto& placement : placementData) {
+        OperatorId operatorId = placement["operatorId"];
+        TopologyNodeId topologyNodeId = placement["nodeId"];
+
+        bool pinned = false;
+        for (const auto& item : pinnedDownStreamOperators) {
+            auto operatorToPin = item->getChildWithOperatorId(operatorId)->as<OperatorNode>();
+            if (operatorToPin) {
+                operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
+                pinned = true;
+                break;
+            }
+        }
+
+        if (!pinned) {
+            NES_ERROR2("ElegantPlacementStrategy: Unable to find operator with id {} in the given list of operators.",
+                       operatorId);
+            throw QueryPlacementException(queryId,
+                                          "ElegantPlacementStrategy: Unable to find operator with id "
+                                              + std::to_string(operatorId) + " in the given list of operators.");
+        }
+    }
+}
+
+}// namespace NES::Optimizer
