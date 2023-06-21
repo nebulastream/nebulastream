@@ -52,7 +52,7 @@ size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
 size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
-std::vector<int8_t*> PagedVector::getPages() { return pages; }
+const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
 void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
