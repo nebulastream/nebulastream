@@ -259,13 +259,13 @@ class QueryPlan {
      * @brief Set query placement strategy
      * @param PlacementStrategy: query placement strategy
      */
-    void setPlacementStrategy(PlacementStrategy placementStrategy);
+    void setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Get the placement strategy for the shared query plan
      * @return placement strategy
      */
-    PlacementStrategy getPlacementStrategy() const;
+    Optimizer::PlacementStrategy getPlacementStrategy() const;
 
   private:
     /**
