@@ -38,6 +38,9 @@ using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
+
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -161,7 +164,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature,
+    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature,
                                                                 const QuerySignaturePtr& rightSignature);
 
     /**
@@ -171,7 +174,7 @@ class SignatureContainmentUtil {
      * @return contained window operator and its watermark operator
      */
     std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                                      const uint8_t containedWindowIndex);
+                                                                      const LogicalOperatorNodePtr& containerOperator);
 
     /**
      * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
@@ -194,7 +197,7 @@ class SignatureContainmentUtil {
      * @param Operator pointer
      * @return name of the field
      */
-    static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
+    std::pair<std::string, ExpressionNodePtr> getFieldNameUsedByMapOperator(const NodePtr& node);
 
     /**
      * @brief Validate if the input field is used in the filter predicate of the operator
@@ -202,9 +205,9 @@ class SignatureContainmentUtil {
      * @param fieldName :  name of the field to be checked
      * @return true if field use in the filter predicate else false
      */
-    static bool filterPredicateStillApplicable(FilterLogicalOperatorNodePtr const& filterOperator,
-                                               const std::vector<std::string>& fieldNames,
-                                               const SchemaPtr& containerOutputSchema);
+    bool mapPredicateSupstitutionSuccessful(FilterLogicalOperatorNodePtr const& filterOperator,
+                                            const std::map<std::string, ExpressionNodePtr>& fieldNames,
+                                            const SchemaPtr& containerOutputSchema);
 
     /**
      * @brief creates conditions for checking projection containment:
@@ -294,7 +297,7 @@ class SignatureContainmentUtil {
      */
     bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
                                                      const LogicalOperatorNodePtr& extractedContainedOperator,
-                                                     std::vector<std::string>& mapAttributeNames);
+                                                     std::map<std::string, ExpressionNodePtr>& mapAttributeNames);
 
     /**
      * @brief Reset z3 solver
@@ -306,7 +309,6 @@ class SignatureContainmentUtil {
     uint64_t counter;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
-    const int8_t NO_WINDOW_PRESENT = 0;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_

@@ -133,8 +133,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     "            SOURCE(1,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
                 Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
                     "TestEquality",
-                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45))"
-                    R"(.filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                     "SINK(21: {PrintSinkDescriptor()})\n"
                     "  FILTER(20)\n"
