@@ -279,11 +279,11 @@ void RadixSortMSD(void* orig_ptr,
  * @brief compWidth size of the column
  * @brief rowWidth size of a row
  */
-Nautilus::Interface::PagedVector* kWayMerge(Nautilus::Interface::PagedVector* origin,
-                                            Nautilus::Interface::PagedVector* tmp,
-                                            uint32_t k,
-                                            uint32_t compWidth,
-                                            uint32_t rowWidth) {
+void kWayMerge(Nautilus::Interface::PagedVector* origin,
+               Nautilus::Interface::PagedVector* tmp,
+               uint32_t k,
+               uint32_t compWidth,
+               uint32_t rowWidth) {
     // Structure to represent an element with its value and index
     struct Element {
         int8_t* value;
@@ -338,7 +338,8 @@ Nautilus::Interface::PagedVector* kWayMerge(Nautilus::Interface::PagedVector* or
             }
         }
     }
-    return tmp;
+    // Swap the pointers
+    origin = tmp;
 }
 
 void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
@@ -346,8 +347,8 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto rowWidth = handler->getStateEntrySize();
 
     for (uint32_t i = 0; i < handler->getState()->getNumberOfPages(); ++i) {
-        auto origPtr = handler->getState()->getEntry(i);
-        auto tempPtr = handler->getTempState()->getEntry(i);
+        auto origPtr = handler->getState()->getPages()[i];
+        auto tempPtr = handler->getTempState()->getPages()[i];
 
         auto count = handler->getState()->capacityPerPage();
         if (i + 1 == handler->getState()->getNumberOfPages()) {
