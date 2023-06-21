@@ -422,14 +422,14 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
         for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
             for (uint64_t j = 0; j < sortFieldIdentifiers.size(); ++j) {
                 if (fieldIdentifiers[i] == sortFieldIdentifiers[j]) {
-                    entry = entry + dataTypes[i]->size();
+                    entry = entry + (uint64_t) dataTypes[i]->size();
                 }
             }
         }
         for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);
-            entry = entry + dataTypes[i]->size();
+            entry = entry + (uint64_t) dataTypes[i]->size();
         }
         child->execute(ctx, record);
     }
