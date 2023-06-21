@@ -349,6 +349,9 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     for (uint32_t i = 0; i < handler->getState()->getNumberOfPages(); ++i) {
         auto origPtr = handler->getState()->getPages()[i];
         auto tempPtr = handler->getTempState()->getPages()[i];
+        if (handler->getTempState()->getPages().size() <= i) {
+            tempPtr = handler->getTempState()->appendPage();
+        }
 
         auto count = handler->getState()->capacityPerPage();
         if (i + 1 == handler->getState()->getNumberOfPages()) {
