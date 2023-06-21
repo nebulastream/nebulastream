@@ -90,8 +90,9 @@ SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregation
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
 
-    return {SynopsisAggregationConfig(type, fieldNameKey, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
-                           inputSchema, outputSchema), inputFile};
+    auto synopsisAggregationConfig = SynopsisAggregationConfig(type, fieldNameKey, fieldNameAggregation, fieldNameApprox,
+                                                               timeStampFieldName, inputSchema, outputSchema);
+    return {synopsisAggregationConfig, inputFile};
 }
 
 Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfig::createAggregationFunction() {
@@ -128,6 +129,7 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfi
 
 SynopsisAggregationConfig::SynopsisAggregationConfig(const SynopsisAggregationConfig& other) {
     type = other.type;
+    fieldNameKey = other.fieldNameKey;
     fieldNameApproximate = other.fieldNameApproximate;
     fieldNameAggregation = other.fieldNameAggregation;
     timeStampFieldName = other.timeStampFieldName;
@@ -142,6 +144,7 @@ SynopsisAggregationConfig& SynopsisAggregationConfig::operator=(const SynopsisAg
     }
 
     type = other.type;
+    fieldNameKey = other.fieldNameKey;
     fieldNameApproximate = other.fieldNameApproximate;
     fieldNameAggregation = other.fieldNameAggregation;
     timeStampFieldName = other.timeStampFieldName;

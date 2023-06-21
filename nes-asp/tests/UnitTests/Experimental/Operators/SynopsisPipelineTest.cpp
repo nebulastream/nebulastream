@@ -164,7 +164,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto numberOfTuplesToProduce = 1000;
 
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("id", BasicType::INT64)
+                                ->addField(fieldNameKey, BasicType::INT64)
                                 ->addField(fieldNameAggregation, BasicType::INT64)
                                 ->addField(timestampFieldName, BasicType::UINT64);
     auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(fieldNameApproximate, BasicType::INT64);

@@ -5,6 +5,7 @@ synopsis:
 aggregation:
   - type: MIN
     inputFile: "uniform_key_value_timestamp.csv"
+    fieldNameKey: "id"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
