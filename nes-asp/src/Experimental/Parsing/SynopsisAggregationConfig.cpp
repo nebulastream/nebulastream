@@ -44,6 +44,7 @@ SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& typ
 const std::string SynopsisAggregationConfig::toString() const {
     std::stringstream stringStream;
     stringStream << "type (" << magic_enum::enum_name(type) << ") "
+                 << "fieldNameKey (" << fieldNameKey << ") "
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
                  << "fieldNameAccuracy (" << fieldNameApproximate << ") "
                  << "timeStampFieldName (" << timeStampFieldName << ") "
@@ -54,13 +55,14 @@ const std::string SynopsisAggregationConfig::toString() const {
 }
 
 const std::string SynopsisAggregationConfig::getHeaderAsCsv() const {
-    return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
-           ",aggregation_inputSchema,aggregation_outputSchema";
+    return "aggregation_type,aggregation_fieldNameKey,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
+           "aggregation_timeStampFieldName,aggregation_inputSchema,aggregation_outputSchema";
 }
 
 const std::string SynopsisAggregationConfig::getValuesAsCsv() const {
     std::stringstream stringStream;
     stringStream << magic_enum::enum_name(type) << ","
+                 << fieldNameKey << ","
                  << fieldNameAggregation << ","
                  << fieldNameApproximate << ","
                  << timeStampFieldName << ","

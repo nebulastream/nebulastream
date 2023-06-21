@@ -134,8 +134,8 @@ std::vector<Runtime::TupleBuffer> fillBuffer(BufferManager& bufferManager, Schem
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
 
         auto pos = dynamicBuffer.getNumberOfTuples();
-        dynamicBuffer[pos][schema->get(0)->getName()].write((int64_t) (i + 1000));
-        dynamicBuffer[pos][schema->get(1)->getName()].write((int64_t) (numberOfTuplesToProduce - i + 100));
+        dynamicBuffer[pos][schema->get(0)->getName()].write((int64_t) (i % 10));
+        dynamicBuffer[pos][schema->get(1)->getName()].write((int64_t) ((i % 10) + 100));
         dynamicBuffer[pos][schema->get(2)->getName()].write((uint64_t)(i));
         dynamicBuffer.setNumberOfTuples(pos + 1);
 
@@ -157,17 +157,11 @@ std::vector<Runtime::TupleBuffer> fillBuffer(BufferManager& bufferManager, Schem
  * checking if the correct result is returned
  */
 TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
+    auto fieldNameKey = "id";
     auto fieldNameAggregation = "value";
     auto fieldNameApproximate = "aggregation";
     auto timestampFieldName = "ts";
     auto numberOfTuplesToProduce = 1000;
-
-    /* Output is 101 as it is the minimum of the loop
-     * for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
-     *   auto val = numberOfTuplesToProduce - i + 100;
-     * }
-     */
-    auto expectedOutput = 101L;
 
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("id", BasicType::INT64)
@@ -176,14 +170,10 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(fieldNameApproximate, BasicType::INT64);
 
     auto allBuffers  = fillBuffer(*bufferManager, inputSchema, numberOfTuplesToProduce);
-    auto expectedBuffer = bufferManager->getBufferBlocking();
-    auto dynamicExpectedBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(expectedBuffer, outputSchema);
-    dynamicExpectedBuffer[0][outputSchema->get(0)->getName()].write(expectedOutput);
-    dynamicExpectedBuffer.setNumberOfTuples(1);
-
     auto synopsisType = ASP::Parsing::Synopsis_Type::SRSWoR;
     auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(synopsisType, numberOfTuplesToProduce);
     auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::Aggregation_Type::MIN,
+                                                                             fieldNameKey,
                                                                              fieldNameAggregation,
                                                                              fieldNameApproximate,
                                                                              timestampFieldName,
@@ -203,18 +193,34 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
         executablePipeline->execute(buffer, *pipelineContext, *workerContext);
     }
 
-    auto approximateBuffer = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
+        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
+        Nautilus::Value<>((int64_t)4),
+    };
+    auto approximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeys, bufferManager);
 
-    ASSERT_EQ(approximateBuffer.size(), 1);
-    NES_DEBUG2("approximateBuffer: {}", Util::printTupleBufferAsCSV(approximateBuffer[0], outputSchema));
-    NES_DEBUG2("expectedBuffer: {}", Util::printTupleBufferAsCSV(expectedBuffer, outputSchema));
+    ASSERT_EQ(approximateBuffers.size(), 1);
+    ASSERT_EQ(approximateBuffers[0].getNumberOfTuples(), queryKeys.size());
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
 
-    auto dynamicApproxBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffer[0], outputSchema);
-    ASSERT_EQ(dynamicApproxBuffer.getNumberOfTuples(), 1);
-    ASSERT_TRUE(dynamicApproxBuffer[0][fieldNameApproximate].equal(dynamicExpectedBuffer[0][fieldNameApproximate]));
+    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 100);
+
+    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 101);
+
+    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 102);
+
+    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 103);
+
+    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 104);
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
+INSTANTIATE_TEST_CASE_P(testSynopsisPipeline,
                         SynopsisPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<SynopsisPipelineTest::ParamType>& info) {
