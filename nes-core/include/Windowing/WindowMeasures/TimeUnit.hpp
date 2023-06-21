@@ -34,7 +34,7 @@ class TimeUnit : public WindowMeasure {
     std::string toString() override;
 
   private:
-    const uint64_t multiplier;
+    uint64_t multiplier;
 };
 
 }// namespace NES::Windowing

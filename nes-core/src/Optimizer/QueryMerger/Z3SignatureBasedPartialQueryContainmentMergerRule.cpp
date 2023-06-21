@@ -25,6 +25,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -57,7 +58,11 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
                                                                                      targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-
+            auto timerStart = std::chrono::system_clock::now();
+            bool timeBudgetReached = false;
+            if (timeBudgetReached) {
+                break;
+            }
             std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> relationshipAndOperators;
 
             //Fetch the host query plan to merge
@@ -72,14 +77,17 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             //Iterate over the target query plan from sink to source and compare the operator signatures with the host query plan
             //When a match is found then store the matching operators in the matchedTargetToHostOperatorMap
             for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
+                if (timeBudgetReached) {
+                    break;
+                }
                 //Iterate the target query plan in DFS order.
                 auto targetChildren = targetRootOperator->getChildren();
                 std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
-                auto timerStart = std::chrono::system_clock::now();
-                bool timeBudgetReached = false;
                 //Iterate till target operators are remaining to be matched
-                while (!targetOperators.empty() && !timeBudgetReached) {
-
+                while (!targetOperators.empty()) {
+                    if (timeBudgetReached) {
+                        break;
+                    }
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
                     bool foundMatch = false;
@@ -97,6 +105,9 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                     //Iterate the host query plan in BFS order and check if an operator with matching signature with the target operator
                     // exists.
                     for (const auto& hostRootOperator : hostQueryPlan->getRootOperators()) {
+                        if (timeBudgetReached) {
+                            break;
+                        }
                         //Initialize the host operators to traverse
                         std::deque<NodePtr> hostOperators;
                         auto children = hostRootOperator->getChildren();
@@ -144,6 +155,16 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                     hostOperators.push_back(hostChild);
                                 }
                             }
+                            if ((std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
+                                                                                       - timerStart)
+                                     .count()
+                                 >= 1000)) {
+                                NES_DEBUG2(
+                                    "MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                                    "TupleBuffer.");
+                                timeBudgetReached = true;
+                                break;
+                            }
                         }
                         if (foundMatch) {
                             break;
@@ -158,13 +179,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                     //Check for the children operators if no host operator with matching is found on the host
                     for (const auto& targetChild : targetOperator->getChildren()) {
                         targetOperators.push_front(targetChild);
-                    }
-                    if ((std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - timerStart)
-                             .count()
-                         >= 10)) {
-                        NES_DEBUG2("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                                   "TupleBuffer.");
-                        timeBudgetReached = true;
                     }
                 }
             }
@@ -272,60 +286,19 @@ void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorCh
     NES_TRACE2("DownstreamOperator: {}", downstreamOperator->toString());
     NES_TRACE2("ContainedOperator: {}", containedOperator->toString());
     NES_TRACE2("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
-    if (!containedOperator->equal(downstreamOperator)) {
-        downstreamOperator->removeAllParent();
-        if (containedOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-            containedOperator->removeChildren();
-            downstreamOperator->addParent(containedOperator);
-        } else {
-            auto parents = containedOperator->getParents();
-            for (const auto& parent : parents) {
-                parent->removeChildren();
-                NES_TRACE2("Parent: {}", parent->toString());
-                downstreamOperator->addParent(parent);
-            }
-        }
+    NES_TRACE2("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
+    auto parents = containedOperator->getParents();
+    for (const auto& parent : parents) {
+        parent->removeChildren();
+        NES_TRACE2("Parent: {}", parent->toString());
+        downstreamOperator->addParent(parent);
     }
-    //remove the children of the upstreamOperator
-    upstreamContainedOperator->removeChildren();
-    //If we deal with contained filter operators, we have to correctly prepare the operator chain to add to the container's
-    //equivalent operator chain.
-    //To do so, we add the most upstream filter operator as a parent to the container's equivalent operator chain.
-    //Then, we add iteratively add all downstream filter operators to the corresponding upstream filter operators as parents.
-    if (upstreamContainedOperator->instanceOf<FilterLogicalOperatorNode>()) {
-        NES_TRACE2("FilterOperator: {}", upstreamContainedOperator->toString());
-        for (const auto& filterOperator : containedOperatorChain) {
-            NES_TRACE2("FilterOperators: {}", filterOperator->toString());
-            //if downstreamOperator and filterOperator are not equal, add the downstream filter operation as a parent
-            //to the currently traversed filter operator
-            filterOperator->removeChildren();
-            if (downstreamOperator->equal(filterOperator)) {
-                continue;
-            }
-            filterOperator->removeAllParent();
-            filterOperator->addParent(downstreamOperator);
-            downstreamOperator = filterOperator->as<LogicalOperatorNode>();
-        }
+    //add the contained operator chain to the host operator
+    bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
+    NES_TRACE2("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren().size());
+    if (!addedNewParent) {
+        NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
     }
-    //If we encounter a watermark operator, we have to obtain its children and add the contained
-    //operator chain to the child not the watermark
-    if (containerOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-        //Watermark operators only have one child
-        auto containersChild = containerOperator->getChildren()[0];
-        //add the contained operator chain to the host operator's child
-        bool addedNewParent = containersChild->addParent(upstreamContainedOperator);
-        if (!addedNewParent) {
-            NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
-        }
-        containerQueryPlan->addAdditionToChangeLog(containersChild->as<OperatorNode>(),
-                                                   upstreamContainedOperator->as<OperatorNode>());
-    } else {
-        //add the contained operator chain to the host operator
-        bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
-        if (!addedNewParent) {
-            NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
-        }
-        containerQueryPlan->addAdditionToChangeLog(containerOperator, upstreamContainedOperator->as<OperatorNode>());
-    }
+    containerQueryPlan->addAdditionToChangeLog(containerOperator, upstreamContainedOperator->as<OperatorNode>());
 }
 }// namespace NES::Optimizer
