@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.114](https://github.com/nebulastream/nebulastream/tree/v0.5.114) (2023-06-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.113...v0.5.114)
+
+### Bug Fixes 🐛
+
+- \[BUG\] java.lang.NoClassDefFoundError: stream/nebula/udf/MapFunction [\#3870](https://github.com/nebulastream/nebulastream/issues/3870)
+
 ## [v0.5.113](https://github.com/nebulastream/nebulastream/tree/v0.5.113) (2023-06-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.112...v0.5.113)
