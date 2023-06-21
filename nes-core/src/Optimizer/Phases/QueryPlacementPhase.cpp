@@ -80,7 +80,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             pinAllSinkOperators(pinnedDownStreamOperators);
 
             //4. Check if all operators are pinned
-            if (!checkForPinnedOperators(pinnedDownStreamOperators) || !checkForPinnedOperators(pinnedUpstreamOperators)) {
+            if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
                 throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
             }
 
@@ -110,7 +110,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         pinAllSinkOperators(pinnedDownStreamOperators);
 
         //4. Check if all operators are pinned
-        if (!checkForPinnedOperators(pinnedDownStreamOperators) || !checkForPinnedOperators(pinnedUpstreamOperators)) {
+        if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
             throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
         }
 
@@ -130,9 +130,9 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     return true;
 }
 
-bool QueryPlacementPhase::checkForPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
 
-    //Find if anyone of the operator does not have PINNED_NODE_ID property
+    //Find if one of the operator does not have PINNED_NODE_ID property
     return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_NODE_ID);
     });
