@@ -49,7 +49,7 @@ class PagedVector {
      * @brief Returns the set of pages
      * @return std::vector<int8_t*>
      */
-    const std::vector<int8_t*> getPages();
+    std::vector<int8_t*> getPages();
 
     /**
      * @brief Clear the sequential data of pages
@@ -61,6 +61,12 @@ class PagedVector {
      * @return size_t
      */
     size_t getNumberOfEntries();
+
+    /**
+     * @brief Sets the number of entires across all pages.
+     * @param size_t
+     */
+    void setNumberOfEntries(size_t entries);
 
     /**
      * @brief Returns the capacity per page

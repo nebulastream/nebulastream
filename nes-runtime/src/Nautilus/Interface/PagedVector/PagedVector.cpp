@@ -46,11 +46,13 @@ PagedVector::~PagedVector() {
 }
 size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }
 
+void PagedVector::setNumberOfEntries(size_t entries) { totalNumberOfEntries = entries; }
+
 size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
 size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
-const std::vector<int8_t*> PagedVector::getPages() { return pages; }
+std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
 void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
