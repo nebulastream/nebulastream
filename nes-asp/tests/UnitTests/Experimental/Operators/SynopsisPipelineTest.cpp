@@ -12,25 +12,26 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
-#include <Util/Logger/LogLevel.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 #include <vector>
@@ -162,17 +163,21 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto fieldNameApproximate = "aggregation";
     auto timestampFieldName = "ts";
     auto numberOfTuplesToProduce = 1000;
+    auto aggregationType = ASP::Parsing::Aggregation_Type::MIN;
 
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField(fieldNameKey, BasicType::INT64)
                                 ->addField(fieldNameAggregation, BasicType::INT64)
                                 ->addField(timestampFieldName, BasicType::UINT64);
-    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(fieldNameApproximate, BasicType::INT64);
+
+    auto outputSchema = ASP::Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
+                                                                                 fieldNameKey, fieldNameAggregation,
+                                                                                 fieldNameKey, fieldNameApproximate);
 
     auto allBuffers  = fillBuffer(*bufferManager, inputSchema, numberOfTuplesToProduce);
     auto synopsisType = ASP::Parsing::Synopsis_Type::SRSWoR;
     auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(synopsisType, numberOfTuplesToProduce);
-    auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::Aggregation_Type::MIN,
+    auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(aggregationType,
                                                                              fieldNameKey,
                                                                              fieldNameAggregation,
                                                                              fieldNameApproximate,
@@ -207,17 +212,17 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 100);
 
-    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 101);
+    EXPECT_EQ(dynamicBuffer[1][fieldNameKey].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][fieldNameApproximate].read<int64_t>(), 101);
 
-    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 2);
-    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 102);
+    EXPECT_EQ(dynamicBuffer[2][fieldNameKey].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][fieldNameApproximate].read<int64_t>(), 102);
 
-    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 103);
+    EXPECT_EQ(dynamicBuffer[3][fieldNameKey].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][fieldNameApproximate].read<int64_t>(), 103);
 
-    EXPECT_EQ(dynamicBuffer[0][fieldNameKey].read<int64_t>(), 4);
-    EXPECT_EQ(dynamicBuffer[0][fieldNameApproximate].read<int64_t>(), 104);
+    EXPECT_EQ(dynamicBuffer[4][fieldNameKey].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][fieldNameApproximate].read<int64_t>(), 104);
 }
 
 INSTANTIATE_TEST_CASE_P(testSynopsisPipeline,

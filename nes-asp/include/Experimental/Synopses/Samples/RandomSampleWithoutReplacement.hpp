@@ -98,7 +98,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param numberOfTuplesInWindow: Number of tuples in the window for the current active sample
      * @return Scaling factor
      */
-    Nautilus::Value<Nautilus::Double> getScalingFactor(Nautilus::Value<>& numberOfTuplesInWindow);
+    Nautilus::Value<> getScalingFactor(Nautilus::Value<>& numberOfTuplesInWindow);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor

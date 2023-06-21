@@ -52,6 +52,7 @@ std::vector<Runtime::TupleBuffer> AbstractSynopsis::getApproximateForKeys(const 
         // Retrieving the approximation for the record
         Nautilus::Record record;
         getApproximateRecord(handlerIndex, ctx, key, record);
+        NES_DEBUG2("record after getApproximateRecord() is {}", record.toString());
 
         // Writing the values to the buffer
         auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
