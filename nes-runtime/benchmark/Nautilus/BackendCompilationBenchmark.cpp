@@ -67,9 +67,9 @@ std::unique_ptr<Nautilus::Backends::Executable> prepare(std::shared_ptr<Nautilus
 #define BENCHMARK_TRACE_FUNCTION(TARGET_FUNCTION)                                                                                \
     static void TARGET_FUNCTION(benchmark::State& state) {                                                                       \
         Value<Int32> x = Value<Int32>((int32_t) 1);                                                                              \
-        x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0);                          \
+        x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0);                                                                       \
         Value<Int32> y = Value<Int32>((int32_t) 1);                                                                              \
-        y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1);                          \
+        y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1);                                                                       \
         for (auto _ : state) {                                                                                                   \
             auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {                                          \
                 return Nautilus::TARGET_FUNCTION(x, y);                                                                          \
@@ -77,9 +77,7 @@ std::unique_ptr<Nautilus::Backends::Executable> prepare(std::shared_ptr<Nautilus
         }                                                                                                                        \
     }                                                                                                                            \
     BENCHMARK(TARGET_FUNCTION)->Unit(benchmark::kMillisecond)->Iterations(10);
-BENCHMARK_TRACE_FUNCTION(test_1500);
-//BENCHMARK_TRACE_FUNCTION(test_1000);
-/*
+
 BENCHMARK_TRACE_FUNCTION(test_1);
 BENCHMARK_TRACE_FUNCTION(test_10);
 BENCHMARK_TRACE_FUNCTION(test_100);
@@ -97,27 +95,25 @@ BENCHMARK_TRACE_FUNCTION(test_1200);
 BENCHMARK_TRACE_FUNCTION(test_1300);
 BENCHMARK_TRACE_FUNCTION(test_1400);
 BENCHMARK_TRACE_FUNCTION(test_1500);
-*/
+
 #define BENCHMARK_COMPILATION_FUNCTION(TARGET_FUNCTION, COMPILER)                                                                \
     static void _##TARGET_FUNCTION##_##COMPILER##_(benchmark::State& state) {                                                    \
         NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_NONE);                                             \
         Value<Int32> x = Value<Int32>((int32_t) 1);                                                                              \
-        x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());                          \
+        x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0);                          \
         Value<Int32> y = Value<Int32>((int32_t) 1);                                                                              \
-        y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());                          \
-        auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {                                              \
-            return Nautilus::TARGET_FUNCTION(x, y);                                                                              \
-        });                                                                                                                      \
-        for (auto _ : state) {                                                                                                   \
+        y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1);                          \
                                                                                                                                  \
+        for (auto _ : state) {                                                                                                   \
+            auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {                                          \
+                return Nautilus::TARGET_FUNCTION(x, y);                                                                          \
+            });                                                                                                                  \
             auto engine = prepare(executionTrace, #COMPILER);                                                                    \
             auto function = engine->getInvocableMember<int32_t, int32_t, int32_t>("execute");                                    \
         }                                                                                                                        \
     }                                                                                                                            \
     BENCHMARK(_##TARGET_FUNCTION##_##COMPILER##_)->Iterations(10)->Unit(benchmark::kMillisecond);
 
-//BENCHMARK_COMPILATION_FUNCTION(test_1500, Flounder);
-/*
 BENCHMARK_COMPILATION_FUNCTION(test_1, CPPCompiler);
 BENCHMARK_COMPILATION_FUNCTION(test_10, CPPCompiler);
 BENCHMARK_COMPILATION_FUNCTION(test_100, CPPCompiler);
@@ -190,7 +186,6 @@ BENCHMARK_COMPILATION_FUNCTION(test_1300, MIR);
 BENCHMARK_COMPILATION_FUNCTION(test_1400, MIR);
 BENCHMARK_COMPILATION_FUNCTION(test_1500, MIR);
 
-
 BENCHMARK_COMPILATION_FUNCTION(test_1, BCInterpreter);
 BENCHMARK_COMPILATION_FUNCTION(test_10, BCInterpreter);
 BENCHMARK_COMPILATION_FUNCTION(test_100, BCInterpreter);
@@ -207,7 +202,7 @@ BENCHMARK_COMPILATION_FUNCTION(test_1100, BCInterpreter);
 BENCHMARK_COMPILATION_FUNCTION(test_1200, BCInterpreter);
 BENCHMARK_COMPILATION_FUNCTION(test_1300, BCInterpreter);
 BENCHMARK_COMPILATION_FUNCTION(test_1400, BCInterpreter);
-BENCHMARK_COMPILATION_FUNCTION(test_1500, BCInterpreter);*/
+BENCHMARK_COMPILATION_FUNCTION(test_1500, BCInterpreter);
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
