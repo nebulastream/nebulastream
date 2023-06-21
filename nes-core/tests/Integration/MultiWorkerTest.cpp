@@ -319,7 +319,7 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
 
 TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     // start the coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_DEBUG2("Starting coordinator");
@@ -367,7 +367,7 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
 
 TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     // start the coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_DEBUG2("Starting coordinator");
@@ -417,7 +417,7 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
 
 TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToInactiveWorker) {
     // start the coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_DEBUG2("Starting coordinator");
@@ -472,7 +472,7 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToInactiveWorker) {
 
 TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     // start the coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_DEBUG2("Starting coordinator");
@@ -505,7 +505,7 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
 TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     // make sure that even if the given workerId is the next available one, the counter is still increased
     // start the coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_DEBUG2("Starting coordinator");
