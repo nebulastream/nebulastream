@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.5.115](https://github.com/nebulastream/nebulastream/tree/v0.5.115) (2023-06-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.114...v0.5.115)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace MapJavaUdfLogicalOperatorNode with OpenCLOperatorNode [\#3867](https://github.com/nebulastream/nebulastream/issues/3867)
+- \[TASK\] include edges in rest request to get all mobile workers [\#3748](https://github.com/nebulastream/nebulastream/issues/3748)
+
+### Bug Fixes 🐛
+
+- \[BUG\]TopologyManagerService::registerWorker checks if the worker existed based on ip and grpc port [\#3796](https://github.com/nebulastream/nebulastream/issues/3796)
+- \[BUG\] Threshold window aggregation does not output group key field [\#3608](https://github.com/nebulastream/nebulastream/issues/3608)
+
 ## [v0.5.114](https://github.com/nebulastream/nebulastream/tree/v0.5.114) (2023-06-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.113...v0.5.114)
