@@ -59,6 +59,7 @@ std::unique_ptr<Nautilus::Backends::Executable> prepare(std::shared_ptr<Nautilus
     options.setDebug(false);
     options.setDumpToConsole(false);
     options.setDumpToFile(false);
+    options.setOptimizationLevel(3);
     auto dumpHelper = DumpHelper::create(compilerName, false, false, "");
     auto& compiler = Backends::CompilationBackendRegistry::getPlugin(std::move(compilerName));
     return compiler->compile(ir, options, dumpHelper);
