@@ -70,7 +70,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     z3Context = std::make_shared<z3::context>(cfg);
     queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
     queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, queryReconfiguration);
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
 
