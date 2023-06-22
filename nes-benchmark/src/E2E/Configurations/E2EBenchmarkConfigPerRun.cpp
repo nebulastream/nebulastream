@@ -41,8 +41,9 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- numberOfQueriesToDeploy: " << numberOfQueriesToDeploy->getValueAsString() << std::endl
         << "- numberOfSources: " << getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
         << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
-        << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString()
-        << "- pageSize: " << pageSize->getValueAsString() << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString()
+        << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString() << std::endl
+        << "- pageSize: " << pageSize->getValueAsString() << std::endl
+        << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl;
 
