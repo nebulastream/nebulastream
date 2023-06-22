@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
@@ -26,22 +27,28 @@
 
 namespace NES::Optimizer {
 
-BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
-                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                               const TopologyPtr& topology,
-                                                               const TypeInferencePhasePtr& typeInferencePhase) {
+BasePlacementStrategyPtr
+PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
+                                      const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                      const TopologyPtr& topology,
+                                      const TypeInferencePhasePtr& typeInferencePhase,
+                                      const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
 
+    std::string plannerURL = coordinatorConfiguration->elegantConfiguration.plannerURL;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Manual:
-            return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
-            return ElegantPlacementStrategy::create(serviceURL, placementStrategy, globalExecutionPlan, topology, typeInferencePhase);
+            return ElegantPlacementStrategy::create(plannerURL,
+                                                    placementStrategy,
+                                                    globalExecutionPlan,
+                                                    topology,
+                                                    typeInferencePhase);
 
 // #2486        case PlacementStrategy::IFCOP:
 //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);

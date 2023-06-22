@@ -35,7 +35,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          TypeInferencePhasePtr typeInferencePhase,
                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), coordinatorConfiguration(coordinatorConfiguration) {
+      typeInferencePhase(std::move(typeInferencePhase)), coordinatorConfiguration(std::move(coordinatorConfiguration)) {
     NES_DEBUG2("QueryPlacementPhase()");
 }
 
@@ -46,7 +46,7 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),
                                                                      std::move(typeInferencePhase),
-                                                                     coordinatorConfiguration));
+                                                                     std::move(coordinatorConfiguration)));
 }
 
 bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
@@ -56,7 +56,9 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
     auto placementStrategyPtr =
-        PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase);
+        PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+
+    bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
