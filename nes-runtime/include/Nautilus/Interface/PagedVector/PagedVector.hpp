@@ -29,7 +29,7 @@ class PagedVectorRef;
  */
 class PagedVector {
   public:
-    static const uint64_t PAGE_SIZE = 4096;
+    static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
      * @brief Creates a new paged vector with a specific entry size

@@ -36,8 +36,13 @@ class NLJWindow : public StreamWindow {
      * @param windowStart: Start timestamp of this window
      * @param windowEnd: End timestamp of this window
      * @param numWorkerThreads: The number of worker threads that will operate on this window
+     * @param leftEntrySize: Size of the tuple on the left
+     * @param rightEntrySize: Size of the tuple on the right tuple
+     * @param leftPageSize: Size of a single page for the left paged vectors
+     * @param rightPageSize: Size of a singe page for the right paged vectors
      */
-    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads);
+    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads, uint64_t leftEntrySize,
+                       uint64_t leftPageSize, uint64_t rightEntrySize, uint64_t rightPageSize);
 
     ~NLJWindow() = default;
 

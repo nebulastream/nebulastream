@@ -114,7 +114,7 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize.getValue().getValue(),
                                                         leftPageSize.getValue().getValue());
     Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize.getValue().getValue(),
-                                                         rightEntrySize.getValue().getValue());
+                                                         rightPageSize.getValue().getValue());
 
     // TODO ask Philipp why do I need this here and can not use auto?
     Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin",

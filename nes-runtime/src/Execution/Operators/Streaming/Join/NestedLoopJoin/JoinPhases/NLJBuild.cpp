@@ -86,9 +86,9 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                                        localJoinState->windowReference, workerId,
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
     Nautilus::Value<UInt64> entrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
-                                                                    nljPagedVectorMemRef);
+                                                               nljPagedVectorMemRef);
     Nautilus::Value<UInt64> pageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
-                                                                  nljPagedVectorMemRef);
+                                                               nljPagedVectorMemRef);
     localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef,
                                                                          entrySize.getValue().getValue(),
                                                                          pageSize.getValue().getValue());
