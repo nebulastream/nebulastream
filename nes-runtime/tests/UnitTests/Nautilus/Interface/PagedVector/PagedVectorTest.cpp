@@ -45,7 +45,7 @@ TEST_F(PagedVectorTest, appendValue) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto pagedVector = PagedVector(std::move(allocator), entrySize);
-    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), (uint64_t) entrySize);
 
     for (auto i = 0; i < 1000; i++) {
         pagedVectorRef.allocateEntry();
@@ -59,7 +59,7 @@ TEST_F(PagedVectorTest, changePageSize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto pagedVector = PagedVector(std::move(allocator), entrySize, 2048);
-    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize, 2048);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), (uint64_t) entrySize, (uint64_t) 2048);
 
     for (auto i = 0; i < 1000; i++) {
         pagedVectorRef.allocateEntry();
@@ -73,7 +73,7 @@ TEST_F(PagedVectorTest, storeAndRetrieveValues) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto pagedVector = PagedVector(std::move(allocator), entrySize);
-    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), (uint64_t) entrySize);
 
     for (auto i = 0UL; i < 1000UL; i++) {
         Value<UInt64> val((uint64_t) i);

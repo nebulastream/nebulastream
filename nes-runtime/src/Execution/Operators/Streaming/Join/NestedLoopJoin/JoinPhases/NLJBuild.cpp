@@ -89,9 +89,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                                                nljPagedVectorMemRef);
     Nautilus::Value<UInt64> pageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
                                                                nljPagedVectorMemRef);
-    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef,
-                                                                         entrySize.getValue().getValue(),
-                                                                         pageSize.getValue().getValue());
+    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
 
     localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
                                                          localJoinState->windowReference);
@@ -129,7 +127,8 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
     auto opHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(Nautilus::Value<Nautilus::MemRef>(nullptr), 42);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(Nautilus::Value<Nautilus::MemRef>(nullptr),
+        Nautilus::Value<Nautilus::UInt64>((uint64_t) 42));
 
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandler, windowRef, pagedVectorRef);
     ctx.setLocalOperatorState(this, std::move(localJoinState));
