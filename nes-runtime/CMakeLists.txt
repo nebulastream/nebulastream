@@ -116,7 +116,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
         add_library(nes-runtime-proxy 
             # getSequenceNumber, getNumberOfTuples, getBuffer, getWatermark, getOriginID declaration
-            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp 
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp
             # getSequenceNumber, getNumberOfTuples, getBuffer, getWatermark, getOriginID implementation
             ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp 
             # getProbeHashMapProxy declaration
