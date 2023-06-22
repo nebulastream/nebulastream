@@ -96,7 +96,7 @@ bool strAndPrettyFunctionFixPass(const std::string& filename) {
                 line.replace(position, toReplaceString.length(), "private");
             }
             // todo adapt file path
-            if(!replaceString(line, "[110 x i8], align 1", "[110 x i8] c\"/home/rudi/dima/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
+            if(!replaceString(line, "[110 x i8], align 1", "[110 x i8] c\"/home/pgrulich/projects/nes/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
                 if(!replaceString(line, "[15 x i8], align 1", "[15 x i8] c\"pos < capacity\\00\", align 1")) {
                     if(!replaceString(line, "[26 x i8], align 1", "[26 x i8] c\"vector::_M_realloc_insert\\00\", align 1")) {
                         replaceString(line, "[71 x i8], align 1", "[71 x i8] c\"void NES::Nautilus::Interface::ChainedHashMap::insert(Entry *, hash_t)\\00\", align 1");
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
                                          "NES__Runtime__TupleBuffer__setOriginId",
                                          "getProbeHashMapProxy",
                                          "findChainProxy",
-                                         "insertProxy",
+                                        // "insertProxy",
                                          "hashValueI32",
                                          "getWorkerIdProxy",
                                          "getPagedVectorProxy",
@@ -274,9 +274,9 @@ int main(int argc, char** argv) {
     // Declare success.
     Out.keep();
 
-    // if(strAndPrettyFunctionFixPass(filename)) {
-    //     return 0;
-    // }
-    // return 1;
-    return 0;
+     if(strAndPrettyFunctionFixPass(filename)) {
+         return 0;
+     }
+    return 1;
+    //return 0;
 }

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/CRCHashFunction.hpp>
 #include <x86intrin.h>
@@ -96,7 +97,7 @@ uint64_t hashTextValueCRC(uint64_t seed, TextValue* value) {
 
 HashFunction::HashValue CRCHashFunction::calculate(HashValue& hash, Value<>& value) {
     if (value->isType<Int8>()) {
-        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());
+        return FunctionCall("ccrHashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());
     } else if (value->isType<Int16>()) {
         return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>());
     } else if (value->isType<Int32>()) {
