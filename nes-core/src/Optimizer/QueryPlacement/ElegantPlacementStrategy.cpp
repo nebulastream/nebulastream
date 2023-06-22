@@ -85,8 +85,11 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         auto queryGraph = prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators);
         payload.push_back(queryGraph);
 
+        // 1.b: Get topology information as json
+        auto availableNodes = prepareAvailableNodes();
+        payload.push_back(availableNodes);
+
         //TODO: Write code to properly call the service URL
-        // Convert topology to a json. Look at TopologyManagerService:getTopologyAsJson(); Add network related information as well
 
         //1.c: Make a rest call to elegant planner
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
@@ -195,6 +198,16 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::vector<O
     }
     queryPlan["OPERATOR_GRAPH"] = nodes;
     return queryPlan;
+}
+
+nlohmann::json ElegantPlacementStrategy::prepareAvailableNodes() {
+    nlohmann::json availableNodes{};
+    std::vector<nlohmann::json> nodes{};
+    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of avalable nodes");
+    // TODO: Convert topology to a json. Look at TopologyManagerService:getTopologyAsJson();
+    //  Add network related information
+    availableNodes["AVAILABLE_NODES"] = nodes;
+    return availableNodes;
 }
 
 }// namespace NES::Optimizer
