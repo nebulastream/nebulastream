@@ -54,7 +54,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param curOperator the operator through which we want to push the filter.
      * @param parOperator the operator that is the parent of curOperator in this queryPlan
      */
-    void pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& curOperator, const NodePtr& parOperator);
+    void pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -78,9 +78,9 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param childOperator we want to insert the filter operator above this operator in the query plan
      * @param parOperator  we want to insert the filter operator below this operator in the query plan
      */
-    static void insertFilterIntoNewPosition(const FilterLogicalOperatorNodePtr& filterOperator,
-                                            const NodePtr& childOperator,
-                                            const NodePtr& parOperator);
+    static void insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,
+                                            NodePtr childOperator,
+                                            NodePtr parOperator);
 };
 
 }// namespace NES::Optimizer

@@ -62,7 +62,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& curOperator, const NodePtr& parOperator) {
+void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator) {
 
     // keeps track if we were able to push the filter below another operator.
     bool pushed = false;
@@ -138,7 +138,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
     }
 }
 
-void FilterPushDownRule::insertFilterIntoNewPosition(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& childOperator, const NodePtr& parOperator){
+void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,NodePtr childOperator, NodePtr parOperator){
 
     // If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
     // so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
@@ -149,35 +149,15 @@ void FilterPushDownRule::insertFilterIntoNewPosition(const FilterLogicalOperator
             return;
         }
 
-        // inserts the operator above the operator that it wasn't able to push below.
-        // This can only be done if that operator does not have multiple parents as the filter operator will get insert below every parent of this operator.
-        if (!childOperator->as<LogicalOperatorNode>()->hasMultipleParents()){
-            if (!childOperator->insertBetweenThisAndParentNodes(filterOperator)){
-                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
-                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
-            }
+        // inserts the operator between the operator that it wasn't able to push below and the parent of this operator.
+        bool success1 = childOperator->removeParent(parOperator);// also removes childOperator as a child from parOperator
+        bool success2 = childOperator->addParent(filterOperator); // also adds childOperator as a child to filterOperator
+        bool success3 = filterOperator->addParent(parOperator); // also adds filterOperator as a child to parOperator
+        if (!success1 || !success2 || !success3){
+            //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
+            throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
         }
-        // inserts the operator below the parent operator of the operator that it wasn't able to push below.
-        // This can only be done if that operator does not have multiple children as the filter operator will get insert above every child of this operator.
-        else if (!parOperator->as<LogicalOperatorNode>()->hasMultipleChildren()){
-            if (!parOperator->insertBetweenThisAndChildNodes(filterOperator)){
-                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
-                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
-            }
-        }
-        else {
-            // This probably works.
-            // BUT there were weird bugs, if we use this method in the case that there is only one parent or one child.
-            // The pointers themselves(childOperator, parOperator) pointed to a different object than the original object after adding or removing a child/parent.
-            // Maybe this has something to do with the operator getting completely disconnected from the queryPlan, but the actual reason isn't obvious.
-            bool success1 = childOperator->removeParent(parOperator);// also removes childOperator as a child from parOperator
-            bool success2 = childOperator->addParent(filterOperator); // also adds childOperator as a child to filterOperator
-            bool success3 = filterOperator->addParent(parOperator); // also adds filterOperator as a child to parOperator
-            if (!success1 || !success2 || !success3){
-                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
-                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
-            }
-        }
+
     }
 }
 
