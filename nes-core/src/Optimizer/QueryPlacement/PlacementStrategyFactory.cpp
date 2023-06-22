@@ -30,6 +30,8 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
                                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                const TopologyPtr& topology,
                                                                const TypeInferencePhasePtr& typeInferencePhase) {
+
+
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);

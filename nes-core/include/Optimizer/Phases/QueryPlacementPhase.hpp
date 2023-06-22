@@ -43,6 +43,11 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
+namespace Configuration {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configuration
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -66,13 +71,13 @@ class QueryPlacementPhase {
      * @param globalExecutionPlan : an instance of global execution plan
      * @param topology : topology in which the placement is to be performed
      * @param typeInferencePhase  : a type inference phase instance
-     * @param queryReconfiguration: should place only updates in the query plan
+     * @param coordinatorConfiguration: coordinator configuration
      * @return pointer to query placement phase
      */
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         bool queryReconfiguration);
+                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
@@ -87,7 +92,7 @@ class QueryPlacementPhase {
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 bool queryReconfiguration);
+                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief: analyze the set and pin all unpinned sink operators
@@ -106,7 +111,7 @@ class QueryPlacementPhase {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
-    bool queryReconfiguration;
+    Configuration::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

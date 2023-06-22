@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
@@ -32,20 +33,20 @@ namespace NES::Optimizer {
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         bool queryReconfiguration)
+                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), queryReconfiguration(queryReconfiguration) {
+      typeInferencePhase(std::move(typeInferencePhase)), coordinatorConfiguration(coordinatorConfiguration) {
     NES_DEBUG2("QueryPlacementPhase()");
 }
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                   bool queryReconfiguration) {
+                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),
                                                                      std::move(typeInferencePhase),
-                                                                     queryReconfiguration));
+                                                                     coordinatorConfiguration));
 }
 
 bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
