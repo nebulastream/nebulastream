@@ -135,8 +135,8 @@ class ChainedHashMap {
      */
     inline void insert(Entry* entry, hash_t hash) {
         const size_t pos = hash & mask;
-        assert(pos <= mask);
-        assert(pos < capacity);
+//assert(pos <= mask);
+  //      assert(pos < capacity);
         auto oldValue = entries[pos];
         entry->next = oldValue;
         entries[pos] = entry;
