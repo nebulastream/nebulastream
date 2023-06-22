@@ -80,7 +80,8 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             pinAllSinkOperators(pinnedDownStreamOperators);
 
             //4. Check if all operators are pinned
-            if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
+            if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators)
+                || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
                 throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
             }
 

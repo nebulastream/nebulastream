@@ -13,10 +13,10 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

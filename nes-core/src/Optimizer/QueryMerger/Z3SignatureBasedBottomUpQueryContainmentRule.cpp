@@ -83,7 +83,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
             if (signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature())
                 == ContainmentType::EQUALITY) {
                 NES_TRACE2("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-//                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+                //                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Get children of target and host sink operators
                 auto targetSinkChildren = targetSink->getChildren();
                 auto hostSinkChildren = hostSink->getChildren();
@@ -95,7 +95,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                         if (!addedNewParent) {
                             NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                         }
-//                        hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSink);
+                        //                        hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSink);
                     }
                     targetSinkChild->removeParent(targetSink);
                 }
@@ -106,7 +106,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                 auto matchedTargetToHostOperatorMap = areQueryPlansContained(targetQueryPlan, hostQueryPlan);
                 NES_DEBUG2("matchedTargetToHostOperatorMap empty? {}", matchedTargetToHostOperatorMap.empty());
                 if (!matchedTargetToHostOperatorMap.empty()) {
-//                    hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+                    //                    hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                     if (matchedTargetToHostOperatorMap.size() > 1) {
                         //Fetch all the matched target operators.
                         std::vector<LogicalOperatorNodePtr> matchedTargetOperators;
@@ -146,7 +146,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 if (!addedNewParent) {
                                     NES_WARNING2("Failed to add new parent");
                                 }
-//                                hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
+                                //                                hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                                 targetOperator->removeParent(targetParent);
                             }
                         } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentType::RIGHT_SIG_CONTAINED
@@ -171,7 +171,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                             if (!addedNewParent) {
                                 NES_WARNING2("Failed to add new parent");
                             }
-//                            hostSharedQueryPlan->addAdditionToChangeLog(std::get<0>(hostOperatorAndRelationship), targetOperator);
+                            //                            hostSharedQueryPlan->addAdditionToChangeLog(std::get<0>(hostOperatorAndRelationship), targetOperator);
                             NES_TRACE2("New shared query plan: {}", hostSharedQueryPlan->getQueryPlan()->toString());
                         } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentType::LEFT_SIG_CONTAINED
                                    && checkWindowContainmentPossible(targetOperator, hostOperator)) {
@@ -195,7 +195,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                             if (!addedNewParent) {
                                 NES_WARNING2("Failed to add new parent");
                             }
-//                            hostSharedQueryPlan->addAdditionToChangeLog(targetOperator, hostOperator);
+                            //                            hostSharedQueryPlan->addAdditionToChangeLog(targetOperator, hostOperator);
                             NES_DEBUG2("New shared query plan: {}", hostSharedQueryPlan->getQueryPlan()->toString());
                         }
                     }
