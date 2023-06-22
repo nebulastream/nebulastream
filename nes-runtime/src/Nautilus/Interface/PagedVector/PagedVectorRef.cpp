@@ -18,8 +18,11 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize, uint64_t pageSize)
-    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), entriesPerPage(pageSize / entrySize) {}
+PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, Value<UInt64> entrySize,
+                               Value<UInt64> pageSize)
+    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), entriesPerPage((uint64_t) 0) {
+    entriesPerPage = pageSize / entrySize;
+}
 
 void allocateNewPageProxy(void* pagedVectorPtr) {
     auto* pagedVector = (PagedVector*) pagedVectorPtr;

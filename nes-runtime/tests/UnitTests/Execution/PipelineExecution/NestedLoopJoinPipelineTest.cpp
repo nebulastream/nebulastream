@@ -343,7 +343,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
 INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,
                         NestedLoopJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),//CPPPipelineCompiler
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),//CPPPipelineCompiler
                         [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });
