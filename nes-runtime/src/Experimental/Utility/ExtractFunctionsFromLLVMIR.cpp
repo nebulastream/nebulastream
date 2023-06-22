@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <exception>
@@ -22,12 +22,14 @@
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/DebugInfo.h>
+#include <llvm/IR/GlobalValue.h>
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Mangler.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Transforms/IPO/ExtractGV.h>
 
@@ -44,6 +46,7 @@
 #include <llvm/Support/SystemUtils.h>
 #include <llvm/Support/ToolOutputFile.h>
 #include <llvm/Transforms/IPO.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -51,80 +54,6 @@
 #include <utility>
 
 using namespace llvm;
-
-/**
- * @brief Tries to find a substring a line. If it finds one, it replaces a substring with another one.
- * 
- * @param line: The line in the LLVM IR that we want to replace a substring in.
- * @param toReplace: The substring that we want to replace.
- * @param replacement: The string that we want to replace 'toReplace' with.
- */
-bool replaceString(std::string& line, const std::string toReplace, const std::string replacement) {
-    auto toReplacePosition = line.find(toReplace);
-    if (toReplacePosition != std::string::npos) {
-        line.replace(toReplacePosition, toReplace.length(), replacement);
-        return true;
-    }
-    return false;
-}
-
-/**
- * @brief A custom pass that iterates over the generated proxy function file and adds information that gets lost
- *        during function extraction. A clean solution would be to use the LLVM passes correctly. We use this custom
- *        pass for now, because finding the correct LLVM approach could take very long.
- * 
- * @param filename: The name of the file that we want to fix @.str nad @__PRETTY_FUNCTION lines for.
- */
-bool strAndPrettyFunctionFixPass(const std::string& filename) {
-    std::ifstream inputFile(filename);
-
-    if (!inputFile) {
-        std::cout << "Failed to open input file." << std::endl;
-        return false;
-    }
-
-    std::stringstream modifiedContent;// Store modified content in a stringstream
-    std::string line;
-
-    while (std::getline(inputFile, line)) {
-        // if (line.substr(0, 13) == "@.str.80.151") {
-        if (line.substr(0, 5) == "@.str" || line.substr(0, 20) == "@__PRETTY_FUNCTION__") {
-            // Replace "external" with "private" and add "unnamed_addr" after "private"
-            const std::string toReplaceString = "external hidden";
-            size_t position = line.find(toReplaceString);
-            if (position != std::string::npos) {
-                line.replace(position, toReplaceString.length(), "private");
-            }
-            // todo adapt file path
-            if (!replaceString(line,
-                               "[110 x i8], align 1",
-                               "[110 x i8] "
-                               "c\"/home/pgrulich/projects/nes/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/"
-                               "ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
-                if (!replaceString(line, "[15 x i8], align 1", "[15 x i8] c\"pos < capacity\\00\", align 1")) {
-                    if (!replaceString(line, "[26 x i8], align 1", "[26 x i8] c\"vector::_M_realloc_insert\\00\", align 1")) {
-                        replaceString(
-                            line,
-                            "[71 x i8], align 1",
-                            "[71 x i8] c\"void NES::Nautilus::Interface::ChainedHashMap::insert(Entry *, hash_t)\\00\", align 1");
-                    }
-                }
-            }
-        }
-        modifiedContent << line << std::endl;
-    }
-    inputFile.close();
-
-    // Overwrite input file with modified file content.
-    std::ofstream outputFile(filename);
-    if (!outputFile) {
-        std::cout << "Failed to open output file." << std::endl;
-        return false;
-    }
-    outputFile << modifiedContent.str();// Overwrite the content of the input file
-    outputFile.close();
-    return true;
-}
 
 std::string demangleToBaseName(const std::string& functionName) {
     (void) functionName;
@@ -142,6 +71,125 @@ std::string demangleToBaseName(const std::string& functionName) {
         return "";
     } else {
         return std::string(Result);
+    }
+}
+
+static void makeVisible(GlobalValue& GV, bool Delete) {
+
+    bool Local = GV.hasLocalLinkage();
+    if (Local || Delete) {
+        GV.setLinkage(GlobalValue::ExternalLinkage);
+        if (Local) {
+            //  All relevant strings pass through here, but also irrelevant strings.
+            GV.setVisibility(GlobalValue::HiddenVisibility);
+        }
+        return;
+    }
+
+    if (!GV.hasLinkOnceLinkage()) {
+        assert(!GV.isDiscardableIfUnused());
+        return;
+    }
+
+    // Map linkonce* to weak* so that llvm doesn't drop this GV.
+    switch (GV.getLinkage()) {
+        default: llvm_unreachable("Unexpected linkage");
+        case GlobalValue::LinkOnceAnyLinkage: GV.setLinkage(GlobalValue::WeakAnyLinkage); return;
+        case GlobalValue::LinkOnceODRLinkage: GV.setLinkage(GlobalValue::WeakODRLinkage); return;
+    }
+}
+
+void extractPass(Module& M, std::vector<GlobalValue*>& GVs, bool deleteStuff, bool keepConstInit) {
+    // Visit the global inline asm.
+    if (!deleteStuff) {
+        M.setModuleInlineAsm("");
+    }
+    SetVector<GlobalValue*> Named(GVs.begin(), GVs.end());
+
+    for (GlobalVariable& GV : M.globals()) {
+        bool specialException = false;
+
+        bool Delete = deleteStuff == (bool) Named.count(&GV) && !GV.isDeclaration() && (!GV.isConstant() || !keepConstInit);
+        if (!Delete) {
+            if (GV.hasAvailableExternallyLinkage())
+                continue;
+            if (GV.getName() == "llvm.global_ctors")
+                continue;
+        }
+
+        makeVisible(GV, Delete);
+
+        if (Delete) {
+            // By removing the initializer, we loose important information on GVs that we want to keep.
+            // On the other hand, it is required to remove all information that we do not need.
+            GV.setInitializer(nullptr);
+            GV.setComdat(nullptr);
+        }
+    }
+
+    // Visit the Functions.
+    for (Function& F : M) {
+        bool Delete = deleteStuff == (bool) Named.count(&F) && !F.isDeclaration();
+        if (!Delete) {
+            if (F.hasAvailableExternallyLinkage())
+                continue;
+        }
+
+        makeVisible(F, Delete);
+
+        if (Delete) {
+            // Make this a declaration and drop it's comdat.
+            F.deleteBody();
+            F.setComdat(nullptr);
+        }
+    }
+
+    // Visit the Aliases.
+    for (GlobalAlias& GA : llvm::make_early_inc_range(M.aliases())) {
+        bool Delete = deleteStuff == (bool) Named.count(&GA);
+        makeVisible(GA, Delete);
+
+        if (Delete) {
+            Type* Ty = GA.getValueType();
+
+            GA.removeFromParent();
+            llvm::Value* Declaration;
+            if (FunctionType* FTy = dyn_cast<FunctionType>(Ty)) {
+                Declaration = Function::Create(FTy, GlobalValue::ExternalLinkage, GA.getAddressSpace(), GA.getName(), &M);
+
+            } else {
+                Declaration = new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage, nullptr, GA.getName());
+            }
+            GA.replaceAllUsesWith(Declaration);
+            delete &GA;
+        }
+    }
+
+    // Visit the IFuncs.
+    for (GlobalIFunc& IF : llvm::make_early_inc_range(M.ifuncs())) {
+        bool Delete = deleteStuff == (bool) Named.count(&IF);
+        makeVisible(IF, Delete);
+
+        if (!Delete)
+            continue;
+
+        auto* FuncType = dyn_cast<FunctionType>(IF.getValueType());
+        IF.removeFromParent();
+        llvm::Value* Declaration =
+            Function::Create(FuncType, GlobalValue::ExternalLinkage, IF.getAddressSpace(), IF.getName(), &M);
+        IF.replaceAllUsesWith(Declaration);
+        delete &IF;
+    }
+}
+
+void reinitializePass(Module& M, Module& M2) {
+    for (GlobalVariable& GV : M.globals()) {
+        for (GlobalVariable& GV2 : M2.globals()) {
+            if (GV.getName() == GV2.getName()) {
+                GV.setInitializer(GV2.getInitializer());
+                GV.setComdat(GV2.getComdat());
+            }
+        }
     }
 }
 
@@ -197,7 +245,7 @@ int main(int argc, char** argv) {
         "NES__Runtime__TupleBuffer__setOriginId",
         "getProbeHashMapProxy",
         "findChainProxy",
-        // "insertProxy",
+        "insertProxy",
         "_ZN3NES8Nautilus9Interface12hashValueCRCIaEEmmT_",
         "_ZN3NES8Nautilus9Interface12hashValueCRCIdEEmmT_",
         "_ZN3NES8Nautilus9Interface12hashValueCRCIfEEmmT_",
@@ -258,12 +306,15 @@ int main(int argc, char** argv) {
             }
         }
     }
+    // Unfortunately, the extractPass removes information from relevant GlobalValues that leads to compilation errors.
+    // To counteract, we preserve that information, and enrich the GlobalValues with that information at the end again.
+
+    // Copy the original module, to preserve GlobalValue information.
+    auto copiedModule = CloneModule(*LLVMModule);
     // We create a vector of GlobValues that represent the functions that we do NOT want to extract.
     std::vector<GlobalValue*> FunctionsToKeep(ProxyFunctionValues.begin(), ProxyFunctionValues.end());
     // We then run the GlobalValue (GV) extraction pass and remove all functions that we want to extract.
-    auto const extractGVPass = new llvm::ExtractGVPass(FunctionsToKeep, /* false: keep functions */ false, false);
-    llvm::ModuleAnalysisManager dummyAnalysisManager;
-    extractGVPass->run(*LLVMModule, dummyAnalysisManager);
+    extractPass(*LLVMModule, FunctionsToKeep, false, false);
 
     // Now that we only have the GVs that we need left, mark the module as fully materialized.
     ExitOnErr(LLVMModule->materializeAll());
@@ -275,7 +326,14 @@ int main(int argc, char** argv) {
     Passes.add(createGlobalDCEPass());          // Delete unreachable globals
     Passes.add(createStripDeadDebugInfoPass()); // Remove dead debug info
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
+    Passes.run(*LLVMModule.get());
 
+    // The module is stripped of all relevant information, and, unfortunately, also of important information on GVs.
+    // We use the preserver GV information from the copiedModule to enrich the GVs in the stripped module.
+    reinitializePass(*LLVMModule, *copiedModule);
+
+    // Print
+    legacy::PassManager PrintPass;
     std::error_code EC;
     // We statically write proxy functions to /tmp/proxiesReduced.ll (we might change this behavior in #3710)
     const std::string filename = std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll";
@@ -284,16 +342,11 @@ int main(int argc, char** argv) {
         errs() << EC.message() << '\n';
         return 1;
     }
-
-    Passes.add(createPrintModulePass(Out.os(), "", false));
-    Passes.run(*LLVMModule.get());
+    PrintPass.add(createPrintModulePass(Out.os(), "", false));
+    PrintPass.run(*LLVMModule.get());
 
     // Declare success.
     Out.keep();
 
-    if (strAndPrettyFunctionFixPass(filename)) {
-        return 0;
-    }
-    return 1;
-    //return 0;
+    return 0;
 }

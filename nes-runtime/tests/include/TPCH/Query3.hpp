@@ -15,6 +15,7 @@
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
 
 #include "Execution/Expressions/ConstantDecimalExpression.hpp"
+#include "Nautilus/Interface/Hash/CRCHashFunction.hpp"
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -99,7 +100,7 @@ class TPCH_Query3 {
                                                                   std::vector<PhysicalTypePtr>{integerType},
                                                                   std::vector<Expressions::ExpressionPtr>(),
                                                                   std::vector<PhysicalTypePtr>(),
-                                                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                                                                  std::make_unique<Nautilus::Interface::CRCHashFunction>(),
                                                                   pageSize);
         selection->setChild(joinOp);
 
@@ -161,7 +162,7 @@ class TPCH_Query3 {
                                                                    std::vector<PhysicalTypePtr>{integerType},
                                                                    std::vector<Record::RecordFieldIdentifier>(),
                                                                    std::vector<PhysicalTypePtr>(),
-                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+                                                                   std::make_unique<Nautilus::Interface::CRCHashFunction>());
         orderDateSelection->setChild(customersJoinProbe);
 
         // join build for order_customers
@@ -175,7 +176,7 @@ class TPCH_Query3 {
                                                         std::vector<PhysicalTypePtr>{integerType},
                                                         order_customersJoinBuildValues,
                                                         std::vector<PhysicalTypePtr>{integerType, integerType},
-                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                                                        std::make_unique<Nautilus::Interface::CRCHashFunction>(),
                                                         pageSize);
 
         customersJoinProbe->setChild(order_customersJoinBuild);
@@ -234,7 +235,7 @@ class TPCH_Query3 {
                                                                   std::vector<PhysicalTypePtr>{integerType},
                                                                   orderProbeFieldNames,
                                                                   std::vector<PhysicalTypePtr>{integerType, integerType},
-                                                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+                                                                  std::make_unique<Nautilus::Interface::CRCHashFunction>());
         shipDateSelection->setChild(lineitemJoinProbe);
 
         //  sum(l_extendedprice * (1 - l_discount)) as revenue,
@@ -259,7 +260,7 @@ class TPCH_Query3 {
             keyFields,
             std::vector<PhysicalTypePtr>{integerType, integerType, integerType},
             aggregationFunctions,
-            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+            std::make_unique<Nautilus::Interface::CRCHashFunction>());
 
         lineitemJoinProbe->setChild(aggregation);
 

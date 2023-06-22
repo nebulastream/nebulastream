@@ -68,6 +68,7 @@ struct BenchmarkOptions {
     uint64_t executionWarmup;
     uint64_t executionBenchmark;
     std::string identifier;
+    bool inlining;
     std::string query;
 };
 
@@ -84,7 +85,7 @@ class BenchmarkRunner {
         options.setDumpToConsole(true);
         options.setDumpToFile(true);
         options.setOptimizationLevel(3);
-        options.setProxyInlining(false);
+        options.setProxyInlining(bmOptions.inlining);
     }
     void run() {
         setup();
@@ -321,6 +322,7 @@ int main(int argc, char** argv) {
     auto compileIterations = std::stoul(commandLineParams["compileIterations"]);
     auto executionWarmup = std::stoul(commandLineParams["executionWarmup"]);
     auto executionBenchmark = std::stoul(commandLineParams["executionBenchmark"]);
+    auto inlining = std::stoul(commandLineParams["inlining"]) == 1;
     NES::Runtime::Execution::BenchmarkOptions options = {.targetScaleFactor = getScaleFactor(commandLineParams),
                                                          .factor = commandLineParams["scaleFactor"],
                                                          .compiler = commandLineParams["compiler"],
@@ -328,6 +330,7 @@ int main(int argc, char** argv) {
                                                          .executionWarmup = executionWarmup,
                                                          .executionBenchmark = executionBenchmark,
                                                          .identifier = commandLineParams["identifier"],
+                                                         .inlining = inlining,
                                                          .query = commandLineParams["query"]};
 
     auto query = commandLineParams["query"];
