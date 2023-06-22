@@ -11,15 +11,30 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads)
-                    : StreamWindow(windowStart, windowEnd), numWorkerThreads(numWorkerThreads) {}
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads, uint64_t leftEntrySize,
+                     uint64_t leftPageSize, uint64_t rightEntrySize, uint64_t rightPageSize)
+                    : StreamWindow(windowStart, windowEnd), numWorkerThreads(numWorkerThreads) {
+    for (uint64_t i = 0; i < numWorkerThreads; ++i) {
+        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+        leftTuples.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator),
+                                                                                   leftEntrySize,
+                                                                                   leftPageSize));
+    }
+
+    for (uint64_t i = 0; i < numWorkerThreads; ++i) {
+        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+        rightTuples.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator),
+                                                                                    rightEntrySize,
+                                                                                    rightPageSize));
+    }
+}
 
 
 uint64_t NLJWindow::getNumberOfTuples(bool leftSide) {
@@ -55,14 +70,14 @@ void* NLJWindow::getPagedVectorRef(bool leftSide, uint64_t workerId) {
 void NLJWindow::combinePagedVectors() {
     // Combing all PagedVectors on the left side
     auto& leftSourcePagedVector = leftTuples[0];
-    for (auto i = (uint64_t )1; i < leftTuples.size(); ++i) {
+    for (uint64_t i = 1; i < leftTuples.size(); ++i) {
         leftSourcePagedVector->combinePagedVectors(*leftTuples[i]);
         leftTuples[i].release();
     }
 
     // Combing all PagedVectors on the right side
     auto& rightSourcePagedVector = rightTuples[0];
-    for (auto i = (uint64_t )1; i < rightTuples.size(); ++i) {
+    for (uint64_t i = 1; i < rightTuples.size(); ++i) {
         rightSourcePagedVector->combinePagedVectors(*rightTuples[i]);
         rightTuples[i].release();
     }
