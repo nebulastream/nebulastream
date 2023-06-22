@@ -18,6 +18,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpr/response.h>
+#include <nlohmann/json.hpp>
 
 namespace NES::Optimizer {
 
@@ -53,6 +54,15 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                       GlobalExecutionPlanPtr globalExecutionPlan,
                                       TopologyPtr topology,
                                       TypeInferencePhasePtr typeInferencePhase);
+
+    /**
+     *
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
+     * @return
+     */
+    nlohmann::json prepareQueryPayload(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief

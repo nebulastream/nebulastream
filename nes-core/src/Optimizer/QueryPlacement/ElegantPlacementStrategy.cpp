@@ -20,7 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpr/api.h>
-#include <nlohmann/json.hpp>
+#include <queue>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -78,11 +78,21 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
 
         //1. Make rest call to get the external operator placement service.
 
-        //Make a rest call to elegant planner
+        //prepare request payload
+        nlohmann::json payload{};
+
+        //1.a: Get query plan as json
+        auto queryGraph = prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators);
+        payload.push_back(queryGraph);
+
         //TODO: Write code to properly call the service URL
         // Convert topology to a json. Look at TopologyManagerService:getTopologyAsJson(); Add network related information as well
-        // Convert query plan into json with required c++ and java UDF code. Look at PlanJsonGenerator::getQueryPlanAsJson
-        cpr::Response response = cpr::Get(cpr::Url{serviceURL}, cpr::Timeout(3000));
+
+        //1.c: Make a rest call to elegant planner
+        cpr::Response response = cpr::Post(cpr::Url{serviceURL},
+                                           cpr::Header{{"Content-Type", "application/json"}},
+                                           cpr::Body{payload.dump()},
+                                           cpr::Timeout(3000));
 
         //2. Parse the response of the external placement service
         pinOperatorsBasedOnElegantService(queryId, pinnedDownStreamOperators, response);
@@ -93,7 +103,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 5. Perform type inference on all updated query plans
+        // 5. Perform type inference on aUtilityFunctionsll updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (const std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
@@ -136,6 +146,55 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
                                               + std::to_string(operatorId) + " in the given list of operators.");
         }
     }
+}
+
+nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+
+    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of the query plan");
+
+    nlohmann::json queryPlan{};
+    std::vector<nlohmann::json> nodes{};
+
+    std::set<OperatorNodePtr> visitedOperator;
+    std::queue<OperatorNodePtr> operatorsToVisit;
+    operatorsToVisit.emplace(pinnedDownStreamOperators.begin(), pinnedDownStreamOperators.end());
+
+    while (!operatorsToVisit.empty()) {
+
+        auto logicalOperator = operatorsToVisit.front();//fetch the front operator
+        operatorsToVisit.pop();                         //pop the front operator
+
+        //if operator was not previously visited
+        if (visitedOperator.insert(logicalOperator).second) {
+            nlohmann::json node;
+            node["id"] = logicalOperator->getId();
+            auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
+            node["PINNED_NODE_ID"] = pinnedNodeId.has_value() ? std::any_cast<uint64_t>(pinnedNodeId) : INVALID_TOPOLOGY_NODE_ID;
+            auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
+            node["SOURCE_CODE"] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : "";
+            nodes.push_back(node);
+
+            auto found = std::find_if(pinnedUpStreamOperators.begin(),
+                                      pinnedUpStreamOperators.end(),
+                                      [](const OperatorNodePtr& pinnedOperatorNode) {
+                                          return pinnedOperatorNode->getId() == 1;
+                                      });
+
+            //array of upstream operator ids
+            auto upstreamOperatorIds = nlohmann::json::array();
+            //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
+            if (found != pinnedUpStreamOperators.end()) {
+                for (const auto& upstreamOperator : logicalOperator->getChildren()) {
+                    upstreamOperatorIds.push_back(upstreamOperator->as<OperatorNode>()->getId());
+                    operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
+                }
+            }
+            node["CHILDREN"] = upstreamOperatorIds;
+        }
+    }
+    queryPlan["OPERATOR_GRAPH"] = nodes;
+    return queryPlan;
 }
 
 }// namespace NES::Optimizer

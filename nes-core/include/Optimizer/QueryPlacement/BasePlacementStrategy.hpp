@@ -76,6 +76,7 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
+const std::string SOURCE_CODE = "SOURCE_CODE";
 const std::string PLACED = "PLACED";
 
 /**
