@@ -82,7 +82,7 @@ uint64_t hashBytesCRC(void* data, uint64_t length) {
 }
 
 template<typename T>
-uint64_t hashValue(uint64_t seed, T value) {
+uint64_t hashValueCRC(uint64_t seed, T value) {
     uint64_t k = (uint64_t) value;
     uint64_t result1 = _mm_crc32_u64(seed, k);
     uint64_t result2 = _mm_crc32_u64(0x04c11db7, k);
@@ -97,25 +97,25 @@ uint64_t hashTextValueCRC(uint64_t seed, TextValue* value) {
 
 HashFunction::HashValue CRCHashFunction::calculate(HashValue& hash, Value<>& value) {
     if (value->isType<Int8>()) {
-        return FunctionCall("ccrHashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIaEEmmT_", hashValueCRC<typename Int8::RawType>, hash, value.as<Int8>());
     } else if (value->isType<Int16>()) {
-        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIsEEmmT_", hashValueCRC<typename Int16::RawType>, hash, value.as<Int16>());
     } else if (value->isType<Int32>()) {
-        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIiEEmmT_", hashValueCRC<typename Int32::RawType>, hash, value.as<Int32>());
     } else if (value->isType<Int64>()) {
-        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIlEEmmT_", hashValueCRC<typename Int64::RawType>, hash, value.as<Int64>());
     } else if (value->isType<UInt8>()) {
-        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIhEEmmT_", hashValueCRC<typename UInt8::RawType>, hash, value.as<UInt8>());
     } else if (value->isType<UInt16>()) {
-        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCItEEmmT_", hashValueCRC<typename UInt16::RawType>, hash, value.as<UInt16>());
     } else if (value->isType<UInt32>()) {
-        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIjEEmmT_", hashValueCRC<typename UInt32::RawType>, hash, value.as<UInt32>());
     } else if (value->isType<UInt64>()) {
-        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCImEEmmT_", hashValueCRC<typename UInt64::RawType>, hash, value.as<UInt64>());
     } else if (value->isType<Float>()) {
-        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIfEEmmT_", hashValueCRC<typename Float::RawType>, hash, value.as<Float>());
     } else if (value->isType<Double>()) {
-        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>());
+        return FunctionCall("_ZN3NES8Nautilus9Interface12hashValueCRCIdEEmmT_", hashValueCRC<typename Double::RawType>, hash, value.as<Double>());
     } else if (value->isType<Text>()) {
         return FunctionCall("hashTextValue", hashTextValueCRC, hash, value.as<Text>()->getReference());
     } else if (value->isType<List>()) {

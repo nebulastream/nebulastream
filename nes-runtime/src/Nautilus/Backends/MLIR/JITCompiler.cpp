@@ -18,7 +18,7 @@
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
 namespace NES::Nautilus::Backends::MLIR {
-    
+
 //Todo remove?
 void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper) {
     // Convert the module to LLVM IR in a new LLVM IR context.
@@ -74,28 +74,37 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
     // TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
     // right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
     const std::unordered_set<std::string> ProxyInliningFunctions{
-                                                                 "NES__Runtime__TupleBuffer__getNumberOfTuples",
-                                                                 "NES__Runtime__TupleBuffer__setNumberOfTuples",
-                                                                 "NES__Runtime__TupleBuffer__getBuffer",
-                                                                 "NES__Runtime__TupleBuffer__getBufferSize",
-                                                                 "NES__Runtime__TupleBuffer__getWatermark",
-                                                                 "NES__Runtime__TupleBuffer__setWatermark",
-                                                                 "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-                                                                 "NES__Runtime__TupleBuffer__setSequenceNumber",
-                                                                 "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                                                 "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
-                                                                "NES__Runtime__TupleBuffer__getOriginId",
-                                                                "NES__Runtime__TupleBuffer__setOriginId",
-                                                                "getProbeHashMapProxy",
-                                                                "findChainProxy",
-                                                              //  "insertProxy",
-                                                                "hashValueI32",
-                                                                "getWorkerIdProxy",
-                                                                "getPagedVectorProxy",
-                                                                "allocateNewPageProxy",
-                                                                "getKeyedStateProxy",
-                                                                // "getGlobalOperatorHandlerProxy"
-                                                                };
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
+        "NES__Runtime__TupleBuffer__getOriginId",
+        "NES__Runtime__TupleBuffer__setOriginId",
+        "getProbeHashMapProxy",
+        "findChainProxy",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIaEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIdEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIfEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIhEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIiEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIjEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIlEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCImEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIsEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCItEEmmT_",
+        "hashValueI32",
+        "getWorkerIdProxy",
+        "getPagedVectorProxy",
+        "allocateNewPageProxy",
+        "getKeyedStateProxy",
+        // "getGlobalOperatorHandlerProxy"
+    };
     // We register all external functions (symbols) that we do not inline.
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();

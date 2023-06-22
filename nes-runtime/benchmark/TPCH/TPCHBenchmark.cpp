@@ -84,7 +84,7 @@ class BenchmarkRunner {
         options.setDumpToConsole(true);
         options.setDumpToFile(true);
         options.setOptimizationLevel(3);
-        options.setProxyInlining(true);
+        options.setProxyInlining(false);
     }
     void run() {
         setup();

@@ -131,6 +131,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
             ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.cpp
             # hashValueI32 declaration and implementation
             ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/Hash/MurMur3HashFunction.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/Hash/CRCHashFunction.cpp
             # getWorkerIdProxy & getGlobalOperatorHandlerProxy declaration
             ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/ExecutionContext.cpp
             # getWorkerIdProxy implementation

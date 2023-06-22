@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 
+#include "Nautilus/Interface/Hash/CRCHashFunction.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -161,7 +162,7 @@ class TPCH_Query1 {
                                                                keyFields,
                                                                types,
                                                                aggregationFunctions,
-                                                               std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+                                                               std::make_unique<Nautilus::Interface::CRCHashFunction>());
 
         map->setChild(aggregation);
 

@@ -32,6 +32,7 @@
 #include <llvm/Transforms/IPO/ExtractGV.h>
 
 #include <cstddef>
+#include <fstream>
 #include <iostream>
 #include <llvm/Pass.h>
 #include <llvm/Support/CommandLine.h>
@@ -48,7 +49,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <fstream>
 
 using namespace llvm;
 
@@ -83,7 +83,7 @@ bool strAndPrettyFunctionFixPass(const std::string& filename) {
         return false;
     }
 
-    std::stringstream modifiedContent; // Store modified content in a stringstream
+    std::stringstream modifiedContent;// Store modified content in a stringstream
     std::string line;
 
     while (std::getline(inputFile, line)) {
@@ -96,10 +96,17 @@ bool strAndPrettyFunctionFixPass(const std::string& filename) {
                 line.replace(position, toReplaceString.length(), "private");
             }
             // todo adapt file path
-            if(!replaceString(line, "[110 x i8], align 1", "[110 x i8] c\"/home/pgrulich/projects/nes/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
-                if(!replaceString(line, "[15 x i8], align 1", "[15 x i8] c\"pos < capacity\\00\", align 1")) {
-                    if(!replaceString(line, "[26 x i8], align 1", "[26 x i8] c\"vector::_M_realloc_insert\\00\", align 1")) {
-                        replaceString(line, "[71 x i8], align 1", "[71 x i8] c\"void NES::Nautilus::Interface::ChainedHashMap::insert(Entry *, hash_t)\\00\", align 1");
+            if (!replaceString(line,
+                               "[110 x i8], align 1",
+                               "[110 x i8] "
+                               "c\"/home/pgrulich/projects/nes/nebulastream/nes-runtime/include/Nautilus/Interface/HashMap/"
+                               "ChainedHashMap/ChainedHashMap.hpp\\00\", align 1")) {
+                if (!replaceString(line, "[15 x i8], align 1", "[15 x i8] c\"pos < capacity\\00\", align 1")) {
+                    if (!replaceString(line, "[26 x i8], align 1", "[26 x i8] c\"vector::_M_realloc_insert\\00\", align 1")) {
+                        replaceString(
+                            line,
+                            "[71 x i8], align 1",
+                            "[71 x i8] c\"void NES::Nautilus::Interface::ChainedHashMap::insert(Entry *, hash_t)\\00\", align 1");
                     }
                 }
             }
@@ -114,7 +121,7 @@ bool strAndPrettyFunctionFixPass(const std::string& filename) {
         std::cout << "Failed to open output file." << std::endl;
         return false;
     }
-    outputFile << modifiedContent.str(); // Overwrite the content of the input file
+    outputFile << modifiedContent.str();// Overwrite the content of the input file
     outputFile.close();
     return true;
 }
@@ -130,7 +137,7 @@ std::string demangleToBaseName(const std::string& functionName) {
         return "";
     }
     char* Result = Mangler.getFunctionBaseName(Buf, &Size);
-    if(!Result) {
+    if (!Result) {
         std::cout << "Could not demangle function with name: " << functionName << '\n';
         return "";
     } else {
@@ -148,7 +155,7 @@ int main(int argc, char** argv) {
         getLazyIRFileModule(std::string(IR_FILE_DIR) + "/" + std::string(IR_FILE_FILE), Err, Context);
 
     if (!LLVMModule.get()) {
-        if(argc > 0) {
+        if (argc > 0) {
             Err.print(argv[0], errs());
         }
         return 1;
@@ -162,43 +169,53 @@ int main(int argc, char** argv) {
     for (auto func = LLVMModule->getFunctionList().begin(); func != LLVMModule->getFunctionList().end(); func++) {
         std::string functionName = func->getName().str();
         std::string demangledName = "";
-        // The hashValue function is a templated function that is created. During build time, several versions of the 
+        // The hashValue function is a templated function that is created. During build time, several versions of the
         // function are created (one for each allowed data type). Currently, we only need the i32 version.
-        if(functionName == "_ZN3NES8Nautilus9Interface9hashValueIiEEmmT_") {
+        if (functionName == "_ZN3NES8Nautilus9Interface9hashValueIiEEmmT_") {
             func->setName("hashValueI32");
         } else {
             demangledName = demangleToBaseName(functionName);
         }
-        if(!demangledName.empty()) {
-            unmangledToMangledNamesMap.emplace(
-                std::pair<std::string, std::string>{demangledName, functionName});
+        if (!demangledName.empty()) {
+            unmangledToMangledNamesMap.emplace(std::pair<std::string, std::string>{demangledName, functionName});
         }
     }
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
-    std::vector<std::string> ExtractFuncs{"NES__Runtime__TupleBuffer__getNumberOfTuples",
-                                          "NES__Runtime__TupleBuffer__setNumberOfTuples",
-                                          "NES__Runtime__TupleBuffer__getBuffer",
-                                          "NES__Runtime__TupleBuffer__getBufferSize",
-                                          "NES__Runtime__TupleBuffer__getWatermark", // Does this cover NES__Runtime__TupleBuffer__Watermark? -> Why does it have a different name in 'RecordBuffer'?
-                                          "NES__Runtime__TupleBuffer__setWatermark",
-                                          "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-                                          "NES__Runtime__TupleBuffer__setSequenceNumber",
-                                          "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                          "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
-                                         "NES__Runtime__TupleBuffer__getOriginId",
-                                         "NES__Runtime__TupleBuffer__setOriginId",
-                                         "getProbeHashMapProxy",
-                                         "findChainProxy",
-                                        // "insertProxy",
-                                         "hashValueI32",
-                                         "getWorkerIdProxy",
-                                         "getPagedVectorProxy",
-                                         "allocateNewPageProxy",
-                                         "getKeyedStateProxy",
-                                        //  "getGlobalOperatorHandlerProxy"
-                                        };
- 
+    std::vector<std::string> ExtractFuncs{
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",// Does this cover NES__Runtime__TupleBuffer__Watermark? -> Why does it have a different name in 'RecordBuffer'?
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
+        "NES__Runtime__TupleBuffer__getOriginId",
+        "NES__Runtime__TupleBuffer__setOriginId",
+        "getProbeHashMapProxy",
+        "findChainProxy",
+        // "insertProxy",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIaEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIdEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIfEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIhEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIiEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIjEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIlEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCImEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCIsEEmmT_",
+        "_ZN3NES8Nautilus9Interface12hashValueCRCItEEmmT_",
+        "hashValueI32",
+        "getWorkerIdProxy",
+        "getPagedVectorProxy",
+        "allocateNewPageProxy",
+        "getKeyedStateProxy",
+        //  "getGlobalOperatorHandlerProxy"
+    };
+
     for (size_t i = 0; i != ExtractFuncs.size(); ++i) {
         GlobalValue* GV = LLVMModule->getFunction(ExtractFuncs[i]);
         if (!GV) {
@@ -274,9 +291,9 @@ int main(int argc, char** argv) {
     // Declare success.
     Out.keep();
 
-     if(strAndPrettyFunctionFixPass(filename)) {
-         return 0;
-     }
+    if (strAndPrettyFunctionFixPass(filename)) {
+        return 0;
+    }
     return 1;
     //return 0;
 }
