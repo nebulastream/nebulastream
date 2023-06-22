@@ -823,7 +823,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                     EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
                     ASSERT_EQ(rootOperator->getChildren().size(), 1U);
                     EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
-                } else{
+                } else {
                     //Sub query plan should contain for one of the three sink operator as its root
                     FAIL();
                 }

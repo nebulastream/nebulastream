@@ -268,15 +268,15 @@ std::set<OperatorNodePtr> SharedQueryPlan::removeOperator(const OperatorNodePtr&
         //If the upstream operator is shared by multiple downstream operators then remove the operator to remove and add this operator
         // to the operators to return.
         auto upstreamOperator = optr->as<OperatorNode>();
-        if (upstreamOperator->getParents().size() > 1) { // If the upstream operator is connected to multiple downstream operator
-                                                         // then remove the downstream operator to remove and terminate recursion.
+        if (upstreamOperator->getParents().size() > 1) {// If the upstream operator is connected to multiple downstream operator
+                                                        // then remove the downstream operator to remove and terminate recursion.
             //Recursively call removal of this upstream operator
             upstreamOperator->removeParent(operatorToRemove);
             //add this upstream operator to operators to return
             upstreamOperatorsToReturn.insert(upstreamOperator);
-        } else { // If the upstream operator is only connected to one downstream operator
-                 // then remove the downstream operator and recursively call operator removal
-                 // for this upstream operator.
+        } else {// If the upstream operator is only connected to one downstream operator
+                // then remove the downstream operator and recursively call operator removal
+                // for this upstream operator.
             //Remove the parent and call remove operator for children
             upstreamOperator->removeParent(operatorToRemove);
             //Recursively call removal of this upstream operator
