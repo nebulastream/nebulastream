@@ -35,10 +35,7 @@ using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
  * @brief This class is responsible for altering the query plan to push down the filter as much as possible.
  * Following are the exceptions:
  *  1.) The Leaf node in the query plan will always be source node. This means the filter can't be push below a source node.
- *  2.) If their exists a map/window operator that manipulates the field used in the predicate of the filter
- *      then, the filter can't be pushed down below the map/window.
- *  3.) If their exists another filter operator next to the target filter operator then it can't be pushed down below that
- *      specific filter operator.
+ *  2.) Every operator below a filter has it's own set of rules that decide if and how the filter can be pushed below that operator
  */
 class FilterPushDownRule : public BaseRewriteRule {
 
@@ -52,10 +49,12 @@ class FilterPushDownRule : public BaseRewriteRule {
     explicit FilterPushDownRule();
 
     /**
-     * @brief Push down given filter operator as close to the source operator as possible
-     * @param filterOperator
+     * @brief Push down given filter operator as close to the source operator as possible, by calling this method recursively
+     * @param filterOperator that is pushed down the queryPlan
+     * @param curOperator the operator through which we want to push the filter.
+     * @param parOperator the operator that is the parent of curOperator in this queryPlan
      */
-    void pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator);
+    void pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& curOperator, const NodePtr& parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -71,6 +70,17 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @return true if field use in the filter predicate else false
      */
     static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
+
+    /**
+     * In case we can't push the filter any further we call this method to remove the filter from its original position in the query plan
+     * and insert the filter at the new position of the query plan. (only if the position of the filter changed)
+     * @param filterOperator the filter operator that we want to insert into the query plan
+     * @param childOperator we want to insert the filter operator above this operator in the query plan
+     * @param parOperator  we want to insert the filter operator below this operator in the query plan
+     */
+    static void insertFilterIntoNewPosition(const FilterLogicalOperatorNodePtr& filterOperator,
+                                            const NodePtr& childOperator,
+                                            const NodePtr& parOperator);
 };
 
 }// namespace NES::Optimizer

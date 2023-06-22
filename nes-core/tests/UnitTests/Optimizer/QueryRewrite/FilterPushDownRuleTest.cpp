@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -28,6 +29,7 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -608,7 +610,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
-    // The order of the branches of the union operator matters and should stay the same.
+    // The order of the branches of the union operator matters for this tests and stays the same in this test.
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = updatedQueryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
@@ -713,4 +715,157 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+}
+
+/* tests if a filter is correctly pushed below a join if all its attributes belong to source 1. The order of the operators in the
+updated query plan is validated, and it is checked that the input and output schema of the filter that is now at a new position
+is still correct */
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToSrc1){
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+    //setup source 1
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("A", NES::BasicType::UINT64)
+                                ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src1", schema);
+
+    //setup source two
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("X", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src2", schema2);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery = Query::from("src2");
+
+    Query query = Query::from("src1")
+                      .joinWith(subQuery)
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")),Milliseconds(1000)))
+                      .filter(Attribute("A") < 9999 || Attribute("src1$ts") < 9999)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    //type inference
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
+    typeInferencePhase->execute(queryPlan);
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc1 = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(joinOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinNotPossible){
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+    //setup source 1
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("A", NES::BasicType::UINT64)
+                                ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src1", schema);
+
+    //setup source two
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("X", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src2", schema2);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery = Query::from("src2");
+
+    Query query = Query::from("src1")
+                      .joinWith(subQuery)
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")),Milliseconds(1000)))
+                      .filter(Attribute("src1$A") < 9999 || Attribute("src2$X") < 9999)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    //type inference
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
+    typeInferencePhase->execute(queryPlan);
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc1 = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(joinOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
 }
