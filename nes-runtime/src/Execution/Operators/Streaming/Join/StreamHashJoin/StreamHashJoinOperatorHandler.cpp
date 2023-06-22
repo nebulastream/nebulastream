@@ -19,7 +19,11 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
-
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <API/AttributeField.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
@@ -70,6 +74,10 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
             //for local we have to merge the tables first
             if (joinStrategy == JoinStrategy::HASH_JOIN_LOCAL) {
                 //push actual bucket from local to global hash table for left side
+
+                //page before merging:
+
+                std::stringstream ss;
                 auto localHashTableLeft = hashWindow->getHashTable(workerCtx->getId(), true);
                 sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
@@ -77,6 +85,7 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
                 auto localHashTableRight = hashWindow->getHashTable(workerCtx->getId(), false);
                 sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
             }
+
             //create task for current window and current partition
             auto buffer = workerCtx->allocateTupleBuffer();
             auto bufferAs = buffer.getBuffer<JoinPartitionIdTWindowIdentifier>();

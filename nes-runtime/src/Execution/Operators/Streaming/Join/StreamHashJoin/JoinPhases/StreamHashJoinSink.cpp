@@ -74,6 +74,48 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
     return keyType->size();
 }
 
+void printPages(PipelineExecutionContext*,
+                WorkerContext*,
+                StreamHashJoinOperatorHandler* operatorHandler,
+                const std::vector<std::unique_ptr<FixedPage>>& probeSide,
+                const std::vector<std::unique_ptr<FixedPage>>& buildSide,
+                uint64_t,
+                uint64_t) {
+    std::stringstream ss;
+
+    //probe side pages
+    size_t leftPageCnt = 0;
+    for (auto& lhsPage : probeSide) {
+        auto lhsLen = lhsPage->size();
+        ss << "print left probe page no=" << leftPageCnt++ << std::endl;
+        //for each item in the page
+        for (auto i = 0UL; i < lhsLen; i++) {
+            ss << "print left build entry no=" << i << std::endl;
+            auto recPtr = lhsPage.get()->operator[](i);
+            auto key = getField(recPtr, operatorHandler->getJoinSchemaLeft(), "f2_left");
+            auto otherField = getField(recPtr, operatorHandler->getJoinSchemaLeft(), "f1_left");
+            auto ts = getField(recPtr, operatorHandler->getJoinSchemaLeft(), "timestamp");
+            ss << "pos=" << i << " key=" << (uint64_t) *key << " ts=" << (uint64_t) *ts
+               << " otherField=" << (uint64_t) *otherField << std::endl;
+        }
+    }
+
+    size_t rightPageCnt = 0;
+    for (auto& rhsPage : buildSide) {
+        auto rhsLen = rhsPage->size();
+        ss << "print right build page no=" << rightPageCnt << std::endl;
+        for (auto i = 0UL; i < rhsLen; ++i) {
+            ss << "print right build entry no=" << i << std::endl;
+            auto recPtr = rhsPage.get()->operator[](i);
+            auto key = getField(recPtr, operatorHandler->getJoinSchemaRight(), "f2_right");
+            auto otherField = getField(recPtr, operatorHandler->getJoinSchemaRight(), "f1_right");
+            auto ts = getField(recPtr, operatorHandler->getJoinSchemaRight(), "timestamp");
+            ss << "pos=" << i << " key=" << (uint64_t) *key << " ts=" << (uint64_t) *ts
+               << " otherField=" << (uint64_t) *otherField << std::endl;
+        }
+    }
+    std::cout << ss.str() << std::endl;
+}
 /**
  * @brief Performs the join of two buckets probeSide and buildSide
  * @param pipelineCtx
@@ -93,6 +135,9 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              const std::vector<std::unique_ptr<FixedPage>>&& buildSide,
                              uint64_t windowStart,
                              uint64_t windowEnd) {
+
+    std::cout << "NEW EXECUTE" << std::endl;
+    printPages(pipelineCtx, workerCtx, operatorHandler, probeSide, buildSide, windowStart, windowEnd);
 
     auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(),
                                              operatorHandler->getJoinSchemaRight(),
@@ -135,14 +180,19 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                     auto rhsRecordPtr = rhsPage.get()->operator[](j);
                     auto rhsRecordKeyPtr =
                         getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
+                    auto leftTsField = getField(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), "timestamp");
+                    auto rightTsField = getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), "timestamp");
                     NES_TRACE("right key==" << (uint64_t) *rhsRecordKeyPtr << " left key=" << (uint64_t) *lhsKeyPtr
-                                            << " leftSchemaSize=" << leftSchemaSize << " rightSchemaSize=" << rightSchemaSize);
+                                              << " leftSchemaSize=" << leftSchemaSize << " rightSchemaSize=" << rightSchemaSize
+                                              << " windowStart=" << windowStart << " windowEnd=" << windowEnd << " leftts="
+                                              << (uint64_t) *leftTsField << " rightTs=" << (uint64_t) *rightTsField);
                     if (compareField(lhsKeyPtr, rhsRecordKeyPtr, sizeOfKey)) {
                         ++joinedTuples;
 
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
-                        NES_WARNING("numberOfTuplesInBuffer=" << numberOfTuplesInBuffer << " j=" << j
+                        NES_WARNING("numberOfTuplesInBuffer=" << numberOfTuplesInBuffer << " j=" << j << " i=" << i
+                                                              << " rhsLen=" << rhsLen << " lhsLen=" << lhsLen
                                                               << " tupleSize=" << sizeOfJoinedTuple
                                                               << " bufferSize=" << currentTupleBuffer.getBufferSize());
                         // Building the join tuple (winStart | winStop| key | left tuple | right tuple)
@@ -241,8 +291,13 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
 
         if (leftBucketSize && rightBucketSize) {
             //TODO: here we can potentially add an optimization to check if (leftBucketSize > rightBucketSize)  and switch orders but this adds a lot of complexitiy
-            joinedTuples =
-                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket), windowStart, windowEnd);
+            joinedTuples = executeJoinForBuckets(pipelineCtx,
+                                                 workerCtx,
+                                                 opHandler,
+                                                 std::move(leftBucket),
+                                                 std::move(rightBucket),
+                                                 windowStart,
+                                                 windowEnd);
         }
     }
 

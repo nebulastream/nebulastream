@@ -19,6 +19,11 @@
 #include <cstddef>
 #include <memory>
 
+namespace NES {
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}// namespace NES
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -83,6 +88,8 @@ class FixedPage {
 
     bool isSizeLeft(uint64_t requiredSpace) const;
 
+    std::string getContentAsString(SchemaPtr schema) const;
+
   private:
     /**
      * @brief Swapping lhs FixedPage with rhs FixedPage
@@ -95,7 +102,7 @@ class FixedPage {
     size_t sizeOfRecord;
     uint8_t* data;
     std::atomic<size_t> currentPos;
-//    size_t currentPos;
+    //    size_t currentPos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };

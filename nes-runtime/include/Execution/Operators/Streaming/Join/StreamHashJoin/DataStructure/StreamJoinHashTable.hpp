@@ -107,6 +107,14 @@ class StreamJoinHashTable {
      */
     size_t getNumItems(size_t bucketPos) const;
 
+    /**
+     * @brief retrieves the number of buckets overall
+     * @return number of buckets
+     */
+    size_t getNumBuckets() const;
+
+    std::string getContentAsString(SchemaPtr schema) const;
+
   protected:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;

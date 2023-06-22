@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+//#include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
 #include <zlib.h>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 StreamJoinHashTable::StreamJoinHashTable(size_t sizeOfRecord,
@@ -42,6 +44,25 @@ size_t StreamJoinHashTable::getBucketPos(uint64_t hash) const {
 FixedPagesLinkedList* StreamJoinHashTable::getBucketLinkedList(size_t bucketPos) {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in StreamJoinHashTable!");
     return buckets[bucketPos].get();
+}
+
+std::string StreamJoinHashTable::getContentAsString(SchemaPtr schema) const
+{
+    std::stringstream ss;
+    //for every bucket
+    size_t bucketCnt = 0;
+    for(auto& bucket: buckets)
+    {
+        ss << "bucket no=" << bucketCnt++;
+        //for every page
+        size_t pageCnt = 0;
+        for(auto& page : bucket->getPages())
+        {
+            ss << " pageNo=" << pageCnt++ << " ";
+            ss << page->getContentAsString(schema);
+        }
+    }
+    return ss.str();
 }
 
 uint64_t StreamJoinHashTable::getNumberOfTuples() {
@@ -79,5 +100,7 @@ size_t StreamJoinHashTable::getNumItems(size_t bucketPos) const {
 }
 
 size_t StreamJoinHashTable::getNumPages(size_t bucketPos) const { return buckets[bucketPos]->getPages().size(); }
+
+size_t StreamJoinHashTable::getNumBuckets() const { return buckets.size(); }
 
 }// namespace NES::Runtime::Execution::Operators

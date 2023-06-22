@@ -153,7 +153,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
+        NES_TRACE("write key=" << field->getName() << " value=" << record.read(fieldName));
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }

@@ -21,7 +21,6 @@ namespace NES::Runtime::Execution::Operators {
 uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
     //try to insert on current Page
     uint8_t* retPointer = pages[pos]->append(hash);
-
     //check page is full
     if (retPointer == nullptr) {
         pageFullCnt++;
@@ -117,7 +116,8 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
     //pre allocate pages
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
-        pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
+        //        pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
+        pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
     }
     currentPage = pages[0].get();
 }

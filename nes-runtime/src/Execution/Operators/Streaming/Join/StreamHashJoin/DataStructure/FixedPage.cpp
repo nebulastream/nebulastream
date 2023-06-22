@@ -11,7 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -29,14 +32,64 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t) {
-    currentPos++;
-    if (currentPos > capacity) {
+//uint8_t* FixedPage::append(const uint64_t) {
+//    currentPos++;
+//    if (currentPos > capacity) {
+//        return nullptr;
+//    }
+////    bloomFilter->add(hash);
+//    uint8_t* ptr = &data[(currentPos - 1) * sizeOfRecord];
+//    return ptr;
+//}
+
+uint8_t* FixedPage::append(const uint64_t hash) {
+    if (currentPos >= capacity) {
         return nullptr;
     }
-    //    bloomFilter->add(hash);
-    uint8_t* ptr = &data[currentPos - 1 * sizeOfRecord];
+
+    if (bloomFilter == nullptr) {
+        NES_ERROR("Bloomfilter become empty")
+    }
+    bloomFilter->add(hash);
+    uint8_t* ptr = &data[currentPos * sizeOfRecord];
+    currentPos++;
     return ptr;
+}
+
+uint8_t* getField2(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& fieldName) {
+    uint8_t* pointer = recordBase;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto& field : joinSchema->fields) {
+        if (field->getName() == fieldName) {
+            break;
+        }
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        pointer += fieldType->size();
+    }
+    return pointer;
+}
+
+std::string FixedPage::getContentAsString(SchemaPtr schema) const {
+    std::stringstream ss;
+    //for each item in the page
+    for (auto i = 0UL; i < currentPos; i++) {
+        ss << "Page entry no=" << i << std::endl;
+        for (auto u = 0UL; schema->getSize(); u++) {
+            ss << " field=" << schema->get(u)->getName();
+            NES_ASSERT(schema->get(u)->getDataType()->isNumeric(), "This method is only supported for uint64");
+            uint8_t* pointer = &data[i * sizeOfRecord];
+            auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+            for (auto& field : schema->fields) {
+                if (field->getName() == schema->get(u)->getName()) {
+                    break;
+                }
+                auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+                pointer += fieldType->size();
+            }
+            ss << " value=" << (uint64_t) *pointer;
+        }
+    }
+    return ss.str();
 }
 
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
@@ -51,11 +104,7 @@ uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeO
 
 size_t FixedPage::size() const { return currentPos; }
 
-
-bool FixedPage::isSizeLeft(uint64_t requiredSpace) const
-{
-    return currentPos + requiredSpace < capacity;
-}
+bool FixedPage::isSizeLeft(uint64_t requiredSpace) const { return currentPos + requiredSpace < capacity; }
 
 FixedPage::FixedPage(FixedPage&& otherPage)
     //    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos), capacity(otherPage.capacity),
