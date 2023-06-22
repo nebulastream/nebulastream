@@ -43,7 +43,7 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-namespace Configuration {
+namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configuration
@@ -111,7 +111,7 @@ class QueryPlacementPhase {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
-    Configuration::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
