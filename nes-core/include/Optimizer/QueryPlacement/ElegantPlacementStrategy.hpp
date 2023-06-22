@@ -66,6 +66,12 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
 
     /**
      * @brief
+     * @return
+     */
+    nlohmann::json prepareAvailableNodes();
+
+    /**
+     * @brief
      * @param queryId
      * @param pinnedDownStreamOperators
      * @param response
