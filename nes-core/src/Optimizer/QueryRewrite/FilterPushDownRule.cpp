@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -22,6 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -53,66 +55,129 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
               });
     NES_DEBUG2("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (const auto& filterOperator : filterOperators) {
-        pushDownFilter(filterOperator);
+        //method calls itself recursively until it can not push the filter further down(upstream).
+        pushDownFilter(filterOperator, filterOperator->getChildren()[0], filterOperator);
     }
     NES_INFO2("FilterPushDownRule: Return the updated query plan {}", queryPlan->toString());
     return queryPlan;
 }
 
-void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator) {
-    std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren();
+void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& curOperator, const NodePtr& parOperator) {
 
-    if (childrenOfFilter.empty()) {
-        NES_ERROR2("FilterPushDownRule: Filter is the leaf, something is wrong");
-        throw std::logic_error("FilterPushDownRule: Filter is the leaf, something is wrong");
-    }
+    // keeps track if we were able to push the filter below another operator.
+    bool pushed = false;
 
-    if (childrenOfFilter.size() > 1) {
-        NES_ERROR2("FilterPushDownRule: Filter has multiple children, case not handled");
-        throw std::logic_error("FilterPushDownRule: Filter has multiple children, case not handled");
-    }
-
-    NodePtr child = childrenOfFilter[0];
-
-    if (child->instanceOf<ProjectionLogicalOperatorNode>()) {
+    if (curOperator->instanceOf<ProjectionLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for projection: https://github.com/nebulastream/nebulastream/issues/3799
-    } else if (child->instanceOf<MapLogicalOperatorNode>()) {
-        std::string mapFieldName = getFieldNameUsedByMapOperator(child);
+    }
+    else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
+        std::string mapFieldName = getFieldNameUsedByMapOperator(curOperator);
         bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
+
+        //This map operator does not manipulate the same field that the filter uses, so we are able to push the filter below this operator.
         if (!predicateFieldManipulated) {
-            filterOperator->removeAndJoinParentAndChildren();
-            child->insertBetweenThisAndChildNodes(filterOperator);
-            pushDownFilter(filterOperator);
+            pushed = true;
+            pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
         }
-    } else if (child->instanceOf<JoinLogicalOperatorNode>()) {
-        // TODO: implement filter pushdown for joins: https://github.com/nebulastream/nebulastream/issues/3765
-    } else if (child->instanceOf<UnionLogicalOperatorNode>()) {
-        std::vector<NodePtr> grandChildren = child->getChildren();
+    }
+    else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
+        //field names that are used by the filter
+        std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
+
+        //if any inputSchema contains all the fields that are used by the filter we can push the filter to the corresponding site
+        SchemaPtr leftSchema = curOperator->as<JoinLogicalOperatorNode>()->getLeftInputSchema();
+        SchemaPtr rightSchema = curOperator->as<JoinLogicalOperatorNode>()->getRightInputSchema();
+        bool leftBranchPossible = true;
+        bool rightBranchPossible = true;
+
+        //if any field that is used by the filter is not part of the branches schema, we can't push the filter to that branch.
+        for (const std::string& fieldUsedByFilter: predicateFields){
+            if (!leftSchema->contains(fieldUsedByFilter)) {leftBranchPossible = false;}
+            if (!rightSchema->contains(fieldUsedByFilter)) {rightBranchPossible = false;}
+        }
+
+        if (leftBranchPossible) {
+            pushed = true;
+            pushDownFilter(filterOperator,curOperator->as<JoinLogicalOperatorNode>()->getLeftOperators()[0],curOperator);
+        }
+        if (rightBranchPossible) {
+            pushed = true;
+            pushDownFilter(filterOperator, curOperator->as<JoinLogicalOperatorNode>()->getRightOperators()[0],curOperator);
+        }
+
+    }
+    else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
+        std::vector<NodePtr> grandChildren = curOperator->getChildren();
 
         if (grandChildren.size() != 2) {
             NES_ERROR2("FilterPushDownRule: Union should have exactly two children");
             throw std::logic_error("FilterPushDownRule: Union should have exactly two children");
         }
 
-        filterOperator->removeAndJoinParentAndChildren();
         NodePtr filterOperatorCopy = filterOperator->copy();
+        filterOperatorCopy->as<FilterLogicalOperatorNode>()->setId(Util::getNextOperatorId());
 
-        NodePtr leftChild = grandChildren[0];
-        NodePtr rightChild = grandChildren[1];
+        //otherwise the order of the branches below the union is not consistent. This would make it harder to write tests, but it should actually be fine if the order changes.
+        insertFilterIntoNewPosition(filterOperator, grandChildren[0], curOperator);
+        insertFilterIntoNewPosition(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
 
-        leftChild->insertBetweenThisAndParentNodes(filterOperator);
-        pushDownFilter(filterOperator);
-
-        rightChild->insertBetweenThisAndParentNodes(filterOperatorCopy);
-        pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>());
-
-    } else if (child->instanceOf<WindowLogicalOperatorNode>()) {
+        pushed = true;
+        pushDownFilter(filterOperator, grandChildren[0], curOperator);
+        pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
+    }
+    else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for window aggregations: https://github.com/nebulastream/nebulastream/issues/3804
-        // Windows can be used either in joins or aggregations.
-        // For window joins, the push-down below join policy is applied.
-        // For window aggregations, we check for one case in which the filter can be pushed down.
-        // Such case happens when there is a group_by clause on a certain attribute
-        // and the filter is applied to the same attribute.
+    }
+    else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        pushed = true;
+        pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
+    }
+    // if we were not able to push the filter below the current operator, we now need to insert it in the new position, if the position is changed
+    if (!pushed) {
+        insertFilterIntoNewPosition(filterOperator, curOperator, parOperator);
+    }
+}
+
+void FilterPushDownRule::insertFilterIntoNewPosition(const FilterLogicalOperatorNodePtr& filterOperator, const NodePtr& childOperator, const NodePtr& parOperator){
+
+    // If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
+    // so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
+    if (filterOperator->getId() != parOperator->as<LogicalOperatorNode>()->getId()) {
+        // removes filter operator from its original position and connects the parents and children of the filter operator at that position
+        if (!filterOperator->removeAndJoinParentAndChildren()){
+            //if we did not manage to remove the operator we can't insert it at the new position
+            return;
+        }
+
+        // inserts the operator above the operator that it wasn't able to push below.
+        // This can only be done if that operator does not have multiple parents as the filter operator will get insert below every parent of this operator.
+        if (!childOperator->as<LogicalOperatorNode>()->hasMultipleParents()){
+            if (!childOperator->insertBetweenThisAndParentNodes(filterOperator)){
+                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
+                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
+            }
+        }
+        // inserts the operator below the parent operator of the operator that it wasn't able to push below.
+        // This can only be done if that operator does not have multiple children as the filter operator will get insert above every child of this operator.
+        else if (!parOperator->as<LogicalOperatorNode>()->hasMultipleChildren()){
+            if (!parOperator->insertBetweenThisAndChildNodes(filterOperator)){
+                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
+                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
+            }
+        }
+        else {
+            // This probably works.
+            // BUT there were weird bugs, if we use this method in the case that there is only one parent or one child.
+            // The pointers themselves(childOperator, parOperator) pointed to a different object than the original object after adding or removing a child/parent.
+            // Maybe this has something to do with the operator getting completely disconnected from the queryPlan, but the actual reason isn't obvious.
+            bool success1 = childOperator->removeParent(parOperator);// also removes childOperator as a child from parOperator
+            bool success2 = childOperator->addParent(filterOperator); // also adds childOperator as a child to filterOperator
+            bool success3 = filterOperator->addParent(parOperator); // also adds filterOperator as a child to parOperator
+            if (!success1 || !success2 || !success3){
+                //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
+                throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
+            }
+        }
     }
 }
 
