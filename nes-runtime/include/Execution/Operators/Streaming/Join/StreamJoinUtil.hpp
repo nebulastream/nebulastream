@@ -41,9 +41,9 @@ static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
-//static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 16 * 1024 * 1024;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 16 * 1024 * 1024;
 //static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABL_SIZE = 8589934592;//8gb
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 17179869184*2;
+//static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 17179869184*2;
 
 static constexpr auto DEFAULT_JOIN_STRATEGY = JoinStrategy::HASH_JOIN_LOCAL;
 
