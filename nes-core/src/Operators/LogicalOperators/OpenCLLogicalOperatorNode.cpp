@@ -26,6 +26,28 @@ OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescr
 
 void OpenCLLogicalOperatorNode::setDeviceId(const std::string& deviceId) { this->deviceId = deviceId; }
 
+std::string OpenCLLogicalOperatorNode::getDeviceId() {
+    return this->deviceId;
+}
+
+void OpenCLLogicalOperatorNode::setDeviceType(const std::string& deviceType) { this->deviceType = deviceType; }
+
+std::string OpenCLLogicalOperatorNode::getDeviceType() {
+    return this->deviceType;
+}
+
+void OpenCLLogicalOperatorNode::setDeviceModelName(const std::string& modelName) { this->modelName = modelName; }
+
+std::string OpenCLLogicalOperatorNode::getDeviceModelName() {
+    return this->modelName;
+}
+
+void OpenCLLogicalOperatorNode::setDeviceMemory(const uint16_t& modelMemory) { this->modelMemory = modelMemory; }
+
+uint16_t OpenCLLogicalOperatorNode::getDeviceMemory() {
+    return this->modelMemory;
+}
+
 void OpenCLLogicalOperatorNode::setOpenCLCode(const std::string& openCLCode) { this->openCLCode = openCLCode; }
 
 std::string OpenCLLogicalOperatorNode::toString() const {

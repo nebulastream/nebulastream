@@ -17,6 +17,7 @@
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpr/api.h>
@@ -201,13 +202,58 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::vector<O
 }
 
 nlohmann::json ElegantPlacementStrategy::prepareAvailableNodes() {
-    nlohmann::json availableNodes{};
-    std::vector<nlohmann::json> nodes{};
-    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of avalable nodes");
-    // TODO: Convert topology to a json. Look at TopologyManagerService:getTopologyAsJson();
-    //  Add network related information
-    availableNodes["AVAILABLE_NODES"] = nodes;
-    return availableNodes;
+    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of available nodes");
+    nlohmann::json topologyJson{};
+    auto root = topology->getRoot();
+    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
+    std::deque<TopologyNodePtr> childToAdd;
+
+    std::vector<nlohmann::json> nodes = {};
+    std::vector<nlohmann::json> edges = {};
+
+    while (!parentToAdd.empty()) {
+        // Current topology node to add to the JSON
+        TopologyNodePtr currentNode = parentToAdd.front();
+        nlohmann::json currentNodeJsonValue{};
+        std::vector<nlohmann::json> devices = {};
+        nlohmann::json currentNodeOpenCLJsonValue{};
+        parentToAdd.pop_front();
+
+        // Add properties for current topology node
+        currentNodeJsonValue["nodeId"] = currentNode->getId();
+        currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
+        auto openCLNode = currentNode->as<OpenCLLogicalOperatorNode>();
+        currentNodeOpenCLJsonValue["deviceID"] = openCLNode->getDeviceId();
+        currentNodeOpenCLJsonValue["deviceType"] = openCLNode->getDeviceType();
+        currentNodeOpenCLJsonValue["deviceName"] = openCLNode->getDeviceModelName();
+        currentNodeOpenCLJsonValue["memory"] = openCLNode->getDeviceMemory();
+        devices.push_back(currentNodeOpenCLJsonValue);
+        currentNodeJsonValue["devices"] = devices;
+        auto children = currentNode->getChildren();
+        for (const auto& child : children) {
+            // Add edge information for current topology node
+            nlohmann::json currentEdgeJsonValue{};
+            currentNodeJsonValue["linkID"] = std::to_string(child->as<TopologyNode>()->getId()) + "_"
+                + std::to_string(currentNode->getId());
+            currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
+            currentEdgeJsonValue["target"] = currentNode->getId();
+            currentEdgeJsonValue["transferRate"] = 100; // FIXME: replace it with more intelligible value
+            edges.push_back(currentEdgeJsonValue);
+            childToAdd.push_back(child->as<TopologyNode>());
+        }
+
+        if (parentToAdd.empty()) {
+            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
+            childToAdd.clear();
+        }
+
+        nodes.push_back(currentNodeJsonValue);
+    }
+    NES_INFO2("ElegantPlacementStrategy: no more topology nodes to add");
+
+    topologyJson["AVAILABLE_NODES"] = nodes;
+    topologyJson["NETWORK_DELAYS"] = edges;
+    return topologyJson;
 }
 
 }// namespace NES::Optimizer
