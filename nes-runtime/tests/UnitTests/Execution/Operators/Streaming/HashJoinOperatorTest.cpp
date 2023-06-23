@@ -468,11 +468,12 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                             checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
 
                         if (!foundBuffer) {
-                            NES_ERROR2("Could not find buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
+                            NES_ERROR2("Could not find buffer {} in emittedBuffers!",
+                                       Util::printTupleBufferAsCSV(buffer, joinSchema));
                             //return false;
                         } else {
-                            NES_WARNING2("Found buffer buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
-
+                            NES_WARNING2("Found buffer buffer {} in emittedBuffers!",
+                                         Util::printTupleBufferAsCSV(buffer, joinSchema));
                         }
 
                         numberOfTuplesInBuffer = 0;

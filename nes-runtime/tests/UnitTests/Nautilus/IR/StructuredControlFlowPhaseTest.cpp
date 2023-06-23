@@ -231,7 +231,8 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                                 == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
                             if (!loopInfoIsCorrect) {
                                 NES_ERROR2("Loop info set incorrectly. Check values: LowerBound: {} vs {}, UpperBound: {} vs {}, "
-                                           "StepSize: {} vs {}, LoopEndBlock: {} vs {}", countedLoopInfo->lowerBound,
+                                           "StepSize: {} vs {}, LoopEndBlock: {} vs {}",
+                                           countedLoopInfo->lowerBound,
                                            correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound,
                                            countedLoopInfo->upperBound,
                                            correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound,
