@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
+
 #include <memory>
 
 namespace NES {
@@ -23,6 +24,7 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
+
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 

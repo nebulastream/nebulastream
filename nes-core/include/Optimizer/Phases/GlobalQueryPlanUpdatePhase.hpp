@@ -71,6 +71,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
+class SampleCodeGenerationPhase;
+using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
+
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
@@ -133,7 +136,9 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     OriginIdInferencePhasePtr originIdInferencePhase;
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
+    SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
+    bool generateSampleCode;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_
