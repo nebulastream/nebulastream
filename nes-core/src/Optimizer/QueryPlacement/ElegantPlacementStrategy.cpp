@@ -72,13 +72,12 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
     FaultToleranceType faultToleranceType /*faultToleranceType*/,
     LineageType lineageType /*lineageType*/,
-    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+    const std::set<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
+    const std::set<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
     try {
 
         //1. Make rest call to get the external operator placement service.
-
         //prepare request payload
         nlohmann::json payload{};
 
@@ -90,8 +89,6 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         auto availableNodes = prepareAvailableNodes();
         payload.push_back(availableNodes);
 
-        //TODO: Write code to properly call the service URL
-
         //1.c: Make a rest call to elegant planner
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
                                            cpr::Header{{"Content-Type", "application/json"}},
@@ -100,7 +97,12 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         if (response.status_code != 200) {
             NES_ERROR2(
                 "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code {} and msg {}",
-                response.status_code, response.reason);
+                response.status_code,
+                response.reason);
+            throw QueryPlacementException(
+                queryId,
+                "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code "
+                    + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 
         //2. Parse the response of the external placement service
@@ -112,7 +114,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 5. Perform type inference on aUtilityFunctionsll updated query plans
+        // 5. Perform type inference on updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (const std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
@@ -120,7 +122,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
 }
 
 void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId,
-                                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators,
                                                                  cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
@@ -157,8 +159,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
     }
 }
 
-nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of the query plan");
 
@@ -232,16 +234,16 @@ nlohmann::json ElegantPlacementStrategy::prepareAvailableNodes() {
         currentNodeOpenCLJsonValue["memory"] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
         devices.push_back(currentNodeOpenCLJsonValue);
         currentNodeJsonValue["devices"] = devices;
-        currentNodeJsonValue["nodeType"] = "static"; // FIXME: populate from enum of {mobile, static, w/e else}?
+        currentNodeJsonValue["nodeType"] = "static";// FIXME: populate from enum of {mobile, static, w/e else}?
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
-            currentEdgeJsonValue["linkID"] = std::to_string(child->as<TopologyNode>()->getId()) + "_"
-                + std::to_string(currentNode->getId());
+            currentEdgeJsonValue["linkID"] =
+                std::to_string(child->as<TopologyNode>()->getId()) + "_" + std::to_string(currentNode->getId());
             currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
             currentEdgeJsonValue["target"] = currentNode->getId();
-            currentEdgeJsonValue["transferRate"] = 100; // FIXME: replace it with more intelligible value
+            currentEdgeJsonValue["transferRate"] = 100;// FIXME: replace it with more intelligible value
             edges.push_back(currentEdgeJsonValue);
             childToAdd.push_back(child->as<TopologyNode>());
         }

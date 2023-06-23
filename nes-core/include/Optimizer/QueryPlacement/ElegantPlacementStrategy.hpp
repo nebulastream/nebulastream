@@ -44,8 +44,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
     explicit ElegantPlacementStrategy(std::string serviceURL,
@@ -61,8 +61,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamOperators
      * @return
      */
-    nlohmann::json prepareQueryPayload(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                       const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief
@@ -77,7 +77,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param response
      */
     void pinOperatorsBasedOnElegantService(QueryId queryId,
-                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                           const std::set<OperatorNodePtr>& pinnedDownStreamOperators,
                                            cpr::Response& response) const;
 
     std::string serviceURL;
