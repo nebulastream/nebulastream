@@ -97,6 +97,11 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
                                            cpr::Header{{"Content-Type", "application/json"}},
                                            cpr::Body{payload.dump()},
                                            cpr::Timeout(3000));
+        if (response.status_code != 200) {
+            NES_ERROR2(
+                "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code {} and msg {}",
+                response.status_code, response.reason);
+        }
 
         //2. Parse the response of the external placement service
         pinOperatorsBasedOnElegantService(queryId, pinnedDownStreamOperators, response);
@@ -221,19 +226,18 @@ nlohmann::json ElegantPlacementStrategy::prepareAvailableNodes() {
 
         // Add properties for current topology node
         currentNodeJsonValue["nodeId"] = currentNode->getId();
-        currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
-        auto openCLNode = currentNode->as<OpenCLLogicalOperatorNode>();
-        currentNodeOpenCLJsonValue["deviceID"] = openCLNode->getDeviceId();
-        currentNodeOpenCLJsonValue["deviceType"] = openCLNode->getDeviceType();
-        currentNodeOpenCLJsonValue["deviceName"] = openCLNode->getDeviceModelName();
-        currentNodeOpenCLJsonValue["memory"] = openCLNode->getDeviceMemory();
+        currentNodeOpenCLJsonValue["deviceID"] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_ID"));
+        currentNodeOpenCLJsonValue["deviceType"] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_TYPE"));
+        currentNodeOpenCLJsonValue["deviceName"] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_NAME"));
+        currentNodeOpenCLJsonValue["memory"] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
         devices.push_back(currentNodeOpenCLJsonValue);
         currentNodeJsonValue["devices"] = devices;
+        currentNodeJsonValue["nodeType"] = "static"; // FIXME: populate from enum of {mobile, static, w/e else}?
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
-            currentNodeJsonValue["linkID"] = std::to_string(child->as<TopologyNode>()->getId()) + "_"
+            currentEdgeJsonValue["linkID"] = std::to_string(child->as<TopologyNode>()->getId()) + "_"
                 + std::to_string(currentNode->getId());
             currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
             currentEdgeJsonValue["target"] = currentNode->getId();
