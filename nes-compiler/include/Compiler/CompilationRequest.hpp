@@ -35,6 +35,7 @@ class CompilationRequest {
      * @param profileExecution enables profiling for the execution
      * @param optimizeCompilation enables optimizations
      * @param debug enables debug options
+     * @param externalApis a vector of external APIs to add to the compilation process (empty by default)
      * @return std::unique_ptr<CompilationRequest>
      */
     CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
@@ -43,7 +44,7 @@ class CompilationRequest {
                        bool profileExecution,
                        bool optimizeCompilation,
                        bool debug,
-                       std::vector<std::shared_ptr<ExternalAPI>> externalApis);
+                       std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
     bool operator==(const CompilationRequest& rhs) const;
     bool operator!=(const CompilationRequest& rhs) const;
 
@@ -55,7 +56,7 @@ class CompilationRequest {
      * @param profileExecution enables profiling for the execution
      * @param optimizeCompilation enables optimizations
      * @param debug enables debug options
-     * @param externalApis enables debug options
+     * @param externalApis a vector of external APIs to add to the compilation process (empty by default)
      * @return std::unique_ptr<CompilationRequest>
      */
     static std::shared_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,

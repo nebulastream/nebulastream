@@ -20,7 +20,12 @@
 namespace NES::Compiler {
 
 /**
- * @brief Any external API has to inherit from this class if it requires specific compiler arguments.
+ * @brief A class which inherits from `ExternalAPI` can be passed to a `CompilationRequest` to augment the
+ * call to the compiler command with flags that are necessary for the correct compiling and linking
+ * of a third-party library.
+ *
+ * An example for an external API would be CUDA, as we need to give the clang compiler CUDA-specific flags
+ * that are not part of the default compiler call mechanism.
  */
 class ExternalAPI {
 public:

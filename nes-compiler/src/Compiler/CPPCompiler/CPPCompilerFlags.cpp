@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
-
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Compiler {

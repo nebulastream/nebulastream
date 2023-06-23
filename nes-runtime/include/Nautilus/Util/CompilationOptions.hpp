@@ -128,7 +128,6 @@ class CompilationOptions {
 
     /**
      * @brief Indicate if we are using CUDA.
-     * @return bool
      */
     bool usingCUDA() const;
 
