@@ -87,8 +87,11 @@ class CUDAKernelWrapper {
         using jitify::reflection::type_of;
         kernelProgramPtr->kernel(std::move(kernel.name))
             .instantiate()
-            .configure(kernel.grid, kernel.block, kernel.smem, kernel.stream)                                             // the configuration
-            .launch(deviceInputBuffer, numberOfInputTuples, deviceOutputBuffer, std::forward<Args>(args)...);// the parameter of the kernel program
+            .configure(kernel.grid, kernel.block, kernel.smem, kernel.stream)// the configuration
+            .launch(deviceInputBuffer,
+                    numberOfInputTuples,
+                    deviceOutputBuffer,
+                    std::forward<Args>(args)...);// the parameter of the kernel program
 
         // copy the result of kernel execution back to the cpu
         cudaMemcpy(hostOutputBuffer, deviceOutputBuffer, numberOfOutputTuples * sizeof(OutputRecord), cudaMemcpyDeviceToHost);

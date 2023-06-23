@@ -142,7 +142,9 @@ void fillBufferToMultiFieldSchema(TupleBuffer& buf, const Runtime::MemoryLayouts
     buf.setNumberOfTuples(NUMBER_OF_TUPLE);
 }
 
-void fillBufferToWindowSchema(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, const size_t numTuples) {
+void fillBufferToWindowSchema(TupleBuffer& buf,
+                              const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout,
+                              const size_t numTuples) {
 
     auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
     auto fields0 = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, memoryLayout, buf);
@@ -204,16 +206,8 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        KernelDescriptor kernel = {
-            "simpleAdditionKernel",
-            dim3(1),
-            dim3(32)
-        };
-        cudaKernelWrapper.execute(inputRecords,
-                                  buffer.getNumberOfTuples(),
-                                  outputRecords,
-                                  numberOfOutputTuples,
-                                  kernel);
+        KernelDescriptor kernel = {"simpleAdditionKernel", dim3(1), dim3(32)};
+        cudaKernelWrapper.execute(inputRecords, buffer.getNumberOfTuples(), outputRecords, numberOfOutputTuples, kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -295,16 +289,8 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        KernelDescriptor kernel = {
-            "additionKernelMultipleFields",
-            dim3(1),
-            dim3(32)
-        };
-        cudaKernelWrapper.execute(record,
-                                  buffer.getNumberOfTuples(),
-                                  outputRecords,
-                                  numberOfOutputTuples,
-                                  kernel);
+        KernelDescriptor kernel = {"additionKernelMultipleFields", dim3(1), dim3(32)};
+        cudaKernelWrapper.execute(record, buffer.getNumberOfTuples(), outputRecords, numberOfOutputTuples, kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -391,16 +377,8 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        KernelDescriptor kernel = {
-            "additionKernelColumnLayout",
-            dim3(1),
-            dim3(32)
-        };
-        cudaKernelWrapper.execute(valueBuffer,
-                                  buffer.getNumberOfTuples(),
-                                  outputRecords,
-                                  numberOfOutputTuples,
-                                  kernel);
+        KernelDescriptor kernel = {"additionKernelColumnLayout", dim3(1), dim3(32)};
+        cudaKernelWrapper.execute(valueBuffer, buffer.getNumberOfTuples(), outputRecords, numberOfOutputTuples, kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -656,7 +634,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
 }
 
 class WindowedAggregationGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-public:
+  public:
     static constexpr uint32_t WINDOW_LENGTH = 8;
     static constexpr uint32_t WINDOW_SLIDE = 8;
     static constexpr size_t NUMBER_OF_INPUT_TUPLES = 32;
@@ -746,11 +724,7 @@ public:
         // Adapt this value in performance tuning.
         dim3 threadsPerBlock(32);
         dim3 numBlocks((numberOfInputTuples + threadsPerBlock.x - 1) / threadsPerBlock.x);
-        KernelDescriptor kernel = {
-            "slidingWindowKernel",
-            numBlocks,
-            threadsPerBlock
-        };
+        KernelDescriptor kernel = {"slidingWindowKernel", numBlocks, threadsPerBlock};
         // execute the kernel
         cudaKernelWrapper.execute(inputRecords,
                                   numberOfInputTuples,
@@ -779,9 +753,9 @@ public:
 TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
     // creating query plan
     SchemaPtr testSchemaWindowedAggregation = Schema::create()
-                                        ->addField("test$id", BasicType::INT32)
-                                        ->addField("test$value", BasicType::UINT32)
-                                        ->addField("test$timestamp", BasicType::UINT64);
+                                                  ->addField("test$id", BasicType::INT32)
+                                                  ->addField("test$value", BasicType::UINT32)
+                                                  ->addField("test$timestamp", BasicType::UINT64);
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaWindowedAggregation,
@@ -849,7 +823,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), numOutputTuples);
 
-    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto resultMemoryLayout =
+        Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto indexField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, resultMemoryLayout, resultBuffer);
     auto valueField = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, resultMemoryLayout, resultBuffer);
     for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++) {
