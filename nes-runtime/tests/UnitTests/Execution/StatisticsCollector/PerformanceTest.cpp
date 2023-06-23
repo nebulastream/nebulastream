@@ -137,7 +137,7 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto adwin = std::make_unique<Adwin>(0.001, 5);
+        auto adwin = std::make_unique<Adwin>(0.6, 5);
 
         // initialize statistics selectivity and add to statistics collector
         auto pipelineSelectivity =
@@ -228,7 +228,7 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDrift = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize statistics selectivity and add to statistics collector
         auto pipelineSelectivity =
@@ -319,7 +319,7 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto adwinRuntime = std::make_unique<Adwin>(0.01, 5);
+        auto adwinRuntime = std::make_unique<Adwin>(0.6, 5);
 
         // initialize statistic runtime
         auto runtime = std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 4);
@@ -408,7 +408,7 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDrift = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize statistic runtime
         auto runtime = std::make_unique<PipelineRuntime>(std::move(seqDrift), nautilusExecutablePipelineStage, 4);
@@ -498,7 +498,7 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto adwin = std::make_unique<Adwin>(0.01, 5);
+        auto adwin = std::make_unique<Adwin>(0.6, 5);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -592,7 +592,7 @@ TEST_P(PerformanceTest, branchMissesTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -689,7 +689,7 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
         pipeline->setRootOperator(scanOperator);
 
         // initialize change detector
-        auto adwin = std::make_unique<Adwin>(0.01, 5);
+        auto adwin = std::make_unique<Adwin>(0.6, 5);
 
         // initialize statistic out-of-order ratio and add to statistics collector
         auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
@@ -792,7 +792,7 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
         pipeline->setRootOperator(scanOperator);
 
         // initialize change detector
-        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDrift = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize statistic out-of-order-ratio and add to statistics collector
         auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
@@ -891,8 +891,8 @@ TEST_P(PerformanceTest, adwinSelectivityRuntimeTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detectors
-        auto adwin = std::make_unique<Adwin>(0.01, 5);
-        auto adwinRuntime = std::make_unique<Adwin>(0.01, 5);
+        auto adwin = std::make_unique<Adwin>(0.6, 5);
+        auto adwinRuntime = std::make_unique<Adwin>(0.6, 5);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -988,8 +988,8 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detectors
-        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto seqDriftRuntime = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDrift = std::make_unique<SeqDrift2>(0.1, 200);
+        auto seqDriftRuntime = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -1085,8 +1085,8 @@ TEST_P(PerformanceTest, adwinSelectivityBranchMissesTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detectors
-        auto adwin = std::make_unique<Adwin>(0.01, 50);
-        auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 50);
+        auto adwin = std::make_unique<Adwin>(0.6, 5);
+        auto adwinBranchMisses = std::make_unique<Adwin>(0.6, 5);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -1183,8 +1183,8 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detectors
-        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
+        auto seqDrift = std::make_unique<SeqDrift2>(0.1, 200);
+        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.1, 200);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();

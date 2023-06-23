@@ -24,7 +24,7 @@
 
 namespace NES::Runtime::Execution {
 
-List::List(int maxBucketSize): maxBucketSize(maxBucketSize){
+List::List(int64_t maxBucketSize): maxBucketSize(maxBucketSize){
     head = nullptr;
     tail = nullptr;
     count = 0;

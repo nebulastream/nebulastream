@@ -18,21 +18,23 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Reservoir::Reservoir(int sampleSize, int blockSize) : size(0),
+Reservoir::Reservoir(int64_t sampleSize, int64_t blockSize) :
+      size(0),
       total(0),
       instanceCount(0),
       sampleSize(sampleSize),
-      repository(blockSize){}
+      repository(blockSize)
+{}
 
-void Reservoir::addElement(double value) { // reservoir sampling from the repository
+void Reservoir::addElement(double value) {
     if(size < sampleSize){
         repository.add(value);
         total = total + value;
         size++;
-    } else {
+    } else { // reservoir sampling from the repository
         std::random_device rd;
         std::mt19937 rng(rd());
-        auto dist = std::uniform_int_distribution<int32_t>(0, (instanceCount + 1));
+        auto dist = std::uniform_int_distribution<int64_t >(0, (instanceCount + 1));
         auto position = dist(rng);
         if(position < sampleSize) {
             total = total - repository.get(position);
@@ -43,15 +45,15 @@ void Reservoir::addElement(double value) { // reservoir sampling from the reposi
     instanceCount++;
 }
 
-double Reservoir::get(int index) {
+double Reservoir::get(int64_t index) {
     return repository.get(index);
 }
 
 double Reservoir::getSampleMean() const {
-    return total / size;
+    return total / static_cast<double>(size);
 }
 
-int Reservoir::getSize() const {
+int64_t Reservoir::getSize() const {
     return size;
 }
 
@@ -59,7 +61,7 @@ double Reservoir::getTotal() const {
     return total;
 }
 
-void Reservoir::setSampleSize(int newSampleSize) {
+void Reservoir::setSampleSize(int64_t newSampleSize) {
     sampleSize = newSampleSize;
 }
 
@@ -71,7 +73,7 @@ void Reservoir::clear() {
 }
 
 void Reservoir::copy(Reservoir& source) {
-    for (int i = 0; i < source.getSize(); i++) {
+    for (int64_t i = 0; i < source.getSize(); i++) {
         addElement(source.get(i));
     }
     source.clear();

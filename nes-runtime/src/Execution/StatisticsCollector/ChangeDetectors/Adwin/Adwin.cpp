@@ -26,11 +26,11 @@
 
 namespace NES::Runtime::Execution {
 
-static int bucketSize(int Row){
-    return (int) pow(2,Row);
+static int64_t bucketSize(int64_t row){
+    return static_cast<int64_t>(pow(2,static_cast<double>(row)));
 }
 
-Adwin::Adwin(double delta, int M) : bucketList(M),MINTCLOCK(1),MINLENGTHWINDOW(16),DELTA(delta),MAXBUCKETS(M){
+Adwin::Adwin(double delta, int64_t M) : bucketList(M),MINTCLOCK(1),MINLENGTHWINDOW(16),DELTA(delta),MAXBUCKETS(M){
     mintTime = 0;
     mintClock = MINTCLOCK;
     mdblError = 0;
@@ -56,7 +56,7 @@ void Adwin::insertElement(const double& value){
 
     // update statistics
     if (windowSize > 1) {
-        variance += (windowSize - 1) * (value - sum / (windowSize - 1)) * (value - sum / (windowSize - 1)) / windowSize;
+        variance += static_cast<double>((windowSize - 1)) * (value - sum / static_cast<double>((windowSize - 1))) * (value - sum / static_cast<double>((windowSize - 1))) / static_cast<double>(windowSize);
     }
     sum += value;
 }
@@ -66,11 +66,11 @@ void Adwin::compressBuckets(){
     ListNode* cursor = bucketList.head;
     ListNode* nextNode;
 
-    int i = 0;
+    auto i = 0;
        		   
     do {
         // find the number of buckets in a row
-        int k = cursor->size;
+        int64_t k = cursor->size;
         // if the row is full, merge buckets
         if (k == MAXBUCKETS + 1) {
             nextNode = cursor->next;
@@ -79,11 +79,11 @@ void Adwin::compressBuckets(){
                 nextNode = cursor->next;
                 lastBucketIndex++;
             }
-            int n1 = bucketSize(i);
-            int n2 = bucketSize(i);
-            double u1 = cursor->sum[0] / n1;
-            double u2 = cursor->sum[1] / n2;
-            double incVariance = n1 * n2 * (u1 - u2) * (u1 - u2) / (n1 + n2);
+            auto n1 = bucketSize(i);
+            auto n2 = bucketSize(i);
+            double u1 = cursor->sum[0] / static_cast<double>(n1);
+            double u2 = cursor->sum[1] / static_cast<double>(n2);
+            double incVariance = static_cast<double>(n1) * static_cast<double>(n2) * (u1 - u2) * (u1 - u2) / static_cast<double>((n1 + n2));
 
             nextNode->addBack(cursor->sum[0] + cursor->sum[1], cursor->variance[0] + cursor->variance[1] + incVariance); // insert sum of first two values into next node
             numberOfBuckets--;
@@ -109,15 +109,15 @@ bool Adwin::checkDrift(){
         while (reduceWidth) {
             reduceWidth = false;
             quit = false;
-            int n0 = 0; // length n0 of subwindow W0
-            int n1 = windowSize; // length n0 of subwindow W1
+            int64_t n0 = 0; // length n0 of subwindow W0
+            int64_t n1 = windowSize; // length n0 of subwindow W1
             double u0 = 0; // sum of values in W0
             double u1 = sum; // sum of values in W1
 
             nodeCursor = bucketList.tail;
-            int i = lastBucketIndex;
+            int64_t i = lastBucketIndex;
             do {
-                for (int k = 0; k < nodeCursor->size; k++) {
+                for (int64_t k = 0; k < nodeCursor->size; k++) {
 
                     if (i == 0 && k == nodeCursor->size - 1) {
                         quit = true;
@@ -151,16 +151,16 @@ bool Adwin::checkDrift(){
     return change;
 }
 
-bool Adwin::cutExpression(int N0, int N1, const double& u0, const double& u1){
+bool Adwin::cutExpression(int64_t N0, int64_t N1, const double& u0, const double& u1){
     auto n0 = double(N0);
     auto n1 = double(N1);
     auto n  = double(windowSize); // length of window windowSize
     double diff = u0/n0 - u1/n1; // difference of the average of values in W0 and W1
 
-    double var = variance / windowSize; // variance of window
+    double var = variance / static_cast<double>(windowSize); // variance of window
     double deltaDash = log(2.0 * log(n) / DELTA); // delta
 
-    int mintMinWinLength = 5;
+    auto mintMinWinLength = 5;
     double harmonicMean = ((double) 1 / ((n0 - mintMinWinLength + 1))) + ((double) 1 / ((n1 - mintMinWinLength + 1))); // harmonic mean of n0 and n1
 
     double epsilon = sqrt(2 * harmonicMean * var * deltaDash) + (double) 2 / 3 * deltaDash * harmonicMean; // threshold epsilon cut
@@ -175,11 +175,11 @@ void Adwin::deleteElement(){
     // update statistics
     ListNode* Node;
     Node = bucketList.tail;
-    int n1 = bucketSize(lastBucketIndex);
+    auto n1 = bucketSize(lastBucketIndex);
     windowSize -= n1;
     sum -= Node->sum[0];
-    double u1 = Node->sum[0]/n1;
-    double incVariance = Node->variance[0]+ n1 * windowSize * (u1 - sum / windowSize) * (u1 - sum / windowSize) / (n1 + windowSize);
+    double u1 = Node->sum[0] / static_cast<double>(n1);
+    double incVariance = Node->variance[0]+ static_cast<double>(n1) * static_cast<double>(windowSize) * (u1 - sum / static_cast<double>(windowSize)) * (u1 - sum / static_cast<double>(windowSize)) / (n1 + windowSize);
     variance -= incVariance;
 
     // delete Bucket
@@ -217,10 +217,10 @@ void Adwin::print() const{
     it = bucketList.tail;
     if (it == nullptr) printf(" It NULL");
 
-    int i = lastBucketIndex;
+    int64_t i = lastBucketIndex;
     do {
-        for (int k = it->size-1; k >= 0; k--) {
-            printf(" %d [%1.4f de %d],", i, it->sum[k], bucketSize(i));
+        for (int64_t k = it->size-1; k >= 0; k--) {
+            printf(" %ld [%1.4f de %ld],", i, it->sum[k], bucketSize(i));
         }
         printf("\n");
         it = it->prev;

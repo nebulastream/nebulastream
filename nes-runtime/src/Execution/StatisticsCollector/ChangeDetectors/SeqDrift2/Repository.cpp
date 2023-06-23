@@ -15,7 +15,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Repository::Repository(int blockSize):
+Repository::Repository(int64_t blockSize):
     listOfBlocks(),
     blockSize(blockSize),
     indexOfLastBlock(-1),
@@ -29,31 +29,20 @@ void Repository::add(double value) {
         listOfBlocks.push_back(block);
         indexOfLastBlock++;
     }
-    listOfBlocks[indexOfLastBlock].add(value);
+    listOfBlocks.back().add(value);
     instanceCount++;
     total = total + value;
 }
 
-void Repository::add(double value, bool isTested){
-    if((instanceCount % blockSize) == 0){
-        Block block = Block(blockSize, isTested);
-        indexOfLastBlock++;
-        listOfBlocks[indexOfLastBlock] = block;
-    }
-    listOfBlocks[indexOfLastBlock].add(value);
-    instanceCount++;
-    total = total + value;
-}
-
-double Repository::get(int index) {
+double Repository::get(int64_t index) {
     return listOfBlocks[index/blockSize].data[(index % blockSize)];
 }
 
-void Repository::addAt(int index, double value) {
+void Repository::addAt(int64_t index, double value) {
     listOfBlocks[index/blockSize].addAtIndex(index % blockSize, value);
 }
 
-int Repository::getSize() {
+int64_t Repository::getSize() const {
     return instanceCount;
 }
 

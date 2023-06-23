@@ -28,9 +28,12 @@ ChangeDataGenerator::ChangeDataGenerator(std::shared_ptr<Runtime::BufferManager>
       noChangePeriod(noChangePeriod),
       noChangeRemain(noChangePeriod){
 
-    if (changeType == INCREMENTAL || changeType == REOCCURRING) {
+    if (changeType == INCREMENTAL) {
         distributionF1Start = 5;
         distributionF2Start = 45;
+    } else if (changeType == REOCCURRING) {
+        distributionF1Start = 2;
+        distributionF2Start = 49;
     } else if (changeType == GRADUAL) {
         distributionF1Start = 1;
     }
@@ -94,7 +97,7 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesIncremental(){
     std::vector<int64_t> fieldValues(100);
     std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
     std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-    distributionF1Start += incrementSteps;
+    distributionF1Start += incrementalSteps;
     return fieldValues;
 }
 
@@ -120,12 +123,13 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesReoccurring(){
         noChangeRemain = noChangePeriod;
         std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-        distributionF1Start += incrementSteps;
+        distributionF1Start += reoccurringSteps;
+        if (distributionF1Start == 51) distributionF1Start = 50;
     } else {
         noChangeRemain = noChangePeriod;
         std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-        distributionF1Start -= incrementSteps;
+        distributionF1Start -= reoccurringSteps;
         if (distributionF1Start == 0) distributionF1Start = 1;
     }
     return fieldValues;
@@ -136,7 +140,7 @@ std::vector<int64_t> ChangeDataGenerator::getNextF2Values() {
         noChangeRemain = noChangePeriod;
         std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF2Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-        distributionF2Start -= incrementSteps;
+        distributionF2Start -= reoccurringSteps;
         if (distributionF2Start == 0) {
             distributionF2Start = 1;
             reoccur = true;
@@ -146,9 +150,9 @@ std::vector<int64_t> ChangeDataGenerator::getNextF2Values() {
         std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF2Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
         if (distributionF2Start == 1){
-            distributionF2Start = 5;
+            distributionF2Start = 2;
         } else {
-            distributionF2Start += incrementSteps;
+            distributionF2Start += reoccurringSteps;
         }
     }
     return fieldValues;

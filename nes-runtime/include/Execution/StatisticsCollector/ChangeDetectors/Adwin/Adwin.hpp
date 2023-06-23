@@ -35,7 +35,7 @@ class Adwin : public ChangeDetector {
     * @param delta confidence value (0,1) controls sensitivity of detecting concept drift
     * @param M number of buckets
     */
-    Adwin(double delta, int M);
+    Adwin(double delta, int64_t M);
 
     /**
      * @brief Updates ADWIN with new element.
@@ -53,7 +53,7 @@ class Adwin : public ChangeDetector {
     void reset() override;
 
     void print() const;
-    int length() const { return windowSize; }
+    int64_t length() const { return windowSize; }
 
   private:
     /**
@@ -81,28 +81,28 @@ class Adwin : public ChangeDetector {
      * @param u1 average of W1
      * @return true, if observed average in both subwindows differs more than threshold
      */
-    bool cutExpression(int n0, int n1, const double& u0, const double& u1);
+    bool cutExpression(int64_t n0, int64_t n1, const double& u0, const double& u1);
 
     /**
      * @brief Delete buckets to reduce window size.
      */
     void deleteElement();
 
-    int numberOfBuckets;
+    int64_t numberOfBuckets;
     List bucketList;
-    int mintTime;
-    int mintClock;
+    int64_t mintTime;
+    int64_t mintClock;
     double mdblError;
     double mdblWidth;
-    int windowSize; // width
-    int lastBucketIndex;
+    int64_t windowSize; // width
+    int64_t lastBucketIndex;
     double sum; // running sum
     double variance; // running variance
 
-    const int MINTCLOCK;
-    const int MINLENGTHWINDOW;
+    const int64_t MINTCLOCK;
+    const int64_t MINLENGTHWINDOW;
     const double DELTA;
-    const int MAXBUCKETS;
+    const int64_t MAXBUCKETS;
 };
 } // namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_ADWIN_HPP_

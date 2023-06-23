@@ -22,22 +22,21 @@ namespace NES::Runtime::Execution {
 
 class Reservoir{
   public:
-    Reservoir(int sampleSize, int blockSize);
+    Reservoir(int64_t sampleSize, int64_t blockSize);
     void addElement(double value);
-    double get(int index);
+    double get(int64_t index);
     double getSampleMean() const;
-    int getSize() const;
+    int64_t getSize() const;
     double getTotal() const;
-    void setSampleSize(int newSampleSize);
+    void setSampleSize(int64_t newSampleSize);
     void clear();
     void copy(Reservoir& source);
 
   private:
-    int size;
+    int64_t size;
     double total;
-    //const int blockSize;
-    int instanceCount;
-    int sampleSize; // Max size
+    int64_t instanceCount;
+    int64_t sampleSize; // Max size
     Repository repository;
 
 };

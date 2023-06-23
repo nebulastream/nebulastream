@@ -16,7 +16,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-SeqDrift2::SeqDrift2(double significanceLevel, int blockSize):
+SeqDrift2::SeqDrift2(double significanceLevel, int64_t blockSize):
   right(blockSize, blockSize),
   left(blockSize, blockSize),
   rightRepositorySize(blockSize), // left sub-window: reservoir that stores values that are statistically not different
@@ -37,7 +37,7 @@ bool SeqDrift2::insertValue(double& inputValue) {
     total += inputValue;
 
     if((instanceCount % blockSize) == 0){ // check for drift at block boundary
-        int driftType = getDriftType();
+        auto driftType = getDriftType();
         if (driftType == DRIFT){
             clearLeftReservoir(); // remove all instances in left sub-window
             moveFromRepositoryToReservoir(); // move instances from right sub-window to left sub-window
@@ -63,7 +63,7 @@ void SeqDrift2::moveFromRepositoryToReservoir() {
     left.copy(right);
 }
 
-int SeqDrift2::getDriftType() {
+int64_t SeqDrift2::getDriftType() {
     if (getWidth() > blockSize){
         rightRepositoryMean = getRightRepositoryMean();
         leftReservoirMean = getLeftReservoirMean();
@@ -91,10 +91,10 @@ double SeqDrift2::getLeftReservoirMean() {
 }
 
 double SeqDrift2::getMean() {
-    return getTotal() / getWidth();
+    return getTotal() / static_cast<double>(getWidth());
 }
 
-int SeqDrift2::getWidth() {
+int64_t SeqDrift2::getWidth() {
     return right.getSize() + left.getSize();
 }
 
@@ -104,14 +104,14 @@ double SeqDrift2::getTotal() {
 
 double SeqDrift2::getVariance() {
     double mean = getMean();
-    double size = getWidth();
-    double x = getTotal() * (mean - 1) * (mean - 1) + (size - getTotal()) * mean * mean; //TODO size - total is negative?
+    auto size = static_cast<double>(getWidth());
+    double x = getTotal() * (mean - 1) * (mean - 1) + (size - getTotal()) * mean * mean;
     double y = size - 1;
     return x / y;
 }
 
 void SeqDrift2::optimizeEpsilon() {
-    int tests = left.getSize() / blockSize;
+    auto tests = left.getSize() / blockSize;
 
     if (tests >= 1){
         variance = getVariance();
@@ -119,9 +119,9 @@ void SeqDrift2::optimizeEpsilon() {
             variance = 0.0001; // to avoid divide by zero exception
         }
 
-        double ddeltadash = getDriftEpsilon(tests);
-        double x = log(4.0 / ddeltadash);
-        double ktemp = k; // initial k = 0.5
+        double deltadash = getDriftEpsilon(tests);
+        double x = log(4.0 / deltadash);
+        double kTemp = k; // initial k = 0.5
 
         double previousStepEpsilon;
         double currentStepEpsilon;
@@ -129,49 +129,49 @@ void SeqDrift2::optimizeEpsilon() {
 
         bool isNotOptimized = true;
         while (isNotOptimized){
-            squareRootValue = sqrt(x * x + 18 * rightRepositorySize * x * variance);
-            previousStepEpsilon = (1.0 / (3 * rightRepositorySize * (1 - ktemp))) * (x + squareRootValue);
-            ktemp = 3 * ktemp / 4; // decrement k in small steps
-            currentStepEpsilon = (1.0 / (3 * rightRepositorySize * (1 - ktemp))) * (x + squareRootValue);
+            squareRootValue = sqrt(x * x + 18.0 * static_cast<double>(rightRepositorySize) * x * variance);
+            previousStepEpsilon = (1.0 / (3.0 * static_cast<double>(rightRepositorySize) * (1 - kTemp))) * (x + squareRootValue);
+            kTemp = 3 * kTemp / 4; // decrement k in small steps
+            currentStepEpsilon = (1.0 / (3.0 * static_cast<double>(rightRepositorySize) * (1 - kTemp))) * (x + squareRootValue);
 
             if (((previousStepEpsilon - currentStepEpsilon) / previousStepEpsilon) < 0.0001) {
                 isNotOptimized = false;
             }
         }
 
-        ktemp = 4 * ktemp / 3; // reset k as it decreased beyond the optimal value
-        ktemp = adjustForDataRate(ktemp); // adjust k according to rate of change in data
-        leftReservoirSize = (int) (rightRepositorySize * (1 - ktemp) / ktemp); // set left reservoir size according to new k
+        kTemp = 4 * kTemp / 3; // reset k as it decreased beyond the optimal value
+        kTemp = adjustForDataRate(kTemp); // adjust k according to rate of change in data
+        leftReservoirSize = static_cast<int64_t>(static_cast<double>(rightRepositorySize) * (1 - kTemp) / kTemp); // set left reservoir size according to new k
         left.setSampleSize(leftReservoirSize);
         squareRootValue = sqrt(x * x + 18 * rightRepositorySize * x * variance);
-        currentStepEpsilon = (1.0 / (3 * rightRepositorySize * (1 - ktemp))) * (x + squareRootValue); //TODO see if necessary
+        currentStepEpsilon = (1.0 / (3 * rightRepositorySize * (1 - kTemp))) * (x + squareRootValue);
         epsilon = currentStepEpsilon;
 
     }
 }
 
-double SeqDrift2::getDriftEpsilon(int iNumTests) {
-    double dSeriesTotal = 2.0 * (1.0 - pow(0.5, iNumTests));
-    double ddeltadash = significanceLevel / dSeriesTotal; // new confidence
-    return ddeltadash;
+double SeqDrift2::getDriftEpsilon(int64_t  iNumTests) {
+    double dSeriesTotal = 2.0 * (1.0 - pow(0.5, static_cast<double>(iNumTests)));
+    double deltadash = significanceLevel / dSeriesTotal; // new confidence
+    return deltadash;
 }
 
-double SeqDrift2::adjustForDataRate(double dKr) {
+double SeqDrift2::adjustForDataRate(double kCurr) {
     double meanIncrease = (right.getSampleMean() - left.getSampleMean()); // determine current rate of change
-    double dk = dKr;
+    double kOpt = kCurr;
     if (meanIncrease > 0) {
-        dk = dk + ((-1) * (meanIncrease * meanIncrease * meanIncrease * meanIncrease) + 1) * dKr;
+        kOpt = kOpt + ((-1) * pow(meanIncrease,4) + 1) * kCurr;
     } else if (meanIncrease <= 0) {
-        dk = dKr;
+        kOpt = kCurr;
     }
-    return dk;
+    return kOpt;
 }
 
 double SeqDrift2::getMeanEstimation() {
-    int width = getWidth();
+    uint64_t  width = getWidth();
 
     if (width != 0){
-        return  getTotal() / width;
+        return getTotal() / static_cast<double>(width);
     } else {
         return 0;
     }

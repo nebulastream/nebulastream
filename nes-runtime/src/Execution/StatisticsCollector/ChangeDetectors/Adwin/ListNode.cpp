@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution {
 
-ListNode::ListNode(int maxSize):
+ListNode::ListNode(int64_t maxSize):
     maxSize(maxSize),
     size(0),
     sum(maxSize + 1, 0.0),
@@ -40,9 +40,9 @@ void ListNode::addBack(const double& value, const double& var) {
     size++;
 }
 
-void ListNode::dropFront(int n) {
+void ListNode::dropFront(int64_t n) {
     //move n last elements to beginning of bucket
-    for (int k = n; k <= maxSize; k++) {
+    for (int64_t k = n; k <= maxSize; k++) {
         sum[k - n] = sum[k];
         variance[k - n] = variance[k];
     }

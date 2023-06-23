@@ -33,7 +33,7 @@ class ListNode {
      * @brief Creates new bucket with a maximum size.
      * @param maxSize
      */
-    ListNode(int maxSize);
+    ListNode(int64_t maxSize);
 
     /**
      * @brief Insert element at the end.
@@ -46,10 +46,10 @@ class ListNode {
      * @brief Drop first n elements.
      * @param n number of elements
      */
-    void dropFront(int n = 1);
+    void dropFront(int64_t n = 1);
 
-    const int maxSize;
-    int size;
+    const int64_t maxSize;
+    int64_t size;
     std::vector<double> sum, variance;
     ListNode* next;
     ListNode* prev;

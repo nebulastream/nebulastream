@@ -28,7 +28,7 @@ class SeqDrift2 : public ChangeDetector {
      * @param significanceLevel value between 0 and 1, controls the false positive rate
      * @param blockSize sets the interval of two consecutive hypothesis tests
      */
-    SeqDrift2(double significanceLevel, int blockSize);
+    SeqDrift2(double significanceLevel, int64_t blockSize);
 
     /**
      * @brief Insert value into SeqDrift change detector.
@@ -68,11 +68,11 @@ class SeqDrift2 : public ChangeDetector {
      * @brief Get the type of drift detected.
      * @return DRIFT or NODRIFT.
      */
-    int getDriftType();
+    int64_t getDriftType();
     double getRightRepositoryMean();
     double getLeftReservoirMean();
     double getMean();
-    int getWidth();
+    int64_t getWidth();
     double getTotal();
     double getVariance();
 
@@ -87,32 +87,32 @@ class SeqDrift2 : public ChangeDetector {
      * @param iNumTests number of successive hypothesis tests
      * @return new confidence value delta dash
      */
-    double getDriftEpsilon(int iNumTests);
+    double getDriftEpsilon(int64_t iNumTests);
 
     /**
      * @brief Calculate the optimal k value based on rate of change.
-     * @param dKr
-     * @return new k value.
+     * @param kCurr current k
+     * @return optimal k value.
      */
-    double adjustForDataRate(double dKr);
+    double adjustForDataRate(double kCurr);
 
     Reservoir right;
     Reservoir left;
-    const int rightRepositorySize;
-    int leftReservoirSize;
-    const int blockSize;
+    const int64_t rightRepositorySize;
+    int64_t leftReservoirSize;
+    const int64_t blockSize;
     const double significanceLevel;
     double k;
 
-    int instanceCount;
-    double rightRepositoryMean;
-    double leftReservoirMean;
+    int64_t instanceCount;
+    double rightRepositoryMean{};
+    double leftReservoirMean{};
     double variance;
     double total;
     double epsilon;
 
-    const static int DRIFT = 0;
-    const static int NODRIFT = 2;
+    const static int64_t DRIFT = 0;
+    const static int64_t NODRIFT = 2;
 
 };
 

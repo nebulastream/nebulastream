@@ -22,19 +22,18 @@ namespace NES::Runtime::Execution {
 
 class Repository{
   public:
-    Repository(int blockSize);
+    Repository(int64_t blockSize);
     void add(double value);
-    void add(double value, bool isTested);
-    double get(int index);
-    void addAt(int index, double value);
-    int getSize();
+    double get(int64_t index);
+    void addAt(int64_t index, double value);
+    int64_t getSize() const;
     void removeAll();
 
   private:
     std::vector<Block> listOfBlocks;
-    const int blockSize;
-    int indexOfLastBlock;
-    int instanceCount;
+    const int64_t blockSize;
+    int64_t indexOfLastBlock;
+    int64_t instanceCount;
     double total;
 
 };

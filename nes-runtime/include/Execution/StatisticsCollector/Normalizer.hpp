@@ -40,6 +40,12 @@ class Normalizer {
     */
     bool normalizeValue(uint64_t value);
 
+    /**
+     * @brief Get estimated mean.
+     * @return estimated mean
+     */
+    double getEstimation();
+
   private:
     /**
     * @brief Normalize the values in the window and add them to the change detector.

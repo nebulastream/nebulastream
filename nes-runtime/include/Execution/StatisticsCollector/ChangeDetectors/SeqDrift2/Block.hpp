@@ -16,24 +16,21 @@ limitations under the License.
 #define NES_RUNTIME_INCLUDE_EXECUTION_STATISTICSCOLLECTOR_CHANGEDETECTORS_BLOCK_HPP_
 
 #include <vector>
+#include <cstdint>
 
 namespace NES::Runtime::Execution {
 
 class Block {
   public:
-    Block(int length);
-    Block(int length, bool isTested);
+    Block(int64_t length);
     void add(double value);
-    void addAtIndex(int index, double newValue);
-    void setTested(bool isTested);
-    bool getIsTested();
+    void addAtIndex(int64_t index, double newValue);
 
     std::vector<double> data;
     double total;
 
   private:
-    int indexOfLastValue;
-    bool isTested;
+    int64_t indexOfLastValue;
 };
 } // namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_STATISTICSCOLLECTOR_CHANGEDETECTORS_BLOCK_HPP_

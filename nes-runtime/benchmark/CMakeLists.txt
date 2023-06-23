@@ -33,5 +33,6 @@ function(add_nes_benchmarks TARGET_NAME FILE_PATH)
 endfunction()
 
 add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
+add_nes_benchmarks(change-detection-benchmark "ChangeDetection/BenchmarkChangeDetection.cpp")
 
 

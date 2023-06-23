@@ -55,4 +55,8 @@ bool Normalizer::addNormalizedValuesToChangeDetection(){
     return change;
 }
 
+double Normalizer::getEstimation() {
+    return changeDetector->getMeanEstimation();
+}
+
 } // namespace NES::Runtime::Execution

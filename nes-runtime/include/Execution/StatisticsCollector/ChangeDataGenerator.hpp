@@ -53,7 +53,8 @@ class ChangeDataGenerator {
     int64_t noChangeRemain;
     int64_t distributionF1Start;
     int64_t distributionF2Start = 1;
-    int64_t incrementSteps = 5;
+    int64_t incrementalSteps = 5;
+    int64_t reoccurringSteps = 1;
     bool reoccur = false;
     int64_t gradualChangePeriod = 20000;
     int64_t gradualDeclinePeriod = 200000;

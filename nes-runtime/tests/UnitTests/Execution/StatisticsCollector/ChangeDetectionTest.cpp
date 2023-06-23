@@ -211,7 +211,7 @@ TEST_P(ChangeDetectionTest, selectivitySeqDriftTest) {
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
 
-    auto seqDrift = std::make_unique<SeqDrift2>(0.1, 100);
+    auto seqDrift = std::make_unique<SeqDrift2>(0.1, 5);
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(seqDrift), nautilusExecutablePipelineStage);
@@ -358,7 +358,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinDeltaTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
-    auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5); // 0.1 und 3 oder 0.01 und 5
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -391,7 +391,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinDeltaTest) {
         std::ofstream csvFile(fmt::format("ChangeAbruptAdwinDeltaTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto adwinTest = std::make_unique<Adwin>(deltas[i], 5); // 0.1 und 3 oder 0.01 und 5
+        auto adwinTest = std::make_unique<Adwin>(deltas[i], 5);
         auto normalizerTest = Normalizer(10, std::move(adwinTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -448,7 +448,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinBucketsTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
-    auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5); // 0.1 und 3 oder 0.01 und 5
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -481,7 +481,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinBucketsTest) {
         std::ofstream csvFile(fmt::format("ChangeAbruptAdwinBucketsTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto adwinTest = std::make_unique<Adwin>(0.6, buckets[i]); // 0.1 und 3 oder 0.01 und 5
+        auto adwinTest = std::make_unique<Adwin>(0.6, buckets[i]);
         auto normalizerTest = Normalizer(10, std::move(adwinTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -571,7 +571,7 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeDeltaTest) {
         std::ofstream csvFile(fmt::format("ChangeAbruptSeqDriftDeltaTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto seqDriftTest = std::make_unique<SeqDrift2>(deltas[i], 200); // 0.01 und 400
+        auto seqDriftTest = std::make_unique<SeqDrift2>(deltas[i], 200);
         auto normalizerTest = Normalizer(10, std::move(seqDriftTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -628,7 +628,7 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeMTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
-    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 200); // 0.01 und 400
+    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 200);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -661,7 +661,7 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeMTest) {
         std::ofstream csvFile(fmt::format("ChangeAbruptSeqDriftBlocksTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto seqDriftTest = std::make_unique<SeqDrift2>(0.3, blocks[i]); // 0.01 und 400
+        auto seqDriftTest = std::make_unique<SeqDrift2>(0.9, blocks[i]);
         auto normalizerTest = Normalizer(10, std::move(seqDriftTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -841,17 +841,16 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::REOCCURRING, 1000000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(21000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::REOCCURRING, 400000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(40000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.6, 5);
-    auto adwinBranchMisses = std::make_unique<Adwin>(0.6,5);
-    //auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 250); // 0.5 500 0.8 250
+    auto adwinSelectivity = std::make_unique<Adwin>(0.9,5);
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.9,5);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -878,7 +877,7 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStageX = std::move(executablePipelineX);
     auto nautilusExecutablePipelineStageX = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStageX);
 
-    auto adwinSelectivityX = std::make_unique<Adwin>(0.01, 4);
+    auto adwinSelectivityX = std::make_unique<Adwin>(0.9, 5);
     auto selectivityX = std::make_unique<PipelineSelectivity>(std::move(adwinSelectivityX), nautilusExecutablePipelineStageX);
 
     // create pipeline Y
@@ -900,11 +899,14 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStageY = std::move(executablePipelineY);
     auto nautilusExecutablePipelineStageY = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStageY);
 
-    auto adwinSelectivityY = std::make_unique<Adwin>(0.01, 4);
+    auto adwinSelectivityY = std::make_unique<Adwin>(0.9, 5);
     auto selectivityY = std::make_unique<PipelineSelectivity>(std::move(adwinSelectivityY), nautilusExecutablePipelineStageY);
 
-    std::ofstream csvFile("ReorderPointDetectionTest.csv");
-    csvFile << "Combined Selectivity;Selectivity X;Selectivity Y;Branch misses;Change\n" ;
+    // collect selectivity and branch misses
+    std::vector<double> selectivityValues;
+    std::vector<double> selectivityXValues;
+    std::vector<double> selectivityYValues;
+    std::vector<uint64_t> branchMissesValues;
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     nautilusExecutablePipelineStageX->setup(pipelineContextX);
@@ -918,17 +920,50 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
         selectivity->collect();
         selectivityX->collect();
         selectivityY->collect();
-        auto change = branchMisses->collect();
-        csvFile << std::any_cast<double>(selectivity->getStatisticValue()) << ";" << std::any_cast<double>(selectivityX->getStatisticValue()) << ";" << std::any_cast<double>(selectivityY->getStatisticValue()) << ";";
-        csvFile << std::any_cast<uint64_t>(branchMisses->getStatisticValue()) <<  ";" << change <<"\n";
+        branchMisses->collect();
+        selectivityValues.push_back(std::any_cast<double>(selectivity->getStatisticValue()));
+        selectivityXValues.push_back(std::any_cast<double>(selectivityX->getStatisticValue()));
+        selectivityYValues.push_back(std::any_cast<double>(selectivityY->getStatisticValue()));
+        branchMissesValues.push_back(std::any_cast<uint64_t>(branchMisses->getStatisticValue()));
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
     nautilusExecutablePipelineStageX->stop(pipelineContextX);
     nautilusExecutablePipelineStageY->stop(pipelineContextY);
 
-    //ASSERT_EQ(pipelineContext.buffers.size(), 42000);
 
-    csvFile.close();
+    // try different deltas for SeqDrift
+    std::vector<double> deltas = {0.001,0.005,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1};
+
+    for (int i = 0; i < (int)deltas.size(); i ++) {
+        std::ofstream csvFile(fmt::format("ReorderAdwinDeltaTest{}.csv",i));
+        csvFile << "Combined Selectivity;Selectivity X;Selectivity Y;Branch misses;Change\n";
+
+        auto adwinTest = std::make_unique<Adwin>(deltas[i],5);
+        auto normalizerTest = Normalizer(10, std::move(adwinTest));
+
+        for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
+            auto change = normalizerTest.normalizeValue(branchMissesValues[j]);
+            csvFile << selectivityValues[j] << ";" << selectivityXValues[j] << ";" << selectivityYValues[j] << ";" << branchMissesValues[j] <<";" << change <<"\n";
+        }
+
+        csvFile.close();
+    }
+
+    for (int i = 0; i < (int)deltas.size(); i ++) {
+        std::ofstream csvFile2(fmt::format("ReorderSeqDriftDeltaTest{}.csv",i));
+        csvFile2 << "Combined Selectivity;Selectivity X;Selectivity Y;Branch misses;Change\n";
+
+        auto seqDriftTest = std::make_unique<SeqDrift2>(deltas[i],200);
+        auto normalizerSeqDrift = Normalizer(10, std::move(seqDriftTest));
+
+        for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
+            auto changeSeqDrift = normalizerSeqDrift.normalizeValue(branchMissesValues[j]);
+            csvFile2 << selectivityValues[j] << ";" << selectivityXValues[j] << ";" << selectivityYValues[j] << ";" << branchMissesValues[j] <<";" << changeSeqDrift <<"\n";
+        }
+
+        csvFile2.close();
+    }
+
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

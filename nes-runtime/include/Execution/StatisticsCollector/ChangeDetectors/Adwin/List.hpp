@@ -33,7 +33,7 @@ class List {
      * @brief Initialize empty list of buckets.
      * @param maxBucketSize
      */
-    List(int maxBucketSize);
+    List(int64_t maxBucketSize);
 
     ~List();
 
@@ -49,8 +49,8 @@ class List {
 
     void resetList();
 
-    const int maxBucketSize;
-    int count;
+    const int64_t maxBucketSize;
+    int64_t count;
     ListNode* head;
     ListNode* tail;
 

@@ -16,40 +16,25 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Block::Block(int length):
+Block::Block(int64_t length):
    data(length, -1.0),
    total(0),
    indexOfLastValue(0)
 {}
 
-Block::Block(int length, bool isTested):
-  data(length, -1.0),
-  total(0),
-  indexOfLastValue(0),
-  isTested(isTested)
-{}
-
 void Block::add(double value) {
-    if ((uint64_t)indexOfLastValue < data.size()){
+    if (indexOfLastValue < (int64_t) data.size()){
         data[indexOfLastValue] = value;
         total = total + value;
         indexOfLastValue++;
     } else {
-        std::cout<<"Error adding to block";
+        std::cout << "Error adding to block";
     }
 }
 
-void Block::addAtIndex(int index, double newValue) {
+void Block::addAtIndex(int64_t index, double newValue) {
     total = total - data[index] + newValue;
     data[index] = newValue;
-}
-
-void Block::setTested(bool isTested) {
-    Block::isTested = isTested;
-}
-
-bool Block::getIsTested() {
-    return isTested;
 }
 
 } // namespace NES::Runtime::Execution
