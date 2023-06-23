@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.119](https://github.com/nebulastream/nebulastream/tree/v0.5.119) (2023-06-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.118...v0.5.119)
+
+**Implemented enhancements:**
+
+- \[TASK\] Pull retrieving stack ref out of loop [\#3743](https://github.com/nebulastream/nebulastream/issues/3743)
+
 ## [v0.5.118](https://github.com/nebulastream/nebulastream/tree/v0.5.118) (2023-06-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.117...v0.5.118)
