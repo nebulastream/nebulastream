@@ -290,6 +290,8 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     queryCompilationOptions->getHashJoinOptions()->setPageSize(queryCompilerConfiguration.pageSize.getValue());
     queryCompilationOptions->getHashJoinOptions()->setPreAllocPageCnt(queryCompilerConfiguration.preAllocPageCnt.getValue());
 
+    queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
+
     return queryCompilationOptions;
 }
 

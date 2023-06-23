@@ -41,7 +41,7 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
 
     std::vector<std::shared_ptr<Compiler::ExternalAPI>> externalApis;
     if (options.usingCUDA()) {
-        externalApis.push_back(std::make_shared<Compiler::CUDAPlatform>());
+        externalApis.push_back(std::make_shared<Compiler::CUDAPlatform>(options.getCUDASdkPath()));
     }
 
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),

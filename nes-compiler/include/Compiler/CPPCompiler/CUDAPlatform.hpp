@@ -24,7 +24,12 @@ namespace NES::Compiler {
  */
 class CUDAPlatform : public ExternalAPI {
 public:
+    explicit CUDAPlatform(const std::string& cudaSdkPath);
+
     const CompilerFlags getCompilerFlags() const override;
+
+private:
+    std::string cudaSdkPath;
 };
 
 } // namespace NES::Compiler

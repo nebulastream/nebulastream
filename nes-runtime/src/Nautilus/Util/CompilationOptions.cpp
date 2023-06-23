@@ -52,5 +52,7 @@ uint8_t CompilationOptions::getOptimizationLevel() const { return optimizationLe
 
 void CompilationOptions::useCUDA(bool cuda) { CompilationOptions::cuda = cuda; }
 bool CompilationOptions::usingCUDA() const { return cuda; }
+void CompilationOptions::setCUDASdkPath(const std::string& cudaSdkPath) { CompilationOptions::cudaSdkPath = cudaSdkPath; }
+const std::string CompilationOptions::getCUDASdkPath() const { return cudaSdkPath; }
 
 }// namespace NES::Nautilus
