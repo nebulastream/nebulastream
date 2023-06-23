@@ -37,44 +37,6 @@ class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
     void setDeviceId(const std::string& deviceId);
 
     /**
-     * @brief: get device id
-     */
-    std::string getDeviceId();
-
-    /**
-     * @brief: set device type
-     * @param deviceType
-     */
-    void setDeviceType(const std::string& deviceType);
-
-    /**
-     * @brief: get device type
-     */
-    std::string getDeviceType();
-
-    /**
-     * @brief: set device model name
-     * @param modelName
-     */
-    void setDeviceModelName(const std::string& modelName);
-
-    /**
-     * @brief: get device model name
-     */
-    std::string getDeviceModelName();
-
-    /**
-     * @brief: set device memory information
-     * @param deviceMemory
-     */
-    void setDeviceMemory(const uint16_t& deviceMemory);
-
-    /**
-     * @brief: get device memory information
-     */
-    uint16_t getDeviceMemory();
-
-    /**
      * @see Node#toString
      */
     std::string toString() const override;
@@ -99,9 +61,6 @@ class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
   private:
     std::string openCLCode;
     std::string deviceId;
-    std::string deviceType;
-    std::string modelName;
-    uint16_t modelMemory;
 };
 }// namespace NES
 #endif//NES_OPENCLLOGICALOPERATORNODE_HPP
