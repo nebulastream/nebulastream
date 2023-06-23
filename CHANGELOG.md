@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.117](https://github.com/nebulastream/nebulastream/tree/v0.5.117) (2023-06-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.116...v0.5.117)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add sliding window pipeline stage to GPU tests [\#3672](https://github.com/nebulastream/nebulastream/issues/3672)
+
 ## [v0.5.116](https://github.com/nebulastream/nebulastream/tree/v0.5.116) (2023-06-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.115...v0.5.116)
