@@ -30,7 +30,7 @@ public:
 
     /**
      * @brief Get all of the compiler flags.
-     * @return std::unordered_set<std::string>
+     * @return A std::unordered_set<std::string> of all the compiler flags.
      */
     [[nodiscard]] std::unordered_set<std::string> getFlags() const;
 

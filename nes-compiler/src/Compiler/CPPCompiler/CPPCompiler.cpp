@@ -158,13 +158,12 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     if (!request->enableDebugging()) {
         std::filesystem::remove(sourceFileName);
     }
-
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
 
     std::filesystem::remove(libraryFileName);
 
     timer.pause();
-    NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
+    NES_INFO("[CPPCompiler] Compilation time: " << (double) timer.getRuntime() / (double) 1000000 << "ms");
 
     return CompilationResult(sharedLibrary, std::move(timer));
 }
