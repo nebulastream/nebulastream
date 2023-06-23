@@ -14,15 +14,14 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -34,7 +33,6 @@
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
-
 #include <utility>
 
 namespace NES::Optimizer {
@@ -51,9 +49,10 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
       z3Context(std::move(z3Context)) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
+    generateSampleCode = coordinatorConfiguration->elegantConfiguration.generateSampleCPPCode;
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
+    sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
     queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
     originIdInferencePhase = OriginIdInferencePhase::create();
     topologySpecificQueryRewritePhase =
@@ -113,14 +112,20 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                     NES_DEBUG2("QueryProcessingService: Performing Query rewrite phase for query:  {}", queryId);
                     queryPlan = queryRewritePhase->execute(queryPlan);
-
                     if (!queryPlan) {
                         throw GlobalQueryPlanUpdateException(
                             "QueryProcessingService: Failed during query rewrite phase for query: " + std::to_string(queryId));
                     }
+
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
+                    //Execute type inference phase on rewritten query plan
                     queryPlan = typeInferencePhase->execute(queryPlan);
+
+                    //Generate sample code
+                    if (generateSampleCode) {
+                        queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
+                    }
 
                     NES_DEBUG2("QueryProcessingService: Compute Signature inference phase for query:  {}", queryId);
                     signatureInferencePhase->execute(queryPlan);

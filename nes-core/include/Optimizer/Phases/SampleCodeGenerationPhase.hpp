@@ -18,18 +18,20 @@
 #include <memory>
 
 namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 namespace QueryCompilation {
 
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 }// namespace QueryCompilation
+
 namespace Optimizer {
 
 class SampleCodeGenerationPhase;
 using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 /**
  * @brief: This phase allows generating C++ code for each logical operator and add it to the operator as property

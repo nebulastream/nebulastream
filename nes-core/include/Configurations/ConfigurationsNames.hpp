@@ -75,9 +75,10 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distribu
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Elegant Configurations
-const std::string ELEGANT = "elegant";                        // elegant configurations are initialize with this constant
-const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";// accelerate java udfs supplied in Map UDF operator
-const std::string PLANNER_URL = "plannerURL";                 // URL for ELEGANT planner
+const std::string ELEGANT = "elegant";                               // elegant configurations are initialize with this constant
+const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";       // accelerate java udfs supplied in Map UDF operator
+const std::string PLANNER_URL = "plannerURL";                        // URL for ELEGANT planner
+const std::string GENERATE_SAMPLE_CPP_CODE = "generateSampleCPPCode";//Generate sample CPP code for the ELEGANT planner
 
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";
