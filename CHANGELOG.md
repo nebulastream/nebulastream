@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.118](https://github.com/nebulastream/nebulastream/tree/v0.5.118) (2023-06-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.117...v0.5.118)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Change to spd logging syntax in folders outside of nes-core [\#3815](https://github.com/nebulastream/nebulastream/issues/3815)
+
 ## [v0.5.117](https://github.com/nebulastream/nebulastream/tree/v0.5.117) (2023-06-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.116...v0.5.117)
