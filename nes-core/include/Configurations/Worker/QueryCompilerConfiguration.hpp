@@ -114,6 +114,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
                                   NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
                                   "Page cnt of pre allocated pages in each bucket hash table"};
 
+    /**
+     * @brief Sets the path to the locally installed CUDA SDK.
+     */
+    StringOption cudaSdkPath = {CUDA_SDK_PATH, "/usr/local/cuda", "Path to CUDA SDK."};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {
@@ -127,6 +132,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &numberOfPartitions,
             &pageSize,
             &preAllocPageCnt,
+            &cudaSdkPath,
         };
     }
 };

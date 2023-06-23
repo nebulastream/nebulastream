@@ -12,15 +12,31 @@
     limitations under the License.
 */
 #include <Compiler/CPPCompiler/CUDAPlatform.hpp>
+#include <Compiler/Exceptions/CompilerException.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <filesystem>
 
 namespace NES::Compiler {
 
+CUDAPlatform::CUDAPlatform(const std::string& cudaSdkPath)
+    : cudaSdkPath(cudaSdkPath)
+{
+    if (cudaSdkPath.empty()) {
+        NES_ERROR("CUDA SDK path is empty");
+        throw CompilerException("CUDA SDK path is empty");
+    }
+
+    if (!std::filesystem::exists(cudaSdkPath)) {
+        NES_ERROR("CUDA SDK path does not exist: " + cudaSdkPath);
+        throw CompilerException("CUDA SDK path does not exist: " + cudaSdkPath);
+    }
+}
+
 const CompilerFlags CUDAPlatform::getCompilerFlags() const {
+    // See https://www.llvm.org/docs/CompileCudaWithLLVM.html
     auto cudaFlags = {
         "--language=cuda",
         "--cuda-gpu-arch=native",
-        "--cuda-path=/usr/local/cuda-12.1",
-        "-L/usr/local/cuda-12.1/lib64",
         "-lcudart",
         "-ldl",
         "-lrt",
@@ -31,6 +47,8 @@ const CompilerFlags CUDAPlatform::getCompilerFlags() const {
     for (auto flag : cudaFlags) {
         flags.addFlag(flag);
     }
+    flags.addFlag("--cuda-path=\"" + cudaSdkPath + "\"");
+    flags.addFlag("-L\"" + cudaSdkPath + "\"/lib64");
     return flags;
 }
 
