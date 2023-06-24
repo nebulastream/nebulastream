@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -185,6 +186,7 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
             auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
             node["SOURCE_CODE"] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : "";
             nodes.push_back(node);
+            node["OUTPUT_TUPLE_SIZE"] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),

@@ -191,7 +191,7 @@ class SharedQueryPlan {
      * @brief Get the placement strategy for the shared query plan
      * @return placement strategy
      */
-    PlacementStrategy getPlacementStrategy() const;
+    Optimizer::PlacementStrategy getPlacementStrategy() const;
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
@@ -218,7 +218,7 @@ class SharedQueryPlan {
     std::vector<QueryId> queryIds;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
-    PlacementStrategy placementStrategy;
+    Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
 };
 }// namespace NES

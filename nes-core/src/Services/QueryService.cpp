@@ -72,9 +72,9 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy placementStrategy;
+        Optimizer::PlacementStrategy placementStrategy;
         try {
-            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
+            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
@@ -119,9 +119,9 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy placementStrategy;
+        Optimizer::PlacementStrategy placementStrategy;
         try {
-            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
+            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
