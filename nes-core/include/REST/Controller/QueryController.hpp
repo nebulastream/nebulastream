@@ -326,7 +326,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validatePlacementStrategy(const std::string& placementStrategy) {
-        return magic_enum::enum_cast<PlacementStrategy>(placementStrategy).has_value();
+        return magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).has_value();
     }
 
     bool validateFaultToleranceType(const std::string& faultToleranceString) {

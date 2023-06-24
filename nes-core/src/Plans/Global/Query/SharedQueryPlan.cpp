@@ -309,7 +309,7 @@ SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPla
 
 void SharedQueryPlan::setStatus(SharedQueryPlanStatus newStatus) { this->sharedQueryPlanStatus = newStatus; }
 
-PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
+Optimizer::PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
 void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);

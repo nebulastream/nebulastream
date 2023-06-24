@@ -301,7 +301,7 @@ class QueryPlan {
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
-    PlacementStrategy placementStrategy = PlacementStrategy::TopDown;
+    Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
