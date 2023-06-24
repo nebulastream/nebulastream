@@ -21,6 +21,7 @@ add_source_files(nes-core
         NemoWindowPinningRule.cpp
         PredicateReorderingRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
+        RedundancyEliminationRule.cpp
         RenameSourceToProjectOperatorRule.cpp
         MapUDFsToOpenCLOperatorsRule.cpp
 )
