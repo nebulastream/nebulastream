@@ -48,22 +48,20 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
   public:
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
-     * @param counterFinishedBuildingStart
-     * @param totalSizeForDataStructures
+     * @param origins
      * @param windowSize
+     * @param sizeOfRecordLeft
+     * @param sizeOfRecordRight
+     * @param totalSizeForDataStructures
      * @param pageSize
+     * @param preAllocPageSizeCnt
      * @param numPartitions
+     * @param joinStrategy
      */
-    explicit StreamHashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                           SchemaPtr joinSchemaRight,
-                                           std::string joinFieldNameLeft,
-                                           std::string joinFieldNameRight,
-                                           const std::vector<OriginId>& origins,
+    explicit StreamHashJoinOperatorHandler(const std::vector<OriginId>& origins,
                                            size_t windowSize,
+                                           size_t sizeOfRecordLeft,
+                                           size_t sizeOfRecordRight,
                                            size_t totalSizeForDataStructures,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
@@ -72,24 +70,22 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
-     * @param counterFinishedBuildingStart
-     * @param totalSizeForDataStructures
-     * @param windowSize
-     * @param pageSize
-     * @param numPartitions
+    * @param origins
+    * @param windowSize
+    * @param sizeOfRecordLeft
+    * @param sizeOfRecordRight
+    * @param totalSizeForDataStructures
+    * @param pageSize
+    * @param preAllocPageSizeCnt
+    * @param numPartitions
+    * @param joinStrategy
      * @return StreamJoinOperatorHandlerPtr
      */
 
-    static StreamHashJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
-                                                   const SchemaPtr& joinSchemaRight,
-                                                   const std::string& joinFieldNameLeft,
-                                                   const std::string& joinFieldNameRight,
-                                                   const std::vector<OriginId>& origins,
+    static StreamHashJoinOperatorHandlerPtr create(const std::vector<OriginId>& origins,
                                                    size_t windowSize,
+                                                   size_t sizeOfRecordLeft,
+                                                   size_t sizeOfRecordRight,
                                                    size_t totalSizeForDataStructures,
                                                    size_t pageSize,
                                                    size_t preAllocPageSizeCnt,

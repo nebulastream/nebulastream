@@ -32,6 +32,8 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      * @return PhysicalHashJoinSinkOperator
      */
@@ -39,6 +41,8 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
+                                      const std::string joinFieldNameLeft,
+                                      const std::string joinFieldNameRight,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -46,12 +50,16 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      * @return PhysicalHashJoinSinkOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
+                                      const std::string joinFieldNameLeft,
+                                      const std::string joinFieldNameRight,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -60,12 +68,16 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      */
     PhysicalHashJoinSinkOperator(OperatorId id,
                                  SchemaPtr leftSchema,
                                  SchemaPtr rightSchema,
                                  SchemaPtr outputSchema,
+                                 const std::string joinFieldNameLeft,
+                                 const std::string joinFieldNameRight,
                                  Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler);
 
     /**
@@ -79,6 +91,22 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @return OperatorNodePtr
      */
     OperatorNodePtr copy() override;
+
+    /**
+     * @brief getter for left join field name
+     * @return
+     */
+    const std::string& getJoinFieldNameLeft() const;
+
+    /**
+     * @brief getter for right join fiel name
+     * @return
+     */
+    const std::string& getJoinFieldNameRight() const;
+
+  protected:
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -29,16 +29,17 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(size_t index,
     }
 }
 
-size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) {
-    //TODO: implement this function
+size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool isLeft) {
     size_t cnt = 0;
-    for (auto& leftBucket : hashTableLeftSide) {
-        cnt += leftBucket->getNumberOfTuples();
+    if (isLeft) {
+        for (auto& leftBucket : hashTableLeftSide) {
+            cnt += leftBucket->getNumberOfTuples();
+        }
+    } else {
+        for (auto& rightBucket : hashTableRightSide) {
+            cnt += rightBucket->getNumberOfTuples();
+        }
     }
-    for (auto& rightBucket : hashTableRightSide) {
-        cnt += rightBucket->getNumberOfTuples();
-    }
-
     return cnt;
 }
 

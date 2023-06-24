@@ -23,10 +23,11 @@ PhysicalNestedLoopJoinBuildOperator::PhysicalNestedLoopJoinBuildOperator(
     SchemaPtr outputSchema,
     Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler,
     JoinBuildSideType buildSide,
-    std::string timeStampFieldName)
+    std::string timeStampFieldName,
+    std::string joinFieldName)
     : OperatorNode(id), PhysicalNestedLoopJoinOperator(std::move(operatorHandler), id),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      timeStampFieldName(std::move(timeStampFieldName)), buildSide(buildSide) {}
+      timeStampFieldName(std::move(timeStampFieldName)), joinFieldName(joinFieldName),buildSide(buildSide) {}
 
 PhysicalOperatorPtr
 PhysicalNestedLoopJoinBuildOperator::create(OperatorId id,
@@ -34,14 +35,16 @@ PhysicalNestedLoopJoinBuildOperator::create(OperatorId id,
                                             const SchemaPtr& outputSchema,
                                             const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
                                             JoinBuildSideType buildSide,
-                                            const std::string& timeStampFieldName) {
+                                            const std::string& timeStampFieldName,
+                                            const std::string& joinFieldName) {
 
     return std::make_shared<PhysicalNestedLoopJoinBuildOperator>(id,
                                                                  inputSchema,
                                                                  outputSchema,
                                                                  operatorHandler,
                                                                  buildSide,
-                                                                 timeStampFieldName);
+                                                                 timeStampFieldName,
+                                                                 joinFieldName);
 }
 
 PhysicalOperatorPtr
@@ -49,17 +52,26 @@ PhysicalNestedLoopJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                             const SchemaPtr& outputSchema,
                                             const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
                                             JoinBuildSideType buildSide,
-                                            const std::string& timeStampFieldName) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
+                                            const std::string& timeStampFieldName,
+                                            const std::string& joinFieldName) {
+    return create(Util::getNextOperatorId(),
+                  inputSchema,
+                  outputSchema,
+                  operatorHandler,
+                  buildSide,
+                  timeStampFieldName,
+                  joinFieldName);
 }
 
 std::string PhysicalNestedLoopJoinBuildOperator::toString() const { return "PhysicalNestedLoopJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalNestedLoopJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
+    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
 }
 
 JoinBuildSideType PhysicalNestedLoopJoinBuildOperator::getBuildSide() const { return buildSide; }
 
 const std::string& PhysicalNestedLoopJoinBuildOperator::getTimeStampFieldName() const { return timeStampFieldName; }
+
+const std::string& PhysicalNestedLoopJoinBuildOperator::getJoinFieldName() const { return joinFieldName; }
 }// namespace NES::QueryCompilation::PhysicalOperators

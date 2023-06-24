@@ -60,15 +60,6 @@ class StreamHashJoinWindow : public StreamWindow {
     ~StreamHashJoinWindow() = default;
 
     /**
-     * @brief Returns the tuple
-     * @param sizeOfTupleInByte
-     * @param tuplePos
-     * @param leftSide
-     * @return Pointer to the start of the memory for the
-     */
-    uint8_t* getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide);
-
-    /**
      * @brief Returns the number of tuples in this window
      * @param sizeOfTupleInByte
      * @param leftSide
@@ -103,7 +94,7 @@ class StreamHashJoinWindow : public StreamWindow {
      */
     bool markPartionAsFinished();
 
-  private:
+  protected:
     uint64_t numberOfWorker;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;

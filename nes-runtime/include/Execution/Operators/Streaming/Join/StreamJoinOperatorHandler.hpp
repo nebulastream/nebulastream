@@ -36,21 +36,15 @@ class StreamJoinOperatorHandler : public OperatorHandler {
   public:
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
-     * @param windowSize
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param origins
+     * @param windowSize
      * @param JoinStrategy
      */
-    StreamJoinOperatorHandler(const SchemaPtr& joinSchemaLeft,
-                              const SchemaPtr& joinSchemaRight,
-                              const std::string& joinFieldNameLeft,
-                              const std::string& joinFieldNameRight,
-                              const std::vector<OriginId>& origins,
+    StreamJoinOperatorHandler(const std::vector<OriginId>& origins,
                               size_t windowSize,
-                              JoinStrategy joinStrategy);
+                              JoinStrategy joinStrategy,
+                              size_t sizeOfRecordLeft,
+                              size_t sizeOfRecordRight);
 
     virtual ~StreamJoinOperatorHandler() = default;
 
@@ -77,22 +71,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param windowIdentifier
      */
     void deleteWindow(uint64_t windowIdentifier);
-
-    /**
-     * @brief Retrieves the number of tuples for a stream (left or right) and a window
-     * @param windowIdentifier
-     * @param isLeftSide
-     * @return Number of tuples or -1 if no window exists for the window identifier
-     */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
-
-    /**
-     * @brief Retrieves the pointer to the first tuple for a stream (left or right) and a window
-     * @param windowIdentifier
-     * @param isLeftSide
-     * @return Pointer
-     */
-    uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
 
     /**
      * @brief Retrieves the schema for the left or right stream
@@ -128,30 +106,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     virtual void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
                                 WorkerContext* workerCtx,
                                 PipelineExecutionContext* pipelineCtx) = 0;
-
-    /**
-     * @brief Getter for the left join schema
-     * @return left join schema
-     */
-    SchemaPtr getJoinSchemaLeft() const;
-
-    /**
-     * @brief Getter for the right join schema
-     * @return right join schema
-     */
-    SchemaPtr getJoinSchemaRight() const;
-
-    /**
-     * @brief Getter for the field name of the left join schmea
-     * @return string of the join field name left
-     */
-    const std::string& getJoinFieldNameLeft() const;
-
-    /**
-     * @brief Getter for the field name of the right join schmea
-     * @return string of the join field name right
-     */
-    const std::string& getJoinFieldNameRight() const;
 
     /**
      * @brief Retrieves the window by a window identifier. If no window exists for the windowIdentifier, the optional has no value.
@@ -205,10 +159,23 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param operatorId
      */
     void addOperatorId(OperatorId operatorId);
+
+    /**
+     * @brief get the operator Id of the handler
+     * @return operatorid
+     */
     OperatorId getOperatorId();
 
+    /**
+     * @brief get the current sequence number of the handler
+     * @return sequenceNumber
+     */
     uint64_t getNextSequenceNumber();
 
+    /**
+     * @brief get the applied join strategy
+     * @return join strategy
+     */
     JoinStrategy getJoinStrategy();
 
   protected:
@@ -216,16 +183,14 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     std::list<StreamWindowPtr> windows;
     SliceAssigner sliceAssigner;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    SchemaPtr joinSchemaLeft;
-    SchemaPtr joinSchemaRight;
-    std::string joinFieldNameLeft;
-    std::string joinFieldNameRight;
     JoinStrategy joinStrategy;
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
     OperatorId operatorId;
     std::mutex windowCreateLock;
     std::atomic<uint64_t> sequenceNumber;
+    size_t sizeOfRecordLeft;
+    size_t sizeOfRecordRight;
 };
 
 }// namespace NES::Runtime::Execution::Operators

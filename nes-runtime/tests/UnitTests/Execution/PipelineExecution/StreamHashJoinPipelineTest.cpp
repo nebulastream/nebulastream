@@ -295,14 +295,12 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         timeStampField,
         rightSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
-    auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
+    auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex, leftSchema, rightSchema, joinSchema, joinFieldNameLeft, joinFieldNameRight);
     auto hashJoinOpHandler =
-        Operators::StreamHashJoinOperatorHandler::create(leftSchema,
-                                                         rightSchema,
-                                                         joinFieldNameLeft,
-                                                         joinFieldNameRight,
-                                                         std::vector<::OriginId>({1}),
+        Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                          windowSize,
+                                                         leftSchema->getSchemaSizeInBytes(),
+                                                         rightSchema->getSchemaSizeInBytes(),
                                                          NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,

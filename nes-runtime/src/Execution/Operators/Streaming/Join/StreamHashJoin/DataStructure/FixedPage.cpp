@@ -32,16 +32,6 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-//uint8_t* FixedPage::append(const uint64_t) {
-//    currentPos++;
-//    if (currentPos > capacity) {
-//        return nullptr;
-//    }
-////    bloomFilter->add(hash);
-//    uint8_t* ptr = &data[(currentPos - 1) * sizeOfRecord];
-//    return ptr;
-//}
-
 uint8_t* FixedPage::append(const uint64_t hash) {
     if (currentPos >= capacity) {
         return nullptr;
@@ -101,6 +91,7 @@ bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
 }
 
 uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
+uint8_t* FixedPage::getRecord(size_t index) const { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return currentPos; }
 

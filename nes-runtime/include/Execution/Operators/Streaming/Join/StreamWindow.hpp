@@ -66,7 +66,6 @@ class StreamWindow {
 
     /**
      * @brief Returns the number of tuples in this window
-     * @param sizeOfTupleInByte
      * @param leftSide
      * @return size_t
      */

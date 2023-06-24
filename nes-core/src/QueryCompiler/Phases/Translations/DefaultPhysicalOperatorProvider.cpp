@@ -411,12 +411,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             || joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL_LOCKING
             || joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
             auto joinOperatorHandler =
-                StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                      joinOperator->getRightInputSchema(),
-                                                      joinFieldNameLeft,
-                                                      joinFieldNameRight,
-                                                      joinOperator->getAllInputOriginIds(),
+                StreamHashJoinOperatorHandler::create(joinOperator->getAllInputOriginIds(),
                                                       windowSize,
+                                                      joinOperator->getLeftInputSchema()->getSize(),
+                                                      joinOperator->getRightInputSchema()->getSize(),
                                                       options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                       options->getHashJoinOptions()->getPageSize(),
                                                       options->getHashJoinOptions()->getPreAllocPageCnt(),
@@ -427,45 +425,51 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                                                              joinOperator->getOutputSchema(),
                                                                                              joinOperatorHandler,
                                                                                              JoinBuildSideType::Left,
-                                                                                             timeStampFieldNameLeft);
+                                                                                             timeStampFieldNameLeft,
+                                                                                             joinFieldNameLeft);
             rightJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                               joinOperator->getOutputSchema(),
                                                                                               joinOperatorHandler,
                                                                                               JoinBuildSideType::Right,
-                                                                                              timeStampFieldNameRight);
+                                                                                              timeStampFieldNameRight,
+                                                                                              joinFieldNameRight);
 
             auto joinSinkOperator = PhysicalOperators::PhysicalHashJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
                                                                                             joinOperator->getRightInputSchema(),
                                                                                             joinOperator->getOutputSchema(),
+                                                                                            joinFieldNameLeft,
+                                                                                            joinFieldNameRight,
                                                                                             joinOperatorHandler);
             leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
             rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
             operatorNode->replace(joinSinkOperator);
         } else if (joinStrategy == NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN) {
-            auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                                  joinOperator->getRightInputSchema(),
-                                                                  joinFieldNameLeft,
-                                                                  joinFieldNameRight,
-                                                                  joinOperator->getAllInputOriginIds(),
-                                                                  windowSize);
+            auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
+                                                                  windowSize,
+                                                                  joinOperator->getLeftInputSchema()->getSize(),
+                                                                  joinOperator->getRightInputSchema()->getSize());
 
             leftJoinBuildOperator =
                 PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
                                                                                joinOperator->getOutputSchema(),
                                                                                joinOperatorHandler,
                                                                                JoinBuildSideType::Left,
-                                                                               timeStampFieldNameLeft);
+                                                                               timeStampFieldNameLeft,
+                                                                               joinFieldNameLeft);
             rightJoinBuildOperator =
                 PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                joinOperator->getOutputSchema(),
                                                                                joinOperatorHandler,
                                                                                JoinBuildSideType::Right,
-                                                                               timeStampFieldNameRight);
+                                                                               timeStampFieldNameRight,
+                                                                               joinFieldNameRight);
 
             auto joinSinkOperator =
                 PhysicalOperators::PhysicalNestedLoopJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
                                                                               joinOperator->getRightInputSchema(),
                                                                               joinOperator->getOutputSchema(),
+                                                                              joinFieldNameLeft,
+                                                                              joinFieldNameRight,
                                                                               joinOperatorHandler);
             leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
             rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);

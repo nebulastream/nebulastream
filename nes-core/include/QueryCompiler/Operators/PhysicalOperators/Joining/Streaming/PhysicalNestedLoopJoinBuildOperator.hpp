@@ -34,14 +34,16 @@ class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperato
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param timeStampFieldName
      * @return PhysicalStreamJoinSinkOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id,
+    static PhysicalOperatorPtr create(const OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName);
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName);
 
     /**
      * @brief creates a PhysicalNestedLoopJoinBuildOperator that retrieves a new operatorId by calling method
@@ -51,13 +53,15 @@ class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperato
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param joinFieldName
      * @return PhysicalStreamJoinBuildOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName);
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName);
 
     /**
      * @brief Constructor for PhysicalNestedLoopJoinBuildOperator
@@ -67,13 +71,15 @@ class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperato
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param joinFieldName
      */
     explicit PhysicalNestedLoopJoinBuildOperator(OperatorId id,
-                                           SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler,
-                                           JoinBuildSideType buildSide,
-                                           std::string timeStampFieldName);
+                                                 SchemaPtr inputSchema,
+                                                 SchemaPtr outputSchema,
+                                                 Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler,
+                                                 JoinBuildSideType buildSide,
+                                                 std::string timeStampFieldName,
+                                                 std::string joinFieldName);
 
     /**
      * @brief Deconstructor
@@ -104,8 +110,15 @@ class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperato
      */
     const std::string& getTimeStampFieldName() const;
 
+    /**
+     * @brief Getter for the timestamp join field name
+     * @return String
+     */
+    const std::string& getJoinFieldName() const;
+
   private:
     std::string timeStampFieldName;
+    std::string joinFieldName;
     JoinBuildSideType buildSide;
 };
 

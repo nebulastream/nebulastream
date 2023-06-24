@@ -16,6 +16,11 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINSINK_HPP_
 #include <Execution/Operators/Operator.hpp>
 
+namespace NES {
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}// namespace NES
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -29,8 +34,19 @@ class StreamHashJoinSink : public Operator {
     /**
      * @brief Constructor for a StreamJoinSink
      * @param handlerIndex
+     * @param joinSchemaLeft
+     * @param joinFieldNameRight
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
+     * @param joinFieldNameOutput
      */
-    explicit StreamHashJoinSink(uint64_t handlerIndex);
+
+    explicit StreamHashJoinSink(uint64_t handlerIndex,
+                                SchemaPtr joinSchemaLeft,
+                                SchemaPtr joinSchemaRight,
+                                SchemaPtr joinSchemaOutput,
+                                std::string joinFieldNameLeft,
+                                std::string joinFieldNameRight);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently,
@@ -40,8 +56,16 @@ class StreamHashJoinSink : public Operator {
      */
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+  protected:
+    void joinTwoBucketLists();
+
   private:
     uint64_t handlerIndex;
+    SchemaPtr joinSchemaLeft;
+    SchemaPtr joinSchemaRight;
+    SchemaPtr joinSchemaOutput;
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
 };
 
 }//namespace NES::Runtime::Execution::Operators

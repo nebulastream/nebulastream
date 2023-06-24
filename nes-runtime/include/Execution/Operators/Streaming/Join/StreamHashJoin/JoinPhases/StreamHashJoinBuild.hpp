@@ -43,7 +43,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
                         bool isLeftSide,
                         const std::string& joinFieldName,
                         const std::string& timeStampField,
-                        SchemaPtr schema,
+                        SchemaPtr inputSchema,
                         std::shared_ptr<TimeFunction> timeFunction);
 
     /**
@@ -77,7 +77,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
     bool isLeftSide;
     std::string joinFieldName;
     std::string timeStampField;
-    SchemaPtr schema;
+    SchemaPtr inputSchema;
     std::shared_ptr<TimeFunction> timeFunction;
 };
 

@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getFirstTupleProxy(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
+void* getFirstTupleProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
@@ -39,7 +39,7 @@ void* getFirstTupleProxy(void* ptrOpHandler, void* windowIdentifierPtr, bool isL
     return opHandler->getFirstTuple(windowIdentifier, isLeftSide);
 }
 
-uint64_t getNumberOfTuplesProxy(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
+uint64_t getNumberOfTuplesProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
@@ -48,7 +48,7 @@ uint64_t getNumberOfTuplesProxy(void* ptrOpHandler, void* windowIdentifierPtr, b
     return opHandler->getNumberOfTuplesInWindow(windowIdentifier, isLeftSide);
 }
 
-void deleteWindowProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
@@ -57,7 +57,7 @@ void deleteWindowProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
     opHandler->deleteWindow(windowIdentifier);
 }
 
-uint64_t getWindowStartProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+uint64_t getWindowStartProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
@@ -67,7 +67,7 @@ uint64_t getWindowStartProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
     return opHandler->getWindowStartEnd(windowIdentifier).first;
 }
 
-uint64_t getWindowEndProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+uint64_t getWindowEndProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
@@ -77,21 +77,20 @@ uint64_t getWindowEndProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
     return opHandler->getWindowStartEnd(windowIdentifier).second;
 }
 
-uint64_t getSequenceNumberProxy(void* ptrOpHandler) {
+uint64_t getSequenceNumberProxyForNestedLoopJoin(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     return opHandler->getNextSequenceNumber();
 }
-uint64_t getOriginIdProxy(void* ptrOpHandler) {
+uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     return opHandler->getOperatorId();
 }
 
 void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    std::cout << "triger sink" << std::endl;
     if (hasChild()) {
         child->open(ctx, recordBuffer);
     }
@@ -99,38 +98,38 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifierMemRef = recordBuffer.getBuffer();
 
-    auto firstTupleLeft = Nautilus::FunctionCall("getFirstTupleProxy",
-                                                 getFirstTupleProxy,
+    auto firstTupleLeft = Nautilus::FunctionCall("getFirstTupleProxyForNestedLoopJoin",
+                                                 getFirstTupleProxyForNestedLoopJoin,
                                                  operatorHandlerMemRef,
                                                  windowIdentifierMemRef,
                                                  Value<Boolean>(/*isLeftSide*/ true));
-    auto firstTupleRight = Nautilus::FunctionCall("getFirstTupleProxy",
-                                                  getFirstTupleProxy,
+    auto firstTupleRight = Nautilus::FunctionCall("getFirstTupleProxyForNestedLoopJoin",
+                                                  getFirstTupleProxyForNestedLoopJoin,
                                                   operatorHandlerMemRef,
                                                   windowIdentifierMemRef,
                                                   Value<Boolean>(/*isLeftSide*/ false));
 
-    auto numberOfTuplesLeft = Nautilus::FunctionCall("getNumberOfTuplesProxy",
-                                                     getNumberOfTuplesProxy,
+    auto numberOfTuplesLeft = Nautilus::FunctionCall("getNumberOfTuplesProxyForNestedLoopJoin",
+                                                     getNumberOfTuplesProxyForNestedLoopJoin,
                                                      operatorHandlerMemRef,
                                                      windowIdentifierMemRef,
                                                      Value<Boolean>(/*isLeftSide*/ true));
-    auto numberOfTuplesRight = Nautilus::FunctionCall("getNumberOfTuplesProxy",
-                                                      getNumberOfTuplesProxy,
+    auto numberOfTuplesRight = Nautilus::FunctionCall("getNumberOfTuplesProxyForNestedLoopJoin",
+                                                      getNumberOfTuplesProxyForNestedLoopJoin,
                                                       operatorHandlerMemRef,
                                                       windowIdentifierMemRef,
                                                       Value<Boolean>(/*isLeftSide*/ false));
 
     // TODO ask Philipp why do I need this here and can not use auto?
     Value<Any> windowStart =
-        Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+        Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin", getWindowStartProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
     Value<Any> windowEnd =
-        Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+        Nautilus::FunctionCall("getWindowEndProxyForNestedLoopJoin", getWindowEndProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
 
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
-    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxy", getSequenceNumberProxy, operatorHandlerMemRef);
+    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin", getSequenceNumberProxyForNestedLoopJoin, operatorHandlerMemRef);
     ctx.setSequenceNumber(sequenceNumber);
-    auto originId = Nautilus::FunctionCall("getOriginIdProxy", getOriginIdProxy, operatorHandlerMemRef);
+    auto originId = Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
     ctx.setOrigin(originId);
 
     // As we know that the data is of type rowLayout, we do not have to provide a buffer size
@@ -173,7 +172,7 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     }
 
     // Once we are done with this window, we can delete it to free up space
-    Nautilus::FunctionCall("deleteWindowProxy", deleteWindowProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+    Nautilus::FunctionCall("deleteWindowProxyForNestedLoopJoin", deleteWindowProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
 }
 
 NLJSink::NLJSink(uint64_t operatorHandlerIndex,

@@ -150,7 +150,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                               record.read(joinFieldName).as<UInt64>());
     //write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : schema->fields) {
+    for (auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         NES_TRACE("write key=" << field->getName() << " value=" << record.read(fieldName));
@@ -191,9 +191,9 @@ StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
                                          bool isLeftSide,
                                          const std::string& joinFieldName,
                                          const std::string& timeStampField,
-                                         SchemaPtr schema,
+                                         SchemaPtr inputSchema,
                                          std::shared_ptr<TimeFunction> timeFunction)
     : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      schema(schema), timeFunction(std::move(timeFunction)) {}
+      inputSchema(inputSchema), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

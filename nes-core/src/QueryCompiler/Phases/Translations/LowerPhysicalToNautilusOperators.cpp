@@ -277,7 +277,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(handlerIndex);
+        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(handlerIndex,
+                                                                                                    sinkOperator->getLeftInputSchema(),
+                                                                                                    sinkOperator->getRightInputSchema(),
+                                                                                                    sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+                                                                                                    sinkOperator->getJoinFieldNameLeft(),
+                                                                                                    sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinSinkOperator>()) {
@@ -285,17 +290,14 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
-        //TODO: we need to change this here as all these parameters the sink can get by its own form the handler
-        auto joinSchema = Runtime::Execution::Util::createJoinSchema(sinkOperator->getOperatorHandler()->getJoinSchemaLeft(),
-                                                 sinkOperator->getOperatorHandler()->getJoinSchemaRight(),
-                                                 sinkOperator->getOperatorHandler()->getJoinFieldNameLeft());
+
         auto joinSinkNautilus =
             std::make_shared<Runtime::Execution::Operators::NLJSink>(handlerIndex,
-                                                                     sinkOperator->getOperatorHandler()->getJoinSchemaLeft(),
-                                                                     sinkOperator->getOperatorHandler()->getJoinSchemaRight(),
-                                                                     joinSchema,
-                                                                     sinkOperator->getOperatorHandler()->getJoinFieldNameLeft(),
-                                                                     sinkOperator->getOperatorHandler()->getJoinFieldNameRight());
+                                                                     sinkOperator->getLeftInputSchema(),
+                                                                     sinkOperator->getRightInputSchema(),
+                                                                     sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+                                                                     sinkOperator->getJoinFieldNameLeft(),
+                                                                     sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {
@@ -304,22 +306,16 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
-
-        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
-        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
-                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
-        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
-                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
-
+//
         std::shared_ptr<Runtime::Execution::Operators::StreamHashJoinBuild> joinBuildNautilus;
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
             auto timeFunction = std::make_shared<Runtime::Execution::Operators::IngestionTimeFunction>();
             joinBuildNautilus =
                 std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                                     isLeftSide,
-                                                                                     joinFieldName,
+                                                                                     buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                                                                                     buildOperator->getJoinFieldName(),
                                                                                      buildOperator->getTimeStampFieldName(),
-                                                                                     joinSchema,
+                                                                                     buildOperator->getInputSchema(),
                                                                                      timeFunction);
         } else {
             auto timeStampFieldRecord =
@@ -327,10 +323,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             auto timeFunction = std::make_shared<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
             joinBuildNautilus =
                 std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                                     isLeftSide,
-                                                                                     joinFieldName,
+                                                                                     buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                                                                                     buildOperator->getJoinFieldName(),
                                                                                      buildOperator->getTimeStampFieldName(),
-                                                                                     joinSchema,
+                                                                                     buildOperator->getInputSchema(),
                                                                                      timeFunction);
         }
 
@@ -343,31 +339,25 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
-        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
-                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
-        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
-                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
-
         auto tsField = buildOperator->getTimeStampFieldName();
         std::shared_ptr<Runtime::Execution::Operators::NLJBuild> joinBuildNautilus;
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
             auto timeFunction = std::make_shared<Runtime::Execution::Operators::IngestionTimeFunction>();
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
-                                                                                          joinSchema,
-                                                                                          joinFieldName,
-                                                                                          tsField,
-                                                                                          isLeftSide,
+                                                                                          buildOperator->getInputSchema(),
+                                                                                          buildOperator->getJoinFieldName(),
+                                                                                          buildOperator->getTimeStampFieldName(),
+                                                                                          buildOperator->getBuildSide() == JoinBuildSideType::Left,
                                                                                           timeFunction);
         } else {
             auto timeStampFieldRecord =
                 std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
             auto timeFunction = std::make_shared<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
-                                                                                          joinSchema,
-                                                                                          joinFieldName,
+                                                                                          buildOperator->getInputSchema(),
+                                                                                          buildOperator->getJoinFieldName(),
                                                                                           buildOperator->getTimeStampFieldName(),
-                                                                                          isLeftSide,
+                                                                                          buildOperator->getBuildSide() == JoinBuildSideType::Left,
                                                                                           timeFunction);
         }
 

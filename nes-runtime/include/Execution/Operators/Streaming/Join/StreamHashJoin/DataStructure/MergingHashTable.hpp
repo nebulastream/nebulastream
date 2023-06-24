@@ -80,6 +80,18 @@ class MergingHashTable {
      */
     size_t getNumBuckets() const;
 
+    /**
+     * @brief
+     * @return
+     */
+    uint8_t* getTupleFromBucketAtPos(size_t bucket, size_t page, size_t pos);
+
+    /**
+     * @brief
+     * @return
+     */
+    uint64_t getNumberOfTuplesForPage(size_t bucket, size_t page);
+
   private:
     std::vector<std::atomic<InternalNode*>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;

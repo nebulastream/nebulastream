@@ -67,6 +67,14 @@ class FixedPage {
     uint8_t* operator[](size_t index) const;
 
     /**
+     * @brief returns a pointer to the record at the given index
+     * @param index
+     * @return pointer to the record
+     */
+    uint8_t* getRecord(size_t index) const;
+
+
+    /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
      * @return null pointer if there is no more space left on the page, otherwise the pointer

@@ -12,38 +12,30 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <API/AttributeField.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                                             SchemaPtr joinSchemaRight,
-                                                             std::string joinFieldNameLeft,
-                                                             std::string joinFieldNameRight,
-                                                             const std::vector<OriginId>& origins,
+StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<OriginId>& origins,
                                                              size_t windowSize,
+                                                             size_t sizeOfRecordLeft,
+                                                             size_t sizeOfRecordRight,
                                                              size_t totalSizeForDataStructures,
                                                              size_t pageSize,
                                                              size_t preAllocPageSizeCnt,
                                                              size_t numPartitions,
                                                              JoinStrategy joinStrategy)
-    : StreamJoinOperatorHandler(joinSchemaLeft,
-                                joinSchemaRight,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
-                                origins,
-                                windowSize,
-                                joinStrategy),
+    : StreamJoinOperatorHandler(origins, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
@@ -98,30 +90,27 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
     }
 }
 
-StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
-                                                                       const SchemaPtr& joinSchemaRight,
-                                                                       const std::string& joinFieldNameLeft,
-                                                                       const std::string& joinFieldNameRight,
-                                                                       const std::vector<OriginId>& origins,
+StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& origins,
                                                                        size_t windowSize,
+                                                                       size_t sizeOfRecordLeft,
+                                                                       size_t sizeOfRecordRight,
                                                                        size_t totalSizeForDataStructures,
                                                                        size_t pageSize,
                                                                        size_t preAllocPageSizeCnt,
                                                                        size_t numPartitions,
                                                                        JoinStrategy joinStrategy) {
 
-    return std::make_shared<StreamHashJoinOperatorHandler>(joinSchemaLeft,
-                                                           joinSchemaRight,
-                                                           joinFieldNameLeft,
-                                                           joinFieldNameRight,
-                                                           origins,
+    return std::make_shared<StreamHashJoinOperatorHandler>(origins,
                                                            windowSize,
+                                                           sizeOfRecordLeft,
+                                                           sizeOfRecordRight,
                                                            totalSizeForDataStructures,
                                                            pageSize,
                                                            preAllocPageSizeCnt,
                                                            numPartitions,
                                                            joinStrategy);
 }
+
 size_t StreamHashJoinOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 size_t StreamHashJoinOperatorHandler::getPageSize() const { return pageSize; }
 size_t StreamHashJoinOperatorHandler::getNumPartitions() const { return numPartitions; }

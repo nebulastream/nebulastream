@@ -158,12 +158,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
-        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
-                                                                            rightSchema,
-                                                                            joinFieldNameLeft,
-                                                                            joinFieldNameRight,
-                                                                            originIds,
-                                                                            windowSize);
+        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(originIds,
+                                                                            windowSize,
+                                                                            leftSchema->getSchemaSizeInBytes(),
+                                                                            rightSchema->getSchemaSizeInBytes());
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

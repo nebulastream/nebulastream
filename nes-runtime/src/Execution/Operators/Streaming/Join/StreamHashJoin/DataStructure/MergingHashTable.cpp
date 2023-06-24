@@ -48,6 +48,40 @@ const std::vector<std::unique_ptr<FixedPage>> MergingHashTable::getPagesForBucke
     return ret;
 }
 
+
+uint8_t* MergingHashTable::getTupleFromBucketAtPos(size_t bucketPos, size_t pageNo, size_t recordPos)
+{
+    auto head = bucketHeads[bucketPos].load();
+    //traverse list
+    size_t pageCnt = 0;
+    auto currentNode = head;
+    while(pageCnt != pageNo)
+    {
+        currentNode = currentNode->next;
+    }
+
+    //
+    return currentNode->dataPage->getRecord(recordPos);
+}
+
+uint64_t MergingHashTable::getNumberOfTuplesForPage(size_t bucketPos, size_t pageNo)
+{
+    auto head = bucketHeads[bucketPos].load();
+    //traverse list
+    size_t pageCnt = 0;
+    auto currentNode = head;
+    while(pageCnt != pageNo)
+    {
+        currentNode = currentNode->next;
+    }
+
+    //
+    return currentNode->dataPage->size();
+}
+
+
+uint8_t* getNumberOfTuplesForPage(size_t bucket, size_t page);
+
 size_t MergingHashTable::getNumBuckets() const { return bucketNumPages.size(); }
 
 size_t MergingHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }

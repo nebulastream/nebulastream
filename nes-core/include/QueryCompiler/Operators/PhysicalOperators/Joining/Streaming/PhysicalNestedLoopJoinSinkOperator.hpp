@@ -23,7 +23,9 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical NLP stream join sink operator and gets translated to a NestedLoopJoinSink operator
  */
-class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
+class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator,
+                                           public PhysicalBinaryOperator,
+                                           public AbstractScanOperator {
 
   public:
     /**
@@ -32,6 +34,8 @@ class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      * @return PhysicalNestedLoopJoinSinkOperator
      */
@@ -39,6 +43,8 @@ class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
+                                      std::string joinFieldNameLeft,
+                                      std::string joinFieldNameRight,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -46,12 +52,16 @@ class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      * @return PhysicalNestedLoopJoinSinkOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
+                                      std::string joinFieldNameLeft,
+                                      std::string joinFieldNameRight,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -60,13 +70,17 @@ class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
      * @param operatorHandler
      */
     PhysicalNestedLoopJoinSinkOperator(OperatorId id,
-                                 SchemaPtr leftSchema,
-                                 SchemaPtr rightSchema,
-                                 SchemaPtr outputSchema,
-                                 Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
+                                       SchemaPtr leftSchema,
+                                       SchemaPtr rightSchema,
+                                       SchemaPtr outputSchema,
+                                       std::string joinFieldNameLeft,
+                                       std::string joinFieldNameRight,
+                                       Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
 
     /**
      * @brief Creates a string containing the name of this physical operator
@@ -79,6 +93,22 @@ class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator
      * @return OperatorNodePtr
      */
     OperatorNodePtr copy() override;
+
+    /**
+     * @brief getter for left join field name
+     * @return
+     */
+    const std::string& getJoinFieldNameLeft() const;
+
+    /**
+     * @brief getter for right join fiel name
+     * @return
+     */
+    const std::string& getJoinFieldNameRight() const;
+
+  protected:
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators
