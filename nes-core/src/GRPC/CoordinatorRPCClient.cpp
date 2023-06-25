@@ -658,4 +658,38 @@ std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
     }
     return parentIds;
 }
+
+bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, std::vector<TopologyNodeId> failedWorkersIds){
+    NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers from workerId={}, number of workerIds={}", sourceWorkerId, failedWorkersIds.size());
+
+    AnnounceFailedWorkersRequest request;
+    NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers request={}", request.DebugString());
+
+    class AnnounceFailedWorkersListener : public detail::RpcExecutionListener<bool, AnnounceFailedWorkersRequest, AnnounceFailedWorkersReply> {
+      public:
+        std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
+
+        explicit AnnounceFailedWorkersListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+            : coordinatorStub(coordinatorStub) {}
+
+        Status rpcCall(const AnnounceFailedWorkersRequest& request, AnnounceFailedWorkersReply* reply) override {
+            ClientContext context;
+
+            return coordinatorStub->AnnounceFailedWorkers(&context, request, reply);
+        }
+        bool onSuccess(const AnnounceFailedWorkersReply& reply) override {
+            NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers: status ok return success={}", reply.success());
+            return reply.success();
+        }
+        bool onPartialFailure(const Status& status) override {
+            NES_DEBUG2(" CoordinatorRPCClient::announceFailedWorkers error={}: {}", status.error_code(), status.error_message());
+            return false;
+        }
+        bool onFailure() override { return false; }
+    };
+
+    auto listener = AnnounceFailedWorkersListener{coordinatorStub};
+
+    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+}
 }// namespace NES
