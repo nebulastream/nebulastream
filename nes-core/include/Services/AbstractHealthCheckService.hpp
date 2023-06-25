@@ -98,6 +98,7 @@ class AbstractHealthCheckService {
 
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
+    std::shared_ptr<std::thread> healthCheckingOnCoordinatorThread;
     std::atomic<bool> isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
     cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;

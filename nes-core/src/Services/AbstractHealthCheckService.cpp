@@ -34,6 +34,15 @@ void AbstractHealthCheckService::stopHealthCheck() {
     auto ret = shutdownRPC->get_future().get();
     NES_ASSERT(ret, "fail to shutdown health check");
 
+    if (healthCheckingOnCoordinatorThread->joinable()) {
+        healthCheckingOnCoordinatorThread->join();
+        healthCheckingOnCoordinatorThread.reset();
+        NES_DEBUG2("AbstractHealthCheckService::stopHealthCheck successfully stopped");
+    } else {
+        NES_ERROR2("HealthCheckService: health thread not joinable");
+        NES_THROW_RUNTIME_ERROR("Error while stopping healthCheckingOnCoordinatorThread->join");
+    }
+
     if (healthCheckingThread->joinable()) {
         healthCheckingThread->join();
         healthCheckingThread.reset();
