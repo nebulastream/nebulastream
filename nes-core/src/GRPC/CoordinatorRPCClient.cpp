@@ -663,6 +663,12 @@ bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, 
     NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers from workerId={}, number of workerIds={}", sourceWorkerId, failedWorkersIds.size());
 
     AnnounceFailedWorkersRequest request;
+    request.set_sourceworkerid(sourceWorkerId);
+    //->Add(std::all_of(failedWorkersIds.begin(), failedWorkersIds.end(), ))
+    for (unsigned long i=0; i<failedWorkersIds.size(); i++) {
+        request.mutable_failedworkersids()->Add(failedWorkersIds.at(i));
+    }
+
     NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers request={}", request.DebugString());
 
     class AnnounceFailedWorkersListener : public detail::RpcExecutionListener<bool, AnnounceFailedWorkersRequest, AnnounceFailedWorkersReply> {
