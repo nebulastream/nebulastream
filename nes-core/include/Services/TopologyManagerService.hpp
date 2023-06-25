@@ -162,12 +162,32 @@ class TopologyManagerService {
       */
     nlohmann::json getTopologyAsJson();
 
+    /**
+     * @brief check if a workerId belongs to a worker that was announced as failed by another worker
+     * @param workerId the workerId of the failed worker
+     * @return true if in the set, false otherwise
+     */
+    bool wasAnnouncedFailedWorker(TopologyNodeId workerId);
+
+    /**
+     * @brief add failed worker announced by other worker to the list of failed workers
+     * @param workerId the workerId of the failed worker
+     */
+    void addAnnouncedFailedWorker(TopologyNodeId workerId);
+
+    /**
+     * @brief remove former failed worker (recovered worker) announced by other worker from the list of failed workers
+     * @param workerId the workerId of the former failed worker (recovered worker)
+     */
+    void removeAnnouncedFailedWorker(TopologyNodeId workerId);
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
     HealthCheckServicePtr healthCheckService;
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
+    std::set<TopologyNodeId> announcedFailedWorkers;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
