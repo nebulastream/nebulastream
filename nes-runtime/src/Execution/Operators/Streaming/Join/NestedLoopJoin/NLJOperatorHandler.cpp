@@ -63,7 +63,7 @@ namespace NES::Runtime::Execution::Operators {
                 std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
                 buffer.setNumberOfTuples(1);
                 pipelineCtx->dispatchBuffer(buffer);
-                NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
+                NES_TRACE2("Emitted windowIdentifier is {}", windowIdentifier);
             }
         }
 
