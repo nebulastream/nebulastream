@@ -431,3 +431,31 @@ Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest*
     }
     return Status::CANCELLED;
 }
+Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext* context,
+                                                   const AnnounceFailedWorkersRequest* request,
+                                                   AnnounceFailedWorkersReply* reply) {
+    NES_DEBUG2("CoordinatorRPCServer::AnnounceFailedWorker: request ={}", request->DebugString());
+    auto failedWorkersIds = request->failedworkersids();
+    // for each id, add to failedWorkers list
+    // for each id, remove from topology
+
+//    auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
+//    bool success = topologyManagerService->removeGeoLocation(request->workerid())
+//        || spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION
+//        || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
+//    if (success) {
+//        if (!topologyManagerService->unregisterNode(request->workerid())) {
+//            NES_ERROR2("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
+//            reply->set_success(false);
+//            return Status::CANCELLED;
+//        }
+//        monitoringManager->removeMonitoringNode(request->workerid());
+//        NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
+//        reply->set_success(true);
+//        return Status::OK;
+//    }
+//    NES_ERROR2("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
+//    reply->set_success(false);
+//    return Status::CANCELLED;
+    return Service::AnnounceFailedWorkers(context, request, reply);
+}

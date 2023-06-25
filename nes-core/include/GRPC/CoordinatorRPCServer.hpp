@@ -258,6 +258,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     Status GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) override;
 
+    /**
+     * @brief inform the coordinator that a device has failed
+     * @param request sent from worker to coordinator containing its id and a list of ids of failed workers
+     * @param reply sent back from the coordinator to the worker if request is processed
+     * @return true if the request is acknowledged, false otherwise
+     */
+    Status AnnounceFailedWorkers (ServerContext* context, const AnnounceFailedWorkersRequest* request, AnnounceFailedWorkersReply* reply) override;
+
   private:
     QueryServicePtr queryService;
     TopologyManagerServicePtr topologyManagerService;
