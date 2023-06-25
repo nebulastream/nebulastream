@@ -14,6 +14,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -28,9 +29,10 @@ using namespace std::chrono_literals;
 namespace NES {
 
 WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient,
+                                                   WorkerRPCClientPtr workerRpcClient,
                                                    std::string healthServiceName,
                                                    NesWorkerPtr worker)
-    : coordinatorRpcClient(coordinatorRpcClient), worker(worker) {
+    : coordinatorRpcClient(coordinatorRpcClient), workerRpcClient(workerRpcClient), worker(worker) {
     id = coordinatorRpcClient->getId();
     this->healthServiceName = healthServiceName;
 }

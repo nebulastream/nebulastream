@@ -229,6 +229,14 @@ class CoordinatorRPCClient {
      */
     std::vector<NodeId> getParents(NodeId nodeId);
 
+    /**
+     * @brief this method is called by a worker to tell the coordinator, that some workers have failed
+     * @param failedWorkersIds list of ids of failed workers
+     * @return true if the information has been successfully processed
+     */
+    bool announceFailedWorkers(TopologyNodeId sourceWorkerId, std::vector<TopologyNodeId> failedWorkersIds);
+
+
   private:
     uint64_t workerId;
     std::string address;

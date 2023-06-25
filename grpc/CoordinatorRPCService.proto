@@ -69,6 +69,18 @@ service CoordinatorRPCService {
   rpc notifySourceStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
+
+  rpc AnnounceFailedWorkers(AnnounceFailedWorkersRequest) returns(AnnounceFailedWorkersReply) {}
+
+}
+
+message AnnounceFailedWorkersRequest {
+	uint64 sourceWorkerId = 1;
+	repeated uint64 failedWorkersIds = 2;
+}
+
+message AnnounceFailedWorkersReply {
+	bool success = 1;
 }
 
 message RegisterWorkerRequest {
