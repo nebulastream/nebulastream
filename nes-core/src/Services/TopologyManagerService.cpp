@@ -362,4 +362,21 @@ std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
 TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {
     return locationIndex->getGeoLocationForNode(nodeId);
 }
+
+bool TopologyManagerService::wasAnnouncedFailedWorker(TopologyNodeId workerId) {
+    return announcedFailedWorkers.find(workerId) != announcedFailedWorkers.end();
+}
+
+void TopologyManagerService::addAnnouncedFailedWorker(TopologyNodeId workerId) {
+    announcedFailedWorkers.insert(workerId);
+}
+
+void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId) {
+    if (announcedFailedWorkers.find(workerId) != announcedFailedWorkers.end()) {
+        announcedFailedWorkers.erase(workerId);
+    } else {
+        NES_DEBUG2("TopologyManagerService::removeAnnouncedFailedWorker could not remove workerId={} from announcedFailedWorkers set because it is not present", workerId);
+    }
+}
+
 }// namespace NES
