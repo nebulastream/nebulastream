@@ -27,13 +27,14 @@
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
 #include <string>
+#include <utility>
 
 namespace NES {
 
 StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
                                                            size_t maxRetries,
-                                                           const WorkerRPCClientPtr& workerRpcClient,
-                                                           bool queryReconfiguration)
+                                                           WorkerRPCClientPtr workerRpcClient,
+                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : AbstractRequest(
         {
             ResourceType::QueryCatalogService,
@@ -44,14 +45,15 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
             ResourceType::SourceCatalog,
         },
         maxRetries),
-      workerRpcClient(std::move(workerRpcClient)), queryId(queryId), queryReconfiguration(queryReconfiguration) {}
+      workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
+      coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
 StopQueryRequestPtr StopQueryRequestExperimental::create(QueryId queryId,
                                                          size_t maxRetries,
-                                                         const WorkerRPCClientPtr& workerRpcClient,
-                                                         bool queryReconfiguration) {
+                                                         WorkerRPCClientPtr workerRpcClient,
+                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(queryId, maxRetries, workerRpcClient, queryReconfiguration));
+        StopQueryRequestExperimental(queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
@@ -66,7 +68,7 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
         NES_TRACE2("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, queryReconfiguration);
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
         NES_TRACE2("Phases created. Stop request initialized.");

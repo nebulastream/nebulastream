@@ -158,7 +158,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::MlHeuristic);
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::MlHeuristic);
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
@@ -172,7 +172,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 

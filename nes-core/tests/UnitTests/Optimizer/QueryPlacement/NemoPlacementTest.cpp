@@ -152,7 +152,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
                           .apply(Count()->as(Attribute("count_value")))
                           .sink(NullOutputSinkDescriptor::create());
         queryPlan = query.getQueryPlan();
-        queryPlan->setPlacementStrategy(NES::PlacementStrategy::BottomUp);
+        queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
 
         // Prepare the placement
         globalExecutionPlan = GlobalExecutionPlan::create();
@@ -176,7 +176,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
         // Execute the placement
         sharedQueryPlan = SharedQueryPlan::create(queryPlan);
         auto queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         queryPlacementPhase->execute(sharedQueryPlan);
     }
 

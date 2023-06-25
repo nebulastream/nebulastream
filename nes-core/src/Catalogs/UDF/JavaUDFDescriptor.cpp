@@ -14,6 +14,7 @@
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
+#include <algorithm>
 
 namespace NES::Catalogs::UDF {
 
