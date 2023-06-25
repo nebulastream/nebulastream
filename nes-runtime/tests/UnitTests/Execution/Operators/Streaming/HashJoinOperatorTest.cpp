@@ -21,6 +21,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
@@ -28,11 +29,10 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-
+//#include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution {
 
 class HashJoinOperatorTest : public Testing::NESBaseTest {
@@ -43,24 +43,24 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup HashJoinOperatorTest test class.");
+        NES_INFO("Setup HashJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup HashJoinOperatorTest test case.");
+        NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO2("Tear down HashJoinOperatorTest test case.");
+        NES_INFO("Tear down HashJoinOperatorTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down HashJoinOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashJoinOperatorTest test class."); }
 };
 
 struct HashJoinBuildHelper {
@@ -96,12 +96,10 @@ struct HashJoinBuildHelper {
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(buildHelper.schema,
-                                                                              buildHelper.schema,
-                                                                              buildHelper.joinFieldName,
-                                                                              buildHelper.joinFieldName,
-                                                                              std::vector<::OriginId>({1}),
+    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                                               buildHelper.windowSize,
+                                                                              buildHelper.schema->getSchemaSizeInBytes(),
+                                                                              buildHelper.schema->getSchemaSizeInBytes(),
                                                                               buildHelper.joinSizeInByte,
                                                                               buildHelper.pageSize,
                                                                               1,
@@ -132,6 +130,13 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
                                         {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
                                         {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+
+        if (i == 0) {
+            auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+            buildHelper.hashJoinBuild->open(executionContext, recordBuffer);
+        }
+
         buildHelper.hashJoinBuild->execute(executionContext, record);
 
         uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
@@ -147,7 +152,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         bool correctlyInserted = false;
         for (auto&& page : bucket->getPages()) {
             for (auto k = 0UL; k < page->size(); ++k) {
-                uint8_t* recordPtr = page->operator[](k);
+                uint8_t* recordPtr = page.get()->operator[](k);
                 auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, buildHelper.bufferManager);
                 auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
 
@@ -160,7 +165,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
         if (!correctlyInserted) {
             auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
-            NES_ERROR2("Could not find record {} in bucket!", Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema));
+            NES_ERROR("Could not find record " << Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema) << " in bucket!");
             return false;
         }
     }
@@ -176,7 +181,7 @@ struct HashJoinSinkHelper {
     size_t noWorkerThreads;
     size_t numSourcesLeft, numSourcesRight;
     size_t joinSizeInByte;
-    size_t windowSize;
+    uint64_t windowSize;
     std::string joinFieldNameLeft, joinFieldNameRight;
     BufferManagerPtr bufferManager;
     SchemaPtr leftSchema, rightSchema;
@@ -203,18 +208,16 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
                                  uint64_t& removedBuffer) {
 
     bool foundBuffer = false;
-    NES_TRACE2("NLJ buffer = {}", Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
+    NES_TRACE("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
 
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
-        NES_TRACE2("Comparing versus {}", Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
+        NES_TRACE("Comparing versus " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
         if (memcmp(tupleBufferIt->getBuffer(),
                    expectedBuffer.getBuffer(),
                    joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
             == 0) {
-            NES_TRACE2("Removing buffer #{} {} of size {}",
-                       removedBuffer,
-                       Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema),
-                       joinSchema->getSchemaSizeInBytes());
+            NES_TRACE("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema)
+                                          << " of size " << joinSchema->getSchemaSizeInBytes());
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
             removedBuffer += 1;
@@ -224,31 +227,41 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
     return foundBuffer;
 }
 
+uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdentifier, uint64_t windowSize) {
+    std::vector<uint64_t> tmpVec;
+    while (totalTuples > windowSize) {
+        tmpVec.emplace_back(windowSize);
+        totalTuples -= windowSize;
+    }
+    tmpVec.emplace_back(totalTuples);
+    auto noWindow = windowIdentifier / windowSize;
+    return tmpVec[noWindow];
+}
+
 bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     if (!hashJoinSinkHelper.leftSchema->contains(hashJoinSinkHelper.joinFieldNameLeft)) {
-        NES_ERROR2("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameLeft);
+        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
         return false;
     }
     if (!hashJoinSinkHelper.rightSchema->contains(hashJoinSinkHelper.joinFieldNameRight)) {
-        NES_ERROR2("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameRight);
+        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
         return false;
     }
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinSinkHelper.bufferManager,
                                                          hashJoinSinkHelper.numberOfBuffersPerWorker);
-    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(hashJoinSinkHelper.leftSchema,
-                                                                              hashJoinSinkHelper.rightSchema,
-                                                                              hashJoinSinkHelper.joinFieldNameLeft,
-                                                                              hashJoinSinkHelper.joinFieldNameRight,
-                                                                              std::vector<::OriginId>({1, 2}),
-                                                                              hashJoinSinkHelper.windowSize,
-                                                                              hashJoinSinkHelper.joinSizeInByte,
-                                                                              hashJoinSinkHelper.pageSize,
-                                                                              1,
-                                                                              hashJoinSinkHelper.numPartitions,
-                                                                              JoinStrategy::HASH_JOIN_LOCAL);
+    auto hashJoinOpHandler =
+        Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1, 2}),
+                                                         hashJoinSinkHelper.windowSize,
+                                                         hashJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
+                                                         hashJoinSinkHelper.rightSchema->getSchemaSizeInBytes(),
+                                                         hashJoinSinkHelper.joinSizeInByte,
+                                                         hashJoinSinkHelper.pageSize,
+                                                         1,
+                                                         hashJoinSinkHelper.numPartitions,
+                                                         JoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -284,8 +297,20 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         hashJoinSinkHelper.timeStampField,
         hashJoinSinkHelper.rightSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
-    auto hashJoinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
 
+    auto joinSchema = Util::createJoinSchema(hashJoinSinkHelper.leftSchema,
+                                             hashJoinSinkHelper.rightSchema,
+                                             hashJoinSinkHelper.joinFieldNameLeft);
+
+    auto hashJoinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex,
+                                                                        hashJoinSinkHelper.leftSchema,
+                                                                        hashJoinSinkHelper.rightSchema,
+                                                                        joinSchema,
+                                                                        hashJoinSinkHelper.joinFieldNameLeft,
+                                                                        hashJoinSinkHelper.joinFieldNameRight);
+    auto collector = std::make_shared<Operators::CollectOperator>();
+    hashJoinSink->setChild(collector);
+    hashJoinSink->setDeletion(false);
     hashJoinBuildLeft->setup(executionContext);
     hashJoinBuildRight->setup(executionContext);
 
@@ -301,14 +326,15 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
             Nautilus::Record({{hashJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
                               {hashJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
                               {hashJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
-        NES_DEBUG("Tuple id=" << i << " key=" << (i % 10) + 10 << " ts=" << i);
+        NES_TRACE("Tuple left f1_left=" << i << " f2_left(key)=" << (i % 10) + 10 << " ts=" << i);
         auto recordRight =
             Nautilus::Record({{hashJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
                               {hashJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
                               {hashJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+        NES_TRACE("Tuple right f1_left=" << i + 1000 << " kef2_left(key)=" << (i % 10) + 10 << " ts=" << i);
 
         if (recordRight.read(hashJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
-            NES_DEBUG("rects=" << recordRight.read(hashJoinSinkHelper.timeStampField) << " >= " << lastTupleTimeStampWindow)
+            NES_TRACE("rects=" << recordRight.read(hashJoinSinkHelper.timeStampField) << " >= " << lastTupleTimeStampWindow)
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
             rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
@@ -328,26 +354,34 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
     for (auto i = 0UL; i < leftRecords.size(); i++) {
         auto tupleBuffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
         RecordBuffer recordBufferLeft = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        if (i == 0) {
+            hashJoinBuildLeft->open(executionContext, recordBufferLeft);
+        }
         uint64_t size = leftRecords[i].size();
         recordBufferLeft.setNumRecords(uint64_t(0));
         //for one record in the buffer
         for (auto u = 0UL; u < leftRecords[i].size(); u++) {
             hashJoinBuildLeft->execute(executionContext, leftRecords[i][u]);
-            NES_DEBUG("Tuple insert id=" << i << " key=" << leftRecords[i][u].read("f2_left")
+            NES_TRACE("Tuple insert id=" << i << " key=" << leftRecords[i][u].read("f2_left")
                                          << " ts=" << leftRecords[i][u].read("timestamp"));
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read("timestamp").as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read("timestamp").as<UInt64>());
         executionContext.setOrigin(uint64_t(1));
         executionContext.setSequenceNumber(uint64_t(i));
-        NES_DEBUG("trigger left with ts=" << leftRecords[i][size - 1].read("timestamp"));
+        NES_TRACE("trigger left with ts=" << leftRecords[i][size - 1].read("timestamp"));
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
     }
-    NES_DEBUG("filling right side");
+    NES_DEBUG("filling right side")
+    std::cout << "right side=" << rightRecords.size() << std::endl;
+    ;
     for (auto i = 0UL; i < rightRecords.size(); i++) {
         auto tupleBuffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
         RecordBuffer recordBufferRight = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        if (i == 0) {
+            hashJoinBuildRight->open(executionContext, recordBufferRight);
+        }
         uint64_t size = rightRecords[i].size();
         recordBufferRight.setNumRecords(uint64_t(0));
         //for one record in the buffer
@@ -358,7 +392,6 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         executionContext.setCurrentTs(rightRecords[i][size - 1].read("timestamp").as<UInt64>());
         executionContext.setOrigin(uint64_t(2));
         executionContext.setSequenceNumber(uint64_t(i));
-        NES_DEBUG("trigger right with ts=" << rightRecords[i][size - 1].read("timestamp"));
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
@@ -374,135 +407,103 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
     hashJoinOperatorTest->emittedBuffers.erase(hashJoinOperatorTest->emittedBuffers.begin(),
                                                hashJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
-    auto joinSchema = Util::createJoinSchema(hashJoinSinkHelper.leftSchema,
-                                             hashJoinSinkHelper.rightSchema,
-                                             hashJoinSinkHelper.joinFieldNameLeft);
-
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
     if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows() != 1) {
-        NES_ERROR("Not exactly one active window!");
-        return false;
+        NES_ERROR("Not exactly one active window!"
+                  << hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows());
+        //TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
+        //        return false;
     }
 
-    uint64_t removedBuffer = 0UL;
-    auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
-    auto buffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
-    auto tuplePerBuffer = hashJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
-    for (auto& buf : hashJoinOperatorTest->emittedBuffers) {
-        NES_DEBUG("buf=" << Util::printTupleBufferAsCSV(buf, joinSchema));
-    }
+    Value<UInt64> zeroValue((uint64_t) 0UL);
+    auto maxWindowIdentifier = std::ceil((double) hashJoinSinkHelper.numberOfTuplesToProduce / hashJoinSinkHelper.windowSize)
+        * hashJoinSinkHelper.windowSize;
+    for (auto windowIdentifier = hashJoinSinkHelper.windowSize; windowIdentifier < maxWindowIdentifier;
+         windowIdentifier += hashJoinSinkHelper.windowSize) {
+        auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(hashJoinSinkHelper.numberOfTuplesToProduce,
+                                                                               windowIdentifier,
+                                                                               hashJoinSinkHelper.windowSize);
+        auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(hashJoinSinkHelper.numberOfTuplesToProduce,
+                                                                                windowIdentifier,
+                                                                                hashJoinSinkHelper.windowSize);
 
-    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(hashJoinOperatorTest->emittedBuffers,
-                                                             joinSchema,
-                                                             hashJoinSinkHelper.timeStampField,
-                                                             hashJoinSinkHelper.bufferManager,
-                                                             hashJoinSinkHelper.windowSize);
-    auto sortedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers,
-                                                               joinSchema,
-                                                               hashJoinSinkHelper.timeStampField,
-                                                               hashJoinSinkHelper.bufferManager);
-    hashJoinOperatorTest->emittedBuffers.clear();
-    mergedEmittedBuffers.clear();
+        auto existingNumberOfTuplesInWindowLeft =
+            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true);
 
-    // Window start and end is always an ui64
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto const timeStampFieldType = physicalDataTypeFactory.getPhysicalType(
-        hashJoinSinkHelper.leftSchema->get(hashJoinSinkHelper.timeStampField)->getDataType());
-    const auto sizeOfWindowStart = timeStampFieldType->size();
-    const auto sizeOfWindowEnd = timeStampFieldType->size();
+        auto existingNumberOfTuplesInWindowRight =
+            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false);
 
-    //TODO: this function only checks on buffer basis and not if matches are across buffer
-    //NOTE: In addition the last buffer contains the last window but this is not triggered as there is no watermark for it later
-    for (auto curWindow = 0UL; curWindow < leftRecords.size() - 1; ++curWindow) {
-        auto numberOfTuplesInBuffer = 0UL;
-        for (auto& leftRecord : leftRecords[curWindow]) {
-            for (auto& rightRecord : rightRecords[curWindow]) {
-                if (leftRecord.read(hashJoinSinkHelper.joinFieldNameLeft)
-                    == rightRecord.read(hashJoinSinkHelper.joinFieldNameRight)) {
-                    // We expect to have at least one more buffer that was created by our join
-                    if (sortedEmittedBuffers.size() == 0) {
-                        NES_ERROR("Expected at least one buffer!");
-                        //                        return false;
-                    }
+        if (existingNumberOfTuplesInWindowLeft != expectedNumberOfTuplesInWindowLeft
+            || existingNumberOfTuplesInWindowRight != expectedNumberOfTuplesInWindowRight) {
+            NES_ERROR("wrong number of inputs are created existingNumberOfTuplesInWindowLeft="
+                      << existingNumberOfTuplesInWindowLeft
+                      << " expectedNumberOfTuplesInWindowLeft=" << expectedNumberOfTuplesInWindowLeft
+                      << " existingNumberOfTuplesInWindowRight=" << existingNumberOfTuplesInWindowRight
+                      << " expectedNumberOfTuplesInWindowRight=" << expectedNumberOfTuplesInWindowRight);
+            EXPECT_TRUE(false);
+            EXIT_FAILURE;
+        }
 
-                    int8_t* bufferPtr = (int8_t*) buffer.getBuffer() + numberOfTuplesInBuffer * sizeJoinedTuple;
-                    // Writing window start and end
-                    uint64_t windowStart = curWindow * hashJoinSinkHelper.windowSize;
-                    uint64_t windowEnd = ((curWindow + 1) * hashJoinSinkHelper.windowSize);
+        for (auto& leftRecordOuter : leftRecords) {
+            for (auto& leftRecordInner : leftRecordOuter) {
+                for (auto& rightRecordOuter : rightRecords) {
+                    for (auto& rightRecordInner : rightRecordOuter) {
+                        auto timestampLeftVal =
+                            leftRecordInner.read(hashJoinSinkHelper.timeStampField).getValue().staticCast<UInt64>().getValue();
+                        auto timestampRightVal =
+                            rightRecordInner.read(hashJoinSinkHelper.timeStampField).getValue().staticCast<UInt64>().getValue();
 
-                    memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
-                    memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);
+                        auto windowStart = windowIdentifier - hashJoinSinkHelper.windowSize;
+                        auto windowEnd = windowIdentifier;
+                        auto leftKey = leftRecordInner.read(hashJoinSinkHelper.joinFieldNameLeft);
+                        auto rightKey = rightRecordInner.read(hashJoinSinkHelper.joinFieldNameRight);
 
-                    // Writing the key
-                    bufferPtr += sizeOfWindowStart + sizeOfWindowEnd;
-                    auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
-                    keyRef.store(leftRecord.read(hashJoinSinkHelper.joinFieldNameLeft));
-                    auto const fieldType = physicalDataTypeFactory.getPhysicalType(
-                        hashJoinSinkHelper.leftSchema->get(hashJoinSinkHelper.joinFieldNameLeft)->getDataType());
-                    bufferPtr += fieldType->size();
+                        auto sizeOfWindowStart = sizeof(uint64_t);
+                        auto sizeOfWindowEnd = sizeof(uint64_t);
 
-                    // Writing the left and right
-                    Util::writeNautilusRecord(0,
-                                              bufferPtr,
-                                              leftRecord,
-                                              hashJoinSinkHelper.leftSchema,
-                                              hashJoinSinkHelper.bufferManager);
-                    Util::writeNautilusRecord(0,
-                                              bufferPtr + hashJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
-                                              rightRecord,
-                                              hashJoinSinkHelper.rightSchema,
-                                              hashJoinSinkHelper.bufferManager);
-                    numberOfTuplesInBuffer += 1;
-                    buffer.setNumberOfTuples(numberOfTuplesInBuffer);
+                        DefaultPhysicalTypeFactory physicalDataTypeFactory;
+                        auto joinKeySize =
+                            physicalDataTypeFactory
+                                .getPhysicalType(
+                                    hashJoinSinkHelper.leftSchema->get(hashJoinSinkHelper.joinFieldNameLeft)->getDataType())
+                                ->size();
+                        auto leftTupleSize = hashJoinSinkHelper.leftSchema->getSchemaSizeInBytes();
+                        auto rightTupleSize = hashJoinSinkHelper.rightSchema->getSchemaSizeInBytes();
 
-                    NES_DEBUG(" write windowStart=" << windowStart << " windowEnd=" << windowEnd
-                                                    << " left=" << leftRecord.toString() << " right=" << rightRecord.toString());
-                    if (numberOfTuplesInBuffer >= tuplePerBuffer) {
-                        NES_DEBUG("wrote buffer=" << Util::printTupleBufferAsCSV(buffer, joinSchema));
-                        std::vector<Runtime::TupleBuffer> bufVec({buffer});
-                        auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec,
-                                                                           joinSchema,
-                                                                           hashJoinSinkHelper.timeStampField,
-                                                                           hashJoinSinkHelper.bufferManager);
+                        if (windowStart <= timestampLeftVal && timestampLeftVal < windowEnd && windowStart <= timestampRightVal
+                            && timestampRightVal < windowEnd && leftKey == rightKey) {
+                            Record joinedRecord;
+                            Nautilus::Value<Any> windowStartVal(windowStart);
+                            Nautilus::Value<Any> windowEndVal(windowEnd);
+                            joinedRecord.write(joinSchema->get(0)->getName(), windowStartVal);
+                            joinedRecord.write(joinSchema->get(1)->getName(), windowEndVal);
+                            joinedRecord.write(joinSchema->get(2)->getName(),
+                                               leftRecordInner.read(hashJoinSinkHelper.joinFieldNameLeft));
 
-                        bool foundBuffer =
-                            checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
+                            // Writing the leftSchema fields
+                            for (auto& field : hashJoinSinkHelper.leftSchema->fields) {
+                                joinedRecord.write(field->getName(), leftRecordInner.read(field->getName()));
+                            }
 
-                        if (!foundBuffer) {
-                            NES_ERROR2("Could not find buffer {} in emittedBuffers!",
-                                       Util::printTupleBufferAsCSV(buffer, joinSchema));
-                            //return false;
-                        } else {
-                            NES_WARNING2("Found buffer buffer {} in emittedBuffers!",
-                                         Util::printTupleBufferAsCSV(buffer, joinSchema));
+                            // Writing the rightSchema fields
+                            for (auto& field : hashJoinSinkHelper.rightSchema->fields) {
+                                joinedRecord.write(field->getName(), rightRecordInner.read(field->getName()));
+                            }
+
+                            // Check if this joinedRecord is in the emitted records
+                            auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
+                            if (it == collector->records.end()) {
+                                NES_ERROR2("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
+                                return false;
+                            }
+
+                            collector->records.erase(it);
                         }
-
-                        numberOfTuplesInBuffer = 0;
-                        buffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
                     }
-                }//end of found a match
-            }
-        }//end of for loop over left
-
-        if (numberOfTuplesInBuffer > 0) {
-            std::vector<Runtime::TupleBuffer> bufVec({buffer});
-            auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec,
-                                                               joinSchema,
-                                                               hashJoinSinkHelper.timeStampField,
-                                                               hashJoinSinkHelper.bufferManager);
-            bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
-            if (!foundBuffer) {
-                NES_ERROR2("Could not find buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
-                return false;
+                }
             }
         }
-    }//end of for loop over windows
-
-    // Make sure that after we have joined all records together no more buffer exist
-    if (sortedEmittedBuffers.size() > 0) {
-        NES_ERROR2("Have not removed all buffers. So some tuples have not been joined together!");
-        return false;
     }
 
     return true;
@@ -515,7 +516,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
                           << callStack;
 
-        NES_FATAL_ERROR2("{}", fatalErrorMessage.str());
+        NES_FATAL_ERROR(fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
@@ -523,7 +524,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR2("{}", fatalExceptionMessage.str());
+        NES_FATAL_ERROR(fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };
