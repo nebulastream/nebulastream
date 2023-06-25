@@ -436,7 +436,7 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext* context,
                                                    AnnounceFailedWorkersReply* reply) {
     NES_DEBUG2("CoordinatorRPCServer::AnnounceFailedWorker: request ={}", request->DebugString());
     auto failedWorkersIds = request->failedworkersids();
-    // for each id, add to failedWorkers list
+    // for each id, add to announcedFailedWorkers list
     // for each id, remove from topology
 
 //    auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
