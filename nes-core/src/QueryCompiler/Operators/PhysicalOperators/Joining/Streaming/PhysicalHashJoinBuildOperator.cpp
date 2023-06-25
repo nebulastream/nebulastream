@@ -18,12 +18,12 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalHashJoinBuildOperator::PhysicalHashJoinBuildOperator(
-    OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-    JoinBuildSideType buildSide,
-    std::string timeStampFieldName,
+    const OperatorId id,
+    const SchemaPtr inputSchema,
+    const SchemaPtr outputSchema,
+    const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
+    const JoinBuildSideType buildSide,
+    const std::string timeStampFieldName,
     const std::string& joinFieldName)
     : OperatorNode(id), PhysicalHashJoinOperator(std::move(operatorHandler), id),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
@@ -34,7 +34,7 @@ PhysicalHashJoinBuildOperator::create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
+                                      const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName) {
 
@@ -51,7 +51,7 @@ PhysicalOperatorPtr
 PhysicalHashJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
+                                      const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);

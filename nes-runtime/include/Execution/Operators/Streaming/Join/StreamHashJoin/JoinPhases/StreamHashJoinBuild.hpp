@@ -23,6 +23,7 @@ class StreamHashJoinBuild;
 using StreamHashJoinBuildPtr = std::shared_ptr<StreamHashJoinBuild>;
 
 class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
  * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the window is finished.
  * Then, each threads inserts the LocalHashTable into the SharedHashTable.
@@ -44,7 +45,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
                         const std::string& joinFieldName,
                         const std::string& timeStampField,
                         SchemaPtr inputSchema,
-                        std::shared_ptr<TimeFunction> timeFunction);
+                        TimeFunctionPtr timeFunction);
 
     /**
      * @brief Setting up the pipeline by initializing the operator handler
@@ -78,7 +79,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
     std::string joinFieldName;
     std::string timeStampField;
     SchemaPtr inputSchema;
-    std::shared_ptr<TimeFunction> timeFunction;
+    TimeFunctionPtr timeFunction;
 };
 
 }// namespace NES::Runtime::Execution::Operators

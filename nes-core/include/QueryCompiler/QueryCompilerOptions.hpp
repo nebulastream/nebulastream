@@ -16,7 +16,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
 #include <cstdint>
 #include <string>
 namespace NES::QueryCompilation {
@@ -110,9 +109,7 @@ class QueryCompilerOptions {
 
     class StreamHashJoinOptions {
       public:
-        StreamHashJoinOptions()
-        //            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024)
-        {}
+        StreamHashJoinOptions() {}
 
         /**
          * @brief getter for max hash table size
@@ -178,15 +175,19 @@ class QueryCompilerOptions {
     static QueryCompilerOptionsPtr createDefaultOptions();
 
     [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
+
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
     [[nodiscard]] QueryCompiler getQueryCompiler() const;
+
     void setQueryCompiler(QueryCompiler pipeliningStrategy);
 
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
+
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
+
     [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy getFilterProcessingStrategy() const;
 
     /**

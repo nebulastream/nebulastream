@@ -42,7 +42,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
     memoryProvider->write(outputIndex, emitState->bufferReference, record);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
 
-    //    // emit buffer if it reached the maximal capacity
+    // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
         resultBuffer.setNumRecords(emitState->outputIndex);

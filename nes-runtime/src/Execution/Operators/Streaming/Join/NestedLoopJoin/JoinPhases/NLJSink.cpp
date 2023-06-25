@@ -121,15 +121,22 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                       Value<Boolean>(/*isLeftSide*/ false));
 
     // TODO ask Philipp why do I need this here and can not use auto?
-    Value<Any> windowStart =
-        Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin", getWindowStartProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
-    Value<Any> windowEnd =
-        Nautilus::FunctionCall("getWindowEndProxyForNestedLoopJoin", getWindowEndProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
+    Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin",
+                                                    getWindowStartProxyForNestedLoopJoin,
+                                                    operatorHandlerMemRef,
+                                                    windowIdentifierMemRef);
+    Value<Any> windowEnd = Nautilus::FunctionCall("getWindowEndProxyForNestedLoopJoin",
+                                                  getWindowEndProxyForNestedLoopJoin,
+                                                  operatorHandlerMemRef,
+                                                  windowIdentifierMemRef);
 
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
-    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin", getSequenceNumberProxyForNestedLoopJoin, operatorHandlerMemRef);
+    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin",
+                                                 getSequenceNumberProxyForNestedLoopJoin,
+                                                 operatorHandlerMemRef);
     ctx.setSequenceNumber(sequenceNumber);
-    auto originId = Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
+    auto originId =
+        Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
     ctx.setOrigin(originId);
 
     // As we know that the data is of type rowLayout, we do not have to provide a buffer size
@@ -163,16 +170,17 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                     joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                 }
 
-                if (hasChild()) {
-                    // Calling the child operator for this joinedRecord
-                    child->execute(ctx, joinedRecord);
-                }
+                // Calling the child operator for this joinedRecord
+                child->execute(ctx, joinedRecord);
             }
         }
     }
 
     // Once we are done with this window, we can delete it to free up space
-    Nautilus::FunctionCall("deleteWindowProxyForNestedLoopJoin", deleteWindowProxyForNestedLoopJoin, operatorHandlerMemRef, windowIdentifierMemRef);
+    Nautilus::FunctionCall("deleteWindowProxyForNestedLoopJoin",
+                           deleteWindowProxyForNestedLoopJoin,
+                           operatorHandlerMemRef,
+                           windowIdentifierMemRef);
 }
 
 NLJSink::NLJSink(uint64_t operatorHandlerIndex,
@@ -182,6 +190,6 @@ NLJSink::NLJSink(uint64_t operatorHandlerIndex,
                  std::string joinFieldNameLeft,
                  std::string joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight){}
+      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
 
 }// namespace NES::Runtime::Execution::Operators

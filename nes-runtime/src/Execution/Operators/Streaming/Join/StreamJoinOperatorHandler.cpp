@@ -73,17 +73,6 @@ StreamWindowPtr StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt(uint64
     return createNewWindow(timestamp);
 }
 
-StreamWindow* StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt2(uint64_t timestamp) {
-    size_t i = 0;
-    for (auto& curWindow : windows) {
-        if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
-            return curWindow.get();
-        }
-    }
-    auto newWindow = createNewWindow(timestamp);
-    return newWindow.get();
-}
-
 uint64_t StreamJoinOperatorHandler::getNumberOfWindows() { return windows.size(); }
 
 std::optional<StreamWindowPtr> StreamJoinOperatorHandler::getWindowByWindowIdentifier(uint64_t windowIdentifier) {

@@ -111,7 +111,7 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
                    bool isLeftSide,
-                   std::shared_ptr<TimeFunction> timeFunction)
+                   TimeFunctionPtr timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
       isLeftSide(isLeftSide), timeFunction(std::move(timeFunction)) {}
 

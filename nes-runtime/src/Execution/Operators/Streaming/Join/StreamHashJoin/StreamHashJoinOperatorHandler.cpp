@@ -90,6 +90,17 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
     }
 }
 
+
+uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
+    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        auto sizeOfTupleInByte = isLeftSide ? sizeOfRecordLeft : sizeOfRecordRight;
+        return window.value()->getNumberOfTuples(sizeOfTupleInByte, isLeftSide);
+    }
+
+    return -1;
+}
+
 StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& origins,
                                                                        size_t windowSize,
                                                                        size_t sizeOfRecordLeft,

@@ -132,6 +132,15 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      */
     size_t getTotalSizeForDataStructures() const;
 
+
+    /**
+     * @brief return number of tuples in window
+     * @param windowIdentifier
+     * @param isLeftSide
+     * @return
+     */
+    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
+
     /**
      * @brief method to trigger the finished windows
      * @param windowIdentifiersToBeTriggered

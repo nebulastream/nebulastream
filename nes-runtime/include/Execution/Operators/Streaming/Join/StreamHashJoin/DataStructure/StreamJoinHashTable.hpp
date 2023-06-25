@@ -113,6 +113,10 @@ class StreamJoinHashTable {
      */
     size_t getNumBuckets() const;
 
+    /**
+     * @brief this methods returnds the content of the page as a string
+     * @return string
+     */
     std::string getContentAsString(SchemaPtr schema) const;
 
   protected:

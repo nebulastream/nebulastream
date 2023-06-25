@@ -30,12 +30,11 @@ GlobalHashTableLockFree::GlobalHashTableLockFree(size_t sizeOfRecord,
 uint8_t* GlobalHashTableLockFree::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE2("into key={} bucket={}", key, getBucketPos(hashedKey));
-    while (true) {
-        auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
-        if (entry != nullptr) {
-            return entry;
-        }
+    auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
+    while (entry == nullptr) {
+        entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
     }
+    return entry;
 }
 
 }// namespace NES::Runtime::Execution::Operators

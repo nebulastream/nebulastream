@@ -46,9 +46,9 @@ class LocalGlobalJoinState : public Operators::OperatorState {
 void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
     NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto currentWindow = opHandler->getWindowByTimestampOrCreateIt2(timeStamp);
+    auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentWindow != nullptr, "invalid window");
-    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow);
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow.get());
     return static_cast<void*>(hashWindow);
 }
 
@@ -192,7 +192,7 @@ StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
                                          const std::string& joinFieldName,
                                          const std::string& timeStampField,
                                          SchemaPtr inputSchema,
-                                         std::shared_ptr<TimeFunction> timeFunction)
+                                         TimeFunctionPtr timeFunction)
     : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
       inputSchema(inputSchema), timeFunction(std::move(timeFunction)) {}
 

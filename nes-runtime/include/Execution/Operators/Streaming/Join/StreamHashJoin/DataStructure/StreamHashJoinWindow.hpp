@@ -47,10 +47,10 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param numPartitions
      */
     explicit StreamHashJoinWindow(size_t numberOfWorkerThreads,
-                                  size_t sizeOfRecordLeft,
-                                  size_t sizeOfRecordRight,
                                   uint64_t windowStart,
                                   uint64_t windowEnd,
+                                  size_t sizeOfRecordLeft,
+                                  size_t sizeOfRecordRight,
                                   size_t maxHashTableSize,
                                   size_t pageSize,
                                   size_t preAllocPageSizeCnt,

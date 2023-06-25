@@ -41,7 +41,7 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
+                                      const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName);
 
@@ -59,7 +59,7 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
+                                      const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName);
 
@@ -73,12 +73,12 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param timeStampFieldName
      * @param joinFieldName
      */
-    explicit PhysicalHashJoinBuildOperator(OperatorId id,
-                                           SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-                                           JoinBuildSideType buildSide,
-                                           std::string timeStampFieldName,
+    explicit PhysicalHashJoinBuildOperator(const OperatorId id,
+                                           const SchemaPtr inputSchema,
+                                           const SchemaPtr outputSchema,
+                                           const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
+                                           const JoinBuildSideType buildSide,
+                                           const std::string timeStampFieldName,
                                            const std::string& joinFieldName);
 
     /**

@@ -51,11 +51,12 @@ Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLe
     }
 }
 
+
 StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
-                                           size_t sizeOfRecordLeft,
-                                           size_t sizeOfRecordRight,
                                            uint64_t windowStart,
                                            uint64_t windowEnd,
+                                           size_t sizeOfRecordLeft,
+                                           size_t sizeOfRecordRight,
                                            size_t maxHashTableSize,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,

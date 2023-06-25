@@ -56,9 +56,11 @@ class StreamHashJoinSink : public Operator {
      */
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-  protected:
-    void joinTwoBucketLists();
 
+    void setDeletion(bool deletion){withDeletion = deletion;}
+
+  protected:
+    bool withDeletion = true;
   private:
     uint64_t handlerIndex;
     SchemaPtr joinSchemaLeft;

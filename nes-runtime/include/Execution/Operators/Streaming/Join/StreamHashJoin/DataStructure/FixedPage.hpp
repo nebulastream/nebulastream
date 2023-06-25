@@ -73,7 +73,6 @@ class FixedPage {
      */
     uint8_t* getRecord(size_t index) const;
 
-
     /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
@@ -94,8 +93,16 @@ class FixedPage {
      */
     size_t size() const;
 
+    /**
+     * @brief this methods tests if requiredSpace is left on page
+     * @return bool
+     */
     bool isSizeLeft(uint64_t requiredSpace) const;
 
+    /**
+     * @brief this methods returnds the content of the page as a string
+     * @return string
+     */
     std::string getContentAsString(SchemaPtr schema) const;
 
   private:
@@ -110,7 +117,6 @@ class FixedPage {
     size_t sizeOfRecord;
     uint8_t* data;
     std::atomic<size_t> currentPos;
-    //    size_t currentPos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };

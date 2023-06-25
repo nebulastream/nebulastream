@@ -121,8 +121,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     StreamWindowPtr getWindowByTimestampOrCreateIt(uint64_t timestamp);
 
-    StreamWindow* getWindowByTimestampOrCreateIt2(uint64_t timestamp);
-
     /**
      * Return the current watermark
      * @return

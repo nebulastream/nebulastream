@@ -17,7 +17,6 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <vector>
-#include <folly/FBVector.h>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -75,12 +74,11 @@ class FixedPagesLinkedList {
 
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
-    //TODO: think about replacing this with folly vector
-//    folly::fbvector<std::unique_ptr<FixedPage>> pages;
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
     std::mutex pageAddMutex;
+
     //used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;

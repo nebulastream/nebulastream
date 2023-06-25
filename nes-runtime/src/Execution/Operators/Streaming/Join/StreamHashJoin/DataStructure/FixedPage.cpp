@@ -46,19 +46,6 @@ uint8_t* FixedPage::append(const uint64_t hash) {
     return ptr;
 }
 
-uint8_t* getField2(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& fieldName) {
-    uint8_t* pointer = recordBase;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : joinSchema->fields) {
-        if (field->getName() == fieldName) {
-            break;
-        }
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        pointer += fieldType->size();
-    }
-    return pointer;
-}
-
 std::string FixedPage::getContentAsString(SchemaPtr schema) const {
     std::stringstream ss;
     //for each item in the page
@@ -91,6 +78,7 @@ bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
 }
 
 uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
+
 uint8_t* FixedPage::getRecord(size_t index) const { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return currentPos; }
@@ -98,7 +86,6 @@ size_t FixedPage::size() const { return currentPos; }
 bool FixedPage::isSizeLeft(uint64_t requiredSpace) const { return currentPos + requiredSpace < capacity; }
 
 FixedPage::FixedPage(FixedPage&& otherPage)
-    //    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos), capacity(otherPage.capacity),
     : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos.load()),
       capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
     otherPage.sizeOfRecord = 0;
@@ -120,13 +107,11 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
     std::swap(lhs.data, rhs.data);
     lhs.currentPos.store(rhs.currentPos.load());
-    //    std::swap(lhs.currentPos, rhs.currentPos);
     std::swap(lhs.capacity, rhs.capacity);
     std::swap(lhs.bloomFilter, rhs.bloomFilter);
 }
 
 FixedPage::FixedPage(FixedPage* otherPage)
-    //    : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
     : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos.load()),
       capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
     otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
