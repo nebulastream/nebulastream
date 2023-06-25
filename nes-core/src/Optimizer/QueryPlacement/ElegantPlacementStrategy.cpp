@@ -170,7 +170,10 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
 
     std::set<OperatorNodePtr> visitedOperator;
     std::queue<OperatorNodePtr> operatorsToVisit;
-    operatorsToVisit.emplace(pinnedDownStreamOperators.begin(), pinnedDownStreamOperators.end());
+    //initialize with upstream operators
+    for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
+        operatorsToVisit.emplace(pinnedDownStreamOperator);
+    }
 
     while (!operatorsToVisit.empty()) {
 

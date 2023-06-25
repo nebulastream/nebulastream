@@ -382,6 +382,7 @@ int main(int argc, const char* argv[]) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
+        coordinatorConfiguration->enableQueryReconfiguration = incrementalPlacement;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
@@ -408,15 +409,18 @@ int main(int argc, const char* argv[]) {
 
             auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase =
-                Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, incrementalPlacement);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              coordinatorConfiguration);
 
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {
 
                 auto queryPlan = queryObjects[i];
                 queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
-                PlacementStrategy queryPlacementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategy).value();
+                Optimizer::PlacementStrategy queryPlacementStrategy =
+                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
                 auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});
