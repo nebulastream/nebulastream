@@ -43,8 +43,8 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      * @param sortFieldIdentifiers field identifiers of the records to sort
      */
     explicit BatchSortOperatorHandler(const std::vector<PhysicalTypePtr>& dataTypes,
-                             const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-                             const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers) {
+                                      const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+                                      const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers) {
         NES_ASSERT(dataTypes.size() == fieldIdentifiers.size(), "Data types and field identifiers must have the same size");
         // Entry size is the sum of the sizes of the fields to sort, with will be stored encoded and the complete record
         entrySize = 0;
