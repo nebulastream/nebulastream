@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -338,18 +339,38 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     EXPECT_TRUE(mapOperatorPQ->equal((*itr)));
     ++itr;
     EXPECT_TRUE(unionOperator->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+
+    //the order of the children of the union operator might have changed, but it both orders are valid.
+    auto leavesLeft = unionOperator->getChildren()[0]->getAllLeafNodes();
+    if (std::find(leavesLeft.begin(), leavesLeft.end(), srcOperatorSQ) == leavesLeft.end()){
+        ++itr;
+        EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    } else {
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    }
+
+
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator) {
@@ -542,22 +563,46 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(unionOperator->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+
+    //the order of the children of the union operator might have changed, but it both orders are valid.
+    auto leavesLeft = unionOperator->getChildren()[0]->getAllLeafNodes();
+    if (std::find(leavesLeft.begin(), leavesLeft.end(), srcOperatorSQ) == leavesLeft.end()){
+        ++itr;
+        EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    }
+    else {
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(mapOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    }
+
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFiltersBelowABinaryOperator) {
@@ -624,31 +669,63 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     ++itr;
     EXPECT_TRUE(mergeOperator->equal((*itr)));
     NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", mergeOperator->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorPQ->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorSQ->toString(), (*itr)->toString());
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorSQ->toString(), (*itr)->toString());
+
+    //the order of the children of the union operator might have changed, but it both orders are valid.
+    auto leavesLeft = mergeOperator->getChildren()[0]->getAllLeafNodes();
+    if (std::find(leavesLeft.begin(), leavesLeft.end(), srcOperatorPQ) == leavesLeft.end()){
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorPQ->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorSQ->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorSQ->toString(), (*itr)->toString());
+    }
+    else {
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorSQ->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorSQ->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ1->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());
+        ++itr;
+        EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+        NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorPQ->toString(), (*itr)->toString());
+    }
 }
+
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
