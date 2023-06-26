@@ -159,4 +159,18 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signature);
     hashBasedSignature[hashCode] = {signature};
 }
+
+std::vector<std::string> WindowLogicalOperatorNode::getGroupByKeyNames() {
+    std::vector<std::string> groupByKeyNames = {};
+    auto windowDefinition = this->getWindowDefinition();
+    if(windowDefinition->isKeyed()) {
+        std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowDefinition->getKeys();
+        groupByKeyNames.reserve(groupByKeys.size());
+        for (const auto& groupByKey : groupByKeys) {
+            groupByKeyNames.push_back(groupByKey->getFieldName());
+        }
+    }
+    return groupByKeyNames;
+}
+
 }// namespace NES
