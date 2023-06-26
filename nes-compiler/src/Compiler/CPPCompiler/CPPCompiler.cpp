@@ -124,7 +124,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     compilerCall << file->getPath();
 
-    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
+    NES_DEBUG2("Compiler: compile with: '{}'", compilerCall.str());
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];
@@ -136,7 +136,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == nullptr) {
-        NES_ERROR("Compiler: failed to run command\n");
+        NES_ERROR2("Compiler: failed to run command\n");
         throw std::runtime_error("Compiler: failed to run command");
     }
 
@@ -163,7 +163,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     std::filesystem::remove(libraryFileName);
 
     timer.pause();
-    NES_INFO("[CPPCompiler] Compilation time: " << (double) timer.getRuntime() / (double) 1000000 << "ms");
+    NES_INFO2("[CPPCompiler] Compilation time: {}ms", (double) timer.getRuntime() / (double) 1000000);
 
     return CompilationResult(sharedLibrary, std::move(timer));
 }
