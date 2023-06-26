@@ -94,7 +94,7 @@ TEST_F(PagedVectorTest, storeAndRetrieveValues) {
 
 TEST_F(PagedVectorTest, storeAndRetrieveValuesAfterMoveFromTo) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    auto entrySize = 32;
+    auto entrySize = (uint64_t) 32;
     auto pagedVector = PagedVector(std::move(allocator), entrySize);
     auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
 
