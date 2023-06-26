@@ -66,6 +66,15 @@ using TestTypes = ::testing::Types<std::pair<uint32_t, uint32_t>,
                                    std::pair<double, uint64_t>>;
 TYPED_TEST_SUITE(BatchSortOperatorTest, TestTypes);
 
+template<typename Type, typename EncodedType>
+void createRecords(std::vector<Record>& records, size_t numRecords) {
+    for (size_t i = 0; i < numRecords; i++) {
+        Type val1 = i * 10;
+        Type val2 = i;
+        records.push_back(Record({{"f1", Value<>(val1)}, {"f2", Value<>(val2)}}));
+    }
+}
+
 /**
  * @brief Tests if the sort operator collects records with multiple fields
  */
@@ -75,12 +84,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
     constexpr size_t NUM_RECORDS = 100;
 
     std::vector<Record> records;
-    records.reserve(NUM_RECORDS);
-    for (size_t i = 0; i < NUM_RECORDS; i++) {
-        Type val1 = i * 10;
-        Type val2 = i;
-        records.push_back(Record({{"f1", Value<>(val1)}, {"f2", Value<>(val2)}}));
-    }
+    createRecords<Type, EncodedType>(records, NUM_RECORDS);
 
     auto nType = Util::getPhysicalTypePtr<Type>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({nType, nType}),
@@ -119,12 +123,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest) {
     constexpr size_t NUM_RECORDS = 100;
 
     std::vector<Record> records;
-    records.reserve(NUM_RECORDS);
-    for (size_t i = 0; i < NUM_RECORDS; i++) {
-        Type val1 = i * 10;
-        Type val2 = i;
-        records.push_back(Record({{"f1", Value<>(val1)}, {"f2", Value<>(val2)}}));
-    }
+    createRecords<Type, EncodedType>(records, NUM_RECORDS);
 
     auto nType = Util::getPhysicalTypePtr<Type>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({nType, nType}),
@@ -158,13 +157,12 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest) {
  * @brief Tests if the sort operator collects records over multiple pages
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
+    using Type = typename TypeParam::first_type;
+    using EncodedType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 1025;// 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
 
     std::vector<Record> records;
-    records.reserve(NUM_RECORDS);
-    for (int i = 0; i < NUM_RECORDS; i++) {
-        records.push_back(Record({{"f1", Value<>(50)}, {"f2", Value<>(1)}}));
-    }
+    createRecords<Type, EncodedType>(records, NUM_RECORDS);
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
     auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({integerType, integerType}),
