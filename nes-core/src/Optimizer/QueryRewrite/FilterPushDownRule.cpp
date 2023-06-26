@@ -28,6 +28,7 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <queue>
 
 namespace NES::Optimizer {
@@ -39,14 +40,13 @@ FilterPushDownRule::FilterPushDownRule() = default;
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 
     NES_INFO2("Applying FilterPushDownRule to query {}", queryPlan->toString());
-    const auto rootOperators = queryPlan->getRootOperators();
-    std::vector<FilterLogicalOperatorNodePtr> filterOperators;
-    for (const auto& rootOperator : rootOperators) {
-        //FIXME: this will result in adding same filter operator twice in the vector
-        // remove the duplicate filters from the vector
-        auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
-        filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
+    const std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
+    std::set<FilterLogicalOperatorNodePtr> filterOperatorsSet;
+    for (const OperatorNodePtr& rootOperator : rootOperators) {
+        std::vector<FilterLogicalOperatorNodePtr> filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+        filterOperatorsSet.insert(filters.begin(), filters.end());
     }
+    std::vector<FilterLogicalOperatorNodePtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG2("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
     std::sort(filterOperators.begin(),
               filterOperators.end(),
@@ -54,7 +54,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
                   return lhs->getId() < rhs->getId();
               });
     NES_DEBUG2("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
-    for (const auto& filterOperator : filterOperators) {
+    for (FilterLogicalOperatorNodePtr filterOperator : filterOperators) {
         //method calls itself recursively until it can not push the filter further down(upstream).
         pushDownFilter(filterOperator, filterOperator->getChildren()[0], filterOperator);
     }
@@ -83,6 +83,10 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
         //field names that are used by the filter
         std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
+
+        //if there is only one attribute accessed it might be part of the join
+        JoinLogicalOperatorNodePtr curOperatorAsJoin = curOperator->as<JoinLogicalOperatorNode>();
+        Join::LogicalJoinDefinitionPtr a =  curOperatorAsJoin->getJoinDefinition();
 
         //if any inputSchema contains all the fields that are used by the filter we can push the filter to the corresponding site
         SchemaPtr leftSchema = curOperator->as<JoinLogicalOperatorNode>()->getLeftInputSchema();
@@ -117,10 +121,6 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         NodePtr filterOperatorCopy = filterOperator->copy();
         filterOperatorCopy->as<FilterLogicalOperatorNode>()->setId(Util::getNextOperatorId());
 
-        //otherwise the order of the branches below the union is not consistent. This would make it harder to write tests, but it should actually be fine if the order changes.
-        insertFilterIntoNewPosition(filterOperator, grandChildren[0], curOperator);
-        insertFilterIntoNewPosition(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
-
         pushed = true;
         pushDownFilter(filterOperator, grandChildren[0], curOperator);
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
@@ -146,6 +146,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         // removes filter operator from its original position and connects the parents and children of the filter operator at that position
         if (!filterOperator->removeAndJoinParentAndChildren()){
             //if we did not manage to remove the operator we can't insert it at the new position
+            NES_WARNING("FilterPushDownRule wanted to change the position of a filter, but was not able to do so.")
             return;
         }
 
@@ -155,6 +156,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         bool success3 = filterOperator->addParent(parOperator); // also adds filterOperator as a child to parOperator
         if (!success1 || !success2 || !success3){
             //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
+            NES_ERROR("FilterPushDownRule removed a Filter from a query plan but was not able to insert it into the query plan again.")
             throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
         }
 
