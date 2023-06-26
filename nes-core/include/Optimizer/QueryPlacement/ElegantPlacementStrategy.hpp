@@ -68,7 +68,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @brief
      * @return
      */
-    nlohmann::json prepareAvailableNodes();
+    nlohmann::json prepareTopologyPayload();
 
     /**
      * @brief
