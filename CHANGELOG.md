@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.121](https://github.com/nebulastream/nebulastream/tree/v0.5.121) (2023-06-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.120...v0.5.121)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve batch sort capabilities [\#3773](https://github.com/nebulastream/nebulastream/issues/3773)
+
 ## [v0.5.120](https://github.com/nebulastream/nebulastream/tree/v0.5.120) (2023-06-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.119...v0.5.120)
