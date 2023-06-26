@@ -448,7 +448,6 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    hadn
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
