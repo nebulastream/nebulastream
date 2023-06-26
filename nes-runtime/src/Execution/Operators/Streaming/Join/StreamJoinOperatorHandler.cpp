@@ -19,7 +19,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
@@ -34,14 +34,15 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 
     auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
     auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
-    //TODO create a factory class for stream join windows #3900
-    if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN) {
+
+    if (joinStrategy == JoinStrategy::NESTED_LOOP_JOIN) {
+        NLJOperatorHandler* nljOpHandler = static_cast<NLJOperatorHandler*>(this);
         NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd, numberOfWorkerThreads,
-                                                         joinSchemaLeft->getSchemaSizeInBytes(),
-                                                         Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                         joinSchemaRight->getSchemaSizeInBytes(),
-                                                         Nautilus::Interface::PagedVector::PAGE_SIZE));
+                                                         nljOpHandler->getLeftEntrySize(),
+                                                         nljOpHandler->getLeftPageSize(),
+                                                         nljOpHandler->getRightEntrySize(),
+                                                         nljOpHandler->getRightPageSize()));
     } else {
         StreamHashJoinOperatorHandler* ptr = static_cast<StreamHashJoinOperatorHandler*>(this);
         auto newWindow = std::make_shared<StreamHashJoinWindow>(numberOfWorkerThreads,
@@ -165,9 +166,13 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
         }
 
         auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
-        if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK)) {
+        if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK) &&
+            window->getNumberOfTuples(/*isLeftSide*/ true) > 0 &&
+            window->getNumberOfTuples(/*isLeftSide*/ false) > 0) {
             triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
-            NES_DEBUG("Added window with id {} to the triggerable windows...", window->getWindowIdentifier());
+            NES_DEBUG2("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
+                       window->getWindowIdentifier(), window->getNumberOfTuples(/*isLeftSide*/ true),
+                       window->getNumberOfTuples(/*isLeftSide*/ false));
         }
     }
 

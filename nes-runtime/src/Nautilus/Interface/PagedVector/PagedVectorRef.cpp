@@ -18,13 +18,11 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, Value<UInt64> entrySize,
-                               Value<UInt64> pageSize)
-    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), entriesPerPage((uint64_t) 0) {
-    entriesPerPage = pageSize / entrySize;
-}
+PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, Value<UInt64> entrySize, Value<UInt64> pageSize)
+    : pagedVectorRef(pagedVectorRef), entrySize(entrySize), pageSize(pageSize) {}
 
-void allocateNewPageProxy(void* pagedVectorPtr) {
+void allocateNewPageProxy(void* pagedVectorPtr, uint64_t numberOfEntries, uint64_t entriesPerPage) {
+    NES_DEBUG2("Calling allocateNewPageProxy numberOfEntries {} entriesPerPage {}", numberOfEntries, entriesPerPage);
     auto* pagedVector = (PagedVector*) pagedVectorPtr;
     pagedVector->appendPage();
 }
@@ -34,10 +32,15 @@ void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     return pagedVector->getPages()[pagePos];
 }
 
+Value<UInt64> PagedVectorRef::getEntriesPerPage() const {
+    return (pageSize / entrySize).as<UInt64>();
+}
+
 Value<MemRef> PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
+    Value<UInt64> entriesPerPage = getEntriesPerPage();
     if (getNumberOfEntries() >= entriesPerPage) {
-        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
+        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef, getNumberOfEntries(), entriesPerPage);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
@@ -60,6 +63,7 @@ Value<UInt64> PagedVectorRef::getTotalNumberOfEntries() {
 }
 
 Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
+    Value<UInt64> entriesPerPage = getEntriesPerPage();
     auto pagePos = (pos / entriesPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 

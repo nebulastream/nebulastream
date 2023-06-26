@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+
 #include <API/Schema.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -34,7 +34,6 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
@@ -70,6 +69,8 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
+    const uint64_t leftPageSize = 256;
+    const uint64_t rightPageSize = 512;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -132,6 +133,8 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto handlerIndex = 0;
         auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
         auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
+        auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
+        auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
         auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
             handlerIndex,
@@ -139,6 +142,8 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             joinFieldNameLeft,
             timeStampFieldLeft,
             /*isLeftSide*/ true,
+            leftEntrySize,
+            leftPageSize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
 
         auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
@@ -147,21 +152,31 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             joinFieldNameRight,
             timeStampFieldRight,
             /*isLeftSide*/ false,
+            rightEntrySize,
+            rightPageSize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
         auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                             leftSchema,
                                                             rightSchema,
                                                             joinSchema,
+                                                            leftEntrySize,
+                                                            leftPageSize,
+                                                            rightEntrySize,
+                                                            rightPageSize,
                                                             joinFieldNameLeft,
                                                             joinFieldNameRight);
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
-        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(originIds,
-                                                                            windowSize,
-                                                                            leftSchema->getSchemaSizeInBytes(),
-                                                                            rightSchema->getSchemaSizeInBytes());
+        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(joinFieldNameLeft,
+                                                                            joinFieldNameRight,
+                                                                            originIds,
+                                                                            leftEntrySize,
+                                                                            leftPageSize,
+                                                                            rightEntrySize,
+                                                                            rightPageSize,
+                                                                            windowSize);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

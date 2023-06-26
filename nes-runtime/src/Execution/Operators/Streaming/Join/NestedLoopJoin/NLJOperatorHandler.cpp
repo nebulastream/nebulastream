@@ -23,14 +23,19 @@
 namespace NES::Runtime::Execution::Operators {
 
 NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
-                                       size_t windowSize,
                                        uint64_t sizeOfTupleInByteLeft,
-                                       uint64_t sizeOfTupleInByteRight)
+                                       uint64_t sizeOfTupleInByteRight,
+                                       uint64_t leftEntrySize,
+                                       uint64_t leftPageSize,
+                                       uint64_t rightEntrySize,
+                                       uint64_t rightPageSize,
+                                       size_t windowSize)
     : StreamJoinOperatorHandler(origins,
                                 windowSize,
                                 NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
-                                sizeOfTupleInByteRight) {}
+                                sizeOfTupleInByteRight), leftEntrySize(leftEntrySize),
+                                leftPageSize(leftPageSize), rightEntrySize(rightEntrySize), rightPageSize(rightPageSize) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -69,35 +74,45 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
 }
 
 NLJOperatorHandlerPtr NLJOperatorHandler::create(const std::vector<OriginId>& origins,
-                                                 size_t windowSize,
-                                                 uint64_t sizeOfTupleInByteLeft,
-                                                 uint64_t sizeOfTupleInByteRight) {
+                                                 const uint64_t sizeOfTupleInByteLeft,
+                                                 const uint64_t sizeOfTupleInByteRight,
+                                                 const uint64_t leftEntrySize,
+                                                 const uint64_t leftPageSize,
+                                                 const uint64_t rightEntrySize,
+                                                 const uint64_t rightPageSize,
+                                                 const size_t windowSize) {
 
-    return std::make_shared<NLJOperatorHandler>(origins, windowSize, sizeOfTupleInByteLeft, sizeOfTupleInByteRight);
+    return std::make_shared<NLJOperatorHandler>(origins,
+                                                sizeOfTupleInByteLeft,
+                                                sizeOfTupleInByteRight,
+                                                leftEntrySize,
+                                                leftPageSize,
+                                                rightEntrySize,
+                                                rightPageSize,
+                                                windowSize);
 }
 
-uint8_t* NLJOperatorHandler::getFirstTuple(uint64_t windowIdentifier, bool isLeftSide) {
-    const auto window = getWindowByWindowIdentifier(windowIdentifier);
-    if (window.has_value()) {
-        if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN) {
-            auto sizeOfTupleInByte = isLeftSide ? sizeOfRecordLeft : sizeOfRecordRight;
-            return static_cast<NLJWindow*>(window->get())->getTuple(sizeOfTupleInByte, 0, isLeftSide);
-        }
-        //TODO For hash window it is not clear what this would be
+StreamWindow* NLJOperatorHandler::getCurrentWindow() {
+    if (windows.empty()) {
+        return getWindowByTimestampOrCreateIt(0).get();
     }
-    return std::nullptr_t();
+    return windows.back().get();
 }
 
-uint64_t getEntrySizePagedVector(void* ptrPagedVector) {
-    NES_ASSERT2_FMT(ptrPagedVector != nullptr, "paged vector should not be null");
-    auto* pagedVector = static_cast<Nautilus::Interface::PagedVector*>(ptrPagedVector);
-    return pagedVector->getEntrySize();
+uint64_t NLJOperatorHandler::getLeftEntrySize() const {
+    return leftEntrySize;
 }
 
-uint64_t getPageSizePagedVector(void* ptrPagedVector) {
-    NES_ASSERT2_FMT(ptrPagedVector != nullptr, "paged vector should not be null");
-    auto* pagedVector = static_cast<Nautilus::Interface::PagedVector*>(ptrPagedVector);
-    return pagedVector->getPageSize();
+uint64_t NLJOperatorHandler::getLeftPageSize() const {
+    return leftPageSize;
+}
+
+uint64_t NLJOperatorHandler::getRightEntrySize() const {
+    return rightEntrySize;
+}
+
+uint64_t NLJOperatorHandler::getRightPageSize() const {
+    return rightPageSize;
 }
 
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {

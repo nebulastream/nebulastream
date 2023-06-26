@@ -30,6 +30,13 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+void* getCurrentWindowProxy(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+
+    return opHandler->getCurrentWindow();
+}
+
 void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
@@ -85,12 +92,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
                                                        localJoinState->windowReference, workerId,
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
-    Nautilus::Value<UInt64> entrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
-                                                               nljPagedVectorMemRef);
-    Nautilus::Value<UInt64> pageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
-                                                               nljPagedVectorMemRef);
     localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
-
     localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
                                                          localJoinState->windowReference);
     localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
@@ -112,7 +114,6 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the memRef to the new entry
     auto entryMemRef = localJoinState->pagedVectorRef.allocateEntry();
 
-
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : schema->fields) {
@@ -125,29 +126,26 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 }
 
 void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
-    auto opHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto windowRef = Nautilus::Value<Nautilus::MemRef>(nullptr);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(Nautilus::Value<Nautilus::MemRef>(nullptr),
-        Nautilus::Value<Nautilus::UInt64>((uint64_t) 42));
+    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandler, windowRef, pagedVectorRef);
+    auto workerId = ctx.getWorkerId();
+    auto windowReference = Nautilus::FunctionCall("getCurrentWindowProxy", getCurrentWindowProxy, opHandlerMemRef);
+    auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
+                                                       windowReference, workerId,
+                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
+    auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
+    localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
+                                              windowReference);
+    localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
+                                            windowReference);
+
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto* localJoinState = static_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
-    auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
-
-    auto watermarkTs = recordBuffer.getWatermarkTs();
-    if (!(localJoinState->windowStart <= watermarkTs && watermarkTs < localJoinState->windowEnd)) {
-        auto workerId = ctx.getWorkerId();
-        updateLocalJoinState(localJoinState, operatorHandlerMemRef, watermarkTs, workerId);
-    }
-
-    ctx.setWatermarkTs(watermarkTs);
-    ctx.setOrigin(recordBuffer.getOriginId());
-
     // Update the watermark for the nlj operator and trigger windows
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkWindowsTriggerProxyForNLJBuild",
                            checkWindowsTriggerProxyForNLJBuild,
                            operatorHandlerMemRef,
@@ -163,8 +161,10 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
                    bool isLeftSide,
+                   const uint64_t entrySize,
+                   const uint64_t pageSize,
                    std::shared_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      isLeftSide(isLeftSide), timeFunction(std::move(timeFunction)) {}
+      isLeftSide(isLeftSide), entrySize(entrySize), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
