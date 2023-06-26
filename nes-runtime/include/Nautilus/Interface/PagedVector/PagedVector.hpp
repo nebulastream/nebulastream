@@ -63,7 +63,7 @@ class PagedVector {
     size_t getNumberOfEntries();
 
     /**
-     * @brief Sets the number of entires across all pages.
+     * @brief Sets the number of entries across all pages.
      * @param size_t
      */
     void setNumberOfEntries(size_t entries);
