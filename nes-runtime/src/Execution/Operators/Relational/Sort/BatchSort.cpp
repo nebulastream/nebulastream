@@ -15,8 +15,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
-#include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
