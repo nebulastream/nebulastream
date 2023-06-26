@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.120](https://github.com/nebulastream/nebulastream/tree/v0.5.120) (2023-06-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.119...v0.5.120)
+
+**Implemented enhancements:**
+
+- \[TASK\] filter pushDown add support for the case that an operator has more than parent operator and increase performance [\#3872](https://github.com/nebulastream/nebulastream/issues/3872)
+- \[TASK\] add filter push-down rule for pushing down below join [\#3841](https://github.com/nebulastream/nebulastream/issues/3841)
+
 ## [v0.5.119](https://github.com/nebulastream/nebulastream/tree/v0.5.119) (2023-06-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.118...v0.5.119)
