@@ -78,9 +78,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param childOperator we want to insert the filter operator above this operator in the query plan
      * @param parOperator  we want to insert the filter operator below this operator in the query plan
      */
-    static void insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,
-                                            NodePtr childOperator,
-                                            NodePtr parOperator);
+    static void
+    insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 };
 
 }// namespace NES::Optimizer
