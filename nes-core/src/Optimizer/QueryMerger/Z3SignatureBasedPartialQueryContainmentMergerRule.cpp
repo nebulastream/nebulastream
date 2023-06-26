@@ -59,10 +59,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                                                                      targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto timerStart = std::chrono::system_clock::now();
-            bool timeBudgetReached = false;
-            if (timeBudgetReached) {
-                break;
-            }
             std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> relationshipAndOperators;
 
             //Fetch the host query plan to merge
@@ -77,17 +73,11 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             //Iterate over the target query plan from sink to source and compare the operator signatures with the host query plan
             //When a match is found then store the matching operators in the matchedTargetToHostOperatorMap
             for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
-                if (timeBudgetReached) {
-                    break;
-                }
                 //Iterate the target query plan in DFS order.
                 auto targetChildren = targetRootOperator->getChildren();
                 std::deque<NodePtr> targetOperators = {targetChildren.begin(), targetChildren.end()};
                 //Iterate till target operators are remaining to be matched
                 while (!targetOperators.empty()) {
-                    if (timeBudgetReached) {
-                        break;
-                    }
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
                     bool foundMatch = false;
@@ -105,9 +95,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                     //Iterate the host query plan in BFS order and check if an operator with matching signature with the target operator
                     // exists.
                     for (const auto& hostRootOperator : hostQueryPlan->getRootOperators()) {
-                        if (timeBudgetReached) {
-                            break;
-                        }
                         //Initialize the host operators to traverse
                         std::deque<NodePtr> hostOperators;
                         auto children = hostRootOperator->getChildren();
@@ -154,16 +141,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                     == visitedHostOperators.end()) {
                                     hostOperators.push_back(hostChild);
                                 }
-                            }
-                            if ((std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
-                                                                                       - timerStart)
-                                     .count()
-                                 >= 10000000000000)) {
-                                NES_DEBUG2(
-                                    "MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                                    "TupleBuffer.");
-                                timeBudgetReached = true;
-                                break;
                             }
                         }
                         if (foundMatch) {
