@@ -78,8 +78,8 @@ template<>
 struct EncoderTraits<bool> {
     using EncodedType = bool;
 
-    static EncodedType Encode(bool value, bool descending) {
-        if (descending)
+    static EncodedType Encode(bool value, bool isDescending) {
+        if (isDescending)
             value = !value;
         return value;
     }
