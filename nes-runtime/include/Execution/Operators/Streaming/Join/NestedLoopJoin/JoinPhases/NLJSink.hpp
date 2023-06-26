@@ -32,12 +32,16 @@ class NLJSink : public Operator {
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      */
-    explicit NLJSink(uint64_t operatorHandlerIndex,
-                     SchemaPtr leftSchema,
-                     SchemaPtr rightSchema,
-                     SchemaPtr joinSchema,
-                     std::string joinFieldNameLeft,
-                     std::string joinFieldNameRight);
+    explicit NLJSink(const uint64_t operatorHandlerIndex,
+                     const SchemaPtr leftSchema,
+                     const SchemaPtr rightSchema,
+                     const SchemaPtr joinSchema,
+                     const uint64_t leftEntrySize,
+                     const uint64_t leftPageSize,
+                     const uint64_t rightEntrySize,
+                     const uint64_t rightPageSize,
+                     const std::string joinFieldNameLeft,
+                     const std::string joinFieldNameRight);
 
     /**
      * @brief Receives a record buffer containing a window identifier for a window that is ready to be joined
@@ -47,10 +51,14 @@ class NLJSink : public Operator {
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
-    uint64_t operatorHandlerIndex;
-    SchemaPtr leftSchema;
-    SchemaPtr rightSchema;
-    SchemaPtr joinSchema;
+    const uint64_t operatorHandlerIndex;
+    const SchemaPtr leftSchema;
+    const SchemaPtr rightSchema;
+    const SchemaPtr joinSchema;
+    const uint64_t leftEntrySize;
+    const uint64_t leftPageSize;
+    const uint64_t rightEntrySize;
+    const uint64_t rightPageSize;
 
     // TODO ask Philipp, if we can get this string from the NLJOperatorHandler
     std::string joinFieldNameLeft;

@@ -73,6 +73,12 @@ class PagedVectorRef {
     Value<UInt64> getTotalNumberOfEntries();
 
     /**
+     * @brief Returns the maximum number of records per page
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getEntriesPerPage() const;
+
+    /**
      * @brief Returns an iterator that points to the begin of this listRef
      * @return ListRefIter
      */
@@ -95,7 +101,7 @@ class PagedVectorRef {
     Value<MemRef> getCurrentPage();
     Value<MemRef> pagedVectorRef;
     Value<UInt64> entrySize;
-    Value<UInt64> entriesPerPage;
+    Value<UInt64> pageSize;
 };
 
 class PagedVectorRefIter {

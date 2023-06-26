@@ -43,7 +43,11 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 size_t windowSize,
                                 uint64_t sizeOfTupleInByteLeft,
-                                uint64_t sizeOfTupleInByteRight);
+                                uint64_t sizeOfTupleInByteRight,
+                                uint64_t leftEntrySize,
+                                uint64_t leftPageSize,
+                                uint64_t rightEntrySize,
+                                uint64_t rightPageSize);
 
     ~NLJOperatorHandler() = default;
     /**
@@ -89,31 +93,33 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
-    /**
-     * @brief method to get the first tuple
-     * @param windowIdentifier
-     * @param isLeftSide
-     * @return
-     */
-    uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
-
-    /**
-     * Create NLJ Operator handler
-     * @param origins
-     * @param windowSize
-     * @param sizeOfTupleInByteLeft
-     * @param sizeOfTupleInByteRight
-     * @return
-     */
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
-                                        size_t windowSize,
-                                        uint64_t sizeOfTupleInByteLeft,
-                                        uint64_t sizeOfTupleInByteRight);
+                                        const uint64_t sizeOfTupleInByteLeft,
+                                        const uint64_t sizeOfTupleInByteRight,
+                                        const uint64_t leftEntrySize,
+                                        const uint64_t leftPageSize,
+                                        const uint64_t rightEntrySize,
+                                        const uint64_t rightPageSize,
+                                        const size_t windowSize);
+
+    /**
+     * @brief Returns the current window, by current we mean the last added window to the list. If no window exists,
+     * a window with the timestamp 0 will be created
+     * @return StreamWindow*
+     */
+    StreamWindow* getCurrentWindow();
+
+    uint64_t getLeftEntrySize() const;
+    uint64_t getLeftPageSize() const;
+    uint64_t getRightEntrySize() const;
+    uint64_t getRightPageSize() const;
+
+  private:
+    const uint64_t leftEntrySize;
+    const uint64_t leftPageSize;
+    const uint64_t rightEntrySize;
+    const uint64_t rightPageSize;
 };
-
-uint64_t getEntrySizePagedVector(void* ptrPagedVector);
-
-uint64_t getPageSizePagedVector(void* ptrPagedVector);
 
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
 

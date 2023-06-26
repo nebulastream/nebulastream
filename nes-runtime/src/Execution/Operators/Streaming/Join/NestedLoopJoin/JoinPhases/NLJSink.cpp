@@ -24,10 +24,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -88,9 +86,7 @@ uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
 }
 
 void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    if (hasChild()) {
-        child->open(ctx, recordBuffer);
-    }
+    child->open(ctx, recordBuffer);
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifierMemRef = recordBuffer.getBuffer();
@@ -102,29 +98,14 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
                                                       windowReference, Nautilus::Value<UInt64>((uint64_t) 0),
                                                       Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ false));
-    Nautilus::Value<UInt64> leftEntrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
-                                                                   leftPagedVectorRef);
-    Nautilus::Value<UInt64> rightEntrySize = Nautilus::FunctionCall("getEntrySizePagedVector", getEntrySizePagedVector,
-                                                                    rightPagedVectorRef);
-    Nautilus::Value<UInt64> leftPageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
-                                                                  leftPagedVectorRef);
-    Nautilus::Value<UInt64> rightPageSize = Nautilus::FunctionCall("getPageSizePagedVector", getPageSizePagedVector,
-                                                                   rightPagedVectorRef);
 
-    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize.getValue().getValue(),
-                                                        leftPageSize.getValue().getValue());
-    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize.getValue().getValue(),
-                                                         rightPageSize.getValue().getValue());
+    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);
+    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
 
-    // TODO ask Philipp why do I need this here and can not use auto?
-    Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForNestedLoopJoin",
-                                                    getWindowStartProxyForNestedLoopJoin,
-                                                    operatorHandlerMemRef,
-                                                    windowIdentifierMemRef);
-    Value<Any> windowEnd = Nautilus::FunctionCall("getWindowEndProxyForNestedLoopJoin",
-                                                  getWindowEndProxyForNestedLoopJoin,
-                                                  operatorHandlerMemRef,
-                                                  windowIdentifierMemRef);
+    Value<Any> windowStart =
+        Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+    Value<Any> windowEnd =
+        Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, operatorHandlerMemRef, windowIdentifierMemRef);
 
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin",
@@ -146,8 +127,8 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
             auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
 
-            /* This can be later replaced by an interface that returns bool and getys passed the
-                 * two Nautilus::Records (left and right) #3691 */
+            /* This can be later replaced by an interface that returns bool and gets passed the
+             * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                 Record joinedRecord;
 
@@ -168,10 +149,9 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                     joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                 }
 
-                if (hasChild()) {
-                    // Calling the child operator for this joinedRecord
-                    child->execute(ctx, joinedRecord);
-                }
+                // Calling the child operator for this joinedRecord
+                NES_DEBUG2("Calling execute on child for record");
+                child->execute(ctx, joinedRecord);
             }
         }
     }
@@ -183,13 +163,19 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                            windowIdentifierMemRef);
 }
 
-NLJSink::NLJSink(uint64_t operatorHandlerIndex,
-                 SchemaPtr leftSchema,
-                 SchemaPtr rightSchema,
-                 SchemaPtr joinSchema,
-                 std::string joinFieldNameLeft,
-                 std::string joinFieldNameRight)
+NLJSink::NLJSink(const uint64_t operatorHandlerIndex,
+                 const SchemaPtr leftSchema,
+                 const SchemaPtr rightSchema,
+                 const SchemaPtr joinSchema,
+                 const uint64_t leftEntrySize,
+                 const uint64_t leftPageSize,
+                 const uint64_t rightEntrySize,
+                 const uint64_t rightPageSize,
+                 const std::string joinFieldNameLeft,
+                 const std::string joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight){}
+      joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), leftPageSize(leftPageSize),
+      rightEntrySize(rightEntrySize), rightPageSize(rightPageSize), joinFieldNameLeft(joinFieldNameLeft),
+      joinFieldNameRight(joinFieldNameRight) {}
 
 }// namespace NES::Runtime::Execution::Operators
