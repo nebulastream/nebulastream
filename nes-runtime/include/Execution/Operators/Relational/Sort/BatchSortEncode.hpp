@@ -17,11 +17,11 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 
+#include <bit>
 #include <cfloat>
-#include <cstring>
 #include <climits>
 #include <cstdint>
-#include <bit>
+#include <cstring>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -36,29 +36,23 @@ namespace NES::Runtime::Execution::Operators {
  * @param value
  * @return uint8_t
  */
-inline constexpr uint8_t FlipSign(uint8_t keyByte) {
-    return keyByte ^ 128;
-}
+inline constexpr uint8_t FlipSign(uint8_t keyByte) { return keyByte ^ 128; }
 
 /**
  * @brief Byte swap a value
  * @param value
  * @return uint8_t
  */
-template <typename T>
+template<typename T>
 inline constexpr T byteSwap(T value) {
     static_assert(std::is_integral<T>::value, "byteSwap can only be used with integral types.");
-    if (sizeof(T) == 1) {
-        return value;
-    } else if (sizeof(T) == 2) {
-        return std::endian::big == std::endian::native ? value : __builtin_bswap16(value);
-    } else if (sizeof(T) == 4) {
-        return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
-    } else if (sizeof(T) == 8) {
-        return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
-    } else {
-        static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
-                      "byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
+    switch (sizeof(T)) {
+        case 1: return value;
+        case 2: return std::endian::big == std::endian::native ? value : __builtin_bswap16(value);
+        case 4: return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
+        case 8: return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
+        default:
+            throw Exceptions::NotImplementedException("byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
     }
 }
 
@@ -69,20 +63,18 @@ inline constexpr T byteSwap(T value) {
  * @tparam T
  * @tparam void
  */
-template <typename T, typename = void>
+template<typename T, typename = void>
 struct EncoderTraits {
     using EncodedType = T;
 
-    static EncodedType Encode(T, bool) {
-        throw Exceptions::NotImplementedException("Encode not implemented for this type");
-    }
+    static EncodedType Encode(T, bool) { throw Exceptions::NotImplementedException("Encode not implemented for this type"); }
 };
 
 /**
  * @brief Encode bool values for sorting
  * @tparam T
  */
-template <>
+template<>
 struct EncoderTraits<bool> {
     using EncodedType = bool;
 
@@ -97,7 +89,7 @@ struct EncoderTraits<bool> {
  * @brief Encode signed integral values for sorting
  * @tparam T
  */
-template <typename T>
+template<typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type> {
     using EncodedType = T;
 
@@ -115,7 +107,7 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
  * @brief Encode unsigned integral values for sorting
  * @tparam T
  */
-template <typename T>
+template<typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type> {
     using EncodedType = T;
 
@@ -131,7 +123,7 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
  * @brief Encode floating point values for sorting
  * @tparam T
  */
-template <typename T>
+template<typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
     // float and double are encoded as uint32_t and uint64_t respectively
     using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
@@ -161,10 +153,10 @@ struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value
     }
 };
 
-template <typename T>
+template<typename T>
 typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = false) {
     return EncoderTraits<T>::Encode(value, descending);
 }
 
-} // namespace NES::Runtime::Execution::Operators
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTENCODE_HPP_
+}// namespace NES::Runtime::Execution::Operators
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTENCODE_HPP_
