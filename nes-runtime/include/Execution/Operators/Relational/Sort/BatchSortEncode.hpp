@@ -136,23 +136,23 @@ struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value
         if (value == 0) {
             encodedValue = 0;
             encodedValue |= (1ull << (sizeof(EncodedType) * 8 - 1));
-            return encodedValue;
-        }
-        if (value > std::numeric_limits<T>::max()) {
-            return std::numeric_limits<EncodedType>::max() - 1;
-        }
-        if (value < -std::numeric_limits<T>::max()) {
-            return 0;
-        }
-        encodedValue = *reinterpret_cast<EncodedType*>(&value);
-        if (encodedValue < (1ull << (sizeof(EncodedType) * 8 - 1))) {
-            encodedValue += (1ull << (sizeof(EncodedType) * 8 - 1));
+        } else if (value > std::numeric_limits<T>::max()) {
+            encodedValue = std::numeric_limits<EncodedType>::max() - 1;
+        } else if (value < -std::numeric_limits<T>::max()) {
+            encodedValue = 0;
         } else {
-            encodedValue = ~encodedValue;
+            encodedValue = *reinterpret_cast<EncodedType*>(&value);
+            if (encodedValue < (1ull << (sizeof(EncodedType) * 8 - 1))) {
+                encodedValue += (1ull << (sizeof(EncodedType) * 8 - 1));
+            } else {
+                encodedValue = ~encodedValue;
+            }
+            if (descending) {
+                encodedValue = ~encodedValue;
+            }
+            encodedValue = byteSwap(encodedValue);
         }
-        if (descending)
-            encodedValue = ~encodedValue;
-        return byteSwap(encodedValue);
+        return encodedValue;
     }
 };
 
