@@ -956,8 +956,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindow) {
                       .apply(Count()->as(Attribute("count_value")))
                       .filter(Attribute("type") == 1)
                       .sink(printSinkDescriptor);
-    // Query query =
-    //   Query::from("default_logical").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -987,6 +986,102 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindow) {
     EXPECT_TRUE(watermarkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossible) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("vehicles")
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
+                      .byKey(Attribute("type"))
+                      .apply(Count()->as(Attribute("count_value")))
+                      .filter(Attribute("size") > 5)
+                      .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr windowOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(windowOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossibleMultipleAttributes) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("vehicles")
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
+                      .byKey(Attribute("type"))
+                      .apply(Count()->as(Attribute("count_value")))
+                      .filter(Attribute("type") == 1 && Attribute("size") > 5)
+                      .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr windowOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(windowOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
