@@ -91,8 +91,7 @@ void FilterLogicalOperatorNode::inferStringSignature() {
 float FilterLogicalOperatorNode::getSelectivity() { return selectivity; }
 void FilterLogicalOperatorNode::setSelectivity(float newSelectivity) { selectivity = newSelectivity; }
 
-
-std::vector<std::string>  FilterLogicalOperatorNode::getFieldNamesUsedByFilterPredicate() {
+std::vector<std::string> FilterLogicalOperatorNode::getFieldNamesUsedByFilterPredicate() {
     NES_TRACE2("FilterLogicalOperatorNode: Find all field names used in filter operator");
 
     //vector to save the names of all the fields that are used in this predicate
