@@ -455,9 +455,13 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             operatorNode->replace(joinSinkOperator);
         } else if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN) {
             auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
-                                                                  windowSize,
                                                                   joinOperator->getLeftInputSchema()->getSize(),
-                                                                  joinOperator->getRightInputSchema()->getSize());
+                                                                  joinOperator->getRightInputSchema()->getSize(),
+                                                                  joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                                  Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                                  joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                                  Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                                  windowSize);
 
             leftJoinBuildOperator =
                 PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
