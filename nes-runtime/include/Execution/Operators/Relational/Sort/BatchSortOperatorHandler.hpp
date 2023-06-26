@@ -48,7 +48,7 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
         NES_ASSERT(dataTypes.size() == fieldIdentifiers.size(), "Data types and field identifiers must have the same size");
         // Entry size is the sum of the sizes of the fields to sort, with will be stored encoded and the complete record
         entrySize = 0;
-        // 1) sort fields
+        // 1) calculate entry size of fields that we encode and store for sorting
         for (const auto& sortFieldIdentifier : sortFieldIdentifiers) {
             for (uint64_t j = 0; j < fieldIdentifiers.size(); ++j) {
                 if (sortFieldIdentifier == fieldIdentifiers[j]) {
@@ -56,7 +56,7 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
                 }
             }
         }
-        // 2) complete record
+        // 2) calculate entry size of complete record/payloads to store
         for (const auto& dataType : dataTypes) {
             entrySize += dataType->size();
         }
