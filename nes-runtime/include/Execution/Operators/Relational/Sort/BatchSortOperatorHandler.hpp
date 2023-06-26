@@ -51,9 +51,7 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
         // 1) calculate entry size of fields that we encode and store for sorting
         for (const auto& sortFieldIdentifier : sortFieldIdentifiers) {
             for (uint64_t j = 0; j < fieldIdentifiers.size(); ++j) {
-                if (sortFieldIdentifier == fieldIdentifiers[j]) {
-                    entrySize += dataTypes[j]->size();
-                }
+                entrySize += (sortFieldIdentifier == fieldIdentifiers[j]) * dataTypes[j]->size();
             }
         }
         // 2) calculate entry size of complete record/payloads to store
