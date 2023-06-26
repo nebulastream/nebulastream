@@ -133,25 +133,18 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         pushDownFilter(filterOperator, grandChildren[0], curOperator);
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
     } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
-        std::shared_ptr<Windowing::LogicalWindowDefinition> windowDefinition = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition();
-        if(windowDefinition->isKeyed()){
-            std::vector<FieldAccessExpressionNodePtr> groupByKeys = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
-            std::vector<std::string> groupByKeyNames;
-            groupByKeyNames.reserve(groupByKeys.size());
-            for(const auto& groupByKey:groupByKeys){
-                groupByKeyNames.push_back(groupByKey->getFieldName());
+        auto groupByKeyNames = curOperator->as<WindowLogicalOperatorNode>()->getGroupByKeyNames();
+        std::vector<FieldAccessExpressionNodePtr> groupByKeys = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
+        std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
+        auto areAllFilterAttributesInGroupByKeys = true;
+        for(const auto& filterAttribute: fieldNamesUsedByFilter) {
+            if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end()) {
+                areAllFilterAttributesInGroupByKeys = false;
             }
-            bool areAllFilterAttributesInGroupByKeys = true;
-            std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
-            for(const auto& filterAttribute: fieldNamesUsedByFilter) {
-                if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end()) {
-                    areAllFilterAttributesInGroupByKeys = false;
-                }
-            }
-            if(areAllFilterAttributesInGroupByKeys){
-                pushed = true;
-                pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
-            }
+        }
+        if(areAllFilterAttributesInGroupByKeys){
+            pushed = true;
+            pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
         }
     } else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         pushed = true;

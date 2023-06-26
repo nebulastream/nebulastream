@@ -29,6 +29,12 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
     void inferStringSignature() override;
+
+    /**
+     * @brief returns the names of every key used in the aggregation
+     * @return a vector containing the key names used in the aggregation
+     */
+    std::vector<std::string> getGroupByKeyNames();
 };
 
 }// namespace NES
