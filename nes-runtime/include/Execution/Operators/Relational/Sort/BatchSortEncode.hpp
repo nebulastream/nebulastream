@@ -79,8 +79,9 @@ struct EncoderTraits<bool> {
     using EncodedType = bool;
 
     static EncodedType Encode(bool value, bool isDescending) {
-        if (isDescending)
+        if (isDescending) {
             value = !value;
+        }
         return value;
     }
 };
@@ -97,8 +98,9 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
         value = byteSwap(value);
         auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
         *firstBytePtr = FlipSign(*firstBytePtr);
-        if (descending)
+        if (descending) {
             value = ~value;
+        }
         return value;
     }
 };
@@ -113,8 +115,9 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
 
     static EncodedType Encode(T value, bool descending) {
         value = byteSwap(value);
-        if (descending)
+        if (descending) {
             value = ~value;
+        }
         return value;
     }
 };
