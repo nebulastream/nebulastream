@@ -296,6 +296,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                      sinkOperator->getLeftInputSchema(),
                                                                      sinkOperator->getRightInputSchema(),
                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+                                                                     sinkOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                                     sinkOperator->getOperatorHandler()->getLeftPageSize(),
+                                                                     sinkOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                                     sinkOperator->getOperatorHandler()->getRightPageSize(),
                                                                      sinkOperator->getJoinFieldNameLeft(),
                                                                      sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
