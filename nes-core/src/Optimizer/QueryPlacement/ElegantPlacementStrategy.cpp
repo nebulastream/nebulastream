@@ -87,8 +87,13 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         payload.push_back(queryGraph);
 
         // 1.b: Get topology information as json
-        auto availableNodes = prepareAvailableNodes();
+        auto availableNodes = prepareTopologyPayload();
         payload.push_back(availableNodes);
+
+        nlohmann::json optimizationObjectives;
+        optimizationObjectives["energyRatio"] = energyRatio;
+        optimizationObjectives["performanceRatio"] = performanceRatio;
+        payload["optimizationObjectives"] = optimizationObjectives;
 
         //1.c: Make a rest call to elegant planner
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
@@ -213,7 +218,7 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
     return queryPlan;
 }
 
-nlohmann::json ElegantPlacementStrategy::prepareAvailableNodes() {
+nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
     NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of available nodes");
     nlohmann::json topologyJson{};
     auto root = topology->getRoot();
