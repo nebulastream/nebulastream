@@ -72,7 +72,7 @@ constexpr uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
  * @param offset offset of columns to compare
  * @param swap swap original and temporary data
  */
-inline void InsertionSort(void* orig_ptr,
+inline void insertionSort(void* orig_ptr,
                           void* temp_ptr,
                           const uint64_t& count,
                           const uint64_t& col_offset,
@@ -111,7 +111,7 @@ inline void InsertionSort(void* orig_ptr,
  * @param row_width width of row
  * @param sorting_size number of bytes to sort
  */
-void RadixSortLSD(void* orig_ptr,
+void radixSortLSD(void* orig_ptr,
                   void* temp_ptr,
                   const uint64_t& count,
                   const uint64_t& col_offset,
@@ -167,7 +167,7 @@ void RadixSortLSD(void* orig_ptr,
  * @param locations locations array as working memory
  * @param swap swap temp and orig
  */
-void RadixSortMSD(void* orig_ptr,
+void radixSortMSD(void* orig_ptr,
                   void* temp_ptr,
                   const uint64_t& count,
                   const uint64_t& col_offset,
@@ -229,7 +229,7 @@ void RadixSortMSD(void* orig_ptr,
 
     // If the maximum count is equal to the total count, call RadixSortMSD recursively with an increased offset
     if (max_count == count) {
-        RadixSortMSD(orig_ptr,
+        radixSortMSD(orig_ptr,
                      temp_ptr,
                      count,
                      col_offset,
@@ -246,7 +246,7 @@ void RadixSortMSD(void* orig_ptr,
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
         const uint64_t loc = (locations[radix] - radix_count) * row_width;
         if (radix_count > INSERTION_SORT_THRESHOLD) {
-            RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc,
+            radixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc,
                          static_cast<uint8_t*>(temp_ptr) + loc,
                          radix_count,
                          col_offset,
@@ -257,7 +257,7 @@ void RadixSortMSD(void* orig_ptr,
                          swap);
         } else if (radix_count != 0) {
             // When the count is low (less than the threshold), insertion sort is more efficient
-            InsertionSort(static_cast<uint8_t*>(orig_ptr) + loc,
+            insertionSort(static_cast<uint8_t*>(orig_ptr) + loc,
                           static_cast<uint8_t*>(temp_ptr) + loc,
                           radix_count,
                           col_offset,
@@ -358,12 +358,12 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
         auto swap = false;// init false
 
         if (count <= INSERTION_SORT_THRESHOLD) {
-            InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
+            insertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
         } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
-            RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
+            radixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
         } else {
             auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
-            RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+            radixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
             delete[] locations;
         }
     }
