@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.122](https://github.com/nebulastream/nebulastream/tree/v0.5.122) (2023-06-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.121...v0.5.122)
+
+**Implemented enhancements:**
+
+- \[TASK\] Support for external APIs in compilation request [\#3859](https://github.com/nebulastream/nebulastream/issues/3859)
+
 ## [v0.5.121](https://github.com/nebulastream/nebulastream/tree/v0.5.121) (2023-06-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.120...v0.5.121)
