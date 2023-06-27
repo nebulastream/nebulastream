@@ -193,6 +193,12 @@ class SharedQueryPlan {
      */
     PlacementStrategy getPlacementStrategy() const;
 
+    /**
+     * Add to the placement path the nodes with the given id
+     * @param topologyNodeIds
+     */
+    void addToPlacementPath(std::set<uint64_t> topologyNodeIds);
+
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -220,6 +226,7 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
+    std::set<uint64_t> topologyPath;
 };
 }// namespace NES
 
