@@ -110,6 +110,11 @@ class SharedQueryPlan {
   public:
     static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief: Add all downstream operators of the query with input id starting from the matched operator
+     * @param queryId : id of the input query
+     * @param matchedOperatorPairs : the matched operator pairs
+     */
     void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs);
 
     /**
@@ -118,6 +123,8 @@ class SharedQueryPlan {
      * @return true if successful
      */
     bool removeQuery(QueryId queryId);
+
+    void newNodesForPlacement();
 
     /**
      * @brief Clear all MetaData information
@@ -167,6 +174,9 @@ class SharedQueryPlan {
      */
     std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>> getChangeLogEntries(Timestamp timestamp);
 
+    /**
+     * @brief: update the timestamp till which the changes have been processed
+     */
     void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 
     /**
@@ -192,6 +202,12 @@ class SharedQueryPlan {
      * @return placement strategy
      */
     Optimizer::PlacementStrategy getPlacementStrategy() const;
+
+    /**
+     * @brief update the nodes used for placement by adding the input nodes
+     * @param newNodesUsedForPlacement: the nodes used for the placement
+     */
+    void updateNodesUsedForPlacement(const std::set<uint64_t>& newNodesUsedForPlacement);
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
@@ -220,6 +236,7 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
+    std::set<uint64_t> nodesUsedForPlacement;
 };
 }// namespace NES
 
