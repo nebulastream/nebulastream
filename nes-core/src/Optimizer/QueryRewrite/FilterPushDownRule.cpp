@@ -25,12 +25,11 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
@@ -134,15 +133,16 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
     } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
         auto groupByKeyNames = curOperator->as<WindowLogicalOperatorNode>()->getGroupByKeyNames();
-        std::vector<FieldAccessExpressionNodePtr> groupByKeys = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
+        std::vector<FieldAccessExpressionNodePtr> groupByKeys =
+            curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
         std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
         auto areAllFilterAttributesInGroupByKeys = true;
-        for(const auto& filterAttribute: fieldNamesUsedByFilter) {
+        for (const auto& filterAttribute : fieldNamesUsedByFilter) {
             if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end()) {
                 areAllFilterAttributesInGroupByKeys = false;
             }
         }
-        if(areAllFilterAttributesInGroupByKeys){
+        if (areAllFilterAttributesInGroupByKeys) {
             pushed = true;
             pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
         }
