@@ -20,7 +20,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
