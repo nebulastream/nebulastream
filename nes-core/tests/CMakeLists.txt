@@ -137,12 +137,20 @@ add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTe
 ### NES TopologyIterator Test ###
 add_nes_unit_test(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest.cpp")
 
-### NES Topology Version Timeling Test ###
-add_nes_unit_test(topology-version-timeline-tests "UnitTests/Topology/Prediction/TopologyVersionTimelineTest.cpp")
+### NES Topology Timeline Test ###
+add_nes_unit_test(topology-timeline-tests "UnitTests/Topology/Prediction/TopologyTimelineTest.cpp")
+
+### NES Topology Prediction Edge Test ###
+add_nes_unit_test(topology-prediction-edge-tests "UnitTests/Topology/Prediction/EdgeTest.cpp")
+
+### NES Topology Changelog Test ###
+add_nes_unit_test(topology-changelog-tests "UnitTests/Topology/Prediction/TopologyChangelogTest.cpp")
+
+### NES Topology Prediction Delta Test ###
+add_nes_unit_test(topology-delta-tests "UnitTests/Topology/Prediction/TopologyDeltaTest.cpp")
 
 ### Lineage Manager Test ###
 add_nes_unit_test(lineage-manager-tests "UnitTests/Runtime/LineageManagerTest.cpp")
-
 
 ### Buffer Manager Test ###
 add_nes_unit_test(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp")

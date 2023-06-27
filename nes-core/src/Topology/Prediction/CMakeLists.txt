@@ -12,8 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        TopologyVersionTimeline.cpp
-        AggregatedTopologyChangeLog.cpp
-        TopologyDelta.cpp
+        TopologyTimeline.cpp
         TopologyChangeLog.cpp
+        TopologyDelta.cpp
+        Edge.cpp
         )

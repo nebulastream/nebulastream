@@ -15,4 +15,4 @@ add_source_files(nes-core
         TopologyNode.cpp
         Topology.cpp
 )
-add_subdirectory(Predictions)
+add_subdirectory(Prediction)
