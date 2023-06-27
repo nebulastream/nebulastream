@@ -153,6 +153,13 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
         nljBuildLeft.setup(executionContext);
         nljBuildRight.setup(executionContext);
+
+        // We do not care for the record buffer in the current NLJBuild::open() implementation
+        RecordBuffer recordBuffer(Value<MemRef>((int8_t*) nullptr));
+        nljBuildLeft.open(executionContext, recordBuffer);
+        nljBuildRight.open(executionContext, recordBuffer);
+
+
         uint64_t maxTimestamp = 2;
         for (auto& leftRecord : allLeftRecords) {
             maxTimestamp = std::max(leftRecord.read(timestampLeft).getValue().staticCast<UInt64>().getValue(), maxTimestamp);
@@ -220,25 +227,25 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                                uint64_t numberOfRecordsLeft,
                                uint64_t numberOfRecordsRight,
                                Operators::NLJOperatorHandler& nljOperatorHandler,
-                               const std::string& timestampFieldnameLeft,
-                               const std::string& timestampFieldnameRight,
-                               const std::string& joinFieldnameLeft,
-                               const std::string& joinFieldnameRight,
+                               const std::string& timestampFieldNameLeft,
+                               const std::string& timestampFieldNameRight,
+                               const std::string& joinFieldNameLeft,
+                               const std::string& joinFieldNameRight,
                                ExecutionContext& executionContext) {
 
         auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, /*isLeftSide*/ true);
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, /*isLeftSide*/ false);
-        auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldnameLeft);
+        auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
         auto memoryProviderLeft =
-            MemoryProvider::MemoryProvider::createMemoryProvider(leftSchema->getSchemaSizeInBytes(), leftSchema);
+            MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
         auto memoryProviderRight =
-            MemoryProvider::MemoryProvider::createMemoryProvider(rightSchema->getSchemaSizeInBytes(), rightSchema);
+            MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
 
         uint64_t maxTimestamp = 0Ul;
         Value<UInt64> zeroVal((uint64_t) 0UL);
         for (auto& leftRecord : allLeftRecords) {
-            auto timestamp = leftRecord.read(timestampFieldnameLeft).getValue().staticCast<UInt64>().getValue();
+            auto timestamp = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
@@ -250,12 +257,12 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         }
 
         for (auto& rightRecord : allRightRecords) {
-            auto timestamp = rightRecord.read(timestampFieldnameRight).getValue().staticCast<UInt64>().getValue();
+            auto timestamp = rightRecord.read(timestampFieldNameRight).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ true, /*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, leftEntrySize, leftPageSize);
+            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ false, /*workerId*/ 0));
+            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
 
             auto memRefToRecord = rightPagedVector.allocateEntry();
             memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);
@@ -287,20 +294,17 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             for (auto& leftRecord : allLeftRecords) {
                 for (auto& rightRecord : allRightRecords) {
 
-                    auto timestampLeftVal = leftRecord.read(timestampFieldnameLeft).getValue().staticCast<UInt64>().getValue();
-                    auto timestampRightVal = rightRecord.read(timestampFieldnameRight).getValue().staticCast<UInt64>().getValue();
+                    auto timestampLeftVal = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
+                    auto timestampRightVal = rightRecord.read(timestampFieldNameRight).getValue().staticCast<UInt64>().getValue();
 
                     auto windowStart = windowIdentifier - windowSize;
                     auto windowEnd = windowIdentifier;
-                    auto leftKey = leftRecord.read(joinFieldnameLeft);
-                    auto rightKey = rightRecord.read(joinFieldnameRight);
-
-                    auto sizeOfWindowStart = sizeof(uint64_t);
-                    auto sizeOfWindowEnd = sizeof(uint64_t);
+                    auto leftKey = leftRecord.read(joinFieldNameLeft);
+                    auto rightKey = rightRecord.read(joinFieldNameRight);
 
                     DefaultPhysicalTypeFactory physicalDataTypeFactory;
                     auto joinKeySize =
-                        physicalDataTypeFactory.getPhysicalType(leftSchema->get(joinFieldnameLeft)->getDataType())->size();
+                        physicalDataTypeFactory.getPhysicalType(leftSchema->get(joinFieldNameLeft)->getDataType())->size();
                     auto leftTupleSize = leftSchema->getSchemaSizeInBytes();
                     auto rightTupleSize = rightSchema->getSchemaSizeInBytes();
 
@@ -311,7 +315,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                         Nautilus::Value<Any> windowEndVal(windowEnd);
                         joinedRecord.write(joinSchema->get(0)->getName(), windowStartVal);
                         joinedRecord.write(joinSchema->get(1)->getName(), windowEndVal);
-                        joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldnameLeft));
+                        joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
 
                         // Writing the leftSchema fields
                         for (auto& field : leftSchema->fields) {
