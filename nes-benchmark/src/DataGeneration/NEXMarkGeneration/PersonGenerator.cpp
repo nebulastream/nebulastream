@@ -52,7 +52,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
 
 PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& persons, uint64_t personsIndex,
                                                    Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    auto uniformIntDistributions = UniformIntDistributions();
+    static auto uniformIntDistributions = UniformIntDistributions();
     std::vector<std::string> fields;
     fields.reserve(12);
 

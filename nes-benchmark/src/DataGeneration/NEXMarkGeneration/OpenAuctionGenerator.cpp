@@ -53,7 +53,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
 
 OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& auctions,
                                                                   uint64_t auctionsIndex, Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    auto uniformIntDistributions = UniformIntDistributions();
+    static auto uniformIntDistributions = UniformIntDistributions();
 
     // create random reserve
     auto reserve = 0UL;
