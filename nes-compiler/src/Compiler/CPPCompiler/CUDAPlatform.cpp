@@ -18,9 +18,7 @@
 
 namespace NES::Compiler {
 
-CUDAPlatform::CUDAPlatform(const std::string& cudaSdkPath)
-    : cudaSdkPath(cudaSdkPath)
-{
+CUDAPlatform::CUDAPlatform(const std::string& cudaSdkPath) : cudaSdkPath(cudaSdkPath) {
     if (cudaSdkPath.empty()) {
         NES_ERROR("CUDA SDK path is empty");
         throw CompilerException("CUDA SDK path is empty");
@@ -52,4 +50,4 @@ const CompilerFlags CUDAPlatform::getCompilerFlags() const {
     return flags;
 }
 
-} // namespace NES::Compiler
+}// namespace NES::Compiler

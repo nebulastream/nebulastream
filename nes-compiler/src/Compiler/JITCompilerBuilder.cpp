@@ -13,8 +13,8 @@
 */
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Compiler/SourceCode.hpp>
 #include <Compiler/LanguageCompiler.hpp>
+#include <Compiler/SourceCode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 

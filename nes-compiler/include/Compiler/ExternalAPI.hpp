@@ -28,7 +28,7 @@ namespace NES::Compiler {
  * that are not part of the default compiler call mechanism.
  */
 class ExternalAPI {
-public:
+  public:
     /**
      * @brief Get the compiler flags specific to the external API.
      * @return CompilerFlags
@@ -38,6 +38,6 @@ public:
     virtual ~ExternalAPI() = default;
 };
 
-} // namespace NES::Compiler
+}// namespace NES::Compiler
 
-#endif // NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_
+#endif// NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_

@@ -23,15 +23,15 @@ namespace NES::Compiler {
  * Note that the compiler flags are only viable for clang.
  */
 class CUDAPlatform : public ExternalAPI {
-public:
+  public:
     explicit CUDAPlatform(const std::string& cudaSdkPath);
 
     const CompilerFlags getCompilerFlags() const override;
 
-private:
+  private:
     std::string cudaSdkPath;
 };
 
-} // namespace NES::Compiler
+}// namespace NES::Compiler
 
 #endif// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CUDAPLATFORM_HPP_
