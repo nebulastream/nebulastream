@@ -46,6 +46,7 @@ namespace NES::ASP::Benchmarking {
                                    << "type (SRSWoR) width (10) height (1) windowSize (1)"
                                << std::endl << " - aggregation: "
                                    << "type (MIN) "
+                                   << "fieldNameKey (id) "
                                    << "fieldNameAggregation (value) "
                                    << "fieldNameAccuracy (aggregation) "
                                    << "timeStampFieldName (ts) "
@@ -58,12 +59,14 @@ namespace NES::ASP::Benchmarking {
                                << std::endl << " - reps: " << 234;
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
-        EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
-                                                             "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
-                                                             ",aggregation_inputSchema,aggregation_outputSchema"
-                                                             ",bufferSize,numberOfBuffers,windowSize,inputFile,reps");
         EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "");
-        EXPECT_EQ(parsedMicroBenchmarks[0].toString(), expectedToStringStream.str());
+        EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
+                                                             "aggregation_type,aggregation_fieldNameKey,"
+                                                             "aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
+                                                             "aggregation_timeStampFieldName,aggregation_inputSchema,"
+                                                             "aggregation_outputSchema,bufferSize,numberOfBuffers,"
+                                                             "windowSize,inputFile,reps");
+    EXPECT_EQ(parsedMicroBenchmarks[0].toString(), expectedToStringStream.str());
     }
 
     /**

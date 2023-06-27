@@ -202,9 +202,8 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
         Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
         Nautilus::Value<>((int64_t)4),
     };
-    auto approximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeys, bufferManager);
 
-    
+    auto approximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeys, bufferManager);
     ASSERT_EQ(approximateBuffers.size(), 1);
     ASSERT_EQ(approximateBuffers[0].getNumberOfTuples(), queryKeys.size());
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
