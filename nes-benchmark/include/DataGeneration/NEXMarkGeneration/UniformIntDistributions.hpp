@@ -19,6 +19,9 @@
 #include <random>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
+
+auto constexpr generatorSeed = 42;
+
 class UniformIntDistributions {
   public:
     /**

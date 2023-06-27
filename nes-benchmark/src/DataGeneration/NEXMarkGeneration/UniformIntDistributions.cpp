@@ -18,7 +18,7 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 // using seed to generate a predictable sequence of values for deterministic behavior
-UniformIntDistributions::UniformIntDistributions() : generator(42) {}
+UniformIntDistributions::UniformIntDistributions() : generator(generatorSeed) {}
 
 uint8_t UniformIntDistributions::generateRandomBoolean() {
     static std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);

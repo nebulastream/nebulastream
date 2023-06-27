@@ -23,7 +23,7 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSize) {
     // using seed to generate a predictable sequence of values for deterministic behavior
     // note that this particular seed is from the original java files
-    std::mt19937 initGenerator(103984);
+    std::mt19937 initGenerator(dependencyGeneratorSeed);
     std::uniform_int_distribution<uint64_t> uniformPersonGenerationDistribution(0, 9);
     std::uniform_int_distribution<uint64_t> uniformOpenAuctionGenerationDistribution(0, 2);
     std::uniform_int_distribution<uint64_t> uniformBidGenerationDistribution(0, 20);
