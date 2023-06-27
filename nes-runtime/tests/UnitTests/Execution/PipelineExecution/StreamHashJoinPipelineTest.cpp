@@ -372,11 +372,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                  ->addField("windowIdentifier", BasicType::UINT64);
 
     for (auto& buf : pipelineExecCtxLeft.emittedBuffers) {
-        NES_TRACE(" pipe left " << Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE2(" pipe left {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     for (auto& buf : pipelineExecCtxRight.emittedBuffers) {
-        NES_TRACE("pipe right " << Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE2("pipe right {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     // Calling join Sink

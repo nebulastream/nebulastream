@@ -54,13 +54,13 @@ class KeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abs
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KeyedThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup KeyedThresholdWindowPipelineTest test class.");
+        NES_INFO2("Setup KeyedThresholdWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
+        NES_INFO2("Setup KeyedThresholdWindowPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -70,7 +70,7 @@ class KeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abs
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down KeyedThresholdWindowPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down KeyedThresholdWindowPipelineTest test class."); }
 };
 
 /**

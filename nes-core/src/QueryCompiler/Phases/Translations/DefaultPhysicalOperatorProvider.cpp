@@ -391,7 +391,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                 }
             }
             NES_ASSERT(found, " left schema does not contain a timestamp attribute");
-            NES_DEBUG2("leftSchema:{}  rightSchema:{} ", leftSchema->toString(), rightSchema->toString());
+            NES_DEBUG("leftSchema:{} rightSchema: {}", leftSchema->toString(), rightSchema->toString());
             NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                        "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
             NES_DEBUG2("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
