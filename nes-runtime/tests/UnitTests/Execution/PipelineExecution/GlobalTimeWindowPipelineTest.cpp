@@ -55,7 +55,7 @@ class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstrac
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Setup GlobalTimeWindowPipelineTest test class.");
+        NES_INFO("Setup Setup GlobalTimeWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */

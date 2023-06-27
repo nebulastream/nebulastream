@@ -42,7 +42,7 @@ std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_share
 CPPCompiler::CPPCompiler()
     : format(std::make_unique<ClangFormat>("cpp")), runtimePathConfig(ExecutablePath::loadRuntimePathConfig()) {}
 
-CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG2("~CPPCompiler"); }
+CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG("~CPPCompiler"); }
 
 Language CPPCompiler::getLanguage() const { return Language::CPP; }
 
@@ -124,7 +124,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     compilerCall << file->getPath();
 
-    NES_DEBUG2("Compiler: compile with: '{}'", compilerCall.str());
+    NES_DEBUG("Compiler: compile with: '{}'", compilerCall.str());
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];
@@ -136,7 +136,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == nullptr) {
-        NES_ERROR2("Compiler: failed to run command\n");
+        NES_ERROR("Compiler: failed to run command\n");
         throw std::runtime_error("Compiler: failed to run command");
     }
 
@@ -151,7 +151,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     // If the compilation didn't return with 0, we throw an exception containing the compiler output
     if (ret != 0) {
-        NES_ERROR2("Compiler: compilation of {} failed.", libraryFileName);
+        NES_ERROR("Compiler: compilation of {} failed.", libraryFileName);
         throw std::runtime_error(strstream.str());
     }
 
@@ -163,7 +163,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     std::filesystem::remove(libraryFileName);
 
     timer.pause();
-    NES_INFO2("[CPPCompiler] Compilation time: {}ms", (double) timer.getRuntime() / (double) 1000000);
+    NES_INFO("[CPPCompiler] Compilation time: {}ms", (double) timer.getRuntime() / (double) 1000000);
 
     return CompilationResult(sharedLibrary, std::move(timer));
 }

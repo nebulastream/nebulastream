@@ -32,7 +32,7 @@ class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling {
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ColumnarMemoryLayoutTest test class.");
+        NES_INFO("Setup ColumnarMemoryLayoutTest test class.");
     }
 
     void SetUp() override {

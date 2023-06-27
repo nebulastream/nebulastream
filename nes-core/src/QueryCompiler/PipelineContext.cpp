@@ -59,7 +59,7 @@ uint64_t PipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHand
             return i;
         }
     }
-    NES_FATAL_ERROR2("Handler is not registered");
+    NES_FATAL_ERROR("Handler is not registered");
     return 0;
 }
 

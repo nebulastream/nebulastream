@@ -36,7 +36,7 @@ class AttributeSortRuleTest : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AttributeSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup AttributeSortRuleTest test case.");
+        NES_INFO("Setup AttributeSortRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */

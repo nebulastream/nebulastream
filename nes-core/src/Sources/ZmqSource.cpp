@@ -44,22 +44,22 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(successors)),
       host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
-    NES_DEBUG2("ZMQSOURCE: Init ZMQ ZMQSOURCE to  {} : {} /", host, port);
+    NES_DEBUG("ZMQSOURCE: Init ZMQ ZMQSOURCE to  {} : {} /", host, port);
 }
 
 ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
-    NES_DEBUG2("ZmqSource::~ZmqSource()");
+    NES_DEBUG("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source");
+        NES_DEBUG("ZMQSOURCE: Destroy ZMQ Source");
     } else {
         NES_ASSERT2_FMT(false, "ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
-    NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source");
+    NES_DEBUG("ZMQSOURCE: Destroy ZMQ Source");
 }
 
 std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
-    NES_DEBUG2("ZMQSource: receiveData ", this->toString());
+    NES_DEBUG("ZMQSource: receiveData ", this->toString());
     if (connect()) {
         try {
 
@@ -69,37 +69,37 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
 
             // TODO: Clarify following comment: envelope - not needed at the moment
             if (auto const receivedSize = socket.recv(metadata).value_or(0); receivedSize != metadataSize) {
-                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", metadataSize, receivedSize);
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", metadataSize, receivedSize);
                 return std::nullopt;
             }
 
             auto buffer = bufferManager->getBufferBlocking();
             buffer.setNumberOfTuples(static_cast<uint64_t*>(metadata.data())[0]);
             buffer.setWatermark(static_cast<uint64_t*>(metadata.data())[1]);
-            NES_DEBUG2("ZMQSource received #tups  {}  watermark= {}", buffer.getNumberOfTuples(), buffer.getWatermark());
+            NES_DEBUG("ZMQSource received #tups  {}  watermark= {}", buffer.getNumberOfTuples(), buffer.getWatermark());
 
             // Receive payload
             // XXX: I guess we don't actually know the size here, it would be nice to be able to check that here
             zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
-                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}",
+                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}",
                            buffer.getBufferSize(),
                            receivedSize.has_value());
                 return std::nullopt;
             } else {
-                NES_DEBUG2("ZMQSource: received buffer of size  {}", receivedSize.has_value());
+                NES_DEBUG("ZMQSource: received buffer of size  {}", receivedSize.has_value());
                 return buffer;
             }
 
         } catch (const zmq::error_t& ex) {
-            NES_ERROR2("ZMQSOURCE error: {}", ex.what());
+            NES_ERROR("ZMQSOURCE error: {}", ex.what());
             return std::nullopt;
         } catch (...) {
-            NES_ERROR2("ZMQSOURCE general error");
+            NES_ERROR("ZMQSOURCE general error");
             return std::nullopt;
         }
     } else {
-        NES_ERROR2("ZMQSOURCE: Not connected!");
+        NES_ERROR("ZMQSOURCE: Not connected!");
         return std::nullopt;
     }
 }
@@ -115,38 +115,38 @@ std::string ZmqSource::toString() const {
 
 bool ZmqSource::connect() {
     if (!connected) {
-        NES_DEBUG2("ZMQSOURCE was !conncect now connect: connected");
+        NES_DEBUG("ZMQSOURCE was !conncect now connect: connected");
         if (host == "localhost") {
             host = "*";
         }
         auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-        NES_DEBUG2("ZMQSOURCE use address {}", address);
+        NES_DEBUG("ZMQSOURCE use address {}", address);
         try {
             socket.set(zmq::sockopt::linger, 0);
             socket.bind(address.c_str());
-            NES_DEBUG2("ZMQSOURCE: set connected true");
+            NES_DEBUG("ZMQSOURCE: set connected true");
             connected = true;
         } catch (const zmq::error_t& ex) {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR2("ZMQSOURCE ERROR: {}", ex.what());
-                NES_DEBUG2("ZMQSOURCE: set connected false");
+                NES_ERROR("ZMQSOURCE ERROR: {}", ex.what());
+                NES_DEBUG("ZMQSOURCE: set connected false");
             }
             connected = false;
         }
     }
 
     if (connected) {
-        NES_DEBUG2("ZMQSOURCE: connected");
+        NES_DEBUG("ZMQSOURCE: connected");
     } else {
-        NES_DEBUG2("Exception: ZMQSOURCE: NOT connected");
+        NES_DEBUG("Exception: ZMQSOURCE: NOT connected");
     }
     return connected;
 }
 
 bool ZmqSource::disconnect() {
-    NES_DEBUG2("ZmqSource::disconnect() connected={}", connected);
+    NES_DEBUG("ZmqSource::disconnect() connected={}", connected);
     if (connected) {
         // we put assert here because it d be called anyway from the shutdown method
         // that we commented out
@@ -158,9 +158,9 @@ bool ZmqSource::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG2("ZMQSOURCE: disconnected");
+        NES_DEBUG("ZMQSOURCE: disconnected");
     } else {
-        NES_DEBUG2("ZMQSOURCE: NOT disconnected");
+        NES_DEBUG("ZMQSOURCE: NOT disconnected");
     }
     return !connected;
 }

@@ -33,10 +33,10 @@ class MultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MultiWorkerTest test class.");
+        NES_INFO("Setup MultiWorkerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down MultiWorkerTest class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
 };
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
@@ -322,14 +322,14 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_DEBUG2("Starting coordinator");
+    NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("Coordinator started successfully");
+    NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with no configured workerId
-    NES_DEBUG2("Starting worker 1");
+    NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -337,10 +337,10 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
     EXPECT_EQ(wrk1->getWorkerId(), 2u);
-    NES_DEBUG2("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     // start worker 2, with no configured workerId
-    NES_DEBUG2("Starting worker 2");
+    NES_DEBUG("Starting worker 2");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
@@ -348,19 +348,19 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     EXPECT_TRUE(retStart2);
     // expected behavior: worker 2 gets assigned the next available workerId, 3
     EXPECT_EQ(wrk2->getWorkerId(), 3u);
-    NES_DEBUG2("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
+    NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
 
     // stop worker 1
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
-    NES_DEBUG2("Worker 1 stopped successfully");
+    NES_DEBUG("Worker 1 stopped successfully");
 
-    NES_DEBUG2("Stopping worker 2");
+    NES_DEBUG("Stopping worker 2");
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("Stopping coordinator");
+    NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
@@ -370,14 +370,14 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_DEBUG2("Starting coordinator");
+    NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("Coordinator started successfully");
+    NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with no configured workerId
-    NES_DEBUG2("Starting worker 1");
+    NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -385,9 +385,9 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
     EXPECT_EQ(wrk1->getWorkerId(), 2u);
-    NES_DEBUG2("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
-    NES_DEBUG2("Starting another worker with the workerId of an active worker");
+    NES_DEBUG("Starting another worker with the workerId of an active worker");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
     wrkConf2->workerId = 2u;
@@ -396,21 +396,21 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     EXPECT_TRUE(retStart2copy);
     // expected behavior: this workerId belongs to an active worker, therefore the next available workerId will be assigned
     EXPECT_EQ(wrk2copy->getWorkerId(), 3u);
-    NES_DEBUG2("Worker 2 started successfully with workerId {}", wrk2copy->getWorkerId());
+    NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2copy->getWorkerId());
 
     // stop worker 1
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
-    NES_DEBUG2("Worker 1 stopped successfully");
+    NES_DEBUG("Worker 1 stopped successfully");
 
     // stop worker 2
-    NES_DEBUG2("Stopping worker 2");
+    NES_DEBUG("Stopping worker 2");
     bool retStopWrk2 = wrk2copy->stop(false);
     EXPECT_TRUE(retStopWrk2);
-    NES_DEBUG2("Worker 2 stopped successfully");
+    NES_DEBUG("Worker 2 stopped successfully");
 
-    NES_DEBUG2("Stopping coordinator");
+    NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
@@ -420,14 +420,14 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToInactiveWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_DEBUG2("Starting coordinator");
+    NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("Coordinator started successfully");
+    NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with no configured workerId
-    NES_DEBUG2("Starting worker 1");
+    NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -435,18 +435,18 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToInactiveWorker) {
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
     EXPECT_EQ(wrk1->getWorkerId(), 2u);
-    NES_DEBUG2("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     // stop worker 1
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
-    NES_DEBUG2("Worker 1 stopped successfully");
+    NES_DEBUG("Worker 1 stopped successfully");
 
     // wait one second to make sure the workers failure is seen
     usleep(1000000);
 
-    NES_DEBUG2("Restarting worker 1");
+    NES_DEBUG("Restarting worker 1");
     WorkerConfigurationPtr wrkConf1restart = WorkerConfiguration::create();
     wrkConf1restart->coordinatorPort = port;
     wrkConf1restart->workerId = 2u;
@@ -457,15 +457,15 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToInactiveWorker) {
     // expected behavior: worker 1 restarts with the same workerId that was initially assigned, 2
     EXPECT_TRUE(connectedAfterRestart);
     EXPECT_EQ(wrk1restart->getWorkerId(), 2u);
-    NES_DEBUG2("Worker1 started successfully with workerId {}", wrk1restart->getWorkerId());
+    NES_DEBUG("Worker1 started successfully with workerId {}", wrk1restart->getWorkerId());
 
     // stop worker 1
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk2 = wrk1restart->stop(false);
     EXPECT_TRUE(retStopWrk2);
-    NES_DEBUG2("Worker 1 stopped successfully");
+    NES_DEBUG("Worker 1 stopped successfully");
 
-    NES_DEBUG2("Stopping coordinator");
+    NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
@@ -475,14 +475,14 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_DEBUG2("Starting coordinator");
+    NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("Coordinator started successfully");
+    NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with a configured workerId
-    NES_DEBUG2("Starting worker 1");
+    NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerId = 123;
@@ -491,13 +491,13 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
     EXPECT_EQ(wrk1->getWorkerId(), 2u);
-    NES_DEBUG2("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("Stopping coordinator");
+    NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
@@ -508,14 +508,14 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_DEBUG2("Starting coordinator");
+    NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("Coordinator started successfully");
+    NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with a configured workerId
-    NES_DEBUG2("Starting worker 1");
+    NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerId = 2;
@@ -524,10 +524,10 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
     EXPECT_EQ(wrk1->getWorkerId(), 2u);
-    NES_DEBUG2("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     // start worker 2, with no configured workerId
-    NES_DEBUG2("Starting worker 2");
+    NES_DEBUG("Starting worker 2");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
@@ -535,17 +535,17 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     EXPECT_TRUE(retStart2);
     // expected behavior: worker 2 gets assigned the next available workerId, 3
     EXPECT_EQ(wrk2->getWorkerId(), 3u);
-    NES_DEBUG2("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
+    NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
 
-    NES_DEBUG2("Stopping worker 1");
+    NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("Stopping worker 2");
+    NES_DEBUG("Stopping worker 2");
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("Stopping coordinator");
+    NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }

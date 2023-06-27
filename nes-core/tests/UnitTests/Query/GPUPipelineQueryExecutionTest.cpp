@@ -89,7 +89,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
+        NES_DEBUG("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
@@ -622,7 +622,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
         for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
             // id
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
-            NES_DEBUG2("expected: {} actual: {}", (recordIndex % 2) + 42, resultRecordValueFields[recordIndex]);
+            NES_DEBUG("expected: {} actual: {}", (recordIndex % 2) + 42, resultRecordValueFields[recordIndex]);
         }
     } else {
         FAIL();

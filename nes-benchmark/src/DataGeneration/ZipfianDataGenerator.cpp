@@ -39,7 +39,7 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
     createdBuffers.reserve(numberOfBuffers);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
-    NES_INFO2("Zipfian source mode");
+    NES_INFO("Zipfian source mode");
 
     // Prints every five percent the current progress
     uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
@@ -86,14 +86,14 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
         }
 
         if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO2("ZipfianDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
+            NES_INFO("ZipfianDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         createdBuffers.emplace_back(bufferRef);
     }
 
-    NES_INFO2("Created all buffers!");
+    NES_INFO("Created all buffers!");
     return createdBuffers;
 }
 std::string ZipfianDataGenerator::toString() {

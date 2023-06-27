@@ -35,40 +35,40 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for RuntimeMetrics. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for RuntimeMetrics. Returning true");
         return true;
     }
 
     if (metrics.wallTimeNs <= 0) {
-        NES_ERROR2("MetricValidator: Wrong wallTimeNs.");
+        NES_ERROR("MetricValidator: Wrong wallTimeNs.");
         check = false;
     }
     if (!(metrics.blkioBytesWritten >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong blkioBytesWritten.");
+        NES_ERROR("MetricValidator: Wrong blkioBytesWritten.");
         check = false;
     }
     if (!(metrics.blkioBytesRead >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong blkioBytesRead.");
+        NES_ERROR("MetricValidator: Wrong blkioBytesRead.");
         check = false;
     }
     if (!(metrics.memoryUsageInBytes >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong memoryUsageInBytes.");
+        NES_ERROR("MetricValidator: Wrong memoryUsageInBytes.");
         check = false;
     }
     if (!(metrics.cpuLoadInJiffies >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong cpuLoadInJiffies.");
+        NES_ERROR("MetricValidator: Wrong cpuLoadInJiffies.");
         check = false;
     }
     if (!(metrics.longCoord >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong longCoord.");
+        NES_ERROR("MetricValidator: Wrong longCoord.");
         check = false;
     }
     if (!(metrics.latCoord >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong latCoord.");
+        NES_ERROR("MetricValidator: Wrong latCoord.");
         check = false;
     }
     if (!(metrics.batteryStatusInPercent >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong batteryStatusInPercent.");
+        NES_ERROR("MetricValidator: Wrong batteryStatusInPercent.");
         check = false;
     }
     return check;
@@ -78,36 +78,36 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for NodeRegistrationMetrics. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for NodeRegistrationMetrics. Returning true");
         return true;
     }
 
     if (!(metrics.cpuQuotaUS >= -1)) {
-        NES_ERROR2("MetricValidator: Wrong cpuQuotaUS.");
+        NES_ERROR("MetricValidator: Wrong cpuQuotaUS.");
         check = false;
     }
     if (!(metrics.cpuPeriodUS >= -1)) {
-        NES_ERROR2("MetricValidator: Wrong cpuPeriodUS.");
+        NES_ERROR("MetricValidator: Wrong cpuPeriodUS.");
         check = false;
     }
     if (!(metrics.totalCPUJiffies > 0)) {
-        NES_ERROR2("MetricValidator: Wrong totalCPUJiffies.");
+        NES_ERROR("MetricValidator: Wrong totalCPUJiffies.");
         check = false;
     }
     if (!(metrics.cpuCoreNum > 0)) {
-        NES_ERROR2("MetricValidator: Wrong cpuCoreNum.");
+        NES_ERROR("MetricValidator: Wrong cpuCoreNum.");
         check = false;
     }
     if (!(metrics.totalMemoryBytes >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong totalMemoryBytes.");
+        NES_ERROR("MetricValidator: Wrong totalMemoryBytes.");
         check = false;
     }
     if (metrics.hasBattery) {
-        NES_ERROR2("MetricValidator: Wrong hasBattery.");
+        NES_ERROR("MetricValidator: Wrong hasBattery.");
         check = false;
     }
     if (metrics.isMoving) {
-        NES_ERROR2("MetricValidator: Wrong isMoving.");
+        NES_ERROR("MetricValidator: Wrong isMoving.");
         check = false;
     }
     return check;
@@ -117,22 +117,22 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for CpuMetricsWrapper. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for CpuMetricsWrapper. Returning true");
         return true;
     }
 
     if (cpuMetrics.size() <= 0) {
-        NES_ERROR2("MetricValidator: Wrong getNumCores.");
+        NES_ERROR("MetricValidator: Wrong getNumCores.");
         check = false;
     }
     for (uint64_t i = 0; i < cpuMetrics.size(); i++) {
         if (!(cpuMetrics.getValue(i).user > 0)) {
-            NES_ERROR2("MetricValidator: Wrong cpuMetrics.getValue(i).user.");
+            NES_ERROR("MetricValidator: Wrong cpuMetrics.getValue(i).user.");
             check = false;
         }
     }
     if (!(cpuMetrics.getTotal().user > 0)) {
-        NES_ERROR2("MetricValidator: Wrong cpuMetrics.getTotal().user.");
+        NES_ERROR("MetricValidator: Wrong cpuMetrics.getTotal().user.");
         check = false;
     }
     return check;
@@ -143,12 +143,12 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for NetworkMetricsWrapper. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for NetworkMetricsWrapper. Returning true");
         return true;
     }
 
     if (networkMetrics.getInterfaceNames().empty()) {
-        NES_ERROR2("MetricValidator: Wrong getInterfaceNames().");
+        NES_ERROR("MetricValidator: Wrong getInterfaceNames().");
         check = false;
     }
     return check;
@@ -158,12 +158,12 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for MemoryMetrics. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for MemoryMetrics. Returning true");
         return true;
     }
 
     if (!(memoryMetrics.FREE_RAM > 0)) {
-        NES_ERROR2("MetricValidator: Wrong FREE_RAM.");
+        NES_ERROR("MetricValidator: Wrong FREE_RAM.");
         check = false;
     }
     return check;
@@ -173,12 +173,12 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for DiskMetrics. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics. Returning true");
         return true;
     }
 
     if (!(diskMetrics.fBavail >= 0)) {
-        NES_ERROR2("MetricValidator: Wrong fBavail.");
+        NES_ERROR("MetricValidator: Wrong fBavail.");
         check = false;
     }
     return check;
@@ -192,7 +192,7 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     bool check = true;
 
     if (!storedMetrics->contains(expectedType)) {
-        NES_ERROR2("MetricValidator: Metrics for node {} are missing type {}", expectedNodeId, toString(expectedType));
+        NES_ERROR("MetricValidator: Metrics for node {} are missing type {}", expectedNodeId, toString(expectedType));
         return false;
     }
 
@@ -200,9 +200,9 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     Monitoring::TimestampMetricPtr pairedNetworkMetric = metricVec->at(0);
     Monitoring::MetricPtr retMetric = pairedNetworkMetric->second;
 
-    NES_INFO2("MetricValidator: Stored metrics for ID {}: {}", expectedNodeId, Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricValidator: Stored metrics for ID {}: {}", expectedNodeId, Monitoring::MetricUtils::toJson(storedMetrics));
     if (retMetric->getMetricType() != expectedType) {
-        NES_ERROR2("MetricValidator: MetricType is not as expected {} != {}",
+        NES_ERROR("MetricValidator: MetricType is not as expected {} != {}",
                    toString(retMetric->getMetricType()),
                    toString(expectedType));
         check = false;
@@ -217,7 +217,7 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     }
 
     if (storedMetrics->size() != expectedSize) {
-        NES_ERROR2("MetricValidator: Stored metrics do not match expected size {} != {}", storedMetrics->size(), expectedSize);
+        NES_ERROR("MetricValidator: Stored metrics do not match expected size {} != {}", storedMetrics->size(), expectedSize);
         check = false;
     }
     return check;
@@ -227,12 +227,12 @@ bool MetricValidator::isValidAll(Monitoring::AbstractSystemResourcesReaderPtr re
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used. Returning true");
         return true;
     }
 
     if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::RegistrationMetric)))) {
-        NES_ERROR2("MetricValidator: Missing field registration");
+        NES_ERROR("MetricValidator: Missing field registration");
         check = false;
     } else {
         check = isValidRegistrationMetrics(reader,
@@ -240,44 +240,44 @@ bool MetricValidator::isValidAll(Monitoring::AbstractSystemResourcesReaderPtr re
     }
 
     if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric)))) {
-        NES_ERROR2("MetricValidator: Missing field disk");
+        NES_ERROR("MetricValidator: Missing field disk");
         check = false;
     } else {
         if (!(json[std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric))].size() == 6U)) {
-            NES_ERROR2("MetricValidator: Values for disk missing");
+            NES_ERROR("MetricValidator: Values for disk missing");
             check = false;
         }
     }
 
     if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedCpuMetrics)))) {
-        NES_ERROR2("MetricValidator: Missing field wrapped cpu");
+        NES_ERROR("MetricValidator: Missing field wrapped cpu");
         check = false;
     } else {
         auto numCpuFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedCpuMetrics))].size();
         if (numCpuFields <= 1) {
-            NES_ERROR2("MetricValidator: Values for wrapped_cpu missing");
+            NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
             check = false;
         }
     }
 
     if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedNetworkMetrics)))) {
-        NES_ERROR2("MetricValidator: Missing field wrapped network");
+        NES_ERROR("MetricValidator: Missing field wrapped network");
         check = false;
     } else {
         auto numFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedNetworkMetrics))].size();
         if (numFields < 1) {
-            NES_ERROR2("MetricValidator: Values for wrapped_network missing");
+            NES_ERROR("MetricValidator: Values for wrapped_network missing");
             check = false;
         }
     }
 
     if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::MemoryMetric)))) {
-        NES_ERROR2("MetricValidator: Missing field memory");
+        NES_ERROR("MetricValidator: Missing field memory");
         check = false;
     } else {
         auto numFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::MemoryMetric))].size();
         if (numFields < 13) {
-            NES_ERROR2("MetricValidator: Values for wrapped_network missing");
+            NES_ERROR("MetricValidator: Values for wrapped_network missing");
             check = false;
         }
     }
@@ -286,57 +286,57 @@ bool MetricValidator::isValidAll(Monitoring::AbstractSystemResourcesReaderPtr re
 
 bool MetricValidator::isValidAllStorage(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json) {
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used. Returning true");
+        NES_WARNING("MetricValidator: AbstractReader used. Returning true");
         return true;
     }
 
     bool check = true;
     if (!json.contains("registration")) {
-        NES_ERROR2("MetricValidator: Missing field registration");
+        NES_ERROR("MetricValidator: Missing field registration");
         check = false;
     } else {
         check = isValidRegistrationMetrics(reader, json["registration"][0]["value"]);
     }
 
     if (!json.contains("disk")) {
-        NES_ERROR2("MetricValidator: Missing field disk");
+        NES_ERROR("MetricValidator: Missing field disk");
         check = false;
     } else {
         if (!(json["disk"][0]["value"].size() == 6U)) {
-            NES_ERROR2("MetricValidator: Values for disk missing");
+            NES_ERROR("MetricValidator: Values for disk missing");
             check = false;
         }
     }
 
     if (!json.contains("wrapped_cpu")) {
-        NES_ERROR2("MetricValidator: Missing field wrapped cpu");
+        NES_ERROR("MetricValidator: Missing field wrapped cpu");
         check = false;
     } else {
         auto numCpuFields = json["wrapped_cpu"][0]["value"].size();
         if (numCpuFields <= 1) {
-            NES_ERROR2("MetricValidator: Values for wrapped_cpu missing");
+            NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
             check = false;
         }
     }
 
     if (!json.contains("wrapped_network")) {
-        NES_ERROR2("MetricValidator: Missing field wrapped network");
+        NES_ERROR("MetricValidator: Missing field wrapped network");
         check = false;
     } else {
         auto numFields = json["wrapped_network"][0]["value"].size();
         if (numFields < 1) {
-            NES_ERROR2("MetricValidator: Values for wrapped_network missing");
+            NES_ERROR("MetricValidator: Values for wrapped_network missing");
             check = false;
         }
     }
 
     if (!json.contains("memory")) {
-        NES_ERROR2("MetricValidator: Missing field memory");
+        NES_ERROR("MetricValidator: Missing field memory");
         check = false;
     } else {
         auto numFields = json["memory"][0]["value"].size();
         if (numFields < 13) {
-            NES_ERROR2("MetricValidator: Values for wrapped_network missing");
+            NES_ERROR("MetricValidator: Values for wrapped_network missing");
             check = false;
         }
     }
@@ -347,47 +347,47 @@ bool MetricValidator::isValidRegistrationMetrics(Monitoring::AbstractSystemResou
     bool check = true;
 
     if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-        NES_WARNING2("MetricValidator: AbstractReader used for DiskMetrics.");
+        NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics.");
         auto numFields = json.size();
         if (numFields != Monitoring::RegistrationMetrics::getSchema("")->getSize()) {
-            NES_ERROR2("MetricValidator: Entries for registration metrics missing");
+            NES_ERROR("MetricValidator: Entries for registration metrics missing");
             return false;
         }
         return true;
     }
 
     if (!(json.contains("CpuCoreNum"))) {
-        NES_ERROR2("MetricValidator: Wrong CpuCoreNum.");
+        NES_ERROR("MetricValidator: Wrong CpuCoreNum.");
         check = false;
     }
 
     if (!(json.contains("CpuPeriodUS"))) {
-        NES_ERROR2("MetricValidator: Wrong CpuPeriodUS.");
+        NES_ERROR("MetricValidator: Wrong CpuPeriodUS.");
         check = false;
     }
 
     if (!(json.contains("CpuQuotaUS"))) {
-        NES_ERROR2("MetricValidator: Wrong CpuQuotaUS.");
+        NES_ERROR("MetricValidator: Wrong CpuQuotaUS.");
         check = false;
     }
 
     if (!(json.contains("HasBattery"))) {
-        NES_ERROR2("MetricValidator: Wrong HasBattery.");
+        NES_ERROR("MetricValidator: Wrong HasBattery.");
         check = false;
     }
 
     if (!(json.contains("IsMoving"))) {
-        NES_ERROR2("MetricValidator: Wrong IsMoving.");
+        NES_ERROR("MetricValidator: Wrong IsMoving.");
         check = false;
     }
 
     if (!(json.contains("TotalCPUJiffies"))) {
-        NES_ERROR2("MetricValidator: Wrong TotalCPUJiffies.");
+        NES_ERROR("MetricValidator: Wrong TotalCPUJiffies.");
         check = false;
     }
 
     if (!(json.contains("TotalMemory"))) {
-        NES_ERROR2("MetricValidator: Wrong TotalMemory.");
+        NES_ERROR("MetricValidator: Wrong TotalMemory.");
         check = false;
     }
 
@@ -398,7 +398,7 @@ bool MetricValidator::checkNodeIds(nlohmann::json json, uint64_t nodeId) {
     bool check = true;
     for (auto& [key, val] : json.items()) {
         if (json[key].contains("NODE_ID") && json[key]["NODE_ID"] != nodeId) {
-            NES_ERROR2("MetricValidator: Wrong node ID for {} where {} != {}", key, json[key]["NODE_ID"], nodeId);
+            NES_ERROR("MetricValidator: Wrong node ID for {} where {} != {}", key, json[key]["NODE_ID"], nodeId);
             check = false;
         }
     }
@@ -423,7 +423,7 @@ bool MetricValidator::MetricValidator::checkEntriesOfStream(std::set<std::string
         check = false;
         for (int i = 0; i < static_cast<int>(jsons.size()); i++) {
             auto json = jsons[i];
-            NES_DEBUG2("Json Values of {}. entry: {}", std::to_string(i), json.dump());
+            NES_DEBUG("Json Values of {}. entry: {}", std::to_string(i), json.dump());
             for (auto& [key, val] : json.items()) {
                 if (key == "logical_stream" && val == elem) {
                     check = true;
@@ -473,12 +473,12 @@ bool MetricValidator::waitForMonitoringStreamsOrTimeout(std::set<std::string> mo
                                                         uint64_t restPort) {
     for (int i = 0; i < maxTimeout; i++) {
         auto json = TestUtils::makeMonitoringRestCall("storage", std::to_string(restPort));
-        NES_INFO2("MetricValidator: Testing metric call {}", json);
+        NES_INFO("MetricValidator: Testing metric call {}", json);
         bool missing = false;
         for (uint64_t nodeId = 1; nodeId <= json.size(); nodeId++) {
             for (auto stream : monitoringStreams) {
                 if (!json[std::to_string(nodeId)].contains(stream)) {
-                    NES_ERROR2("MetricValidator: Missing metric {} for node {} ", stream, nodeId);
+                    NES_ERROR("MetricValidator: Missing metric {} for node {} ", stream, nodeId);
                     missing = true;
                     break;
                 }
@@ -491,11 +491,11 @@ bool MetricValidator::waitForMonitoringStreamsOrTimeout(std::set<std::string> mo
         if (missing) {
             std::this_thread::sleep_for(std::chrono::seconds(2));
         } else {
-            NES_INFO2("MetricValidator: All metrics available");
+            NES_INFO("MetricValidator: All metrics available");
             return true;
         }
     }
-    NES_ERROR2("MetricValidator: Timeout passed");
+    NES_ERROR("MetricValidator: Timeout passed");
     return false;
 }
 

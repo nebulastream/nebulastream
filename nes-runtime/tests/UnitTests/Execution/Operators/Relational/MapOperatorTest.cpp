@@ -30,11 +30,11 @@ class MapOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MapOperatorTest test class.");
+        NES_INFO("Setup MapOperatorTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down MapOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down MapOperatorTest test class."); }
 };
 
 /**

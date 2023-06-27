@@ -96,7 +96,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             solver.add(*(qsp->getConditions()));
             std::stringstream s;
             s << solver;
-            NES_INFO2("{}", s.str());
+            NES_INFO("{}", s.str());
             // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
             if (solver.check() == z3::unsat) {
                 auto predicateStr = filterOp->getPredicate()->toString();
@@ -104,7 +104,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             }
         }
     } catch (SignatureComputationException& ex) {
-        NES_WARNING2("Unable to compute signature due to {}", ex.what());
+        NES_WARNING("Unable to compute signature due to {}", ex.what());
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
         throw InvalidQueryException(errorMessage + "\n");
@@ -226,7 +226,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
                 }
             }
         }
-        NES_DEBUG2("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
+        NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
         if (commonStamp->isUndefined()) {
             throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types "
                                         "cannot be mixed as input to the tensorflow model.");

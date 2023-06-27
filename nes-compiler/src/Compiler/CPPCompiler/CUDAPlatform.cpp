@@ -25,7 +25,7 @@ CUDAPlatform::CUDAPlatform(const std::string& cudaSdkPath) : cudaSdkPath(cudaSdk
     }
 
     if (!std::filesystem::exists(cudaSdkPath)) {
-        NES_ERROR("CUDA SDK path does not exist: " + cudaSdkPath);
+        NES_ERROR("CUDA SDK path does not exist: {}", cudaSdkPath);
         throw CompilerException("CUDA SDK path does not exist: " + cudaSdkPath);
     }
 }

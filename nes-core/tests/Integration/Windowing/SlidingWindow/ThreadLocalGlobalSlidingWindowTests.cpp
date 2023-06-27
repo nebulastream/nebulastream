@@ -49,7 +49,7 @@ class SingleNodeThreadLocalGlobalSlidingWindowTests : public Testing::NESBaseTes
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SingleNodeThreadLocalGlobalSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SingleNodeThreadLocalGlobalSlidingWindowTests test class.");
+        NES_INFO("Setup SingleNodeThreadLocalGlobalSlidingWindowTests test class.");
     }
 
     void SetUp() override {
@@ -129,7 +129,7 @@ class DataGenerator {
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
                 }
                 counter++;
-                NES_DEBUG2("Counter: {}", counter)
+                NES_DEBUG("Counter: {}", counter)
                 buffer.setNumberOfTuples(numberOfTuplesToProduce);
             },
             numberOfBuffers,

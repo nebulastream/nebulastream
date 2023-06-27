@@ -352,7 +352,7 @@ TEST_F(TopologyTest, printGraph) {
         }
     }
 
-    NES_INFO2(" current plan from topo=");
+    NES_INFO(" current plan from topo=");
     topology->print();
     SUCCEED();
 }

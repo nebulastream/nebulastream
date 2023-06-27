@@ -37,14 +37,14 @@ class QueryPlanBuilderTest : public Testing::TestWithErrorHandling {
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("QueryPlanBuilderTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryPlanTest test case.");
+        NES_INFO("Setup QueryPlanTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO2("Setup QueryPlanBuilderTest test case."); }
+    void TearDown() override { NES_INFO("Setup QueryPlanBuilderTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down QueryPlanBuilderTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryPlanBuilderTest test class."); }
 };
 
 TEST_F(QueryPlanBuilderTest, testHasOperator) {

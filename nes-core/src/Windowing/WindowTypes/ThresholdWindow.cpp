@@ -50,7 +50,7 @@ const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicat
 uint64_t ThresholdWindow::getMinimumCount() { return minimumCount; }
 
 bool ThresholdWindow::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    NES_INFO2("inferStamp for ThresholdWindow")
+    NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(typeInferencePhaseContext, schema);
     if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("the threshold expression is not a valid predicate");

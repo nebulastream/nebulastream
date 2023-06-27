@@ -45,7 +45,7 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     if (resultBuffers.size() == expectedBuffer) {
         completed.set_value(expectedBuffer);
     } else if (resultBuffers.size() > expectedBuffer) {
-        NES_ERROR2("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), expectedBuffer);
+        NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), expectedBuffer);
         EXPECT_TRUE(false);
     }
     return true;
@@ -73,7 +73,7 @@ uint32_t TestSink::getNumberOfResultBuffers() {
 SinkMediumTypes TestSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
 void TestSink::cleanupBuffers() {
-    NES_DEBUG2("TestSink: cleanupBuffers()");
+    NES_DEBUG("TestSink: cleanupBuffers()");
     std::unique_lock lock(m);
     resultBuffers.clear();
 }

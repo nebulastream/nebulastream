@@ -42,7 +42,7 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     std::string timeString = t->c_str();
     if (timeString.find('T') != std::string::npos) {
         std::sscanf(t->c_str(), "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);
-        NES_DEBUG2(" the year {} the month {} the day {} the hour {} the minute {} and the second {}",
+        NES_DEBUG(" the year {} the month {} the day {} the hour {} the minute {} and the second {}",
                    year,
                    month,
                    day,
@@ -51,7 +51,7 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
                    second);
     } else {
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
-        NES_DEBUG2(" the year {} the month {} and the day {}", year, month, day);
+        NES_DEBUG(" the year {} the month {} and the day {}", year, month, day);
     }
     //TODO: Currently, we only support this format in a rather naive way, with issue #3616 we want to enhance the format, e.g., by
     // distinguishing Date and Time input strings or support user-defined formats.
@@ -167,7 +167,7 @@ TextValue* weekdayNameproxy(int64_t milliseconds) {
     // Return the name of the day of the week
     auto weekdayName = weekdayNames[dayOfWeek];
     //Value<TextValue> valueweekdayname = (TextValue)weekdayName);
-    NES_TRACE2("Find the weekday name {}", weekdayName);
+    NES_TRACE("Find the weekday name {}", weekdayName);
     NES::Nautilus::TextValue* t = NES::Nautilus::TextValue::create(weekdayName);
     return t;
 }

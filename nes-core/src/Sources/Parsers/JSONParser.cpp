@@ -34,7 +34,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,
                                               const Runtime::BufferManagerPtr& bufferManager) {
-    NES_TRACE2("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);
+    NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);
     std::vector<std::string> helperToken;
     // extract values as strings from JSON message - should be improved with JSON library
     nlohmann::json parsedJSONObject;
@@ -52,13 +52,13 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
-            NES_TRACE2("JSONParser::writeInputTupleToTupleBuffer: Current Field:  {}", schemaKeys[fieldIndex]);
+            NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field:  {}", schemaKeys[fieldIndex]);
             jsonValue = parsedJSONObject[schemaKeys[fieldIndex]].dump();
             if (jsonValue == "null") {// key doesn't exist in parsedJSONObject, which is not an error itself
                 return false;
             }
         } catch (nlohmann::json::exception jsonException) {
-            NES_ERROR2("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: {}", jsonException.what());
+            NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: {}", jsonException.what());
             return false;
         }
         //JSON stings are send with " or '. We do not want to save these chars to our strings, though. Hence, we need to trim

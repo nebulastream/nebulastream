@@ -101,7 +101,7 @@ GeneratableOperatorProviderPtr DefaultGeneratableOperatorProvider::create() {
 }
 
 void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
-    NES_DEBUG2("Lower {} to generatable operator", operatorNode->toString());
+    NES_DEBUG("Lower {} to generatable operator", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
         lowerSource(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {

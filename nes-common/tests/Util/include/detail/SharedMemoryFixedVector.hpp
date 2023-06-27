@@ -63,7 +63,7 @@ class SharedMemoryFixedVector {
         } else {
             std::string filePath = std::filesystem::temp_directory_path() / "nes.tests.begin";
             while (!std::filesystem::exists(filePath)) {
-                NES_DEBUG2("File {} does not exists", filePath);
+                NES_DEBUG("File {} does not exists", filePath);
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
         }

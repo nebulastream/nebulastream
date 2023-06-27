@@ -73,7 +73,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{message},
                                  cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -85,7 +85,7 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
             throw ClientException("Invalid response format queryId is not contained in: " + result.dump());
         }
     } else {
-        NES_ERROR2("Received response with error code: {}", response.status_code);
+        NES_ERROR("Received response with error code: {}", response.status_code);
         if (result.contains("message")) {
             throw ClientException(result["message"]);
         } else {
@@ -98,11 +98,11 @@ bool RemoteClient::testConnection() {
     auto path = "connectivity/check";
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
 
     if (result.contains("success")) {
         return result["success"].get<bool>();
@@ -114,7 +114,7 @@ std::string RemoteClient::getQueryPlan(uint64_t queryId) {
     auto path = "query/query-plan?queryId=" + std::to_string(queryId);
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -126,7 +126,7 @@ std::string RemoteClient::getQueryExecutionPlan(uint64_t queryId) {
     auto path = "query/execution-plan?queryId=" + std::to_string(queryId);
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -138,7 +138,7 @@ std::string RemoteClient::getQueryStatus(uint64_t queryId) {
     auto path = "query/query-status?queryId=" + std::to_string(queryId);
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -155,7 +155,7 @@ RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
     auto path = "query/stop-query?queryId="s + std::to_string(queryId);
 
     auto future = cpr::DeleteAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -172,7 +172,7 @@ std::string RemoteClient::getTopology() {
     auto path = "topology";
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -184,7 +184,7 @@ std::string RemoteClient::getQueries() {
 
     nlohmann::json jsonReturn;
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -209,7 +209,7 @@ std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
 
     nlohmann::json jsonReturn;
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -231,7 +231,7 @@ bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& s
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{msg},
                                  cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
@@ -249,7 +249,7 @@ std::string RemoteClient::getLogicalSources() {
 
     nlohmann::json jsonReturn;
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
-    NES_DEBUG2("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);

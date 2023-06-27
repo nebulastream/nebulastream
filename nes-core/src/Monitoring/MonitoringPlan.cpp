@@ -18,7 +18,7 @@
 
 namespace NES::Monitoring {
 MonitoringPlan::MonitoringPlan(const std::set<MetricType>& metrics) : metricTypes(metrics) {
-    NES_DEBUG2("MonitoringPlan: Init with metrics of size {}", metrics.size());
+    NES_DEBUG("MonitoringPlan: Init with metrics of size {}", metrics.size());
 }
 
 MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {

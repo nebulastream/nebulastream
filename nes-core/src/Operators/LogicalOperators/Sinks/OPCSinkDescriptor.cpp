@@ -24,7 +24,7 @@ namespace NES {
 OPCSinkDescriptor::OPCSinkDescriptor(std::string url, UA_NodeId nodeId, std::string user, std::string password)
     : url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {
 
-    NES_DEBUG2("OPCSINKDESCRIPTOR {} : Init OPC Sink descriptor.", this);
+    NES_DEBUG("OPCSINKDESCRIPTOR {} : Init OPC Sink descriptor.", this);
 }
 
 const std::string OPCSinkDescriptor::getUrl() const { return url; }
@@ -44,7 +44,7 @@ std::string OPCSinkDescriptor::toString() const { return "OPCSinkDescriptor()"; 
 
 bool OPCSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<OPCSinkDescriptor>()) {
-        NES_DEBUG2("Instance of {}", other->instanceOf<OPCSinkDescriptor>());
+        NES_DEBUG("Instance of {}", other->instanceOf<OPCSinkDescriptor>());
         return false;
     }
     auto otherSinkDescriptor = other->as<OPCSinkDescriptor>();

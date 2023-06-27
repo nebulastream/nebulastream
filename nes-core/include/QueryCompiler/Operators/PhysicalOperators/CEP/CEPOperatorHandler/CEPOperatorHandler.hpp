@@ -56,7 +56,7 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
-    ~CEPOperatorHandler() override { NES_DEBUG2("~CEPOperatorHandler()"); }
+    ~CEPOperatorHandler() override { NES_DEBUG("~CEPOperatorHandler()"); }
 
     [[maybe_unused]] void incrementCounter();
 

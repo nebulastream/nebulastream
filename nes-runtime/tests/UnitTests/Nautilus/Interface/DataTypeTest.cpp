@@ -28,11 +28,11 @@ class DataTypeTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DataTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup DataTypeTest test class.");
+        NES_INFO("Setup DataTypeTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down DataTypeTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down DataTypeTest test class."); }
 };
 
 TEST_F(DataTypeTest, ConstructValueTest) {

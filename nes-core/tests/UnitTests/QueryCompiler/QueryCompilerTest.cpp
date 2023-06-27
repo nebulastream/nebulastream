@@ -78,7 +78,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryCompilerTest test class.");
+        NES_INFO("Setup QueryCompilerTest test class.");
     }
 
     void SetUp() override {

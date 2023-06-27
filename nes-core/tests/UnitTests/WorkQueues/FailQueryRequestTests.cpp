@@ -70,15 +70,15 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("Fail Query Request Test: Start coordinator");
+    NES_INFO("Fail Query Request Test: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_NE(port, 0UL);
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
-    NES_DEBUG2("Fail Query Request Test: Start worker 1");
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
@@ -93,17 +93,17 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("Fail Query Request Test: Worker1 started successfully");
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO2("Fail Query Request Test: Submit query");
+    NES_INFO("Fail Query Request Test: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG2("query= {}", query);
+    NES_DEBUG("query= {}", query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -112,7 +112,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     auto start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -121,7 +121,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -130,7 +130,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
@@ -139,7 +139,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     start_timestamp = std::chrono::system_clock::now();
     while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
         sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     }
@@ -148,7 +148,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
@@ -170,7 +170,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::FAILED
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not failed yet")
+        NES_DEBUG("query not failed yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::FAILED);
@@ -184,7 +184,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Failed
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not stopped yet")
+        NES_DEBUG("query not stopped yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Failed);
@@ -193,7 +193,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query still running")
+        NES_DEBUG("query still running")
         std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
@@ -203,7 +203,7 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     while (crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId)
                == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query still running")
+        NES_DEBUG("query still running")
         std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(5)));
@@ -220,15 +220,15 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("Fail Query Request Test: Start coordinator");
+    NES_INFO("Fail Query Request Test: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_NE(port, 0UL);
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
-    NES_DEBUG2("Fail Query Request Test: Start worker 1");
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
@@ -243,17 +243,17 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("Fail Query Request Test: Worker1 started successfully");
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO2("Fail Query Request Test: Submit query");
+    NES_INFO("Fail Query Request Test: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG2("query= {}", query);
+    NES_DEBUG("query= {}", query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -262,7 +262,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     auto start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -271,7 +271,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -280,7 +280,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
@@ -289,7 +289,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     start_timestamp = std::chrono::system_clock::now();
     while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
         sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     }
@@ -298,7 +298,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
@@ -329,15 +329,15 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("Fail Query Request Test: Start coordinator");
+    NES_INFO("Fail Query Request Test: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_NE(port, 0UL);
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
-    NES_DEBUG2("Fail Query Request Test: Start worker 1");
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
@@ -352,17 +352,17 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("Fail Query Request Test: Worker1 started successfully");
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO2("Fail Query Request Test: Submit query");
+    NES_INFO("Fail Query Request Test: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG2("query= {}", query);
+    NES_DEBUG("query= {}", query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -371,7 +371,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -380,7 +380,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -389,7 +389,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
@@ -398,7 +398,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     start_timestamp = std::chrono::system_clock::now();
     while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
         sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     }
@@ -407,7 +407,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
@@ -441,15 +441,15 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("Fail Query Request Test: Start coordinator");
+    NES_INFO("Fail Query Request Test: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_NE(port, 0UL);
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
-    NES_DEBUG2("Fail Query Request Test: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
-    NES_DEBUG2("Fail Query Request Test: Start worker 1");
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
@@ -464,17 +464,17 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("Fail Query Request Test: Worker1 started successfully");
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO2("Fail Query Request Test: Submit query");
+    NES_INFO("Fail Query Request Test: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG2("query= {}", query);
+    NES_DEBUG("query= {}", query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -483,7 +483,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     auto start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -492,7 +492,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -501,7 +501,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
@@ -510,7 +510,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     start_timestamp = std::chrono::system_clock::now();
     while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
         sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     }
@@ -519,7 +519,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG2("query not running yet")
+        NES_DEBUG("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
     ASSERT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);

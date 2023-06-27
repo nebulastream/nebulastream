@@ -72,13 +72,13 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
 Nautilus::Interface::ChainedHashMap* BatchJoinHandler::getGlobalHashMap() { return globalMap.get(); }
 
 void BatchJoinHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG2("start BatchJoinHandler");
+    NES_DEBUG("start BatchJoinHandler");
 }
 
 void BatchJoinHandler::stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("shutdown BatchJoinHandler: {}", queryTerminationType);
+    NES_DEBUG("shutdown BatchJoinHandler: {}", queryTerminationType);
 }
-BatchJoinHandler::~BatchJoinHandler() { NES_DEBUG2("~BatchJoinHandler"); }
+BatchJoinHandler::~BatchJoinHandler() { NES_DEBUG("~BatchJoinHandler"); }
 
 void BatchJoinHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 

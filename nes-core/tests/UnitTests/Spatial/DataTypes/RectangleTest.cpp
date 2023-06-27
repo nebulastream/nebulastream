@@ -25,7 +25,7 @@ class RectangleTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RectangleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RectangleTest test class.");
+        NES_INFO("Setup RectangleTest test class.");
     }
 };
 // This tests the rectangle datatype

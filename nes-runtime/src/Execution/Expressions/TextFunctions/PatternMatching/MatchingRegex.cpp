@@ -35,9 +35,9 @@ MatchingRegex::MatchingRegex(const NES::Runtime::Execution::Expressions::Express
 */
 bool regexMatch(TextValue* txt, TextValue* regex, const Boolean& caseSensetive) {
     std::string target = std::string(txt->str(), txt->length());
-    NES_DEBUG2("Received the following source string {}", target);
+    NES_DEBUG("Received the following source string {}", target);
     std::string strPattern = std::string(regex->str(), regex->length());
-    NES_DEBUG2("Received the following source string {}", strPattern);
+    NES_DEBUG("Received the following source string {}", strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
     // would make regex case in sensitive for ILIKE
     if (caseSensetive) {
@@ -62,13 +62,13 @@ Value<> MatchingRegex::execute(NES::Nautilus::Record& record) const {
                               pattern.as<Text>()->getReference(),
                               caseSensitiveFlag.as<Boolean>());
     } else {
-        NES_DEBUG2("{}", text->getType()->toString());
+        NES_DEBUG("{}", text->getType()->toString());
         std::stringstream patternType;
         patternType << pattern->getType();
-        NES_DEBUG2("{}", patternType.str());
+        NES_DEBUG("{}", patternType.str());
         std::stringstream type;
         type << caseSensitiveFlag->getType();
-        NES_DEBUG2("{}", type.str());
+        NES_DEBUG("{}", type.str());
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for case "
                                 "sensitive pattern matching.");
     }

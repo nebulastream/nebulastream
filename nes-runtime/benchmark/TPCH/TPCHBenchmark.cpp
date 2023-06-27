@@ -80,13 +80,13 @@ class BenchmarkRunner {
             runQuery(compileTimeTimer, executionTimeTimer);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
-            NES_INFO2("Run {} compilation time {}, execution time {}",
+            NES_INFO("Run {} compilation time {}, execution time {}",
                       i,
                       compileTimeTimer.getPrintTime(),
                       executionTimeTimer.getPrintTime());
         }
 
-        NES_INFO2("Final {} compilation time {}, execution time {} ",
+        NES_INFO("Final {} compilation time {}, execution time {} ",
                   compiler,
                   (sumCompilation / (double) iterations),
                   (sumExecution / (double) iterations));

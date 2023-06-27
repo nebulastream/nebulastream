@@ -71,7 +71,7 @@ void InferModelOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& r
         } else if (value->isType<Int8>()) {
             FunctionCall("addValueToModel", addValueToModel<int8_t>, Value<UInt32>(i), value.as<Int8>(), inferModelHandler);
         } else {
-            NES_ERROR2("Can not handle inputs other than of type int, bool, float, and double");
+            NES_ERROR("Can not handle inputs other than of type int, bool, float, and double");
         }
     }
 

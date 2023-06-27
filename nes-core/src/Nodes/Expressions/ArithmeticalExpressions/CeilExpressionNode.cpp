@@ -34,7 +34,7 @@ void CeilExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE2("CeilExpressionNode: converted stamp to float: {}", toString());
+    NES_TRACE("CeilExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool CeilExpressionNode::equal(NodePtr const& rhs) const {

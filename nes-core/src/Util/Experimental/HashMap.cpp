@@ -48,7 +48,7 @@ uint64_t Hashmap::setSize(uint64_t nrEntries) {
     mask = capacity - 1;
     auto buffer = bufferManager->getUnpooledBuffer(capacity * sizeof(Entry*));
     if (!buffer.has_value()) {
-        NES_FATAL_ERROR2("No buffer available");
+        NES_FATAL_ERROR("No buffer available");
     }
     this->entryBuffer = buffer.value();
     buffer.reset();

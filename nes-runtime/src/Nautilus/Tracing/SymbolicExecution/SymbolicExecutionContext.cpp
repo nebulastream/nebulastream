@@ -47,7 +47,7 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
         };
         case SymbolicExecutionContext::TagState::SecondVisit: {
             // The tag is in SecondVisit state -> terminate execution.
-            NES_DEBUG2("Trace: early terminate via exception.");
+            NES_DEBUG("Trace: early terminate via exception.");
             throw TraceTerminationException();
         };
     }
@@ -81,7 +81,7 @@ bool SymbolicExecutionContext::shouldContinue() {
             // the target tag of this path was already visited two times, so tracing can skip it.
             std::stringstream first;
             first << element->first;
-            NES_DEBUG2("Skip tag {}", first.str());
+            NES_DEBUG("Skip tag {}", first.str());
             inflightExecutionPaths.pop_front();
         }
     };

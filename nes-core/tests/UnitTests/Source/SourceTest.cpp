@@ -553,11 +553,11 @@ class SourceTest : public Testing::NESBaseTest {
         this->sourceAffinity = std::numeric_limits<uint64_t>::max();
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down SourceTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO2("Setup SourceTest test class.");
+        NES_INFO("Setup SourceTest test class.");
     }
 
     void TearDown() override {
@@ -1489,7 +1489,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
-    NES_DEBUG2("{}", int_schema->toString());
+    NES_DEBUG("{}", int_schema->toString());
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1854,14 +1854,14 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_DEBUG2("E2EBase: Start coordinator");
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
-    NES_DEBUG2("E2EBase: Start worker 1");
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->bufferSizeInBytes = (72);
@@ -1974,20 +1974,20 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 60));
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_DEBUG2("start={} stop={}", start, stop);
+    NES_DEBUG("start={} stop={}", start, stop);
 
-    NES_INFO2("SourceTest: Remove query");
+    NES_INFO("SourceTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG2("E2EBase: Stop worker 1");
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("E2EBase: Stop Coordinator");
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    NES_DEBUG2("E2EBase: Test finished");
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {

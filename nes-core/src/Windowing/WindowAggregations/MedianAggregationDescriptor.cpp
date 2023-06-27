@@ -38,7 +38,7 @@ WindowAggregationPtr MedianAggregationDescriptor::create(FieldAccessExpressionNo
 WindowAggregationPtr MedianAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));
@@ -49,7 +49,7 @@ void MedianAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhase
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {
-        NES_FATAL_ERROR2("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     //Set fully qualified name for the as Field
     auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();

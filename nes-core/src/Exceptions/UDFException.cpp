@@ -19,7 +19,7 @@ namespace NES {
 
 UDFException::UDFException(const std::string& message)
     : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace()), message(message) {
-    NES_ERROR2("{}", message);
+    NES_ERROR("{}", message);
 }
 
 }// namespace NES

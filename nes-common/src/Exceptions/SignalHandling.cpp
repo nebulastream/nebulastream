@@ -60,13 +60,13 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace) {
 }
 
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
-    NES_TRACE2("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
+    NES_TRACE("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
     auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
     invokeErrorHandlers(exception, std::move(stacktrace));
 }
 
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener) {
-    NES_TRACE2("installGlobalErrorListener");
+    NES_TRACE("installGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
     if (listener) {
         globalErrorListeners.emplace_back(listener);
@@ -74,7 +74,7 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener) 
 }
 
 void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener) {
-    NES_TRACE2("removeGlobalErrorListener");
+    NES_TRACE("removeGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
     for (auto it = globalErrorListeners.begin(); it != globalErrorListeners.end(); ++it) {
         if (it->lock().get() == listener.get()) {

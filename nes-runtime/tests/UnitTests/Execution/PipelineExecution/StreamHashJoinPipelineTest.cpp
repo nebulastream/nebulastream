@@ -71,13 +71,13 @@ class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup HashJoinPipelineTest test class.");
+        NES_INFO("Setup HashJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup HashJoinPipelineTest test case.");
+        NES_INFO("Setup HashJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -88,12 +88,12 @@ class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO2("Tear down HashJoinPipelineTest test case.");
+        NES_INFO("Tear down HashJoinPipelineTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down HashJoinPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashJoinPipelineTest test class."); }
 };
 
 void buildLeftAndRightHashTable(std::vector<TupleBuffer>& allBuffersLeft,
@@ -372,11 +372,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                  ->addField("windowIdentifier", BasicType::UINT64);
 
     for (auto& buf : pipelineExecCtxLeft.emittedBuffers) {
-        NES_TRACE2(" pipe left {}", Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE(" pipe left {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     for (auto& buf : pipelineExecCtxRight.emittedBuffers) {
-        NES_TRACE2("pipe right {}", Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE("pipe right {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     // Calling join Sink
@@ -385,7 +385,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                pipelineExecCtxRight.emittedBuffers.begin(),
                                pipelineExecCtxRight.emittedBuffers.end());
 
-    NES_DEBUG2("Calling joinSink for {} buffers", buildEmittedBuffers.size());
+    NES_DEBUG("Calling joinSink for {} buffers", buildEmittedBuffers.size());
     for (auto buf : buildEmittedBuffers) {
         executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
     }
@@ -427,7 +427,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         auto nljBuffer = sortNLJBuffers[i];
         auto hashJoinBuf = sortedMergedEmittedBuffers[i];
 
-        NES_DEBUG2("Comparing nljBuffer\n{} \n and hashJoinBuf\n{}",
+        NES_DEBUG("Comparing nljBuffer\n{} \n and hashJoinBuf\n{}",
                    Util::printTupleBufferAsCSV(nljBuffer, joinSchema),
                    Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
 

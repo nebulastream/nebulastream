@@ -29,17 +29,17 @@ class JaroTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JaroTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup JaroTest test class.");
+        NES_INFO("Setup JaroTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG2("Setup JaroTest test case.")
+        NES_DEBUG("Setup JaroTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down JaccardTest class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down JaccardTest class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };

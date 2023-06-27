@@ -26,10 +26,10 @@ class RequestExecutionExceptionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RequestExecutionException test class.");
+        NES_INFO("Setup RequestExecutionException test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down RequestExecutionException test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down RequestExecutionException test class."); }
 };
 
 /**

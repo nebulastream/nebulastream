@@ -42,13 +42,13 @@ class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("InferModelPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup InferModelPipelineTest test class.");
+        NES_INFO("Setup InferModelPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO2("Setup InferModelPipelineTest test case.");
+        NES_INFO("Setup InferModelPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -58,7 +58,7 @@ class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down InferModelPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down InferModelPipelineTest test class."); }
 };
 
 /**

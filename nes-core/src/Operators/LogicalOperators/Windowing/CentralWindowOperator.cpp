@@ -66,7 +66,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG2("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
+    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
                inputSchema->toString());
 
     // infer type of aggregation
@@ -108,12 +108,12 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     }
 
     for (auto& agg : windowAggregation) {
-        NES_INFO2("Add the following field to the output schema of the GlobalWindow {}",
+        NES_INFO("Add the following field to the output schema of the GlobalWindow {}",
                   agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }//end for
-    NES_INFO2("The final output schema is {}", outputSchema->toString())
+    NES_INFO("The final output schema is {}", outputSchema->toString())
 
     return true;
 }

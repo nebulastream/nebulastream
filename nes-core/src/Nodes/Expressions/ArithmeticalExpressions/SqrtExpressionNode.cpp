@@ -38,7 +38,7 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {
-        NES_ERROR2("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at "
+        NES_ERROR("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at "
                    "run-time.");
     }
 
@@ -47,7 +47,7 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     // increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
-    NES_TRACE2("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
+    NES_TRACE("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
 }
 
 bool SqrtExpressionNode::equal(NodePtr const& rhs) const {

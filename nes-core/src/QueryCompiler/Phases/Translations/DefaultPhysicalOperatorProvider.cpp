@@ -357,7 +357,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         std::string timeStampFieldNameRight = "";
 
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
-            NES_DEBUG2("Skip eventime identification as we use ingestion time");
+            NES_DEBUG("Skip eventime identification as we use ingestion time");
             timeStampFieldNameLeft = "IngestionTime";
             timeStampFieldNameRight = "IngestionTime";
         } else {
@@ -394,7 +394,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             NES_DEBUG("leftSchema:{} rightSchema: {}", leftSchema->toString(), rightSchema->toString());
             NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                        "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
-            NES_DEBUG2("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
+            NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
         }
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
@@ -562,7 +562,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Que
 
 void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const QueryPlanPtr&,
                                                                      const LogicalOperatorNodePtr& operatorNode) {
-    NES_DEBUG2("Create Thread local window aggregation");
+    NES_DEBUG("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -723,7 +723,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
+    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
     if (windowOperator->getInputOriginIds().empty()) {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
@@ -740,7 +740,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             // check different content-based window types
             if (contentBasedWindowType->getContentBasedSubWindowType()
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
-                NES_INFO2("Lower ThresholdWindow");
+                NES_INFO("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =
                     PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                                windowOutputSchema,
@@ -793,7 +793,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
-    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n{}", plan->toString());
+    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n{}", plan->toString());
 }
 
 }// namespace NES::QueryCompilation

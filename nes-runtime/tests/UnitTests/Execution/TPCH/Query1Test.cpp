@@ -48,13 +48,13 @@ class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TPCH_Q1.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO2("Setup TPCH_Q1 test class.");
+        NES_INFO("Setup TPCH_Q1 test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO2("Setup TPCH_Q1 test case.");
+        NES_INFO("Setup TPCH_Q1 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -66,7 +66,7 @@ class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down TPCH_Q6 test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q6 test class."); }
 };
 
 /**
@@ -91,7 +91,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     auto& lineitems = tables[TPCHTable::LineItem];
 
     // process table
-    NES_INFO2("Process {} chunks", lineitems->getChunks().size());
+    NES_INFO("Process {} chunks", lineitems->getChunks().size());
     Timer timer("Q1");
     timer.start();
     auto pipeline1 = plan.getPipeline(0);
@@ -107,7 +107,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     timer.pause();
     std::stringstream timerAsString;
     timerAsString << timer;
-    NES_INFO2("Query Runtime:\n{}", timerAsString.str());
+    NES_INFO("Query Runtime:\n{}", timerAsString.str());
     // compare results
     auto aggregationHandler = pipeline1.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(0);
     // TODO extend for multi thread support

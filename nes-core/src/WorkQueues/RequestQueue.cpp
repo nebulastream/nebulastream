@@ -22,10 +22,10 @@ RequestQueue::RequestQueue(uint64_t batchSize) : newRequestAvailable(false), bat
 
 bool RequestQueue::add(const NESRequestPtr& request) {
     std::unique_lock<std::mutex> lock(requestMutex);
-    NES_INFO2("QueryRequestQueue: Adding a new query request : {}", request->toString());
+    NES_INFO("QueryRequestQueue: Adding a new query request : {}", request->toString());
     //TODO: identify and handle if more than one request for same query exists in the queue
     requestQueue.emplace_back(request);
-    NES_INFO2("QueryCatalog: Marking that new request is available to be scheduled");
+    NES_INFO("QueryCatalog: Marking that new request is available to be scheduled");
     setNewRequestAvailable(true);
     availabilityTrigger.notify_one();
     return true;
@@ -38,7 +38,7 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
     availabilityTrigger.wait(lock, [&] {
         return isNewRequestAvailable();
     });
-    NES_INFO2("QueryRequestQueue: Fetching Queries to Schedule");
+    NES_INFO("QueryRequestQueue: Fetching Queries to Schedule");
     std::vector<NESRequestPtr> queriesToSchedule;
     queriesToSchedule.reserve(batchSize);
     if (!requestQueue.empty()) {
@@ -49,18 +49,18 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
             requestQueue.pop_front();
             currentBatchSize++;
         }
-        NES_INFO2("QueryRequestQueue: Optimizing {} queryIdAndCatalogEntryMapping.", queriesToSchedule.size());
+        NES_INFO("QueryRequestQueue: Optimizing {} queryIdAndCatalogEntryMapping.", queriesToSchedule.size());
         setNewRequestAvailable(!requestQueue.empty());
         return queriesToSchedule;
     }
-    NES_INFO2("QueryRequestQueue: Nothing to schedule.");
+    NES_INFO("QueryRequestQueue: Nothing to schedule.");
     setNewRequestAvailable(!requestQueue.empty());
     return queriesToSchedule;
 }
 
 void RequestQueue::insertPoisonPill() {
     std::unique_lock<std::mutex> lock(requestMutex);
-    NES_INFO2("QueryRequestQueue: Shutdown is called. Inserting Poison pill in the query request queue.");
+    NES_INFO("QueryRequestQueue: Shutdown is called. Inserting Poison pill in the query request queue.");
     setNewRequestAvailable(true);
     availabilityTrigger.notify_one();
 }

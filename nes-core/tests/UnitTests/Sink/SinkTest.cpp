@@ -63,7 +63,7 @@ class SinkTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SinkTest class.");
+        NES_INFO("Setup SinkTest class.");
     }
 
     /* Called before a single test. */
@@ -115,13 +115,13 @@ TEST_F(SinkTest, testCSVFileSink) {
     auto rowLayoutBeforeWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBufferBeforeWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutBeforeWrite, buffer);
     std::string bufferContentBeforeWrite = dynamicTupleBufferBeforeWrite.toString(test_schema);
-    NES_TRACE2("Buffer Content= {}", bufferContentBeforeWrite);
+    NES_TRACE("Buffer Content= {}", bufferContentBeforeWrite);
 
     // get buffer content as string
     auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBufferAfterWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutAfterWrite, buffer);
     std::string bufferContentAfterWrite = dynamicTupleBufferAfterWrite.toString(test_schema);
-    NES_TRACE2("Buffer Content= {}", bufferContentAfterWrite);
+    NES_TRACE("Buffer Content= {}", bufferContentAfterWrite);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -159,7 +159,7 @@ TEST_F(SinkTest, testTextFileSink) {
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE2("Buffer Content= {}", bufferContent);
+    NES_TRACE("Buffer Content= {}", bufferContent);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -189,7 +189,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE2("Buffer Content= {}", bufferContent);
+    NES_TRACE("Buffer Content= {}", bufferContent);
 
     //deserialize schema
     uint64_t idx = path_to_bin_file.rfind('.');
@@ -622,7 +622,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr retMetric = pairedDiskMetric->second;
     Monitoring::DiskMetrics parsedMetrics = retMetric->getValue<Monitoring::DiskMetrics>();
 
-    NES_INFO2("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_TRUE(storedMetrics->size() == 1);
     ASSERT_EQ(parsedMetrics, typedMetric);
 
@@ -633,7 +633,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr retMetricCpu = pairedCpuMetric->second;
     Monitoring::CpuMetricsWrapper parsedMetricsCpu = retMetricCpu->getValue<Monitoring::CpuMetricsWrapper>();
 
-    NES_INFO2("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
+    NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
     ASSERT_EQ(parsedMetricsCpu, typedMetricCpu);
 

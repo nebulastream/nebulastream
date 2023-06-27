@@ -63,7 +63,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
 
 void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs) {
 
-    NES_DEBUG2("SharedQueryPlan: Add the matched operators of query with id {} to the shared query plan.", queryId);
+    NES_DEBUG("SharedQueryPlan: Add the matched operators of query with id {} to the shared query plan.", queryId);
 
     // TODO Handling Fault-Tolerance in case of query merging [#2327]
 
@@ -139,7 +139,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             //set host operator as the upstream operator in the change log
             clEntryUpstreamOperators.insert(hostOperator);
 
-            NES_INFO2("{},    {}", hostOperator->toString(), targetOperator->toString());
+            NES_INFO("{},    {}", hostOperator->toString(), targetOperator->toString());
 
             //fetch all root operator of the target operator to compute downstream operator list for the change log entry
             for (const auto& newRootOperator : targetOperator->getAllRootNodes()) {
@@ -155,7 +155,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 //add host operator as the upstream operator to the downstreamTargetOperator
                 bool success = hostOperator->addParent(downstreamTargetOperator);
 
-                NES_INFO2("{},{}", success, success1);
+                NES_INFO("{},{}", success, success1);
             }
         }
 
@@ -181,7 +181,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             now,
             Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
 
-        NES_INFO2("{}", queryPlan->toString());
+        NES_INFO("{}", queryPlan->toString());
     }
 
     //add the new sink operators as root to the query plan
@@ -197,13 +197,13 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
-    NES_DEBUG2("SharedQueryPlan: Remove the Query Id {} and associated Global Query Nodes with sink operators.", queryId);
+    NES_DEBUG("SharedQueryPlan: Remove the Query Id {} and associated Global Query Nodes with sink operators.", queryId);
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
-        NES_ERROR2("SharedQueryPlan: query id {} is not present in metadata information.", queryId);
+        NES_ERROR("SharedQueryPlan: query id {} is not present in metadata information.", queryId);
         return false;
     }
 
-    NES_TRACE2("SharedQueryPlan: Remove the Global Query Nodes with sink operators for query  {}", queryId);
+    NES_TRACE("SharedQueryPlan: Remove the Global Query Nodes with sink operators for query  {}", queryId);
     std::set<OperatorNodePtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
     for (const auto& sinkOperator : sinkOperatorsToRemove) {
@@ -211,7 +211,7 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
 
         auto upstreamOperators = removeOperator(sinkOperator);
         if (upstreamOperators.empty()) {
-            NES_ERROR2("SharedQueryPlan: unable to remove Root operator from the shared query plan {}", sharedQueryId);
+            NES_ERROR("SharedQueryPlan: unable to remove Root operator from the shared query plan {}", sharedQueryId);
             return false;
         }
         queryPlan->removeAsRootOperator(sinkOperator);
@@ -227,12 +227,12 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
 }
 
 bool SharedQueryPlan::isEmpty() {
-    NES_TRACE2("SharedQueryPlan: Check if Global Query Metadata is empty. Found :  {}", queryIdToSinkOperatorMap.empty());
+    NES_TRACE("SharedQueryPlan: Check if Global Query Metadata is empty. Found :  {}", queryIdToSinkOperatorMap.empty());
     return queryIdToSinkOperatorMap.empty();
 }
 
 std::vector<OperatorNodePtr> SharedQueryPlan::getSinkOperators() {
-    NES_TRACE2("SharedQueryPlan: Get all Global Query Nodes with sink operators for the current Metadata");
+    NES_TRACE("SharedQueryPlan: Get all Global Query Nodes with sink operators for the current Metadata");
     return queryPlan->getRootOperators();
 }
 
@@ -241,7 +241,7 @@ std::map<QueryId, std::set<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSinkOp
 SharedQueryId SharedQueryPlan::getId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
-    NES_DEBUG2("SharedQueryPlan: clearing all metadata information.");
+    NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     queryIds.clear();
 }

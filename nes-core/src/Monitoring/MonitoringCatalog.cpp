@@ -25,7 +25,7 @@ namespace NES::Monitoring {
 
 MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors)
     : metricMap(metricCollectors) {
-    NES_DEBUG2("MonitoringCatalog: Init with collector map of size {}", metricCollectors.size());
+    NES_DEBUG("MonitoringCatalog: Init with collector map of size {}", metricCollectors.size());
 }
 
 MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors) {
@@ -33,7 +33,7 @@ MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricTy
 }
 
 MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
-    NES_DEBUG2("MonitoringCatalog: Init default catalog");
+    NES_DEBUG("MonitoringCatalog: Init default catalog");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics(
         {{MetricType::WrappedCpuMetrics, std::shared_ptr<MetricCollector>(new CpuCollector())},
@@ -47,7 +47,7 @@ MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) 
     if (metricMap.contains(metricType)) {
         return metricMap[metricType];
     }
-    NES_ERROR2("MonitoringCatalog: MetricType {} is not in catalog.", std::string(magic_enum::enum_name(metricType)));
+    NES_ERROR("MonitoringCatalog: MetricType {} is not in catalog.", std::string(magic_enum::enum_name(metricType)));
     return nullptr;
 }
 

@@ -43,7 +43,7 @@ void loadClassesFromByteList(void* state, const JavaUDFByteCodeList& byteCodeLis
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
-    NES_DEBUG2("Have to inject {} classes into the JVM", byteCodeList.size());
+    NES_DEBUG("Have to inject {} classes into the JVM", byteCodeList.size());
     for (auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -51,7 +51,7 @@ void loadClassesFromByteList(void* state, const JavaUDFByteCodeList& byteCodeLis
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
         const auto jniName = handler->convertToJNIName(className);
-        NES_DEBUG2("Injecting Java class into JVM: {}", jniName);
+        NES_DEBUG("Injecting Java class into JVM: {}", jniName);
         handler->getEnvironment()->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
@@ -94,7 +94,7 @@ void startOrAttachVMWithJarFile(void* state) {
     // Sanity check javaPath
     auto javaPath = handler->getJavaPath().value();
     if (!dirExists(javaPath)) {
-        NES_FATAL_ERROR2("jarPath: {} not valid!", javaPath);
+        NES_FATAL_ERROR("jarPath: {} not valid!", javaPath);
         exit(EXIT_FAILURE);
     }
 

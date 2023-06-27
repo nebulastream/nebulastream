@@ -601,7 +601,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, outputBuffer);
     std::stringstream dynamicTupleBufferAsString;
     dynamicTupleBufferAsString << dynamicTupleBuffer;
-    NES_INFO2("{}", dynamicTupleBufferAsString.str());
+    NES_INFO("{}", dynamicTupleBufferAsString.str());
 
     /* check result for correctness */
     auto sumGeneratedCode = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, outputBuffer)[0];

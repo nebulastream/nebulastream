@@ -75,13 +75,13 @@ uint64_t MQTTClientWrapper::getNumberOfUnsentMessages() {
 void MQTTClientWrapper::setCallback(UserCallback& cb) { syncClient->set_callback(cb); }
 
 void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause) {
-    NES_TRACE2("MQTTClientWrapper::UserCallback::connection_lost: Connection lost");
+    NES_TRACE("MQTTClientWrapper::UserCallback::connection_lost: Connection lost");
     if (!cause.empty()) {
-        NES_DEBUG2("MQTTClientWrapper::UserCallback:connection_lost: cause: {}", cause);
+        NES_DEBUG("MQTTClientWrapper::UserCallback:connection_lost: cause: {}", cause);
     }
 }
 void MQTTClientWrapper::UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {
-    NES_TRACE2("\n\t[Delivery complete for token: {}]", (tok ? tok->get_message_id() : -1));
+    NES_TRACE("\n\t[Delivery complete for token: {}]", (tok ? tok->get_message_id() : -1));
 }
 }// namespace NES
 #endif//ENABLE_MQTT_BUILD

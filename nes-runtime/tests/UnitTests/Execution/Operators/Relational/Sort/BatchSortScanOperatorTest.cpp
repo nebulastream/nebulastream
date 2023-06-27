@@ -39,13 +39,13 @@ class BatchSortScanOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BatchSortScanOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup BatchSortScanOperatorTest test class.");
+        NES_INFO("Setup BatchSortScanOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override { Testing::NESBaseTest::SetUp(); }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down BatchSortScanOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down BatchSortScanOperatorTest test class."); }
 };
 
 constexpr uint32_t SEED = 42;

@@ -24,7 +24,7 @@ class ArrayTypeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ArrayTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ArrayType test class.");
+        NES_INFO("Setup ArrayType test class.");
     }
 };
 /// Check that the null-terminator has to be present for fixed-size strings only.

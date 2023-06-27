@@ -68,13 +68,13 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SynopsisPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SynopsisPipelineTest test class.");
+        NES_INFO("Setup SynopsisPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup SynopsisPipelineTest test case.");
+        NES_INFO("Setup SynopsisPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }

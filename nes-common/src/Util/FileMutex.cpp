@@ -30,6 +30,9 @@ FileMutex::FileMutex(const std::string filePath) : fileName(filePath) {
     if (fd == -1 && errno == EEXIST) {
         fd = open(filePath.c_str(), O_RDWR);
     }
+/*    std::stringstream message;
+    message << "Invalid file " << filePath << " " << strerror(errno);
+    NES_ASSERT2_FMT(fd != -1, message.str());*/
     NES_ASSERT2_FMT(fd != -1, "Invalid file " << filePath << " " << strerror(errno));
 }
 

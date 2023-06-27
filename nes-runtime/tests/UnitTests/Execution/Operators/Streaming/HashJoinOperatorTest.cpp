@@ -43,24 +43,24 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup HashJoinOperatorTest test class.");
+        NES_INFO("Setup HashJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup HashJoinOperatorTest test case.");
+        NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO2("Tear down HashJoinOperatorTest test case.");
+        NES_INFO("Tear down HashJoinOperatorTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down HashJoinOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashJoinOperatorTest test class."); }
 };
 
 struct HashJoinBuildHelper {
@@ -165,7 +165,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
         if (!correctlyInserted) {
             auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
-            NES_ERROR("Could not find record " << Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema) << " in bucket!");
+            NES_ERROR("Could not find record {} in bucket!", Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema));
             return false;
         }
     }
@@ -210,16 +210,18 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
                                  uint64_t& removedBuffer) {
 
     bool foundBuffer = false;
-    NES_TRACE("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
+    NES_TRACE("NLJ buffer = {}", Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
 
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
-        NES_TRACE("Comparing versus " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
+        NES_TRACE("Comparing versus {}", Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
         if (memcmp(tupleBufferIt->getBuffer(),
                    expectedBuffer.getBuffer(),
                    joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
             == 0) {
-            NES_TRACE("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema)
-                                          << " of size " << joinSchema->getSchemaSizeInBytes());
+            NES_TRACE("Removing buffer #{} {} of size {}",
+                      removedBuffer,
+                      Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema),
+                      joinSchema->getSchemaSizeInBytes());
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
             removedBuffer += 1;
@@ -243,11 +245,11 @@ uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdent
 bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     if (!hashJoinSinkHelper.leftSchema->contains(hashJoinSinkHelper.joinFieldNameLeft)) {
-        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
+        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameLeft);
         return false;
     }
     if (!hashJoinSinkHelper.rightSchema->contains(hashJoinSinkHelper.joinFieldNameRight)) {
-        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
+        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameRight);
         return false;
     }
 
@@ -351,7 +353,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         tmpRecordsRight.emplace_back(recordRight);
     }
 
-    NES_DEBUG2("filling left side");
+    NES_DEBUG("filling left side");
     //push buffers to build left
     //for all record buffers
     for (auto i = 0UL; i < leftRecords.size(); i++) {
@@ -397,7 +399,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
-    NES_DEBUG2("trigger sink");
+    NES_DEBUG("trigger sink");
     auto numberOfEmittedBuffersBuild = hashJoinOperatorTest->emittedBuffers.size();
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
         auto tupleBuffer = hashJoinOperatorTest->emittedBuffers[cnt];
@@ -523,7 +525,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
                           << callStack;
 
-        NES_FATAL_ERROR(fatalErrorMessage.str());
+        NES_FATAL_ERROR("{}", fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
@@ -531,7 +533,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        NES_FATAL_ERROR("{}", fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };

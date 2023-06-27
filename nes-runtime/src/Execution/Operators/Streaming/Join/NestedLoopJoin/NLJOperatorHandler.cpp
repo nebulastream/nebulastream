@@ -64,7 +64,7 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
         buffer.setNumberOfTuples(1);
         pipelineCtx->dispatchBuffer(buffer);
-        NES_TRACE2("Emitted windowIdentifier is {}", windowIdentifier);
+        NES_TRACE("Emitted windowIdentifier {}", windowIdentifier);
     }
 }
 

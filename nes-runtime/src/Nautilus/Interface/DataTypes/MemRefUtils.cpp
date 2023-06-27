@@ -60,7 +60,7 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
             default: {
                 std::stringstream dataTypeAsString;
                 dataTypeAsString << dataType;
-                NES_ERROR2("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
+                NES_ERROR("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
                 NES_NOT_IMPLEMENTED();
             };
         }

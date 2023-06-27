@@ -33,11 +33,11 @@ class AggregationFunctionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup AddExpressionTest test class.");
+        NES_INFO("Setup AddExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down TraceTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
 /**

@@ -56,11 +56,11 @@ CSVSourceType::CSVSourceType()
       gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
                                                                                GatheringMode::INTERVAL_MODE,
                                                                                "Gathering mode of the source.")) {
-    NES_INFO2("CSVSourceTypeConfig: Init source config object with default values.");
+    NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
 CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap) : CSVSourceType() {
-    NES_INFO2("CSVSourceType: Init default CSV source config object with values from command line.");
+    NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
     } else {
@@ -93,7 +93,7 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
 }
 
 CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
-    NES_INFO2("CSVSourceType: Init default CSV source config object with values from YAML file.");
+    NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML file.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
         filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>());

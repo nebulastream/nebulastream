@@ -38,7 +38,7 @@ uint8_t* FixedPage::append(const uint64_t hash) {
     }
 
     if (bloomFilter == nullptr) {
-        NES_ERROR2("Bloomfilter become empty")
+        NES_ERROR("Bloomfilter become empty")
     }
     bloomFilter->add(hash);
     uint8_t* ptr = &data[currentPos * sizeOfRecord];

@@ -30,20 +30,20 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryCatalogControllerTest test class.");
+        NES_INFO("Setup QueryCatalogControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down QueryCatalogControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class."); }
 
     void startCoordinator() {
-        NES_INFO2("QueryCatalogControllerTest: Start coordinator");
+        NES_INFO("QueryCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO2("QueryCatalogControllerTest: Coordinator started successfully");
+        NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {
@@ -267,7 +267,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
     EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
-    NES_DEBUG2("{}", jsonResponse2.dump());
+    NES_DEBUG("{}", jsonResponse2.dump());
     std::string message2 = "no statistics available for query with ID: " + std::to_string(queryId);
     ASSERT_TRUE(jsonResponse2["message"] == message2);
     stopCoordinator();

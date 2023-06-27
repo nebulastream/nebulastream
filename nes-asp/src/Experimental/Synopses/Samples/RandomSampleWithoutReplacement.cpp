@@ -144,7 +144,7 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
     aggregationFunction->lower(aggregationValueMemRef, outputRecord);
     auto scalingFactor = getScalingFactor(numberOfTuplesInWindow);
     auto approximatedValue = outputRecord.read(fieldNameApproximate) * scalingFactor;
-    NES_DEBUG2("approximatedValue {}", approximatedValue.getValue().toString());
+    NES_DEBUG("approximatedValue {}", approximatedValue.getValue().toString());
 
     // Writing the approximate to the record as well as the key
     outputRecord.write(fieldNameApproximate, approximatedValue);
@@ -167,7 +167,7 @@ Nautilus::Value<> RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Val
         retValue = (numberOfTuplesInWindow / minSize);
     }
 
-    NES_DEBUG2("Scaling factor is {}", retValue.getValue().toString());
+    NES_DEBUG("Scaling factor is {}", retValue.getValue().toString());
     if (retValue == 1.0) {
         return Nautilus::Value<Nautilus::UInt64>((uint64_t) 1);
     } else {

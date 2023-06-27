@@ -74,13 +74,13 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NestedLoopJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup NestedLoopJoinPipelineTest test class.");
+        NES_INFO("Setup NestedLoopJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup NestedLoopJoinPipelineTest test case.");
+        NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -110,10 +110,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto rightBuffers =
             Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
-        NES_DEBUG2("read file={}", fileNameBuffersSink);
+        NES_DEBUG("read file={}", fileNameBuffersSink);
 
-        NES_DEBUG2("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
-        NES_DEBUG2("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
+        NES_DEBUG("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
+        NES_DEBUG("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         // Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
@@ -219,8 +219,8 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         nljWorks = nljWorks && (pipelineExecCtxSink.emittedBuffers.size() == 20);
         auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
 
-        NES_DEBUG2("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-        NES_DEBUG2("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
+        NES_DEBUG("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
+        NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 
         nljWorks = nljWorks && (resultBuffer.getNumberOfTuples() == expectedSinkBuffers[0].getNumberOfTuples());
         nljWorks =

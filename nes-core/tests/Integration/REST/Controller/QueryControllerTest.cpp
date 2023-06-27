@@ -31,20 +31,20 @@ class QueryControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryControllerTest test class.");
+        NES_INFO("Setup QueryControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down QueryControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 
     void startCoordinator() {
-        NES_INFO2("QueryControllerTest: Start coordinator");
+        NES_INFO("QueryControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO2("QueryControllerTest: Coordinator started successfully");
+        NES_INFO("QueryControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {
@@ -98,7 +98,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}", res.dump());
+    NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("No placement strategy specified. Specify a placement strategy using 'placement'.")
                 != std::string::npos);
@@ -124,7 +124,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}", res.dump());
+    NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Placement Strategy: ") != std::string::npos);
     stopCoordinator();
@@ -150,7 +150,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}", res.dump());
+    NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid fault tolerance Type provided:") != std::string::npos);
     stopCoordinator();
@@ -177,7 +177,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}", res.dump());
+    NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Lineage Mode Type provided:") != std::string::npos);
     stopCoordinator();
@@ -185,7 +185,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
 
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
-    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -199,7 +199,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO2("QueryControllerTest: Coordinator started successfully");
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     ASSERT_TRUE(success);
     nlohmann::json request;
@@ -226,7 +226,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 
 //Check if getting an execution-plan returns as expected
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
-    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -240,7 +240,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO2("QueryControllerTest: Coordinator started successfully");
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
@@ -265,7 +265,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG2("{}", queryId);
+    NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
@@ -295,7 +295,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response3;
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
-    NES_DEBUG2("{}", response3.dump());
+    NES_DEBUG("{}", response3.dump());
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
     ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
@@ -303,7 +303,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
 //Check if getting an execution-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
-    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -317,7 +317,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO2("QueryControllerTest: Coordinator started successfully");
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
@@ -342,7 +342,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG2("{}", queryId);
+    NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
@@ -362,7 +362,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 
 //Check if getting a query-plan returns as expected
 TEST_F(QueryControllerTest, testGetQueryPlan) {
-    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -376,7 +376,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO2("QueryControllerTest: Coordinator started successfully");
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
@@ -400,7 +400,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG2("{}", queryId);
+    NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
 
@@ -426,7 +426,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
 //Check if getting a query-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
-    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -440,7 +440,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO2("QueryControllerTest: Coordinator started successfully");
+    NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
@@ -464,7 +464,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG2("{}", queryId);
+    NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
@@ -476,7 +476,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
-    NES_DEBUG2("{}", response2.dump());
+    NES_DEBUG("{}", response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
     ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();

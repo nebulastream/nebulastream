@@ -56,7 +56,7 @@ void CountMin::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContex
         auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
         auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
         auto colPos = hash % numberOfCols;
-        NES_DEBUG2("Colpos {} for key {}", colPos.getValue().toString(), key.getValue().toString());
+        NES_DEBUG("Colpos {} for key {}", colPos.getValue().toString(), key.getValue().toString());
         aggregationFunction->lift(sketchArray[row][colPos], record);
     }
 }

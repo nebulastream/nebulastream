@@ -146,7 +146,7 @@ class ConfigurationOption {
         } else if (inputFormat == "JSON") {
             this->value = InputFormat::JSON;
         } else {
-            NES_ERROR2("InputFormatEnum: value unknown.");
+            NES_ERROR("InputFormatEnum: value unknown.");
         }
     }
 
@@ -162,7 +162,7 @@ class ConfigurationOption {
         } else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET") {
             this->value = TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET;
         } else {
-            NES_ERROR2("TCPDecideMessageSizeEnum: value unknown.");
+            NES_ERROR("TCPDecideMessageSizeEnum: value unknown.");
         }
     }
 

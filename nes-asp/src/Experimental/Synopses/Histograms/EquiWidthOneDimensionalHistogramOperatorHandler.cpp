@@ -28,12 +28,12 @@ void EquiWidthOneDimensionalHistogramOperatorHandler::setup(uint64_t entrySize, 
 
 void EquiWidthOneDimensionalHistogramOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                            Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG2("Started EquiWidth1DHistOperatorHandler!");
+    NES_DEBUG("Started EquiWidth1DHistOperatorHandler!");
 }
 
 void EquiWidthOneDimensionalHistogramOperatorHandler::stop(Runtime::QueryTerminationType,
                                           Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("Started EquiWidth1DHistOperatorHandler!");
+    NES_DEBUG("Started EquiWidth1DHistOperatorHandler!");
 }
 
 } // namespace NES::ASP

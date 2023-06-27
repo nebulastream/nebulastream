@@ -62,7 +62,7 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case NativeType::DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case NativeType::BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
         case NativeType::TEXT: {
-            NES_DEBUG2(
+            NES_DEBUG(
                 "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.");
             return "TEXT conversion to string not implemented.";
         }

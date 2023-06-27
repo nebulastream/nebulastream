@@ -76,7 +76,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
       rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
-    NES_DEBUG2("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
+    NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
@@ -127,7 +127,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
 NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
-    NES_DEBUG2("NesCoordinator::~NesCoordinator() map cleared");
+    NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     sourceCatalog->reset();
     queryCatalog->clearQueries();
 }
@@ -138,7 +138,7 @@ Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeE
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
-    NES_DEBUG2("NesCoordinator start");
+    NES_DEBUG("NesCoordinator start");
 
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
@@ -148,33 +148,33 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
         setThreadName("RqstProc");
 
-        NES_INFO2("NesCoordinator: started queryRequestProcessor");
+        NES_INFO("NesCoordinator: started queryRequestProcessor");
         queryRequestProcessorService->start();
-        NES_WARNING2("NesCoordinator: finished queryRequestProcessor");
+        NES_WARNING("NesCoordinator: finished queryRequestProcessor");
     }));
 
-    NES_DEBUG2("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");
+    NES_DEBUG("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");
     std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         setThreadName("nesRPC");
 
-        NES_DEBUG2("NesCoordinator: buildAndStartGRPCServer");
+        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
-        NES_DEBUG2("NesCoordinator: buildAndStartGRPCServer: end listening");
+        NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
     }));
     promRPC->get_future().get();
-    NES_DEBUG2("NesCoordinator:buildAndStartGRPCServer: ready");
+    NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
-    NES_DEBUG2("NesCoordinator: Register Logical sources");
+    NES_DEBUG("NesCoordinator: Register Logical sources");
     for (auto logicalSource : coordinatorConfiguration->logicalSources.getValues()) {
         sourceCatalogService->registerLogicalSource(logicalSource.getValue()->getLogicalSourceName(),
                                                     logicalSource.getValue()->getSchema());
     }
-    NES_DEBUG2("NesCoordinator: Finished Registering Logical source");
+    NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
     //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
-    NES_DEBUG2("NesCoordinator::startCoordinator: start nes worker");
+    NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
     coordinatorConfiguration->worker.coordinatorIp = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
@@ -189,13 +189,13 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES::Exceptions::installGlobalErrorListener(worker);
 
     //Start rest that accepts queryIdAndCatalogEntryMapping form the outsides
-    NES_DEBUG2("NesCoordinator starting rest server");
+    NES_DEBUG("NesCoordinator starting rest server");
 
     //setting the allowed origins for http request to the rest server
     std::optional<std::string> allowedOrigin = std::nullopt;
     auto originString = coordinatorConfiguration->restServerCorsAllowedOrigin.getValue();
     if (!originString.empty()) {
-        NES_INFO2("CORS: allow origin: {}", originString);
+        NES_INFO("CORS: allow origin: {}", originString);
         allowedOrigin = originString;
     }
 
@@ -219,22 +219,22 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         restServer->start();//this call is blocking
     }));
 
-    NES_DEBUG2("NesCoordinator::startCoordinatorRESTServer: ready");
+    NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
     healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
                                                                          workerRpcClient,
                                                                          HEALTH_SERVICE_NAME,
                                                                          coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
-    NES_DEBUG2("NesCoordinator start health check");
+    NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
-        NES_DEBUG2("NesCoordinator started, join now and waiting for work");
+        NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
-        NES_DEBUG2("NesCoordinator Required stopping");
+        NES_DEBUG("NesCoordinator Required stopping");
     } else {//non-blocking is used for tests to continue execution
-        NES_DEBUG2("NesCoordinator started, return without blocking on port {}", rpcPort);
+        NES_DEBUG("NesCoordinator started, return without blocking on port {}", rpcPort);
         return rpcPort;
     }
     return 0UL;
@@ -247,63 +247,63 @@ ReplicationServicePtr NesCoordinator::getReplicationService() const { return rep
 TopologyPtr NesCoordinator::getTopology() const { return topology; }
 
 bool NesCoordinator::stopCoordinator(bool force) {
-    NES_DEBUG2("NesCoordinator: stopCoordinator force={}", force);
+    NES_DEBUG("NesCoordinator: stopCoordinator force={}", force);
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
 
-        NES_DEBUG2("NesCoordinator::stop health check");
+        NES_DEBUG("NesCoordinator::stop health check");
         healthCheckService->stopHealthCheck();
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
-            NES_ERROR2("NesCoordinator::stop node engine stop not successful");
+            NES_ERROR("NesCoordinator::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
         }
-        NES_DEBUG2("NesCoordinator::stop Node engine stopped successfully");
+        NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
-        NES_DEBUG2("NesCoordinator: stopping rest server");
+        NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
-            NES_ERROR2("NesCoordinator::stopCoordinator: error while stopping restServer");
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
             NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
         }
-        NES_DEBUG2("NesCoordinator: rest server stopped {}", successStopRest);
+        NES_DEBUG("NesCoordinator: rest server stopped {}", successStopRest);
 
         if (restThread->joinable()) {
-            NES_DEBUG2("NesCoordinator: join restThread");
+            NES_DEBUG("NesCoordinator: join restThread");
             restThread->join();
         } else {
-            NES_ERROR2("NesCoordinator: rest thread not joinable");
+            NES_ERROR("NesCoordinator: rest thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         queryRequestProcessorService->shutDown();
         if (queryRequestProcessorThread->joinable()) {
-            NES_DEBUG2("NesCoordinator: join queryRequestProcessorThread");
+            NES_DEBUG("NesCoordinator: join queryRequestProcessorThread");
             queryRequestProcessorThread->join();
-            NES_DEBUG2("NesCoordinator: joined queryRequestProcessorThread");
+            NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
         } else {
-            NES_ERROR2("NesCoordinator: query processor thread not joinable");
+            NES_ERROR("NesCoordinator: query processor thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
-        NES_DEBUG2("NesCoordinator: stopping rpc server");
+        NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
         rpcServer->Wait();
 
         if (rpcThread->joinable()) {
-            NES_DEBUG2("NesCoordinator: join rpcThread");
+            NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
             rpcThread.reset();
 
         } else {
-            NES_ERROR2("NesCoordinator: rpc thread not joinable");
+            NES_ERROR("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         return true;
     }
-    NES_DEBUG2("NesCoordinator: already stopped");
+    NES_DEBUG("NesCoordinator: already stopped");
     return true;
 }
 
@@ -336,13 +336,13 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 
     rpcServer = builder.BuildAndStart();
     prom->set_value(true);
-    NES_DEBUG2("NesCoordinator: buildAndStartGRPCServerServer listening on address={}", address);
+    NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address={}", address);
     rpcServer->Wait();//blocking call
-    NES_DEBUG2("NesCoordinator: buildAndStartGRPCServer end listening");
+    NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
-    NES_INFO2("NesCoordinator: Get query statistics for query Id {}", queryId);
+    NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 

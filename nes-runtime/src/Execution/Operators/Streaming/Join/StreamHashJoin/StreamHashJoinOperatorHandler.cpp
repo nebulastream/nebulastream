@@ -42,11 +42,11 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<O
 }
 
 void StreamHashJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG2("start HashJoinOperatorHandler");
+    NES_DEBUG("start HashJoinOperatorHandler");
 }
 
 void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop HashJoinOperatorHandler");
+    NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
 void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
@@ -84,7 +84,7 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
             bufferAs->windowIdentifier = windowIdentifier;
             buffer.setNumberOfTuples(1);
             pipelineCtx->dispatchBuffer(buffer);
-            NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
+            NES_TRACE("Emitted windowIdentifier {}", windowIdentifier);
         }
     }
 }

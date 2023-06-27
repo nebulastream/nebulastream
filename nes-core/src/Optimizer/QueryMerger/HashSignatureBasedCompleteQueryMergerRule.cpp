@@ -31,16 +31,16 @@ HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMerg
 }
 
 bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO2(
+    NES_INFO(
         "HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING2("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                      " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG2("HashSignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
@@ -74,7 +74,7 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
             }
 
             if (foundMatch) {
-                NES_TRACE2("HashSignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("HashSignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 //Compute matched operator pairs
                 std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
                 matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
@@ -97,7 +97,7 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
         }
 
         if (!merged) {
-            NES_DEBUG2("HashSignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("HashSignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

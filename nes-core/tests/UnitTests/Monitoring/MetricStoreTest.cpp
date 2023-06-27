@@ -40,13 +40,13 @@ class MetricStoreTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricStoreTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("ResourcesReaderTest: Setup MetricStoreTest test class.");
+        NES_INFO("ResourcesReaderTest: Setup MetricStoreTest test class.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG2("MetricStoreTest: Setup MetricStoreTest test case.");
+        NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
@@ -68,7 +68,7 @@ TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     metricStore->addMetrics(nodeId, std::make_shared<Monitoring::Metric>(myString));
 
     Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO2("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 1);
 
@@ -90,7 +90,7 @@ TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
     metricStore->addMetrics(nodeId, networkMetrics);
 
     auto storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO2("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 2);
 

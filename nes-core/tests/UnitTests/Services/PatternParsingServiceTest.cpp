@@ -37,7 +37,7 @@ class PatternParsingServiceTest : public Testing::TestWithErrorHandling {
     /* Will be called before a test is executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryPlanTest test case.");
+        NES_INFO("Setup QueryPlanTest test case.");
     }
 };
 

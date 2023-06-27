@@ -28,7 +28,7 @@ GeoLocation::GeoLocation() {
 GeoLocation::GeoLocation(double latitude, double longitude) {
     //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
     if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
-        NES_ERROR2("Trying to create a location with invalid coordinates");
+        NES_ERROR("Trying to create a location with invalid coordinates");
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
     this->latitude = latitude;
@@ -49,7 +49,7 @@ GeoLocation GeoLocation::fromString(const std::string& coordinates) {
     char separator = 0;
     stringStream >> separator;
     if (separator != ',') {
-        NES_ERROR2("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
+        NES_ERROR("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
     double lng;

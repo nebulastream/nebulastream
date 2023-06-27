@@ -21,10 +21,10 @@ namespace NES {
 AbstractHealthCheckService::AbstractHealthCheckService() {}
 
 void AbstractHealthCheckService::stopHealthCheck() {
-    NES_DEBUG2("AbstractHealthCheckService::stopHealthCheck called on id= {}", id);
+    NES_DEBUG("AbstractHealthCheckService::stopHealthCheck called on id= {}", id);
     auto expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
-        NES_DEBUG2("AbstractHealthCheckService::stopHealthCheck health check already stopped");
+        NES_DEBUG("AbstractHealthCheckService::stopHealthCheck health check already stopped");
         return;
     }
     {
@@ -37,15 +37,15 @@ void AbstractHealthCheckService::stopHealthCheck() {
     if (healthCheckingThread->joinable()) {
         healthCheckingThread->join();
         healthCheckingThread.reset();
-        NES_DEBUG2("AbstractHealthCheckService::stopHealthCheck successfully stopped");
+        NES_DEBUG("AbstractHealthCheckService::stopHealthCheck successfully stopped");
     } else {
-        NES_ERROR2("HealthCheckService: health thread not joinable");
+        NES_ERROR("HealthCheckService: health thread not joinable");
         NES_THROW_RUNTIME_ERROR("Error while stopping healthCheckingThread->join");
     }
 }
 
 void AbstractHealthCheckService::addNodeToHealthCheck(TopologyNodePtr node) {
-    NES_DEBUG2("HealthCheckService: adding node with id {}", node->getId());
+    NES_DEBUG("HealthCheckService: adding node with id {}", node->getId());
     auto exists = nodeIdToTopologyNodeMap.contains(node->getId());
     if (exists) {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << node->getId());
@@ -58,28 +58,28 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
     if (!exists) {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to remove a node that does not exists id=" << node->getId());
     }
-    NES_DEBUG2("HealthCheckService: removing node with id {}", node->getId());
+    NES_DEBUG("HealthCheckService: removing node with id {}", node->getId());
     nodeIdToTopologyNodeMap.erase(node->getId());
 }
 
 bool AbstractHealthCheckService::getRunning() { return isRunning; }
 
 bool AbstractHealthCheckService::isWorkerInactive(TopologyNodeId workerId) {
-    NES_DEBUG2("HealthCheckService: checking if node with id {} is inactive", workerId);
+    NES_DEBUG("HealthCheckService: checking if node with id {} is inactive", workerId);
     std::lock_guard<std::mutex> lock(cvMutex);
     bool isNotActive = inactiveWorkers.contains(workerId);
     if (isNotActive) {
-        NES_DEBUG2("HealthCheckService: node with id {} is inactive", workerId);
+        NES_DEBUG("HealthCheckService: node with id {} is inactive", workerId);
         return true;
     }
-    NES_DEBUG2("HealthCheckService: node with id {} is active", workerId);
+    NES_DEBUG("HealthCheckService: node with id {} is active", workerId);
     return false;
 }
 
 TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(TopologyNodeId workerId) {
     for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
         if (node.first == workerId) {
-            NES_DEBUG2("AbstractHealthCheckService: Found worker with id {}", workerId);
+            NES_DEBUG("AbstractHealthCheckService: Found worker with id {}", workerId);
             return node.second;
         }
     }

@@ -30,7 +30,7 @@ class H3HashTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("H3HashTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("H3HashTest test class SetUpTestCase.");
+        NES_INFO("H3HashTest test class SetUpTestCase.");
     }
 
     void SetUp() override {
@@ -49,7 +49,7 @@ class H3HashTest : public Testing::NESBaseTest {
         allH3Hashes.clear();
     }
 
-    static void TearDownTestCase() { NES_INFO2("H3HashTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO("H3HashTest test class TearDownTestCase."); }
 };
 
 /**

@@ -50,17 +50,17 @@ class ProxyInliningTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProxyInliningTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ProxyInliningTest test class.");
+        NES_INFO("Setup ProxyInliningTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { NES_INFO2("Setup ProxyInliningTest test case."); }
+    void SetUp() override { NES_INFO("Setup ProxyInliningTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO2("Tear down ProxyInliningTest test case."); }
+    void TearDown() override { NES_INFO("Tear down ProxyInliningTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down ProxyInliningTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ProxyInliningTest test class."); }
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -102,9 +102,9 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
         scan.close(executionContext, recordBuffer);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    NES_INFO2("{}", *execution.get());
+    NES_INFO("{}", *execution.get());
     auto ir = irCreationPhase.apply(execution);
-    NES_INFO2("{}", ir->toString());
+    NES_INFO("{}", ir->toString());
     auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     assert(engine);
 }

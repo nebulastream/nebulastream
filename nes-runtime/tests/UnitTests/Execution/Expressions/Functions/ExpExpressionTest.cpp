@@ -26,11 +26,11 @@ class ExpExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ExpExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ExpExpressionTest test class.");
+        NES_INFO("Setup ExpExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down ExpExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExpExpressionTest test class."); }
 };
 
 TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {

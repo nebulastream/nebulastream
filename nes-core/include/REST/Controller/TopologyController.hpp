@@ -77,7 +77,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
-            NES_ERROR2("TopologyController: handleGet -getTopology: Exception occurred while building the "
+            NES_ERROR("TopologyController: handleGet -getTopology: Exception occurred while building the "
                        "topology: {}",
                        exc.what());
             return errorHandler->handleError(Status::CODE_500,
@@ -103,9 +103,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             uint64_t childId = reqJson["childId"].get<uint64_t>();
             bool added = topologyManagerService->addParent(childId, parentId);
             if (added) {
-                NES_DEBUG2("TopologyController::handlePost:addParent: created link successfully new topology is=");
+                NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
             } else {
-                NES_ERROR2("TopologyController::handlePost:addParent: Failed");
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
             }
             //Prepare the response
@@ -135,9 +135,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             uint64_t childId = reqJson["childId"].get<uint64_t>();
             bool removed = topologyManagerService->removeParent(childId, parentId);
             if (removed) {
-                NES_DEBUG2("TopologyController::handlePost:addParent: deleted link successfully");
+                NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
-                NES_ERROR2("TopologyController::handlePost:addParent: Failed");
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
             }
             //Prepare the response

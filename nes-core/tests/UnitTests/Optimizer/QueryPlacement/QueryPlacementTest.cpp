@@ -74,13 +74,13 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup QueryPlacementTest test class.");
+        NES_DEBUG("Setup QueryPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG2("Setup QueryPlacementTest test case.");
+        NES_DEBUG("Setup QueryPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -138,8 +138,8 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
             // set data modification factor for map operator
             if ((*qPlanItr)->instanceOf<MapLogicalOperatorNode>()) {
                 auto op = (*qPlanItr)->as<MapLogicalOperatorNode>();
-                NES_DEBUG2("input schema in bytes: {}", op->getInputSchema()->getSchemaSizeInBytes());
-                NES_DEBUG2("output schema in bytes: {}", op->getOutputSchema()->getSchemaSizeInBytes());
+                NES_DEBUG("input schema in bytes: {}", op->getInputSchema()->getSchemaSizeInBytes());
+                NES_DEBUG("output schema in bytes: {}", op->getOutputSchema()->getSchemaSizeInBytes());
                 double schemaSizeComparison =
                     1.0 * op->getOutputSchema()->getSchemaSizeInBytes() / op->getInputSchema()->getSchemaSizeInBytes();
 
@@ -1142,7 +1142,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
     ASSERT_TRUE(midNode2->containAsChild(srcNode2));
 
-    NES_DEBUG2("QueryPlacementTest:: topology: {}", topology->toString());
+    NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1200,7 +1200,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
 
     // Execute the placement
     placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
-    NES_DEBUG2("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
@@ -1287,7 +1287,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
 
-    NES_DEBUG2("QueryPlacementTest:: topology: {}", topology->toString());
+    NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1341,7 +1341,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlan);
-    NES_DEBUG2("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
@@ -1407,7 +1407,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
 
-    NES_DEBUG2("QueryPlacementTest:: topology: {}", topology->toString());
+    NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"

@@ -37,7 +37,7 @@ class GlobalTumblingWindowQueryExecutionTest
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GlobalTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("QueryExecutionTest: Setup GlobalTumblingWindowQueryExecutionTest test class.");
+        NES_DEBUG("QueryExecutionTest: Setup GlobalTumblingWindowQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -48,14 +48,14 @@ class GlobalTumblingWindowQueryExecutionTest
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test case.");
+        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG2("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test class.");
+        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test class.");
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;

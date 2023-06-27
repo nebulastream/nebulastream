@@ -91,14 +91,14 @@ class UDFTest : public Testing::NESBaseTest,
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UDFExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup UDFExecutionTest test class.");
+        NES_INFO("Setup UDFExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO2("Setup Query6Test test case. {}", compiler);
+        NES_INFO("Setup Query6Test test case. {}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -123,10 +123,10 @@ class UDFTest : public Testing::NESBaseTest,
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO2("Tear down UDFExecutionTest test case."); }
+    void TearDown() override { NES_INFO("Tear down UDFExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down UDFExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down UDFExecutionTest test class."); }
 };
 
 SchemaPtr getSchema() {
@@ -227,10 +227,10 @@ TEST_P(UDFTest, distanceUDF) {
     timer.snapshot("Execute");
     timer.pause();
 
-    NES_INFO2("{}", timer);
+    NES_INFO("{}", timer);
     auto processedTuples = data.size() * memoryLayout->getCapacity() * iterations;
     double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
+    NES_INFO("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
 }
 
 TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
@@ -278,10 +278,10 @@ TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
         executablePipeline->execute(*runtimeWorkerContext, buffer);
         auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
         auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-        NES_INFO2("Result {}", sumState->sum);
+        NES_INFO("Result {}", sumState->sum);
         timer.snapshot("QueryExecutionTime");
         timer.pause();
-        NES_INFO2("QueryExecutionTime: {}", timer);
+        NES_INFO("QueryExecutionTime: {}", timer);
     }
 }
 
@@ -326,10 +326,10 @@ TEST_P(UDFTest, crimeIndexUDF) {
     timer.snapshot("Execute");
     timer.pause();
 
-    NES_INFO2("{}", timer);
+    NES_INFO("{}", timer);
     auto processedTuples = data.size() * memoryLayout->getCapacity() * iterations;
     double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
+    NES_INFO("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testUDF,

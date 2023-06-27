@@ -49,13 +49,13 @@ class CountMinTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CountMinTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup CountMinTest test class.");
+        NES_INFO("Setup CountMinTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup CountMinTest test case.");
+        NES_INFO("Setup CountMinTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
         readKeyExpression = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
 

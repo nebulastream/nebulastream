@@ -45,7 +45,7 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SignatureInferencePhaseTest test case.");
+        NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
     void SetUp() override {
@@ -60,7 +60,7 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling {
 TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
 
     //Prepare
-    NES_INFO2("SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
+    NES_INFO("SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;

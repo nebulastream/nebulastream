@@ -29,7 +29,7 @@ CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
-    NES_TRACE2("CpuMetricsWrapper: Allocating memory for {} metrics.", std::to_string(arr.size()));
+    NES_TRACE("CpuMetricsWrapper: Allocating memory for {} metrics.", std::to_string(arr.size()));
 }
 
 CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const { return cpuMetrics.at(cpuCore); }
@@ -38,9 +38,9 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
     auto schema = CpuMetrics::getSchema("");
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     if (schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
-        NES_ERROR2("CpuMetricsWrapper: At least one tuple of CpuMetrics has to fit into buffer");
+        NES_ERROR("CpuMetricsWrapper: At least one tuple of CpuMetrics has to fit into buffer");
     } else if (totalSize > buf.getBufferSize()) {
-        NES_WARNING2("CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize: {} > getBufferSize:{}",
+        NES_WARNING("CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize: {} > getBufferSize:{}",
                      totalSize,
                      buf.getBufferSize());
     }
@@ -55,7 +55,7 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
 void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto schema = CpuMetrics::getSchema("");
     auto cpuList = std::vector<CpuMetrics>();
-    NES_TRACE2("CpuMetricsWrapper: Parsing buffer with number of tuples {}", buf.getNumberOfTuples());
+    NES_TRACE("CpuMetricsWrapper: Parsing buffer with number of tuples {}", buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
@@ -89,13 +89,13 @@ nlohmann::json CpuMetricsWrapper::toJson() const {
 
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {
-        NES_ERROR2("CpuMetricsWrapper: Sizes are not equal {}!={}", cpuMetrics.size(), rhs.size());
+        NES_ERROR("CpuMetricsWrapper: Sizes are not equal {}!={}", cpuMetrics.size(), rhs.size());
         return false;
     }
 
     for (unsigned int i = 0; i < cpuMetrics.size(); i++) {
         if (cpuMetrics[i] != rhs.cpuMetrics[i]) {
-            NES_ERROR2("CpuMetricsWrapper: Cpu core {} are not equal.", i);
+            NES_ERROR("CpuMetricsWrapper: Cpu core {} are not equal.", i);
             return false;
         }
     }

@@ -52,7 +52,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SensorBusTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SourceBusTest test class.");
+        NES_INFO("Setup SourceBusTest test class.");
     }
 
     /**
@@ -66,7 +66,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling {
    */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG2("Setup SourceBusTest test case.");
+        NES_DEBUG("Setup SourceBusTest test case.");
         bus_file_allocated_id = 1;
         snprintf(path_to_bus_str, 19, "/dev/i2c-%d", bus_file_allocated_id);
         sensor_address_in_bus = 0x1c;

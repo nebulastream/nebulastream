@@ -37,16 +37,16 @@ Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule
 
 bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO2(
+    NES_INFO(
         "Z3SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING2("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
                      " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG2("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -153,7 +153,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             }
 
             if (!matchedTargetToHostOperatorMap.empty()) {
-                NES_TRACE2("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
                 // As upstream matched operators are covered by downstream matched operators. We need to retain only the
@@ -204,7 +204,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
         }
 
         if (!matched) {
-            NES_DEBUG2("Z3SignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

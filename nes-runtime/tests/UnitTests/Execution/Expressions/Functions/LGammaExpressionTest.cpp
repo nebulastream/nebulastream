@@ -26,11 +26,11 @@ class LGammaExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LGammaExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup LGammaExpressionTest test class.");
+        NES_INFO("Setup LGammaExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down LGammaExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down LGammaExpressionTest test class."); }
 };
 
 TEST_F(LGammaExpressionTest, lGammaIntegers) {

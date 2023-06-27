@@ -19,10 +19,10 @@
 namespace NES::Sensors {
 
 GenericBus::GenericBus(const char* filename, BusType type) : fileName(filename), busType(type) {
-    NES_INFO2("Sensor Bus: Initializing {} bus at {}", magic_enum::enum_name(type), filename);
+    NES_INFO("Sensor Bus: Initializing {} bus at {}", magic_enum::enum_name(type), filename);
 }
 
-GenericBus::~GenericBus() { NES_DEBUG2("Sensor Bus: Destroying {} bus at {}", magic_enum::enum_name(this->busType), fileName); }
+GenericBus::~GenericBus() { NES_DEBUG("Sensor Bus: Destroying {} bus at {}", magic_enum::enum_name(this->busType), fileName); }
 
 bool GenericBus::init(int address) { return this->initBus(address); }
 

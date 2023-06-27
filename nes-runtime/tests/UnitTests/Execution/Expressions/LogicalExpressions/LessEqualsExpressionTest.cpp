@@ -25,11 +25,11 @@ class LessEqualsExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LessEqualsExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup LessEqualsExpressionTest test class.");
+        NES_INFO("Setup LessEqualsExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down LessEqualsExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down LessEqualsExpressionTest test class."); }
 };
 
 TEST_F(LessEqualsExpressionTest, signedIntegers) {

@@ -29,12 +29,12 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
+        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_INFO2("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
+        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
@@ -42,13 +42,13 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_INFO2("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
+        NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -71,9 +71,9 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
  * @return boolean if the buffers contain the same tuples
  */
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
-    NES_DEBUG2("Checking if the buffers are equal, so if they contain the same tuples");
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG2("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -95,7 +95,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG2("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
             return false;
         }
     }
@@ -144,7 +144,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    NES_INFO2("Submitting query: {}", query.getQueryPlan()->toString())
+    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
@@ -162,8 +162,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
-    NES_DEBUG2("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
+    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
     ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
@@ -236,7 +236,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
                      .window(TumblingWindow::of(EventTime(Attribute("test1$start")), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    NES_INFO2("Submitting query: {}", query.getQueryPlan()->toString())
+    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
@@ -254,9 +254,9 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
+    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
     if (testSink->getNumberOfResultBuffers() == 2) {
-        NES_DEBUG2("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->getResultBuffer(1).getBuffer(), sinkSchema));
+        NES_DEBUG("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->getResultBuffer(1).getBuffer(), sinkSchema));
     }
 }
 

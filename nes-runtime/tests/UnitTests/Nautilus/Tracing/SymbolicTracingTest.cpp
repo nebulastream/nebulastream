@@ -31,11 +31,11 @@ class SymbolicTracingTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SymbolicExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup SymbolicExecutionTest test class.");
+        NES_DEBUG("Setup SymbolicExecutionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down SymbolicExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down SymbolicExecutionTest test class."); }
 };
 
 TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
@@ -45,7 +45,7 @@ TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
@@ -62,7 +62,7 @@ TEST_F(SymbolicTracingTest, arithmeticExpressionTest) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     auto basicBlocks = executionTrace->getBlocks();
 
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -84,7 +84,7 @@ TEST_F(SymbolicTracingTest, logicalNegateTest) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
@@ -98,7 +98,7 @@ TEST_F(SymbolicTracingTest, logicalExpressionLessThanTest) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
@@ -165,7 +165,7 @@ TEST_F(SymbolicTracingTest, logicalAssignEqualsTest) {
     auto basicBlocks = executionTrace->getBlocks();
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
     ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
@@ -199,11 +199,11 @@ TEST_F(SymbolicTracingTest, ifConditionTest) {
 
     std::stringstream executionTraceAsString;
     executionTraceAsString << *executionTrace.get();
-    NES_INFO2("{}", executionTraceAsString.str());
+    NES_INFO("{}", executionTraceAsString.str());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTrace2;
     executionTrace2 << *executionTrace.get();
-    NES_INFO2("{}", executionTrace2.str());
+    NES_INFO("{}", executionTrace2.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
@@ -245,11 +245,11 @@ TEST_F(SymbolicTracingTest, ifElseConditionTest) {
     });
     std::stringstream executionTraceString;
     executionTraceString << *executionTrace;
-    NES_INFO2("{}", executionTraceString.str());
+    NES_INFO("{}", executionTraceString.str());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceString2;
     executionTraceString2 << *executionTrace;
-    NES_INFO2("{}", executionTraceString2.str());
+    NES_INFO("{}", executionTraceString2.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
@@ -292,12 +292,12 @@ TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
     });
     std::stringstream executionTraceString;
     executionTraceString << *executionTrace;
-    NES_INFO2("{}", executionTraceString.str());
+    NES_INFO("{}", executionTraceString.str());
 
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::stringstream executionTraceString2;
     executionTraceString2 << *executionTrace;
-    NES_INFO2("{}", executionTraceString2.str());
+    NES_INFO("{}", executionTraceString2.str());
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 7);
     auto block0 = basicBlocks[0];
@@ -345,7 +345,7 @@ TEST_F(SymbolicTracingTest, emptyLoopTest) {
     execution = ssaCreationPhase.apply(std::move(execution));
     std::stringstream executionString;
     executionString << *execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     auto basicBlocks = execution->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
@@ -388,7 +388,7 @@ TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
     auto block0 = basicBlocks[0];
     std::stringstream executionString;
     executionString << *execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
@@ -429,7 +429,7 @@ TEST_F(SymbolicTracingTest, sumLoopTest) {
     auto block0 = basicBlocks[0];
     std::stringstream executionString;
     executionString << *execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
@@ -473,7 +473,7 @@ TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
     auto block0 = basicBlocks[0];
     std::stringstream executionString;
     executionString << *execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::JMP);
 
@@ -508,14 +508,14 @@ TEST_F(SymbolicTracingTest, invertedLoopTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     std::stringstream executionString2;
     executionString2 << execution;
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
     ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
@@ -544,12 +544,12 @@ TEST_F(SymbolicTracingTest, nestedLoopTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 7);
 }
 
@@ -559,12 +559,12 @@ TEST_F(SymbolicTracingTest, nestedLoopIfTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 10);
 }
 
@@ -574,12 +574,12 @@ TEST_F(SymbolicTracingTest, loopWithBreakTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 7);
 }
 
@@ -589,12 +589,12 @@ TEST_F(SymbolicTracingTest, nestedFunctionCallTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 4);
 }
 
@@ -605,12 +605,12 @@ TEST_F(SymbolicTracingTest, deepLoopTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 61);
 }
 
@@ -621,12 +621,12 @@ TEST_F(SymbolicTracingTest, DISABLED_nativeLoopTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 61);
 }
 
@@ -639,12 +639,12 @@ TEST_F(SymbolicTracingTest, tracingBreakerTest) {
     });
     std::stringstream executionString;
     executionString << execution;
-    NES_INFO2("{}", executionString.str());
+    NES_INFO("{}", executionString.str());
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::stringstream executionString2;
     executionString2 << *execution.get();
-    NES_INFO2("{}", executionString2.str());
+    NES_INFO("{}", executionString2.str());
     ASSERT_EQ(basicBlocks.size(), 13);
 }
 

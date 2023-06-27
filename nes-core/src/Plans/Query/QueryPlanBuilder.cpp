@@ -40,7 +40,7 @@
 namespace NES {
 
 QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
-    NES_DEBUG2("QueryPlanBuilder: create query plan for input source  {}", sourceName);
+    NES_DEBUG("QueryPlanBuilder: create query plan for input source  {}", sourceName);
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
     auto queryPlanPtr = QueryPlan::create(sourceOperator);
     queryPlanPtr->setSourceConsumed(sourceName);
@@ -48,21 +48,21 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
 }
 
 QueryPlanPtr QueryPlanBuilder::addProjection(std::vector<NES::ExpressionNodePtr> expressions, NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add projection operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
     OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
 QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add rename operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add rename operator to query plan");
     auto op = LogicalOperatorFactory::createRenameSourceOperator(newSourceName);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
 QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExpression, NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add filter operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add filter operator to query plan");
     if (!filterExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Filter predicate cannot have a FieldRenameExpression");
     }
@@ -73,7 +73,7 @@ QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExp
 
 NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                   NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add map java udf operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
@@ -81,14 +81,14 @@ NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescript
 
 NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                       NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add flat map java udf operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add flat map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
 QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: add map operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add map operator to query plan");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Map expression cannot have a FieldRenameExpression");
     }
@@ -98,7 +98,7 @@ QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr cons
 }
 
 QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan) {
-    NES_DEBUG2("QueryPlanBuilder: unionWith the subQuery to current query plan");
+    NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query plan");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
@@ -110,7 +110,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                        ExpressionItem onRightKey,
                                        const Windowing::WindowTypePtr& windowType,
                                        Join::LogicalJoinDefinition::JoinType joinType) {
-    NES_DEBUG2("Query: joinWith the subQuery to current query");
+    NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto leftKeyFieldAccess = checkExpression(onLeftKey.getExpressionNode(), "leftSide");
     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey.getExpressionNode(), "leftSide");
@@ -146,7 +146,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                                               1,
                                                               joinType);
 
-    NES_DEBUG2("QueryPlanBuilder: add join operator to query plan");
+    NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
@@ -156,7 +156,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan
                                                  NES::QueryPlanPtr rightQueryPlan,
                                                  ExpressionItem onProbeKey,
                                                  ExpressionItem onBuildKey) {
-    NES_DEBUG2("Query: joinWith the subQuery to current query");
+    NES_DEBUG("Query: joinWith the subQuery to current query");
     auto probeKeyFieldAccess = checkExpression(onProbeKey.getExpressionNode(), "onProbeKey");
     auto buildKeyFieldAccess = checkExpression(onBuildKey.getExpressionNode(), "onBuildKey");
 
@@ -191,7 +191,7 @@ QueryPlanBuilder::assignWatermark(NES::QueryPlanPtr queryPlan,
 
 NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan,
                                                                    const NES::Windowing::WindowTypePtr windowType) {
-    NES_DEBUG2("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
+    NES_DEBUG("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
 
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
@@ -213,7 +213,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::Operat
                                                                      NES::QueryPlanPtr rightQueryPlan) {
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
-    NES_DEBUG2("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
+    NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
     auto newSourceName = NES::Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
     leftQueryPlan->setSourceConsumed(newSourceName);
     return leftQueryPlan;
@@ -222,7 +222,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::Operat
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(NES::ExpressionNodePtr expression,
                                                                              std::string side) {
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
+        NES_ERROR("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
     return expression->as<FieldAccessExpressionNode>();
