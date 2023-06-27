@@ -56,11 +56,12 @@ namespace NES::Benchmark {
             << "- numberOfQueriesToDeploy: " << defaultConfigPerRun.numberOfQueriesToDeploy->getValueAsString() << std::endl
             << "- numberOfSources: " << defaultConfigPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
             << "- numberOfBuffersInGlobalBufferManager: " << defaultConfigPerRun.numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
-            << "- numberOfBuffersInSourceLocalBufferPool: " << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString() << std::endl
-            << "- pageSize: " << defaultConfigPerRun.pageSize->getValueAsString() << std::endl
-            << "- preAllocPageCnt: " << defaultConfigPerRun.preAllocPageCnt->getValueAsString() << std::endl
+            << "- numberOfBuffersInSourceLocalBufferPool: " << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString()
+            << "- pageSize: " << defaultConfigPerRun.pageSize->getValueAsString()
+            << "- preAllocPageCnt: " << defaultConfigPerRun.preAllocPageCnt->getValueAsString()
             << "- numberOfPartitions: " << defaultConfigPerRun.numberOfPartitions->getValueAsString() << std::endl
-            << "- maxHashTableSize: " << defaultConfigPerRun.maxHashTableSize->getValueAsString() << std::endl;
+            << "- maxHashTableSize: " << defaultConfigPerRun.maxHashTableSize->getValueAsString()
+            << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);
