@@ -172,7 +172,7 @@ Nautilus::Value<> RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Val
         return Nautilus::Value<Nautilus::UInt64>((uint64_t) 1);
     } else {
         return retValue;
-    };
+    }
 }
 
 Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
