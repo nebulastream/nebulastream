@@ -3,7 +3,7 @@ from collections import defaultdict
 
 # regex patterns
 value_pattern = re.compile(r'(\d+.\d+)\s+ms$')
-task_patterns = ["Trace Generation", "IR Generation", "MIR_MIRGen", "MIR_MIRComp", "Flounder_FlounderGen", "Flounder_FlounderComp", "MLIR_MLIRGen", "[22:14", "CPP_CPPGen", "CPP_CPPComp", "BC_BCGen"]
+task_patterns = ["Trace Generation", "IR Generation", "MIR_MIRGen", "MIR_MIRComp", "Flounder_FlounderGen", "Flounder_FlounderComp", "MLIR_MLIRGen", "[23:27", "CPP_CPPGen", "CPP_CPPComp", "BC_BCGen"]
 
 def extract_info(file_name):
     task_times = defaultdict(list)

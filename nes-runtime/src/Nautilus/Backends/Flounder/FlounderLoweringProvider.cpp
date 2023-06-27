@@ -52,7 +52,7 @@ FlounderLoweringProvider::FlounderLoweringProvider() = default;
 std::unique_ptr<flounder::Executable> FlounderLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir,
                                                                       const NES::DumpHelper& dumpHelper) {
     flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ true};
+                                                     /*collect the asm code to print later*/ false};
     auto ctx = LoweringContext(std::move(ir));
     return ctx.process(compiler, dumpHelper);
 }
