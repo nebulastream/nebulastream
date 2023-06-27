@@ -105,6 +105,7 @@ class NLJBuild : public ExecutableOperator {
     const uint64_t entrySize;
     const uint64_t pageSize;
     const std::shared_ptr<TimeFunction> timeFunction;
+
 };
 }// namespace NES::Runtime::Execution::Operators
 
