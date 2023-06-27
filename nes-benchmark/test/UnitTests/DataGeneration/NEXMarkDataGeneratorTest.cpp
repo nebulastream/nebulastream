@@ -217,12 +217,14 @@ TEST_F(NEXMarkDataGeneratorTest, personGeneratorTest) {
     // testing createData()
     auto dataDefault = personGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     auto persons = dependencyGeneratorInstance.getPersons();
+    ASSERT_FALSE(dataDefault.empty());
 
     auto index = 0UL;
     for (auto& buffer : dataDefault) {
         auto numBuffers = buffer.getNumberOfTuples();
         auto bufferAsCSV = Util::printTupleBufferAsCSV(buffer, personGenerator->getSchema());
         auto bufferRecordsAsString = Util::splitWithStringDelimiter<std::string>(bufferAsCSV, "\n");
+        //NES_INFO(bufferAsCSV);
 
         for (auto i = index; i < index + numBuffers; ++i) {
             auto bufferRecord = bufferRecordsAsString[i % bufferRecordsAsString.size()];
@@ -312,12 +314,14 @@ TEST_F(NEXMarkDataGeneratorTest, openAuctionGeneratorTest) {
     // testing createData()
     auto dataDefault = openAuctionGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     auto auctions = dependencyGeneratorInstance.getAuctions();
+    ASSERT_FALSE(dataDefault.empty());
 
     auto index = 0UL;
     for (auto& buffer : dataDefault) {
         auto numBuffers = buffer.getNumberOfTuples();
         auto bufferAsCSV = Util::printTupleBufferAsCSV(buffer, openAuctionGenerator->getSchema());
         auto bufferRecordsAsString = Util::splitWithStringDelimiter<std::string>(bufferAsCSV, "\n");
+        //NES_INFO(bufferAsCSV);
 
         for (auto i = index; i < index + numBuffers; ++i) {
             auto bufferRecord = bufferRecordsAsString[i % bufferRecordsAsString.size()];
@@ -386,11 +390,13 @@ TEST_F(NEXMarkDataGeneratorTest, bidGeneratorTest) {
     // testing createData()
     auto dataDefault = bidGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     auto bids = dependencyGeneratorInstance.getBids();
+    ASSERT_FALSE(dataDefault.empty());
 
     auto index = 0UL;
     for (auto& buffer : dataDefault) {
         auto numBuffers = buffer.getNumberOfTuples();
         auto bufferDefault = Util::printTupleBufferAsCSV(buffer, bidGenerator->getSchema());
+        //NES_INFO(bufferDefault);
 
         std::ostringstream expectedBuffer;
         for (auto i = index; i < index + numBuffers; ++i) {
