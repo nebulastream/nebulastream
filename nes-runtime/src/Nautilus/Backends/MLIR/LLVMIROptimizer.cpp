@@ -70,7 +70,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
             auto* basicError = new std::error_code();
 
             // Dump the generated llvmIRModule.
-            dumpHelper.dump(options.getIdentifier(), llvmIRString);
+            dumpHelper.dump("5. LLVM.ll", llvmIRString);
         }
         return optimizedModule;
     };

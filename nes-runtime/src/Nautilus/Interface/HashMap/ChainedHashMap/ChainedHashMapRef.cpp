@@ -19,12 +19,12 @@
 
 namespace NES::Nautilus::Interface {
 
-extern "C" __attribute__((always_inline)) void* findChainProxy(void* state, uint64_t hash) {
+extern "C" void* findChainProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->findChain(hash);
 }
 
-extern "C" __attribute__((always_inline)) void* insertProxy(void* state, uint64_t hash) {
+extern "C" void* insertProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->insertEntry(hash);
 }

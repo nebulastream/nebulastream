@@ -16,7 +16,7 @@ compilerArgs=("PipelineCompiler" "CPPPipelineCompiler" "BCInterpreter" "Babelfis
 for scaleFactor in "${scaleFactors[@]}"; do
   for query in "${queries[@]}"; do
     for compilerArg in "${compilerArgs[@]}"; do
-      command="../tpch-benchmark query=$query identifier=$id scaleFactor=$scaleFactor compiler=$compilerArg compileIterations=$compileIterations executionWarmup=$executionWarmup executionBenchmark=$executionBenchmark"
+      command="../tpch-benchmark query=$query identifier=$id inlining=0 scaleFactor=$scaleFactor compiler=$compilerArg compileIterations=$compileIterations executionWarmup=$executionWarmup executionBenchmark=$executionBenchmark"
       echo $command
       eval $command
     done

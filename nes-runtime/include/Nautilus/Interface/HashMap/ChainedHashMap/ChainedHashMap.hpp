@@ -90,7 +90,7 @@ class ChainedHashMap {
      * @param hash the hash for the key.
      * @return Entry* to the new entry.
      */
-    inline Entry* insertEntry(hash_t hash) {
+    Entry* insertEntry(hash_t hash) {
         auto* newEntry = allocateNewEntry();
         // call the constructor of Entry at the address of new Entry to initialize the object.
         new (newEntry) Entry(hash);
