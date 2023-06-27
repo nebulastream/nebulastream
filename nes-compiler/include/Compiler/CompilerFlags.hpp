@@ -25,7 +25,7 @@ namespace NES::Compiler {
  * Flags can be added, retrieved and two sets of CompilerFlags can also be merged.
  */
 class CompilerFlags {
-public:
+  public:
     CompilerFlags() = default;
 
     /**
@@ -46,10 +46,10 @@ public:
      */
     void mergeFlags(const CompilerFlags& flags);
 
-private:
+  private:
     std::unordered_set<std::string> compilerFlags;
 };
 
-} // namespace NES::Compiler
+}// namespace NES::Compiler
 
-#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
+#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_

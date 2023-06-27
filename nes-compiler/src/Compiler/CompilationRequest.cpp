@@ -32,16 +32,9 @@ CompilationRequest::CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
                                        bool optimizeCompilation,
                                        bool debug,
                                        std::vector<std::shared_ptr<ExternalAPI>> externalApis)
-    : sourceCode(std::move(sourceCode))
-    , name(std::move(name))
-    , profileCompilation(profileCompilation)
-    , profileExecution(profileExecution)
-    , optimizeCompilation(optimizeCompilation)
-    , debug(debug)
-    , externalApis(std::move(externalApis))
-{
-
-}
+    : sourceCode(std::move(sourceCode)), name(std::move(name)), profileCompilation(profileCompilation),
+      profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug),
+      externalApis(std::move(externalApis)) {}
 
 std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<SourceCode> sourceCode,
                                                                std::string identifier,

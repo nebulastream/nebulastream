@@ -30,10 +30,8 @@ enum class Language {
  */
 inline std::string getLanguageAsString(Language language) {
     switch (language) {
-        case Language::CPP:
-            return "CPP";
-        default:
-            return "unknown";
+        case Language::CPP: return "CPP";
+        default: return "unknown";
     }
 }
 
