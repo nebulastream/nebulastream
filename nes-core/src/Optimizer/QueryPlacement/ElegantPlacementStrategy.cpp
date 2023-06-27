@@ -91,9 +91,9 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         payload.push_back(availableNodes);
 
         nlohmann::json optimizationObjectives;
-        optimizationObjectives[ENERGY_RATIO] = energyRatio;
-        optimizationObjectives[PERFORMANCE_RATIO] = performanceRatio;
-        payload[OPTIMIZATION_OBJECTIVES] = optimizationObjectives;
+        optimizationObjectives[ENERGY_RATIO_KEY] = energyRatio;
+        optimizationObjectives[PERFORMANCE_RATIO_KEY] = performanceRatio;
+        payload[OPTIMIZATION_OBJECTIVES_KEY] = optimizationObjectives;
 
         //1.c: Make a rest call to elegant planner
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
@@ -132,12 +132,12 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
                                                                  cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
-    auto placementData = jsonResponse[PLACEMENT];
+    auto placementData = jsonResponse[PLACEMENT_KEY];
 
     // fill with true where nodeId is present
     for (const auto& placement : placementData) {
-        OperatorId operatorId = placement[OPERATOR_ID];
-        TopologyNodeId topologyNodeId = placement[NODE_ID];
+        OperatorId operatorId = placement[OPERATOR_ID_KEY];
+        TopologyNodeId topologyNodeId = placement[NODE_ID_KEY];
 
         bool pinned = false;
         for (const auto& item : pinnedDownStreamOperators) {
@@ -146,7 +146,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
                 operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
 
                 if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
-                    std::string deviceId = placement[DEVICE_ID];
+                    std::string deviceId = placement[DEVICE_ID_KEY];
                     operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
                 }
 
@@ -188,13 +188,13 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
         //if operator was not previously visited
         if (visitedOperator.insert(logicalOperator).second) {
             nlohmann::json node;
-            node[ID] = logicalOperator->getId();
+            node[ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
-            node[PINNED_NODE_ID] = pinnedNodeId.has_value() ? std::any_cast<uint64_t>(pinnedNodeId) : INVALID_TOPOLOGY_NODE_ID;
+            node[PINNED_NODE_ID_KEY] = pinnedNodeId.has_value() ? std::any_cast<uint64_t>(pinnedNodeId) : INVALID_TOPOLOGY_NODE_ID;
             auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
             node[SOURCE_CODE] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : "";
             nodes.push_back(node);
-            node[OUTPUT_TUPLE_SIZE] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
+            node[OUTPUT_TUPLE_SIZE_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),
@@ -211,10 +211,10 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
                     operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
                 }
             }
-            node[CHILDREN] = upstreamOperatorIds;
+            node[CHILDREN_KEY] = upstreamOperatorIds;
         }
     }
-    queryPlan[OPERATOR_GRAPH] = nodes;
+    queryPlan[OPERATOR_GRAPH_KEY] = nodes;
     return queryPlan;
 }
 
@@ -237,23 +237,23 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
         parentToAdd.pop_front();
 
         // Add properties for current topology node
-        currentNodeJsonValue[NODE_ID] = currentNode->getId();
-        currentNodeOpenCLJsonValue[DEVICE_ID] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_ID"));
-        currentNodeOpenCLJsonValue[DEVICE_TYPE] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_TYPE"));
-        currentNodeOpenCLJsonValue[DEVICE_NAME] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_NAME"));
-        currentNodeOpenCLJsonValue[MEMORY] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
+        currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
+        currentNodeOpenCLJsonValue[DEVICE_ID_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_ID"));
+        currentNodeOpenCLJsonValue[DEVICE_TYPE_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_TYPE"));
+        currentNodeOpenCLJsonValue[DEVICE_NAME_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_NAME"));
+        currentNodeOpenCLJsonValue[MEMORY_KEY] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
         devices.push_back(currentNodeOpenCLJsonValue);
-        currentNodeJsonValue[DEVICES] = devices;
-        currentNodeJsonValue[NODE_TYPE] = "static";// FIXME: populate from enum of {mobile, static, w/e else}?
+        currentNodeJsonValue[DEVICES_KEY] = devices;
+        currentNodeJsonValue[NODE_TYPE_KEY] = "static";// FIXME: populate from enum of {mobile, static, w/e else}?
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
-            currentEdgeJsonValue[LINK_ID] =
+            currentEdgeJsonValue[LINK_ID_KEY] =
                 std::to_string(child->as<TopologyNode>()->getId()) + "_" + std::to_string(currentNode->getId());
-            currentEdgeJsonValue[SOURCE] = child->as<TopologyNode>()->getId();
-            currentEdgeJsonValue[TARGET] = currentNode->getId();
-            currentEdgeJsonValue[TRANSFER_RATE] = 100;// FIXME: replace it with more intelligible value
+            currentEdgeJsonValue[SOURCE_KEY] = child->as<TopologyNode>()->getId();
+            currentEdgeJsonValue[TARGET_KEY] = currentNode->getId();
+            currentEdgeJsonValue[TRANSFER_RATE_KEY] = 100;// FIXME: replace it with more intelligible value
             edges.push_back(currentEdgeJsonValue);
             childToAdd.push_back(child->as<TopologyNode>());
         }
@@ -267,8 +267,8 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
     }
     NES_INFO2("ElegantPlacementStrategy: no more topology nodes to add");
 
-    topologyJson[AVAILABLE_NODES] = nodes;
-    topologyJson[NETWORK_DELAYS] = edges;
+    topologyJson[AVAILABLE_NODES_KEY] = nodes;
+    topologyJson[NETWORK_DELAYS_KEY] = edges;
     return topologyJson;
 }
 
