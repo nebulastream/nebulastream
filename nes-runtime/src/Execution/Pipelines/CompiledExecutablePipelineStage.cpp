@@ -76,13 +76,13 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     dumpHelper.dump("O. AfterTracing.trace", [&]() {
         return executionTrace->toString();
     });
-    timer.snapshot("Trace Generation");
+
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     dumpHelper.dump("1. AfterTracing.trace", [&]() {
         return executionTrace->toString();
     });
-    timer.snapshot("SSA Generation");
+    timer.snapshot("Trace Generation");
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
