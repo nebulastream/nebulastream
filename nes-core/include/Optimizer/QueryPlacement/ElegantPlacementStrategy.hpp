@@ -83,6 +83,32 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     std::string serviceURL;
     uint16_t performanceRatio;
     uint16_t energyRatio;
+
+    //Payload constants
+    const std::string OPERATOR_GRAPH = "operatorGraph";
+    const std::string CHILDREN = "children";
+    const std::string OUTPUT_TUPLE_SIZE = "outputTupleSize";
+    const std::string SOURCE_CODE = "sourceCode";
+    const std::string PINNED_NODE_ID = "pinnedNodeId";
+    const std::string ID = "id";
+    const std::string DEVICE_ID = "deviceID";
+    const std::string DEVICE_TYPE = "deviceType";
+    const std::string DEVICE_NAME = "deviceName";
+    const std::string MEMORY = "memory";
+    const std::string DEVICES = "devices";
+    const std::string NODE_TYPE = "nodeType";
+    const std::string LINK_ID = "linkID";
+    const std::string SOURCE = "source";
+    const std::string TARGET = "target";
+    const std::string TRANSFER_RATE = "transferRate";
+    const std::string AVAILABLE_NODES = "AVAILABLE_NODES";
+    const std::string NETWORK_DELAYS = "NETWORK_DELAYS";
+    const std::string NODE_ID = "nodeId";
+    const std::string PLACEMENT = "placement";
+    const std::string OPERATOR_ID = "operatorId";
+    const std::string ENERGY_RATIO = "energyRatio";
+    const std::string PERFORMANCE_RATIO = "performanceRatio";
+    const std::string OPTIMIZATION_OBJECTIVES = "optimizationObjectives";
 };
 
 }// namespace NES::Optimizer
