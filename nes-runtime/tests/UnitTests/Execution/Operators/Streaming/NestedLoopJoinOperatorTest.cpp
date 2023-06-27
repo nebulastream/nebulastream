@@ -166,7 +166,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
-            NES_DEBUG("Check window=" << windowIdentifier);
+            NES_DEBUG2("Check window={}", windowIdentifier);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true),
                       expectedNumberOfTuplesInWindowLeft);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),

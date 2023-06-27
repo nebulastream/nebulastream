@@ -99,7 +99,7 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    NES_INFO2("Submitting query: {}", query.getQueryPlan()->toString())
+    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
@@ -119,12 +119,12 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    NES_DEBUG2("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->resultBuffers[0], joinSchema));
+    NES_DEBUG("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->resultBuffers[0], joinSchema));
 
     auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
-    NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG2("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
+    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
+    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
     ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));

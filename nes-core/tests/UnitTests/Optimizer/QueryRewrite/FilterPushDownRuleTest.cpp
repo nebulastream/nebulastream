@@ -845,9 +845,9 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToSrc1) {
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}",  (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}",  (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
@@ -920,9 +920,9 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinNotPossible) {
 
     // Execute
     auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
-    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    NES_DEBUG2("Input Query Plan: {}",  (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
-    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+    NES_DEBUG2("Updated Query Plan: {}", (updatedPlan)->toString());
 
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);

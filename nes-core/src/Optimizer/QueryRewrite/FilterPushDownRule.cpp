@@ -166,7 +166,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         // removes filter operator from its original position and connects the parents and children of the filter operator at that position
         if (!filterOperator->removeAndJoinParentAndChildren()) {
             //if we did not manage to remove the operator we can't insert it at the new position
-            NES_WARNING("FilterPushDownRule wanted to change the position of a filter, but was not able to do so.")
+            NES_WARNING(2"FilterPushDownRule wanted to change the position of a filter, but was not able to do so.")
             return;
         }
 
@@ -176,7 +176,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         bool success3 = filterOperator->addParent(parOperator);  // also adds filterOperator as a child to parOperator
         if (!success1 || !success2 || !success3) {
             //if we did not manage to remove the operator but now the insertion is not successful, the queryPlan is invalid now
-            NES_ERROR(
+            NES_ERROR2(
                 "FilterPushDownRule removed a Filter from a query plan but was not able to insert it into the query plan again.")
             throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
         }

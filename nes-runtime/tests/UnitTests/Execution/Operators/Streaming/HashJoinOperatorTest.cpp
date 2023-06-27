@@ -329,7 +329,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
             Nautilus::Record({{hashJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
                               {hashJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
                               {hashJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
-        NES_DEBUG("Tuple left f1_left=" << i << " f2_left(key)=" << (i % 10) + 10 << " ts=" << i);
+        NES_DEBUG("Tuple id={} key={} ts={}", i, (i % 10) + 10, i);
         auto recordRight =
             Nautilus::Record({{hashJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
                               {hashJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
@@ -337,7 +337,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         NES_DEBUG("Tuple right f1_left=" << i + 1000 << " kef2_left(key)=" << (i % 10) + 10 << " ts=" << i);
 
         if (recordRight.read(hashJoinSinkHelper.timeStampFieldRight) > lastTupleTimeStampWindow) {
-            NES_DEBUG("rects=" << recordRight.read(hashJoinSinkHelper.timeStampFieldRight) << " >= " << lastTupleTimeStampWindow)
+            NES_DEBUG("rects={} >= {}", recordRight.read(hashJoinSinkHelper.timeStampFieldRight)->toString(), lastTupleTimeStampWindow);
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
             rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
@@ -351,7 +351,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         tmpRecordsRight.emplace_back(recordRight);
     }
 
-    NES_DEBUG("filling left side");
+    NES_DEBUG2("filling left side");
     //push buffers to build left
     //for all record buffers
     for (auto i = 0UL; i < leftRecords.size(); i++) {
@@ -365,14 +365,13 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         //for one record in the buffer
         for (auto u = 0UL; u < leftRecords[i].size(); u++) {
             hashJoinBuildLeft->execute(executionContext, leftRecords[i][u]);
-            NES_DEBUG("Tuple insert id=" << i << " key=" << leftRecords[i][u].read("f2_left")
-                                         << " ts=" << leftRecords[i][u].read(hashJoinSinkHelper.timeStampFieldLeft));
+            NES_DEBUG("Tuple insert id={} key={} ts={}", i, leftRecords[i][u].read("f2_left")->toString(), leftRecords[i][u].read(hashJoinSinkHelper.timeStampFieldLeft)->toString());
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setOrigin(uint64_t(1));
         executionContext.setSequenceNumber(uint64_t(i));
-        NES_DEBUG("trigger left with ts=" << leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft));
+        NES_DEBUG("trigger left with ts={}", leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft)->toString());
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
     }
@@ -398,7 +397,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
-    NES_DEBUG("trigger sink");
+    NES_DEBUG2("trigger sink");
     auto numberOfEmittedBuffersBuild = hashJoinOperatorTest->emittedBuffers.size();
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
         auto tupleBuffer = hashJoinOperatorTest->emittedBuffers[cnt];
@@ -413,8 +412,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
     if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows() != 1) {
-        NES_ERROR("Not exactly one active window!"
-                  << hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows());
+        NES_ERROR("Not exactly one active window! {}"
+                  hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows());
         //TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
         //        return false;
     }

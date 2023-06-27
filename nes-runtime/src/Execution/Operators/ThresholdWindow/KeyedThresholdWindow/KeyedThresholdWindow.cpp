@@ -31,49 +31,49 @@ namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementKeyedThresholdWindowCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called incrementCount: recordCount = " << handler->keyedAggregationStates.at(aggKey).recordCount + 1);
+    NES_TRACE2("Called incrementCount: recordCount = {}", handler->keyedAggregationStates.at(aggKey).recordCount + 1);
     handler->keyedAggregationStates.at(aggKey).recordCount++;
 }
 
 extern "C" void setKeyedThresholdWindowIsWindowOpen(void* state, uint32_t aggKey, bool isWindowOpen) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
+    NES_TRACE2("Called setIsWindowOpen: {}", isWindowOpen);
     handler->keyedAggregationStates.at(aggKey).isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsKeyedThresholdWindowOpen(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->keyedAggregationStates.at(aggKey).isWindowOpen);
+    NES_TRACE2("Called getIsWindowOpen: isWindowOpen = {}", handler->keyedAggregationStates.at(aggKey).isWindowOpen);
     return handler->keyedAggregationStates.at(aggKey).isWindowOpen;
 }
 
 extern "C" uint64_t getKeyedThresholdWindowRecordCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called getRecordCount: recordCount = " << handler->keyedAggregationStates.at(aggKey).recordCount);
+    NES_TRACE2("Called getRecordCount: recordCount = {}", handler->keyedAggregationStates.at(aggKey).recordCount);
     return handler->keyedAggregationStates.at(aggKey).recordCount;
 }
 
 extern "C" void resetKeyedThresholdWindowCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called resetCount");
+    NES_TRACE2("Called resetCount");
     handler->keyedAggregationStates.at(aggKey).recordCount = 0;
 }
 
 extern "C" void lockKeyedThresholdWindowHandler(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called lockWindowHandler");
+    NES_TRACE2("Called lockWindowHandler");
     handler->keyedAggregationStates.at(aggKey).mutex.lock();
 }
 
 extern "C" void unlockKeyedThresholdWindowHandler(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called unlockWindowHandler");
+    NES_TRACE2("Called unlockWindowHandler");
     handler->keyedAggregationStates.at(aggKey).mutex.unlock();
 }
 
 extern "C" void createStateIfNotExist(void* hanlderMemref, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) hanlderMemref;
-    NES_TRACE("Called createStateIfNotExist");
+    NES_TRACE2("Called createStateIfNotExist");
     // Create a key if not exist
     if (handler->keyedAggregationStates.find(aggKey) == handler->keyedAggregationStates.end()) {
         // key does not exist, create a new map entry with aggKey as key
@@ -96,7 +96,7 @@ void addAggregationValues(void* state, uint32_t aggKey, uint32_t aggFunctionCoun
 // TODO #3801: should support key data types other than uint32_t
 extern "C" void* getKeyedAggregationValue(void* state, uint32_t aggKey, uint32_t aggFuncIdx) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called getAggregationValue: for aggIdx = " << aggFuncIdx << " and aggKey = " << aggKey);
+    NES_TRACE2("Called getAggregationValue: for aggIdx = {} and aggKey = {}", aggFuncIdx, aggKey);
     return (void*) handler->keyedAggregationStates.at(aggKey).aggregationValues[aggFuncIdx].get();
 }
 
@@ -118,7 +118,7 @@ KeyedThresholdWindow::KeyedThresholdWindow(
 }
 
 void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
+    NES_TRACE2("Execute ThresholdWindow for received record {}", record.getAllFields().begin()->c_str())
 
     // derive key values
     Value<> keyValue = keyExpression->execute(record);
@@ -174,7 +174,7 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
     }
 
     if (val) {
-        NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
+        NES_TRACE2("Execute ThresholdWindow for valid predicate {}", val.getValue().toString())
         for (uint32_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueState = FunctionCall("getKeyedAggregationValue",
                                                       getKeyedAggregationValue,

@@ -110,10 +110,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto rightBuffers =
             Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
-        NES_DEBUG("read file=" << fileNameBuffersSink);
+        NES_DEBUG2("read file={}", fileNameBuffersSink);
 
-        NES_DEBUG("leftBuffer: \n" << Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
-        NES_DEBUG("rightBuffers: \n" << Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
+        NES_DEBUG2("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
+        NES_DEBUG2("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         // Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
