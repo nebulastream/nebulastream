@@ -21,102 +21,102 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 UniformIntDistributions::UniformIntDistributions() : generator(42) {}
 
 uint8_t UniformIntDistributions::generateRandomBoolean() {
-    std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
+    static std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
     return uniformBooleanDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomReserve() {
-    std::uniform_int_distribution<uint16_t> uniformReserveDistribution(1000, 2000);
+    static std::uniform_int_distribution<uint16_t> uniformReserveDistribution(1000, 2000);
     return uniformReserveDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomCategory() {
-    std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
+    static std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
     return uniformCategoryDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomQuantity() {
-    std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 10);
+    static std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 10);
     return uniformQuantityDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomFirstname() {
-    std::uniform_int_distribution<uint16_t> uniformFirstnameDistribution(0, PersonDataPool().firstnames.size() - 1);
+    static std::uniform_int_distribution<uint16_t> uniformFirstnameDistribution(0, PersonDataPool().firstnames.size() - 1);
     return uniformFirstnameDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomLastname() {
-    std::uniform_int_distribution<uint16_t> uniformLastnameDistribution(0, PersonDataPool().lastnames.size() - 1);
+    static std::uniform_int_distribution<uint16_t> uniformLastnameDistribution(0, PersonDataPool().lastnames.size() - 1);
     return uniformLastnameDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomEmail() {
-    std::uniform_int_distribution<uint8_t> uniformEmailDistribution(0, PersonDataPool().emails.size() - 1);
+    static std::uniform_int_distribution<uint8_t> uniformEmailDistribution(0, PersonDataPool().emails.size() - 1);
     return uniformEmailDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomCity() {
-    std::uniform_int_distribution<uint16_t> uniformCityDistribution(0, PersonDataPool().cities.size() - 1);
+    static std::uniform_int_distribution<uint16_t> uniformCityDistribution(0, PersonDataPool().cities.size() - 1);
     return uniformCityDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomCountry() {
-    std::uniform_int_distribution<uint8_t> uniformCountryDistribution(0, PersonDataPool().countries.size() - 1);
+    static std::uniform_int_distribution<uint8_t> uniformCountryDistribution(0, PersonDataPool().countries.size() - 1);
     return uniformCountryDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomProvince() {
-    std::uniform_int_distribution<uint8_t> uniformProvinceDistribution(0, PersonDataPool().provinces.size() - 1);
+    static std::uniform_int_distribution<uint8_t> uniformProvinceDistribution(0, PersonDataPool().provinces.size() - 1);
     return uniformProvinceDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomEducation() {
-    std::uniform_int_distribution<uint8_t> uniformEducationDistribution(0, PersonDataPool().education.size() - 1);
+    static std::uniform_int_distribution<uint8_t> uniformEducationDistribution(0, PersonDataPool().education.size() - 1);
     return uniformEducationDistribution(generator);
 }
 
 uint32_t UniformIntDistributions::generateRandomZipcode() {
-    std::uniform_int_distribution<uint32_t> uniformZipcodeDistribution(1, 99999);
+    static std::uniform_int_distribution<uint32_t> uniformZipcodeDistribution(1, 99999);
     return uniformZipcodeDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomOneHundred() {
-    std::uniform_int_distribution<uint8_t> uniformHundredDistribution(1, 99);
+    static std::uniform_int_distribution<uint8_t> uniformHundredDistribution(1, 99);
     return uniformHundredDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomCreditcard() {
-    std::uniform_int_distribution<uint16_t> uniformCreditcardDistribution(1000, 9999);
+    static std::uniform_int_distribution<uint16_t> uniformCreditcardDistribution(1000, 9999);
     return uniformCreditcardDistribution(generator);
 }
 
 uint32_t UniformIntDistributions::generateRandomIncome() {
-    std::uniform_int_distribution<uint32_t> uniformIncomeDistribution(40000, 69999);
+    static std::uniform_int_distribution<uint32_t> uniformIncomeDistribution(40000, 69999);
     return uniformIncomeDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomAge() {
-    std::uniform_int_distribution<uint8_t> uniformAgeDistribution(30, 44);
+    static std::uniform_int_distribution<uint8_t> uniformAgeDistribution(30, 44);
     return uniformAgeDistribution(generator);
 }
 
 uint8_t UniformIntDistributions::generateRandomInterest() {
-    std::uniform_int_distribution<uint8_t> uniformInterestDistribution(0, 4);
+    static std::uniform_int_distribution<uint8_t> uniformInterestDistribution(0, 4);
     return uniformInterestDistribution(generator);
 }
 
 uint16_t UniformIntDistributions::generateRandomPhonePrefix() {
-    std::uniform_int_distribution<uint16_t> uniformPhonePrefixDistribution(10, 999);
+    static std::uniform_int_distribution<uint16_t> uniformPhonePrefixDistribution(10, 999);
     return uniformPhonePrefixDistribution(generator);
 }
 
 uint32_t UniformIntDistributions::generateRandomPhoneSuffix() {
-    std::uniform_int_distribution<uint32_t> uniformPhoneSuffixDistribution(123457, 9987653);
+    static std::uniform_int_distribution<uint32_t> uniformPhoneSuffixDistribution(123457, 9987653);
     return uniformPhoneSuffixDistribution(generator);
 }
 
 bool UniformIntDistributions::isCountryUS() {
-    std::uniform_int_distribution<uint8_t> uniformCountryUSDistribution(0, 3);
+    static std::uniform_int_distribution<uint8_t> uniformCountryUSDistribution(0, 3);
     return uniformCountryUSDistribution(generator) != 0;
 }
 

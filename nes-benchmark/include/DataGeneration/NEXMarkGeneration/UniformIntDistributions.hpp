@@ -144,6 +144,7 @@ class UniformIntDistributions {
      * @return true or false
      */
     bool isCountryUS();
+
   private:
     std::mt19937 generator;
 };
