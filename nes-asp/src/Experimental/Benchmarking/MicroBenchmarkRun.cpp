@@ -43,10 +43,10 @@ void MicroBenchmarkRun::run() {
         auto allRecordBuffers = this->createInputRecords(bufferManager);
 
         NES_INFO2("Creating the query keys...");
-        auto queryKeyValues = this->createQueryKeyValues(allRecordBuffers, bufferManager);
+        auto keys = this->createKeys(allRecordBuffers, bufferManager);
 
         NES_INFO2("Creating accuracy buffer...");
-        auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, queryKeyValues, bufferManager);
+        auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, keys, bufferManager);
 
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
         NES_INFO2("Creating the synopsis...");
@@ -80,7 +80,7 @@ void MicroBenchmarkRun::run() {
         timer.snapshot(executePipelineSnapshotName);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
-        auto allApproximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeyValues,
+        auto allApproximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, keys,
                                                                      bufferManager);
 
         timer.snapshot(getApproximateSnapshotName);
@@ -231,14 +231,14 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime:
 
 
 
-std::vector<Nautilus::Value<>> MicroBenchmarkRun::createQueryKeyValues(std::vector<Runtime::TupleBuffer>& inputBuffers,
+std::vector<Nautilus::Value<>> MicroBenchmarkRun::createKeys(std::vector<Runtime::TupleBuffer>& inputBuffers,
                                                                        Runtime::BufferManagerPtr bufferManager) {
     // For now, we just use all keys that we observe
 
     auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                                    aggregation.inputSchema);
     auto readKeyFieldExpression = aggregation.getReadFieldKeyExpression();
-    std::vector<Nautilus::Value<>> queryKeyValues;
+    std::vector<Nautilus::Value<>> keys;
 
     for (auto& buffer : inputBuffers) {
         auto numberOfRecords = buffer.getNumberOfTuples();
@@ -246,15 +246,15 @@ std::vector<Nautilus::Value<>> MicroBenchmarkRun::createQueryKeyValues(std::vect
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read({}, bufferAddress, i);
             auto key = readKeyFieldExpression->execute(record);
-            queryKeyValues.emplace_back(key);
+            keys.emplace_back(key);
         }
     }
 
-    return queryKeyValues;
+    return keys;
 }
 
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
-                                                                           std::vector<Nautilus::Value<>>& queryKeyValues,
+                                                                           std::vector<Nautilus::Value<>>& keys,
                                                                            Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
     auto aggregationFunction = aggregation.createAggregationFunction();
@@ -273,7 +273,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
     auto outputBuffer = bufferManager->getBufferBlocking();
     Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t)0);
 
-    for (auto& key : queryKeyValues) {
+    for (auto& key : keys) {
         aggregationFunction->reset(aggregationValueMemRef);
 
         for (auto& buf : inputBuffers) {
