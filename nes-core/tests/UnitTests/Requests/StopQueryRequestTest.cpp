@@ -40,7 +40,7 @@ class StopQueryRequestTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StopQueryRequestTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO2("Setup StopQueryRequestTest test class.");
+        NES_INFO("Setup StopQueryRequestTest test class.");
     }
 };
 /**

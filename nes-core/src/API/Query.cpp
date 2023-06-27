@@ -102,7 +102,7 @@ namespace CEPOperatorBuilder {
 
 And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
-    NES_DEBUG2("Query: add map operator to andWith to add virtual key to originalQuery");
+    NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignment("cep_leftKey");
     std::string cepRightKey = keyAssignment("cep_rightKey");
@@ -110,8 +110,8 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
-    NES_DEBUG2("Query: add name cepLeftKey {}", cepLeftKey);
-    NES_DEBUG2("Query: add name cepRightKey {}", cepRightKey);
+    NES_DEBUG("Query: add name cepLeftKey {}", cepLeftKey);
+    NES_DEBUG("Query: add name cepRightKey {}", cepRightKey);
     onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
     onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
@@ -122,7 +122,7 @@ Query& And::window(const Windowing::WindowTypePtr& windowType) const {
 
 Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
-    NES_DEBUG2("Query: add map operator to seqWith to add virtual key to originalQuery");
+    NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignment("cep_leftKey");
     std::string cepRightKey = keyAssignment("cep_rightKey");
@@ -135,7 +135,7 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
-    NES_DEBUG2("Sequence enters window function");
+    NES_DEBUG("Sequence enters window function");
     auto timestamp = Windowing::WindowType::asTimeBasedWindowType(windowType)
                          ->getTimeCharacteristic()
                          ->getField()
@@ -162,8 +162,8 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     else {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
-    NES_DEBUG2("ExpressionItem for Left Source {}", sourceNameLeft);
-    NES_DEBUG2("ExpressionItem for Right Source {}", sourceNameRight);
+    NES_DEBUG("ExpressionItem for Left Source {}", sourceNameLeft);
+    NES_DEBUG("ExpressionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
         .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
 }
@@ -228,25 +228,25 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 Query::Query(const Query& query) = default;
 
 Query Query::from(const std::string& sourceName) {
-    NES_DEBUG2("Query: create new Query with source {}", sourceName);
+    NES_DEBUG("Query: create new Query with source {}", sourceName);
     auto queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
     return Query(queryPlan);
 }
 
 Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
-    NES_DEBUG2("Query: add projection to query");
+    NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
     return *this;
 }
 
 Query& Query::as(const std::string& newSourceName) {
-    NES_DEBUG2("Query: add rename operator to query");
+    NES_DEBUG("Query: add rename operator to query");
     this->queryPlan = QueryPlanBuilder::addRename(newSourceName, this->queryPlan);
     return *this;
 }
 
 Query& Query::unionWith(const Query& subQuery) {
-    NES_DEBUG2("Query: unionWith the subQuery to current query");
+    NES_DEBUG("Query: unionWith the subQuery to current query");
     this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQuery.getQueryPlan());
     return *this;
 }
@@ -255,7 +255,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onLeftKey,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG2("Query: add JoinType (INNER_JOIN) to Join Operator");
+    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
     this->queryPlan =
         QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onLeftKey, onRightKey, windowType, joinType);
@@ -263,7 +263,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
 }
 
 Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
-    NES_DEBUG2("Query: add Batch Join Operator to Query");
+    NES_DEBUG("Query: add Batch Join Operator to Query");
     this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
     return *this;
 }
@@ -272,7 +272,7 @@ Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onLeftKey,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
+    NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan =
         QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onLeftKey, onRightKey, windowType, joinType);
@@ -283,7 +283,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onLeftKey,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
+    NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan =
         QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onLeftKey, onRightKey, windowType, joinType);
@@ -291,31 +291,31 @@ Query& Query::seqWith(const Query& subQueryRhs,
 }
 
 Query& Query::orWith(const Query& subQueryRhs) {
-    NES_DEBUG2("Query: finally we translate the OR into a union OP ");
+    NES_DEBUG("Query: finally we translate the OR into a union OP ");
     this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQueryRhs.getQueryPlan());
     return *this;
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
-    NES_DEBUG2("Query: add filter operator to query");
+    NES_DEBUG("Query: add filter operator to query");
     this->queryPlan = QueryPlanBuilder::addFilter(filterExpression, this->queryPlan);
     return *this;
 }
 
 Query& Query::mapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
-    NES_DEBUG2("Query: add map java udf operator to query");
+    NES_DEBUG("Query: add map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addMapJavaUDF(descriptor, this->queryPlan);
     return *this;
 }
 
 Query& Query::flatMapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
-    NES_DEBUG2("Query: add flat map java udf operator to query");
+    NES_DEBUG("Query: add flat map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addFlatMapJavaUDF(descriptor, this->queryPlan);
     return *this;
 }
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
-    NES_DEBUG2("Query: add map operator to query");
+    NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);
     return *this;
 }
@@ -323,7 +323,7 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
 Query& Query::inferModel(const std::string model,
                          const std::initializer_list<ExpressionItem> inputFields,
                          const std::initializer_list<ExpressionItem> outputFields) {
-    NES_DEBUG2("Query: add map inferModel to query");
+    NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
     std::vector<ExpressionItemPtr> inputFieldsPtr;
@@ -338,19 +338,19 @@ Query& Query::inferModel(const std::string model,
     }
 
     OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
-    NES_DEBUG2("Query::inferModel: Current Operator: {}", op->toString());
+    NES_DEBUG("Query::inferModel: Current Operator: {}", op->toString());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
-    NES_DEBUG2("Query: add sink operator to query");
+    NES_DEBUG("Query: add sink operator to query");
     this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor);
     return *this;
 }
 
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
-    NES_DEBUG2("Query: add assignWatermark operator to query");
+    NES_DEBUG("Query: add assignWatermark operator to query");
     this->queryPlan = QueryPlanBuilder::assignWatermark(this->queryPlan, watermarkStrategyDescriptor);
     return *this;
 }

@@ -38,7 +38,7 @@ void AbsExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
 
     // increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) 0);
-    NES_TRACE2("AbsExpressionNode: increased the lower bound of stamp to 0: {}", toString());
+    NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: {}", toString());
 }
 
 bool AbsExpressionNode::equal(NodePtr const& rhs) const {

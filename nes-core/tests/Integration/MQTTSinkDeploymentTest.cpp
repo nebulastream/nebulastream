@@ -36,7 +36,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MQTTSinkDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MQTTSinkDeploymentTest test class.");
+        NES_INFO("Setup MQTTSinkDeploymentTest test class.");
     }
 
     void SetUp() override {
@@ -49,7 +49,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        NES_INFO2("Tear down MQTTSinkDeploymentTest class.");
+        NES_INFO("Tear down MQTTSinkDeploymentTest class.");
         Testing::NESBaseTest::TearDown();
     }
 };
@@ -60,21 +60,21 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
  */
 
 TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
-    NES_INFO2("MQTTSinkDeploymentTest: Start coordinator");
+    NES_INFO("MQTTSinkDeploymentTest: Start coordinator");
     // Here the default schema (default_logical) is already initialized (NesCoordinator calls 'SourceCatalog'
     // it is later used in TypeInferencePhase.cpp via 'sourceCatalog->getSchemaForLogicalSource(logicalSourceName);' to set
     // the new sources schema to the default_logical schema
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("MQTTSinkDeploymentTest: Coordinator started successfully");
+    NES_INFO("MQTTSinkDeploymentTest: Coordinator started successfully");
 
-    NES_INFO2("MQTTSinkDeploymentTest: Start worker 1");
+    NES_INFO("MQTTSinkDeploymentTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MQTTSinkDeploymentTest: Worker1 started successfully");
+    NES_INFO("MQTTSinkDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -82,7 +82,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorker.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MQTTSinkDeploymentTest: Submit query");
+    NES_INFO("MQTTSinkDeploymentTest: Submit query");
 
     // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
     string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001",
@@ -99,18 +99,18 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("MQTTSinkDeploymentTest: Remove query");
+    NES_INFO("MQTTSinkDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MQTTSinkDeploymentTest: Stop worker 1");
+    NES_INFO("MQTTSinkDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MQTTSinkDeploymentTest: Stop Coordinator");
+    NES_INFO("MQTTSinkDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MQTTSinkDeploymentTest: Test finished");
+    NES_INFO("MQTTSinkDeploymentTest: Test finished");
 }
 
 }// namespace NES

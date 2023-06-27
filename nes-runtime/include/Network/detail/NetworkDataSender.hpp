@@ -86,11 +86,11 @@ class NetworkDataSender : public BaseChannelType {
                                                                           childBuffer.getControlBlock()),
                                                            kZmqSendMore);
             res &= !!sentBytesOpt;
-            NES_TRACE2("Sending child #{} was {}", i, ((!!sentBytesOpt) ? " successful " : " not successful"));
+            NES_TRACE("Sending child #{} was {}", i, ((!!sentBytesOpt) ? " successful " : " not successful"));
         }
 
         if (!res) {
-            NES_ERROR2("DataChannel: Error sending children buffer for {}", this->channelId);
+            NES_ERROR("DataChannel: Error sending children buffer for {}", this->channelId);
             return false;
         }
 
@@ -101,7 +101,7 @@ class NetworkDataSender : public BaseChannelType {
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
             kZmqSendDefault);
         if (!!sentBytesOpt) {
-            NES_TRACE2("DataChannel: Sending buffer with {}/{}-{}",
+            NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
                        inputBuffer.getNumberOfTuples(),
                        inputBuffer.getBufferSize(),
                        inputBuffer.getOriginId());
@@ -109,7 +109,7 @@ class NetworkDataSender : public BaseChannelType {
             return true;
         }
 
-        NES_ERROR2("DataChannel: Error sending buffer for {}", this->channelId);
+        NES_ERROR("DataChannel: Error sending buffer for {}", this->channelId);
         return false;
     }
 };

@@ -36,15 +36,15 @@ HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::Conte
 }
 
 bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO2("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING2("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+        NES_WARNING("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
                      " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG2("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -98,7 +98,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
-                NES_TRACE2("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 //Compute matched operator pairs
                 std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
@@ -122,7 +122,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         }
 
         if (!matched) {
-            NES_DEBUG2("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

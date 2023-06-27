@@ -36,7 +36,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       typeInferencePhase(std::move(typeInferencePhase)), coordinatorConfiguration(std::move(coordinatorConfiguration)) {
-    NES_DEBUG2("QueryPlacementPhase()");
+    NES_DEBUG("QueryPlacementPhase()");
 }
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -50,7 +50,7 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
 }
 
 bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_INFO2("QueryPlacementPhase: Perform query placement phase for shared query plan {}",
+    NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan {}",
               std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
@@ -67,7 +67,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
-    NES_DEBUG2("QueryPlacementPhase: Perform query placement for query plan\n{}", queryPlan->toString());
+    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
     // Get current time stamp
     uint64_t nowInMicroSec =
@@ -98,7 +98,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                                                                            pinnedDownStreamOperators);
 
             if (!success) {
-                NES_ERROR2("Unable to perform query placement for the change log entry");
+                NES_ERROR("Unable to perform query placement for the change log entry");
                 return false;
             }
         }
@@ -128,12 +128,12 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                                                                        pinnedDownStreamOperators);
 
         if (!success) {
-            NES_ERROR2("Unable to perform query placement for the change log entry");
+            NES_ERROR("Unable to perform query placement for the change log entry");
             return false;
         }
     }
 
-    NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
     return true;
 }
 

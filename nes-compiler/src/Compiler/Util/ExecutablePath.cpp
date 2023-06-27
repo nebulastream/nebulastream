@@ -66,18 +66,18 @@ RuntimePathConfig loadRuntimePathConfig() {
 #endif
 
     if (isInUNIXInstallDir()) {
-        NES_DEBUG2("Detected a unix install dir as a execution location");
+        NES_DEBUG("Detected a unix install dir as a execution location");
         runtimePathConfig.clangBinaryPath = DEFAULT_CLANG_PATH_UNIX_INSTALL;
         runtimePathConfig.includePaths.push_back(DEFAULT_PUBLIC_INCLUDE_DIR_UNIX_INSTALL);
         runtimePathConfig.libPaths.push_back(DEFAULT_LIB_UNIX_INSTALL);
     } else if (isInLocalInstallDir()) {
-        NES_DEBUG2("Detected a local install dir as a execution location");
+        NES_DEBUG("Detected a local install dir as a execution location");
         auto executablePath = getExecutablePath().parent_path();
         runtimePathConfig.clangBinaryPath = executablePath.append("bin/nes-clang");
         runtimePathConfig.includePaths.push_back(executablePath.append("include/nebulatstream"));
         runtimePathConfig.libPaths.push_back(executablePath.append("lib"));
     } else if (isInBuildDir() || isInBuildDirIsAvailable()) {
-        NES_DEBUG2("Detected a build dir as a execution location");
+        NES_DEBUG("Detected a build dir as a execution location");
         const std::string coreBinaryDir = PATH_TO_BINARY_DIR "/nes-common/";
         const std::string runtimeBinaryDir = PATH_TO_BINARY_DIR "/nes-runtime/";
         const std::string commonBinaryDir = PATH_TO_BINARY_DIR "/nes-core/";
@@ -110,7 +110,7 @@ RuntimePathConfig loadRuntimePathConfig() {
     }
     std::stringstream runtimePath;
     runtimePath << runtimePathConfig;
-    NES_INFO2("RuntimePathConfig: {}", runtimePath.str());
+    NES_INFO("RuntimePathConfig: {}", runtimePath.str());
 
     return runtimePathConfig;
 }
@@ -183,12 +183,12 @@ std::filesystem::path getLibPath(std::string libName) {
     if (std::filesystem::is_regular_file(libPath)) {
         std::stringstream pathAsString;
         pathAsString << libPath.parent_path();
-        NES_DEBUG2("Library {} found at: {}", libName, pathAsString.str());
+        NES_DEBUG("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     } else {
         std::stringstream libPathStr;
         libPathStr << libPath.parent_path();
-        NES_DEBUG2("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPathStr.str());
+        NES_DEBUG("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPathStr.str());
 
         std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
         std::string path;
@@ -201,12 +201,12 @@ std::filesystem::path getLibPath(std::string libName) {
             if (std::filesystem::is_regular_file(libPath)) {
                 std::stringstream pathStr;
                 pathStr << libPath.parent_path();
-                NES_DEBUG2("Library {} found at: {}", libName, pathStr.str());
+                NES_DEBUG("Library {} found at: {}", libName, pathStr.str());
                 return libPath;
             }
         }
     }
-    NES_FATAL_ERROR2("No valid {} found in executable path or DYLD_LIBRARY_PATH.", libName);
+    NES_FATAL_ERROR("No valid {} found in executable path or DYLD_LIBRARY_PATH.", libName);
     return std::filesystem::current_path();
 }
 
@@ -233,7 +233,7 @@ std::filesystem::path getLibPath(std::string libName) {
     if (std::filesystem::is_regular_file(libPath)) {
         std::stringstream pathAsString;
         pathAsString << libPath.parent_path();
-        NES_DEBUG2("Library {} found at: {}", libName, pathAsString.str());
+        NES_DEBUG("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     }
     throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());
@@ -247,7 +247,7 @@ std::filesystem::path getPublicIncludes() {
     if (exists(includePath)) {
         std::stringstream path;
         path << includePath;
-        NES_DEBUG2("NebulaStream include path found at {}", path.str());
+        NES_DEBUG("NebulaStream include path found at {}", path.str());
         return includePath;
     }
     throw CompilerException("NebulaStream include path found not found. Executable path is: " + executablePath.string());
@@ -262,10 +262,10 @@ std::filesystem::path getClangPath() {
     if (std::filesystem::exists(nesClangPath)) {
         std::stringstream path;
         path << nesClangPath;
-        NES_DEBUG2("Clang found at: {}", path.str());
+        NES_DEBUG("Clang found at: {}", path.str());
         return std::filesystem::path(nesClangPath);
     } else if (std::filesystem::exists(CLANG_EXECUTABLE)) {
-        NES_DEBUG2("Clang found at: {}", CLANG_EXECUTABLE);
+        NES_DEBUG("Clang found at: {}", CLANG_EXECUTABLE);
         return std::filesystem::path(CLANG_EXECUTABLE);
     }
     throw CompilerException("Path to clang executable not found");

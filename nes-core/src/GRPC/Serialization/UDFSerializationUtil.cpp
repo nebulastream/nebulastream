@@ -50,7 +50,7 @@ UDFSerializationUtil::deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessag
     auto javaUdfByteCodeList = Catalogs::UDF::JavaUDFByteCodeList{};
     javaUdfByteCodeList.reserve(JavaUdfDescriptorMessage.classes().size());
     for (const auto& classDefinition : JavaUdfDescriptorMessage.classes()) {
-        NES_DEBUG2("Deserialized Java UDF class: {}", classDefinition.class_name());
+        NES_DEBUG("Deserialized Java UDF class: {}", classDefinition.class_name());
         javaUdfByteCodeList.emplace_back(
             classDefinition.class_name(),
             Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()});

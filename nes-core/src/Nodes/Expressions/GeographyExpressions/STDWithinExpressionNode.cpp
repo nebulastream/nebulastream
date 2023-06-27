@@ -45,7 +45,7 @@ bool STDWithinExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string STDWithinExpressionNode::toString() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR2("A STDWithinExpressionNode should always access two children, but it had: {}", children.size());
+        NES_FATAL_ERROR("A STDWithinExpressionNode should always access two children, but it had: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::toString(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -65,7 +65,7 @@ void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeE
 
 ExpressionNodePtr STDWithinExpressionNode::getPoint() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR2("An STDWithinExpressionNode should always have two children, but it has: {}", children.size());
+        NES_FATAL_ERROR("An STDWithinExpressionNode should always have two children, but it has: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::getPoint(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -74,7 +74,7 @@ ExpressionNodePtr STDWithinExpressionNode::getPoint() const {
 
 ShapeExpressionNodePtr STDWithinExpressionNode::getCircle() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR2("An STDWithinExpressionNode should always have two children, but it has: {}", children.size());
+        NES_FATAL_ERROR("An STDWithinExpressionNode should always have two children, but it has: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STDWithinExpressionNode::getCircle(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -97,7 +97,7 @@ void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCont
     }
 
     stamp = DataTypeFactory::createBoolean();
-    NES_TRACE2("ST_DWithinExpressionNode: The following stamp was assigned: {}", toString());
+    NES_TRACE("ST_DWithinExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr STDWithinExpressionNode::copy() {

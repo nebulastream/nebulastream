@@ -23,7 +23,7 @@ namespace NES::Catalogs::UDF {
 std::unique_ptr<UDFCatalog> UDFCatalog::create() { return std::make_unique<UDFCatalog>(); }
 
 void UDFCatalog::registerUDF(const std::string& name, UDFDescriptorPtr descriptor) {
-    NES_DEBUG2("Registering UDF '{}'", name);
+    NES_DEBUG("Registering UDF '{}'", name);
     if (descriptor == nullptr) {
         throw UDFException("UDF descriptor must not be null");
     }
@@ -35,20 +35,20 @@ void UDFCatalog::registerUDF(const std::string& name, UDFDescriptorPtr descripto
 }
 
 UDFDescriptorPtr UDFCatalog::getUDFDescriptor(const std::string& name) {
-    NES_DEBUG2("Looking up descriptor for UDF '{}'", name);
+    NES_DEBUG("Looking up descriptor for UDF '{}'", name);
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
-        NES_DEBUG2("UDF '{}' does not exist", name);
+        NES_DEBUG("UDF '{}' does not exist", name);
         return nullptr;
     }
     return entry->second;
 }
 
 bool UDFCatalog::removeUDF(const std::string& name) {
-    NES_DEBUG2("Removing UDF '{}'", name);
+    NES_DEBUG("Removing UDF '{}'", name);
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
-        NES_DEBUG2("Did not find UDF '{}'", name);
+        NES_DEBUG("Did not find UDF '{}'", name);
         // Removing an unregistered UDF is not an error condition
         // because it could have been removed by another user.
         // We just notify the user by returning false.
@@ -59,7 +59,7 @@ bool UDFCatalog::removeUDF(const std::string& name) {
 }
 
 std::vector<std::string> UDFCatalog::listUDFs() const {
-    NES_DEBUG2("Listing names of registered UDFs");
+    NES_DEBUG("Listing names of registered UDFs");
     auto list = std::vector<std::string>{};
     list.reserve(udfStore.size());
     for (const auto& [key, _] : udfStore) {

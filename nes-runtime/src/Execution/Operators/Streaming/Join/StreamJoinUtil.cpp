@@ -47,7 +47,7 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
     for (auto& fields : rightSchema->fields) {
         retSchema->addField(fields->getName(), fields->getDataType());
     }
-    NES_DEBUG2("Created joinSchema {} from leftSchema {} and rightSchema {}.",
+    NES_DEBUG("Created joinSchema {} from leftSchema {} and rightSchema {}.",
                retSchema->toString(),
                leftSchema->toString(),
                rightSchema->toString());
@@ -87,7 +87,7 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
         // iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
             auto field = physicalTypes[j];
-            NES_TRACE2("Current value is:  {}", values[j]);
+            NES_TRACE("Current value is:  {}", values[j]);
             writeFieldValueToTupleBuffer(values[j], j, dynamicBuffer, schema, tupleCount, bufferManager);
         }
         if (schema->contains(timestampFieldname)) {
@@ -100,7 +100,7 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
             tupleBuffer.setOriginId(originId);
             tupleBuffer.setSequenceNumber(++sequenceNumber);
             tupleBuffer.setWatermark(watermarkTS);
-            NES_DEBUG2("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
+            NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
             tupleBuffer = bufferManager->getBufferBlocking();
@@ -116,7 +116,7 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
         tupleBuffer.setSequenceNumber(++sequenceNumber);
         tupleBuffer.setWatermark(watermarkTS);
         recordBuffers.emplace_back(tupleBuffer);
-        NES_DEBUG2("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
+        NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }
 
     return recordBuffers;
@@ -195,7 +195,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
-                        NES_FATAL_ERROR2(
+                        NES_FATAL_ERROR(
                             "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
                             inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a char");
@@ -205,7 +205,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE2("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to "
+                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to "
                                "tuple buffer",
                                inputString);
 
@@ -235,7 +235,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
                     if (!value) {
                         if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
-                            NES_FATAL_ERROR2(
+                            NES_FATAL_ERROR(
                                 "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
                                 inputString.c_str());
                             throw std::invalid_argument("Value " + inputString + " is not a boolean");
@@ -245,7 +245,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
-                    NES_FATAL_ERROR2("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
+                    NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         } else {// char array(string) case
             // obtain pointer from buffer to fill with content via strcpy
@@ -255,7 +255,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
             strcpy(value, inputString.c_str());
         }
     } catch (const std::exception& e) {
-        NES_ERROR2("Failed to convert inputString to desired NES data type. Error: {}", e.what());
+        NES_ERROR("Failed to convert inputString to desired NES data type. Error: {}", e.what());
     }
 }
 
@@ -284,9 +284,9 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
 }
 
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
-    NES_DEBUG2("Checking if the buffers are equal, so if they contain the same tuples...");
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG2("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -309,7 +309,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG2("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
                        idxBuffer1);
             return false;
         }
@@ -335,7 +335,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
             // handle variable-length field
             if (dataType->isText()) {
-                NES_DEBUG2("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
                            "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer
@@ -355,7 +355,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
                 }
 
                 else {
-                    NES_WARNING2("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
+                    NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
                                  "variable-length TEXT field. Returning an empty string.")
                 }
             }

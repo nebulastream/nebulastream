@@ -127,7 +127,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
-        NES_INFO2("Node: {}", node->toString());
+        NES_INFO("Node: {}", node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
@@ -145,7 +145,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-    NES_INFO2("Lower node:{} to NautilusOperator.", operatorNode->toString());
+    NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -582,12 +582,12 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                        uint64_t handlerIndex) {
-    NES_INFO2("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
+    NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-    NES_INFO2("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
+    NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
     auto minCount = thresholdWindowType->getMinimumCount();
 
@@ -636,7 +636,7 @@ LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::Physic
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
-    NES_INFO2("Lower Window Aggregations to Nautilus Operator");
+    NES_INFO("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     std::transform(aggs.cbegin(),
                    aggs.cend(),

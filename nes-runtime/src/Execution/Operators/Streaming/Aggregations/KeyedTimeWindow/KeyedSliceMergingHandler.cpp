@@ -35,12 +35,12 @@ void KeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContex
 }
 
 void KeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG2("start GlobalSliceMergingHandler");
+    NES_DEBUG("start GlobalSliceMergingHandler");
 }
 
 void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                     Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop GlobalSliceMergingHandler: {}", queryTerminationType);
+    NES_DEBUG("stop GlobalSliceMergingHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys) {
@@ -49,7 +49,7 @@ KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceM
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
     return std::make_unique<KeyedSlice>(std::move(hashMap), sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG2("Destruct SliceStagingWindowHandler"); }
+KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Runtime::Execution::Operators

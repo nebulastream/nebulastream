@@ -28,9 +28,9 @@ namespace NES {
 void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan,
                                                     SerializableQueryPlan* serializableQueryPlan,
                                                     bool isClientOriginated) {
-    NES_DEBUG2("QueryPlanSerializationUtil: serializing query plan {}", queryPlan->toString());
+    NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan->toString());
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
-    NES_DEBUG2("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
+    NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
@@ -41,7 +41,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
             // skip rest of the steps as the operator is already serialized
             continue;
         }
-        NES_TRACE2("QueryPlan: Inserting operator in collection of already visited node.");
+        NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp, isClientOriginated);
         serializedOperatorMap[visitingOp->getId()] = serializeOperator;
     }
@@ -54,14 +54,14 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
 
     if (!isClientOriginated) {
         //Serialize the sub query plan and query plan id
-        NES_TRACE2("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
+        NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
         serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
         serializableQueryPlan->set_queryid(queryPlan->getQueryId());
     }
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
-    NES_TRACE2("QueryPlanSerializationUtil: Deserializing query plan {}", serializedQueryPlan->DebugString());
+    NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializedQueryPlan->DebugString());
     std::vector<OperatorNodePtr> rootOperators;
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
 

@@ -64,7 +64,7 @@ class WindowManagerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup WindowMangerTest test class.");
+        NES_INFO("Setup WindowMangerTest test class.");
     }
 
     const uint64_t buffers_managed = 10;
@@ -290,8 +290,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex].addToSum(5);
     aggregates[sliceIndex].addToCount();
-    NES_DEBUG2("{}", aggregates[sliceIndex].getSum());
-    NES_DEBUG2("{}", aggregates[sliceIndex].getCount());
+    NES_DEBUG("{}", aggregates[sliceIndex].getSum());
+    NES_DEBUG("{}", aggregates[sliceIndex].getCount());
 
     ASSERT_EQ(aggregates[sliceIndex].getSum(), 5UL);
     ASSERT_EQ(aggregates[sliceIndex].getCount(), 1L);
@@ -378,7 +378,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1UL);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -472,7 +472,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1UL);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -555,7 +555,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -641,7 +641,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
@@ -726,7 +726,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1U);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -814,7 +814,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    NES_DEBUG2("{}", aggregates[sliceIndex]);
+    NES_DEBUG("{}", aggregates[sliceIndex]);
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();

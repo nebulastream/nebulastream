@@ -22,7 +22,7 @@ namespace NES::ASP::Benchmarking {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("MicroBenchmarkResultTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO2("Setup MicroBenchmarkResultTest test class.");
+            NES_INFO("Setup MicroBenchmarkResultTest test class.");
         }
     };
 

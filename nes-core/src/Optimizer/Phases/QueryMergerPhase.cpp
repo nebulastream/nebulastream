@@ -69,7 +69,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
 }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_DEBUG2("QueryMergerPhase: Executing query merger phase.");
+    NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
     return queryMergerRule->apply(std::move(globalQueryPlan));
 }
 

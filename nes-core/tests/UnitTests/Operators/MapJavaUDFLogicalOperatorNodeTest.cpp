@@ -80,7 +80,7 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
     // The signature ends with the string signature of the child.
     auto& signature = *hashBasedSignature.begin()->second.begin();
     auto& childSignature = *child->getHashBasedSignature().begin()->second.begin();
-    NES_DEBUG2("{}", signature);
+    NES_DEBUG("{}", signature);
     ASSERT_TRUE(signature.ends_with("." + childSignature));
 }
 

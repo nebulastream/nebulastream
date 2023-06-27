@@ -44,7 +44,7 @@ NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() { return bufferManager
 
 DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::Node generatorNode) {
 
-    NES_INFO2("DataGenerator created from type: {}", type)
+    NES_INFO("DataGenerator created from type: {}", type)
 
     if (type.empty() || type == "Default") {
         return std::make_unique<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);

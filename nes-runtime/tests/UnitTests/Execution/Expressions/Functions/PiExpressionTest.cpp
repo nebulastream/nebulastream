@@ -26,11 +26,11 @@ class PiExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PiExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup PiExpressionTest test class.");
+        NES_INFO("Setup PiExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down PiExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down PiExpressionTest test class."); }
 };
 
 TEST_F(PiExpressionTest, evaluatePiExpressionInteger) {

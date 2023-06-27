@@ -35,7 +35,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ConvertLogicalToPhysicalSinkTest test class.");
+        NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
     }
 
     void SetUp() override {

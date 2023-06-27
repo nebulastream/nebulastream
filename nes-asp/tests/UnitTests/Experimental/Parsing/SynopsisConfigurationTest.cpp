@@ -22,13 +22,13 @@ namespace NES::ASP::Parsing {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("SynopsisConfigurationTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO2("Setup SynopsisConfigurationTest test class.");
+            NES_INFO("Setup SynopsisConfigurationTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO2("Setup SynopsisConfigurationTest test case.");
+            NES_INFO("Setup SynopsisConfigurationTest test case.");
         }
     };
 

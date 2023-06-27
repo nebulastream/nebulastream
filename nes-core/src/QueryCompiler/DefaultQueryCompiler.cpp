@@ -58,7 +58,7 @@ QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& opt
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
-    NES_INFO2("Compile Query with Default Compiler");
+    NES_INFO("Compile Query with Default Compiler");
     try {
         Timer timer("DefaultQueryCompiler");
 
@@ -72,7 +72,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         }
 
         timer.start();
-        NES_DEBUG2("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+        NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
@@ -105,7 +105,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         dumpContext->dump("8. ExecutableOperatorPlan", pipelinedQueryPlan);
         timer.snapshot("ExecutableOperatorPlan");
         timer.pause();
-        NES_INFO2("DefaultQueryCompiler Runtime:\n{}", printString(timer));
+        NES_INFO("DefaultQueryCompiler Runtime:\n{}", printString(timer));
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));

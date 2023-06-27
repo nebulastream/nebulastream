@@ -72,7 +72,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
             if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                 if (!optRecvStatus.has_value()) {
-                    NES_DEBUG2("recv failed on network channel");
+                    NES_DEBUG("recv failed on network channel");
                     return nullptr;
                 }
             }
@@ -93,14 +93,14 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
-                        NES_ERROR2("{}: Connection failed with server {} for {}"
+                        NES_ERROR("{}: Connection failed with server {} for {}"
                                    "->Wrong server ready message! Reason: Partitions are not matching",
                                    channelName,
                                    socketAddr,
                                    channelId.getNesPartition().toString());
                         break;
                     }
-                    NES_DEBUG2("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
+                    NES_DEBUG("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
                     return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
                 }
                 case Messages::MessageType::ErrorMessage: {
@@ -115,22 +115,22 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             // it means the producer is already done so it wont be able
                             // to receive any event. We should figure out if this case must be
                             // handled somewhere else. For instance, what does this mean for FT and upstream backup?
-                            NES_ERROR2("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
+                            NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
                             return nullptr;
                         }
                     }
 
-                    NES_WARNING2("{}: Received error from server-> {}", channelName, errorMsg.getErrorTypeAsString());
+                    NES_WARNING("{}: Received error from server-> {}", channelName, errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);
                     break;
                 }
                 default: {
                     // got a wrong message type!
-                    NES_ERROR2("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
+                    NES_ERROR("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
                     return nullptr;
                 }
             }
-            NES_DEBUG2("{}: Connection with server failed! Reconnecting attempt {} backoff time {}",
+            NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} backoff time {}",
                        channelName,
                        i,
                        std::to_string(backOffTime.count()));
@@ -139,14 +139,14 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
             i++;
         }
-        NES_ERROR2("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);
+        NES_ERROR("{}: Error establishing a connection with server: {} Closing socket!", channelName, channelId);
         zmqSocket.close();
         return nullptr;
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
-            NES_DEBUG2("{}: Zmq context closed!", channelName);
+            NES_DEBUG("{}: Zmq context closed!", channelName);
         } else {
-            NES_ERROR2("{}: Zmq error {}", channelName, err.what());
+            NES_ERROR("{}: Zmq error {}", channelName, err.what());
             throw;
         }
         return nullptr;
@@ -191,13 +191,13 @@ EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
                                                  std::string&& address,
                                                  Runtime::BufferManagerPtr bufferManager)
     : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
-    NES_DEBUG2("Initializing EventOnlyNetworkChannel {}", channelId);
+    NES_DEBUG("Initializing EventOnlyNetworkChannel {}", channelId);
 }
 
 EventOnlyNetworkChannel::~EventOnlyNetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Event Channel not closed " << channelId); }
 
 void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) {
-    NES_DEBUG2("Closing EventOnlyNetworkChannel {}", channelId);
+    NES_DEBUG("Closing EventOnlyNetworkChannel {}", channelId);
     inherited::close(canSendEvent && !canSendData, terminationType);
 }
 

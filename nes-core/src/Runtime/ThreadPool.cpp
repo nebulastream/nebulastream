@@ -50,9 +50,9 @@ ThreadPool::ThreadPool(uint64_t nodeId,
       hardwareManager(hardwareManager) {}
 
 ThreadPool::~ThreadPool() {
-    NES_DEBUG2("Threadpool: Destroying Thread Pool");
+    NES_DEBUG("Threadpool: Destroying Thread Pool");
     stop();
-    NES_DEBUG2("QueryManager: Destroy threads Queue");
+    NES_DEBUG("QueryManager: Destroy threads Queue");
     threads.clear();
 }
 
@@ -65,13 +65,13 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                     break;
                 }
                 case ExecutionResult::AllFinished: {
-                    NES_DEBUG2("Threadpool got poison pill - shutting down...");
+                    NES_DEBUG("Threadpool got poison pill - shutting down...");
                     running = false;
                     break;
                 }
                 case ExecutionResult::Error: {
                     // TODO add here error handling (see issues 524 and 463)
-                    NES_ERROR2("Threadpool: finished task with error");
+                    NES_ERROR("Threadpool: finished task with error");
                     running = false;
                     break;
                 }
@@ -80,7 +80,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                 }
             }
         } catch (TaskExecutionException const& taskException) {
-            NES_ERROR2("Got fatal error on thread {}: {}", workerContext.getId(), taskException.what());
+            NES_ERROR("Got fatal error on thread {}: {}", workerContext.getId(), taskException.what());
             queryManager->notifyTaskFailure(taskException.getExecutable(), std::string(taskException.what()));
         }
     }
@@ -89,23 +89,23 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     try {
         queryManager->processNextTask(running, workerContext);
     } catch (std::exception const& error) {
-        NES_ERROR2("Got fatal error on thread {}: {}", workerContext.getId(), error.what());
+        NES_ERROR("Got fatal error on thread {}: {}", workerContext.getId(), error.what());
         NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
     }
-    NES_DEBUG2("Threadpool: end runningRoutine");
+    NES_DEBUG("Threadpool: end runningRoutine");
 }
 
 bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
     auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
     std::unique_lock lock(reconfigLock);
     if (running) {
-        NES_DEBUG2("Threadpool:start already running, return false");
+        NES_DEBUG("Threadpool:start already running, return false");
         return false;
     }
     running = true;
 
     /* spawn threads */
-    NES_DEBUG2("Threadpool: Spawning {} threads", numThreads);
+    NES_DEBUG("Threadpool: Spawning {} threads", numThreads);
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier, &threadToQueueMapping]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
@@ -124,9 +124,9 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
                 CPU_SET(workerPinningPositionList[i], &cpuset);
                 int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                 if (rc != 0) {
-                    NES_ERROR2("Error calling pthread_setaffinity_np: {}", rc);
+                    NES_ERROR("Error calling pthread_setaffinity_np: {}", rc);
                 } else {
-                    NES_WARNING2("worker {} pins to core={}", i, workerPinningPositionList[i]);
+                    NES_WARNING("worker {} pins to core={}", i, workerPinningPositionList[i]);
                 }
             }
 #endif
@@ -144,25 +144,25 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
 #endif
             // TODO (2310) properly initialize the profiler with a file, thread, and core id
             auto workerId = NesThread::getId();
-            NES_DEBUG2("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
+            NES_DEBUG("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
             runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx));
         });
     }
     barrier->wait();
-    NES_DEBUG2("Threadpool: start return from start");
+    NES_DEBUG("Threadpool: start return from start");
     return true;
 }
 
 bool ThreadPool::stop() {
     std::unique_lock lock(reconfigLock);
-    NES_DEBUG2("ThreadPool: stop thread pool while {} with {} threads", (running.load() ? "running" : "not running"), numThreads);
+    NES_DEBUG("ThreadPool: stop thread pool while {} with {} threads", (running.load() ? "running" : "not running"), numThreads);
     auto expected = true;
     if (!running.compare_exchange_strong(expected, false)) {
         return false;
     }
     /* wake up all threads in the query manager,
  * so they notice the change in the run variable */
-    NES_DEBUG2("Threadpool: Going to unblock {} threads", numThreads);
+    NES_DEBUG("Threadpool: Going to unblock {} threads", numThreads);
     queryManager->poisonWorkers();
     /* join all threads if possible */
     for (auto& thread : threads) {
@@ -171,7 +171,7 @@ bool ThreadPool::stop() {
         }
     }
     threads.clear();
-    NES_DEBUG2("Threadpool: stop finished");
+    NES_DEBUG("Threadpool: stop finished");
     return true;
 }
 

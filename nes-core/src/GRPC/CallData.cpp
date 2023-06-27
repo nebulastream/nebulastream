@@ -33,7 +33,7 @@ void CallData::proceed() {
     grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
 
     if (status == CallStatus::CREATE) {
-        NES_DEBUG2("RequestInSyncInCreate={}", request.DebugString());
+        NES_DEBUG("RequestInSyncInCreate={}", request.DebugString());
         // Make this instance progress to the PROCESS state.
         status = CallStatus::PROCESS;
 
@@ -43,7 +43,7 @@ void CallData::proceed() {
         // instances can serve different requests concurrently), in this case
         // the memory address of this CallData instance.
     } else if (status == CallStatus::PROCESS) {
-        NES_DEBUG2("RequestInSyncInProcees={}", request.DebugString());
+        NES_DEBUG("RequestInSyncInProcees={}", request.DebugString());
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
@@ -55,7 +55,7 @@ void CallData::proceed() {
         status = CallStatus::FINISH;
         responder.Finish(reply, Status::OK, this);
     } else {
-        NES_DEBUG2("RequestInSyncInFinish={}", request.DebugString());
+        NES_DEBUG("RequestInSyncInFinish={}", request.DebugString());
         NES_ASSERT(status == CallStatus::FINISH, "RequestInSyncInFinish failed");
         // Once in the FINISH state, deallocate ourselves (CallData).
         delete this;

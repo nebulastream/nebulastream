@@ -49,13 +49,13 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RandomSampleWithoutReplacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RandomSampleWithoutReplacementTest test class.");
+        NES_INFO("Setup RandomSampleWithoutReplacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup RandomSampleWithoutReplacementTest test case.");
+        NES_INFO("Setup RandomSampleWithoutReplacementTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
 
         // Creating the worker context and the pipeline necessary for testing the sampling

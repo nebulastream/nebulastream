@@ -28,7 +28,7 @@ ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowT
     if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {
         return thresholdWindow;
     } else {
-        NES_ERROR2("Can not cast the content based window type to a threshold window");
+        NES_ERROR("Can not cast the content based window type to a threshold window");
         NES_THROW_RUNTIME_ERROR("Can not cast the content based window type to a threshold window");
     }
 }

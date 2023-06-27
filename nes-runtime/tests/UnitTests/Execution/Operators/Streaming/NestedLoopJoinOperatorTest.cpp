@@ -79,13 +79,13 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NestedLoopJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup NestedLoopJoinOperatorTest test class.");
+        NES_INFO("Setup NestedLoopJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup NestedLoopJoinOperatorTest test case.");
+        NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
         leftSchema = Schema::create()
                          ->addField("id", BasicType::UINT64)
                          ->addField("value_left", BasicType::UINT64)
@@ -166,7 +166,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
-            NES_DEBUG2("Check window={}", windowIdentifier);
+            NES_DEBUG("Check window={}", windowIdentifier);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true),
                       expectedNumberOfTuplesInWindowLeft);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),
@@ -184,7 +184,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 Value<UInt64> posInWindowVal(posInWindow);
                 auto& leftRecord = allLeftRecords[pos];
                 auto readRecordLeft = memoryProviderLeft->read({}, startOfTupleLeft, posInWindowVal);
-                NES_TRACE2("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
+                NES_TRACE("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
 
                 for (auto& field : leftSchema->fields) {
                     EXPECT_EQ(readRecordLeft.read(field->getName()), leftRecord.read(field->getName()));
@@ -197,7 +197,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 Value<UInt64> posInWindowVal(posInWindow);
                 auto& rightRecord = allRightRecords[pos];
                 auto readRecordRight = memoryProviderRight->read({}, startOfTupleRight, posInWindowVal);
-                NES_TRACE2("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
+                NES_TRACE("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
 
                 for (auto& field : rightSchema->fields) {
                     EXPECT_EQ(readRecordRight.read(field->getName()), rightRecord.read(field->getName()));
@@ -308,7 +308,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                         // Check if this joinedRecord is in the emitted records
                         auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
                         if (it == collector->records.end()) {
-                            NES_ERROR2("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
+                            NES_ERROR("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
                             ASSERT_TRUE(false);
                         }
                         collector->records.erase(it);

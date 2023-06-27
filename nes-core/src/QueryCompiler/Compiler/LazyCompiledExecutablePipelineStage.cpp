@@ -53,7 +53,7 @@ LazyCompiledExecutablePipelineStage::create(std::shared_future<Runtime::Executio
     return std::make_shared<LazyCompiledExecutablePipelineStage>(futurePipeline);
 }
 LazyCompiledExecutablePipelineStage::~LazyCompiledExecutablePipelineStage() {
-    NES_DEBUG2("~LazyCompiledExecutablePipelineStage()");
+    NES_DEBUG("~LazyCompiledExecutablePipelineStage()");
 }
 
 }// namespace NES

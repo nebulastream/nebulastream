@@ -26,7 +26,7 @@ class WindowAssignerTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowAssignerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup WindowAssignerTest test class.");
+        NES_DEBUG("Setup WindowAssignerTest test class.");
     }
 };
 

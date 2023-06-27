@@ -28,24 +28,24 @@ namespace NES::Benchmark::DataProvision {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("ExternalProviderTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO2("Setup ExternalProviderTest test class.");
+            NES_INFO("Setup ExternalProviderTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
             bufferManager =  std::make_shared<Runtime::BufferManager>();
-            NES_INFO2("Setup ExternalProviderTest test case.");
+            NES_INFO("Setup ExternalProviderTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            NES_INFO2("Tear down ExternalProviderTest test case.");
+            NES_INFO("Tear down ExternalProviderTest test case.");
             Testing::NESBaseTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO2("Tear down ExternalProviderTest test class."); }
+        static void TearDownTestCase() { NES_INFO("Tear down ExternalProviderTest test class."); }
 
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
@@ -54,7 +54,7 @@ namespace NES::Benchmark::DataProvision {
      * @brief busy waiting until the ExternalProvider has started
      */
     void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
-        NES_DEBUG2("Waiting until ExternalProvider has started...");
+        NES_DEBUG("Waiting until ExternalProvider has started...");
         externalProvider.waitUntilStarted();
     }
 
@@ -103,7 +103,7 @@ namespace NES::Benchmark::DataProvision {
 
         // we expect queueSize to not exactly match the theoretical value of 50000 as we cannot ensure that exactly 1 second has
         // passed between starting the provider and getting the queue size
-        NES_INFO2("{}", queueSize);
+        NES_INFO("{}", queueSize);
         ASSERT_TRUE(50000 <= queueSize && queueSize <= 50500);
     }
 

@@ -35,7 +35,7 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public Abst
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup TraceTest test class.");
+        NES_INFO("Setup TraceTest test class.");
     }
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.

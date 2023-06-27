@@ -57,17 +57,17 @@ bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
 
 OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
     if (level == QueryCompilerOptions::OutputBufferOptimizationLevel::NO) {
-        NES_DEBUG2("BufferOptimizationPhase: No optimization requested or applied.");
+        NES_DEBUG("BufferOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
     }
 
     // If we can't modify the input we can't optimize the buffer access.
     if (isReadOnlyInput(operatorPipeline)) {
-        NES_DEBUG2("BufferOptimizationPhase: No optimization is possible as input is read only.");
+        NES_DEBUG("BufferOptimizationPhase: No optimization is possible as input is read only.");
         return operatorPipeline;
     }
 
-    NES_DEBUG2("BufferOptimizationPhase: Scanning pipeline for optimization potential.");
+    NES_DEBUG("BufferOptimizationPhase: Scanning pipeline for optimization potential.");
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
 
@@ -96,17 +96,17 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     }
 
     if (inputSchema == nullptr) {
-        NES_DEBUG2("BufferOptimizationPhase: No Scan operator found in pipeline. No optimization can be applied.");
+        NES_DEBUG("BufferOptimizationPhase: No Scan operator found in pipeline. No optimization can be applied.");
         return operatorPipeline;
     }
     if (emitNode == nullptr || outputSchema == nullptr) {
-        NES_DEBUG2("BufferOptimizationPhase: No Emit operator found in pipeline. No optimization can be applied.");
+        NES_DEBUG("BufferOptimizationPhase: No Emit operator found in pipeline. No optimization can be applied.");
         return operatorPipeline;
     }
 
     if (inputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT
         || outputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT) {
-        NES_DEBUG2("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are "
+        NES_DEBUG("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are "
                    "using a ROW layout.");
         return operatorPipeline;
     }
@@ -114,10 +114,10 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     // If we have only a filter query, we use a record copy instead of a field copy
     if (inputSchema->equals(outputSchema) && filterOperatorFound && filterOnly) {
         emitNode->setOutputBufferAssignmentStrategy(OutputBufferAssignmentStrategy::RECORD_COPY);
-        NES_DEBUG2("BufferOptimizationPhase: Use Record Copy");
+        NES_DEBUG("BufferOptimizationPhase: Use Record Copy");
     } else {
         emitNode->setOutputBufferAssignmentStrategy(OutputBufferAssignmentStrategy::FIELD_COPY);
-        NES_DEBUG2("BufferOptimizationPhase: Use Field Copy");
+        NES_DEBUG("BufferOptimizationPhase: Use Field Copy");
     }
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
@@ -127,7 +127,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         // The highest level of optimization - just modifying the input buffer in place and passing it to the next pipeline
         // - can be applied as there are no filter statements etc.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::ONLY_INPLACE_OPERATIONS);
-        NES_DEBUG2("BufferOptimizationPhase: Assign ONLY_INPLACE_OPERATIONS optimization strategy to pipeline.");
+        NES_DEBUG("BufferOptimizationPhase: Assign ONLY_INPLACE_OPERATIONS optimization strategy to pipeline.");
         return operatorPipeline;
     }
 
@@ -136,7 +136,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
             || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The optimizations "reuse input buffer as output buffer" and "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK);
-        NES_DEBUG2(
+        NES_DEBUG(
             "BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
         return operatorPipeline;
     }
@@ -145,7 +145,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
             || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The optimization  "reuse input buffer as output buffer" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER);
-        NES_DEBUG2("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
+        NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
         return operatorPipeline;
     }
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
@@ -153,12 +153,12 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
             || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The optimization "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK);
-        NES_DEBUG2("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
+        NES_DEBUG("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
         return operatorPipeline;
     }
 
     // level != NO, but still no optimization can be applied
-    NES_DEBUG2("BufferOptimizationPhase: Optimization was requested, but no optimization was applied.");
+    NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization was applied.");
 
     return operatorPipeline;
 }

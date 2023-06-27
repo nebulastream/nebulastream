@@ -22,7 +22,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#define KEEP_OLD_LOGGING
+//#define KEEP_OLD_LOGGING
 namespace NES {
 
 // In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
@@ -110,6 +110,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 // when that is completed the old macros will be removed.
 
 /// @brief this is the old logging macro that is the entry point for logging calls
+/*
 #define NES_LOG(LEVEL, message)                                                                                                  \
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
@@ -120,9 +121,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, "{}", __buffer.str());       \
         }                                                                                                                        \
     } while (0)
-
+*/
 /// @brief this is the new logging macro that is the entry point for logging calls
-#define NES_LOG2(LEVEL, ...)                                                                                                     \
+#define NES_LOG(LEVEL, ...)                                                                                                     \
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
@@ -161,17 +162,17 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #else
 
 // Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG2(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
+#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
 // Creates a log message with log level info.
-#define NES_INFO(...) NES_LOG2(NES::LogLevel::LOG_INFO, __VA_ARGS__);
+#define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
 // Creates a log message with log level debug.
-#define NES_DEBUG(...) NES_LOG2(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
+#define NES_DEBUG(...) NES_LOG(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
 // Creates a log message with log level warning.
-#define NES_WARNING(...) NES_LOG2(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
+#define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
 // Creates a log message with log level error.
-#define NES_ERROR(...) NES_LOG2(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
+#define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
 // Creates a log message with log level fatal error.
-#define NES_FATAL_ERROR(...) NES_LOG2(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
+#define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
 
 #endif
 
@@ -183,7 +184,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES_ERROR("NES Fatal Error on " #CONDITION << " message: " << TEXT);                                                 \
+            std::stringstream textString;                                                                                        \
+            textString << TEXT;                                                                                                  \
+            NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, textString.str());                                        \
             {                                                                                                                    \
                 auto __stacktrace = NES::collectAndPrintStacktrace();                                                            \
                 std::stringbuf __buffer;                                                                                         \
@@ -201,7 +204,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #define NES_ASSERT(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES_ERROR("NES Fatal Error on " #CONDITION << " message: " << TEXT);                                                 \
+            std::stringstream textString;                                                                                              \
+            textString << TEXT;                                                                                                                          \
+            NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, textString.str());                                                 \
             {                                                                                                                    \
                 auto __stacktrace = NES::collectAndPrintStacktrace();                                                            \
                 std::stringbuf __buffer;                                                                                         \
@@ -216,7 +221,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #define NES_ASSERT2_FMT(CONDITION, ...)                                                                                          \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            NES_ERROR("NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                                          \
+            std::stringstream args;                                                                                              \
+            args << __VA_ARGS__;                                                                                                                      \
+            NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, args.str());                                          \
             {                                                                                                                    \
                 auto __stacktrace = NES::collectAndPrintStacktrace();                                                            \
                 std::stringbuf __buffer;                                                                                         \
@@ -248,7 +255,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         if ((THROW_EXCEPTION)) {                                                                                                 \
             NES_THROW_RUNTIME_ERROR(__VA_ARGS__);                                                                                \
         } else {                                                                                                                 \
-            NES_ERROR(__buffer.str());                                                                                           \
+            NES_ERROR("{}", __buffer.str());                                                                                           \
         }                                                                                                                        \
     } while (0)
 

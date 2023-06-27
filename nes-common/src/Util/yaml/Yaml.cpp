@@ -1531,13 +1531,13 @@ class ParseImp {
                     scalarValue.replace(i, 1, "\\n");
                     i += 2;
                 }
-                NES_DEBUG2("{}", scalarValue);
+                NES_DEBUG("{}", scalarValue);
             } else if (pLine->Type == Node::eType::MapType) {
-                NES_DEBUG2("{}:", pLine->Data);
+                NES_DEBUG("{}:", pLine->Data);
             } else if (pLine->Type == Node::eType::SequenceType) {
-                NES_DEBUG2("-");
+                NES_DEBUG("-");
             } else {
-                NES_DEBUG2("> UNKOWN TYPE <");
+                NES_DEBUG("> UNKOWN TYPE <");
             }
         }
     }

@@ -53,13 +53,13 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemoryLayoutSelectionPhase.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MemoryLayoutSelectionPhase test case.");
+        NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_INFO2("Setup MemoryLayoutSelectionPhase test case.");
+        NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)

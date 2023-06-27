@@ -49,11 +49,11 @@ class OPCSinkTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OPCSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("OPCSINKTEST::SetUpTestCase()");
+        NES_DEBUG("OPCSINKTEST::SetUpTestCase()");
     }
 
     void SetUp() {
-        NES_DEBUG2("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
+        NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
@@ -67,11 +67,11 @@ class OPCSinkTest : public Testing::TestWithErrorHandling {
     void TearDown() {
         nodeEngine->stop();
         nodeEngine.reset();
-        NES_DEBUG2("OPCSINKTEST::TearDown() Tear down OPCSourceTest");
+        NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("OPCSINKTEST::TearDownTestCases() Tear down OPCSourceTest test class."); }
 
     static void addVariable(UA_Server* server) {
         /* Define the attribute of the myInteger variable node */
@@ -134,7 +134,7 @@ class OPCSinkTest : public Testing::TestWithErrorHandling {
         writeVariable(server);
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
-        NES_DEBUG2(" retval is={}", retval);
+        NES_DEBUG(" retval is={}", retval);
         UA_Server_delete(server);
     }
 
@@ -165,7 +165,7 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
     std::string expected =
         "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
-    NES_DEBUG2("{}", opcSink->toString());
+    NES_DEBUG("{}", opcSink->toString());
     SUCCEED();
 }
 
@@ -189,10 +189,10 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, write_buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, write_buffer);
-    NES_DEBUG2("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", dynamicTupleBuffer);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", dynamicTupleBuffer);
 
     opcSink->writeData(write_buffer, wctx);
-    NES_DEBUG2("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
 
     auto nodeEngine1 = Runtime::create("127.0.0.1", 31338, PhysicalSourceConfig::createEmpty());
@@ -210,10 +210,10 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     auto tuple_buffer = opcSource->receiveData();
     uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-    NES_DEBUG2("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: {}", *(uint32_t*) tuple_buffer->getBuffer());
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) Received value is: {}", *(uint32_t*) tuple_buffer->getBuffer());
     value = *tuple;
     uint64_t expected = 45;
-    NES_DEBUG2("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: {}. Received value is: {}", expected, value);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: {}. Received value is: {}", expected, value);
     EXPECT_EQ(value, expected);
     tuple_buffer->release();
     nodeEngine1->stop();

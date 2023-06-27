@@ -51,7 +51,7 @@ FileSink::FileSink(SinkFormatPtr format,
             NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
-    NES_DEBUG2("FileSink: open file= {}", filePath);
+    NES_DEBUG("FileSink: open file= {}", filePath);
     if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
@@ -60,7 +60,7 @@ FileSink::FileSink(SinkFormatPtr format,
 }
 
 FileSink::~FileSink() {
-    NES_DEBUG2("~FileSink: close file={}", filePath);
+    NES_DEBUG("~FileSink: close file={}", filePath);
     outputFile.close();
 }
 
@@ -78,17 +78,17 @@ void FileSink::shutdown() {}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE2("FileSink: getSchema medium {} format {} and mode {}",
+    NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
                toString(),
                sinkFormat->toString(),
                this->getAppendAsString());
 
     if (!inputBuffer) {
-        NES_ERROR2("FileSink::writeData input buffer invalid");
+        NES_ERROR("FileSink::writeData input buffer invalid");
         return false;
     }
     if (!schemaWritten) {
-        NES_TRACE2("FileSink::getData: write schema");
+        NES_TRACE("FileSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             std::ofstream outputFile;
@@ -96,7 +96,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                 uint64_t idx = filePath.rfind('.');
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
-                NES_TRACE2("FileSink::writeData: schema is ={} to file={}", sinkFormat->getSchemaPtr()->toString(), schemaFile);
+                NES_TRACE("FileSink::writeData: schema is ={} to file={}", sinkFormat->getSchemaPtr()->toString(), schemaFile);
                 outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
             } else {
                 outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
@@ -106,19 +106,19 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             outputFile.close();
 
             schemaWritten = true;
-            NES_TRACE2("FileSink::writeData: schema written");
+            NES_TRACE("FileSink::writeData: schema written");
         } else {
-            NES_TRACE2("FileSink::writeData: no schema written");
+            NES_TRACE("FileSink::writeData: no schema written");
         }
     } else {
-        NES_TRACE2("FileSink::getData: schema already written");
+        NES_TRACE("FileSink::getData: schema already written");
     }
 
-    NES_TRACE2("FileSink::getData: write data to file= {}", filePath);
+    NES_TRACE("FileSink::getData: write data to file= {}", filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
     for (auto& buffer : dataBuffers) {
-        NES_TRACE2("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
+        NES_TRACE("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());

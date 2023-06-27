@@ -31,7 +31,7 @@ auto createDefault() {
     return Value<TypedList<ComponentType>>(TypedList<ComponentType>(textRef));
 }
 
-List::~List() { NES_DEBUG2("~List"); }
+List::~List() { NES_DEBUG("~List"); }
 
 List::ListValueIterator List::begin() {
     auto startIndex = Value<UInt32>((std::uint32_t) 0);

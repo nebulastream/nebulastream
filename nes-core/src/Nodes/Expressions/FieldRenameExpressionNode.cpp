@@ -60,7 +60,7 @@ void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCo
     //Detect if user has added attribute name separator
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
         if (!fieldAttribute) {
-            NES_ERROR2("FieldRenameExpressionNode: Original field with name {} does not exists in the schema {}",
+            NES_ERROR("FieldRenameExpressionNode: Original field with name {} does not exists in the schema {}",
                        fieldName,
                        schema->toString());
             throw InvalidFieldException("Original field with name " + fieldName + " does not exists in the schema "
@@ -70,13 +70,13 @@ void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCo
     }
 
     if (fieldName == newFieldName) {
-        NES_WARNING2("FieldRenameExpressionNode: Both existing and new fields are same: existing: {} new field name: {}",
+        NES_WARNING("FieldRenameExpressionNode: Both existing and new fields are same: existing: {} new field name: {}",
                      fieldName,
                      newFieldName);
     } else {
         auto newFieldAttribute = schema->hasFieldName(newFieldName);
         if (newFieldAttribute) {
-            NES_ERROR2("FieldRenameExpressionNode: The new field name {} already exists in the input schema {}. "
+            NES_ERROR("FieldRenameExpressionNode: The new field name {} already exists in the input schema {}. "
                        "Can't use the name of an existing field.",
                        schema->toString(),
                        newFieldName);

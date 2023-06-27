@@ -29,11 +29,11 @@ class IfCompilationTest : public Testing::NESBaseTest, public AbstractCompilatio
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup IfCompilationTest test class.");
+        NES_DEBUG("Setup IfCompilationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down IfCompilationTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class."); }
 };
 
 Value<> ifThenCondition() {

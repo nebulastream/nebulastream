@@ -25,7 +25,7 @@ BinarySourceTypePtr BinarySourceType::create(Yaml::Node yamlConfig) {
 }
 
 BinarySourceType::BinarySourceType(Yaml::Node yamlConfig) : BinarySourceType() {
-    NES_INFO2("CSVSourceType: Init default CSV source config object with values from YAML.");
+    NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
         filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>());
@@ -40,7 +40,7 @@ BinarySourceTypePtr BinarySourceType::create(std::map<std::string, std::string> 
 }
 
 BinarySourceType::BinarySourceType(std::map<std::string, std::string> sourceConfigMap) : BinarySourceType() {
-    NES_INFO2("CSVSourceType: Init default CSV source config object with values from command line.");
+    NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG)->second);
     } else {
@@ -57,7 +57,7 @@ BinarySourceType::BinarySourceType()
           Configurations::FILE_PATH_CONFIG,
           "../tests/test_data/QnV_short.csv",//FIXME: What should we do about these things?
           "file path, needed for: CSVSource, BinarySource")) {
-    NES_INFO2("BinarySourceTypeConfig: Init source config object with default params.");
+    NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
 
 std::string BinarySourceType::toString() {

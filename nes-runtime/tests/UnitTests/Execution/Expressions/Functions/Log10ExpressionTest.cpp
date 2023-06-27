@@ -28,11 +28,11 @@ class Log10ExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Log10ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Log10ExpressionTest test class.");
+        NES_INFO("Setup Log10ExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down Log10ExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Log10ExpressionTest test class."); }
 };
 
 TEST_F(Log10ExpressionTest, evaluateLog10ExpressionInteger) {

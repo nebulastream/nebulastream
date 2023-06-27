@@ -57,7 +57,7 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 }
 
 void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
-    NES_DEBUG2("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
+    NES_DEBUG("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         windows.remove(window.value());
@@ -102,23 +102,23 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
       joinStrategy(joinStrategy), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG2("start HashJoinOperatorHandler");
+    NES_DEBUG("start HashJoinOperatorHandler");
 }
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop HashJoinOperatorHandler");
+    NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
 uint64_t StreamJoinOperatorHandler::getNextSequenceNumber() { return sequenceNumber++; }
 
 void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     if (alreadySetup) {
-        NES_DEBUG2("StreamJoinOperatorHandler::setup was called already!");
+        NES_DEBUG("StreamJoinOperatorHandler::setup was called already!");
         return;
     }
     alreadySetup = true;
 
-    NES_DEBUG2("HashJoinOperatorHandler::setup was called!");
+    NES_DEBUG("HashJoinOperatorHandler::setup was called!");
     // It does not matter here if we put true or false as a parameter
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
@@ -148,7 +148,7 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
     //The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 
-    NES_DEBUG2("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originId {} watermarkstatus={}",
+    NES_DEBUG("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originId {} watermarkstatus={}",
                newGlobalWatermark,
                watermarkTs,
                sequenceNumber,
@@ -162,7 +162,7 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
         auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
         if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK)) {
             triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
-            NES_DEBUG2("Added window with id {} to the triggerable windows...", window->getWindowIdentifier());
+            NES_DEBUG("Added window with id {} to the triggerable windows...", window->getWindowIdentifier());
         }
     }
 

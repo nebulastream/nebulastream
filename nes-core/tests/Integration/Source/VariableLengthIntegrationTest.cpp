@@ -35,7 +35,7 @@ class VariableLengthIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("VariableLengthIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup VariableLengthIntegrationTest test class.");
+        NES_INFO("Setup VariableLengthIntegrationTest test class.");
     }
 
     std::string generateRandomString(size_t size) {
@@ -74,14 +74,14 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_INFO2("VariableLengthIntegrationTest: Start coordinator");
+    NES_INFO("VariableLengthIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     crd->getSourceCatalogService()->registerLogicalSource("variable_length", testSchema);
 
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("VariableLengthIntegrationTest: Coordinator started successfully");
-    NES_DEBUG2("VariableLengthIntegrationTest: Start worker 1");
+    NES_DEBUG("VariableLengthIntegrationTest: Coordinator started successfully");
+    NES_DEBUG("VariableLengthIntegrationTest: Start worker 1");
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
@@ -98,7 +98,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
 
     ASSERT_TRUE(retStart1);
-    NES_INFO2("VariableLengthIntegrationTest: Worker1 started successfully");
+    NES_INFO("VariableLengthIntegrationTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -115,7 +115,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("VariableLengthIntegrationTest: Remove query");
+    NES_INFO("VariableLengthIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string const expectedContent =
@@ -157,8 +157,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO2("VariableLengthIntegrationTest: content={}", content);
-    NES_INFO2("VariableLengthIntegrationTest: expContent={}", expectedContent);
+    NES_INFO("VariableLengthIntegrationTest: content={}", content);
+    NES_INFO("VariableLengthIntegrationTest: expContent={}", expectedContent);
 
     EXPECT_EQ(content, expectedContent);
 

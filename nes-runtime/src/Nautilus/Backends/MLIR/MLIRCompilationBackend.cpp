@@ -50,7 +50,7 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
 
     // 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {})) {
-        NES_FATAL_ERROR2("Could not lower and optimize MLIR");
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
     // 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.

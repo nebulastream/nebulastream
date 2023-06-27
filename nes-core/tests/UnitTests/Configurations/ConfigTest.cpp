@@ -36,7 +36,7 @@ class ConfigTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Configuration test class.");
+        NES_INFO("Setup Configuration test class.");
     }
 
     static std::vector<const char*> makePosixArgs(const std::vector<std::string>& args) {
@@ -58,7 +58,7 @@ class ConfigTest : public Testing::NESBaseTest {
         return result;
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down Configuration test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Configuration test class."); }
 };
 
 /**

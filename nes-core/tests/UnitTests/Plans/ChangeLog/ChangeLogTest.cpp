@@ -32,7 +32,7 @@ class ChangeLogTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ChangeLogTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ChangeLogTest test class.");
+        NES_INFO("Setup ChangeLogTest test class.");
     }
 
     void SetUp() override {
@@ -73,7 +73,7 @@ TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    NES_DEBUG2("{}", queryPlan->toString());
+    NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
     auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
@@ -96,7 +96,7 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    NES_DEBUG2("{}", queryPlan->toString());
+    NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
     auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
@@ -134,7 +134,7 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    NES_DEBUG2("{}", queryPlan->toString());
+    NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
     auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();

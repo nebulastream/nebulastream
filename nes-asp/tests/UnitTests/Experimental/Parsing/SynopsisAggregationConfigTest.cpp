@@ -32,13 +32,13 @@ namespace NES::ASP::Parsing {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("SynopsisAggregationConfigTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO2("Setup SynopsisAggregationConfigTest test class.");
+            NES_INFO("Setup SynopsisAggregationConfigTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO2("Setup SynopsisAggregationConfigTest test case.");
+            NES_INFO("Setup SynopsisAggregationConfigTest test case.");
 
             Yaml::Node aggregationNode;
             aggregationNode["type"] = std::string(magic_enum::enum_name(type));

@@ -33,15 +33,15 @@ void BatchAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext
 }
 
 void BatchAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG2("start BatchAggregationHandler");
+    NES_DEBUG("start BatchAggregationHandler");
 }
 
 void BatchAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                    Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("shutdown BatchAggregationHandler: {}", queryTerminationType);
+    NES_DEBUG("shutdown BatchAggregationHandler: {}", queryTerminationType);
 }
 BatchAggregationHandler::~BatchAggregationHandler() {
-    NES_DEBUG2("~BatchAggregationHandler");
+    NES_DEBUG("~BatchAggregationHandler");
 
     for (auto s : threadLocalStateStores) {
         free(s);

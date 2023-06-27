@@ -61,7 +61,7 @@ bool SliceMergingOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typ
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG2("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
+    NES_DEBUG("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
                inputSchema->toString());
 
     // infer type of aggregation

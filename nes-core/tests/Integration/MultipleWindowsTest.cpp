@@ -35,7 +35,7 @@ class MultipleWindowsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleWindowsTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MultipleWindowsTest test class.");
+        NES_INFO("Setup MultipleWindowsTest test class.");
     }
 };
 
@@ -48,18 +48,18 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     coordinatorConfig->restPort = *restPort;
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO2("MultipleWindowsTest: Start coordinator");
+    NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -72,7 +72,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -80,7 +80,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
@@ -100,18 +100,18 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
                              "0,2000,4,1\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
@@ -119,18 +119,18 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = 12;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -143,9 +143,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
@@ -158,7 +158,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -166,7 +166,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
@@ -187,22 +187,22 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 2");
+    NES_INFO("MultipleWindowsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -213,18 +213,18 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = 12;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -238,7 +238,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -246,7 +246,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query =
         "Query::from(\"window\")"
         ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
@@ -259,7 +259,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_DEBUG2("wait start");
+    NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -273,18 +273,18 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -294,18 +294,18 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -319,9 +319,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
@@ -334,7 +334,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -342,7 +342,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
                    ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5))).byKey(Attribute(\"id\")"
                    ").apply(Sum(Attribute(\"value\")))"
@@ -353,7 +353,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_DEBUG2("wait start");
+    NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -372,40 +372,40 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 2");
+    NES_INFO("MultipleWindowsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -418,7 +418,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -426,7 +426,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
@@ -464,36 +464,36 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -507,9 +507,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
@@ -522,7 +522,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -530,7 +530,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("start"), Milliseconds(0), Milliseconds()))
@@ -557,22 +557,22 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("MultipleWindowsTest: Remove query");
+    NES_INFO("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 1");
+    NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("MultipleWindowsTest: Stop worker 2");
+    NES_INFO("MultipleWindowsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("MultipleWindowsTest: Test finished");
+    NES_INFO("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -582,18 +582,18 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -606,7 +606,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testOutput.out";
     remove(outputFilePath.c_str());
@@ -614,9 +614,9 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_DEBUG2("MultipleWindowsTest: Submit query");
+    NES_DEBUG("MultipleWindowsTest: Submit query");
 
-    NES_DEBUG2("MultipleWindowsTest: Submit query");
+    NES_DEBUG("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
@@ -646,18 +646,18 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleWindowsTest: Remove query");
+    NES_DEBUG("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 1");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop Coordinator");
+    NES_DEBUG("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleWindowsTest: Test finished");
+    NES_DEBUG("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -700,18 +700,18 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -719,9 +719,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
@@ -737,9 +737,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    NES_INFO2("MultipleWindowsTest: Start worker 3");
+    NES_INFO("MultipleWindowsTest: Start worker 3");
 
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
@@ -756,7 +756,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_INFO2("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
+    NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
@@ -764,7 +764,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
 
     string query = R"(Query::from("window")
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
@@ -789,26 +789,26 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleWindowsTest: Remove query");
+    NES_DEBUG("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 1");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 2");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 3");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop Coordinator");
+    NES_DEBUG("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleWindowsTest: Test finished");
+    NES_DEBUG("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -857,27 +857,27 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (3);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
@@ -893,9 +893,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    NES_INFO2("MultipleWindowsTest: Start worker 3");
+    NES_INFO("MultipleWindowsTest: Start worker 3");
 
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
@@ -912,7 +912,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_INFO2("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
+    NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
@@ -920,7 +920,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleWindowsTest: Submit query");
+    NES_INFO("MultipleWindowsTest: Submit query");
 
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
@@ -947,26 +947,26 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleWindowsTest: Remove query");
+    NES_DEBUG("MultipleWindowsTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 1");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 2");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop worker 3");
+    NES_DEBUG("MultipleWindowsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleWindowsTest: Stop Coordinator");
+    NES_DEBUG("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleWindowsTest: Test finished");
+    NES_DEBUG("MultipleWindowsTest: Test finished");
 }
 
 }// namespace NES

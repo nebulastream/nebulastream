@@ -27,11 +27,11 @@ void RandomSampleWithoutReplacementOperatorHandler::setup(uint64_t entrySize, ui
 void RandomSampleWithoutReplacementOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                           Runtime::StateManagerPtr,
                                                           uint32_t) {
-    NES_DEBUG2("Started SRSWoROperatorHandler!");
+    NES_DEBUG("Started SRSWoROperatorHandler!");
 }
 void RandomSampleWithoutReplacementOperatorHandler::stop(Runtime::QueryTerminationType,
                                                          Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("Stopped SRSWoROperatorHandler!");
+    NES_DEBUG("Stopped SRSWoROperatorHandler!");
 }
 
 } // namespace NES::ASP

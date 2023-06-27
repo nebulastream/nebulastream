@@ -28,13 +28,13 @@ DistributeJoinRule::DistributeJoinRule() = default;
 DistributeJoinRulePtr DistributeJoinRule::create() { return std::make_shared<DistributeJoinRule>(DistributeJoinRule()); }
 
 QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO2("DistributeJoinRule: Apply DistributeJoinRule.");
-    NES_DEBUG2("DistributeJoinRule::apply: plan before replace\n{}", queryPlan->toString());
+    NES_INFO("DistributeJoinRule: Apply DistributeJoinRule.");
+    NES_DEBUG("DistributeJoinRule::apply: plan before replace\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     if (!joinOps.empty()) {
-        NES_DEBUG2("DistributeJoinRule::apply: found {} join operators", joinOps.size());
+        NES_DEBUG("DistributeJoinRule::apply: found {} join operators", joinOps.size());
         for (auto& joinOp : joinOps) {
-            NES_DEBUG2("DistributeJoinRule::apply: join operator {}", joinOp->toString());
+            NES_DEBUG("DistributeJoinRule::apply: join operator {}", joinOp->toString());
             auto leftInputSchema = joinOp->getLeftInputSchema();
             uint64_t edgesLeft = 0;
             uint64_t edgesRight = 0;
@@ -47,15 +47,15 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
                     edgesRight++;
                 }
             }
-            NES_DEBUG2("DistributeJoinRule set edgesLeft={} edgesRight={}", edgesLeft, edgesRight);
+            NES_DEBUG("DistributeJoinRule set edgesLeft={} edgesRight={}", edgesLeft, edgesRight);
             joinOp->getJoinDefinition()->setNumberOfInputEdgesLeft(edgesLeft);
             joinOp->getJoinDefinition()->setNumberOfInputEdgesRight(edgesRight);
         }
     } else {
-        NES_DEBUG2("DistributeJoinRule::apply: no join operator in query");
+        NES_DEBUG("DistributeJoinRule::apply: no join operator in query");
     }
 
-    NES_DEBUG2("DistributeJoinRule::apply: plan after replace\n{}", queryPlan->toString());
+    NES_DEBUG("DistributeJoinRule::apply: plan after replace\n{}", queryPlan->toString());
 
     return queryPlan;
 }

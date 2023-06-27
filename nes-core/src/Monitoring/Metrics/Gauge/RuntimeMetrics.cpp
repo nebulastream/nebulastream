@@ -28,7 +28,7 @@ namespace NES::Monitoring {
 RuntimeMetrics::RuntimeMetrics()
     : nodeId(0), wallTimeNs(0), memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0),
       batteryStatusInPercent(0), latCoord(0), longCoord(0) {
-    NES_DEBUG2("RuntimeMetrics: Default ctor");
+    NES_DEBUG("RuntimeMetrics: Default ctor");
 }
 
 SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {

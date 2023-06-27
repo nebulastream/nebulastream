@@ -41,7 +41,7 @@ class BatchSortOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BatchSortOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup BatchSortOperatorTest test class.");
+        NES_INFO("Setup BatchSortOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -51,7 +51,7 @@ class BatchSortOperatorTest : public Testing::NESBaseTest {
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down BatchSortOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down BatchSortOperatorTest test class."); }
 };
 
 using TestTypes = ::testing::Types<std::pair<uint32_t, uint32_t>,

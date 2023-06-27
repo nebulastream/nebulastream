@@ -27,7 +27,7 @@ LocalHashTable::LocalHashTable(size_t sizeOfRecord,
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
-    NES_TRACE2("into key={} bucket={}", key, getBucketPos(hashedKey));
+    NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
     return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
 }
 

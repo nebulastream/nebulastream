@@ -133,8 +133,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
-        NES_ERROR2("This is not a source pipeline.");
-        NES_ERROR2("{}", pipeline->getQueryPlan()->toString());
+        NES_ERROR("This is not a source pipeline.");
+        NES_ERROR("{}", pipeline->getQueryPlan()->toString());
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
@@ -185,7 +185,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG2("Adding current source operator: {} as a predecessor to its child pipeline: {}",
+            NES_DEBUG("Adding current source operator: {} as a predecessor to its child pipeline: {}",
                        source->getOperatorId(),
                        (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
@@ -245,11 +245,11 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
-                NES_TRACE2("Emit Buffer to data sink {}", (*sink)->toString());
+                NES_TRACE("Emit Buffer to data sink {}", (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
             } else if (const auto* nextExecutablePipeline =
                            std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-                NES_TRACE2("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
+                NES_TRACE("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
             }
         }
@@ -257,7 +257,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            NES_TRACE2("Emit buffer to query manager");
+            NES_TRACE("Emit buffer to query manager");
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
@@ -284,7 +284,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG2("Adding current pipeline: {} as a predecessor to its child pipeline: {}",
+            NES_DEBUG("Adding current pipeline: {} as a predecessor to its child pipeline: {}",
                        executablePipeline->getPipelineId(),
                        (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
@@ -301,7 +301,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG2("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
+    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
                physicalSource->toString(),
                magic_enum::enum_name(sourceType));
 

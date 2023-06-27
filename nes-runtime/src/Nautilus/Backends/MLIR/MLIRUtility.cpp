@@ -34,7 +34,7 @@ void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirM
     if (!mlirFilepath.empty()) {
         fileStream.write(mlirString.c_str(), mlirString.length());
     }
-    NES_DEBUG2("{}", mlirString);
+    NES_DEBUG("{}", mlirString);
 }
 
 int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& moduleString) {
@@ -44,7 +44,7 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
 
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {})) {
-        NES_FATAL_ERROR2("Could not lower and optimize MLIR");
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
@@ -64,7 +64,7 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::compileNESIRToMachineCode(st
     auto module = loweringProvider->generateModuleFromIR(ir);
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
-        NES_FATAL_ERROR2("Could not lower and optimize MLIR");
+        NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
     // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.

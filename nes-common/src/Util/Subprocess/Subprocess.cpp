@@ -44,14 +44,14 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
 
     switch (pid = ::fork()) {
         case -1: {
-            NES_FATAL_ERROR2("Subprocess {} failed to start", cmd);
+            NES_FATAL_ERROR("Subprocess {} failed to start", cmd);
             return;
         }
         case 0: {
             executeCommandInChildProcess(argv);
         }
     }
-    NES_DEBUG2("Started process {} with pid: {}", cmd, pid);
+    NES_DEBUG("Started process {} with pid: {}", cmd, pid);
 
     ::close(outPipe[magic_enum::enum_integer(ends_of_pipe::WRITE)]);
     this->outputFile = fdopen(outPipe[magic_enum::enum_integer(ends_of_pipe::READ)], "r");
@@ -64,17 +64,17 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
 }
 
 Subprocess::~Subprocess() {
-    NES_INFO2("Killing process->PID: {}", pid);
+    NES_INFO("Killing process->PID: {}", pid);
     ::kill(pid, SIGKILL);
     stopped = true;
     logThread.join();
 }
 
 bool Subprocess::kill() {
-    NES_DEBUG2("Killing pid={}", pid);
+    NES_DEBUG("Killing pid={}", pid);
     auto res = ::kill(pid, SIGKILL);
     NES_ASSERT(res == 0, "process could not be killed");
-    NES_DEBUG2("Process pid={} successfully killed", pid);
+    NES_DEBUG("Process pid={} successfully killed", pid);
     return res;
 }
 

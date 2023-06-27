@@ -28,10 +28,10 @@ class SpatialExpressionNodeTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SpatialExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SpatialExpressionNodeTest test class.");
+        NES_INFO("Setup SpatialExpressionNodeTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down SpatialExpressionNodeTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down SpatialExpressionNodeTest test class."); }
 };
 
 // This tests the circle expression node

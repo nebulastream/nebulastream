@@ -20,7 +20,7 @@
 
 namespace NES::Monitoring {
 
-AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG2("AllEntriesMetricStore: Init NewestMetricStore"); }
+AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG("AllEntriesMetricStore: Init NewestMetricStore"); }
 
 MetricStoreType AllEntriesMetricStore::getType() const { return MetricStoreType::AllEntries; }
 
@@ -29,24 +29,24 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     StoredNodeMetricsPtr nodeMetrics;
     uint64_t timestamp = duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     if (storedMetrics.contains(nodeId)) {
-        NES_TRACE2("AllEntriesMetricStore: Found stored metrics for node with ID {}", nodeId);
+        NES_TRACE("AllEntriesMetricStore: Found stored metrics for node with ID {}", nodeId);
         nodeMetrics = storedMetrics[nodeId];
         // check if the metric type exists
         if (!nodeMetrics->contains(metric->getMetricType())) {
-            NES_TRACE2("AllEntriesMetricStore: Creating metrics {} of {}",
+            NES_TRACE("AllEntriesMetricStore: Creating metrics {} of {}",
                        nodeId,
                        std::string(magic_enum::enum_name(metric->getMetricType())));
             nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
-        NES_TRACE2("AllEntriesMetricStore: Creating node {} of {}",
+        NES_TRACE("AllEntriesMetricStore: Creating node {} of {}",
                    nodeId,
                    std::string(magic_enum::enum_name(metric->getMetricType())));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
-    NES_TRACE2("AllEntriesMetricStore: Adding metrics for {} with type {}: {}",
+    NES_TRACE("AllEntriesMetricStore: Adding metrics for {} with type {}: {}",
                nodeId,
                std::string(magic_enum::enum_name(metric->getMetricType())),
                NES::Monitoring::asJson(metric));

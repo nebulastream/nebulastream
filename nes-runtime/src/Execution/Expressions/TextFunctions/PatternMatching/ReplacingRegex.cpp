@@ -35,13 +35,13 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
 */
 TextValue* regexReplace(TextValue* text, TextValue* reg, TextValue* replacement) {
     std::string strText = std::string(text->c_str(), text->length());
-    NES_DEBUG2("Received the following source string {}", strText);
+    NES_DEBUG("Received the following source string {}", strText);
     std::regex tempRegex(std::string(reg->c_str(), reg->length()));
-    NES_DEBUG2("Received the following reg string {}", std::string(reg->c_str(), reg->length()));
+    NES_DEBUG("Received the following reg string {}", std::string(reg->c_str(), reg->length()));
     std::string strReplacement = std::string(replacement->c_str(), replacement->length());
-    NES_DEBUG2("Received the following replacement string {}", strReplacement);
+    NES_DEBUG("Received the following replacement string {}", strReplacement);
     std::string strReplaced = std::regex_replace(strText, tempRegex, strReplacement);
-    NES_DEBUG2("Created the string {}", strReplaced)
+    NES_DEBUG("Created the string {}", strReplaced)
     return TextValue::create(strReplaced);
 }
 

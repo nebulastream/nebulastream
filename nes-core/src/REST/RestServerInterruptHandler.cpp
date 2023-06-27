@@ -26,19 +26,19 @@ static std::mutex mutex;
 void RestServerInterruptHandler::hookUserInterruptHandler() { signal(SIGTERM, handleUserInterrupt); }
 
 void RestServerInterruptHandler::handleUserInterrupt(int signal) {
-    NES_DEBUG2("handleUserInterrupt");
+    NES_DEBUG("handleUserInterrupt");
     if (signal == SIGTERM) {
-        NES_DEBUG2("SIGINT trapped ...");
+        NES_DEBUG("SIGINT trapped ...");
         condition.notify_all();
     }
 }
 
 void RestServerInterruptHandler::waitForUserInterrupt() {
-    NES_DEBUG2("Wait for interrupt of RestServer");
+    NES_DEBUG("Wait for interrupt of RestServer");
     std::unique_lock<std::mutex> lock{mutex};
-    NES_TRACE2("Wait for interrupt: got lock");
+    NES_TRACE("Wait for interrupt: got lock");
     condition.wait(lock);
-    NES_DEBUG2("User has signaled to interrupt program");
+    NES_DEBUG("User has signaled to interrupt program");
     lock.unlock();
 }
 

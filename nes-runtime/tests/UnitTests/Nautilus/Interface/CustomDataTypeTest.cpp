@@ -29,7 +29,7 @@ class CustomDataTypeTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TextTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup TextTypeTest test class.");
+        NES_DEBUG("Setup TextTypeTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -37,11 +37,11 @@ class CustomDataTypeTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG2("Setup TextTypeTest test case.")
+        NES_DEBUG("Setup TextTypeTest test case.")
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down TextTypeTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
@@ -86,7 +86,7 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
     c1 = c2;
     std::stringstream value;
     value << c3.value;
-    NES_DEBUG2("{}", value.str());
+    NES_DEBUG("{}", value.str());
 }
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeBaseTest) {

@@ -39,21 +39,21 @@ void MicroBenchmarkRun::run() {
         // Creating bufferManager for this run
         auto bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, numberOfBuffers);
 
-        NES_INFO2("Creating input buffer...");
+        NES_INFO("Creating input buffer...");
         auto allRecordBuffers = this->createInputRecords(bufferManager);
 
-        NES_INFO2("Creating the query keys...");
+        NES_INFO("Creating the query keys...");
         auto keys = this->createKeys(allRecordBuffers, bufferManager);
 
-        NES_INFO2("Creating accuracy buffer...");
+        NES_INFO("Creating accuracy buffer...");
         auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, keys, bufferManager);
 
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
-        NES_INFO2("Creating the synopsis...");
+        NES_INFO("Creating the synopsis...");
         auto synopsis = AbstractSynopsis::create(*synopsesArguments, aggregation);
 
         // Create and compile the pipeline and create a workerContext
-        NES_INFO2("Create and compile the pipeline...");
+        NES_INFO("Create and compile the pipeline...");
         auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis);
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
@@ -94,11 +94,11 @@ void MicroBenchmarkRun::run() {
         auto accuracy = this->compareAccuracy(allAccuracyBuffers, allApproximateBuffers);
 
         auto throughputInTuples = windowSize / ((double)duration / NANO_TO_SECONDS_MULTIPLIER);
-        NES_DEBUG2("accuracy: {} throughputInTuples: {}", accuracy, throughputInTuples);
+        NES_DEBUG("accuracy: {} throughputInTuples: {}", accuracy, throughputInTuples);
         microBenchmarkResult.emplace_back(throughputInTuples, accuracy);
     }
 
-    NES_INFO2("Loop timers: {}", printString(timer));
+    NES_INFO("Loop timers: {}", printString(timer));
 }
 
 std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile,

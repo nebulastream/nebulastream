@@ -49,14 +49,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
     SourceType srcType = dataSource->getType();
     switch (srcType) {
         case SourceType::ZMQ_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating ZMQ source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);
             SourceDescriptorPtr zmqSourceDescriptor =
                 ZmqSourceDescriptor::create(dataSource->getSchema(), zmqSourcePtr->getHost(), zmqSourcePtr->getPort());
             return zmqSourceDescriptor;
         }
         case SourceType::DEFAULT_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating Default source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating Default source");
             const DefaultSourcePtr defaultSourcePtr = std::dynamic_pointer_cast<DefaultSource>(dataSource);
             const SourceDescriptorPtr defaultSourceDescriptor =
                 DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(),
@@ -65,14 +65,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             return defaultSourceDescriptor;
         }
         case SourceType::BINARY_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating Binary File source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating Binary File source");
             const BinarySourcePtr binarySourcePtr = std::dynamic_pointer_cast<BinarySource>(dataSource);
             const SourceDescriptorPtr binarySourceDescriptor =
                 BinarySourceDescriptor::create(binarySourcePtr->getSchema(), binarySourcePtr->getFilePath());
             return binarySourceDescriptor;
         }
         case SourceType::CSV_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating CSV File source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating CSV File source");
             const CSVSourcePtr csvSourcePtr = std::dynamic_pointer_cast<CSVSource>(dataSource);
             const SourceDescriptorPtr csvSourceDescriptor =
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfig());
@@ -80,7 +80,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
         }
 #ifdef ENABLE_KAFKA_BUILD
         case SourceType::KAFKA_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating Kafka source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating Kafka source");
             const KafkaSourcePtr kafkaSourcePtr = std::dynamic_pointer_cast<KafkaSource>(dataSource);
             const SourceDescriptorPtr kafkaSourceDescriptor =
                 KafkaSourceDescriptor::create(kafkaSourcePtr->getSchema(),
@@ -98,7 +98,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
 #endif
 #ifdef ENABLE_MQTT_BUILD
         case SourceType::MQTT_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating MQTT source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
             const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
             const SourceDescriptorPtr mqttSourceDescriptor =
                 MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(), mqttSourcePtr->getSourceConfigPtr());
@@ -107,7 +107,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
 #endif
 #ifdef ENABLE_OPC_BUILD
         case OPC_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating OPC source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating OPC source");
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
             const SourceDescriptorPtr opcSourceDescriptor = OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
                                                                                         opcSourcePtr->getUrl(),
@@ -118,14 +118,14 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
         }
 #endif
         case SourceType::SENSE_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating sense source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
             const SourceDescriptorPtr senseSourceDescriptor =
                 SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdfs());
             return senseSourceDescriptor;
         }
         case SourceType::MATERIALIZEDVIEW_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating materialized view source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating materialized view source");
             const Experimental::MaterializedView::MaterializedViewSourcePtr materializedViewSourcePtr =
                 std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSource>(dataSource);
             const SourceDescriptorPtr materializedViewSourceDescriptor =
@@ -137,21 +137,21 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");
         }
         case SourceType::MONITORING_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating monitoring source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating monitoring source");
             const MonitoringSourcePtr monitoringSource = std::dynamic_pointer_cast<MonitoringSource>(dataSource);
             const SourceDescriptorPtr monitoringSourceDescriptor =
                 MonitoringSourceDescriptor::create(monitoringSource->getWaitTime(), monitoringSource->getCollectorType());
             return monitoringSourceDescriptor;
         }
         case SourceType::TCP_SOURCE: {
-            NES_INFO2("ConvertPhysicalToLogicalSource: Creating TCP source");
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating TCP source");
             const TCPSourcePtr tcpSource = std::dynamic_pointer_cast<TCPSource>(dataSource);
             const SourceDescriptorPtr tcpSourceDescriptor =
                 TCPSourceDescriptor::create(tcpSource->getSchema(), tcpSource->getSourceConfig());
             return tcpSourceDescriptor;
         }
         default: {
-            NES_ERROR2("ConvertPhysicalToLogicalSource: Unknown Data Source Type {}", magic_enum::enum_name(srcType));
+            NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type {}", magic_enum::enum_name(srcType));
             throw std::invalid_argument("Unknown Source Descriptor Type ");
         }
     }

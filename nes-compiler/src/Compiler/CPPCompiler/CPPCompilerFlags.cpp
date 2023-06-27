@@ -32,17 +32,17 @@ void CPPCompilerFlags::addDefaultCompilerFlags() {
 }
 
 void CPPCompilerFlags::addSharedLibraryFlag() {
-    NES_DEBUG2("Compile as shared library.");
+    NES_DEBUG("Compile as shared library.");
     addFlag(SHARED);
 }
 
 void CPPCompilerFlags::enableDebugFlags() {
-    NES_DEBUG2("Compile with debugging.");
+    NES_DEBUG("Compile with debugging.");
     addFlag(GENERATE_DEBUG_SYMBOLS);
 }
 
 void CPPCompilerFlags::enableOptimizationFlags() {
-    NES_DEBUG2("Compile with optimizations.");
+    NES_DEBUG("Compile with optimizations.");
     addFlag(ALL_OPTIMIZATIONS);
 #if !defined(__aarch64__)
     // use -mcpu=native instead of TUNE/ARCH for arm64, below
@@ -61,7 +61,7 @@ void CPPCompilerFlags::enableOptimizationFlags() {
 }
 
 void CPPCompilerFlags::enableProfilingFlags() {
-    NES_DEBUG2("Compilation Time tracing is activated open: chrome://tracing/");
+    NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
 }
 

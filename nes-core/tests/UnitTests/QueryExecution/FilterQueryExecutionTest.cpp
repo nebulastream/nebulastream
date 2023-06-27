@@ -35,7 +35,7 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FilterQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("FilterQueryExecutionTest: Setup FilterQueryExecutionTest test class.");
+        NES_DEBUG("FilterQueryExecutionTest: Setup FilterQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -46,13 +46,13 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
+        NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {

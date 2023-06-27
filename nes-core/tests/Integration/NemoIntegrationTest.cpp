@@ -38,13 +38,13 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NemoIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup NemoIntegrationTest test class.");
+        NES_INFO("Setup NemoIntegrationTest test class.");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        NES_INFO2("NemoIntegrationTest: Setting up test with rpc port {}, rest port {}", rpcCoordinatorPort, restPort);
+        NES_INFO("NemoIntegrationTest: Setting up test with rpc port {}, rest port {}", rpcCoordinatorPort, restPort);
     }
 
     std::string testTopology(uint64_t restPort,
@@ -55,7 +55,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
                              uint64_t childThreshold,
                              uint64_t combinerThreshold,
                              uint64_t expectedNumberBuffers) {
-        NES_INFO2(" start coordinator");
+        NES_INFO(" start coordinator");
         std::string outputFilePath = this->getTestResourceFolder().string() + "/windowOut.csv";
         remove(outputFilePath.c_str());
 
@@ -81,7 +81,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
                   "addField(createField(\\\"timestamp\\\",UINT64));\"}";
         schema << endl;
 
-        NES_INFO2("schema submit={}", schema.str());
+        NES_INFO("schema submit={}", schema.str());
         bool logSource = TestUtils::addLogicalSource(schema.str(), std::to_string(restPort));
         assert(logSource);
 
@@ -132,7 +132,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
             parents = newParents;
         }
 
-        NES_INFO2("NemoIntegrationTest: Finished setting up topology.");
+        NES_INFO("NemoIntegrationTest: Finished setting up topology.");
 
         std::stringstream ss;
         ss << "{\"userQuery\" : ";
@@ -145,13 +145,13 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         ss << R"());","placement" : "BottomUp"})";
         ss << endl;
 
-        NES_INFO2("query string submit={}", ss.str());
+        NES_INFO("query string submit={}", ss.str());
 
         nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
         QueryId queryId = json_return["queryId"].get<uint64_t>();
 
-        NES_INFO2("try to acc return");
-        NES_INFO2("Query ID: {}", queryId);
+        NES_INFO("try to acc return");
+        NES_INFO("Query ID: {}", queryId);
 
         auto checkCompleted = TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort));
         assert(checkCompleted);
@@ -162,7 +162,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         std::ifstream ifs(outputFilePath.c_str());
         assert(ifs.good());
         std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-        NES_INFO2("content={}", content);
+        NES_INFO("content={}", content);
 
         return content;
     }
@@ -182,8 +182,8 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
                              "0,10000,12,2\n"
                              "0,10000,16,4\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 }
 
@@ -207,8 +207,8 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
                              "0,10000,12,1\n"
                              "0,10000,16,2\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 }
 
@@ -232,8 +232,8 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
                              "0,10000,12,2\n"
                              "0,10000,16,4\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 }
 
@@ -251,8 +251,8 @@ TEST_F(NemoIntegrationTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) 
                              "0,10000,12,4\n"
                              "0,10000,16,8\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 }
 
@@ -318,8 +318,8 @@ TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsDenseTopology) {
                              "0,10000,12,3\n"
                              "0,10000,16,6\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     ASSERT_EQ(content.size(), expectedContent.size());
     ASSERT_EQ(content, expectedContent);
 }

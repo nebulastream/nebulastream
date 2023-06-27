@@ -31,7 +31,7 @@ namespace NES::Benchmark {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("E2ESingleRunTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO2("Setup E2ESingleRunTest test class.");
+            NES_INFO("Setup E2ESingleRunTest test class.");
         }
     };
 

@@ -30,11 +30,11 @@ class LoopCompilationTest : public Testing::NESBaseTest, public AbstractCompilat
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup TraceTest test class.");
+        NES_DEBUG("Setup TraceTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down TraceTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down TraceTest test class."); }
 };
 
 Value<> sumLoop(int upperLimit) {

@@ -33,7 +33,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandli
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup DynamicMemoryLayoutTest test class.");
+        NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();

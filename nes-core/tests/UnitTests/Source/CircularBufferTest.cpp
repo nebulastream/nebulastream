@@ -25,7 +25,7 @@ class CircularBufferTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CircularBufferTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup CircularBufferTest test class.");
+        NES_DEBUG("Setup CircularBufferTest test class.");
     }
 
     uint64_t testCapacity = 3;

@@ -34,7 +34,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                              const SchemaPtr& schema,
                                              const Runtime::BufferManagerPtr& bufferManager) {
-    NES_TRACE2("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);
+    NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);
 
     std::vector<std::string> values;
     try {
@@ -53,7 +53,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
-        NES_TRACE2("Current value is:  {}", values[j]);
+        NES_TRACE("Current value is:  {}", values[j]);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount, bufferManager);
     }
     return true;

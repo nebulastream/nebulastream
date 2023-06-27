@@ -30,14 +30,14 @@ JoinOperatorHandlerPtr JoinOperatorHandler::create(const LogicalJoinDefinitionPt
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)
     : joinDefinition(std::move(joinDefinition)), resultSchema(std::move(resultSchema)) {
-    NES_DEBUG2("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)");
+    NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)");
 }
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
                                          SchemaPtr resultSchema,
                                          AbstractJoinHandlerPtr joinHandler)
     : joinDefinition(std::move(joinDefinition)), joinHandler(std::move(joinHandler)), resultSchema(std::move(resultSchema)) {
-    NES_DEBUG2("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr "
+    NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr "
                "joinHandler)");
 }
 

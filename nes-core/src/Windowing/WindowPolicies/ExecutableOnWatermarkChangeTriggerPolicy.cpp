@@ -24,7 +24,7 @@
 namespace NES::Windowing {
 
 ExecutableOnWatermarkChangeTriggerPolicy::~ExecutableOnWatermarkChangeTriggerPolicy() {
-    NES_WARNING2("~ExecutableOnWatermarkChangeTriggerPolicy()");
+    NES_WARNING("~ExecutableOnWatermarkChangeTriggerPolicy()");
 }
 
 bool ExecutableOnWatermarkChangeTriggerPolicy::start(AbstractWindowHandlerPtr, Runtime::WorkerContextRef) {

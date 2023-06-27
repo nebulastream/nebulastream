@@ -35,7 +35,7 @@ NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr
 }
 
 PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan) {
-    NES_DEBUG2("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
+    NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
     for (const auto& pipeline : queryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);

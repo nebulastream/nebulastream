@@ -24,11 +24,11 @@ namespace NES::Runtime::Execution::Operators {
 TensorflowAdapterPtr TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
 void TensorflowAdapter::initializeModel(std::string pathToModel) {
-    NES_DEBUG2("INITIALIZING MODEL:  {}", pathToModel);
+    NES_DEBUG("INITIALIZING MODEL:  {}", pathToModel);
     std::ifstream input(pathToModel, std::ios::in | std::ios::binary);
     std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
     input.close();
-    NES_INFO2("MODEL SIZE: {}", std::to_string(bytes.size()));
+    NES_INFO("MODEL SIZE: {}", std::to_string(bytes.size()));
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(pathToModel.c_str()), options);
     TfLiteInterpreterAllocateTensors(interpreter);

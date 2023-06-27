@@ -194,7 +194,7 @@ bool TraceContext::isKnownOperation(const Tag* tag) {
     if (auto ref = checkTag(tag)) {
         std::stringstream trace;
         trace << *executionTrace;
-        NES_TRACE2("{}", trace.str());
+        NES_TRACE("{}", trace.str());
         // TODO #3500 Fix handling of repeated operations
         if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -224,7 +224,7 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
         } catch (const TraceTerminationException& ex) {
         }
     }
-    NES_DEBUG2("Iterations: {}", symbolicExecutionContext.getIterations());
+    NES_DEBUG("Iterations: {}", symbolicExecutionContext.getIterations());
     return executionTrace;
 }
 

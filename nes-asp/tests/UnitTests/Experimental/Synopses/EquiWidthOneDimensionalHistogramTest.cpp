@@ -48,13 +48,13 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EquiWidthOneDimensionalHistogramTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup EquiWidthOneDimensionalHistogramTest test class.");
+        NES_INFO("Setup EquiWidthOneDimensionalHistogramTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup EquiWidthOneDimensionalHistogramTest test case.");
+        NES_INFO("Setup EquiWidthOneDimensionalHistogramTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
 
         // Creating the worker context and the pipeline necessary for testing the sampling

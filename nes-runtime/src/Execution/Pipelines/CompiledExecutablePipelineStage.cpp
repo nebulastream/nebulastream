@@ -86,7 +86,7 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     timer.snapshot("Compilation");
     std::stringstream timerAsString;
     timerAsString << timer;
-    NES_INFO2("{}", timerAsString.str());
+    NES_INFO("{}", timerAsString.str());
     return executable;
 }
 

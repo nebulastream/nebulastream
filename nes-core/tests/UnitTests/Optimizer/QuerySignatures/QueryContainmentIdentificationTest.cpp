@@ -67,7 +67,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryContainmentIdentificationTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO2("Setup QueryContainmentIdentificationTest test case.");
+        NES_INFO("Setup QueryContainmentIdentificationTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -104,7 +104,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
+        NES_DEBUG("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
     }
 
     static auto createEqualityCases() {
@@ -456,9 +456,9 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
         //Check if the host and target sink operator signatures have a containment relationship
         Optimizer::ContainmentType containment =
             signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
-        NES_TRACE2("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: {}",
+        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: {}",
                    magic_enum::enum_name(containment));
-        NES_TRACE2("Query pairing number: {}", counter);
+        NES_TRACE("Query pairing number: {}", counter);
         ASSERT_EQ(containment, containmentCase.containmentType);
         counter++;
     }

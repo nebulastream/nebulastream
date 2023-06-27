@@ -27,7 +27,7 @@ JVMContext& JVMContext::instance() {
 
 inline void jniErrorCheck(jint rc) {
     if (rc == JNI_OK) {
-        NES_INFO2("Java VM startup/attach/detach was successful");
+        NES_INFO("Java VM startup/attach/detach was successful");
     } else if (rc == JNI_ERR) {
         NES_THROW_RUNTIME_ERROR("An unknown error occurred during Java VM startup/attach/detach!");
     } else if (rc == JNI_EDETACHED) {

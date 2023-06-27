@@ -54,7 +54,7 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QuerySignatureUtilTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QuerySignatureUtilTests test case.");
+        NES_INFO("Setup QuerySignatureUtilTests test case.");
     }
 
     /* Will be called before a test is executed. */

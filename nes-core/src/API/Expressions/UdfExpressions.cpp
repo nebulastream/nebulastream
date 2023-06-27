@@ -22,7 +22,7 @@ namespace NES {
 ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArguments) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
-        NES_ERROR2("UDF name has to be a ConstantValueExpression but it was a {}", udfNameExpression->toString());
+        NES_ERROR("UDF name has to be a ConstantValueExpression but it was a {}", udfNameExpression->toString());
     }
     auto udfNameConstantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
     return UDFCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));

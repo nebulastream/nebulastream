@@ -43,7 +43,7 @@ class LocalGlobalJoinState : public Operators::OperatorState {
 };
 
 void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
-    NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
+    NES_DEBUG("getStreamHashJoinWindowProxy with ts={}", timeStamp);
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
     auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentWindow != nullptr, "invalid window");
@@ -66,7 +66,7 @@ uint64_t getWindowEndProxy(void* ptrHashWindow) {
 void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
     StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
-    NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
+    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
     auto ptr = hashWindow->getHashTable(workerIdx, isLeftSide);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;

@@ -72,7 +72,7 @@ bool OPCSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<OPCSourceDescriptor>())
         return false;
     auto otherOPCSource = other->as<OPCSourceDescriptor>();
-    NES_DEBUG2("URL= {} == {}", url, otherOPCSource->getUrl());
+    NES_DEBUG("URL= {} == {}", url, otherOPCSource->getUrl());
     char* otherOperatorIdent = (char*) UA_malloc(sizeof(char) * otherOPCSource->getNodeId().identifier.string.length + 1);
     memcpy(otherOperatorIdent,
            otherOPCSource->getNodeId().identifier.string.data,

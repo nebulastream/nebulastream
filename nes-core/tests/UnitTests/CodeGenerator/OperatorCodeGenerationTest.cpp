@@ -77,12 +77,12 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OperatorOperatorCodeGenerationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup OperatorOperatorCodeGenerationTest test class.");
+        NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_DEBUG2("Setup OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -92,13 +92,13 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -417,7 +417,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
-    NES_INFO2("Generate Code");
+    NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
@@ -438,7 +438,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     stage->start(*queryContext);
     if (auto buffer = source->receiveData().value(); !!buffer) {
         /* execute Stage */
-        NES_INFO2("Processing {} tuples: ", buffer.getNumberOfTuples());
+        NES_INFO("Processing {} tuples: ", buffer.getNumberOfTuples());
         stage->execute(buffer, *queryContext, wctx);
         if (auto resultBuffer = queryContext->buffers[0]; !!resultBuffer) {
             /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
@@ -493,7 +493,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare input tuple buffer */
     source->open();
     auto inputBuffer = source->receiveData().value();
-    NES_INFO2("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
+    NES_INFO("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
@@ -504,7 +504,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     stage->execute(inputBuffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    NES_INFO2("Number of generated output tuples: {}", resultBuffer.getNumberOfTuples());
+    NES_INFO("Number of generated output tuples: {}", resultBuffer.getNumberOfTuples());
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5U);
 
     auto* resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
@@ -781,7 +781,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::stringstream dynamicTupleBufferAsString;
     dynamicTupleBufferAsString << dynamicTupleBuffer;
-    NES_DEBUG2("buffer={}", dynamicTupleBufferAsString.str());
+    NES_DEBUG("buffer={}", dynamicTupleBufferAsString.str());
 
     /* execute Stage */
     stage1->setup(*executionContext);
@@ -794,16 +794,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     for (auto& [key, val] : stateVar->rangeAll()) {
         std::stringstream valueAsString;
         valueAsString << val;
-        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
+        NES_DEBUG("Key: {} Value: {}", key, valueAsString.str());
         for (auto& slice : val->getSliceMetadata()) {
-            NES_DEBUG2("start={} end={}", slice.getStartTs(), slice.getEndTs());
+            NES_DEBUG("start={} end={}", slice.getStartTs(), slice.getEndTs());
             results.push_back(slice.getStartTs());
             results.push_back(slice.getEndTs());
         }
         for (auto& agg : val->getPartialAggregates()) {
-            NES_DEBUG2("key={}", key);
+            NES_DEBUG("key={}", key);
             results.push_back(key);
-            NES_DEBUG2("value={}", agg);
+            NES_DEBUG("value={}", agg);
             results.push_back(agg);
         }
     }
@@ -1484,13 +1484,13 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     /* prepare input tuple buffer */
     source->open();
     auto inputBuffer = source->receiveData().value();
-    NES_INFO2("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
+    NES_INFO("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(input_schema, inputBuffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
     std::stringstream dynamicTupleBufferAsString;
     dynamicTupleBufferAsString << dynamicTupleBuffer;
-    NES_DEBUG2("buffer content={}", dynamicTupleBufferAsString.str());
+    NES_DEBUG("buffer content={}", dynamicTupleBufferAsString.str());
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage1->setup(*executionContext);
@@ -1512,7 +1512,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     for (auto& [key, val] : stateVarLeft->rangeAll()) {
         std::stringstream valueAsString;
         valueAsString << val;
-        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
+        NES_DEBUG("Key: {} Value: {}", key, valueAsString.str());
         auto lock = std::unique_lock(val->mutex());
         for (auto& list : val->getAppendList()) {
             for (auto& value : list) {
@@ -1523,7 +1523,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     for (auto& [key, val] : stateVarRight->rangeAll()) {
         std::stringstream valueAsString;
         valueAsString << val;
-        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
+        NES_DEBUG("Key: {} Value: {}", key, valueAsString.str());
         auto lock = std::unique_lock(val->mutex());
         for (auto& list : val->getAppendList()) {
             for (auto& value : list) {
@@ -1640,7 +1640,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 
     } catch (std::exception& e) {
-        NES_ERROR2("{}", e.what());
+        NES_ERROR("{}", e.what());
         ASSERT_TRUE(false);
     }
 }
@@ -1874,6 +1874,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
     std::stringstream dynamicTupleBufferAsString;
     dynamicTupleBufferAsString << dynamicTupleBuffer;
-    NES_DEBUG2("{}", dynamicTupleBufferAsString.str());
+    NES_DEBUG("{}", dynamicTupleBufferAsString.str());
 }
 }// namespace NES

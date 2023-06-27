@@ -50,7 +50,7 @@ LambdaSource::LambdaSource(
                       gatheringMode,
                       std::move(successors)),
       generationFunction(std::move(generationFunction)) {
-    NES_DEBUG2("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
+    NES_DEBUG("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
     if (this->gatheringMode == GatheringMode::INTERVAL_MODE || this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
@@ -64,7 +64,7 @@ LambdaSource::LambdaSource(
 }
 
 std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
-    NES_TRACE2("LambdaSource::receiveData called on operatorId= {}", operatorId);
+    NES_TRACE("LambdaSource::receiveData called on operatorId= {}", operatorId);
     using namespace std::chrono_literals;
 
     auto buffer = allocateBuffer();
@@ -77,8 +77,8 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE2("LambdaSource: Current buffer content {}", buffer.toString(schema));
-    NES_TRACE2("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
+    NES_TRACE("LambdaSource: Current buffer content {}", buffer.toString(schema));
+    NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
                buffer.getNumberOfTuples(),
                rawBuffer.getOriginId());
 

@@ -50,7 +50,7 @@ class MapUDFsToOpenCLOperatorsRuleTest : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RenameSourceToProjectOperatorRuleTest test case.");
+        NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -61,7 +61,7 @@ class MapUDFsToOpenCLOperatorsRuleTest : public Testing::TestWithErrorHandling {
     }
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
-        NES_INFO2("Setup FilterPushDownTest test case.");
+        NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -102,7 +102,7 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
-    NES_INFO2("{}", updatedQueryPlan->toString());
+    NES_INFO("{}", updatedQueryPlan->toString());
 
     mapJavaUDFOperators = updatedQueryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());
@@ -138,7 +138,7 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
-    NES_INFO2("{}", updatedQueryPlan->toString());
+    NES_INFO("{}", updatedQueryPlan->toString());
 
     mapJavaUDFOperators = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());

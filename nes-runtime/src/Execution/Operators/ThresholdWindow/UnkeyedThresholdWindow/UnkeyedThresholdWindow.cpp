@@ -26,49 +26,49 @@ namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementCount(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called incrementCount: recordCount = {}", handler->recordCount + 1);
+    NES_TRACE("Called incrementCount: recordCount = {}", handler->recordCount + 1);
     handler->recordCount++;
 }
 
 extern "C" void setIsWindowOpen(void* state, bool isWindowOpen) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called setIsWindowOpen: {}", isWindowOpen);
+    NES_TRACE("Called setIsWindowOpen: {}", isWindowOpen);
     handler->isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsWindowOpen(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called getIsWindowOpen: isWindowOpen = {}", handler->isWindowOpen);
+    NES_TRACE("Called getIsWindowOpen: isWindowOpen = {}", handler->isWindowOpen);
     return handler->isWindowOpen;
 }
 
 extern "C" uint64_t getRecordCount(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called getRecordCount: recordCount = {}", handler->recordCount);
+    NES_TRACE("Called getRecordCount: recordCount = {}", handler->recordCount);
     return handler->recordCount;
 }
 
 extern "C" void resetCount(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called resetCount");
+    NES_TRACE("Called resetCount");
     handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called lockWindowHandler");
+    NES_TRACE("Called lockWindowHandler");
     handler->mutex.lock();
 }
 
 extern "C" void unlockWindowHandler(void* state) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called unlockWindowHandler");
+    NES_TRACE("Called unlockWindowHandler");
     handler->mutex.unlock();
 }
 
 extern "C" void* getAggregationValue(void* state, uint64_t i) {
     auto handler = (UnkeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE2("Called getAggregationValue: i = {}", i);
+    NES_TRACE("Called getAggregationValue: i = {}", i);
     return (void*) handler->AggregationValues[i].get();
 }
 
@@ -82,17 +82,17 @@ UnkeyedThresholdWindow::UnkeyedThresholdWindow(
       minCount(minCount), operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void UnkeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    NES_TRACE2("Execute ThresholdWindow for received record {}", record.getAllFields().begin()->c_str())
+    NES_TRACE("Execute ThresholdWindow for received record {}", record.getAllFields().begin()->c_str())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        NES_TRACE2("Execute ThresholdWindow for valid predicate {}", val.getValue().toString())
+        NES_TRACE("Execute ThresholdWindow for valid predicate {}", val.getValue().toString())
         // Log the start of a threshold window
         auto allFieldNames = record.getAllFields();
         if (!FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
-            NES_DEBUG2("Threshold window starts, opening value:{}",
+            NES_DEBUG("Threshold window starts, opening value:{}",
                        std::accumulate(allFieldNames.begin(),
                                        allFieldNames.end(),
                                        std::string{},
@@ -126,7 +126,7 @@ void UnkeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) cons
                 // Log the closing of window and along with agg result
                 auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
                 auto allFieldNames = record.getAllFields();
-                NES_DEBUG2("Threshold window ends, closing value:{} | aggVal:{}",
+                NES_DEBUG("Threshold window ends, closing value:{} | aggVal:{}",
                            std::accumulate(allFieldNames.begin(),
                                            allFieldNames.end(),
                                            std::string{},

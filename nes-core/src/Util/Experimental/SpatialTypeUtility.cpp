@@ -54,7 +54,7 @@ NES::Spatial::Protobuf::SpatialType SpatialTypeUtility::toProtobufEnum(Experimen
         case Experimental::SpatialType::FIXED_LOCATION: return NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION;
         case Experimental::SpatialType::MOBILE_NODE: return NES::Spatial::Protobuf::SpatialType::MOBILE_NODE;
         case Experimental::SpatialType::INVALID:
-            NES_FATAL_ERROR2("cannot construct protobuf enum from invalid spatial type, exiting");
+            NES_FATAL_ERROR("cannot construct protobuf enum from invalid spatial type, exiting");
             exit(EXIT_FAILURE);
     }
 }

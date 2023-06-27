@@ -35,70 +35,70 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
       locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
-    NES_DEBUG2("WorkerRPCServer::WorkerRPCServer()");
+    NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG2("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}",
+    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}",
                queryPlan->getQueryId(),
                queryPlan->toString());
     bool success = 0;
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);
     } catch (std::exception& error) {
-        NES_ERROR2("Register query crashed: {}", error.what());
+        NES_ERROR("Register query crashed: {}", error.what());
         success = false;
     }
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::RegisterQuery: success");
+        NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR2("WorkerRPCServer::RegisterQuery: failed");
+    NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
-    NES_DEBUG2("WorkerRPCServer::UnregisterQuery: got request for {}", request->queryid());
+    NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->queryid());
     bool success = nodeEngine->unregisterQuery(request->queryid());
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::UnregisterQuery: success");
+        NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR2("WorkerRPCServer::UnregisterQuery: failed");
+    NES_ERROR("WorkerRPCServer::UnregisterQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request, StartQueryReply* reply) {
-    NES_DEBUG2("WorkerRPCServer::StartQuery: got request for {}", request->queryid());
+    NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->queryid());
     bool success = nodeEngine->startQuery(request->queryid());
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::StartQuery: success");
+        NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR2("WorkerRPCServer::StartQuery: failed");
+    NES_ERROR("WorkerRPCServer::StartQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
-    NES_DEBUG2("WorkerRPCServer::StopQuery: got request for {}", request->queryid());
+    NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->queryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
                         && terminationType != Runtime::QueryTerminationType::Invalid,
                     "Invalid termination type requested");
     bool success = nodeEngine->stopQuery(request->queryid(), terminationType);
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::StopQuery: success");
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR2("WorkerRPCServer::StopQuery: failed");
+    NES_ERROR("WorkerRPCServer::StopQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -107,7 +107,7 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
                                                const MonitoringRegistrationRequest* request,
                                                MonitoringRegistrationReply*) {
     try {
-        NES_DEBUG2("WorkerRPCServer::RegisterMonitoringPlan: Got request");
+        NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
         std::set<Monitoring::MetricType> types;
         for (auto type : request->metrictypes()) {
             types.insert((Monitoring::MetricType) type);
@@ -116,57 +116,57 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
         monitoringAgent->setMonitoringPlan(plan);
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR2("WorkerRPCServer: Registering monitoring plan failed: {}", ex.what());
+        NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
-        NES_DEBUG2("WorkerRPCServer: GetMonitoringData request received");
+        NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");
         auto metrics = monitoringAgent->getMetricsAsJson().dump();
-        NES_DEBUG2("WorkerRPCServer: Transmitting monitoring data: {}", metrics);
+        NES_DEBUG("WorkerRPCServer: Transmitting monitoring data: {}", metrics);
         reply->set_metricsasjson(metrics);
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR2("WorkerRPCServer: Requesting monitoring data failed: {}", ex.what());
+        NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
     try {
-        NES_ERROR2("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {} and a queryId {}",
+        NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {} and a queryId {}",
                    request->timestamp(),
                    request->queryid());
         reply->set_success(true);
         nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR2("WorkerRPCServer: received a broken punctuation message: {}", ex.what());
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: {}", ex.what());
         return Status::CANCELLED;
     }
 }
 
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
-    NES_DEBUG2("WorkerRPCServer::BeginBuffer request received");
+    NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t uniqueNetworkSinkDescriptorId = request->uniquenetworksinkdescriptorid();
     bool success = nodeEngine->bufferData(querySubPlanId, uniqueNetworkSinkDescriptorId);
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::StopQuery: success");
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
     } else {
-        NES_ERROR2("WorkerRPCServer::StopQuery: failed");
+        NES_ERROR("WorkerRPCServer::StopQuery: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
 }
 Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
-    NES_DEBUG2("WorkerRPCServer::Sink Reconfiguration request received");
+    NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t uniqueNetworkSinkDescriptorId = request->uniquenetworksinkdescriptorid();
     uint64_t newNodeId = request->newnodeid();
@@ -175,11 +175,11 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 
     bool success = nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, querySubPlanId, uniqueNetworkSinkDescriptorId);
     if (success) {
-        NES_DEBUG2("WorkerRPCServer::UpdateNetworkSinks: success");
+        NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);
         return Status::OK;
     } else {
-        NES_ERROR2("WorkerRPCServer::UpdateNetworkSinks: failed");
+        NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
@@ -187,9 +187,9 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 
 Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
     (void) request;
-    NES_DEBUG2("WorkerRPCServer received location request")
+    NES_DEBUG("WorkerRPCServer received location request")
     if (!locationProvider) {
-        NES_DEBUG2("WorkerRPCServer: locationProvider not set, node doesn't have known location")
+        NES_DEBUG("WorkerRPCServer: locationProvider not set, node doesn't have known location")
         //return an empty reply
         return Status::OK;
     }

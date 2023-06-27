@@ -21,12 +21,12 @@ namespace NES::ASP {
 
 void CountMinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                     Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG2("Started CountMinOperatorHandler!");
+    NES_DEBUG("Started CountMinOperatorHandler!");
 }
 
 void CountMinOperatorHandler::stop(Runtime::QueryTerminationType,
                                    Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("Stopped CountMinOperatorHandler!");
+    NES_DEBUG("Stopped CountMinOperatorHandler!");
 }
 
 void CountMinOperatorHandler::setup(uint64_t entrySize, uint64_t numberOfRows, uint64_t numberOfCols) {

@@ -74,7 +74,7 @@ OperatorNodePtr RenameSourceOperatorNode::copy() {
 
 void RenameSourceOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("RenameSourceOperatorNode: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("RenameSourceOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "RenameSourceOperatorNode: Rename Source should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
