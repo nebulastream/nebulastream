@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.123](https://github.com/nebulastream/nebulastream/tree/v0.5.123) (2023-06-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.122...v0.5.123)
+
+**Implemented enhancements:**
+
+- \[TASK\] add filter push-down rule for pushing down below window [\#3804](https://github.com/nebulastream/nebulastream/issues/3804)
+
 ## [v0.5.122](https://github.com/nebulastream/nebulastream/tree/v0.5.122) (2023-06-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.121...v0.5.122)
