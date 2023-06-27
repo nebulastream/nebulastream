@@ -85,30 +85,30 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     uint16_t energyRatio;
 
     //Payload constants
-    const std::string OPERATOR_GRAPH = "operatorGraph";
-    const std::string CHILDREN = "children";
-    const std::string OUTPUT_TUPLE_SIZE = "outputTupleSize";
-    const std::string SOURCE_CODE = "sourceCode";
-    const std::string PINNED_NODE_ID = "pinnedNodeId";
-    const std::string ID = "id";
-    const std::string DEVICE_ID = "deviceID";
-    const std::string DEVICE_TYPE = "deviceType";
-    const std::string DEVICE_NAME = "deviceName";
-    const std::string MEMORY = "memory";
-    const std::string DEVICES = "devices";
-    const std::string NODE_TYPE = "nodeType";
-    const std::string LINK_ID = "linkID";
-    const std::string SOURCE = "source";
-    const std::string TARGET = "target";
-    const std::string TRANSFER_RATE = "transferRate";
-    const std::string AVAILABLE_NODES = "AVAILABLE_NODES";
-    const std::string NETWORK_DELAYS = "NETWORK_DELAYS";
-    const std::string NODE_ID = "nodeId";
-    const std::string PLACEMENT = "placement";
-    const std::string OPERATOR_ID = "operatorId";
-    const std::string ENERGY_RATIO = "energyRatio";
-    const std::string PERFORMANCE_RATIO = "performanceRatio";
-    const std::string OPTIMIZATION_OBJECTIVES = "optimizationObjectives";
+    const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
+    const std::string CHILDREN_KEY = "children";
+    const std::string OUTPUT_TUPLE_SIZE_KEY = "outputTupleSize";
+    const std::string SOURCE_CODE_KEY = "sourceCode";
+    const std::string PINNED_NODE_ID_KEY = "pinnedNodeId";
+    const std::string ID_KEY = "id";
+    const std::string DEVICE_ID_KEY = "deviceID";
+    const std::string DEVICE_TYPE_KEY = "deviceType";
+    const std::string DEVICE_NAME_KEY = "deviceName";
+    const std::string MEMORY_KEY = "memory";
+    const std::string DEVICES_KEY = "devices";
+    const std::string NODE_TYPE_KEY = "nodeType";
+    const std::string LINK_ID_KEY = "linkID";
+    const std::string SOURCE_KEY = "source";
+    const std::string TARGET_KEY = "target";
+    const std::string TRANSFER_RATE_KEY = "transferRate";
+    const std::string AVAILABLE_NODES_KEY = "AVAILABLE_NODES";
+    const std::string NETWORK_DELAYS_KEY = "NETWORK_DELAYS";
+    const std::string NODE_ID_KEY = "nodeId";
+    const std::string PLACEMENT_KEY = "placement";
+    const std::string OPERATOR_ID_KEY = "operatorId";
+    const std::string ENERGY_RATIO_KEY = "energyRatio";
+    const std::string PERFORMANCE_RATIO_KEY = "performanceRatio";
+    const std::string OPTIMIZATION_OBJECTIVES_KEY = "optimizationObjectives";
 };
 
 }// namespace NES::Optimizer
