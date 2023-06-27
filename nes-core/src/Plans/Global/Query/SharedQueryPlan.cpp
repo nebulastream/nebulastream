@@ -315,4 +315,10 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);
 }
 
+void SharedQueryPlan::updateNodesUsedForPlacement(const std::set<uint64_t>& newNodesUsedForPlacement) {
+    for (const auto& nodeUsedForPlacement : newNodesUsedForPlacement) {
+        this->nodesUsedForPlacement.insert(nodeUsedForPlacement);
+    }
+}
+
 }// namespace NES
