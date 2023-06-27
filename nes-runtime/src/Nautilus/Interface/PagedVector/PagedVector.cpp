@@ -25,7 +25,7 @@ PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, u
 }
 
 int8_t* PagedVector::appendPage() {
-    auto page = reinterpret_cast<int8_t*>(allocator->allocate(PAGE_SIZE));
+    auto page = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
     pages.emplace_back(page);
     currentPage = page;
     numberOfEntries = 0;
@@ -50,7 +50,7 @@ void PagedVector::setNumberOfEntries(size_t entries) { totalNumberOfEntries = en
 
 size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
-size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
+size_t PagedVector::capacityPerPage() { return pageSize / entrySize; }
 
 const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
