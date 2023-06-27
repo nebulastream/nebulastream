@@ -11,29 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Topology/Predictions/TopologyDelta.hpp>
-#include <Topology/Predictions/TopologyVersionTimeline.hpp>
+#include <Topology/Prediction/TopologyDelta.hpp>
+#include <Topology/Prediction/TopologyTimeline.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
-#include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
 namespace NES {
-
-class TopologyVersionTimelineTest : public Testing::NESBaseTest {
+using Experimental::TopologyPrediction::Edge;
+using Experimental::TopologyPrediction::TopologyTimeline;
+class TopologyTimelineTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-
-        NES::Logger::setupLogging("TopologyVersionTimelineTest.log", NES::LogLevel::LOG_NONE);
-        NES_DEBUG("Setup TopologyVersionTimeline test class.");
+        NES::Logger::setupLogging("TopologyTimelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG2("Setup TopologyTimeline test class.");
     }
 
     static std::vector<TopologyNodeId> getIdVector(const std::vector<NodePtr>& nodes) {
@@ -46,8 +42,19 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         return ids;
     }
 
-    static void compareNodeAt(Experimental::TopologyPrediction::TopologyVersionTimeline versions, Timestamp time, uint64_t id, std::vector<uint64_t> parents, std::vector<uint64_t> children) {
-        std::cout << "compare node " << id << std::endl;
+    static void compareIdVectors(const std::vector<NodePtr>& original, const std::vector<NodePtr>& copy) {
+        EXPECT_EQ(original.size(), copy.size());
+        std::vector<TopologyNodeId> originalIds = getIdVector(original);
+        std::vector<TopologyNodeId> copiedIds = getIdVector(copy);
+
+        std::sort(originalIds.begin(), originalIds.end());
+        std::sort(copiedIds.begin(), copiedIds.end());
+
+        ASSERT_EQ(originalIds, copiedIds);
+    }
+
+    static void compareNodeAt(Experimental::TopologyPrediction::TopologyTimeline versions, Timestamp time, uint64_t id, std::vector<uint64_t> parents, std::vector<uint64_t> children) {
+        NES_DEBUG2("compare node {}",id);
         auto predictedNode = versions.getTopologyVersion(time)->findNodeWithId(id);
 
         //check if the node is predicted to be removed
@@ -64,30 +71,72 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
         EXPECT_EQ(getIdVector(predictedNode->getParents()), parents);
     }
 
-  protected:
-    TopologyNodePtr rootNode, mid1, mid2, mid3, src1, src2, src3, src4;
+    static void testTopologyEquality(const TopologyPtr& original, const TopologyPtr& copy) {
+        NES_DEBUG2("comparing topologies");
+        (void ) copy;
+
+        std::queue<TopologyNodePtr> originalQueue;
+        originalQueue.push(original->getRoot());
+        std::set<uint64_t> visited;
+
+        while (!originalQueue.empty()) {
+            auto originalNode = originalQueue.front();
+            originalQueue.pop();
+            ASSERT_TRUE(originalNode);
+            NES_DEBUG2("checking node {}", originalNode->getId());
+            auto copiedNode = copy->findNodeWithId(originalNode->getId());
+            NES_DEBUG2("copied node id {}", copiedNode->getId());
+            ASSERT_NE(copiedNode, nullptr);
+
+            ASSERT_NE(originalNode, copiedNode);
+
+            compareIdVectors(originalNode->getChildren(), copiedNode->getChildren());
+            compareIdVectors(originalNode->getParents(), copiedNode->getParents());
+
+            for (const auto& child : originalNode->getChildren()) {
+                auto id = child->as<TopologyNode>()->getId();
+                if (!visited.contains(id)) {
+                    visited.insert(id);
+                    originalQueue.push(child->as<TopologyNode>());
+                }
+            }
+        }
+    }
 };
 
-TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
+TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
-    std::cout << "Original Topology" << std::endl;
-    std::cout << topology->toString() << std::endl;
-    Experimental::TopologyPrediction::TopologyVersionTimeline versionTimeline(topology);
+
+    auto timeline = TopologyTimeline::create(topology);
+    auto changedTopology = timeline->getTopologyVersion(23);
+    ASSERT_NE(changedTopology, topology);
+    testTopologyEquality(changedTopology, topology);
+}
+
+
+TEST_F(TopologyTimelineTest, testUpdatingMultiplePredictions) {
+    auto topology = Topology::create();
+    std::map<std::string, std::any> properties;
+    topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
+    NES_DEBUG2("Original Topology");
+    NES_DEBUG2("{}", topology->toString());
+    Experimental::TopologyPrediction::TopologyTimeline versionTimeline(topology);
 
     //create new prediction for node 3 to reconnect to node 4
-    std::cout << "adding new prediction that node 3 will reconnect to node 4 at time 7" << std::endl;
+    NES_DEBUG2("adding new prediction that node 3 will reconnect to node 4 at time 7");
     Experimental::TopologyPrediction::TopologyDelta delta3({{3, 4}}, {{3, 2}});
     versionTimeline.addTopologyDelta(7, delta3);
 
     Timestamp viewTime;
-    std::cout << versionTimeline.predictionsToString() << std::endl;
 
-    std::cout << "views: " << std::endl;
     //check values
     //view at time 6
     viewTime = 6;
@@ -104,7 +153,7 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
 
     //changing time of prediction of node 3 to happen at 4 instead of 7
-    std::cout << "updating prediction that node 3 will reconnect to node 4 at time 4 instead of time 7" << std::endl;
+    NES_DEBUG2("updating prediction that node 3 will reconnect to node 4 at time 4 instead of time 7");
     versionTimeline.removeTopologyDelta(7, delta3);
     versionTimeline.addTopologyDelta(4, delta3);
 
@@ -124,11 +173,10 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 4, {2}, {3});
 
     //adding new prediction for node 4 to reconnect to node 1 at time 6
-    std::cout << "adding new prediction that node 4 will reconnect to node 1 at time 6" << std::endl;
+    NES_DEBUG2("adding new prediction that node 4 will reconnect to node 1 at time 6");
     Experimental::TopologyPrediction::TopologyDelta delta4({{4, 1}}, {{4, 2}});
     versionTimeline.addTopologyDelta(6, delta4);
 
-    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
@@ -152,17 +200,16 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 4, {1}, {3});
 
     //predicting adding of node 5 as child of 1 at time 5
-    std::cout << "adding prediction that a new node with id 5 will connect to the system at time 5" << std::endl;
+    NES_DEBUG2("adding prediction that a new node with id 5 will connect to the system at time 5");
     Experimental::TopologyPrediction::TopologyDelta delta5({{5, 1}}, {});
     versionTimeline.addTopologyDelta(5, delta5);
 
-    std::cout << "node 4 changes prediction that it will connect to node 5 at time 7 instead of to 1 at time 6" << std::endl;
-    //changing predciction for node 4 to connect to 5 at time 7 instead of to 1 at time 6 (old prediction should not be visible anymore)
+    NES_DEBUG2("node 4 changes prediction that it will connect to node 5 at time 7 instead of to 1 at time 6");
+    //changing prediction for node 4 to connect to 5 at time 7 instead of to 1 at time 6 (old prediction should not be visible anymore)
     Experimental::TopologyPrediction::TopologyDelta delta4New({{4, 5}}, {{4, 2}});
     versionTimeline.removeTopologyDelta(6, delta4);
     versionTimeline.addTopologyDelta(7, delta4New);
 
-    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
@@ -197,12 +244,10 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 5, {1}, {4});
 
     //schedule 2 to connect to 5 at 7, the same time when 4 connects to 5
-    std::cout << std::endl;
-    std::cout << "schedule 2 to connect to 5 at 7, the same time when 4 connects to 5" << std::endl;
+    NES_DEBUG2("schedule 2 to connect to 5 at 7, the same time when 4 connects to 5");
     Experimental::TopologyPrediction::TopologyDelta delta2({{2, 5}}, {{2, 1}});
     versionTimeline.addTopologyDelta(7, delta2);
 
-    std::cout << versionTimeline.predictionsToString() << std::endl;
     //check values
     //view at time 3
     viewTime = 3;
@@ -236,5 +281,4 @@ TEST_F(TopologyVersionTimelineTest, testUpdatingMultiplePredictions) {
     compareNodeAt(versionTimeline, viewTime, 4, {5}, {3});
     compareNodeAt(versionTimeline, viewTime, 5, {1}, {4, 2});
 }
-
 }// namespace NES

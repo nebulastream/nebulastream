@@ -28,5 +28,3 @@ venv
 compile_commands.json
 mlir_grammar.json
 nes-asp/data/*.csv
-
-.uuid
