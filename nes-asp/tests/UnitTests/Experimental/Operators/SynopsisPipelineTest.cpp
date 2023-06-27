@@ -204,6 +204,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     };
     auto approximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeys, bufferManager);
 
+    
     ASSERT_EQ(approximateBuffers.size(), 1);
     ASSERT_EQ(approximateBuffers[0].getNumberOfTuples(), queryKeys.size());
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
