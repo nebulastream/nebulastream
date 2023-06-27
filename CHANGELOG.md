@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.124](https://github.com/nebulastream/nebulastream/tree/v0.5.124) (2023-06-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.123...v0.5.124)
+
+**Implemented enhancements:**
+
+- \[TASK\] Fix ASP specific Tests [\#3887](https://github.com/nebulastream/nebulastream/issues/3887)
+
 ## [v0.5.123](https://github.com/nebulastream/nebulastream/tree/v0.5.123) (2023-06-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.122...v0.5.123)
