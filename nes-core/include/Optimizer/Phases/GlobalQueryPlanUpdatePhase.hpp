@@ -138,7 +138,6 @@ class GlobalQueryPlanUpdatePhase {
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
-    bool generateSampleCode;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_
