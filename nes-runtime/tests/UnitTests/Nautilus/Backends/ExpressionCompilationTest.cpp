@@ -20,6 +20,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -106,6 +107,25 @@ TEST_P(ExpressionExecutionTest, addI64Test) {
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
     ASSERT_EQ(function(-14), -7);
+}
+
+Value<> uint64ModExpression(Value<UInt64> x) {
+    Value<UInt64> y = (uint64_t) 7;
+    return x % y;
+}
+uint64_t operator ""_u64(unsigned long long);
+
+TEST_P(ExpressionExecutionTest, modUI64Test) {
+    Value<UInt64> tempx = UINT64_C(0);
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createUInt64Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
+        return uint64ModExpression(tempx);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<uint64_t, uint64_t>("execute");
+    ASSERT_EQ(function(3), 3);
+    ASSERT_EQ(function(14), 0);
+    ASSERT_EQ(function(18), 4);
 }
 
 Value<> int64ModExpression(Value<Int64> x) {

@@ -48,6 +48,14 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
 };
 
 int main(int argc, const char* argv[]) {
+    auto ul = 0UL;
+    auto ull = 0ULL;
+    uint64_t u64 = 0;
+    std::cout << "Size of unsigned long: " << sizeof(unsigned long) << " bytes" << std::endl;
+    std::cout << "Size of unsigned long long: " << sizeof(unsigned long long) << " bytes" << std::endl;
+    std::cout << "Size of ul: " << sizeof(ul) << " bytes" << std::endl;
+    std::cout << "Size of ull: " << sizeof(ull) << " bytes" << std::endl;
+    std::cout << "Size of uint64_t: " << sizeof(u64) << " bytes" << std::endl;
 
     std::cout << logo << std::endl;
 
