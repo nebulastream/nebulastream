@@ -512,6 +512,14 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
+        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        auto javaUDFMap = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
+    }
+
+    {
         auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(rename);
         auto renameOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

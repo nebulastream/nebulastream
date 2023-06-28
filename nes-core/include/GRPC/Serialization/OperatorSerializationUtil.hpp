@@ -20,6 +20,7 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
@@ -36,6 +37,7 @@ class SerializableOperator_WatermarkStrategyDetails;
 class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
 class SerializableOperator_MapJavaUdfDetails;
+class SerializableOperator_FlatMapJavaUdfDetails;
 class SerializableOperator_JavaUdfWindowDetails;
 class SerializableOperator_CEPIterationDetails;
 class SerializableOperator_ProjectionDetails;
@@ -306,7 +308,7 @@ class OperatorSerializationUtil {
     deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails);
 
     /**
-     * @brief Serializes a mapJavaUdf operator
+     * @brief Serializes a Map Java UDF operator
      * @param mapJavaUdfOperatorNode
      * @param serializedOperator serialized instance of the operator
      */
@@ -314,12 +316,28 @@ class OperatorSerializationUtil {
                                             SerializableOperator& serializedOperator);
 
     /**
-     * @brief deserializes a mapJavaUdf operator
+     * @brief Serializes a FlatMap Java UDF operator
+     * @param flatMapJavaUdfOperatorNode
+     * @param serializedOperator serialized instance of the operator
+     */
+    static void serializeFlatMapJavaUDFOperator(const FlatMapJavaUDFLogicalOperatorNode& flatMapJavaUDFOperatorNode,
+                                                SerializableOperator& serializedOperator);
+
+    /**
+     * @brief deserializes a Map Java UDF operator
      * @param mapJavaUdfDetails
      * @return MapJavaUdfLogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr
     deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
+
+    /**
+     * @brief deserializes a FlatMap Java UDF operator
+     * @param flatMapJavaUDFDetails
+     * @return MapJavaUdfLogicalOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr
+    deserializeFlatMapJavaUDFOperator(const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUDFDetails);
 };
 }// namespace NES
 

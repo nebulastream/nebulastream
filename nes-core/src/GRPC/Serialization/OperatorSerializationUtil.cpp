@@ -184,8 +184,13 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializedOperator.mutable_details()->PackFrom(renameDetails);
 
     } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
-        // Serialize map java udf operator
+        // Serialize Map Java UDF operator
         serializeMapJavaUDFOperator(*operatorNode->as<MapJavaUDFLogicalOperatorNode>(), serializedOperator);
+
+    } else if (operatorNode->instanceOf<FlatMapJavaUDFLogicalOperatorNode>()) {
+        // Serialize FlatMap Java UDF operator
+        serializeFlatMapJavaUDFOperator(*operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>(), serializedOperator);
+
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
     }
@@ -338,10 +343,16 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         operatorNode = LogicalOperatorFactory::createRenameSourceOperator(renameDetails.newsourcename());
 
     } else if (details.Is<SerializableOperator_MapJavaUdfDetails>()) {
-        NES_TRACE("Deserialize map Java UDF operator.");
+        NES_TRACE("Deserialize Map Java UDF operator.");
         auto mapJavaUDFDetails = SerializableOperator_MapJavaUdfDetails();
         details.UnpackTo(&mapJavaUDFDetails);
         operatorNode = deserializeMapJavaUDFOperator(mapJavaUDFDetails);
+
+    } else if (details.Is<SerializableOperator_FlatMapJavaUdfDetails>()) {
+        NES_TRACE("Deserialize FlatMap Java UDF operator.");
+        auto flatMapJavaUDFDetails = SerializableOperator_FlatMapJavaUdfDetails();
+        details.UnpackTo(&flatMapJavaUDFDetails);
+        operatorNode = deserializeFlatMapJavaUDFOperator(flatMapJavaUDFDetails);
 
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
@@ -1920,9 +1931,24 @@ void OperatorSerializationUtil::serializeMapJavaUDFOperator(const MapJavaUDFLogi
     serializedOperator.mutable_details()->PackFrom(mapJavaUdfDetails);
 }
 
+void OperatorSerializationUtil::serializeFlatMapJavaUDFOperator(const FlatMapJavaUDFLogicalOperatorNode& flatMapJavaUdfOperatorNode,
+                                                            SerializableOperator& serializedOperator) {
+    NES_TRACE("OperatorSerializationUtil:: serialize to FlatMapJavaUDFLogicalOperatorNode");
+    auto flatMapJavaUdfDetails = SerializableOperator_FlatMapJavaUdfDetails();
+    UDFSerializationUtil::serializeJavaUDFDescriptor(*flatMapJavaUdfOperatorNode.getJavaUDFDescriptor(),
+                                                     *flatMapJavaUdfDetails.mutable_javaudfdescriptor());
+    serializedOperator.mutable_details()->PackFrom(flatMapJavaUdfDetails);
+}
+
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
     auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(mapJavaUdfDetails.javaudfdescriptor());
     return LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+}
+
+LogicalUnaryOperatorNodePtr
+OperatorSerializationUtil::deserializeFlatMapJavaUDFOperator(const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUdfDetails) {
+    auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(flatMapJavaUdfDetails.javaudfdescriptor());
+    return LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
 }
 }// namespace NES
