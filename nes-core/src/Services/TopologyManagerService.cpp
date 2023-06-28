@@ -263,7 +263,6 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
         currentNodeJsonValue["id"] = currentNode->getId();
         currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
         currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
-        currentNodeJsonValue["opencl"] = true; // FIXME: replace it with more intelligible value
         if (currentNode->getSpatialNodeType() != NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             auto geoLocation = getGeoLocationForNode(currentNode->getId());
             auto locationInfo = nlohmann::json{};
@@ -281,8 +280,8 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
             nlohmann::json currentEdgeJsonValue{};
             currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
             currentEdgeJsonValue["target"] = currentNode->getId();
-            currentNodeJsonValue["bandwidth"] = 100; // FIXME: replace it with more intelligible value
             edges.push_back(currentEdgeJsonValue);
+
             childToAdd.push_back(child->as<TopologyNode>());
         }
 
