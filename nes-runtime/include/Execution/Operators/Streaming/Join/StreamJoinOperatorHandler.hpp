@@ -159,32 +159,31 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     void addOperatorId(OperatorId operatorId);
 
     /**
-     * @brief get the operator Id of the handler
-     * @return operatorid
+     * @brief Returns the operator id that this handler is responsible for
+     * @return OperatorId
      */
     OperatorId getOperatorId();
 
-    /**
-     * @brief get the current sequence number of the handler
-     * @return sequenceNumber
-     */
-    uint64_t getNextSequenceNumber();
-
-<<<<<<< HEAD
     /**
      * @brief get the applied join strategy
      * @return join strategy
      */
     StreamJoinStrategy getJoinStrategy();
 
-  protected:
-    size_t numberOfWorkerThreads = 1;
-=======
+    /**
+     * @brief Returns the next sequence number for the operator that this operator handler is responsible for
+     * @return uint64_t
+     */
+    uint64_t getNextSequenceNumber();
+
+    /**
+     * @brief Sets the number of worker thread for the join, especially necessary for the build part of the join
+     * @param numberOfWorkerThreads
+     */
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
 protected:
-    uint64_t numberOfWorkerThreads;
->>>>>>> d13d3f3321 ([#3736] Fixed weird bug)
+    uint64_t numberOfWorkerThreads = 1;
     std::list<StreamWindowPtr> windows;
     SliceAssigner sliceAssigner;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
