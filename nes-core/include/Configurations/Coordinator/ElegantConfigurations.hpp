@@ -41,11 +41,6 @@ class ElegantConfigurations : public BaseConfiguration {
      */
     StringOption plannerURL = {PLANNER_URL, "Complete URL for connecting with the ELEGANT planner."};
 
-    /**
-     * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
-     */
-    BoolOption generateSampleCPPCode = {GENERATE_SAMPLE_CPP_CODE, "Generate sample CPP code for the ELEGANT planner."};
-
   private:
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
 };
