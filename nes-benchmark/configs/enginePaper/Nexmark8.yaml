@@ -6,8 +6,8 @@ outputFile: nexmark8.csv
 #numberOfWorkerThreads: 1,2,3,4,5,6,7,8
 #numberOfSources: 1,1,1,1,2,2,2,2
 #numberOfWorkerThreads: 1,2,4,8,16
-numberOfWorkerThreads: 2
-numberOfSources: 1
+numberOfWorkerThreads: 1, 2, 4, 8
+numberOfSources: 4
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 16384
@@ -53,7 +53,7 @@ gatheringValues: 50000
 #sourcePinList: 0
 
 #benchmark internal parameter
-numberOfBuffersToProduce: 500000000
+numberOfBuffersToProduce: 5000000000
 scalability: scale-up
 #logLevel: LOG_DEBUG
 logLevel: LOG_ERROR
