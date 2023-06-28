@@ -49,19 +49,18 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
 
   private:
     explicit ElegantPlacementStrategy(std::string serviceURL,
-                                      uint16_t performanceRatio,
-                                      uint16_t energyRatio,
+                                      float timeWeight,
                                       GlobalExecutionPlanPtr globalExecutionPlan,
                                       TopologyPtr topology,
                                       TypeInferencePhasePtr typeInferencePhase);
 
     /**
      *
-     * @param pinnedUpStreamOperators
+     * @param pinnedOperator
      * @param pinnedDownStreamOperators
      * @return
      */
-    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedOperator,
                                        const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
@@ -81,34 +80,37 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            cpr::Response& response) const;
 
     std::string serviceURL;
-    uint16_t performanceRatio;
-    uint16_t energyRatio;
+    float timeWeight;
 
-    //Payload constants
+    //Query payload constants
     const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
+    const std::string OPERATOR_ID_KEY = "operatorId";
     const std::string CHILDREN_KEY = "children";
-    const std::string OUTPUT_TUPLE_SIZE_KEY = "outputTupleSize";
     const std::string SOURCE_CODE_KEY = "sourceCode";
-    const std::string PINNED_NODE_ID_KEY = "pinnedNodeId";
-    const std::string ID_KEY = "id";
+    const std::string CONSTRAINT_KEY = "constraint";
+    const std::string INPUT_DATA_KEY = "inputData";
+
+    //Topology payload constants
     const std::string DEVICE_ID_KEY = "deviceID";
     const std::string DEVICE_TYPE_KEY = "deviceType";
     const std::string DEVICE_NAME_KEY = "deviceName";
     const std::string MEMORY_KEY = "memory";
     const std::string DEVICES_KEY = "devices";
-    const std::string NODE_TYPE_KEY = "nodeType";
-    const std::string LINK_ID_KEY = "linkID";
-    const std::string SOURCE_KEY = "source";
-    const std::string TARGET_KEY = "target";
-    const std::string TRANSFER_RATE_KEY = "transferRate";
-    const std::string AVAILABLE_NODES_KEY = "AVAILABLE_NODES";
-    const std::string NETWORK_DELAYS_KEY = "NETWORK_DELAYS";
     const std::string NODE_ID_KEY = "nodeId";
+    const std::string NODE_TYPE_KEY = "nodeType";
+
+    //Network delay payload constants
+    const std::string NETWORK_DELAYS_KEY = "networkDelays";
+    const std::string LINK_ID_KEY = "linkID";
+    const std::string TRANSFER_RATE_KEY = "transferRate";
+    const std::string TIME_WEIGHT_KEY = "time_Weight";
+
+    //Response payload constants
+    const std::string AVAILABLE_NODES_KEY = "availNodes";
     const std::string PLACEMENT_KEY = "placement";
-    const std::string OPERATOR_ID_KEY = "operatorId";
-    const std::string ENERGY_RATIO_KEY = "energyRatio";
-    const std::string PERFORMANCE_RATIO_KEY = "performanceRatio";
     const std::string OPTIMIZATION_OBJECTIVES_KEY = "optimizationObjectives";
+
+    const std::string EMPTY_STRING;
 };
 
 }// namespace NES::Optimizer

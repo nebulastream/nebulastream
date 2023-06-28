@@ -34,47 +34,35 @@ ElegantPlacementStrategy::create(const std::string& serviceURL,
                                  NES::TopologyPtr topology,
                                  NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
 
-    uint16_t performanceRatio = 0, energyRatio = 0;
+    float timeWeight = 0.0;
 
     switch (placementStrategy) {
-        case PlacementStrategy::ELEGANT_PERFORMANCE:
-            performanceRatio = 100;
-            energyRatio = 0;
-            break;
-        case PlacementStrategy::ELEGANT_ENERGY:
-            performanceRatio = 0;
-            energyRatio = 100;
-            break;
-        case PlacementStrategy::ELEGANT_BALANCED:
-            performanceRatio = 50;
-            energyRatio = 50;
-            break;
+        case PlacementStrategy::ELEGANT_PERFORMANCE: timeWeight = 1; break;
+        case PlacementStrategy::ELEGANT_ENERGY: timeWeight = 0; break;
+        case PlacementStrategy::ELEGANT_BALANCED: timeWeight = 0.5; break;
         default: NES_ERROR2("Unknown placement strategy for elegant {}", magic_enum::enum_name(placementStrategy));
     }
 
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
-                                                                               performanceRatio,
-                                                                               energyRatio,
+                                                                               timeWeight,
                                                                                std::move(globalExecutionPlan),
                                                                                std::move(topology),
                                                                                std::move(typeInferencePhase)));
 }
 
 ElegantPlacementStrategy::ElegantPlacementStrategy(std::string serviceURL,
-                                                   uint16_t performanceRatio,
-                                                   uint16_t energyRatio,
+                                                   float timeWeight,
                                                    NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                    NES::TopologyPtr topology,
                                                    NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)),
-      serviceURL(std::move(serviceURL)), performanceRatio(performanceRatio), energyRatio(energyRatio) {}
+      serviceURL(std::move(serviceURL)), timeWeight(timeWeight) {}
 
-bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
-    QueryId queryId /*queryId*/,
-    FaultToleranceType faultToleranceType /*faultToleranceType*/,
-    LineageType lineageType /*lineageType*/,
-    const std::set<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::set<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
+                                                         FaultToleranceType faultToleranceType,
+                                                         LineageType lineageType,
+                                                         const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                         const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     try {
 
@@ -86,25 +74,19 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(
         auto queryGraph = prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators);
         payload.push_back(queryGraph);
 
-        // 1.b: Get topology information as json
+        // 1.b: Get topology and network information as json
         auto availableNodes = prepareTopologyPayload();
         payload.push_back(availableNodes);
 
-        nlohmann::json optimizationObjectives;
-        optimizationObjectives[ENERGY_RATIO_KEY] = energyRatio;
-        optimizationObjectives[PERFORMANCE_RATIO_KEY] = performanceRatio;
-        payload[OPTIMIZATION_OBJECTIVES_KEY] = optimizationObjectives;
+        // 1.c: Optimization objective
+        payload[TIME_WEIGHT_KEY] = timeWeight;
 
-        //1.c: Make a rest call to elegant planner
+        //1.d: Make a rest call to elegant planner
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
                                            cpr::Header{{"Content-Type", "application/json"}},
                                            cpr::Body{payload.dump()},
                                            cpr::Timeout(3000));
         if (response.status_code != 200) {
-            NES_ERROR2(
-                "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code {} and msg {}",
-                response.status_code,
-                response.reason);
             throw QueryPlacementException(
                 queryId,
                 "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code "
@@ -156,8 +138,6 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
         }
 
         if (!pinned) {
-            NES_ERROR2("ElegantPlacementStrategy: Unable to find operator with id {} in the given list of operators.",
-                       operatorId);
             throw QueryPlacementException(queryId,
                                           "ElegantPlacementStrategy: Unable to find operator with id "
                                               + std::to_string(operatorId) + " in the given list of operators.");
@@ -188,24 +168,24 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
         //if operator was not previously visited
         if (visitedOperator.insert(logicalOperator).second) {
             nlohmann::json node;
-            node[ID_KEY] = logicalOperator->getId();
+            node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
-            node[PINNED_NODE_ID_KEY] = pinnedNodeId.has_value() ? std::any_cast<uint64_t>(pinnedNodeId) : INVALID_TOPOLOGY_NODE_ID;
+            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::any_cast<std::string>(pinnedNodeId) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
-            node[SOURCE_CODE] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : "";
+            node[SOURCE_CODE] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             nodes.push_back(node);
-            node[OUTPUT_TUPLE_SIZE_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
+            node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),
-                                      [](const OperatorNodePtr& pinnedOperatorNode) {
-                                          return pinnedOperatorNode->getId() == 1;
+                                      [logicalOperator](const OperatorNodePtr& pinnedOperator) {
+                                          return pinnedOperator->getId() == logicalOperator->getId();
                                       });
 
             //array of upstream operator ids
             auto upstreamOperatorIds = nlohmann::json::array();
             //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
-            if (found != pinnedUpStreamOperators.end()) {
+            if (found == pinnedUpStreamOperators.end()) {
                 for (const auto& upstreamOperator : logicalOperator->getChildren()) {
                     upstreamOperatorIds.push_back(upstreamOperator->as<OperatorNode>()->getId());
                     operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
@@ -232,27 +212,30 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
         // Current topology node to add to the JSON
         TopologyNodePtr currentNode = parentToAdd.front();
         nlohmann::json currentNodeJsonValue{};
-        std::vector<nlohmann::json> devices = {};
-        nlohmann::json currentNodeOpenCLJsonValue{};
         parentToAdd.pop_front();
 
         // Add properties for current topology node
         currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
+        currentNodeJsonValue[NODE_TYPE_KEY] = "stationary";// always set to stationary
+
+        std::vector<nlohmann::json> devices = {};
+        //TODO: a node can have multiple devices. At this point it is not clear how these information will come to us.
+        // should be handled as part of issue #3853
+        nlohmann::json currentNodeOpenCLJsonValue{};
         currentNodeOpenCLJsonValue[DEVICE_ID_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_ID"));
         currentNodeOpenCLJsonValue[DEVICE_TYPE_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_TYPE"));
         currentNodeOpenCLJsonValue[DEVICE_NAME_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_NAME"));
         currentNodeOpenCLJsonValue[MEMORY_KEY] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
         devices.push_back(currentNodeOpenCLJsonValue);
+
         currentNodeJsonValue[DEVICES_KEY] = devices;
-        currentNodeJsonValue[NODE_TYPE_KEY] = "static";// FIXME: populate from enum of {mobile, static, w/e else}?
+
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
             currentEdgeJsonValue[LINK_ID_KEY] =
-                std::to_string(child->as<TopologyNode>()->getId()) + "_" + std::to_string(currentNode->getId());
-            currentEdgeJsonValue[SOURCE_KEY] = child->as<TopologyNode>()->getId();
-            currentEdgeJsonValue[TARGET_KEY] = currentNode->getId();
+                std::to_string(child->as<TopologyNode>()->getId()) + "-" + std::to_string(currentNode->getId());
             currentEdgeJsonValue[TRANSFER_RATE_KEY] = 100;// FIXME: replace it with more intelligible value
             edges.push_back(currentEdgeJsonValue);
             childToAdd.push_back(child->as<TopologyNode>());

@@ -122,8 +122,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     //Execute type inference phase on rewritten query plan
                     queryPlan = typeInferencePhase->execute(queryPlan);
 
-                    //Generate sample code
-                    if (generateSampleCode) {
+                    //Generate sample code for elegant planner
+                    if (runQueryRequest->getQueryPlacementStrategy() == Optimizer::PlacementStrategy::ELEGANT_BALANCED
+                        || runQueryRequest->getQueryPlacementStrategy() == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
+                        || runQueryRequest->getQueryPlacementStrategy() == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
                         queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
                     }
 
