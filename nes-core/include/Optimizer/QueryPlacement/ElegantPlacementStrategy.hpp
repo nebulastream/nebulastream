@@ -22,18 +22,21 @@
 
 namespace NES::Optimizer {
 
+/**
+ * @brief This class allows us to communicate with external planner service to perform operator placement.
+ */
 class ElegantPlacementStrategy : public BasePlacementStrategy {
   public:
     ~ElegantPlacementStrategy() override = default;
 
     /**
-     * @brief
-     * @param serviceURL
-     * @param placementStrategy
-     * @param globalExecutionPlan
-     * @param topology
-     * @param typeInferencePhase
-     * @return
+     * @brief Create instance of Elegant Placement Strategy
+     * @param serviceURL: service URL to connect to
+     * @param placementStrategy: The name of the ELEGANT placement strategy
+     * @param globalExecutionPlan: the global execution plan
+     * @param topology: the topology
+     * @param typeInferencePhase: type inference phase
+     * @return shared pointer to the placement strategy
      */
     static std::unique_ptr<ElegantPlacementStrategy> create(const std::string& serviceURL,
                                                             PlacementStrategy placementStrategy,
@@ -55,25 +58,25 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                       TypeInferencePhasePtr typeInferencePhase);
 
     /**
-     *
-     * @param pinnedOperator
-     * @param pinnedDownStreamOperators
-     * @return
+     * @brief: Prepare the query payload for the external service
+     * @param pinnedUpStreamOperators: pinned upstream operators of the plan to be placed
+     * @param pinnedDownStreamOperators: pinned downstream operators of the plan to be placed
+     * @return json representing the payload
      */
-    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedOperator,
+    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
                                        const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
-     * @brief
-     * @return
+     * @brief: Prepare the topology payload for the external placement service
+     * @return json representing the payload
      */
     nlohmann::json prepareTopologyPayload();
 
     /**
-     * @brief
-     * @param queryId
-     * @param pinnedDownStreamOperators
-     * @param response
+     * @brief Add pinning information to the operators based on the response received from the external placement service
+     * @param queryId: query id
+     * @param pinnedDownStreamOperators: pinned downstream operators
+     * @param response: Json representing the placement response received from the external service
      */
     void pinOperatorsBasedOnElegantService(QueryId queryId,
                                            const std::set<OperatorNodePtr>& pinnedDownStreamOperators,

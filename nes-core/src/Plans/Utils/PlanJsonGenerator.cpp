@@ -207,8 +207,6 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
         nlohmann::json node;
         node["id"] = "NONE";
         node["name"] = "NONE";
-        node["operatorPinned"] = 1; // FIXME: replace it with more intelligible value
-        node["code"] = ""; // FIXME: replace it with more intelligible value
         nodes.push_back(node);
     } else {
         NES_DEBUG2("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
