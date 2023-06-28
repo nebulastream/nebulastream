@@ -144,7 +144,8 @@ class GlobalQueryPlan {
      * @return pointer to the Shared Query Plan or nullptr
      */
     std::vector<SharedQueryPlanPtr>
-    getSharedQueryPlansConsumingSourcesAndPlacementStrategy(const std::string& sourceNames, NES::Optimizer::PlacementStrategy placementStrategy);
+    getSharedQueryPlansConsumingSourcesAndPlacementStrategy(const std::string& sourceNames,
+                                                            NES::Optimizer::PlacementStrategy placementStrategy);
 
   private:
     GlobalQueryPlan();
