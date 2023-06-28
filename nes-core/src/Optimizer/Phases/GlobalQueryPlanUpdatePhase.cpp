@@ -49,7 +49,6 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
       z3Context(std::move(z3Context)) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-    generateSampleCode = coordinatorConfiguration->elegantConfiguration.generateSampleCPPCode;
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
