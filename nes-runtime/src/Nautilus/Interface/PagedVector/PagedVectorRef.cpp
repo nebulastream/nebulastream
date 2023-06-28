@@ -21,8 +21,7 @@ namespace NES::Nautilus::Interface {
 PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, Value<UInt64> entrySize, Value<UInt64> pageSize)
     : pagedVectorRef(pagedVectorRef), entrySize(entrySize), pageSize(pageSize) {}
 
-void allocateNewPageProxy(void* pagedVectorPtr, uint64_t numberOfEntries, uint64_t entriesPerPage) {
-    NES_DEBUG2("Calling allocateNewPageProxy numberOfEntries {} entriesPerPage {}", numberOfEntries, entriesPerPage);
+void allocateNewPageProxy(void* pagedVectorPtr) {
     auto* pagedVector = (PagedVector*) pagedVectorPtr;
     pagedVector->appendPage();
 }
@@ -40,7 +39,7 @@ Value<MemRef> PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
     Value<UInt64> entriesPerPage = getEntriesPerPage();
     if (getNumberOfEntries() >= entriesPerPage) {
-        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef, getNumberOfEntries(), entriesPerPage);
+        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();

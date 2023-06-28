@@ -426,7 +426,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
+TEST_F(MultiThreadedTest, testOneJoin) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;

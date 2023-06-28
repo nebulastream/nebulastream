@@ -41,13 +41,13 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param sizeOfTupleInByteRight
      */
     explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
-                                size_t windowSize,
                                 uint64_t sizeOfTupleInByteLeft,
                                 uint64_t sizeOfTupleInByteRight,
                                 uint64_t leftEntrySize,
                                 uint64_t leftPageSize,
                                 uint64_t rightEntrySize,
-                                uint64_t rightPageSize);
+                                uint64_t rightPageSize,
+                                size_t windowSize);
 
     ~NLJOperatorHandler() = default;
     /**

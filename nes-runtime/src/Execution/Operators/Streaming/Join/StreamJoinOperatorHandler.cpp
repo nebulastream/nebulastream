@@ -34,8 +34,8 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 
     auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
     auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
-
-    if (joinStrategy == JoinStrategy::NESTED_LOOP_JOIN) {
+    //TODO create a factory class for stream join windows #3900
+    if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN) {
         NLJOperatorHandler* nljOpHandler = static_cast<NLJOperatorHandler*>(this);
         NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd, numberOfWorkerThreads,
@@ -104,7 +104,7 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      const StreamJoinStrategy joinStrategy,
                                                      size_t sizeOfRecordLeft,
                                                      size_t sizeOfRecordRight)
-    : sliceAssigner(windowSize, windowSize), watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
+    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize), watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
       joinStrategy(joinStrategy), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
@@ -177,6 +177,10 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
     }
 
     return triggerableWindowIdentifiers;
+}
+
+void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+    StreamJoinOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
 }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -18,22 +18,23 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads, uint64_t leftEntrySize,
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numberOfWorker, uint64_t leftEntrySize,
                      uint64_t leftPageSize, uint64_t rightEntrySize, uint64_t rightPageSize)
-                    : StreamWindow(windowStart, windowEnd), numWorkerThreads(numWorkerThreads) {
-    for (uint64_t i = 0; i < numWorkerThreads; ++i) {
+                    : StreamWindow(windowStart, windowEnd) {
+    for (uint64_t i = 0; i < numberOfWorker; ++i) {
         auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
         leftTuples.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator),
                                                                                    leftEntrySize,
                                                                                    leftPageSize));
     }
 
-    for (uint64_t i = 0; i < numWorkerThreads; ++i) {
+    for (uint64_t i = 0; i < numberOfWorker; ++i) {
         auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
         rightTuples.emplace_back(std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator),
                                                                                     rightEntrySize,
                                                                                     rightPageSize));
     }
+    NES_DEBUG2("Created NLJWindow {}", NLJWindow::toString());
 }
 
 
@@ -55,15 +56,20 @@ uint64_t NLJWindow::getNumberOfTuples(bool leftSide) {
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "NLJWindow(windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+    basicOstringstream << "NLJWindow(windowStart: " << windowStart
+                       << " windowEnd: " << windowEnd
+                       << " windowState: " << std::string(magic_enum::enum_name<WindowState>(windowState))
+                       << " leftNumberOfTuples: " << getNumberOfTuples(/*isLeftSide*/ true)
+                       << " rightNumberOfTuples: " << getNumberOfTuples(/*isLeftSide*/ false)
+                       << ")";
     return basicOstringstream.str();
 }
 
 void* NLJWindow::getPagedVectorRef(bool leftSide, uint64_t workerId) {
     if (leftSide) {
-        return leftTuples[workerId % numWorkerThreads].get();
+        return leftTuples[workerId % leftTuples.size()].get();
     } else {
-        return rightTuples[workerId % numWorkerThreads].get();
+        return rightTuples[workerId % rightTuples.size()].get();
     }
 }
 
