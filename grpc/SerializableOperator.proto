@@ -563,6 +563,13 @@ message SerializableOperator{
   }
 
   /**
+    Information to serialize a FlatMap operator with a Java UDF.
+   */
+  message FlatMapJavaUdfDetails {
+    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+  }
+
+  /**
     Properties of a java window udf
   */
   message JavaUdfWindowDetails {
