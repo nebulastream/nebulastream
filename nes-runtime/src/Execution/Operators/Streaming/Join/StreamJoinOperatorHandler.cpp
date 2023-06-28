@@ -129,11 +129,6 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
 
-uint64_t StreamJoinOperatorHandler::getLastWatermark() { return watermarkProcessor->getCurrentWatermark(); }
-void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
-    workerIdToWatermarkMap[workerId] = watermark;
-}
-
 void StreamJoinOperatorHandler::addOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
 
 OperatorId StreamJoinOperatorHandler::getOperatorId() { return operatorId; }
