@@ -73,15 +73,15 @@ class NLJBuild : public ExecutableOperator {
 
     /**
      * @brief Stores the record in the corresponding window
-     * @param ctx
-     * @param record
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: Record that should be processed
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
      * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
-     * @param ctx
-     * @param recordBuffer
+     * @param ctx: The RuntimeExecutionContext
+     * @param recordBuffer: RecordBuffer
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -106,7 +106,6 @@ class NLJBuild : public ExecutableOperator {
     const uint64_t entrySize;
     const uint64_t pageSize;
     const std::shared_ptr<TimeFunction> timeFunction;
-
 };
 }// namespace NES::Runtime::Execution::Operators
 

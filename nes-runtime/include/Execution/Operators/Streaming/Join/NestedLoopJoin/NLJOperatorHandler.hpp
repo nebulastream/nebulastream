@@ -121,6 +121,10 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     const uint64_t rightPageSize;
 };
 
+/**
+ * @brief Proxy function for returning the pointer to the correct PagedVector
+ * @return void*
+ */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
 
 }// namespace NES::Runtime::Execution::Operators
