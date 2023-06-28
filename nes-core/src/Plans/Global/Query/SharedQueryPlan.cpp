@@ -315,10 +315,65 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);
 }
 
-void SharedQueryPlan::updateNodesUsedForPlacement(const std::set<uint64_t>& newNodesUsedForPlacement) {
+void SharedQueryPlan::insetBetweenNodesTheNewPlacementPath(const std::set<uint64_t>& newNodesUsedForPlacement) {
     for (const auto& nodeUsedForPlacement : newNodesUsedForPlacement) {
-        this->nodesUsedForPlacement.insert(nodeUsedForPlacement);
+        this->placementPath.emplace(nodeUsedForPlacement);
     }
+}
+
+std::queue<uint64_t> SharedQueryPlan::getPlacementPath() { return placementPath; }
+
+void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
+                                                 const std::set<uint64_t>& downstreamOperatorIds) {
+
+    std::set<OperatorNodePtr> upstreamOperators;
+    for (const auto& upstreamOperatorId : upstreamOperatorIds) {
+        upstreamOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId));
+    }
+
+    std::set<OperatorNodePtr> downstreamOperators;
+    for (const auto& downstreamOperatorId : downstreamOperatorIds) {
+        downstreamOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId));
+    }
+
+    //Perform a DFS iteration starting from downstream operators and mark all intermediate nodes for re-operator placement
+    std::set<OperatorNodePtr> visitedOperator;
+    std::queue<OperatorNodePtr> operatorsToVisit;
+    //initialize with upstream operators
+    for (const auto& pinnedDownStreamOperator : downstreamOperators) {
+        auto children = pinnedDownStreamOperator->getChildren();
+        for (const auto& child : children) {
+            operatorsToVisit.emplace(child->as<OperatorNode>());
+        }
+    }
+
+    while (!operatorsToVisit.empty()) {
+
+        auto logicalOperator = operatorsToVisit.front();//fetch the front operator
+        operatorsToVisit.pop();                         //pop the front operator
+
+        //if operator was not previously visited
+        if (visitedOperator.insert(logicalOperator).second) {
+
+            auto found = std::find_if(upstreamOperators.begin(),
+                                      upstreamOperators.end(),
+                                      [logicalOperator](const OperatorNodePtr& pinnedOperator) {
+                                          return pinnedOperator->getId() == logicalOperator->getId();
+                                      });
+
+            //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
+            if (found == upstreamOperators.end()) {
+                //TODO: Set the status of the logical operator to replacement  as part of the issue #3899
+                for (const auto& upstreamOperator : logicalOperator->getChildren()) {
+                    operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
+                }
+            }
+        }
+    }
+
+    //add change log entry indicating the addition
+    long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
 }
 
 }// namespace NES
