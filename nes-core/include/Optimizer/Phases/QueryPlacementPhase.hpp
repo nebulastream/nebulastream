@@ -46,7 +46,7 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configuration
+}// namespace Configurations
 
 namespace Catalogs::Source {
 class SourceCatalog;
