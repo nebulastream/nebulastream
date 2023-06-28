@@ -19,6 +19,7 @@
 #include <Util/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
+#include <queue>
 #include <set>
 #include <vector>
 
@@ -124,7 +125,12 @@ class SharedQueryPlan {
      */
     bool removeQuery(QueryId queryId);
 
-    void newNodesForPlacement();
+    /**
+     * @brief Mark all operators between (excluding) upstream and downstream operators for re-operator placement
+     * @param upstreamOperatorIds: upstream operator ids
+     * @param downstreamOperatorIds: downstream Operator ids
+     */
+    void performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds, const std::set<uint64_t>& downstreamOperatorIds);
 
     /**
      * @brief Clear all MetaData information
@@ -189,7 +195,7 @@ class SharedQueryPlan {
      * Get the status of the shared query plan
      * @return Current status of the query plan
      */
-    SharedQueryPlanStatus getStatus() const;
+    [[nodiscard]] SharedQueryPlanStatus getStatus() const;
 
     /**
      * Set the status of the shared query plan
@@ -201,13 +207,19 @@ class SharedQueryPlan {
      * @brief Get the placement strategy for the shared query plan
      * @return placement strategy
      */
-    Optimizer::PlacementStrategy getPlacementStrategy() const;
+    [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
     /**
      * @brief update the nodes used for placement by adding the input nodes
      * @param newNodesUsedForPlacement: the nodes used for the placement
      */
-    void updateNodesUsedForPlacement(const std::set<uint64_t>& newNodesUsedForPlacement);
+    void insetBetweenNodesTheNewPlacementPath(const std::set<uint64_t>& newNodesUsedForPlacement);
+
+    /**
+     * @brief get the placement path used by this shared query plan
+     * @return queue containing the node ids where operators from this shared query plans are placed
+     */
+    std::queue<uint64_t> getPlacementPath();
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
@@ -236,7 +248,8 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
-    std::set<uint64_t> nodesUsedForPlacement;
+    //Front of the queue is the source nodes and the end of the queue is the sink nodes
+    std::queue<uint64_t> placementPath;
 };
 }// namespace NES
 
