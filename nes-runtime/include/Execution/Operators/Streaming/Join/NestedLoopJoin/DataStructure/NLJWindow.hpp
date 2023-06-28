@@ -75,7 +75,6 @@ class NLJWindow : public StreamWindow {
     std::string toString() override;
 
   private:
-    uint64_t numWorkerThreads;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftTuples;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightTuples;
 };

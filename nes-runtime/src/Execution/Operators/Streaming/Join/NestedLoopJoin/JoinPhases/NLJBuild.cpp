@@ -30,6 +30,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineContext);
+
+    opHandler->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+}
+
 void* getCurrentWindowProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
@@ -125,6 +134,12 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
+void NLJBuild::setup(ExecutionContext &executionCtx) const {
+    Nautilus::FunctionCall("setNumberOfWorkerThreadsProxy", setNumberOfWorkerThreadsProxy,
+                           executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
+                           executionCtx.getPipelineContext());
+}
+
 void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
@@ -135,10 +150,6 @@ void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
-//    localJoinState->windowStart = (uint64_t) 0; //Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
-//    localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
-//                                            windowReference);
-
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 

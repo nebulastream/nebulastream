@@ -117,9 +117,6 @@ uint64_t NLJOperatorHandler::getRightPageSize() const {
 
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
-    try to make sure that both threads operate on their own PagedVector
-    also try to replicate this behavior with MultiThreadedTest, testOneJoin
-    NES_DEBUG2("getting PagedVector for workerId {} and isLeftSide {}", workerId, isLeftSide);
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
     return nljWindow->getPagedVectorRef(isLeftSide, workerId);
 }

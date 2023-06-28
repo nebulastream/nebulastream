@@ -67,6 +67,7 @@ class NLJBuild : public ExecutableOperator {
              const uint64_t pageSize,
              std::shared_ptr<TimeFunction> timeFunction);
 
+    void setup(ExecutionContext &executionCtx) const override;
 
     void open(ExecutionContext& ctx, RecordBuffer &recordBuffer) const override;
 

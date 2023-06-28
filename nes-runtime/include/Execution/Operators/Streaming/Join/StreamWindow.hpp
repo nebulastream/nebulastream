@@ -33,8 +33,8 @@ class StreamWindow {
 
     /**
      * @brief Constructor for creating a window
-     * @param windowStart
-     * @param windowEnd
+     * @param windowStart: Start timestamp of this window
+     * @param windowEnd: End timestamp of this window
      */
     explicit StreamWindow(uint64_t windowStart, uint64_t windowEnd);
 
