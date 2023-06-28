@@ -308,20 +308,15 @@ class OperatorSerializationUtil {
     deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails);
 
     /**
-     * @brief Serializes a Map Java UDF operator
+     * @brief Serializes a Map or FlatMap Java UDF operator
      * @param mapJavaUdfOperatorNode
      * @param serializedOperator serialized instance of the operator
+     * @tparam T The LogicalOperatorNode (either MapJavaUDFLogicalOperatorNode or FlatMapJavaUDFLogicalOperatorNode)
+     * @tparam D The GRPC SerializeOperator details message (either SerializableOperator_MapJavaUdfDetails or SerializableOperator_FlatMapJavaUdfDetails)
      */
-    static void serializeMapJavaUDFOperator(const MapJavaUDFLogicalOperatorNode& mapJavaUDFOperatorNode,
-                                            SerializableOperator& serializedOperator);
-
-    /**
-     * @brief Serializes a FlatMap Java UDF operator
-     * @param flatMapJavaUdfOperatorNode
-     * @param serializedOperator serialized instance of the operator
-     */
-    static void serializeFlatMapJavaUDFOperator(const FlatMapJavaUDFLogicalOperatorNode& flatMapJavaUDFOperatorNode,
-                                                SerializableOperator& serializedOperator);
+    template <typename T, typename D>
+    static void serializeJavaUDFOperator(const T& mapJavaUDFOperatorNode,
+                                         SerializableOperator& serializedOperator);
 
     /**
      * @brief deserializes a Map Java UDF operator
