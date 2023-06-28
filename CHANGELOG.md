@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.125](https://github.com/nebulastream/nebulastream/tree/v0.5.125) (2023-06-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.124...v0.5.125)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create and process placement request for ELEGANT Planner [\#3868](https://github.com/nebulastream/nebulastream/issues/3868)
+
+### Miscellaneous Issues ✌️
+
+- \[TASK\] ICCS planner input integration [\#3442](https://github.com/nebulastream/nebulastream/issues/3442)
+
 ## [v0.5.124](https://github.com/nebulastream/nebulastream/tree/v0.5.124) (2023-06-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.123...v0.5.124)
