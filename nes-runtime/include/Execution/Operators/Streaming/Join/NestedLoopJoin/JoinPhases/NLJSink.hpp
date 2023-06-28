@@ -60,7 +60,6 @@ class NLJSink : public Operator {
     const uint64_t rightEntrySize;
     const uint64_t rightPageSize;
 
-    // TODO ask Philipp, if we can get this string from the NLJOperatorHandler
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
 };
