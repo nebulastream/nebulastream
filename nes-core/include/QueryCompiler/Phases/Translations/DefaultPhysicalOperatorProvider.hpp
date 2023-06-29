@@ -13,24 +13,25 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
-#include "Windowing/LogicalWindowDefinition.hpp"
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <vector>
 namespace NES::QueryCompilation {
 
-typedef struct WindowOperatorPropertiesStruct {
+//TODO use references in structs
+struct WindowOperatorPropertiesStruct {
     WindowOperatorNodePtr windowOperator;
     SchemaPtr windowInputSchema;
     SchemaPtr windowOutputSchema;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 } WindowOperatorProperties;
 
-typedef struct KeyedOperatorHandlersStruct {
+struct KeyedOperatorHandlersStruct {
     PhysicalOperators::PhysicalKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
     PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
 } KeyedOperatorHandlers;
 
-typedef struct GlobalOperatorHandlersStruct {
+struct GlobalOperatorHandlersStruct {
     PhysicalOperators::PhysicalGlobalSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
     PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
 } GlobalOperatorHandlers;
