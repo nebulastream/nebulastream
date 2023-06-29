@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.126](https://github.com/nebulastream/nebulastream/tree/v0.5.126) (2023-06-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.125...v0.5.126)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create user-defined literal for `uint64_t` and other types [\#3857](https://github.com/nebulastream/nebulastream/issues/3857)
+
 ## [v0.5.125](https://github.com/nebulastream/nebulastream/tree/v0.5.125) (2023-06-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.124...v0.5.125)
