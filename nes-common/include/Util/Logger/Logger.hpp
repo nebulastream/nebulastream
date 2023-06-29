@@ -126,7 +126,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 #define NES_LOG(LEVEL, ...)                                                                                                     \
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                  \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__);                \
         }                                                                                                                        \
     } while (0)
@@ -255,6 +255,9 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         if ((THROW_EXCEPTION)) {                                                                                                 \
             NES_THROW_RUNTIME_ERROR(__VA_ARGS__);                                                                                \
         } else {                                                                                                                 \
+            std::stringbuf __buffer;                                                                                                 \
+            std::ostream __os(&__buffer);                                                                                        \
+            __os << __VA_ARGS__;                                                                                                 \
             NES_ERROR("{}", __buffer.str());                                                                                           \
         }                                                                                                                        \
     } while (0)
