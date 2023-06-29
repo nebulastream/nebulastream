@@ -39,7 +39,7 @@ class RpcException : public RequestExecutionException {
      * calls and the count of performed calls
      * @param mode the mode of the rpc operation
      */
-    explicit RpcException(std::string message, std::vector<RpcFailureInformation> failedRpcs, RpcClientModes mode);
+    explicit RpcException(const std::string& message, std::vector<RpcFailureInformation> failedRpcs, RpcClientModes mode);
 
     [[nodiscard]] const char* what() const noexcept override;
 

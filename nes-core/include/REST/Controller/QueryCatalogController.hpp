@@ -149,7 +149,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
             response["queryMetaData"] = catalogEntry->getMetaInformation();
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");

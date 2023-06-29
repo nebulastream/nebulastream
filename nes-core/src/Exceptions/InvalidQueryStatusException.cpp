@@ -16,10 +16,10 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
-namespace NES {
+namespace NES::Exceptions {
 
 InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses,
-                                                         QueryStatus actualStatus) {
+                                                         QueryStatus actualStatus) : RequestExecutionException("Invalid query status") {
 
     std::stringstream expectedStatus;
     for (QueryStatus status : expectedStatuses) {

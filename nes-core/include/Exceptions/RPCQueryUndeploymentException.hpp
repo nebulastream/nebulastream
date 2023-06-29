@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_QUERYUNDEPLOYMENTRPCEXCEPTION_HPP
-#define NES_QUERYUNDEPLOYMENTRPCEXCEPTION_HPP
+#ifndef NES_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP
+#define NES_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP
 #include <Exceptions/RequestExecutionException.hpp>
 #include <vector>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -22,7 +22,7 @@ namespace NES::Exceptions {
  * @brief This exception indicates that an rpc to undeploy a query from a worker has failed
  */
  //todo 3915: check if this class can be generalized to include also rpc failures during deployment
-class QueryUndeploymentRpcException : public RequestExecutionException {
+class RPCQueryUndeploymentException : public RequestExecutionException {
   public:
     /**
      * @brief construct an exception
@@ -30,7 +30,7 @@ class QueryUndeploymentRpcException : public RequestExecutionException {
      * @param failedRpcExecutionNodeIds: the execution node ids of the workers that could not be reached vie rpc
      * @param mode: the mode indicating if the rpc was a register, unregister, start or stop operation
      */
-    explicit QueryUndeploymentRpcException(std::string message, std::vector<uint64_t> failedRpcExecutionNodeIds, RpcClientModes mode);
+    explicit RPCQueryUndeploymentException(const std::string& message, std::vector<TopologyNodeId> failedRpcExecutionNodeIds, RpcClientModes mode);
 
     [[nodiscard]] const char * what() const noexcept override;
 
@@ -38,7 +38,7 @@ class QueryUndeploymentRpcException : public RequestExecutionException {
      * @brief get a list of the nodes that could not be reached
      * @return a vector of node ids
      */
-    std::vector<uint64_t> getFailedExecutionNodeIds();
+    std::vector<TopologyNodeId> getFailedExecutionNodeIds();
 
     /**
      * @brief get the mode of the failed operation
@@ -48,7 +48,7 @@ class QueryUndeploymentRpcException : public RequestExecutionException {
 
   private:
     std::string message;
-    std::vector<uint64_t> failedExecutionNodeIds;
+    std::vector<TopologyNodeId> failedExecutionNodeIds;
     RpcClientModes mode;
 };
 }// namespace NES::Exceptions

@@ -24,6 +24,8 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
+using Exceptions::QueryNotFoundException;
+using Exceptions::InvalidQueryStatusException;
 
 QueryCatalogService::QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
 

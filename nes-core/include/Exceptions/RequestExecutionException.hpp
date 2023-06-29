@@ -16,16 +16,17 @@
 
 #include <exception>
 #include <string>
+#include <stdexcept>
 
-namespace NES {
+namespace NES::Exceptions {
 
 /**
  * @brief This is the base class for exceptions thrown during the execution of coordinator side requests which
  * indicate an error that possibly require a rollback or other kinds of specific error handling
  */
-class RequestExecutionException : public std::exception {
-
+class RequestExecutionException : public std::runtime_error {
   public:
+    explicit RequestExecutionException(const std::string& message);
     /**
      * @brief Checks if this object is of type ExceptionType
      * @tparam ExceptionType: a subclass ob RequestExecutionException
@@ -35,7 +36,7 @@ class RequestExecutionException : public std::exception {
     bool instanceOf() {
         if (dynamic_cast<ExceptionType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 };

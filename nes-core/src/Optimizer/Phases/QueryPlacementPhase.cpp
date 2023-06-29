@@ -88,7 +88,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             //4. Check if all operators are pinned
             if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators)
                 || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
-                throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+                throw Exceptions::QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
             }
 
             bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
@@ -118,7 +118,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
         //4. Check if all operators are pinned
         if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
-            throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+            throw Exceptions::QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
         }
 
         bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,

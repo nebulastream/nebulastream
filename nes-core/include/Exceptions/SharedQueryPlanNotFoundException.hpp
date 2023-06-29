@@ -21,17 +21,16 @@ namespace NES::Exceptions {
 /**
  * @brief This exception indicates, that no shared query plan with the given id could be found
  */
-class NoSuchSQPInGlobalQueryPlanException : public RequestExecutionException {
+class SharedQueryPlanNotFoundException : public RequestExecutionException {
     /**
      * @brief construct an exception containing a human readable message and a shared query id
      * @param message: A string to indicate to the user what caused the exception
      * @param id: the id of the sqp that was looked up but not found
      */
-    NoSuchSQPInGlobalQueryPlanException(std::string message, SharedQueryId id);
+    SharedQueryPlanNotFoundException(const std::string& message, SharedQueryId id);
 
     [[nodiscard]] SharedQueryId getSharedQueryId() const;
   private:
-    std::string message;
     SharedQueryId id;
 };
 }

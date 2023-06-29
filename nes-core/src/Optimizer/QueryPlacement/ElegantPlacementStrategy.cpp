@@ -87,7 +87,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                            cpr::Body{payload.dump()},
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
-            throw QueryPlacementException(
+            throw Exceptions::QueryPlacementException(
                 queryId,
                 "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code "
                     + std::to_string(response.status_code) + " and msg " + response.reason);
@@ -105,7 +105,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 5. Perform type inference on updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (const std::exception& ex) {
-        throw QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
 }
 
@@ -138,7 +138,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
         }
 
         if (!pinned) {
-            throw QueryPlacementException(queryId,
+            throw Exceptions::QueryPlacementException(queryId,
                                           "ElegantPlacementStrategy: Unable to find operator with id "
                                               + std::to_string(operatorId) + " in the given list of operators.");
         }

@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace NES {
+namespace NES::Exceptions {
 /**
  * @brief Exception is raised when the query is in an Invalid status
  */

@@ -11,17 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/QueryUndeploymentRpcException.hpp>
+#include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <utility>
 namespace NES::Exceptions {
-QueryUndeploymentRpcException::QueryUndeploymentRpcException(std::string message,
+RPCQueryUndeploymentException::RPCQueryUndeploymentException(const std::string& message,
                                                              std::vector<uint64_t> failedRpcExecutionNodeIds,
                                                              RpcClientModes mode)
-    : message(std::move(message)), failedExecutionNodeIds(std::move(failedRpcExecutionNodeIds)), mode(mode) {}
+    : RequestExecutionException(message), failedExecutionNodeIds(std::move(failedRpcExecutionNodeIds)), mode(mode) {}
 
-const char* QueryUndeploymentRpcException::what() const noexcept { return message.c_str(); }
+const char* RPCQueryUndeploymentException::what() const noexcept { return message.c_str(); }
 
-std::vector<uint64_t> QueryUndeploymentRpcException::getFailedExecutionNodeIds() { return failedExecutionNodeIds; }
+std::vector<uint64_t> RPCQueryUndeploymentException::getFailedExecutionNodeIds() { return failedExecutionNodeIds; }
 
-RpcClientModes QueryUndeploymentRpcException::getMode() { return mode; }
+RpcClientModes RPCQueryUndeploymentException::getMode() { return mode; }
 }// namespace NES::Exceptions

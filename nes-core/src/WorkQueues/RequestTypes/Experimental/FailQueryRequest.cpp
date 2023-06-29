@@ -52,7 +52,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle();
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        throw QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
+        throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
                                      + " in the global query plan");
     }
 
@@ -70,7 +70,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     try {
         queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
-        throw Exceptions::QueryUndeploymentException("failed to undeploy query with id " + std::to_string(queryId));
+        throw Exceptions::QueryUndeploymentException(sharedQueryId, "failed to undeploy query with id " + std::to_string(queryId));
     }
 
     //update global query plan
