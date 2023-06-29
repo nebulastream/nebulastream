@@ -34,7 +34,7 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                       const TypeInferencePhasePtr& typeInferencePhase,
                                       const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
 
-    std::string plannerURL = coordinatorConfiguration->elegantConfiguration.plannerURL;
+    std::string plannerURL = coordinatorConfiguration->elegantConfiguration.plannerServiceURL;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
