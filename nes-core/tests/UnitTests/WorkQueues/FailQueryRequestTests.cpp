@@ -24,6 +24,7 @@
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/QueryUndeploymentRpcException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -66,7 +67,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
 };
 
 //test successful execution of fail query request for a single query
-TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
+TEST_F(FailQueryRequestTest, testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -544,6 +545,8 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
                                                      crd->getUDFCatalog());
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
+    auto workerId = wrk1->getWorkerId();
+
     //stop worker to provoke failure of undeployment
     EXPECT_TRUE(wrk1->stop(true));
 
@@ -552,8 +555,10 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
         std::this_thread::sleep_for(std::chrono::seconds(defaultTimeout));
         //fail the test if exception was not thrown within timeout
         FAIL();
-    } catch (Exceptions::St& e) {
+    } catch (Exceptions::QueryUndeploymentRpcException& e) {
         NES_DEBUG2("Caught query undeployment exception: {}", e.what());
+        ASSERT_EQ(e.getMode(), RpcClientModes::Stop);
+        ASSERT_EQ(e.getFailedExecutionNodeIds(), std::vector {workerId});
     }
     bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
