@@ -70,7 +70,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     try {
         queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
-        throw QueryUndeploymentException("failed to undeploy query with id " + std::to_string(queryId));
+        throw Exceptions::QueryUndeploymentException("failed to undeploy query with id " + std::to_string(queryId));
     }
 
     //update global query plan
