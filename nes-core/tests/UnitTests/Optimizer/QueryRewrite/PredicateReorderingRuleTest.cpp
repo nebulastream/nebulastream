@@ -157,3 +157,115 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
+
+TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());    \
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .filter(Attribute("id") < 45 && Attribute("id2") > 2)
+                      .map(Attribute("value") = 40)
+                      .filter(Attribute("vehicle") == "car")
+                      .map(Attribute("id") = 30)
+                      .filter(Attribute("id") > 1)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator1 = (*itr);
+    ++itr;
+    const NodePtr mapOperator1 = (*itr);
+    ++itr;
+    const NodePtr filterOperator2 = (*itr);
+    ++itr;
+    const NodePtr mapOperator2 = (*itr);
+    ++itr;
+    const NodePtr filterOperator3 = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto predicateReorderingRule = Optimizer::PredicateReorderingRule::create();
+    const QueryPlanPtr updatedPlan = predicateReorderingRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());    \
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query subQuery = Query::from("car").filter(Attribute("id") > 35);
+
+    Query query = Query::from("default_logical")
+                      .unionWith(subQuery)
+                      .map(Attribute("value") = 80)
+                      .filter(Attribute("id") > 45)
+                      .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr mergeOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+    ++itr;
+    const NodePtr filterOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSQ = (*itr);
+
+    // Execute
+    auto predicateReorderingRule = Optimizer::PredicateReorderingRule::create();
+    const QueryPlanPtr updatedPlan = predicateReorderingRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mergeOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+}
