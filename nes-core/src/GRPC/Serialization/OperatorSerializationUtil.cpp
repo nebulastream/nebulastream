@@ -1963,8 +1963,8 @@ void OperatorSerializationUtil::serializeOpenCLOperator(const OpenCLLogicalOpera
     auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
     UDFSerializationUtil::serializeJavaUDFDescriptor(*openCLLogicalOperatorNode.getJavaUDFDescriptor(),
                                                      *openCLDetails.mutable_javaudfdescriptor());
-    openCLDetails.set_allocated_deviceid(openCLLogicalOperatorNode.getDeviceId());
-    openCLDetails.set_allocated_openclcode(openCLLogicalOperatorNode.getOpenClCode());
+    openCLDetails.set_deviceid(openCLLogicalOperatorNode.getDeviceId());
+    openCLDetails.set_openclcode(openCLLogicalOperatorNode.getOpenClCode());
     serializedOperator.mutable_details()->PackFrom(openCLDetails);
 }
 
