@@ -75,7 +75,7 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
     } catch (std::exception& e) {
         NES_TRACE("Failed to acquire resources.");
         //todo #3611: instead of matching on std::exception, implement a storae access handle excpetion which can be passed on
-        RequestExecutionException executionException;
+        RequestExecutionException executionException("Could not acquire resources");
         handleError(executionException, storageHandler);
     }
 }
@@ -108,7 +108,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
-                throw QueryPlacementException(sharedQueryId,
+                throw Exceptions::QueryPlacementException(sharedQueryId,
                                               "QueryProcessingService: Failed to perform query placement for "
                                               "query plan with shared query id: "
                                                   + std::to_string(sharedQueryId));

@@ -103,14 +103,14 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
     bool result = true;
-    std::vector<Exceptions::RpcFailureInformation> failed;
+    std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;
     for (const auto& queue : queues) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;
-        uint64_t cnt = 0;
+        uint64_t queueIndex = 0;
         // Block until the next result is available in the completion queue "completionQueue".
-        while (cnt != queue.second && queue.first->Next(&got_tag, &ok)) {
+        while (queueIndex != queue.second && queue.first->Next(&got_tag, &ok)) {
             // The tag in this example is the memory location of the call object
             bool status = false;
             if (mode == RpcClientModes::Register) {
@@ -137,15 +137,15 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             }
 
             if (!status) {
-                failed.push_back({queue.first, cnt});
+                failedRPCCalls.push_back({queue.first, queueIndex});
             }
 
             // Once we're complete, deallocate the call object.
-            cnt++;
+            queueIndex++;
         }
     }
-    if (!failed.empty()) {
-        throw Exceptions::RpcException("Some RPCs did not succeed", failed, mode);
+    if (!failedRPCCalls.empty()) {
+        throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls, mode);
     }
     NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
     return result;

@@ -14,12 +14,12 @@
 #include <Exceptions/RpcException.hpp>
 #include <utility>
 namespace NES::Exceptions {
-RpcException::RpcException(std::string message, std::vector<RpcFailureInformation> failedRpcs, RpcClientModes mode)
-    : message(std::move(message)), failedRpcs(std::move(failedRpcs)), mode(mode) {}
+RpcException::RpcException(const std::string& message, std::vector<RpcFailureInformation> failedRpcs, RpcClientModes mode)
+    : RequestExecutionException(message), failedRpcs(std::move(failedRpcs)), mode(mode) {}
 
 const char* RpcException::what() const noexcept { return message.c_str(); }
 
 std::vector<RpcFailureInformation> RpcException::getFailedCalls() { return failedRpcs; }
 
 RpcClientModes RpcException::getMode() { return mode; }
-};// namespace NES::Exceptions
+}// namespace NES::Exceptions

@@ -11,23 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
-
-#include <Exceptions/RequestExecutionException.hpp>
-#include <stdexcept>
-#include <string>
-
+#include <Exceptions/SharedQueryPlanNotFoundException.hpp>
+#include <utility>
 namespace NES::Exceptions {
-/**
- * @brief This exception is raised when the query you are looking for is not found
- */
-class QueryNotFoundException : public RequestExecutionException {
-  public:
-    explicit QueryNotFoundException(const std::string& message);
+SharedQueryPlanNotFoundException::SharedQueryPlanNotFoundException(const std::string& message, NES::SharedQueryId id)
+    : RequestExecutionException(message), id(id) {}
 
-    const char* what() const noexcept override;
-};
-}// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
+SharedQueryId SharedQueryPlanNotFoundException::getSharedQueryId() const { return id; }
+}// namespace NES::Exceptions

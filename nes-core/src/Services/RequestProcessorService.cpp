@@ -127,7 +127,7 @@ void RequestProcessorService::start() {
                                 NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
-                                    throw QueryPlacementException(sharedQueryId,
+                                    throw Exceptions::QueryPlacementException(sharedQueryId,
                                                                   "QueryProcessingService: Failed to perform query placement for "
                                                                   "query plan with shared query id: "
                                                                       + std::to_string(sharedQueryId));
@@ -160,7 +160,7 @@ void RequestProcessorService::start() {
                                 NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
-                                    throw QueryPlacementException(sharedQueryId,
+                                    throw Exceptions::QueryPlacementException(sharedQueryId,
                                                                   "QueryProcessingService: Failed to perform query placement for "
                                                                   "query plan with shared query id: "
                                                                       + std::to_string(sharedQueryId));
@@ -226,7 +226,7 @@ void RequestProcessorService::start() {
                     }
                 }
                 //FIXME: Proper error handling #1585
-            } catch (QueryPlacementException& ex) {
+            } catch (Exceptions::QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
@@ -246,9 +246,9 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
                 auto queryId = ex.getQueryId();
                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
-            } catch (InvalidQueryStatusException& ex) {
+            } catch (Exceptions::InvalidQueryStatusException& ex) {
                 NES_ERROR("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
-            } catch (QueryNotFoundException& ex) {
+            } catch (Exceptions::QueryNotFoundException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryNotFoundException: {}", ex.what());
             } catch (Exceptions::QueryUndeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryUndeploymentException: {}", ex.what());

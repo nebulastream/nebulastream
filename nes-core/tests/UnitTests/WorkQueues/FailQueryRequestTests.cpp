@@ -24,7 +24,7 @@
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include <Exceptions/QueryUndeploymentRpcException.hpp>
+#include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -322,7 +322,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
                                                      crd->getSourceCatalog(),
                                                      crd->getUDFCatalog());
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
-    EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryNotFoundException);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), Exceptions::QueryNotFoundException);
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = crd->stopCoordinator(true);
@@ -433,7 +433,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
                                                      crd->getUDFCatalog());
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
-    EXPECT_THROW(failQueryRequest.execute(storageHandler), InvalidQueryStatusException);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), Exceptions::InvalidQueryStatusException);
 
     //make sure that query is stopped before shutting down node engine to avoid errors in shutdown
     EXPECT_TRUE(wrk1->getNodeEngine()->stopQuery(queryId));
@@ -555,7 +555,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
         std::this_thread::sleep_for(std::chrono::seconds(defaultTimeout));
         //fail the test if exception was not thrown within timeout
         FAIL();
-    } catch (Exceptions::QueryUndeploymentRpcException& e) {
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
         NES_DEBUG2("Caught query undeployment exception: {}", e.what());
         ASSERT_EQ(e.getMode(), RpcClientModes::Stop);
         ASSERT_EQ(e.getFailedExecutionNodeIds(), std::vector {workerId});

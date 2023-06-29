@@ -34,6 +34,7 @@ add_source_files(nes-core
         LocationProviderException.cpp
         ExecutionNodeNotFoundException.cpp
         RPCException.cpp
-        QueryUndeploymentRpcException.cpp
-        NoSuchSQPInGlobalQueryPlanException.cpp
+        RPCQueryUndeploymentException.cpp
+        SharedQueryPlanNotFoundException.cpp
+        RequestExecutionException.cpp
 )

@@ -25,14 +25,8 @@ namespace NES::Exceptions {
 /**
  * @brief this exception indicates an error during the undeployment of a query
  */
-class QueryUndeploymentException : public std::runtime_error, public RequestExecutionException {
+class QueryUndeploymentException : public RequestExecutionException {
   public:
-    /**
-     * @brief constructor
-     * @param message message containing information about the error
-     */
-    explicit QueryUndeploymentException(const std::string& message);
-
     /**
      * @brief constructor
      * @param sharedQueryId the shared query id of the query that was being undeployed when the exception occurred
@@ -42,14 +36,14 @@ class QueryUndeploymentException : public std::runtime_error, public RequestExec
 
     /**
      * @brief get the shared query id of the query that was to be undeployed, if it is known
-     * @return: an optional containing the shared query id or nullopt if it was no supplied at request creation
+     * @return: the shared query id
      */
-    std::optional<SharedQueryId> getSharedQueryId();
+    SharedQueryId getSharedQueryId();
 
     [[nodiscard]] const char* what() const noexcept override;
 
   private:
-    std::optional<SharedQueryId> sharedQueryId;
+    SharedQueryId sharedQueryId;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
