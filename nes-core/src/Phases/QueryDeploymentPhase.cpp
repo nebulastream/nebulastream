@@ -155,7 +155,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
 
                     //3. Fetch the topology node and compute the topology node payload
                     nlohmann::json payload;
-                    auto deviceId = openCLOperator->deviceId;
+                    auto deviceId = openCLOperator->getDeviceId();
                     //TODO: Add the topology node information
 
                     //4. Extract the Java UDF code
@@ -180,8 +180,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //FIXME: use the correct key
                     auto openCLCode = jsonResponse["AccelerationCode"];
                     //6. Set the Open CL code
-                    openCLOperator->openCLCode = openCLCode;
-                    //FIXME: Handle deserialization and serialization of the OpenCL code
+                    openCLOperator->setOpenClCode(openCLCode);
                 }
             }
 

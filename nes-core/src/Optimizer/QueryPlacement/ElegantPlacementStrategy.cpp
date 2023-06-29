@@ -129,7 +129,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
 
                 if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
                     std::string deviceId = placement[DEVICE_ID_KEY];
-                    operatorToPin->as<OpenCLLogicalOperatorNode>()->deviceId = deviceId;
+                    operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
                 }
 
                 pinned = true;
