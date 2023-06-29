@@ -62,7 +62,6 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 
 enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
 
-
 class WorkerRPCClient {
   public:
     template<typename ReplayType>

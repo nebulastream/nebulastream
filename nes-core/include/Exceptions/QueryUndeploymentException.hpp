@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 
@@ -21,10 +20,10 @@
 #include <stdexcept>
 #include <string>
 
-namespace NES {
+namespace NES::Exceptions {
 
 /**
- * @brief this exception indicates an error during the undeployment of a reqeust
+ * @brief this exception indicates an error during the undeployment of a query
  */
 class QueryUndeploymentException : public std::runtime_error, public RequestExecutionException {
   public:
@@ -43,15 +42,14 @@ class QueryUndeploymentException : public std::runtime_error, public RequestExec
 
     /**
      * @brief get the shared query id of the query that was to be undeployed, if it is known
-     * @return: an optional containing the shared query id or nullopt if it was no supplies at request creation
+     * @return: an optional containing the shared query id or nullopt if it was no supplied at request creation
      */
     std::optional<SharedQueryId> getSharedQueryId();
 
-    const char* what() const noexcept override;
+    [[nodiscard]] const char* what() const noexcept override;
 
   private:
     std::optional<SharedQueryId> sharedQueryId;
-
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

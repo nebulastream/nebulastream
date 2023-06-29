@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
-namespace NES {
+namespace NES::Exceptions {
 ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(std::string message, NodeId id)
     : QueryUndeploymentException(message), id(id) {}
 

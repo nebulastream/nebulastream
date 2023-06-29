@@ -52,19 +52,19 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        throw ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
+        throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
                                          + " is deployed");
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
     bool successStop = stopQuery(queryId, executionNodes, sharedQueryPlanStatus);
-    //todo: this query returns always true if there is no exception, so the following block is astually obsolete
+    //todo 3916: this query returns always true if there is no exception, so the following block is astually obsolete
     if (successStop) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for  {}", queryId);
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for {}", queryId);
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", queryId);
@@ -74,7 +74,7 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
@@ -85,7 +85,7 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     }
 
     if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-        throw QueryUndeploymentException("Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException("Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
     }
 }
 
@@ -118,8 +118,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
             NES_NOT_IMPLEMENTED();
         }
 
-       //todo: this function als oalways returns true if there is no exception thrown
-        //todo: make this retunr the fialed nodes
+       //todo 3916: this function als oalways returns true if there is no exception thrown
         bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queryTerminationType, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::markQueryForStop {} to {} successful", queryId, rpcAddress);
@@ -133,17 +132,17 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
 
     // activate below for async calls
     try {
-        //todo: this function returns always true: change that
+        //todo 3916: this function returns always true: change that
         bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
         NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
     } catch (Exceptions::RpcException& e) {
         std::vector<uint64_t> failedRpcsExecutionNodeIds;
-        for (const auto& failedRpcInfo : e.getFailedRpcNodeIds()) {
+        for (const auto& failedRpcInfo : e.getFailedCalls()) {
             failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
         }
         throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
     }
-    //todo: what about this return value?
+    //todo 3916: what about this return value?
     return true;
 }
 
@@ -180,10 +179,10 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         return result;
     } catch (Exceptions::RpcException& e) {
         std::vector<uint64_t> failedRpcsExecutionNodeIds;
-        for (const auto& failedRpcInfo : e.getFailedRpcNodeIds()) {
+        for (const auto& failedRpcInfo : e.getFailedCalls()) {
             failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
         }
-        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
+        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Unregister);
     }
     return false;
 }

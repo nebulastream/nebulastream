@@ -250,7 +250,7 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
             } catch (QueryNotFoundException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryNotFoundException: {}", ex.what());
-            } catch (QueryUndeploymentException& ex) {
+            } catch (Exceptions::QueryUndeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryUndeploymentException: {}", ex.what());
             } catch (InvalidQueryException& ex) {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: {}", ex.what());

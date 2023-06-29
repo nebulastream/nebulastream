@@ -16,23 +16,34 @@
 
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Common/Identifiers.hpp>
-namespace NES {
+namespace NES::Exceptions {
 
 /**
  * @brief This exception indicates, that a lookup for an execution node in the global execution plan failed
  */
 class ExecutionNodeNotFoundException : public QueryUndeploymentException {
   public:
+    /**
+     * @brief construct an exception containing a human readable message
+     * @param message: A string to indicate to the user what caused the exception
+     */
     explicit ExecutionNodeNotFoundException(std::string message);
+
+    /**
+     * @brief construct an exception containing a human readable message and a node id
+     * @param message: A string to indicate to the user what caused the exception
+     * @param id: the id of the execution node that was looked up but not found (execution node ids correspond to topology
+     * node ids and therefore have the same type)
+     */
     ExecutionNodeNotFoundException(std::string message, TopologyNodeId id);
 
-
+    /**
+     * @brief get the id of the execution node that could not be found
+     */
     NodeId getNodeId();
 
   private:
-    //execution node ids are equal to the topology node ids
     TopologyNodeId id;
 };
 }
-
 #endif//NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
