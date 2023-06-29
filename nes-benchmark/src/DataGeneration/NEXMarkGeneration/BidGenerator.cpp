@@ -61,9 +61,7 @@ std::string BidGenerator::getName() { return "NEXMarkBid"; }
 
 std::string BidGenerator::toString() {
     std::ostringstream oss;
-
     oss << getName() << "()";
-
     return oss.str();
 }
 

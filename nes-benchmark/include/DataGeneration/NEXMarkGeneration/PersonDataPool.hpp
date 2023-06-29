@@ -17,6 +17,11 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
+/**
+ * @brief This class is a helper class for the NEXMark PersonGenerator. It allows for the creation of random persons as we draw
+ * random indices for names, cities, countries, provinces, emails and education.
+ * For more information see https://web.archive.org/web/20100620010601/http://datalab.cs.pdx.edu/niagaraST/NEXMark/NEXMarkGen.tgz
+ */
 class PersonDataPool {
   public:
     PersonDataPool() = default;

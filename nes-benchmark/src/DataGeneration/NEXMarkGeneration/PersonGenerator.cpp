@@ -219,9 +219,7 @@ std::string PersonGenerator::getName() { return "NEXMarkPerson"; }
 
 std::string PersonGenerator::toString() {
     std::ostringstream oss;
-
     oss << getName() << "()";
-
     return oss.str();
 }
 

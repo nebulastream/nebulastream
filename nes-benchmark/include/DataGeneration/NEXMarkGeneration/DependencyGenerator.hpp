@@ -25,6 +25,11 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 auto constexpr dependencyGeneratorSeed = 103984;
 auto constexpr recordsInit = 50;
 
+/**
+ * @brief This class is a helper class for the NEXMark generators. As the data streams in NEXMark depend on each other,
+ * we need a centralised unit to coordinate the each data stream with the others. It is responsible for keeping track
+ * of all the creation timestamps and making sure that the data is consistent.
+ */
 class DependencyGenerator {
   public:
     /**

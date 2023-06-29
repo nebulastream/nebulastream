@@ -75,8 +75,7 @@ OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<st
     std::ostringstream oss;
     if (uniformIntDistributions.generateRandomBoolean()) {
         oss << "Regular";
-    }
-    else {
+    } else {
         oss << "Featured";
     }
     if (quantity > 1 && uniformIntDistributions.generateRandomBoolean()) {
@@ -109,9 +108,7 @@ std::string OpenAuctionGenerator::getName() { return "NEXMarkOpenAuction"; }
 
 std::string OpenAuctionGenerator::toString() {
     std::ostringstream oss;
-
     oss << getName() << "()";
-
     return oss.str();
 }
 
