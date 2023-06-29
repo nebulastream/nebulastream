@@ -562,6 +562,15 @@ message SerializableOperator{
       JavaUdfDescriptorMessage javaUdfDescriptor = 1;
   }
 
+    /**
+      Information to serialize a Open CL operator with a Java UDF.
+     */
+    message OpenCLOperatorDetails {
+        JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+        string deviceId = 2;
+        string openCLCode = 3;
+    }
+
   /**
     Information to serialize a FlatMap operator with a Java UDF.
    */

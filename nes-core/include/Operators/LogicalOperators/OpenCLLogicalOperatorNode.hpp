@@ -24,7 +24,6 @@ class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
   public:
     OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
 
-
     /**
      * @see Node#toString
      */
@@ -47,6 +46,15 @@ class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
+    [[nodiscard]] const std::string& getOpenClCode() const;
+
+    void setOpenClCode(const std::string& openClCode);
+
+    [[nodiscard]] const std::string& getDeviceId() const;
+
+    void setDeviceId(const std::string& deviceId);
+
+  private:
     std::string openCLCode;
     std::string deviceId;
 };
