@@ -14,12 +14,12 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Util/StdInt.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -92,19 +92,19 @@ TEST_P(ExpressionExecutionTest, addI32Test) {
 }
 
 Value<> uint32AddExpression(Value<UInt32> x) {
-  Value<UInt32> y = 5_u32;
-  return x + y;
+    Value<UInt32> y = 5_u32;
+    return x + y;
 }
 
 TEST_P(ExpressionExecutionTest, addUI32Test) {
-  Value<UInt32> tempx = 0_u32;
-  tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
-  auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-    return uint32AddExpression(tempx);
-  });
-  auto engine = prepare(executionTrace);
-  auto function = engine->getInvocableMember<uint32_t, uint32_t>("execute");
-  ASSERT_EQ(function(8), 13);
+    Value<UInt32> tempx = 0_u32;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
+        return uint32AddExpression(tempx);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<uint32_t, uint32_t>("execute");
+    ASSERT_EQ(function(8), 13);
 }
 
 Value<> int64AddExpression(Value<Int64> x) {
