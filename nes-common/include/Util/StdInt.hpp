@@ -18,52 +18,31 @@
 /**
  * @brief Implements unsigned user-defined literals that return the corresponding uintX_t type
  */
-uint8_t operator "" _u8(unsigned long long value) {
-    return static_cast<uint8_t>(value);
-};
-uint16_t operator "" _u16(unsigned long long value) {
-    return static_cast<uint16_t>(value);
-};
-uint32_t operator "" _u32(unsigned long long value) {
-    return static_cast<uint32_t>(value);
-};
-uint64_t operator "" _u64(unsigned long long value) {
-    return static_cast<uint64_t>(value);
-};
-
+uint8_t operator"" _u8(unsigned long long value) { return static_cast<uint8_t>(value); };
+uint16_t operator"" _u16(unsigned long long value) { return static_cast<uint16_t>(value); };
+uint32_t operator"" _u32(unsigned long long value) { return static_cast<uint32_t>(value); };
+uint64_t operator"" _u64(unsigned long long value) { return static_cast<uint64_t>(value); };
 
 /**
  * @brief We require this helper struct, as there is no such thing as a negative integer literal (https://stackoverflow.com/a/23430371)
  * We overload the operator- and the implicit conversion operator to be able to use it seamlessly, e.g. CustomClass(-2_s8), or CustomClass(42_s64)
  */
-template <typename T>
+template<typename T>
 struct HelperStructLiterals {
     T val;
     inline HelperStructLiterals(T v) : val(v) {}
 
-    inline T operator-() const {
-        return -val;
-    }
+    inline T operator-() const { return -val; }
 
-    inline operator T() const {
-        return val;
-    }
+    inline operator T() const { return val; }
 };
 
 /**
  * @brief We have to return here our own helper struct as otherwise, we can not parse negative constants.
  */
-HelperStructLiterals<int8_t> operator "" _s8(unsigned long long value) {
-  return HelperStructLiterals<int8_t>(value);
-};
-HelperStructLiterals<int16_t> operator "" _s16(unsigned long long value) {
-    return HelperStructLiterals<int16_t>(value);
-};
-HelperStructLiterals<int32_t> operator "" _s32(unsigned long long value) {
-    return HelperStructLiterals<int32_t>(value);
-};
-HelperStructLiterals<int64_t> operator "" _s64(unsigned long long value) {
-    return HelperStructLiterals<int64_t>(value);
-};
+HelperStructLiterals<int8_t> operator"" _s8(unsigned long long value) { return HelperStructLiterals<int8_t>(value); };
+HelperStructLiterals<int16_t> operator"" _s16(unsigned long long value) { return HelperStructLiterals<int16_t>(value); };
+HelperStructLiterals<int32_t> operator"" _s32(unsigned long long value) { return HelperStructLiterals<int32_t>(value); };
+HelperStructLiterals<int64_t> operator"" _s64(unsigned long long value) { return HelperStructLiterals<int64_t>(value); };
 
-#endif //NES_NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
+#endif//NES_NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
