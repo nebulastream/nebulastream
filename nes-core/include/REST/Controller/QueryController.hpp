@@ -98,7 +98,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: {}", executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -113,7 +113,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             NES_TRACE("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
             return createResponse(Status::CODE_200, basePlan.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -133,7 +133,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 response[phaseName] = queryPlanJson;
             }
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -155,7 +155,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
             response["queryMetaData"] = catalogEntry->getMetaInformation();
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -297,7 +297,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             nlohmann::json response;
             response["success"] = success;
             return createResponse(status, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             NES_ERROR("RestServer: unknown exception.");

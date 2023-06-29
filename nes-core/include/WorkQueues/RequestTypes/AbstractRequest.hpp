@@ -21,6 +21,7 @@
 #include <vector>
 
 namespace NES {
+using Exceptions::RequestExecutionException;
 
 namespace Configurations {
 class OptimizerConfiguration;

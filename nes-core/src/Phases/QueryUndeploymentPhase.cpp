@@ -14,7 +14,7 @@
 
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include <Exceptions/QueryUndeploymentRpcException.hpp>
+#include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
@@ -64,7 +64,7 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for {}", queryId);
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw Exceptions::QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(queryId, "Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", queryId);
@@ -74,7 +74,7 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw Exceptions::QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(queryId, "Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
@@ -85,7 +85,7 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     }
 
     if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-        throw Exceptions::QueryUndeploymentException("Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(queryId, "Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
     }
 }
 
@@ -140,7 +140,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
         for (const auto& failedRpcInfo : e.getFailedCalls()) {
             failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
         }
-        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
+        throw Exceptions::RPCQueryUndeploymentException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
     }
     //todo 3916: what about this return value?
     return true;
@@ -182,7 +182,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         for (const auto& failedRpcInfo : e.getFailedCalls()) {
             failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
         }
-        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Unregister);
+        throw Exceptions::RPCQueryUndeploymentException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Unregister);
     }
     return false;
 }

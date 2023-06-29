@@ -13,11 +13,11 @@
 */
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 namespace NES::Exceptions {
-ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(std::string message, NodeId id)
-    : QueryUndeploymentException(message), id(id) {}
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message, NodeId id)
+    : RequestExecutionException(message), id(id) {}
 
-ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(std::string message)
-    : QueryUndeploymentException(message), id(INVALID_TOPOLOGY_NODE_ID) {}
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message)
+    : RequestExecutionException(message), id(INVALID_TOPOLOGY_NODE_ID) {}
 
-NodeId ExecutionNodeNotFoundException::getNodeId() { return id; }
+NodeId ExecutionNodeNotFoundException::getNodeId() const { return id; }
 }// namespace NES

@@ -65,7 +65,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 5. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (std::exception& ex) {
-        throw QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
 }
 

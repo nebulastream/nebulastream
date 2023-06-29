@@ -20,12 +20,12 @@
 #include <string>
 #include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES {
+namespace NES::Exceptions {
 
 /**
  * @brief Exception indicating problem during operator placement phase
  */
-class QueryPlacementException : public std::runtime_error, public RequestExecutionException {
+class QueryPlacementException : public RequestExecutionException {
 
   public:
     explicit QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message);

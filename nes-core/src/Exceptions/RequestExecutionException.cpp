@@ -11,11 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/NoSuchSQPInGlobalQueryPlanException.hpp>
-#include <utility>
+#include <Exceptions/RequestExecutionException.hpp>
 namespace NES::Exceptions {
-NoSuchSQPInGlobalQueryPlanException::NoSuchSQPInGlobalQueryPlanException(std::string message, NES::SharedQueryId id)
-    : message(std::move(message)), id(id) {}
-
-SharedQueryId NoSuchSQPInGlobalQueryPlanException::getSharedQueryId() const { return id; }
-}// namespace NES::Exceptions
+RequestExecutionException::RequestExecutionException(const std::string& message) : std::runtime_error(message) {}
+}
