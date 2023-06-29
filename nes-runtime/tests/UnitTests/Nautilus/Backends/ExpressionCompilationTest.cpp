@@ -14,7 +14,7 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Util/StdInt.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -42,12 +42,12 @@ class ExpressionExecutionTest : public Testing::NESBaseTest, public AbstractComp
 };
 
 Value<> int8AddExpression(Value<Int8> x) {
-    Value<Int8> y = (int8_t) 2;
+    Value<Int8> y = -2_s8;
     return x + y;
 }
 
 TEST_P(ExpressionExecutionTest, addI8Test) {
-    Value<Int8> tempx = (int8_t) 0;
+    Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int8AddExpression(tempx);
@@ -55,16 +55,16 @@ TEST_P(ExpressionExecutionTest, addI8Test) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int8_t, int8_t>("execute");
 
-    ASSERT_EQ(function(1), 3.0);
+    ASSERT_EQ(function(1), -1.0);
 }
 
 Value<> int16AddExpression(Value<Int16> x) {
-    Value<Int16> y = (int16_t) 5;
+    Value<Int16> y(5_s16);
     return x + y;
 }
 
 TEST_P(ExpressionExecutionTest, addI16Test) {
-    Value<Int16> tempx = (int16_t) 0;
+    Value<Int16> tempx(0_s16);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt16Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int16AddExpression(tempx);
@@ -91,13 +91,29 @@ TEST_P(ExpressionExecutionTest, addI32Test) {
     ASSERT_EQ(function(8), 13);
 }
 
+Value<> uint32AddExpression(Value<UInt32> x) {
+  Value<UInt32> y = 5_u32;
+  return x + y;
+}
+
+TEST_P(ExpressionExecutionTest, addUI32Test) {
+  Value<UInt32> tempx = 0_u32;
+  tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
+  auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
+    return uint32AddExpression(tempx);
+  });
+  auto engine = prepare(executionTrace);
+  auto function = engine->getInvocableMember<uint32_t, uint32_t>("execute");
+  ASSERT_EQ(function(8), 13);
+}
+
 Value<> int64AddExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x + y;
 }
 
 TEST_P(ExpressionExecutionTest, addI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64AddExpression(tempx);
@@ -110,13 +126,12 @@ TEST_P(ExpressionExecutionTest, addI64Test) {
 }
 
 Value<> uint64ModExpression(Value<UInt64> x) {
-    Value<UInt64> y = (uint64_t) 7;
+    Value<UInt64> y = 7_u64;
     return x % y;
 }
-uint64_t operator ""_u64(unsigned long long);
 
 TEST_P(ExpressionExecutionTest, modUI64Test) {
-    Value<UInt64> tempx = UINT64_C(0);
+    Value<UInt64> tempx = 0_u64;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createUInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return uint64ModExpression(tempx);
@@ -129,12 +144,12 @@ TEST_P(ExpressionExecutionTest, modUI64Test) {
 }
 
 Value<> int64ModExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x % y;
 }
 
 TEST_P(ExpressionExecutionTest, modI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64ModExpression(tempx);
@@ -147,12 +162,12 @@ TEST_P(ExpressionExecutionTest, modI64Test) {
 }
 
 Value<> int64BitWiseAndExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x & y;
 }
 
 TEST_P(ExpressionExecutionTest, bitWiseAndI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseAndExpression(tempx);
@@ -165,81 +180,81 @@ TEST_P(ExpressionExecutionTest, bitWiseAndI64Test) {
 }
 
 Value<> int64BitWiseOrExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x | y;
 }
 
 TEST_P(ExpressionExecutionTest, BitWiseOrI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseOrExpression(tempx);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3), ((int64_t) 3 | 7));
-    ASSERT_EQ(function(14), ((int64_t) 14 | 7));
-    ASSERT_EQ(function(18), ((int64_t) 18 | 7));
+    ASSERT_EQ(function(3), ((3_s64) | 7));
+    ASSERT_EQ(function(14), ((14_s64) | 7));
+    ASSERT_EQ(function(18), ((18_s64) | 7));
 }
 
 Value<> int64BitWiseXorExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x ^ y;
 }
 
 TEST_P(ExpressionExecutionTest, BitWiseXorI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseXorExpression(tempx);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3), ((int64_t) 3 ^ 7));
-    ASSERT_EQ(function(14), ((int64_t) 14 ^ 7));
-    ASSERT_EQ(function(18), ((int64_t) 18 ^ 7));
+    ASSERT_EQ(function(3), ((3_s64) ^ 7));
+    ASSERT_EQ(function(14), ((14_s64) ^ 7));
+    ASSERT_EQ(function(18), ((18_s64) ^ 7));
 }
 
 Value<> int64BitWiseLeftShiftExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x << y;
 }
 
 TEST_P(ExpressionExecutionTest, BitWiseLeftShiftI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseLeftShiftExpression(tempx);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3), ((int64_t) 3 << 7));
-    ASSERT_EQ(function(14), ((int64_t) 14 << 7));
-    ASSERT_EQ(function(18), ((int64_t) 18 << 7));
+    ASSERT_EQ(function(3), ((3_s64) << 7));
+    ASSERT_EQ(function(14), ((14_s64) << 7));
+    ASSERT_EQ(function(18), ((18_s64) << 7));
 }
 
 Value<> int64BitWiseRightShiftExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 2;
+    Value<Int64> y(2_s64);
     return x >> y;
 }
 
 TEST_P(ExpressionExecutionTest, BitWiseRightShiftI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseRightShiftExpression(tempx);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3), ((int64_t) 3 >> 2));
-    ASSERT_EQ(function(14), ((int64_t) 14 >> 2));
-    ASSERT_EQ(function(18), ((int64_t) 18 >> 2));
+    ASSERT_EQ(function(3), ((3_s64) >> 2));
+    ASSERT_EQ(function(14), ((14_s64) >> 2));
+    ASSERT_EQ(function(18), ((18_s64) >> 2));
 }
 
 Value<> int64BitWiseNotExpression(Value<Int64> x) { return ~x; }
 
 TEST_P(ExpressionExecutionTest, BitWiseNotI64Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx(0_s64);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64BitWiseNotExpression(tempx);
@@ -306,12 +321,12 @@ TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
 }
 
 Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y(7_s64);
     return x + y;
 }
 
 TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
-    Value<Int8> tempx = (int8_t) 0;
+    Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
@@ -324,12 +339,12 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
 }
 
 Value<> castInt8ToInt64AddExpression2(Value<> x) {
-    Value<Int64> y = (int64_t) 42;
+    Value<Int64> y(42_s64);
     return y + x;
 }
 
 TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2) {
-    Value<Int8> tempx = (int8_t) 0;
+    Value<Int8> tempx(0_s8);
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);
