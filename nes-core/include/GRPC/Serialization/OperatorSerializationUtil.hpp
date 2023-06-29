@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -332,6 +333,21 @@ class OperatorSerializationUtil {
      */
     static LogicalUnaryOperatorNodePtr
     deserializeFlatMapJavaUDFOperator(const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUDFDetails);
+
+    /**
+     * @brief deserialize open cl operator
+     * @param openCLLogicalOperatorNode
+     * @param serializedOperator
+     */
+    static void serializeOpenCLOperator(const NES::OpenCLLogicalOperatorNode& openCLLogicalOperatorNode,
+                                        SerializableOperator& serializedOperator);
+
+    /**
+     * @brief serialize open cl operator
+     * @param openCLDetails
+     * @return OpenCLLogicalOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
 };
 }// namespace NES
 

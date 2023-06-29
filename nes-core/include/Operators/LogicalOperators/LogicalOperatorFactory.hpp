@@ -222,6 +222,15 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr
     createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
                                         OperatorId id = Util::getNextOperatorId());
+
+    /**
+     * @brief Create a new OpenCL logical operator
+     * @param javaUdfDescriptor : the java UDF descriptor
+     * @param id : the id of the operator
+     * @return a logical operator of type OpenCL logical operator
+     */
+    static LogicalUnaryOperatorNodePtr createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                                                   OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

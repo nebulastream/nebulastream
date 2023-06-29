@@ -74,7 +74,6 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     queryDeploymentPhase =
         QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                queryCatalogService,
                                                                                sourceCatalog,
@@ -82,7 +81,6 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                z3Context,
                                                                                coordinatorConfiguration,
                                                                                udfCatalog);
-
     queryMigrationPhase =
         Experimental::QueryMigrationPhase::create(globalExecutionPlan, topology, workerRpcClient, queryPlacementPhase);
 }
