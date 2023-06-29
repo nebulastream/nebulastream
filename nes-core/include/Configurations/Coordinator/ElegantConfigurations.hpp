@@ -39,7 +39,12 @@ class ElegantConfigurations : public BaseConfiguration {
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
      */
-    StringOption plannerURL = {PLANNER_URL, "Complete URL for connecting with the ELEGANT planner."};
+    StringOption plannerServiceURL = {PLANNER_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
+
+    /**
+     * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
+     */
+    StringOption accelerationServiceURL = {ACCELERATION_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }

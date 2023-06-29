@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
@@ -24,7 +25,6 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkerRPCService.grpc.pb.h>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <utility>
@@ -33,18 +33,27 @@ namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                            WorkerRPCClientPtr workerRpcClient,
-                                           QueryCatalogServicePtr catalogService)
+                                           QueryCatalogServicePtr catalogService,
+                                           bool accelerateJavaUDFs,
+                                           std::string accelerationServiceURL)
     : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      queryCatalogService(std::move(catalogService)) {}
+      queryCatalogService(std::move(catalogService)), accelerateJavaUDFs(accelerateJavaUDFs),
+      accelerationServiceURL(std::move(accelerationServiceURL)) {}
 
-QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     WorkerRPCClientPtr workerRpcClient,
-                                                     QueryCatalogServicePtr catalogService) {
+QueryDeploymentPhasePtr
+QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                             WorkerRPCClientPtr workerRpcClient,
+                             QueryCatalogServicePtr catalogService,
+                             const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
     return std::make_shared<QueryDeploymentPhase>(
-        QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient), std::move(catalogService)));
+        QueryDeploymentPhase(std::move(globalExecutionPlan),
+                             std::move(workerRpcClient),
+                             std::move(catalogService),
+                             coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs,
+                             coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));
 }
 
-bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
+bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_DEBUG("QueryDeploymentPhase: deploy the query");
 
     auto sharedQueryId = sharedQueryPlan->getId();
@@ -133,42 +142,47 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto topologyNode = executionNode->getTopologyNode();
 
         for (auto& querySubPlan : querySubPlans) {
-            //Elegant acceleration service call
-            //1. Fetch the OpenCL Operators
-            auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
 
-            //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
-            for (const auto& openCLOperator : openCLOperators) {
+            //If accelerate Java UDFs is enabled
+            if (accelerateJavaUDFs) {
 
-                //3. Fetch the topology node and compute the topology node payload
-                nlohmann::json payload;
-                auto deviceId = openCLOperator->deviceId;
-                //TODO: Add the topology node information
+                //Elegant acceleration service call
+                //1. Fetch the OpenCL Operators
+                auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
 
-                //4. Extract the Java UDF code
-                auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
-                //FIXME: Add the UDF code
-                payload["functionCode"] = javaDescriptor->getMethodName();
+                //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
+                for (const auto& openCLOperator : openCLOperators) {
 
-                //5. Make Acceleration Service Call
-                cpr::Response response = cpr::Post(cpr::Url{serviceURL},
-                                                   cpr::Header{{"Content-Type", "application/json"}},
-                                                   cpr::Body{payload.dump()},
-                                                   cpr::Timeout(3000));
-                if (response.status_code != 200) {
-                    throw QueryDeploymentException(
-                        queryId,
-                        "QueryDeploymentPhase::deployQuery: Error in call to Elegant acceleration service with code "
-                            + std::to_string(response.status_code) + " and msg " + response.reason);
+                    //3. Fetch the topology node and compute the topology node payload
+                    nlohmann::json payload;
+                    auto deviceId = openCLOperator->deviceId;
+                    //TODO: Add the topology node information
+
+                    //4. Extract the Java UDF code
+                    auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
+                    //FIXME: Add the UDF code
+                    payload["functionCode"] = javaDescriptor->getMethodName();
+
+                    //5. Make Acceleration Service Call
+                    cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
+                                                       cpr::Header{{"Content-Type", "application/json"}},
+                                                       cpr::Body{payload.dump()},
+                                                       cpr::Timeout(3000));
+                    if (response.status_code != 200) {
+                        throw QueryDeploymentException(
+                            queryId,
+                            "QueryDeploymentPhase::deployQuery: Error in call to Elegant acceleration service with code "
+                                + std::to_string(response.status_code) + " and msg " + response.reason);
+                    }
+
+                    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+                    //Fetch the acceleration Code
+                    //FIXME: use the correct key
+                    auto openCLCode = jsonResponse["AccelerationCode"];
+                    //6. Set the Open CL code
+                    openCLOperator->openCLCode = openCLCode;
+                    //FIXME: Handle deserialization and serialization of the OpenCL code
                 }
-
-                nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-                //Fetch the acceleration Code
-                //FIXME: use the correct key
-                auto openCLCode = jsonResponse["AccelerationCode"];
-                //6. Set the Open CL code
-                openCLOperator->openCLCode = openCLCode;
-                //FIXME: Handle deserialization and serialization of the OpenCL code
             }
 
             //enable this for sync calls

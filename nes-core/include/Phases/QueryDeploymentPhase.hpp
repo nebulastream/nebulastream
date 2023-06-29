@@ -22,6 +22,11 @@
 
 namespace NES {
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
@@ -49,22 +54,28 @@ class QueryDeploymentPhase {
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @param globalExecutionPlan : global execution plan
      * @param workerRpcClient : rpc client to communicate with workers
+     * @param queryCatalogService: query catalog service
+     * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr
-    create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryCatalogServicePtr);
+    static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                          WorkerRPCClientPtr workerRpcClient,
+                                          QueryCatalogServicePtr queryCatalogService,
+                                          const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
     /**
      * @brief method for deploying and starting the query
      * @param queryId : the query Id of the query to be deployed and started
      * @return true if successful else false
      */
-    bool execute(SharedQueryPlanPtr sharedQueryPlan);
+    bool execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                   WorkerRPCClientPtr workerRpcClient,
-                                  QueryCatalogServicePtr);
+                                  QueryCatalogServicePtr queryCatalogService,
+                                  bool accelerateJavaUDFs,
+                                  std::string accelerationServiceURL);
     /**
      * @brief method send query to nodes
      * @param queryId
@@ -82,6 +93,8 @@ class QueryDeploymentPhase {
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
+    bool accelerateJavaUDFs;
+    std::string accelerationServiceURL;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
