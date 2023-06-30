@@ -153,10 +153,22 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                 //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
                 for (const auto& openCLOperator : openCLOperators) {
 
+                    // FIXME: populate information from node with the correct property keys
+                    // FIXME: pick a naming + id scheme for deviceName
                     //3. Fetch the topology node and compute the topology node payload
                     nlohmann::json payload;
-                    auto deviceId = openCLOperator->getDeviceId();
-                    //TODO: Add the topology node information
+                    nlohmann::json deviceInfo;
+                    deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
+                    deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] = std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
+                    nlohmann::json maxWorkItems{};
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
+                    deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
+                    deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
+                    deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
+                    deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
+                    payload[DEVICE_INFO_KEY] = deviceInfo;
 
                     //4. Extract the Java UDF code
                     auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
