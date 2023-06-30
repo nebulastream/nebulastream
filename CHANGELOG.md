@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.127](https://github.com/nebulastream/nebulastream/tree/v0.5.127) (2023-06-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.126...v0.5.127)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve Single thread performance on Join [\#3848](https://github.com/nebulastream/nebulastream/issues/3848)
+
 ## [v0.5.126](https://github.com/nebulastream/nebulastream/tree/v0.5.126) (2023-06-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.125...v0.5.126)
