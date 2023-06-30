@@ -30,6 +30,7 @@
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::ASP::Benchmarking {
 void MicroBenchmarkRun::run() {

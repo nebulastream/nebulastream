@@ -24,6 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/StdInt.hpp>
 #include <filesystem>
 #include <fstream>
 #include <future>

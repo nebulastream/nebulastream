@@ -235,7 +235,7 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
 Value<> textTestFunction(Value<Text>& text) {
     auto length = text->length();
     auto list2 = text->upper();
-    for (Value<UInt32> i = (uint32_t) 0; i < text->length(); i = i + (uint32_t) 1) {
+    for (Value<UInt32> i = 0_u32; i < text->length(); i = i + 1_u32) {
         text[i] = (int8_t) 'o';
     }
     return list2->length();
@@ -301,7 +301,7 @@ TEST_P(TypeCompilationTest, castInteger) {
 TEST_P(TypeCompilationTest, castUInteger) {
     Value<> ui8 = Value<UInt8>((uint8_t) 42);
     Value<> ui16 = Value<UInt16>((uint16_t) 42);
-    Value<> ui32 = Value<UInt32>((uint32_t) 42);
+    Value<> ui32 = Value<UInt32>(42_u32);
     Value<> ui64 = Value<UInt64>(42_u64);
 
     {
@@ -343,7 +343,7 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
     Value<> i64 = Value<Int64>((int64_t) 42);
     Value<> ui8 = Value<UInt8>((uint8_t) 42);
     Value<> ui16 = Value<UInt16>((uint16_t) 42);
-    Value<> ui32 = Value<UInt32>((uint32_t) 42);
+    Value<> ui32 = Value<UInt32>(42_u32);
     Value<> ui64 = Value<UInt64>(42_u64);
     {
         auto engine = compileCast(i8, ui8);

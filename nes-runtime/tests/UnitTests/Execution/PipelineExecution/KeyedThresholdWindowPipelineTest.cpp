@@ -132,18 +132,18 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     // Fill buffer
     dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
-    dynamicBuffer[0]["key"].write((uint32_t) 0);
+    dynamicBuffer[0]["key"].write(0_u32);
     dynamicBuffer[0]["f2"].write((int64_t) 10);
     dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
-    dynamicBuffer[1]["key"].write((uint32_t) 0);
+    dynamicBuffer[1]["key"].write(0_u32);
     dynamicBuffer[1]["f2"].write((int64_t) 20);
     dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
-    dynamicBuffer[2]["key"].write((uint32_t) 0);
+    dynamicBuffer[2]["key"].write(0_u32);
     dynamicBuffer[2]["f2"].write((int64_t) 30);
 
     // the last tuple closes the window
     dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify
-    dynamicBuffer[3]["key"].write((uint32_t) 0);
+    dynamicBuffer[3]["key"].write(0_u32);
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
@@ -233,33 +233,33 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
 
     // Fill buffer
     dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
-    dynamicBuffer[0]["key"].write((uint32_t) 0);
+    dynamicBuffer[0]["key"].write(0_u32);
     dynamicBuffer[0]["f2"].write((int64_t) 10);
     dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
-    dynamicBuffer[1]["key"].write((uint32_t) 0);
+    dynamicBuffer[1]["key"].write(0_u32);
     dynamicBuffer[1]["f2"].write((int64_t) 20);
     dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
-    dynamicBuffer[2]["key"].write((uint32_t) 0);
+    dynamicBuffer[2]["key"].write(0_u32);
     dynamicBuffer[2]["f2"].write((int64_t) 30);
 
     // the last tuple closes the window
     dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify, closes the threshold window for key 0
-    dynamicBuffer[3]["key"].write((uint32_t) 0);
+    dynamicBuffer[3]["key"].write(0_u32);
     dynamicBuffer[3]["f2"].write((int64_t) 40);
 
     dynamicBuffer[4]["f1"].write((int64_t) 1);// does not qualify
-    dynamicBuffer[4]["key"].write((uint32_t) 1);
+    dynamicBuffer[4]["key"].write(1_u32);
     dynamicBuffer[4]["f2"].write((int64_t) 100);
     dynamicBuffer[5]["f1"].write((int64_t) 2);// qualifies
-    dynamicBuffer[5]["key"].write((uint32_t) 1);
+    dynamicBuffer[5]["key"].write(1_u32);
     dynamicBuffer[5]["f2"].write((int64_t) 200);
     dynamicBuffer[6]["f1"].write((int64_t) 3);// qualifies
-    dynamicBuffer[6]["key"].write((uint32_t) 1);
+    dynamicBuffer[6]["key"].write(1_u32);
     dynamicBuffer[6]["f2"].write((int64_t) 300);
 
     // the last tuple closes the window
     dynamicBuffer[7]["f1"].write((int64_t) 1);// does not qualify, closes the threshold window for key 1
-    dynamicBuffer[7]["key"].write((uint32_t) 1);
+    dynamicBuffer[7]["key"].write(1_u32);
     dynamicBuffer[7]["f2"].write((int64_t) 400);
     dynamicBuffer.setNumberOfTuples(8);
 

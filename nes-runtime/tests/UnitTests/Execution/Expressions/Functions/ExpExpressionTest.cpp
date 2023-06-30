@@ -77,7 +77,7 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
 
     // UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 5));
+        auto resultValue = expression.eval(Value<UInt32>(5_u32));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

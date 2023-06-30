@@ -29,7 +29,7 @@ std::unique_ptr<AggregationState> AvgFunction::createState() {
                     return std::make_unique<AvgState>(Value<>((uint16_t) 0), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<AvgState>(Value<>((uint32_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_u32), Value<>((int64_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
                     return std::make_unique<AvgState>(Value<>(0_u64), Value<>((int64_t) 0));

@@ -72,7 +72,7 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     }
     // UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 3));
+        auto resultValue = expression.eval(Value<UInt32>(3_u32));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

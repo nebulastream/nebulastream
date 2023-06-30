@@ -132,7 +132,7 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 42));
+        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(42_u32));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -158,7 +158,7 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(4_u32));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -184,7 +184,7 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 2), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>(2_u32), Value<UInt32>(4_u32));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }

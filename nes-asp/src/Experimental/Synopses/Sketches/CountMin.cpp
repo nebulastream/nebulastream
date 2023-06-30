@@ -21,6 +21,7 @@
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::ASP {
 

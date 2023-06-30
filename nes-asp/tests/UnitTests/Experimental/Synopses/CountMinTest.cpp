@@ -23,9 +23,9 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Experimental/Synopses/Sketches/CountMinOperatorHandler.hpp>
 #include <Experimental/Synopses/Sketches/CountMin.hpp>
-
-#include <memory>
+#include <Util/StdInt.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <memory>
 
 namespace NES::ASP {
 /**
