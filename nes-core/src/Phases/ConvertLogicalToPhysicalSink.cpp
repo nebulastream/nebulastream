@@ -155,7 +155,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format={}",
-                  fileSinkDescriptor->getSinkFormatAsString());
+                 fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
                                      querySubPlan->getQueryId(),

@@ -356,7 +356,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
     NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
-               "children signatures");
+              "children signatures");
     //Fetch the signature of only children and get the column values
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
 

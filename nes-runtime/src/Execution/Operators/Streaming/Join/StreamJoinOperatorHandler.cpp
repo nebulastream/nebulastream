@@ -149,11 +149,11 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
     uint64_t newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 
     NES_DEBUG("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originId {} watermarkstatus={}",
-               newGlobalWatermark,
-               watermarkTs,
-               sequenceNumber,
-               originId,
-               watermarkProcessor->getCurrentStatus());
+              newGlobalWatermark,
+              watermarkTs,
+              sequenceNumber,
+              originId,
+              watermarkProcessor->getCurrentStatus());
     for (auto& window : windows) {
         if (window->getWindowEnd() > newGlobalWatermark) {
             continue;

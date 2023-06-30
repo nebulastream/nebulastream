@@ -81,23 +81,23 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         size_t numberOfFlushedRecords = 0;
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: leftHashTable {} check key={} nextEdge={}",
-                       id,
-                       toString(),
-                       leftHashTable.first,
-                       leftHashTable.second->nextEdge);
+                      id,
+                      toString(),
+                      leftHashTable.first,
+                      leftHashTable.second->nextEdge);
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: rightHashTable {} check key={} nextEdge={}",
-                           id,
-                           toString(),
-                           rightHashTable.first,
-                           rightHashTable.second->nextEdge);
+                          id,
+                          toString(),
+                          rightHashTable.first,
+                          rightHashTable.second->nextEdge);
                 {
                     if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN) {
                         if (leftHashTable.first == rightHashTable.first) {
 
                             NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: found join pair for key {}",
-                                       id,
-                                       leftHashTable.first);
+                                      id,
+                                      leftHashTable.first);
                             numberOfFlushedRecords += joinWindows(leftHashTable.first,
                                                                   leftHashTable.second,
                                                                   rightHashTable.second,
@@ -121,7 +121,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               workerContext);
                     } else {
                         NES_ERROR("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}",
-                                   magic_enum::enum_name(joinDefinition->getJoinType()));
+                                  magic_enum::enum_name(joinDefinition->getJoinType()));
                     }
                 }
             }
@@ -136,13 +136,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: Dispatch last buffer output buffer with {}, content={} "
-                           "originId={} watermark={} windowAction={}",
-                           id,
-                           tupleBuffer.getNumberOfTuples(),
-                           dynamicTupleBuffer,
-                           tupleBuffer.getOriginId(),
-                           tupleBuffer.getWatermark(),
-                           toString());
+                          "originId={} watermark={} windowAction={}",
+                          id,
+                          tupleBuffer.getNumberOfTuples(),
+                          dynamicTupleBuffer,
+                          tupleBuffer.getOriginId(),
+                          tupleBuffer.getWatermark(),
+                          toString());
             }
 
             //forward buffer to next  pipeline stage
@@ -175,9 +175,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                        uint64_t lastWatermark,
                        Runtime::WorkerContextRef workerContext) {
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:::joinWindows:leftStore currentWatermark is={} lastWatermark={}",
-                   id,
-                   currentWatermark,
-                   lastWatermark);
+                  id,
+                  currentWatermark,
+                  lastWatermark);
         size_t numberOfFlushedRecords = 0;
         if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR("ExecutableNestedLoopJoinTriggerAction {}:: the weakExecutionContext was already expired!", id);
@@ -207,15 +207,15 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
 
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: leftStore trigger {} windows, on {} slices",
-                   id,
-                   windows.size(),
-                   slicesLeft.size());
+                  id,
+                  windows.size(),
+                  slicesLeft.size());
         for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}::leftStore trigger sliceid={} start={} end={}",
-                       id,
-                       sliceId,
-                       slicesLeft[sliceId].getStartTs(),
-                       slicesLeft[sliceId].getEndTs());
+                      id,
+                      sliceId,
+                      slicesLeft[sliceId].getStartTs(),
+                      slicesLeft[sliceId].getEndTs());
         }
 
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: content right side for key={}", id, key);
@@ -234,10 +234,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 ->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: aggregateWindows No trigger because NOT currentWatermark={} > "
-                       "lastWatermark={}",
-                       id,
-                       currentWatermark,
-                       lastWatermark);
+                      "lastWatermark={}",
+                      id,
+                      currentWatermark,
+                      lastWatermark);
         }
 
         NES_TRACE(
@@ -254,35 +254,35 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: window.getStartTs()={} slices[sliceId].getStartTs()={} "
-                           "window.getEndTs()={} slices[sliceId].getEndTs()={}",
-                           id,
-                           window.getStartTs(),
-                           slicesLeft[sliceId].getStartTs(),
-                           window.getEndTs(),
-                           slicesLeft[sliceId].getEndTs());
+                          "window.getEndTs()={} slices[sliceId].getEndTs()={}",
+                          id,
+                          window.getStartTs(),
+                          slicesLeft[sliceId].getStartTs(),
+                          window.getEndTs(),
+                          slicesLeft[sliceId].getEndTs());
                 if (window.getStartTs() <= slicesLeft[sliceId].getStartTs()
                     && window.getEndTs() >= slicesLeft[sliceId].getEndTs()) {
                     size_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
                     NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: window.getStartTs()={} "
-                               "slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={}",
-                               id,
-                               window.getStartTs(),
-                               slicesRight[sliceId].getStartTs(),
-                               window.getEndTs(),
-                               slicesRight[sliceId].getEndTs());
+                              "slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={}",
+                              id,
+                              window.getStartTs(),
+                              slicesRight[sliceId].getStartTs(),
+                              window.getEndTs(),
+                              slicesRight[sliceId].getEndTs());
                     if (slicesLeft[sliceId].getStartTs() == slicesRight[sliceId].getStartTs()
                         && slicesLeft[sliceId].getEndTs() == slicesRight[sliceId].getEndTs()) {
                         NES_TRACE("size left={} size right={}", listLeft[sliceId].size(), listRight[sliceId].size());
                         for (auto& left : listLeft[sliceId]) {
                             for (auto& right : listRight[sliceId]) {
                                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: write key={} window.start()={} "
-                                           "window.getEndTs()={} windowId={} sliceId={}",
-                                           id,
-                                           key,
-                                           window.getStartTs(),
-                                           window.getEndTs(),
-                                           windowId,
-                                           sliceId);
+                                          "window.getEndTs()={} windowId={} sliceId={}",
+                                          id,
+                                          key,
+                                          window.getStartTs(),
+                                          window.getEndTs(),
+                                          windowId,
+                                          sliceId);
 
                                 if ((currentNumberOfTuples + 1) * windowSchema->getSchemaSizeInBytes()
                                     > tupleBuffer.getBufferSize()) {
@@ -309,9 +309,9 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 uint64_t slideSize =
                     Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())->getSize().getTime();
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction {}:: largestClosedWindow={}  slideSize={}",
-                           id,
-                           largestClosedWindow,
-                           slideSize);
+                          id,
+                          largestClosedWindow,
+                          slideSize);
 
                 //TODO: we have to re-activate the deletion once we are sure that it is working again
                 largestClosedWindow = largestClosedWindow > slideSize ? largestClosedWindow - slideSize : 0;
@@ -343,10 +343,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                            InputTypeLeft& leftValue,
                            InputTypeRight& rightValue) {
         NES_TRACE("write sizes left={} right={} typeL={} typeR={}",
-                   sizeof(leftValue),
-                   sizeof(rightValue),
-                   sizeof(InputTypeLeft),
-                   sizeof(InputTypeRight));
+                  sizeof(leftValue),
+                  sizeof(rightValue),
+                  sizeof(InputTypeLeft),
+                  sizeof(InputTypeRight));
         NES_ASSERT(windowTupleLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
                    "Layout Type must be ROW");
         // A struct can be packed which assures that the correct bytes are written to the TupleBuffer.

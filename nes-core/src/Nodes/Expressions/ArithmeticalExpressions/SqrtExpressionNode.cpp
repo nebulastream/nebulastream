@@ -39,7 +39,7 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {
         NES_ERROR("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at "
-                   "run-time.");
+                  "run-time.");
     }
 
     // if stamp is integer, convert stamp to float

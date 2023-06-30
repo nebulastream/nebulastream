@@ -206,8 +206,8 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     value = *tuple;
     uint64_t expected = 43;
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: {}. Received value is: {}",
-               expected,
-               value);
+              expected,
+              value);
     EXPECT_EQ(value, expected);
     tuple_buffer->release();
     stopServer();

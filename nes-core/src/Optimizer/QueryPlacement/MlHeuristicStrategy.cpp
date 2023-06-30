@@ -139,7 +139,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
     NES_DEBUG("MlHeuristicStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         NES_DEBUG("MlHeuristicStrategy: Get the topology node for source operator {} placement.",
-                   pinnedUpStreamOperator->toString());
+                  pinnedUpStreamOperator->toString());
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
@@ -211,9 +211,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
             NES_TRACE("MlHeuristicStrategy: Get the topology nodes where child operators are placed.");
             std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
             if (childTopologyNodes.empty()) {
-                NES_WARNING(
-                    "MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
-                    "placed.");
+                NES_WARNING("MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
+                            "placed.");
                 return;
             }
 
@@ -225,8 +224,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
             }
             if (!candidateTopologyNode) {
                 NES_ERROR("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, "
-                           "operatorId: {}",
-                           operatorNode->getId());
+                          "operatorId: {}",
+                          operatorNode->getId());
                 topology->print();
                 throw Exceptions::RuntimeException(
                     "MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
@@ -331,7 +330,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                 candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
                 if (candidateTopologyNode->getAvailableResources() > 0) {
                     NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : {}",
-                               candidateTopologyNode->getId());
+                              candidateTopologyNode->getId());
                     break;
                 }
             }

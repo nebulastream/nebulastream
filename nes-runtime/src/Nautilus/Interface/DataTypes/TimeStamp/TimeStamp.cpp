@@ -43,12 +43,12 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     if (timeString.find('T') != std::string::npos) {
         std::sscanf(t->c_str(), "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);
         NES_DEBUG(" the year {} the month {} the day {} the hour {} the minute {} and the second {}",
-                   year,
-                   month,
-                   day,
-                   hour,
-                   minute,
-                   second);
+                  year,
+                  month,
+                  day,
+                  hour,
+                  minute,
+                  second);
     } else {
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
         NES_DEBUG(" the year {} the month {} and the day {}", year, month, day);

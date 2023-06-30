@@ -32,8 +32,8 @@ std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus s
         result[key] = value->getQueryString();
     }
     NES_INFO("QueryCatalog : found {} all queryIdAndCatalogEntryMapping with status {}",
-              result.size(),
-              magic_enum::enum_name(status));
+             result.size(),
+             magic_enum::enum_name(status));
     return result;
 }
 

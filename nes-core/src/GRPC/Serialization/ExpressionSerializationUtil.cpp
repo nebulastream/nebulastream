@@ -162,7 +162,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
 
     DataTypeSerializationUtil::serializeDataType(expression->getStamp(), serializedExpression->mutable_stamp());
     NES_DEBUG("ExpressionSerializationUtil:: serialize expression node to {}",
-               serializedExpression->mutable_details()->type_url());
+              serializedExpression->mutable_details()->type_url());
     return serializedExpression;
 }
 
@@ -210,8 +210,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
                 deserializeExpression(serializedFieldRenameExpression.originalfieldaccessexpression());
             if (!originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
                 NES_FATAL_ERROR("ExpressionSerializationUtil: the original field access expression "
-                                 "should be of type FieldAccessExpressionNode, but was a {}",
-                                 originalFieldAccessExpression->toString());
+                                "should be of type FieldAccessExpressionNode, but was a {}",
+                                originalFieldAccessExpression->toString());
             }
             auto newFieldName = serializedFieldRenameExpression.newfieldname();
             expressionNodePtr =
@@ -281,7 +281,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression.stamp());
     expressionNodePtr->setStamp(stamp);
     NES_DEBUG("ExpressionSerializationUtil:: deserialized expression node to the following node: {}",
-               expressionNodePtr->toString());
+              expressionNodePtr->toString());
     return expressionNodePtr;
 }
 
@@ -398,7 +398,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
 
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: {}",
-                         expression->toString());
+                        expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -436,7 +436,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
     } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
         // serialize less equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Less Equals logical expression to "
-                   "SerializableExpression_LessEqualsExpression");
+                  "SerializableExpression_LessEqualsExpression");
         auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_LessEqualsExpression();
         serializeExpression(lessEqualsExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
@@ -456,7 +456,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
     } else if (expression->instanceOf<GreaterEqualsExpressionNode>()) {
         // serialize greater equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Greater Equals logical expression to "
-                   "SerializableExpression_GreaterEqualsExpression");
+                  "SerializableExpression_GreaterEqualsExpression");
         auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_GreaterEqualsExpression();
         serializeExpression(greaterEqualsExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
@@ -465,8 +465,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
 
     } else if (expression->instanceOf<EqualsExpressionNode>()) {
         // serialize equals expression node.
-        NES_TRACE(
-            "ExpressionSerializationUtil:: serialize Equals logical expression to SerializableExpression_EqualsExpression");
+        NES_TRACE("ExpressionSerializationUtil:: serialize Equals logical expression to SerializableExpression_EqualsExpression");
         auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_EqualsExpression();
         serializeExpression(equalsExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
@@ -475,8 +474,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
 
     } else if (expression->instanceOf<NegateExpressionNode>()) {
         // serialize negate expression node.
-        NES_TRACE(
-            "ExpressionSerializationUtil:: serialize negate logical expression to SerializableExpression_NegateExpression");
+        NES_TRACE("ExpressionSerializationUtil:: serialize negate logical expression to SerializableExpression_NegateExpression");
         auto equalsExpressionNode = expression->as<NegateExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_NegateExpression();
         serializeExpression(equalsExpressionNode->child(), serializedExpressionNode.mutable_child());
@@ -484,7 +482,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
 
     } else {
         NES_FATAL_ERROR("ExpressionSerializationUtil: No serialization implemented for this logical expression node: {}",
-                         expression->toString());
+                        expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -495,7 +493,7 @@ void ExpressionSerializationUtil::serializeGeographyExpressions(const Expression
     if (expression->instanceOf<STWithinExpressionNode>()) {
         // serialize st_within expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize ST_WITHIN geography expression to "
-                   "SerializableExpression_ST_WITHINExpression");
+                  "SerializableExpression_ST_WITHINExpression");
         auto stWithinExpressionNode = expression->as<STWithinExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_ST_WithinExpression();
         serializeGeographyFieldAccessExpressions(stWithinExpressionNode->getPoint(), serializedExpressionNode.mutable_point());
@@ -506,7 +504,7 @@ void ExpressionSerializationUtil::serializeGeographyExpressions(const Expression
     } else if (expression->instanceOf<STDWithinExpressionNode>()) {
         // serialize st_dwithin expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize ST_DWITHIN geography expression to "
-                   "SerializableExpression_ST_DWITHINExpression");
+                  "SerializableExpression_ST_DWITHINExpression");
         auto stDWithinExpressionNode = expression->as<STDWithinExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_ST_DWithinExpression();
         serializeGeographyFieldAccessExpressions(stDWithinExpressionNode->getPoint(), serializedExpressionNode.mutable_point());
@@ -532,7 +530,7 @@ void ExpressionSerializationUtil::serializeGeographyExpressions(const Expression
 
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this geography expression node: {}",
-                         expression->toString());
+                        expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -542,7 +540,7 @@ void ExpressionSerializationUtil::serializeGeographyFieldAccessExpressions(
     SerializableExpression_GeographyFieldsAccessExpression* serializedExpression) {
     // serialize geography fields accesses expression nodes.
     NES_TRACE("ExpressionSerializationUtil:: serialize GeographyFieldsAccessExpressionNode geography expression to "
-               "SerializableExpression_GeographyFieldsAccessExpression");
+              "SerializableExpression_GeographyFieldsAccessExpression");
     auto geographyFieldsAccessExpressionNode = expression->as<GeographyFieldsAccessExpressionNode>();
 
     auto latitudeExpression = geographyFieldsAccessExpressionNode->getLatitude();
@@ -817,7 +815,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessEx
     const SerializableExpression_GeographyFieldsAccessExpression& serializedExpression) {
     // serialize geography fields accesses expression nodes.
     NES_TRACE("ExpressionSerializationUtil:: de-serialize SerializableExpression_GeographyFieldsAccessExpression"
-               "serialized expression to GeographyFieldsAccessExpressionNode");
+              "serialized expression to GeographyFieldsAccessExpressionNode");
 
     auto latitudeExpression = FieldAccessExpressionNode::create(serializedExpression.latitude().fieldname());
     auto longitudeExpression = FieldAccessExpressionNode::create(serializedExpression.longitude().fieldname());

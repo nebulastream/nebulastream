@@ -48,9 +48,9 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
         retSchema->addField(fields->getName(), fields->getDataType());
     }
     NES_DEBUG("Created joinSchema {} from leftSchema {} and rightSchema {}.",
-               retSchema->toString(),
-               leftSchema->toString(),
-               rightSchema->toString());
+              retSchema->toString(),
+              leftSchema->toString(),
+              rightSchema->toString());
 
     return retSchema;
 }
@@ -195,9 +195,8 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
-                        NES_FATAL_ERROR(
-                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                            inputString.c_str());
+                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
+                                        inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -206,8 +205,8 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
                     NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to "
-                               "tuple buffer",
-                               inputString);
+                              "tuple buffer",
+                              inputString);
 
                     auto sizeOfInputField = inputString.size();
                     auto totalSize = sizeOfInputField + sizeof(uint32_t);
@@ -310,7 +309,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 
         if (!idxFoundInBuffer2) {
             NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
-                       idxBuffer1);
+                      idxBuffer1);
             return false;
         }
     }
@@ -336,7 +335,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
             // handle variable-length field
             if (dataType->isText()) {
                 NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
-                           "from the tuple buffer");
+                          "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer
                 Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
@@ -356,7 +355,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
                 else {
                     NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
-                                 "variable-length TEXT field. Returning an empty string.")
+                                "variable-length TEXT field. Returning an empty string.")
                 }
             }
 

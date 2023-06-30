@@ -206,10 +206,10 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         sum += psum;
 
         NES_INFO("Test: query result = Processed Block:{} count: {} psum: {} sum: {}",
-                  inputTupleBuffer.getNumberOfTuples(),
-                  count,
-                  psum,
-                  sum);
+                 inputTupleBuffer.getNumberOfTuples(),
+                 count,
+                 psum,
+                 sum);
 
         if (sum == 10) {
             NES_DEBUG("TEST: result correct");

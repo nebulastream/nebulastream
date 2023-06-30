@@ -62,8 +62,8 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
             std::rethrow_exception(exception);
         } catch (const std::exception& e) {
             NES_ERROR("SignatureContainmentUtil: Exception occurred while performing containment check among "
-                       "queryIdAndCatalogEntryMapping {}",
-                       e.what());
+                      "queryIdAndCatalogEntryMapping {}",
+                      e.what());
         }
     }
     return containmentRelationship;
@@ -225,9 +225,9 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     leftQueryFilterConditions.push_back(to_expr(*context, *leftSignature->getConditions()));
     rightQueryFilterConditions.push_back(to_expr(*context, *rightSignature->getConditions()));
     NES_TRACE("SignatureContainmentUtil::checkContainment: content of left sig expression vectors: {}",
-               leftQueryFilterConditions.to_string());
+              leftQueryFilterConditions.to_string());
     NES_TRACE("SignatureContainmentUtil::checkContainment: content of right sig expression vectors: {}",
-               rightQueryFilterConditions.to_string());
+              rightQueryFilterConditions.to_string());
     //The rest of the method checks for filter containment as follows:
     //check if right sig ⊆ left sig for filters, i.e. if ((right cond && !left condition) == unsat) <=> right sig ⊆ left sig,
     //since we're checking for projection containment, the negation is on the side of the contained condition,
@@ -375,8 +375,8 @@ bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std
                     && containedWindow.at("window-time-slide")->get_numeral_int()
                         == containedWindow.at("window-time-size")->get_numeral_int());
             NES_TRACE("Window containment possible after slide check: {}",
-                       containedWindow.at("window-time-slide")->to_string()
-                           == containerWindow.at("window-time-slide")->to_string());
+                      containedWindow.at("window-time-slide")->to_string()
+                          == containerWindow.at("window-time-slide")->to_string());
             NES_TRACE(
                 "Window containment possible after slide and size check: {}",
                 (containerWindow.at("window-time-slide")->to_string() == containerWindow.at("window-time-size")->to_string()

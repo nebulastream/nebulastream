@@ -80,8 +80,8 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
     else if (sinkType == "FILE_SINK") {
         FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
         NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode {} format {}",
-                  fileSink->getAppendAsBool(),
-                  fileSink->getSinkFormat());
+                 fileSink->getAppendAsBool(),
+                 fileSink->getSinkFormat());
         return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
     } else if (sinkType == "MATERIALIZED_VIEW_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating materialized view sink");

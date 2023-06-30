@@ -186,8 +186,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
             NES_DEBUG("Adding current source operator: {} as a predecessor to its child pipeline: {}",
-                       source->getOperatorId(),
-                       (*nextExecutablePipeline)->getPipelineId());
+                      source->getOperatorId(),
+                      (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
         // note: we do not register predecessors for DataSinks.
@@ -285,8 +285,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
             NES_DEBUG("Adding current pipeline: {} as a predecessor to its child pipeline: {}",
-                       executablePipeline->getPipelineId(),
-                       (*nextExecutablePipeline)->getPipelineId());
+                      executablePipeline->getPipelineId(),
+                      (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
         // note: we do not register predecessors for DataSinks.
@@ -302,8 +302,8 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
     auto sourceType = physicalSourceType->getSourceType();
     NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-               physicalSource->toString(),
-               magic_enum::enum_name(sourceType));
+              physicalSource->toString(),
+              magic_enum::enum_name(sourceType));
 
     switch (sourceType) {
         case SourceType::DEFAULT_SOURCE: {

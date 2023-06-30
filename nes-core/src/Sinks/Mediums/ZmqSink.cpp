@@ -120,8 +120,8 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     }
 
     NES_DEBUG("ZmqSink: writes buffer with tupleCnt ={} watermark={}",
-               inputBuffer.getNumberOfTuples(),
-               inputBuffer.getWatermark());
+              inputBuffer.getNumberOfTuples(),
+              inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {// XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
         try {

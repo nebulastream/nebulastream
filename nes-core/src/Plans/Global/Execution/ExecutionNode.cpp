@@ -116,8 +116,7 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
 bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, const QueryPlanPtr& querySubPlan) {
     if (hasQuerySubPlans(queryId)) {
-        NES_DEBUG("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id :  {}",
-                   queryId);
+        NES_DEBUG("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id :  {}", queryId);
         std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[queryId];
         querySubPlans.push_back(querySubPlan);
         mapOfQuerySubPlans[queryId] = querySubPlans;

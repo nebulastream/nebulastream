@@ -77,10 +77,10 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-               this->tupleSize,
-               this->gatheringInterval.count(),
-               this->numberOfBuffersToProduce,
-               this->numberOfTuplesToProducePerBuffer);
+              this->tupleSize,
+              this->gatheringInterval.count(),
+              this->numberOfBuffersToProduce,
+              this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema->fields) {

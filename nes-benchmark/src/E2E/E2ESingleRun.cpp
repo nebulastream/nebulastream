@@ -115,8 +115,8 @@ void E2ESingleRun::createSources() {
         allBufferManagers.emplace_back(bufferManager);
 
         NES_INFO("Creating #{}physical sources for logical source {}",
-                  numberOfPhysicalSrc,
-                  logicalSource->getLogicalSourceName());
+                 numberOfPhysicalSrc,
+                 logicalSource->getLogicalSourceName());
 
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
@@ -215,7 +215,7 @@ void E2ESingleRun::runQuery() {
 
     // Wait for the system to come to a steady state
     NES_INFO("Now waiting for {} s to let the system come to a steady state!",
-              configOverAllRuns.startupSleepIntervalInSeconds->getValue());
+             configOverAllRuns.startupSleepIntervalInSeconds->getValue());
     sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
 
     // For now, we only support one way of collecting the measurements
@@ -228,8 +228,8 @@ void E2ESingleRun::runQuery() {
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
                     NES_DEBUG("Query with id {} not ready with no. tuples = {}. Sleeping for a second now...",
-                               id,
-                               iter->getProcessedTuple());
+                              id,
+                              iter->getProcessedTuple());
                     sleep(1);
                 }
                 NES_INFO("Query with id {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
@@ -320,8 +320,8 @@ void E2ESingleRun::stopQuery() {
                 break;
             }
             NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                       id,
-                       queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
+                      id,
+                      queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
             std::this_thread::sleep_for(stopQuerySleep);
         }
         NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -347,7 +347,7 @@ void E2ESingleRun::stopQuery() {
                 case std::future_status::deferred: {
                     if (coordinator->isCoordinatorRunning()) {
                         NES_DEBUG("Waiting for stop wrk cause #tasks in the queue: {}",
-                                   coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
+                                  coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
                     } else {
                         NES_DEBUG("worker stopped");
                     }
@@ -461,7 +461,7 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
             }
             case QueryStatus::FAILED: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
-                           std::string(magic_enum::enum_name(status)));
+                          std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {

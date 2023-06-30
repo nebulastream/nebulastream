@@ -113,8 +113,8 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
         uint64_t executionNodeId = executionNode->getId();
         if (!executionNode->removeQuerySubPlans(queryId)) {
             NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id {} from execution node with id {}",
-                       queryId,
-                       executionNodeId);
+                      queryId,
+                      executionNodeId);
             return false;
         }
         if (executionNode->getAllQuerySubPlans().empty()) {
@@ -184,8 +184,8 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& exec
         QueryId queryId = pair.first;
         if (queryIdIndex.find(queryId) == queryIdIndex.end()) {
             NES_DEBUG("GlobalExecutionPlan: Query Id {} does not exists adding a new entry with execution node {}",
-                       queryId,
-                       executionNode->getId());
+                      queryId,
+                      executionNode->getId());
             queryIdIndex[queryId] = {executionNode};
         } else {
             std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
@@ -196,8 +196,8 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& exec
                 queryIdIndex[queryId] = executionNodes;
             } else {
                 NES_DEBUG("GlobalExecutionPlan: Skipping as execution node {} already mapped to the query Id {}",
-                           executionNode->getId(),
-                           queryId);
+                          executionNode->getId(),
+                          queryId);
             }
         }
     }

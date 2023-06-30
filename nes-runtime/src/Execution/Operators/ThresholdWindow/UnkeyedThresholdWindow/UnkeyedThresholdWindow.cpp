@@ -93,12 +93,12 @@ void UnkeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) cons
         auto allFieldNames = record.getAllFields();
         if (!FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
             NES_DEBUG("Threshold window starts, opening value:{}",
-                       std::accumulate(allFieldNames.begin(),
-                                       allFieldNames.end(),
-                                       std::string{},
-                                       [&record](std::string acc, std::string s) {
-                                           return acc + s + "=" + record.read(s)->toString() + ",";
-                                       }));
+                      std::accumulate(allFieldNames.begin(),
+                                      allFieldNames.end(),
+                                      std::string{},
+                                      [&record](std::string acc, std::string s) {
+                                          return acc + s + "=" + record.read(s)->toString() + ",";
+                                      }));
         }
 
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
@@ -127,18 +127,18 @@ void UnkeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) cons
                 auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
                 auto allFieldNames = record.getAllFields();
                 NES_DEBUG("Threshold window ends, closing value:{} | aggVal:{}",
-                           std::accumulate(allFieldNames.begin(),
-                                           allFieldNames.end(),
-                                           std::string{},
-                                           [&record](std::string acc, std::string s) {
-                                               return acc + s + "=" + record.read(s)->toString() + ",";
-                                           }),
-                           std::accumulate(aggregationResultFieldIdentifiers.begin(),
-                                           aggregationResultFieldIdentifiers.end(),
-                                           std::string{},
-                                           [&resultRecord](std::string acc, std::string s) {
-                                               return acc + " " + s + "=" + resultRecord.read(s)->toString();
-                                           }));
+                          std::accumulate(allFieldNames.begin(),
+                                          allFieldNames.end(),
+                                          std::string{},
+                                          [&record](std::string acc, std::string s) {
+                                              return acc + s + "=" + record.read(s)->toString() + ",";
+                                          }),
+                          std::accumulate(aggregationResultFieldIdentifiers.begin(),
+                                          aggregationResultFieldIdentifiers.end(),
+                                          std::string{},
+                                          [&resultRecord](std::string acc, std::string s) {
+                                              return acc + " " + s + "=" + resultRecord.read(s)->toString();
+                                          }));
 
                 // crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);

@@ -52,16 +52,16 @@ Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& conte
 bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "
-              "Global Query Plan");
+             "Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("Z3SignatureBasedQueryContainmentRule: Found no new query plan to add in the global query plan."
-                     " Skipping the Signature Based Equal Query Merger Rule.");
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
     NES_DEBUG("Z3SignatureBasedQueryContainmentRule: Iterating over all Shared Query MetaData in the Global "
-               "Query Plan");
+              "Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -202,12 +202,12 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                     //Add all root operators from target query plan to host query plan
                     for (const auto& targetRootOperator : targetQueryPlan->getRootOperators()) {
                         NES_DEBUG("Adding root operator {} to host query plan {}",
-                                   targetRootOperator->toString(),
-                                   hostQueryPlan->toString());
+                                  targetRootOperator->toString(),
+                                  hostQueryPlan->toString());
                         hostQueryPlan->addRootOperator(targetRootOperator);
                         NES_DEBUG("Adding root operator {} to host query plan {}",
-                                   targetRootOperator->toString(),
-                                   hostQueryPlan->toString());
+                                  targetRootOperator->toString(),
+                                  hostQueryPlan->toString());
                     }
                 }
             }
@@ -257,13 +257,13 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areQueryPlansContained(const Query
 
     std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> targetHostOperatorMap;
     NES_DEBUG("Check if the target and address query plans are syntactically "
-               "contained.");
+              "contained.");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
         NES_WARNING("Not matched as number of Sources in target and host query plans are "
-                     "different.");
+                    "different.");
         return {};
     }
 
@@ -318,9 +318,9 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         return targetHostOperatorMap;
     } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
         NES_DEBUG("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
-                   targetOperator->toString(),
-                   hostOperator->toString(),
-                   magic_enum::enum_name(containmentType));
+                  targetOperator->toString(),
+                  hostOperator->toString(),
+                  magic_enum::enum_name(containmentType));
         if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
             return targetHostOperatorMap;
         }

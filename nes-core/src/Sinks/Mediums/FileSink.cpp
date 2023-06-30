@@ -79,9 +79,9 @@ void FileSink::shutdown() {}
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
-               toString(),
-               sinkFormat->toString(),
-               this->getAppendAsString());
+              toString(),
+              sinkFormat->toString(),
+              this->getAppendAsString());
 
     if (!inputBuffer) {
         NES_ERROR("FileSink::writeData input buffer invalid");

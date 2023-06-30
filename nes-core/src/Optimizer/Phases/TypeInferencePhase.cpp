@@ -71,8 +71,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 }
                 sourceDescriptor->setSchema(schema);
                 NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}",
-                           logicalSourceName,
-                           schema->toString());
+                          logicalSourceName,
+                          schema->toString());
             }
         }
 

@@ -150,16 +150,14 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         }
         case PipelineContext::PipelineContextArity::BinaryLeft: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
-            NES_DEBUG("arity binaryleft generate scan for input={} output={}",
-                       inputSchema->toString(),
-                       outputSchema->toString());
+            NES_DEBUG("arity binaryleft generate scan for input={} output={}", inputSchema->toString(), outputSchema->toString());
             break;
         }
         case PipelineContext::PipelineContextArity::BinaryRight: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
             NES_DEBUG("arity binaryright generate scan for input={} output={}",
-                       inputSchema->toString(),
-                       outputSchema->toString());
+                      inputSchema->toString(),
+                      outputSchema->toString());
             break;
         }
     }
@@ -336,7 +334,7 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
             if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
                 NES_FATAL_ERROR("CCodeGenerator: projection: the attribute {} is not registered so we can not access it.",
-                                 fieldAccessExpression->getFieldName());
+                                fieldAccessExpression->getFieldName());
             }
         }
     }
@@ -428,7 +426,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
             NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
-                       field->getStamp()->toString());
+                      field->getStamp()->toString());
         }
         if (!firstIter) {
             commonStamp = field->getStamp();
@@ -597,8 +595,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                         // check if record handler has current field
                         if (!recordHandler->hasAttribute(field->getName())) {
                             NES_FATAL_ERROR("CCodeGenerator: field: {} is part of the output schema, but not registered in the "
-                                             "record handler.",
-                                             field->toString());
+                                            "record handler.",
+                                            field->toString());
                         }
 
                         std::string tmpVarName = "tmp_" + field->getName();
@@ -628,16 +626,16 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                         getVariableDeclarationForField(structDeclarationResultTuple, field);
                     if (!resultRecordFieldVariableDeclaration) {
                         NES_FATAL_ERROR("CCodeGenerator: Could not extract field {} from result record struct {}",
-                                         field->toString(),
-                                         structDeclarationResultTuple.getTypeName());
+                                        field->toString(),
+                                        structDeclarationResultTuple.getTypeName());
                     }
 
                     // check if record handler has current field
                     if (!recordHandler->hasAttribute(field->getName())) {
                         NES_FATAL_ERROR("CCodeGenerator: field: {}"
-                                         " is part of the output schema, "
-                                         "but not registered in the record handler.",
-                                         field->toString());
+                                        " is part of the output schema, "
+                                        "but not registered in the record handler.",
+                                        field->toString());
                     }
 
                     // Get current field from record handler.
@@ -707,16 +705,16 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
             if (!resultRecordFieldVariableDeclaration) {
                 NES_FATAL_ERROR("CodeGenerator: Could not extract field {} from result record struct {}",
-                                 field->toString(),
-                                 structDeclarationResultTuple.getTypeName());
+                                field->toString(),
+                                structDeclarationResultTuple.getTypeName());
             }
 
             // check if record handler has current field
             if (!recordHandler->hasAttribute(field->getName())) {
                 NES_FATAL_ERROR("CCodeGenerator: field: {}"
-                                 " is part of the output schema, "
-                                 "but not registered in the record handler.",
-                                 field->toString());
+                                " is part of the output schema, "
+                                "but not registered in the record handler.",
+                                field->toString());
             }
 
             // Get current field from record handler.
@@ -2811,7 +2809,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode={} not implemented",
-                         std::string(magic_enum::enum_name(action->getActionType())));
+                        std::string(magic_enum::enum_name(action->getActionType())));
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2947,9 +2945,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                          PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
     NES_DEBUG("join input={} aritiy={} out={}",
-               context->inputSchema->toString(),
-               magic_enum::enum_name(context->arity),
-               joinDef->getOutputSchema()->toString());
+              context->inputSchema->toString(),
+              magic_enum::enum_name(context->arity),
+              joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -3167,9 +3165,9 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                               QueryCompilation::JoinBuildSideType buildSide) {
     NES_DEBUG("join input={} aritiy={} out={}",
-               context->inputSchema->toString(),
-               magic_enum::enum_name(buildSide),
-               joinDef->getOutputSchema()->toString());
+              context->inputSchema->toString(),
+              magic_enum::enum_name(buildSide),
+              joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -3834,7 +3832,7 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
                 call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else {
             NES_FATAL_ERROR("Aggregation Handler: aggregation={} not implemented",
-                             std::string(magic_enum::enum_name(aggregation->getType())));
+                            std::string(magic_enum::enum_name(aggregation->getType())));
         }
         // add the partial aggregation initialization to the code
         setupScope->addStatement(partialAggregateInitStatement.copy());
@@ -4285,7 +4283,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode={} not implemented",
-                         std::string(magic_enum::enum_name(policy->getPolicyType())));
+                        std::string(magic_enum::enum_name(policy->getPolicyType())));
     }
 
     auto action = window->getTriggerAction();
@@ -4313,7 +4311,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode={} not implemented",
-                         std::string(magic_enum::enum_name(action->getActionType())));
+                        std::string(magic_enum::enum_name(action->getActionType())));
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(

@@ -28,8 +28,8 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     int ret = system("which clang-format > /dev/null");
     if (ret != 0) {
         NES_ERROR("Compiler: Clang-format was requested, but did not find external tool 'clang-format'. "
-                   "Please install 'clang-format' and try again."
-                   "If 'clang-format-X' is installed, try to create a symbolic link.");
+                  "Please install 'clang-format' and try again."
+                  "If 'clang-format-X' is installed, try to create a symbolic link.");
         return;
     }
     // construct clang-format command argument

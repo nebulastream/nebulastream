@@ -140,9 +140,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
     }
 }
 
-void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) {
-    NES_TRACE("Release locks.");
-}
+void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE("Release locks."); }
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 

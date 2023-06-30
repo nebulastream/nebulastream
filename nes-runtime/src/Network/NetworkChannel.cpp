@@ -94,10 +94,10 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
                         NES_ERROR("{}: Connection failed with server {} for {}"
-                                   "->Wrong server ready message! Reason: Partitions are not matching",
-                                   channelName,
-                                   socketAddr,
-                                   channelId.getNesPartition().toString());
+                                  "->Wrong server ready message! Reason: Partitions are not matching",
+                                  channelName,
+                                  socketAddr,
+                                  channelId.getNesPartition().toString());
                         break;
                     }
                     NES_DEBUG("{}: Connection established with server {} for {}", channelName, socketAddr, channelId);
@@ -131,9 +131,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 }
             }
             NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} backoff time {}",
-                       channelName,
-                       i,
-                       std::to_string(backOffTime.count()));
+                      channelName,
+                      i,
+                      std::to_string(backOffTime.count()));
             std::this_thread::sleep_for(backOffTime);// TODO make this async
             backOffTime *= 2;
             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);

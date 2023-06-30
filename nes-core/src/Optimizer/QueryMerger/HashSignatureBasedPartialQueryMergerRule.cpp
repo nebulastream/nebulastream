@@ -34,7 +34,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
-                     " Skipping the Signature Based Equal Query Merger Rule.");
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
@@ -123,7 +123,7 @@ HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr&
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
         NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
-                     "different.");
+                    "different.");
         return {};
     }
 

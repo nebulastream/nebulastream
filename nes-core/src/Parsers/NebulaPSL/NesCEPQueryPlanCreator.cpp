@@ -145,8 +145,8 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     if (context->LBRACKET()) {    // context contains []
         if (context->D_POINTS()) {//e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
             NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: {} and Max {}",
-                       context->iterMin()->INT()->getText(),
-                       context->iterMin()->INT()->getText());
+                      context->iterMin()->INT()->getText(),
+                      context->iterMin()->INT()->getText());
             timeOperatorNode.setMinMax(
                 std::make_pair(stoi(context->iterMin()->INT()->getText()), stoi(context->iterMax()->INT()->getText())));
         } else {// e.g., A[2] means that we except exact 2 occurrences of A
@@ -171,9 +171,9 @@ void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryC
     auto rightExpressionNode = NES::Attribute(this->currentRightExp).getExpressionNode();
     NES::ExpressionNodePtr expression;
     NES_DEBUG("NesCEPQueryPlanCreator: exitBinaryComparisonPredicate: add filters {} {} {}",
-               this->currentLeftExp,
-               comparisonOperator,
-               this->currentRightExp)
+              this->currentLeftExp,
+              comparisonOperator,
+              this->currentRightExp)
 
     if (comparisonOperator == "<") {
         expression = NES::LessExpressionNode::create(leftExpressionNode, rightExpressionNode);
@@ -236,7 +236,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                 auto sourceName = pattern.getSources().at(operatorNode->second.getLeftChildId());
                 queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add times operator{}",
-                           pattern.getSources().at(operatorNode->second.getLeftChildId()))
+                          pattern.getSources().at(operatorNode->second.getLeftChildId()))
 
                 queryPlan = QueryPlanBuilder::addMap(Attribute("Count") = 1, queryPlan);
 
@@ -380,7 +380,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
     // find left (query) and right branch (subquery) of binary operator
     //left query plan
     NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryLeft from {}",
-               pattern.getSources().at(it->second.getLeftChildId()))
+              pattern.getSources().at(it->second.getLeftChildId()))
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
     // if queryPlan is empty
@@ -456,8 +456,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                     sourceNameLeft = sourceNameLeft + "$" + timestamp;
                 }
                 NES_DEBUG("NesCEPQueryPlanCreater: ExpressionItem for Left Source {} and ExpressionItem for Right Source {}",
-                           sourceNameLeft,
-                           sourceNameRight);
+                          sourceNameLeft,
+                          sourceNameRight);
                 //create filter expression and add it to queryPlan
                 leftQueryPlan =
                     QueryPlanBuilder::addFilter(Attribute(sourceNameLeft) < Attribute(sourceNameRight), leftQueryPlan);

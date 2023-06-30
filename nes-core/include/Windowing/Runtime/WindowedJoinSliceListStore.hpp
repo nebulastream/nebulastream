@@ -62,8 +62,8 @@ class WindowedJoinSliceListStore {
         auto const isDefault = timestamp == -1;
         if (timestamp < 0 and !isDefault) {
             NES_ERROR("getSliceIndexByTs for could not find a slice, because the timestamp is "
-                       "neither -1 nor positive: {}",
-                       timestamp);
+                      "neither -1 nor positive: {}",
+                      timestamp);
             NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen.");
         }
         auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(timestamp);
@@ -106,11 +106,11 @@ class WindowedJoinSliceListStore {
                 break;
             }
             NES_TRACE("WindowedJoinSliceListStore removeSlicesUntil: watermark={} from slice endts={}, sliceMetaData size={} "
-                       "content size={}",
-                       watermark,
-                       itSlice->getEndTs(),
-                       sliceMetaData.size(),
-                       content.size());
+                      "content size={}",
+                      watermark,
+                      itSlice->getEndTs(),
+                      sliceMetaData.size(),
+                      content.size());
 
             itAggs++;
         }
@@ -118,8 +118,8 @@ class WindowedJoinSliceListStore {
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         content.erase(content.begin(), itAggs);
         NES_TRACE("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice={} content={}",
-                   sliceMetaData.size(),
-                   content.size());
+                  sliceMetaData.size(),
+                  content.size());
     }
 
     /**

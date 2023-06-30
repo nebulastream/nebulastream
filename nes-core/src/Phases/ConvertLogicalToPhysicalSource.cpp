@@ -301,8 +301,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                numSourceLocalBuffers,
                                successors);
     } else {
-        NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}",
-                   sourceDescriptor->getSchema()->toString());
+        NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }

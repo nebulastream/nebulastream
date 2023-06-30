@@ -65,9 +65,9 @@ std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& input
             std::string contentWithSingleBufferSize = bufferContent.substr(0, buf.getBufferSize());
             bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());
             NES_TRACE("CsvFormat::getData: add following content to buffer ={}"
-                       "\nRemaining content for next buffer ={}",
-                       contentWithSingleBufferSize,
-                       bufferContent);
+                      "\nRemaining content for next buffer ={}",
+                      contentWithSingleBufferSize,
+                      bufferContent);
             NES_ASSERT(contentWithSingleBufferSize.size() == buf.getBufferSize(),
                        "CsvFormat: Content size is not equal to buffer size and will waste space in a buffer.");
             std::copy(contentWithSingleBufferSize.begin(), contentWithSingleBufferSize.end(), buf.getBuffer());

@@ -98,8 +98,8 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     }
     NES_DEBUG("read {} waypoints from csv", waypoints.size());
     NES_DEBUG("first timestamp is {}, last timestamp is {}",
-               waypoints.front().getTimestamp().value(),
-               waypoints.back().getTimestamp().value());
+              waypoints.front().getTimestamp().value(),
+              waypoints.back().getTimestamp().value());
     //set first csv entry as the next waypoint
 }
 

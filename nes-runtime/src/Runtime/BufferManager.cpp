@@ -129,12 +129,12 @@ void BufferManager::initialize(uint32_t withAlignment) {
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
     NES_TRACE("Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
-               allocatedAreaSize,
-               withAlignment,
-               alignedBufferSize,
-               numOfBuffers,
-               controlBlockSize,
-               alignof(detail::BufferControlBlock));
+              allocatedAreaSize,
+              withAlignment,
+              alignedBufferSize,
+              numOfBuffers,
+              controlBlockSize,
+              alignof(detail::BufferControlBlock));
     if (basePointer == nullptr) {
         NES_THROW_RUNTIME_ERROR("memory allocation failed");
     }
@@ -258,10 +258,10 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
     NES_TRACE("Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
-               reinterpret_cast<uintptr_t>(ptr),
-               alignedBufferSize,
-               alignedBufferSizePlusControlBlock,
-               controlBlockSize);
+              reinterpret_cast<uintptr_t>(ptr),
+              alignedBufferSize,
+              alignedBufferSizePlusControlBlock,
+              controlBlockSize);
     auto memSegment = std::make_unique<detail::MemorySegment>(
         ptr + controlBlockSize,
         alignedBufferSize,

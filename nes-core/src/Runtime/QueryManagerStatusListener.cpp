@@ -81,9 +81,7 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
     for (auto qepToFail : plansToFail) {
         auto future =
             asyncTaskExecutor->runAsync([this, reason, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr {
-                NES_DEBUG("Going to fail query id={} subplan={}",
-                           qepToFail->getQuerySubPlanId(),
-                           qepToFail->getQuerySubPlanId());
+                NES_DEBUG("Going to fail query id={} subplan={}", qepToFail->getQuerySubPlanId(), qepToFail->getQuerySubPlanId());
                 if (failQuery(qepToFail)) {
                     NES_DEBUG("Failed query id= {} subplan={}", qepToFail->getQuerySubPlanId(), qepToFail->getQuerySubPlanId());
                     queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), qepToFail->getQuerySubPlanId(), reason);
@@ -131,9 +129,9 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     //THIS is now shutting down all
     for (auto& entry : sourceToQEPMapping[source->getOperatorId()]) {
         NES_TRACE("notifySourceCompletion operator id={} plan id={} subplan={}",
-                   source->getOperatorId(),
-                   entry->getQueryId(),
-                   entry->getQuerySubPlanId());
+                  source->getOperatorId(),
+                  entry->getQueryId(),
+                  entry->getQuerySubPlanId());
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {
             queryStatusListener->notifySourceTermination(entry->getQueryId(),

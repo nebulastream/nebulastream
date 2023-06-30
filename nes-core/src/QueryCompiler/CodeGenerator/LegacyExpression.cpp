@@ -134,7 +134,7 @@ LegacyExpressionPtr WhenPredicate::copy() const { return std::make_shared<WhenPr
 
 ExpressionStatementPtr WhenPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     NES_INFO("LegacyWhenPredicate: This predicate generates code, but it should never generate code on its own. The code will "
-              "just return the right expression.")
+             "just return the right expression.")
     return TernaryOperatorStatement(*(left->generateCode(code, recordHandler)),
                                     *(right->generateCode(code, recordHandler)),
                                     *(right->generateCode(code, recordHandler)))
@@ -189,8 +189,8 @@ ExpressionStatementPtr CasePredicate::generateCode(GeneratedCodePtr& code, Recor
             curBaseExpr = tmpExpr;
         }
         NES_DEBUG("CasePredicate: Generating code for expression. {} It looks like: {}",
-                   this->toString(),
-                   curBaseExpr->getCode()->code_);
+                  this->toString(),
+                  curBaseExpr->getCode()->code_);
         return curBaseExpr;
     } catch (const std::bad_cast& e) {
         NES_FATAL_ERROR("CasePredicate: Could not cast when expressions to generate code for them.");
@@ -217,7 +217,7 @@ bool CasePredicate::equals(const LegacyExpression& _rhs) const {
         auto rhs = dynamic_cast<const CasePredicate&>(_rhs);
         if (whenExprs.size() == rhs.getWhenExprs().size() && defautlExpr->equals(*rhs.getDefaultExpr().get())) {
             NES_DEBUG("CasePredicate: Equals in this legacy predicate only checks for same number of when cases and whether or "
-                       "not the default expression is equal.")
+                      "not the default expression is equal.")
             return true;
         }
         return false;

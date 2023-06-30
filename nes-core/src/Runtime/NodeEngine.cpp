@@ -496,8 +496,8 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
         std::vector<QuerySubPlanId> querySubPlanIds = plan.second;
         for (auto querySubPlanId : querySubPlanIds) {
             NES_TRACE("querySubPlanId={} stat= {}",
-                       querySubPlanId,
-                       queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
+                      querySubPlanId,
+                      queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
 
             queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
             if (withReset) {
@@ -578,8 +578,8 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                   querySubPlanId,
-                   uniqueNetworkSinkDescriptorId);
+                  querySubPlanId,
+                  uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
@@ -661,8 +661,8 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                   querySubPlanId,
-                   uniqueNetworkSinkDescriptorId);
+                  querySubPlanId,
+                  uniqueNetworkSinkDescriptorId);
         return false;
     }
 }

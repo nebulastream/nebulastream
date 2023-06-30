@@ -37,9 +37,9 @@ bool LogicalUnaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
             NES_ERROR("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators."
-                       "this op schema= {} child schema={}",
-                       child->as<OperatorNode>()->getOutputSchema()->toString(),
-                       childSchema->toString());
+                      "this op schema= {} child schema={}",
+                      child->as<OperatorNode>()->getOutputSchema()->toString(),
+                      childSchema->toString());
             return false;
         }
     }

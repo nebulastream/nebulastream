@@ -102,9 +102,9 @@ class NetworkDataSender : public BaseChannelType {
             kZmqSendDefault);
         if (!!sentBytesOpt) {
             NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
-                       inputBuffer.getNumberOfTuples(),
-                       inputBuffer.getBufferSize(),
-                       inputBuffer.getOriginId());
+                      inputBuffer.getNumberOfTuples(),
+                      inputBuffer.getBufferSize(),
+                      inputBuffer.getOriginId());
 
             return true;
         }

@@ -51,9 +51,9 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
         return reply.success();
     }
     NES_DEBUG(" WorkerRPCClient::registerQuery "
-               "error={}: {}",
-               status.error_code(),
-               status.error_message());
+              "error={}: {}",
+              status.error_code(),
+              status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
@@ -385,9 +385,9 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         return reply.success();
     } else {
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
-                   "error={} : {}",
-                   status.error_code(),
-                   status.error_message());
+                  "error={} : {}",
+                  status.error_code(),
+                  status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
     return false;

@@ -59,8 +59,8 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
         // check if an active worker with workerId already exists
         if (topology->nodeWithWorkerIdExists(workerId)) {
             NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
-                         "worker id will be assigned.",
-                         workerId);
+                        "worker id will be assigned.",
+                        workerId);
             id = getNextTopologyNodeId();
         }
         // check if an inactive worker with workerId already exists

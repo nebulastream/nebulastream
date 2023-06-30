@@ -63,9 +63,9 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
     NES_DEBUG("StaticDataSource: id {} Initialize source with schema: |{}| size: {}",
-               std::to_string(operatorId),
-               this->schema->toString(),
-               std::to_string(tupleSizeInBytes));
+              std::to_string(operatorId),
+              this->schema->toString(),
+              std::to_string(tupleSizeInBytes));
 
     this->sourceAffinity = sourceAffinity;
     bufferSize = localBufferManager->getBufferSize();
@@ -119,7 +119,7 @@ bool StaticDataSource::start() {
     startCalled = true;
     if (lateStart) {
         NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: {}",
-                   this->operatorId);
+                  this->operatorId);
         return true;// we didn't start but still signal a success
     }
 
@@ -232,9 +232,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
     generatedBuffers++;
-    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read {} tuples at posInFile={}",
-               tupleCount,
-               currentPositionInFile);
+    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
     NES_TRACE("StaticDataSource::fillBuffer: read filled buffer={} ", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 

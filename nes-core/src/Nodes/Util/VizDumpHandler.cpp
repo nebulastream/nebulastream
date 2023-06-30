@@ -116,10 +116,10 @@ void VizDumpHandler::dump(const NodePtr) { NES_NOT_IMPLEMENTED(); }
 
 void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr queryPlan) {
     NES_DEBUG("Dump query plan: {} : {} for context {} and scope {}",
-               queryPlan->getQueryId(),
-               queryPlan->getQuerySubPlanId(),
-               context,
-               scope);
+              queryPlan->getQueryId(),
+              queryPlan->getQuerySubPlanId(),
+              context,
+              scope);
     auto graph = detail::VizGraph("graph");
     dump(queryPlan, "", graph);
     writeToFile(context, scope, graph.serialize());
