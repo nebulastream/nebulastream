@@ -76,7 +76,7 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                       .filter(Attribute("id") < 45 && Attribute("id2") > 2)
+                      .filter(Attribute("id") < 45 && Attribute("id2") > 2)
                       .filter(Attribute("vehicle") == "car")
                       .filter(Attribute("type") == 2 && Attribute("id2") > 2)
                       .sink(printSinkDescriptor);
@@ -166,11 +166,15 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .filter(Attribute("id") < 45 && Attribute("id2") > 2)
-                      .map(Attribute("value") = 40)
+                      .filter(Attribute("id2") > 2)
                       .filter(Attribute("vehicle") == "car")
-                      .map(Attribute("id") = 30)
+                      .map(Attribute("value") = 40)
                       .filter(Attribute("id") > 1)
+                      .filter(Attribute("value") > 10)
+                      .project(Attribute("type").as("t"), Attribute("value").as("v"))
+                      .filter(Attribute("id3") > 3)
+                      .filter(Attribute("id4") > 4)
+                      .filter(Attribute("id5") > 5)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -180,14 +184,29 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    ++itr;
-    const NodePtr mapOperator1 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.8);
     ++itr;
     const NodePtr filterOperator2 = (*itr);
-    ++itr;
-    const NodePtr mapOperator2 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
     ++itr;
     const NodePtr filterOperator3 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    ++itr;
+    const NodePtr projectionOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator4 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    ++itr;
+    const NodePtr filterOperator5 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator6 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    ++itr;
+    const NodePtr filterOperator7 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.4);
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -200,15 +219,23 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(filterOperator1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(mapOperator1->equal((*itr)));
-    ++itr;
     EXPECT_TRUE(filterOperator2->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(mapOperator2->equal((*itr)));
-    ++itr;
     EXPECT_TRUE(filterOperator3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(projectionOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator4->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator5->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator7->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator6->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
@@ -224,8 +251,12 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
     Query subQuery = Query::from("car").filter(Attribute("id") > 35);
 
     Query query = Query::from("default_logical")
+                      .filter(Attribute("id") > 1)
+                      .filter(Attribute("value") > 10)
                       .unionWith(subQuery)
                       .map(Attribute("value") = 80)
+                      .filter(Attribute("id2") > 2)
+                      .filter(Attribute("vehicle") == "car")
                       .filter(Attribute("id") > 45)
                       .sink(printSinkDescriptor);
 
@@ -236,17 +267,32 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
 
     const NodePtr sinkOperator = (*itr);
     ++itr;
-    const NodePtr filterOperatorPQ = (*itr);
+    const NodePtr filterOperatorPQ1 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    ++itr;
+    const NodePtr filterOperatorPQ2 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    ++itr;
+    const NodePtr filterOperatorPQ3 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.4);
     ++itr;
     const NodePtr mapOperatorPQ = (*itr);
     ++itr;
     const NodePtr mergeOperator = (*itr);
     ++itr;
-    const NodePtr srcOperatorPQ = (*itr);
-    ++itr;
     const NodePtr filterOperatorSQ = (*itr);
     ++itr;
     const NodePtr srcOperatorSQ = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ4 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.7);
+    ++itr;
+    const NodePtr filterOperatorPQ5 = (*itr);
+    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.3);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+    ++itr;
+
 
     // Execute
     auto predicateReorderingRule = Optimizer::PredicateReorderingRule::create();
@@ -257,11 +303,19 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
     itr = queryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
-    EXPECT_TRUE(filterOperatorPQ->equal((*itr)));
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperatorPQ->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mergeOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ5->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ4->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
     ++itr;
