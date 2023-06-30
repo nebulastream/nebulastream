@@ -83,8 +83,8 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
             zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
                 NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}",
-                           buffer.getBufferSize(),
-                           receivedSize.has_value());
+                          buffer.getBufferSize(),
+                          receivedSize.has_value());
                 return std::nullopt;
             } else {
                 NES_DEBUG("ZMQSource: received buffer of size  {}", receivedSize.has_value());

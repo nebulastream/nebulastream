@@ -284,11 +284,11 @@ class TestHarness {
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
         NES_DEBUG("TestHarness: outputSchema: {}",
-                   queryCatalogService->getEntryForQuery(queryId)
-                       ->getInputQueryPlan()
-                       ->getSinkOperators()[0]
-                       ->getOutputSchema()
-                       ->toString());
+                  queryCatalogService->getEntryForQuery(queryId)
+                      ->getInputQueryPlan()
+                      ->getSinkOperators()[0]
+                      ->getOutputSchema()
+                      ->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
@@ -325,7 +325,7 @@ class TestHarness {
         ifs.read(buff, length);
 
         NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
-                   queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+                  queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
         queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
 
         for (const auto& worker : testHarnessWorkerConfigurations) {

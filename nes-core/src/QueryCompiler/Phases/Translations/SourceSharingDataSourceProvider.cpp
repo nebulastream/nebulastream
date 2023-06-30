@@ -45,7 +45,7 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(OperatorId operatorId,
     auto searchEntry = std::make_pair(sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getPhysicalSourceName());
     if (sourceDescriptorToDataSourceMap.contains(searchEntry)) {
         NES_DEBUG("using already existing source for source sharing for logical name {}",
-                   sourceDescriptor->getLogicalSourceName());
+                  sourceDescriptor->getLogicalSourceName());
         sourceDescriptorToDataSourceMap[searchEntry]->addExecutableSuccessors(successors);
         sourceDescriptorToDataSourceMap[searchEntry]->incrementNumberOfConsumerQueries();
         return sourceDescriptorToDataSourceMap[searchEntry];

@@ -485,8 +485,8 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
             expectedIt++;
         }
         NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                   std::distance(actualWayPoints.cbegin(), actualIt),
-                   std::distance(expectedWayPoints.cbegin(), expectedIt));
+                  std::distance(actualWayPoints.cbegin(), actualIt),
+                  std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -569,8 +569,8 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
             expectedIt++;
         }
         NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                   std::distance(actualWayPoints.cbegin(), actualIt),
-                   std::distance(expectedWayPoints.cbegin(), expectedIt));
+                  std::distance(actualWayPoints.cbegin(), actualIt),
+                  std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         ASSERT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -657,8 +657,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
             expectedIt++;
         }
         NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                   std::distance(actualWayPoints.cbegin(), actualIt),
-                   std::distance(expectedWayPoints.cbegin(), expectedIt));
+                  std::distance(actualWayPoints.cbegin(), actualIt),
+                  std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -742,8 +742,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
             expectedIt++;
         }
         NES_DEBUG("comparing actual waypoint {} to expected waypoint {}",
-                   std::distance(actualWayPoints.cbegin(), actualIt),
-                   std::distance(expectedWayPoints.cbegin(), expectedIt));
+                  std::distance(actualWayPoints.cbegin(), actualIt),
+                  std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }

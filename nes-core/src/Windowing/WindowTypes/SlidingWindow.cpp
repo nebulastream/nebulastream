@@ -32,9 +32,9 @@ void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t l
     NES_TRACE("SlidingWindow::triggerWindows windows before={}", windows.size());
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
     NES_TRACE("SlidingWindow::triggerWindows= lastStart={} size.getTime()={} lastWatermark={}",
-               lastStart,
-               size.getTime(),
-               lastWatermark);
+              lastStart,
+              size.getTime(),
+              lastWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark && windowStart >= 0;
          windowStart -= slide.getTime()) {
         if (windowStart >= 0 && ((windowStart + size.getTime()) <= currentWatermark)) {

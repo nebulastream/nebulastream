@@ -104,9 +104,8 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
-                        NES_FATAL_ERROR(
-                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                            inputString);
+                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
+                                        inputString);
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -115,8 +114,8 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
                     NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
-                               "to tuple buffer",
-                               inputString);
+                              "to tuple buffer",
+                              inputString);
 
                     auto sizeOfInputField = inputString.size();
                     auto totalSize = sizeOfInputField + sizeof(uint32_t);

@@ -243,11 +243,11 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                 QueryFailureNotificationReply* reply) {
     try {
         NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: {} subplan: {} Id of "
-                   "worker: {} Reason for failure: {}",
-                   request->queryid(),
-                   request->subqueryid(),
-                   request->workerid(),
-                   request->errormsg());
+                  "worker: {} Reason for failure: {}",
+                  request->queryid(),
+                  request->subqueryid(),
+                  request->workerid(),
+                  request->errormsg());
 
         NES_ASSERT2_FMT(!request->errormsg().empty(),
                         "Cannot fail query without error message " << request->queryid() << " subplan: " << request->subqueryid()
@@ -281,8 +281,8 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
                                                     EpochBarrierPropagationReply* reply) {
     try {
         NES_INFO("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp  {} and querySubPlanId {}",
-                  request->timestamp(),
-                  request->queryid());
+                 request->timestamp(),
+                 request->queryid());
         this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
         reply->set_success(true);
         return Status::OK;
@@ -312,9 +312,9 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
     try {
         NES_ERROR("CoordinatorRPCServer::sendErrors: failure message received."
-                   "Id of worker: {} Reason for failure: {}",
-                   request->workerid(),
-                   request->errormsg());
+                  "Id of worker: {} Reason for failure: {}",
+                  request->workerid(),
+                  request->errormsg());
         // TODO implement here what happens with received Error Messages
         reply->set_success(true);
         return Status::OK;
@@ -346,8 +346,8 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
     auto sharedQueryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
     NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}",
-              querySubPlanId,
-              sharedQueryId)
+             querySubPlanId,
+             sharedQueryId)
 
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SOFT_STOP_TRIGGERED);
@@ -402,10 +402,10 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     auto coordinates = request->waypoint().geolocation();
     auto timestamp = request->waypoint().timestamp();
     NES_DEBUG("Coordinator received location update from node with id {} which reports [{}, {}] at TS {}",
-               request->workerid(),
-               coordinates.lat(),
-               coordinates.lng(),
-               timestamp);
+              request->workerid(),
+              coordinates.lat(),
+              coordinates.lng(),
+              timestamp);
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
     if (!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))) {

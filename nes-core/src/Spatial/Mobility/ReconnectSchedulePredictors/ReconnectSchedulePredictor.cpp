@@ -32,16 +32,16 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()) {
         NES_FATAL_ERROR("Default Coverage Radius: {} is bigger than the node index update threshold: {}. this would lead to "
-                         "nodes not being not discoverable although they are in range. Exiting",
-                         configuration->defaultCoverageRadius.getValue(),
-                         configuration->nodeIndexUpdateThreshold.getValue());
+                        "nodes not being not discoverable although they are in range. Exiting",
+                        configuration->defaultCoverageRadius.getValue(),
+                        configuration->nodeIndexUpdateThreshold.getValue());
         exit(EXIT_FAILURE);
     }
     if (configuration->nodeIndexUpdateThreshold.getValue() > nodeInfoDownloadRadius) {
         NES_FATAL_ERROR("Node info download radius: {} is smaller than the node index update threshold: {}. this would lead to "
-                         "downloading node info after every location update. Exiting",
-                         nodeInfoDownloadRadius,
-                         configuration->nodeIndexUpdateThreshold.getValue());
+                        "downloading node info after every location update. Exiting",
+                        nodeInfoDownloadRadius,
+                        configuration->nodeIndexUpdateThreshold.getValue());
         exit(EXIT_FAILURE);
     }
 

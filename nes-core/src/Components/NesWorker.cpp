@@ -126,16 +126,16 @@ uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking {} workerId={} coordinatorIp={} coordinatorPort={} localWorkerIp={} "
-               "localWorkerRpcPort={} "
-               "localWorkerZmqPort={} windowStrategy={}",
-               blocking,
-               workerConfig->workerId.getValue(),
-               workerConfig->coordinatorIp.getValue(),
-               workerConfig->coordinatorPort.getValue(),
-               workerConfig->localWorkerIp.getValue(),
-               localWorkerRpcPort,
-               workerConfig->dataPort.getValue(),
-               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
+              "localWorkerRpcPort={} "
+              "localWorkerZmqPort={} windowStrategy={}",
+              blocking,
+              workerConfig->workerId.getValue(),
+              workerConfig->coordinatorIp.getValue(),
+              workerConfig->coordinatorPort.getValue(),
+              workerConfig->localWorkerIp.getValue(),
+              localWorkerRpcPort,
+              workerConfig->dataPort.getValue(),
+              magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
 
     NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
@@ -160,8 +160,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
-               rpcAddress,
-               localWorkerRpcPort.load());
+              rpcAddress,
+              localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
@@ -180,8 +180,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
-               rpcAddress,
-               localWorkerRpcPort.load());
+              rpcAddress,
+              localWorkerRpcPort.load());
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -208,7 +208,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         auto parentIds = coordinatorRpcClient->getParents(workerId);
         if (parentIds.size() > 1) {
             NES_WARNING("Attempting to start worker mobility handler for worker with multiple parents. This is"
-                         "currently not supported, mobility handler will not be started");
+                        "currently not supported, mobility handler will not be started");
         } else {
             workerMobilityHandler->start(parentIds);
         }
@@ -457,9 +457,9 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                                                   << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         NES_DEBUG("NesWorker {} about to notify soft stop completion for query {} subPlan {}",
-                   getWorkerId(),
-                   queryId,
-                   subQueryId);
+                  getWorkerId(),
+                  queryId,
+                  subQueryId);
         return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
         return true;// rpc to coordinator executed from async runner

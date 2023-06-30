@@ -74,8 +74,8 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
     this->queryService = queryService;
     this->catalogService = catalogService;
     NES_DEBUG("MonitoringManager: Init with monitoring= {} , storage= {} ",
-               enableMonitoring,
-               std::string(magic_enum::enum_name(metricStore->getType())));
+              enableMonitoring,
+              std::string(magic_enum::enum_name(metricStore->getType())));
 }
 
 MonitoringManager::~MonitoringManager() {
@@ -159,8 +159,8 @@ StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
     NES_TRACE("MonitoringManager: Adding metrics of type {} for node {}",
-               std::string(magic_enum::enum_name(metrics->getMetricType())),
-               nodeId);
+              std::string(magic_enum::enum_name(metrics->getMetricType())),
+              nodeId);
     metricStore->addMetrics(nodeId, metrics);
 }
 
@@ -317,8 +317,8 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
             return true;
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                   queryId,
-                   catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+                  queryId,
+                  catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");

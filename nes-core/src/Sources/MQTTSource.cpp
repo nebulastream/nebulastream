@@ -179,9 +179,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}",
-                               tupleCount,
-                               tuplesThisPass);
+                    NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}", tupleCount, tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
                     NES_WARNING("MQTTSource::fillBuffer: Not connected anymore!");

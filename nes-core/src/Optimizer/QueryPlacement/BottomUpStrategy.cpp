@@ -74,7 +74,7 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator {} placement.",
-                   pinnedUpStreamOperator->toString());
+                  pinnedUpStreamOperator->toString());
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
@@ -151,7 +151,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                 candidateTopologyNode = pinnedSinkOperatorLocation;
             } else {
                 NES_ERROR("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
-                           "placed.");
+                          "placed.");
                 throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                     "placed.");
@@ -173,7 +173,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
             candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
             if (candidateTopologyNode->getAvailableResources() > 0) {
                 NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : {}",
-                           candidateTopologyNode->getId());
+                          candidateTopologyNode->getId());
                 break;
             }
         }

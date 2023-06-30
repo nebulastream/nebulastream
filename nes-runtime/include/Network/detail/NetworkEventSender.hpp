@@ -64,9 +64,9 @@ class NetworkEventSender : public BaseChannelType {
             kZmqSendDefault);
         if (sentBytesOpt.has_value()) {
             NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
-                       inputBuffer.getNumberOfTuples(),
-                       inputBuffer.getBufferSize(),
-                       inputBuffer.getOriginId());
+                      inputBuffer.getNumberOfTuples(),
+                      inputBuffer.getBufferSize(),
+                      inputBuffer.getOriginId());
             return true;
         }
         NES_ERROR("DataChannel: Error sending buffer for {}", this->channelId);

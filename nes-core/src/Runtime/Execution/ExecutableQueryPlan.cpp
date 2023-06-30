@@ -209,16 +209,16 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
         }
         case ReconfigurationType::SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan {} sub plan {} left tokens = {}",
-                       queryId,
-                       querySubPlanId,
-                       numOfTerminationTokens);
+                      queryId,
+                      querySubPlanId,
+                      numOfTerminationTokens);
             if (numOfTerminationTokens.fetch_sub(1) == 1) {
                 auto expected = Execution::ExecutableQueryPlanStatus::Running;
                 if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Finished)) {
                     // if CAS fails - it means the query was already stopped or failed
                     NES_DEBUG("QueryExecutionPlan: query plan {} subplan {} is marked as (soft) stopped now",
-                               queryId,
-                               querySubPlanId);
+                              queryId,
+                              querySubPlanId);
                     qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                     queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
                                                           Execution::ExecutableQueryPlanStatus::Finished);
@@ -226,8 +226,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 }
             } else {
                 NES_DEBUG("QueryExecutionPlan: query plan {} subplan {} was already marked as stopped now",
-                           queryId,
-                           querySubPlanId);
+                          queryId,
+                          querySubPlanId);
             }
             break;
         }

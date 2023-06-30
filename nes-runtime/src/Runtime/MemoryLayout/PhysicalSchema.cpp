@@ -52,8 +52,8 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
     auto fields = schema->fields;
     if (fieldIndex > fields.size()) {
         NES_FATAL_ERROR("PhysicalSchema: field index {} is out of bound. Schema only contains {} fields.",
-                         fieldIndex,
-                         fields.size());
+                        fieldIndex,
+                        fields.size());
         throw IllegalArgumentException("Field index out of bound");
     }
     return true;

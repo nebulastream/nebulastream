@@ -157,7 +157,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
             //if the next scheduled parent is closer than the current parent, reconnect to the current parent
             reconnectSchedule.value().removeNextReconnect();
             NES_DEBUG("popped reconnect from schedule, remaining schedule size {}",
-                       reconnectSchedule.value().getReconnectVector().size());
+                      reconnectSchedule.value().getReconnectVector().size());
             return nextScheduledReconnect.value();
         }
     }
@@ -202,8 +202,8 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
         currentParentId = newParentId;
     } else {
         NES_WARNING("WorkerMobilityHandler::replaceParent() failed to replace oldParent={} with newParentId={}.",
-                     currentParentId,
-                     newParentId);
+                    currentParentId,
+                    newParentId);
         //todo: #3572 query coordinator for actual parent to recover from faulty state
     }
 

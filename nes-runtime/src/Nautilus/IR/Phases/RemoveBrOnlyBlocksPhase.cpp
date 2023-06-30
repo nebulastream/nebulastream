@@ -121,7 +121,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const
                 branchOp->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
             } else {
                 NES_ERROR("RemoveBrOnlyBlocksPhase::updateTerminatorOperation: Case not implemented: {}",
-                           magic_enum::enum_name(terminatorOp->getOperationType()));
+                          magic_enum::enum_name(terminatorOp->getOperationType()));
                 NES_NOT_IMPLEMENTED();
             }
         }

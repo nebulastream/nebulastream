@@ -61,7 +61,7 @@ void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr co
         auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField();
         if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("GeneratableWatermarkAssignerOperator: watermark field has to be an FieldAccessExpression but it was a {}",
-                       keyExpression->toString());
+                      keyExpression->toString());
         }
         auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
         auto watermarkStrategy =

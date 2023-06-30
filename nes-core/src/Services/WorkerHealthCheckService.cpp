@@ -51,7 +51,7 @@ void WorkerHealthCheckService::startHealthCheck() {
                 NES_TRACE("NesWorker::healthCheck: for worker id={} is alive", coordinatorRpcClient->getId());
             } else {
                 NES_ERROR("NesWorker::healthCheck: for worker id={} coordinator went down so shutting down the worker with ip",
-                           coordinatorRpcClient->getId());
+                          coordinatorRpcClient->getId());
                 worker->stop(true);
             }
             {

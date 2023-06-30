@@ -203,8 +203,8 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
     NES_INFO("MetricValidator: Stored metrics for ID {}: {}", expectedNodeId, Monitoring::MetricUtils::toJson(storedMetrics));
     if (retMetric->getMetricType() != expectedType) {
         NES_ERROR("MetricValidator: MetricType is not as expected {} != {}",
-                   toString(retMetric->getMetricType()),
-                   toString(expectedType));
+                  toString(retMetric->getMetricType()),
+                  toString(expectedType));
         check = false;
     }
 

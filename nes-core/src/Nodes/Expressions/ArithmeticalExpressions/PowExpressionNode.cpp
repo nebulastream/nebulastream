@@ -40,7 +40,7 @@ void PowExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::createDouble();
         NES_TRACE("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: {}",
-                   toString());
+                  toString());
     }
 }
 

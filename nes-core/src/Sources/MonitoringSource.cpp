@@ -56,8 +56,8 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     metricCollector->fillBuffer(buf);
     NES_TRACE("MonitoringSource: Generated buffer with{} tuple and size {}",
-               buf.getNumberOfTuples(),
-               schema->getSchemaSizeInBytes());
+              buf.getNumberOfTuples(),
+              schema->getSchemaSizeInBytes());
 
     //update statistics
     generatedTuples += buf.getNumberOfTuples();

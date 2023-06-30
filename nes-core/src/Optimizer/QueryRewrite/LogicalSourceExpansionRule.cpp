@@ -76,8 +76,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries =
             sourceCatalog->getPhysicalSources(logicalSourceName);
-        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.",
-                   sourceCatalogEntries.size());
+        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty()) {
             throw Exceptions::RuntimeException(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
@@ -100,7 +99,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
         NES_TRACE("LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph",
-                   sourceCatalogEntries.size());
+                  sourceCatalogEntries.size());
         //Create one duplicate operator for each physical source
         for (auto& sourceCatalogEntry : sourceCatalogEntries) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");

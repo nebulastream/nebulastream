@@ -99,8 +99,8 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::markQueryForStop at execution node with id={} and IP={}",
-                   executionNode->getId(),
-                   rpcAddress);
+                  executionNode->getId(),
+                  rpcAddress);
 
         Runtime::QueryTerminationType queryTerminationType;
 
@@ -142,8 +142,8 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
-                   executionNode->getId(),
-                   rpcAddress);
+                  executionNode->getId(),
+                  rpcAddress);
         //        bool success = workerRPCClient->unregisterQuery(rpcAddress, queryId);
         bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         if (success) {

@@ -66,20 +66,20 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
             workerContext.getId());
         auto* task = buffer.getBuffer<ReconfigurationMessage>();
         NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
-                   "on thread {}",
-                   workerContext.getId());
+                  "on thread {}",
+                  workerContext.getId());
         task->wait();
         NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to "
-                   "reconfigure on thread {}",
-                   workerContext.getId());
+                  "reconfigure on thread {}",
+                  workerContext.getId());
         task->getInstance()->reconfigure(*task, workerContext);
         NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback "
-                   "on thread {}",
-                   workerContext.getId());
+                  "on thread {}",
+                  workerContext.getId());
         task->postReconfiguration();
         NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on "
-                   "thread {}",
-                   workerContext.getId());
+                  "thread {}",
+                  workerContext.getId());
         task->postWait();
         return ExecutionResult::Ok;
     }
@@ -191,9 +191,9 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         s << buffer;
         std::string bufferString = s.str();
         NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {} queueId={}",
-                   sink->get()->toString(),
-                   bufferString,
-                   queueId);
+                  sink->get()->toString(),
+                  bufferString,
+                  queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     } else {
@@ -234,10 +234,10 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         s << buffer;
         std::string bufferString = s.str();
         NES_TRACE("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",
-                   (*nextPipeline)->getPipelineId(),
-                   (*nextPipeline)->getSuccessors().size(),
-                   bufferString,
-                   queueId);
+                  (*nextPipeline)->getPipelineId(),
+                  (*nextPipeline)->getSuccessors().size(),
+                  bufferString,
+                  queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
@@ -245,9 +245,9 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         s << buffer;
         std::string bufferString = s.str();
         NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {} queueId={}",
-                   sink->get()->toString(),
-                   bufferString,
-                   queueId);
+                  sink->get()->toString(),
+                  bufferString,
+                  queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else {
@@ -347,7 +347,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
         queryId = (*executablePipeline)->getQueryId();
         pipelineId = (*executablePipeline)->getPipelineId();
         NES_TRACE("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}",
-                   (*executablePipeline)->isReconfiguration());
+                  (*executablePipeline)->isReconfiguration());
     }
     updateStatistics(task, queryId, querySubPlanId, pipelineId, wtx);
 }
@@ -357,9 +357,9 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
                                                        const ReconfigurationMessage& message,
                                                        bool blocking) {
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-               queryExecutionPlanId,
-               blocking,
-               magic_enum::enum_name(message.getType()));
+              queryExecutionPlanId,
+              blocking,
+              magic_enum::enum_name(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
@@ -373,9 +373,9 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
                                                     const ReconfigurationMessage& message,
                                                     bool blocking) {
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-               queryExecutionPlanId,
-               blocking,
-               int(message.getType()));
+              queryExecutionPlanId,
+              blocking,
+              int(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
@@ -391,9 +391,9 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
     std::unique_lock reconfLock(reconfigurationMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-               queryExecutionPlanId,
-               blocking,
-               magic_enum::enum_name(task->getType()));
+              queryExecutionPlanId,
+              blocking,
+              magic_enum::enum_name(task->getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
@@ -428,10 +428,10 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
     std::unique_lock reconfLock(reconfigurationMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {} to queue={}",
-               queryExecutionPlanId,
-               blocking,
-               magic_enum::enum_name(task->getType()),
-               queryToTaskQueueIdMap[queryId]);
+              queryExecutionPlanId,
+              blocking,
+              magic_enum::enum_name(task->getType()),
+              queryToTaskQueueIdMap[queryId]);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());

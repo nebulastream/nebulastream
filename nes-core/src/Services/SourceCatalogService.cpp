@@ -45,10 +45,10 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
     }
 
     NES_DEBUG("SourceCatalogService::RegisterPhysicalSource: try to register physical node id {} physical source= {} logical "
-               "source= {}",
-               topologyNode->getId(),
-               physicalSourceName,
-               logicalSourceName);
+              "source= {}",
+              topologyNode->getId(),
+              physicalSourceName,
+              logicalSourceName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalSource);
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
@@ -88,16 +88,16 @@ bool SourceCatalogService::unregisterPhysicalSource(TopologyNodePtr topologyNode
 
 bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourceName, const std::string& schemaString) {
     NES_DEBUG("SourceCatalogService::registerLogicalSource: register logical source={} schema= {}",
-               logicalSourceName,
-               schemaString);
+              logicalSourceName,
+              schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
     return sourceCatalog->addLogicalSource(logicalSourceName, schemaString);
 }
 
 bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
     NES_DEBUG("SourceCatalogService::registerLogicalSource: register logical source= {} schema= {}",
-               logicalSourceName,
-               schema->toString());
+              logicalSourceName,
+              schema->toString());
     std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
     return sourceCatalog->addLogicalSource(logicalSourceName, std::move(schema));
 }

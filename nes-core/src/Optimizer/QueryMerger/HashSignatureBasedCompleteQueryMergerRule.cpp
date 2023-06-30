@@ -36,7 +36,7 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
-                     " Skipping the Signature Based Equal Query Merger Rule.");
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 

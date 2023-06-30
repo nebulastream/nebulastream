@@ -204,11 +204,11 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
             auto lineageMode = magic_enum::enum_cast<LineageType>(lineageString).value();
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
-                       "lineage= {}",
-                       userQuery,
-                       placement,
-                       faultToleranceString,
-                       lineageString);
+                      "lineage= {}",
+                      userQuery,
+                      placement,
+                      faultToleranceString,
+                      lineageString);
             QueryId queryId =
                 queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode);
             //Prepare the response
@@ -217,13 +217,13 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return createResponse(Status::CODE_202, response.dump());
         } catch (const InvalidQueryException& exc) {
             NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
-                       "user request: {}",
-                       exc.what());
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (const MapEntryNotFoundException& exc) {
             NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
-                       "user request: {}",
-                       exc.what());
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -278,8 +278,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
             NES_ERROR("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
-                       "user request: {}",
-                       exc.what());
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (...) {
             NES_ERROR("RestServer: unknown exception.");
@@ -315,9 +315,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_400, errorMessage);
         }
         if (!userRequest.contains("placement")) {
-            NES_ERROR(
-                "QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                "using 'placement'.");
+            NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
+                      "using 'placement'.");
             std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placement'. For "
                                        "more info check https://docs.nebula.stream/docs/clients/rest-api/";
             return errorHandler->handleError(Status::CODE_400, errorMessage);
@@ -340,9 +339,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
         auto* context = protobufMessage->mutable_context();
         if (!context->contains("placement")) {
-            NES_ERROR(
-                "QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                "using 'placementStrategy'.");
+            NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
+                      "using 'placementStrategy'.");
             std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placementStrategy'."
                                        "More info at: https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
             return errorHandler->handleError(Status::CODE_400, errorMessage);

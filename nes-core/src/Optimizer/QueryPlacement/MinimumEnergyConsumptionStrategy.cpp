@@ -200,7 +200,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
 
             if (!node) {
                 NES_ERROR("MinimumEnergyConsumption: Can not schedule the operator. No free resource available capacity is={}",
-                           sinkNode->getRemainingCpuCapacity());
+                          sinkNode->getRemainingCpuCapacity());
                 throw std::runtime_error("Can not schedule the operator. No free resource available.");
             }
 

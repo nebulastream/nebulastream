@@ -70,7 +70,7 @@ StatementType ForLoopStatement::getStamentType() const { return StatementType::F
 CodeExpressionPtr ForLoopStatement::getCode() const {
     if (varDeclaration && varDeclarationStatement) {
         NES_ERROR("ForLoopStatement: At most one of varDeclaration & varDeclarationStatement"
-                   "should be defined for code generation.");
+                  "should be defined for code generation.");
     }
 
     std::stringstream code;

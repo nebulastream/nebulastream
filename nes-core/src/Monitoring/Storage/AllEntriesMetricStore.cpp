@@ -34,22 +34,22 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         // check if the metric type exists
         if (!nodeMetrics->contains(metric->getMetricType())) {
             NES_TRACE("AllEntriesMetricStore: Creating metrics {} of {}",
-                       nodeId,
-                       std::string(magic_enum::enum_name(metric->getMetricType())));
+                      nodeId,
+                      std::string(magic_enum::enum_name(metric->getMetricType())));
             nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
         NES_TRACE("AllEntriesMetricStore: Creating node {} of {}",
-                   nodeId,
-                   std::string(magic_enum::enum_name(metric->getMetricType())));
+                  nodeId,
+                  std::string(magic_enum::enum_name(metric->getMetricType())));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
     NES_TRACE("AllEntriesMetricStore: Adding metrics for {} with type {}: {}",
-               nodeId,
-               std::string(magic_enum::enum_name(metric->getMetricType())),
-               NES::Monitoring::asJson(metric));
+              nodeId,
+              std::string(magic_enum::enum_name(metric->getMetricType())),
+              NES::Monitoring::asJson(metric));
     TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));

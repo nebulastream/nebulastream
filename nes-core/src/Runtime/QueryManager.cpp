@@ -99,9 +99,9 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
       numberOfQueues(numberOfQueues), numberOfThreadsPerQueue(numberOfThreadsPerQueue) {
 
     NES_DEBUG("QueryManger: use static mode for numberOfQueues={} numThreads={} numberOfThreadsPerQueue=",
-               numberOfQueues,
-               numThreads,
-               numberOfThreadsPerQueue);
+              numberOfQueues,
+              numThreads,
+              numberOfThreadsPerQueue);
     if (numberOfQueues * numberOfThreadsPerQueue != numThreads) {
         NES_THROW_RUNTIME_ERROR("number of queues and threads have to match");
     }

@@ -108,8 +108,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
         }
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: {}",
-                     expression->toString());
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: {}", expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }
@@ -173,7 +172,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: {}",
-                     expression->toString());
+                    expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -225,13 +224,13 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(con
         auto const negateExpressionNode = expression->as<NegateExpressionNode>();
         (void) negateExpressionNode;
         NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
-                         "legacy expressions: {}",
-                         expression->toString());
+                        "legacy expressions: {}",
+                        expression->toString());
         NES_NOT_IMPLEMENTED();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this "
-                     "logical expression node: {}",
-                     expression->toString());
+                    "logical expression node: {}",
+                    expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }

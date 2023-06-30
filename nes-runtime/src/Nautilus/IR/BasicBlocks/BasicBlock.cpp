@@ -117,7 +117,7 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
         return {};
     } else {
         NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: {}",
-                   magic_enum::enum_name(operations.back()->getOperationType()));
+                  magic_enum::enum_name(operations.back()->getOperationType()));
         NES_NOT_IMPLEMENTED();
     }
 }

@@ -196,8 +196,8 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
             return true;
         }
         NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr sleep because val={} < {}",
-                   ptr->getQueryStatistics(queryId)[0]->getProcessedTuple(),
-                   expectedResult);
+                  ptr->getQueryStatistics(queryId)[0]->getProcessedTuple(),
+                  expectedResult);
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
@@ -268,8 +268,8 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
             return true;
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                   queryId,
-                   queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+                  queryId,
+                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -293,7 +293,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             return true;
         }
         NES_TRACE("checkFailedOrTimeout: status not reached as status is={}",
-                   queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_WARNING("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -330,18 +330,18 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             count = std::count(content.begin(), content.end(), '\n');
             if (expectedlines.size() != count) {
                 NES_TRACE("checkoutputortimeout: number of expected lines {} not reached yet with {} lines content={} file={}",
-                           expectedlines.size(),
-                           count,
-                           content,
-                           outputFilePath);
+                          expectedlines.size(),
+                          count,
+                          content,
+                          outputFilePath);
                 continue;
             }
 
             if (content.size() != expectedContent.size()) {
                 NES_TRACE("checkoutputortimeout: number of chars {} not reached yet with chars content={} lines content={}",
-                           expectedContent.size(),
-                           content.size(),
-                           content);
+                          expectedContent.size(),
+                          content.size(),
+                          content);
                 continue;
             }
 
@@ -387,9 +387,9 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             count = std::count(content.begin(), content.end(), '\n');
             if (count < minNumberOfLines) {
                 NES_TRACE("checkIfOutputFileIsNotEmtpy: number of min lines {} not reached yet with {} lines content={}",
-                           minNumberOfLines,
-                           count,
-                           content);
+                          minNumberOfLines,
+                          count,
+                          content);
                 continue;
             }
             NES_TRACE("at least {} are found in content={}", minNumberOfLines, content);
@@ -397,8 +397,8 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         }
     }
     NES_ERROR("checkIfOutputFileIsNotEmtpy: expected ({}) result not reached ({}) within set timeout content",
-               count,
-               minNumberOfLines);
+              count,
+              minNumberOfLines);
     return false;
 }
 
@@ -504,9 +504,9 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
     NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult={}"
-               " expectedNumberBuffers={}",
-               currentResult,
-               expectedNumberBuffers);
+              " expectedNumberBuffers={}",
+              currentResult,
+              expectedNumberBuffers);
     return false;
 }
 
@@ -643,8 +643,8 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
     }
 
     NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly {} but expected {}",
-               nodeNo,
-               expectedWorkers);
+              nodeNo,
+              expectedWorkers);
     return false;
 }
 

@@ -107,7 +107,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     if (inputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT
         || outputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT) {
         NES_DEBUG("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are "
-                   "using a ROW layout.");
+                  "using a ROW layout.");
         return operatorPipeline;
     }
 

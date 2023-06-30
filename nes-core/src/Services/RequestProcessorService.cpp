@@ -183,7 +183,7 @@ void RequestProcessorService::start() {
                                        || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
 
                                 NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
-                                           "running.");
+                                          "running.");
 
                                 //3.4.1. Undeploy the running shared query plan
                                 queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
@@ -256,8 +256,8 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: {}", ex.what());
             } catch (std::exception& ex) {
                 NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the "
-                                 "queryIdAndCatalogEntryMapping: {}",
-                                 ex.what());
+                                "queryIdAndCatalogEntryMapping: {}",
+                                ex.what());
                 shutDown();
             }
         }

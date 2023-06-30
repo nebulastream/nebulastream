@@ -75,8 +75,8 @@ bool NetworkManager::registerSubpartitionConsumer(const NesPartition& nesPartiti
                                                   const NodeLocation& senderLocation,
                                                   const DataEmitterPtr& emitter) const {
     NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: {} from {}",
-               nesPartition.toString(),
-               senderLocation.getHostname());
+              nesPartition.toString(),
+              senderLocation.getHostname());
     NES_ASSERT2_FMT(emitter, "invalid network source " << nesPartition.toString());
     return partitionManager->registerSubpartitionConsumer(nesPartition, senderLocation, emitter);
 }

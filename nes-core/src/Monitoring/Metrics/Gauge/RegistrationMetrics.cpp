@@ -36,8 +36,8 @@ RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
     : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
     NES_DEBUG("RegistrationMetrics: Init with flag moving:{}, hasBattery:{}",
-               std::to_string(isMoving),
-               std::to_string(hasBattery));
+              std::to_string(isMoving),
+              std::to_string(hasBattery));
 }
 
 RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)

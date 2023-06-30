@@ -46,9 +46,9 @@ class WindowSliceStore {
         }
         auto lastSlice = sliceMetaData.back();
         NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen. current ts {} last slice {} - {}",
-                   ts,
-                   lastSlice.getStartTs(),
-                   lastSlice.getEndTs());
+                  ts,
+                  lastSlice.getStartTs(),
+                  lastSlice.getEndTs());
         NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts"
                                 << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
         //TODO: change this back once we have the vector clocks
@@ -98,19 +98,19 @@ class WindowSliceStore {
                 break;
             }
             NES_TRACE("WindowSliceStore removeSlicesUntil: watermark={} from slice endts={} sliceMetaData size={} "
-                       "partialaggregate size={}",
-                       watermark,
-                       itSlice->getEndTs(),
-                       sliceMetaData.size(),
-                       partialAggregates.size());
+                      "partialaggregate size={}",
+                      watermark,
+                      itSlice->getEndTs(),
+                      sliceMetaData.size(),
+                      partialAggregates.size());
             itAggs++;
         }
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         partialAggregates.erase(partialAggregates.begin(), itAggs);
         NES_TRACE("WindowSliceStore: removeSlicesUntil size after cleanup slice={} aggs={}",
-                   sliceMetaData.size(),
-                   partialAggregates.size());
+                  sliceMetaData.size(),
+                  partialAggregates.size());
     }
 
     /**

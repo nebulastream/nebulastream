@@ -67,8 +67,8 @@ bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         } else {
             NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
-                       "but it was a {}",
-                       expression->toString());
+                      "but it was a {}",
+                      expression->toString());
             throw TypeInferenceException("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a "
                                          "FieldRenameExpression but it was a "
                                          + expression->toString());

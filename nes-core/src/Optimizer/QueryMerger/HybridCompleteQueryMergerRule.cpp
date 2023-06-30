@@ -40,7 +40,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
-                     " Skipping the Signature Based Equal Query Merger Rule.");
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 

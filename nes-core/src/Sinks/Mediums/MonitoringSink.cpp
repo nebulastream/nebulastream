@@ -65,10 +65,10 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];
         NES_TRACE("MonitoringSink: Received buffer for {} with {} tuple and size {}:{}",
-                   nodeId,
-                   inputBuffer.getNumberOfTuples(),
-                   getSchemaPtr()->getSchemaSizeInBytes(),
-                   asJson(parsedMetric));
+                  nodeId,
+                  inputBuffer.getNumberOfTuples(),
+                  getSchemaPtr()->getSchemaSizeInBytes(),
+                  asJson(parsedMetric));
 
         metricStore->addMetrics(nodeId, std::move(parsedMetric));
     }

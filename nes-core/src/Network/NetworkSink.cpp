@@ -121,9 +121,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
             workerContext.createStorage(nesPartition);
             NES_DEBUG("NetworkSink: reconfigure() stored channel on {} Thread {} ref cnt {}",
-                       nesPartition.toString(),
-                       Runtime::NesThread::getId(),
-                       task.getUserData<uint32_t>());
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId(),
+                      task.getUserData<uint32_t>());
             break;
         }
         case Runtime::ReconfigurationType::HardEndOfStream: {
@@ -202,8 +202,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
                             "Cannot remove network channel " << nesPartition.toString());
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
-                       nesPartition.toString(),
-                       Runtime::NesThread::getId());
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId());
         }
     }
 }
@@ -224,7 +224,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
 }
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
-               this->uniqueNetworkSinkDescriptorId);
+              this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage
     onEvent(event);
 }
