@@ -132,7 +132,6 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      */
     size_t getTotalSizeForDataStructures() const;
 
-
     /**
      * @brief return number of tuples in window
      * @param windowIdentifier

@@ -56,11 +56,11 @@ class StreamHashJoinSink : public Operator {
      */
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-
-    void setDeletion(bool deletion){withDeletion = deletion;}
+    void setDeletion(bool deletion) { withDeletion = deletion; }
 
   protected:
     bool withDeletion = true;
+
   private:
     uint64_t handlerIndex;
     SchemaPtr joinSchemaLeft;

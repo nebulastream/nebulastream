@@ -106,7 +106,6 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                                         size_t windowSize,
                                         uint64_t sizeOfTupleInByteLeft,
                                         uint64_t sizeOfTupleInByteRight);
-
 };
 }// namespace NES::Runtime::Execution::Operators
 

@@ -79,7 +79,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
                                                                   configPerRun.numberOfPartitions->getDefaultValue());
 
     auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint64_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
-                                                                  configPerRun.maxHashTableSize->getDefaultValue());
+                                                                 configPerRun.maxHashTableSize->getDefaultValue());
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {

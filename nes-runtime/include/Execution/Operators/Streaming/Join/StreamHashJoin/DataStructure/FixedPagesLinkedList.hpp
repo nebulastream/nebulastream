@@ -42,7 +42,6 @@ class FixedPagesLinkedList {
      */
     uint8_t* appendLocal(const uint64_t hash);
 
-
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
      * @param hash
@@ -69,7 +68,6 @@ class FixedPagesLinkedList {
     std::string getStatistics();
 
   private:
-
     uint8_t* insertOnParticularPage(size_t position);
 
     std::atomic<uint64_t> pos;
@@ -85,7 +83,6 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
     std::atomic<FixedPage*> currentPage;
-
 };
 }// namespace NES::Runtime::Execution::Operators
 

@@ -26,8 +26,8 @@ PhysicalHashJoinSinkOperator::PhysicalHashJoinSinkOperator(
     const std::string& joinFieldNameRight,
     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler)
     : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id),
-      PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema),
-      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
+      PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
+      joinFieldNameRight(joinFieldNameRight) {}
 
 std::string PhysicalHashJoinSinkOperator::toString() const { return "PhysicalHashJoinSinkOperator"; }
 
@@ -70,6 +70,5 @@ PhysicalHashJoinSinkOperator::create(OperatorId id,
 
 const std::string& PhysicalHashJoinSinkOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
 const std::string& PhysicalHashJoinSinkOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
-
 
 }// namespace NES::QueryCompilation::PhysicalOperators

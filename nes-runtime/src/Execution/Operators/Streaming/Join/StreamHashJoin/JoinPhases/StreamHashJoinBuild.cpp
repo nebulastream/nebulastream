@@ -139,10 +139,10 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
         joinState->windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, joinState->windowReference);
-//        NES_TRACE2("reinit join state with start={} end={} for ts={}",
-//                   (uint64_t) joinState->windowStart,
-//                   (uint64_t) joinState->windowEnd,
-//                   (uint64_t) tsValue);
+        //        NES_TRACE2("reinit join state with start={} end={} for ts={}",
+        //                   (uint64_t) joinState->windowStart,
+        //                   (uint64_t) joinState->windowEnd,
+        //                   (uint64_t) tsValue);
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

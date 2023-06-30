@@ -204,7 +204,7 @@ void StreamHashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer)
                                operatorHandlerMemRef,
                                windowIdentifier);
         NES_TRACE("Mark partition for done numberOfPagesLeft=" << numberOfPagesLeft
-                                                                 << " numberOfPagesRight=" << numberOfPagesRight);
+                                                               << " numberOfPagesRight=" << numberOfPagesRight);
         return;
     }
 
