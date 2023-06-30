@@ -128,27 +128,27 @@ public:
 std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
     return {
         Nautilus::Record({
-            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>(0_u64)},
             {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 42)},
-            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>(0_u64)}
         }),
 
         Nautilus::Record({
-            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>(2_u64)},
             {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 1234)},
-            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>(1_u64)}
         }),
 
         Nautilus::Record({
-            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>(4_u64)},
             {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 404)},
-            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>(1_u64)}
         }),
 
         Nautilus::Record({
-            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>(4_u64)},
             {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 101)},
-            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>(1_u64)}
         })
     };
 }

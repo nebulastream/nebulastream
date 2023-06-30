@@ -98,7 +98,7 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeBaseTest) {
 
     const TimeStamp c2 = TimeStamp((uint64_t) dur.count());
     auto c3 = c1 + c2;
-    EXPECT_EQ(c3.as<TimeStamp>()->getMilliSeconds(), (uint64_t) 3333597103488);
+    EXPECT_EQ(c3.as<TimeStamp>()->getMilliSeconds(), 3333597103488_u64);
     const TimeStamp c4 = TimeStamp((uint64_t) dur.count() - 1000);
     /** tests the functions greater and less than, equals */
     EXPECT_EQ((c1 > c4), true);
@@ -126,17 +126,17 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeExtendions) {
     std::chrono::milliseconds dur(ms);
     auto c1 = Value<TimeStamp>(TimeStamp((uint64_t) dur.count()));
     auto centuryc1 = c1->century();
-    EXPECT_EQ(centuryc1, (uint64_t) 21);
+    EXPECT_EQ(centuryc1, 21_u64);
     long ms2 = 570207551;// Wed Jan 07 1970 14:23:27
     std::chrono::milliseconds dur1(ms2);
     auto c2 = Value<TimeStamp>(TimeStamp((uint64_t) dur1.count()));
     auto centuryc2 = c2->century();
-    EXPECT_EQ(centuryc2, (uint64_t) 20);
+    EXPECT_EQ(centuryc2, 20_u64);
     /** Test für age functions*/
     auto age = c2->difference(c1);
-    EXPECT_EQ(age, (uint64_t) 1666228344193);
+    EXPECT_EQ(age, 1666228344193_u64);
     auto age2 = c1->difference(c2);
-    EXPECT_EQ(age2, (uint64_t) 1666228344193);
+    EXPECT_EQ(age2, 1666228344193_u64);
     /** Test für weekdayName */
     auto weekdayName = c1->getWeekdayName();
     EXPECT_EQ(weekdayName, Value<Text>("Wednesday"));
@@ -151,11 +151,11 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeConstructurTest) {
     //Test String Constructor
     auto textValue = Value<Text>("1970-01-07T14:23:27");
     auto c3 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue));
-    EXPECT_EQ(c3->getMilliSeconds(), (uint64_t) 570207000L);
+    EXPECT_EQ(c3->getMilliSeconds(), 570207000_u64L);
     //
     auto textValue1 = Value<Text>("1970-01-07");
     auto c4 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue1));
-    EXPECT_EQ(c4->getMilliSeconds(), (uint64_t) 518400000L);
+    EXPECT_EQ(c4->getMilliSeconds(), 518400000_u64L);
 }
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeIntervalTest) {

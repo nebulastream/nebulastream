@@ -35,7 +35,7 @@ std::unique_ptr<AggregationState> SumFunction::createState() {
                     return std::make_unique<SumState>(Value<>((uint32_t) 0));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<SumState>(Value<>((uint64_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_u64));
                 };
             }
         } else {

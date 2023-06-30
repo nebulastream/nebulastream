@@ -130,7 +130,7 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
     // Iterating over the sample and creating the aggregation for all keys
     Nautilus::Value<Nautilus::MemRef> aggregationValueMemRef = pagedVectorRef.getEntry(numberOfTuplesInWindow.as<Nautilus::UInt64>());
     aggregationFunction->reset(aggregationValueMemRef);
-    Nautilus::Value<Nautilus::UInt64> zeroValue((uint64_t) 0);
+    Nautilus::Value<Nautilus::UInt64> zeroValue(0_u64);
     for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.at(numberOfRecordsInSample); ++it) {
         auto entryMemRef = *it;
         auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
@@ -169,7 +169,7 @@ Nautilus::Value<> RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Val
 
     NES_DEBUG("Scaling factor is {}", retValue.getValue().toString());
     if (retValue == 1.0) {
-        return Nautilus::Value<Nautilus::UInt64>((uint64_t) 1);
+        return Nautilus::Value<Nautilus::UInt64>(1_u64);
     } else {
         return retValue;
     }

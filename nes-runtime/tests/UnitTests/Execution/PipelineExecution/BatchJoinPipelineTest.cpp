@@ -121,7 +121,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     joinBuildExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     joinBuildExecutablePipeline->stop(pipeline1Context);
     auto entries = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    ASSERT_EQ(entries, (uint64_t) 4);
+    ASSERT_EQ(entries, 4_u64);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

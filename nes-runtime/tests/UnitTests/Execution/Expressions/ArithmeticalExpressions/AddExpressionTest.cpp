@@ -95,8 +95,8 @@ TEST_F(AddExpressionTest, addUnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
-        auto resultValue = addExpression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 42));
-        ASSERT_EQ(resultValue, (uint64_t) 84u);
+        auto resultValue = addExpression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
+        ASSERT_EQ(resultValue, 84_u64u);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
 }
@@ -127,7 +127,7 @@ TEST_F(AddExpressionTest, addTimeStamps) {
     {
         auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp((uint64_t) dur.count())),
                                               Value<TimeStamp>(TimeStamp((uint64_t) dur.count())));
-        EXPECT_EQ(resultValue.as<TimeStamp>()->getMilliSeconds(), (uint64_t) 3333597103488);
+        EXPECT_EQ(resultValue.as<TimeStamp>()->getMilliSeconds(), 3333597103488_u64);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<TimeStamp>());
     }
 }

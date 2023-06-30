@@ -149,13 +149,13 @@ TEST_F(SignExpressionTest, evaluateSignExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 0));
+        auto resultValue = expression.eval(Value<UInt64>(0_u64));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 10));
+        auto resultValue = expression.eval(Value<UInt64>(10_u64));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

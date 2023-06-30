@@ -78,7 +78,7 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(4_u64));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

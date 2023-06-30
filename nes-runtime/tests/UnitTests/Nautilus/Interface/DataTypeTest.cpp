@@ -179,19 +179,19 @@ TEST_F(DataTypeTest, UInt16Test) {
 }
 
 TEST_F(DataTypeTest, UInt64Test) {
-    auto f1 = Value<UInt64>((uint64_t) 42);
-    ASSERT_EQ(f1.value->getValue(), (uint64_t) 42);
+    auto f1 = Value<UInt64>(42_u64);
+    ASSERT_EQ(f1.value->getValue(), 42_u64);
     ASSERT_TRUE(f1.value->getType()->isInteger());
     auto stamp = f1.value->getType();
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(stamp)->getNumberOfBits(), 64);
 
-    Value<UInt64> f2 = (uint64_t) 32;
-    ASSERT_EQ(f2.value->getValue(), (uint64_t) 32);
+    Value<UInt64> f2 = 32_u64;
+    ASSERT_EQ(f2.value->getValue(), 32_u64);
     ASSERT_TRUE(f2.value->getType()->isInteger());
     auto stamp2 = f2.value->getType();
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(stamp2)->getNumberOfBits(), 64);
     auto f3 = f1 + f2;
-    ASSERT_EQ(f3.as<UInt64>().value->getValue(), (uint64_t) 74);
+    ASSERT_EQ(f3.as<UInt64>().value->getValue(), 74_u64);
 }
 
 TEST_F(DataTypeTest, IntCastTest) {
@@ -248,7 +248,7 @@ TEST_F(DataTypeTest, UIntCastTest) {
     Value<UInt8> ui8 = (uint8_t) 32;
     Value<UInt16> ui16 = (uint16_t) 32;
     Value<UInt32> ui32 = (uint32_t) 32;
-    Value<UInt64> ui64 = (uint64_t) 32;
+    Value<UInt64> ui64 = 32_u64;
 
     {
         // cast ui8 to ui16
@@ -268,7 +268,7 @@ TEST_F(DataTypeTest, UIntCastTest) {
         // cast ui8 to ui64
         auto v1 = ui8 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
-        ASSERT_EQ(v1.as<UInt64>()->getValue(), (uint64_t) 64);
+        ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 
     {
@@ -282,14 +282,14 @@ TEST_F(DataTypeTest, UIntCastTest) {
         // cast ui16 to ui64
         auto v1 = ui16 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
-        ASSERT_EQ(v1.as<UInt64>()->getValue(), (uint64_t) 64);
+        ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 
     {
         // cast ui32 to ui64
         auto v1 = ui32 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
-        ASSERT_EQ(v1.as<UInt64>()->getValue(), (uint64_t) 64);
+        ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 }
 
@@ -297,7 +297,7 @@ TEST_F(DataTypeTest, UIntAndIntCastTest) {
     Value<UInt8> ui8 = (uint8_t) 32;
     Value<UInt16> ui16 = (uint16_t) 32;
     Value<UInt32> ui32 = (uint32_t) 32;
-    Value<UInt64> ui64 = (uint64_t) 32;
+    Value<UInt64> ui64 = 32_u64;
 
     Value<Int8> i8 = (int8_t) 32;
     Value<Int16> i16 = (int16_t) 32;
@@ -390,7 +390,7 @@ TEST_F(DataTypeTest, UIntAndIntCastTest) {
         // cast ui64 to i64
         auto v1 = ui64 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
-        ASSERT_EQ(v1.as<UInt64>()->getValue(), (uint64_t) 64);
+        ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 }
 
@@ -463,9 +463,9 @@ struct TestS {
 TEST_F(DataTypeTest, LoadMemberTest) {
     auto test = TestS{10, 20, 30};
     Value<MemRef> ref = Value<MemRef>((int8_t*) &test);
-    ASSERT_EQ(getMember(ref, TestS, x).load<UInt64>(), (uint64_t) 10);
-    ASSERT_EQ(getMember(ref, TestS, y).load<UInt64>(), (uint64_t) 20);
-    ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), (uint64_t) 30);
+    ASSERT_EQ(getMember(ref, TestS, x).load<UInt64>(), 10_u64);
+    ASSERT_EQ(getMember(ref, TestS, y).load<UInt64>(), 20_u64);
+    ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), 30_u64);
 }
 
 }// namespace NES::Nautilus

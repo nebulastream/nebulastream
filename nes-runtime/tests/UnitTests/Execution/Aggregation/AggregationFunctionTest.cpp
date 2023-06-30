@@ -89,20 +89,20 @@ TEST_F(AggregationFunctionTest, countAggregation) {
     // test lift
     Record inputRecord;
     countAgg.lift(memref, inputRecord);
-    ASSERT_EQ(countValue.count, (uint64_t) 1);
+    ASSERT_EQ(countValue.count, 1_u64);
 
     // test combine
     countAgg.combine(memref, memref);
-    ASSERT_EQ(countValue.count, (uint64_t) 2);
+    ASSERT_EQ(countValue.count, 2_u64);
 
     // test lower
     auto result = Record();
     countAgg.lower(memref, result);
-    ASSERT_EQ(result.read("result"), (uint64_t) 2);
+    ASSERT_EQ(result.read("result"), 2_u64);
 
     // test reset
     countAgg.reset(memref);
-    EXPECT_EQ(countValue.count, (uint64_t) 0);
+    EXPECT_EQ(countValue.count, 0_u64);
 }
 
 /**

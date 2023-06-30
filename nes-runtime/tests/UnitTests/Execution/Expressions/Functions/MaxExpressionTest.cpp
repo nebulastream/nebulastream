@@ -83,7 +83,7 @@ TEST_F(MaxExpressionTest, evaluateMaxExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 17), Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(17_u64), Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

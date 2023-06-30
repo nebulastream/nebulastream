@@ -302,7 +302,7 @@ TEST_P(TypeCompilationTest, castUInteger) {
     Value<> ui8 = Value<UInt8>((uint8_t) 42);
     Value<> ui16 = Value<UInt16>((uint16_t) 42);
     Value<> ui32 = Value<UInt32>((uint32_t) 42);
-    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+    Value<> ui64 = Value<UInt64>(42_u64);
 
     {
         auto engine = compileCast(ui8, ui16);
@@ -344,7 +344,7 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
     Value<> ui8 = Value<UInt8>((uint8_t) 42);
     Value<> ui16 = Value<UInt16>((uint16_t) 42);
     Value<> ui32 = Value<UInt32>((uint32_t) 42);
-    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+    Value<> ui64 = Value<UInt64>(42_u64);
     {
         auto engine = compileCast(i8, ui8);
         auto function = engine->getInvocableMember<uint8_t, int8_t, uint8_t>("execute");

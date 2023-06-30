@@ -47,7 +47,7 @@ std::vector<Runtime::TupleBuffer> AbstractSynopsis::getApproximateForKeys(const 
     auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
     auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                      outputSchema);
-    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
+    Nautilus::Value<Nautilus::UInt64> recordIndex(0_u64);
     for (auto& key : keys) {
         // Retrieving the approximation for the record
         Nautilus::Record record;
@@ -64,7 +64,7 @@ std::vector<Runtime::TupleBuffer> AbstractSynopsis::getApproximateForKeys(const 
         if (recordIndex >= maxRecordsPerBuffer) {
             retTupleBuffers.emplace_back(buffer);
             buffer = bufferManager->getBufferBlocking();
-            recordIndex = (uint64_t) 0;
+            recordIndex = 0_u64;
         }
     }
 

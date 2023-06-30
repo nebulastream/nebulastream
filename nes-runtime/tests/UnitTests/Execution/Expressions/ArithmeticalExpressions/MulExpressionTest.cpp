@@ -82,8 +82,8 @@ TEST_F(MulExpressionTest, addUnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4), Value<UInt64>((uint64_t) 4));
-        ASSERT_EQ(resultValue, (uint64_t) 16);
+        auto resultValue = expression.eval(Value<UInt64>(4_u64), Value<UInt64>(4_u64));
+        ASSERT_EQ(resultValue, 16_u64);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
 }

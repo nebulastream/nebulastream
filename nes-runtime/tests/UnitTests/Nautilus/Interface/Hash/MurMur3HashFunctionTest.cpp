@@ -44,7 +44,7 @@ class HashTest : public Testing::NESBaseTest {
 TEST_F(HashTest, IntHashTest) {
     auto f1 = Value<Int8>((int8_t) 42);
     auto res = hf->calculate(f1);
-    ASSERT_EQ(res, (uint64_t) 9297814887077134198ul);
+    ASSERT_EQ(res, 9297814887077134198_u64ul);
 }
 
 }// namespace NES::Nautilus::Interface

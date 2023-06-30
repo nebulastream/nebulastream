@@ -780,7 +780,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // auto maxWatermark = 0;
         auto maxWatermarkInitStatement =
             VarDeclStatement(maxWatermarkVariableDeclaration)
-                .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
+                .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
         context->code->variableInitStmts.push_back(maxWatermarkInitStatement.copy());
 
         NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid size of struct input tuples");
@@ -2109,7 +2109,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
             auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
             // todo fix entry size
             auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(getEntrySize(window))));
-            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue(16_u64)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
                                                         tf->createPointer(partialAggregationEntry.getType())));
@@ -2198,7 +2198,7 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(
             auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
             // todo fix entry size
             auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(getEntrySize(window))));
-            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue(16_u64)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
                                                         tf->createPointer(partialAggregationEntry.getType())));
@@ -2300,7 +2300,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
-    auto constStatement = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0)));
+    auto constStatement = Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64)));
 
     if (context->pipelineName != "SlicingWindowType") {
         context->pipelineName = "CompleteWindowType";
@@ -2308,7 +2308,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
     auto debState =
-        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
+        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
     context->code->variableInitStmts.push_back(debState.copy());
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
@@ -3562,7 +3562,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
 
     auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
     auto debState =
-        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
+        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
     context->code->variableInitStmts.push_back(debState.copy());
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
@@ -3948,7 +3948,7 @@ CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowD
     auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
     createCall->addParameter(constantValueSize);
 
-    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue(100000_u64)));
     createCall->addParameter(constantNumberOfEntries);
 
     auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");
@@ -4016,7 +4016,7 @@ CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindow
     auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
     createCall->addParameter(constantValueSize);
 
-    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue(100000_u64)));
     createCall->addParameter(constantNumberOfEntries);
 
     auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");
@@ -4126,7 +4126,7 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
     createCall->addParameter(constantValueSize);
 
-    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue(100000_u64)));
     createCall->addParameter(constantNumberOfEntries);
 
     auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");

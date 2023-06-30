@@ -26,7 +26,7 @@ OUT customBitCastProxy(IN f) {
     return ret;
 }
 
-HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
+HashFunction::HashValue H3Hash::init() { return 0_u64UL; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
 
