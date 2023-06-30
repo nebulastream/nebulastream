@@ -125,7 +125,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 // Creates a log message with log level fatal error.
 #define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
 
-#endif
 
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
@@ -215,4 +214,4 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 
 }// namespace NES
 
-// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_

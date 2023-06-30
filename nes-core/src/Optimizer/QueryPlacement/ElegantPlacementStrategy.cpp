@@ -40,7 +40,7 @@ ElegantPlacementStrategy::create(const std::string& serviceURL,
         case PlacementStrategy::ELEGANT_PERFORMANCE: timeWeight = 1; break;
         case PlacementStrategy::ELEGANT_ENERGY: timeWeight = 0; break;
         case PlacementStrategy::ELEGANT_BALANCED: timeWeight = 0.5; break;
-        default: NES_ERROR2("Unknown placement strategy for elegant {}", magic_enum::enum_name(placementStrategy));
+        default: NES_ERROR("Unknown placement strategy for elegant {}", magic_enum::enum_name(placementStrategy));
     }
 
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
@@ -148,7 +148,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
 nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
                                                              const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of the query plan");
+    NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of the query plan");
 
     nlohmann::json queryPlan{};
     std::vector<nlohmann::json> nodes{};
@@ -199,7 +199,7 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Oper
 }
 
 nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
-    NES_DEBUG2("ElegantPlacementStrategy: Getting the json representation of available nodes");
+    NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of available nodes");
     nlohmann::json topologyJson{};
     auto root = topology->getRoot();
     std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
@@ -248,7 +248,7 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
 
         nodes.push_back(currentNodeJsonValue);
     }
-    NES_INFO2("ElegantPlacementStrategy: no more topology nodes to add");
+    NES_INFO("ElegantPlacementStrategy: no more topology nodes to add");
 
     topologyJson[AVAILABLE_NODES_KEY] = nodes;
     topologyJson[NETWORK_DELAYS_KEY] = edges;
