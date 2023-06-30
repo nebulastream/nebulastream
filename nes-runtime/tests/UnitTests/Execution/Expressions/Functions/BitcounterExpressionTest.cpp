@@ -82,7 +82,7 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 31));
+        auto resultValue = expression.eval(Value<UInt64>(31_u64));
         ASSERT_EQ(resultValue, (uint32_t) 5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }

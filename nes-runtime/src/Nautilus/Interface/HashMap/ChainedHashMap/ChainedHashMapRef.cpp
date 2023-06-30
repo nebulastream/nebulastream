@@ -134,7 +134,7 @@ Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
     auto entriesPerPage = getEntriesPerPage();
-    return {*this, entriesPerPage, (uint64_t) 0};
+    return {*this, entriesPerPage, 0_u64};
 }
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() {
     auto currentSize = getCurrentSize();
@@ -160,22 +160,22 @@ Value<MemRef> ChainedHashMapRef::getPage(const Value<UInt64>& pageIndex) {
 ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef,
                                                 const Value<UInt64>& entriesPerPage,
                                                 const Value<UInt64>& currentIndex)
-    : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex((uint64_t) 0),
-      currentPage(hashTableRef.getPage((uint64_t) 0)), currentPageIndex((uint64_t) 0), currentIndex(currentIndex) {}
+    : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex(0_u64),
+      currentPage(hashTableRef.getPage(0_u64)), currentPageIndex(0_u64), currentIndex(currentIndex) {}
 
 ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex)
-    : hashTableRef(hashTableRef), entriesPerPage((uint64_t) 0), inPageIndex((uint64_t) 0),
+    : hashTableRef(hashTableRef), entriesPerPage(0_u64), inPageIndex(0_u64),
       currentPage(/*use hash table ref as a temp mem ref that is in this case never used*/ hashTableRef.hashTableRef),
-      currentPageIndex((uint64_t) 0), currentIndex(currentIndex) {}
+      currentPageIndex(0_u64), currentIndex(currentIndex) {}
 
 ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++() {
-    inPageIndex = inPageIndex + (uint64_t) 1;
+    inPageIndex = inPageIndex + 1_u64;
     if (entriesPerPage == inPageIndex) {
-        inPageIndex = (uint64_t) 0;
-        currentPageIndex = currentPageIndex + (uint64_t) 1;
+        inPageIndex = 0_u64;
+        currentPageIndex = currentPageIndex + 1_u64;
         currentPage = hashTableRef.getPage(currentPageIndex);
     }
-    currentIndex = currentIndex + (uint64_t) 1;
+    currentIndex = currentIndex + 1_u64;
     return *this;
 }
 

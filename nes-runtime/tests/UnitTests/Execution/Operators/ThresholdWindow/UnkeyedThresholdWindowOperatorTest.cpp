@@ -417,7 +417,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), (uint64_t) 2);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2_u64);
 
     thresholdWindowOperator->terminate(ctx);
 }
@@ -514,7 +514,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMax), 90);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMin), 50);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMean), 3);
-    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameCount), (uint64_t) 2);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameCount), 2_u64);
 
     thresholdWindowOperator->terminate(ctx);
 }

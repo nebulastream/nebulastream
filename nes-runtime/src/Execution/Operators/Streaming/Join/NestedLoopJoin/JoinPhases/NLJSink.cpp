@@ -26,7 +26,11 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+<<<<<<< HEAD
 #include <Util/StdInt.hpp>
+=======
+#include<Util/StdInt.hpp>
+>>>>>>> b658f713f7 ([#3919] Changed for uint64_t to user-defined literal)
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -106,7 +110,6 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
         for (auto rightRecordMemRef : rightPagedVector) {
             auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
             auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
-
             /* This can be later replaced by an interface that returns bool and gets passed the
              * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {

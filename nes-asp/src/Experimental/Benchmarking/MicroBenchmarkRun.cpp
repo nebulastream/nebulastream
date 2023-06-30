@@ -243,7 +243,7 @@ std::vector<Nautilus::Value<>> MicroBenchmarkRun::createKeys(std::vector<Runtime
     for (auto& buffer : inputBuffers) {
         auto numberOfRecords = buffer.getNumberOfTuples();
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
-        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+        for (Nautilus::Value<Nautilus::UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
             auto record = memoryProvider->read({}, bufferAddress, i);
             auto key = readKeyFieldExpression->execute(record);
             keys.emplace_back(key);
@@ -271,14 +271,14 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
     std::vector<Runtime::TupleBuffer> accuracyBuffers;
     auto maxRecordsPerBuffer = bufferManager->getBufferSize() / aggregation.outputSchema->getSchemaSizeInBytes();
     auto outputBuffer = bufferManager->getBufferBlocking();
-    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t)0);
+    Nautilus::Value<Nautilus::UInt64> recordIndex(0_u64);
 
     for (auto& key : keys) {
         aggregationFunction->reset(aggregationValueMemRef);
 
         for (auto& buf : inputBuffers) {
             auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buf.getBuffer());
-            for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < buf.getNumberOfTuples(); i = i + (uint64_t) 1) {
+            for (Nautilus::Value<Nautilus::UInt64> i = 0_u64; i < buf.getNumberOfTuples(); i = i + 1_u64) {
                 auto record = inputMemoryProvider->read({}, bufferAddress, i);
                 if (readKeyFieldExpression->execute(record) == key) {
                     aggregationFunction->lift(aggregationValueMemRef, record);
@@ -300,7 +300,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
         if (recordIndex >= maxRecordsPerBuffer) {
             accuracyBuffers.emplace_back(outputBuffer);
             outputBuffer = bufferManager->getBufferBlocking();
-            recordIndex = (uint64_t) 0;
+            recordIndex = 0_u64;
         }
     }
 

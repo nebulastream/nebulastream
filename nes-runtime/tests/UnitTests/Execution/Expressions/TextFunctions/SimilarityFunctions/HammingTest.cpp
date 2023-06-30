@@ -51,12 +51,12 @@ TEST_F(HammingTest, BaseTest) {
     auto textValue0 = Value<Text>("lurk");
     auto textValue1 = Value<Text>("duck");
     auto dist1 = expression.eval(textValue0, textValue1);
-    EXPECT_EQ(dist1, (uint64_t) 2);
+    EXPECT_EQ(dist1, 2_u64);
 
     auto textValue2 = Value<Text>("duk");
     auto textValue3 = Value<Text>("duk");
     auto dist2 = expression.eval(textValue2, textValue3);
-    EXPECT_EQ(dist2, (uint64_t) 0);
+    EXPECT_EQ(dist2, 0_u64);
 }
 
 TEST_F(HammingTest, FailTestInputType) {

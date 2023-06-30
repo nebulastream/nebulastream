@@ -80,7 +80,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
     }
     //UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 0));
+        auto resultValue = expression.eval(Value<UInt64>(0_u64));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

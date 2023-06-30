@@ -45,7 +45,7 @@ void EquiWidthOneDimensionalHistogram::addToSynopsis(const uint64_t, Runtime::Ex
     auto& bins = localState->bins;
 
     auto binDimensionPos = ((readKeyExpression->execute(record) - minValue) / binWidth);
-    aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
+    aggregationFunction->lift(bins[0_u64][binDimensionPos], record);
 }
 
 void EquiWidthOneDimensionalHistogram::getApproximateRecord(const uint64_t handlerIndex,
@@ -60,7 +60,7 @@ void EquiWidthOneDimensionalHistogram::getApproximateRecord(const uint64_t handl
 
     // Calculating the bin position and then lowering the approximation
     auto binDimensionPos = ((key - minValue) / binWidth);
-    aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], outputRecord);
+    aggregationFunction->lower(bins[0_u64][binDimensionPos], outputRecord);
 
     // Writing the key, lower and upper value of the current bin
     auto lowerBinBound = binDimensionPos * binWidth;
@@ -81,8 +81,8 @@ void EquiWidthOneDimensionalHistogram::setup(const uint64_t handlerIndex, Runtim
     auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
     auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
 
-    for (Nautilus::Value<> bin = (uint64_t) 0; bin < numberOfBins; bin = bin + 1) {
-        aggregationFunction->reset(binsRef[(uint64_t)0][bin]);
+    for (Nautilus::Value<> bin = 0_u64; bin < numberOfBins; bin = bin + 1) {
+        aggregationFunction->reset(binsRef[0_u64][bin]);
     }
 }
 

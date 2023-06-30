@@ -190,7 +190,7 @@ TEST_P(AggregationOperatorTest, aggQueryTest) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0; i < 10; i++) {
-        dynamicBuffer[i]["f1"].write((uint64_t) 1);
+        dynamicBuffer[i]["f1"].write(1_u64);
     }
     dynamicBuffer.setNumberOfTuples(10);
     executablePipeline->setup();

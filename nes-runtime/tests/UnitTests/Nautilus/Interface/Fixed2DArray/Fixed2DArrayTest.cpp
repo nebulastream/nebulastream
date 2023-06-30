@@ -43,16 +43,16 @@ TEST_F(Fixed2DArrayTest, insertSimpleDataTypes) {
     Fixed2DArray fixed2DArray(*allocator, numRows, numCols, entrySize);
     Fixed2DArrayRef fixed2DArrayRef(Value<MemRef>((int8_t*) &fixed2DArray), entrySize, numCols);
 
-    for (Value<UInt64> row = (uint64_t) 0UL; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = (uint64_t) 0UL; col < (uint64_t) numCols; col = col + 1) {
+    for (Value<UInt64> row = 0_u64UL; row < (uint64_t) numRows; row = row + 1) {
+        for (Value<UInt64> col = 0_u64UL; col < (uint64_t) numCols; col = col + 1) {
             Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
             auto cell = fixed2DArrayRef[row][col];
             cell.store(expectedValue);
         }
     }
 
-    for (Value<UInt64> row = (uint64_t) 0UL; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = (uint64_t) 0UL; col < (uint64_t) numCols; col = col + 1) {
+    for (Value<UInt64> row = 0_u64UL; row < (uint64_t) numRows; row = row + 1) {
+        for (Value<UInt64> col = 0_u64UL; col < (uint64_t) numCols; col = col + 1) {
             Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
             auto cell = fixed2DArrayRef[row][col];
             auto resultValue = cell.load<UInt64>();
@@ -76,8 +76,8 @@ TEST_F(Fixed2DArrayTest, insertCustomClass) {
     Fixed2DArray fixed2DArray(*allocator, numRows, numCols, entrySize);
     Fixed2DArrayRef fixed2DArrayRef(Value<MemRef>((int8_t*) &fixed2DArray), entrySize, numCols);
 
-    for (Value<UInt64> row = (uint64_t) 0UL; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = (uint64_t) 0UL; col < (uint64_t) numCols; col = col + 1) {
+    for (Value<UInt64> row = 0_u64UL; row < (uint64_t) numRows; row = row + 1) {
+        for (Value<UInt64> col = 0_u64UL; col < (uint64_t) numCols; col = col + 1) {
             auto cellCustomClass = static_cast<CustomClass*>(fixed2DArrayRef[row][col].getValue().getValue());
             cellCustomClass->id = col.getValue().getValue() + row.getValue().getValue() * numCols;
             cellCustomClass->val1 = 42;
@@ -85,8 +85,8 @@ TEST_F(Fixed2DArrayTest, insertCustomClass) {
         }
     }
 
-    for (Value<UInt64> row = (uint64_t) 0UL; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = (uint64_t) 0UL; col < (uint64_t) numCols; col = col + 1) {
+    for (Value<UInt64> row = 0_u64UL; row < (uint64_t) numRows; row = row + 1) {
+        for (Value<UInt64> col = 0_u64UL; col < (uint64_t) numCols; col = col + 1) {
             auto cellCustomClass = static_cast<CustomClass*>(fixed2DArrayRef[row][col].getValue().getValue());
             EXPECT_EQ(cellCustomClass->id, col.getValue().getValue() + row.getValue().getValue() * numCols);
             EXPECT_EQ(cellCustomClass->val1, 42);

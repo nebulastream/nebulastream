@@ -109,9 +109,9 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     slicePreAggregation.open(ctx, rb);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 11)}, {"k1", Value<>(11)}, {"v1", Value<>(2)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(12)}, {"v1", Value<>(42)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(11)}, {"v1", Value<>(3)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>(11_u64)}, {"k1", Value<>(11)}, {"v1", Value<>(2)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>(12_u64)}, {"k1", Value<>(12)}, {"v1", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>(12_u64)}, {"k1", Value<>(11)}, {"v1", Value<>(3)}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);

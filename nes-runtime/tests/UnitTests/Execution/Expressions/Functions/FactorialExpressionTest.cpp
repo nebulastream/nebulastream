@@ -82,13 +82,13 @@ TEST_F(FactorialExpressionTest, factorialUnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

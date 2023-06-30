@@ -81,13 +81,13 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 42));
-        ASSERT_EQ(resultValue, (uint64_t) 0);
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
+        ASSERT_EQ(resultValue, 0_u64);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
 
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 43));
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(43_u64));
         ASSERT_EQ(resultValue, UINT64_MAX);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }

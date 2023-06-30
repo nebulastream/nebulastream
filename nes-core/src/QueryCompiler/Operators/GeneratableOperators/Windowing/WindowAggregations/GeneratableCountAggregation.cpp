@@ -36,7 +36,7 @@ void GeneratableCountAggregation::compileLift(CompoundStatementPtr currentCode,
                                               BinaryOperatorStatement partialValueRef,
                                               RecordHandlerPtr) {
 
-    auto initValue = DataTypeFactory::createBasicValue((uint64_t) 1);
+    auto initValue = DataTypeFactory::createBasicValue(1_u64);
     auto initGenValue = GeneratableTypesFactory::createValueType(initValue);
     auto updatedPartial = partialValueRef.assign(ConstantExpressionStatement(initGenValue));
     currentCode->addStatement(updatedPartial.copy());

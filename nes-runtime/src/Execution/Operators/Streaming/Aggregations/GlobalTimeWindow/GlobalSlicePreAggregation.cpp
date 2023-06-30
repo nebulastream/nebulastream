@@ -71,7 +71,7 @@ GlobalSlicePreAggregation::GlobalSlicePreAggregation(
 
 void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = (uint64_t) 0;
+    Value<UInt64> entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
