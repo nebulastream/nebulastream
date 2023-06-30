@@ -24,8 +24,7 @@ PhysicalHashJoinBuildOperator::PhysicalHashJoinBuildOperator(
     const JoinBuildSideType buildSide,
     const std::string& timeStampFieldName,
     const std::string& joinFieldName)
-    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id),
-      PhysicalUnaryOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName), buildSide(buildSide) {}
 
 PhysicalOperatorPtr
@@ -53,7 +52,13 @@ PhysicalHashJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                       const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
+    return create(Util::getNextOperatorId(),
+                  inputSchema,
+                  outputSchema,
+                  operatorHandler,
+                  buildSide,
+                  timeStampFieldName,
+                  joinFieldName);
 }
 
 std::string PhysicalHashJoinBuildOperator::toString() const { return "PhysicalHashJoinBuildOperator"; }

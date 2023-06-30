@@ -15,13 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_HASHTABLE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_HASHTABLE_HPP_
 
-#include <atomic>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -41,10 +41,10 @@ class StreamJoinHashTable {
      * @param preAllocPageSizeCnt
      */
     explicit StreamJoinHashTable(size_t sizeOfRecord,
-                       size_t numPartitions,
-                       FixedPagesAllocator& fixedPagesAllocator,
-                       size_t pageSize,
-                       size_t preAllocPageSizeCnt);
+                                 size_t numPartitions,
+                                 FixedPagesAllocator& fixedPagesAllocator,
+                                 size_t pageSize,
+                                 size_t preAllocPageSizeCnt);
 
     StreamJoinHashTable(const StreamJoinHashTable&) = delete;
 

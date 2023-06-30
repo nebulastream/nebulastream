@@ -445,8 +445,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                       << " existingNumberOfTuplesInWindowRight=" << existingNumberOfTuplesInWindowRight
                       << " expectedNumberOfTuplesInWindowRight=" << expectedNumberOfTuplesInWindowRight
                       << " windowIdentifier=" << windowIdentifier);
-                        EXPECT_TRUE(false);
-                        EXIT_FAILURE;
+            EXPECT_TRUE(false);
+            EXIT_FAILURE;
         }
 
         for (auto& leftRecordOuter : leftRecords) {

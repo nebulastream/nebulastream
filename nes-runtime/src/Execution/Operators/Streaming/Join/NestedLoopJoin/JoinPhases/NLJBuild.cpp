@@ -26,9 +26,6 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -77,7 +74,6 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
                                               operatorHandlerMemRef,
                                               Value<Boolean>(isLeftSide),
                                               timestampVal);
-
 
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

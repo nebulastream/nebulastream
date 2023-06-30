@@ -16,7 +16,8 @@
 namespace NES::Runtime::Execution {
 
 Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(uint64_t workerId, bool leftSide) {
-    if (joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING || joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+    if (joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+        || joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         workerId = 0;
     }
 
