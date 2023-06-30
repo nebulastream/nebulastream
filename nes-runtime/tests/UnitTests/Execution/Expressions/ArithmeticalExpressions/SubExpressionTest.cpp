@@ -77,7 +77,7 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
     }// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
-        ASSERT_EQ(resultValue, (uint32_t) 0);
+        ASSERT_EQ(resultValue, 0_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {

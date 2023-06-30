@@ -247,7 +247,7 @@ TEST_F(DataTypeTest, IntCastTest) {
 TEST_F(DataTypeTest, UIntCastTest) {
     Value<UInt8> ui8 = (uint8_t) 32;
     Value<UInt16> ui16 = (uint16_t) 32;
-    Value<UInt32> ui32 = (uint32_t) 32;
+    Value<UInt32> ui32 = 32_u32;
     Value<UInt64> ui64 = 32_u64;
 
     {
@@ -261,7 +261,7 @@ TEST_F(DataTypeTest, UIntCastTest) {
         // cast ui8 to ui32
         auto v1 = ui8 + ui32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
-        ASSERT_EQ(v1.as<UInt32>()->getValue(), (uint32_t) 64);
+        ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
@@ -275,7 +275,7 @@ TEST_F(DataTypeTest, UIntCastTest) {
         // cast ui16 to ui32
         auto v1 = ui16 + ui32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
-        ASSERT_EQ(v1.as<UInt32>()->getValue(), (uint32_t) 64);
+        ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
@@ -296,7 +296,7 @@ TEST_F(DataTypeTest, UIntCastTest) {
 TEST_F(DataTypeTest, UIntAndIntCastTest) {
     Value<UInt8> ui8 = (uint8_t) 32;
     Value<UInt16> ui16 = (uint16_t) 32;
-    Value<UInt32> ui32 = (uint32_t) 32;
+    Value<UInt32> ui32 = 32_u32;
     Value<UInt64> ui64 = 32_u64;
 
     Value<Int8> i8 = (int8_t) 32;
@@ -364,20 +364,20 @@ TEST_F(DataTypeTest, UIntAndIntCastTest) {
         // cast ui32 to i8
         auto v1 = ui32 + i8;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
-        ASSERT_EQ(v1.as<UInt32>()->getValue(), (uint32_t) 64);
+        ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
     {
         // cast ui32 to i16
         auto v1 = ui32 + i16;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
-        ASSERT_EQ(v1.as<UInt32>()->getValue(), (uint32_t) 64);
+        ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
         // cast ui32 to i32
         auto v1 = ui32 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
-        ASSERT_EQ(v1.as<UInt32>()->getValue(), (uint32_t) 64);
+        ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
     {
         // cast ui32 to i64

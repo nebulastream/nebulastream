@@ -91,7 +91,7 @@ TEST_F(AddExpressionTest, addUnsignedIntegers) {
     }// UInt32
     {
         auto resultValue = addExpression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
-        ASSERT_EQ(resultValue, (uint32_t) 84u);
+        ASSERT_EQ(resultValue, 84_u32u);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {

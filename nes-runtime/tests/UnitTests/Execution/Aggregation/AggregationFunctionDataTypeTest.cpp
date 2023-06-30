@@ -75,7 +75,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
             return Nautilus::Value<Nautilus::UInt16>((uint16_t) 1);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
-            return Nautilus::Value<Nautilus::UInt32>((uint32_t) 1);
+            return Nautilus::Value<Nautilus::UInt32>(1_u32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
             return Nautilus::Value<Nautilus::UInt64>(1_u64);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {

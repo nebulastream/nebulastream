@@ -25,6 +25,7 @@
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::ASP {
 

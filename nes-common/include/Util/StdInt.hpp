@@ -16,6 +16,8 @@
 #define NES_NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
 #include <cstdint>
 
+#include <cstdint>
+
 /**
  * @brief Implements unsigned user-defined literals that return the corresponding uintX_t type
  */

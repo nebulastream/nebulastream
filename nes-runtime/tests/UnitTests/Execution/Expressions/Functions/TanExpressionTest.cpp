@@ -74,7 +74,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
     }
     //UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 0));
+        auto resultValue = expression.eval(Value<UInt32>(0_u32));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

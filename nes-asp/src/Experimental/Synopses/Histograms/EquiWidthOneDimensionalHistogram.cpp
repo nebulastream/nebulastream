@@ -16,9 +16,9 @@
 #include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogram.hpp>
 #include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogramOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::ASP {
 

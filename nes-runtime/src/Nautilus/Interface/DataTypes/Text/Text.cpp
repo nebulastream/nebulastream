@@ -206,7 +206,7 @@ void Text::write(Value<UInt32> index, Value<Int8> value) {
     FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
 }
 
-uint32_t getBitLength(const TextValue* text) { return (text->length() * (uint32_t) 8); }
+uint32_t getBitLength(const TextValue* text) { return (text->length() * 8_u32); }
 
 const Value<UInt32> Text::bitLength() const { return FunctionCall<>("getBitLength", getBitLength, rawReference); }
 
@@ -299,7 +299,7 @@ TextValue* leftTrim(const TextValue* text, const TextValue* target) {
     }
     auto position = uint32_t(textPosition(text, target));
     char space = ' ';
-    auto spaceCount = (uint32_t) 0;
+    auto spaceCount = 0_u32;
     for (uint32_t i = 0; i < position; i++) {
         char temp = text->c_str()[i];
         if (temp == space) {
@@ -338,8 +338,8 @@ TextValue* lrTrim(const TextValue* text) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     char space = ' ';
-    auto spacecount = (uint32_t) 0;
-    auto count = (uint32_t) 0;
+    auto spacecount = 0_u32;
+    auto count = 0_u32;
     for (uint32_t i = 0; i < text->length(); i++) {
         char temp = text->c_str()[i];
         if (temp == space) {

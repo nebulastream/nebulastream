@@ -17,7 +17,9 @@
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::ASP {
 

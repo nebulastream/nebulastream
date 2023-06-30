@@ -27,6 +27,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/StdInt.hpp>
 #include <random>
 
 namespace NES::ASP {

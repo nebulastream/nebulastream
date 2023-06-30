@@ -79,7 +79,7 @@ TEST_F(DivExpressionTest, divUnsignedIntegers) {
     }// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(4u), Value<UInt32>(4u));
-        ASSERT_EQ(resultValue, (uint32_t) 1);
+        ASSERT_EQ(resultValue, 1_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
