@@ -22,7 +22,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-//#define KEEP_OLD_LOGGING
 namespace NES {
 
 // In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
@@ -104,24 +103,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
     }
 };
 
-// in the following code we have the logging macros. the ones that have a 2 at the end use spdlog library natively
-// i.e., without using << to concatenate strings
-// in the next weeks (starting from 11.12.22) one goal is to migrate all logging calls to use the new macros
-// when that is completed the old macros will be removed.
-
-/// @brief this is the old logging macro that is the entry point for logging calls
-/*
-#define NES_LOG(LEVEL, message)                                                                                                  \
-    do {                                                                                                                         \
-        auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
-            std::stringbuf __buffer;                                                                                             \
-            std::ostream __os(&__buffer);                                                                                        \
-            __os << message;                                                                                                     \
-            NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, "{}", __buffer.str());       \
-        }                                                                                                                        \
-    } while (0)
-*/
 /// @brief this is the new logging macro that is the entry point for logging calls
 #define NES_LOG(LEVEL, ...)                                                                                                     \
     do {                                                                                                                         \
@@ -130,36 +111,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__);                \
         }                                                                                                                        \
     } while (0)
-
-#ifdef KEEP_OLD_LOGGING
-
-// Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
-// Creates a log message with log level info.
-#define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
-// Creates a log message with log level debug.
-#define NES_DEBUG(...) NES_LOG(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
-// Creates a log message with log level warning.
-#define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
-// Creates a log message with log level error.
-#define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
-// Creates a log message with log level fatal error.
-#define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
-
-// Creates a log message with log level trace.
-#define NES_TRACE2(...) NES_LOG2(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
-// Creates a log message with log level info.
-#define NES_INFO2(...) NES_LOG2(NES::LogLevel::LOG_INFO, __VA_ARGS__);
-// Creates a log message with log level debug.
-#define NES_DEBUG2(...) NES_LOG2(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
-// Creates a log message with log level warning.
-#define NES_WARNING2(...) NES_LOG2(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
-// Creates a log message with log level error.
-#define NES_ERROR2(...) NES_LOG2(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
-// Creates a log message with log level fatal error.
-#define NES_FATAL_ERROR2(...) NES_LOG2(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
-
-#else
 
 // Creates a log message with log level trace.
 #define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
@@ -264,4 +215,4 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
