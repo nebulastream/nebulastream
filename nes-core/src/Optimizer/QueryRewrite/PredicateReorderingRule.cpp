@@ -32,41 +32,46 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
             std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_TRACE2("PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2){
-                NES_TRACE2("PredicateReorderingRule: Copy consecutive filters");
-                std::vector<FilterLogicalOperatorNodePtr> orderedFilters(consecutiveFilters.begin(), consecutiveFilters.end());
-                NES_TRACE2("PredicateReorderingRule: Sort all filter nodes in increasing order of selectivity");
-                std::sort(orderedFilters.begin(),
-                          orderedFilters.end(),
-                          [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
-                              return lhs->getSelectivity() < rhs->getSelectivity();
-                          });
-                NES_TRACE2("PredicateReorderingRule: Start re-writing the new query plan");
-                NES_TRACE2("PredicateReorderingRule: Least selective filter goes to the top (close to the sink), his new parents will be the first filter parents'");
-                std::vector<NodePtr> filterChainParent = consecutiveFilters.at(0)->getParents();
+                std::vector<NodePtr> filterChainParents = consecutiveFilters.front()->getParents();
                 std::vector<NodePtr> filterChainChildren = consecutiveFilters.back()->getChildren();
-                orderedFilters.at(0)->removeAllParent();
-                for(auto& firstFilterParent : filterChainParent){
-                     orderedFilters.at(0)->addParent(firstFilterParent);
-                }
-                NES_TRACE2("PredicateReorderingRule: For each filter, reassign parents according to new order");
-                for (unsigned int i = 1; i < orderedFilters.size(); i++) {
-                    auto filterToReassign =  orderedFilters.at(i);
-                    std::shared_ptr<OperatorNode> filterToUpdate = queryPlan->getOperatorWithId(filterToReassign->getId());
-                    if(filterToUpdate != nullptr){
-                        filterToUpdate->removeAllParent();
-                        filterToUpdate->addParent(orderedFilters.at(i-1));
-                    } else{
-                        NES_TRACE2("PredicateReorderingRule: Filter to update not found in the plan, something is wrong");
-                        continue;
+                NES_TRACE2("PredicateReorderingRule: If the filters are already sorted, no change is needed");
+                auto already_sorted = std::is_sorted(consecutiveFilters.begin(),
+                               consecutiveFilters.end(),
+                               [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
+                                   return lhs->getSelectivity() < rhs->getSelectivity();
+                               });
+                if (!already_sorted) {
+                    NES_TRACE2("PredicateReorderingRule: Sort all filter nodes in increasing order of selectivity");
+                    std::sort(consecutiveFilters.begin(),
+                              consecutiveFilters.end(),
+                              [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
+                                  return lhs->getSelectivity() < rhs->getSelectivity();
+                              });
+                    NES_TRACE2("PredicateReorderingRule: Start re-writing the new query plan");
+                    NES_TRACE2("PredicateReorderingRule: Remove parent/children references");
+                    for (auto& filterToReassign : consecutiveFilters) {
+                        filterToReassign->removeAllParent();
+                        filterToReassign->removeChildren();
+                    }
+                    NES_TRACE2("PredicateReorderingRule: For each filter, reassign children according to new order");
+                    for (unsigned int i = 0; i < consecutiveFilters.size() - 1; i++) {
+                        auto filterToReassign = consecutiveFilters.at(i);
+                        filterToReassign->addChild(consecutiveFilters.at(i + 1));
+                    }
+                    NES_TRACE2("PredicateReorderingRule: Retrieve most and least selective filters");
+                    auto leastSelectiveFilter = consecutiveFilters.front();
+                    auto mostSelectiveFilter = consecutiveFilters.back();
+                    NES_TRACE2("PredicateReorderingRule: Least selective filter goes to the top (closer to sink), his new parents will be the chain parents'");
+                    for (auto& filterChainParent : filterChainParents) {
+                        leastSelectiveFilter->addParent(filterChainParent);
+                    }
+                    NES_TRACE2("PredicateReorderingRule: Most selective filter goes to the bottom (closer to the source), his new children will be the chain children");
+                    for (auto& filterChainChild : filterChainChildren) {
+                        mostSelectiveFilter->addChild(filterChainChild);
                     }
                 }
-                NES_TRACE2("PredicateReorderingRule: Most selective filter goes to the bottom (close to the source), his new children will be the last filter children'");
-                orderedFilters.back()->removeChildren();
-                for (auto& previousChild : filterChainChildren){
-                    orderedFilters.back()->addChild(previousChild);
-                }
                 NES_TRACE2("PredicateReorderingRule: Mark the involved nodes as visited");
-                for (auto& orderedFilter : orderedFilters){
+                for (auto& orderedFilter : consecutiveFilters){
                     visitedNodesIds.insert(orderedFilter->getId());
                 }
             }
