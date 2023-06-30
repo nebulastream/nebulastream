@@ -39,6 +39,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -131,20 +132,20 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
     dynamicBuffer[0]["key"].write(0_u32);
-    dynamicBuffer[0]["f2"].write((int64_t) 10);
-    dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
+    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
+    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
     dynamicBuffer[1]["key"].write(0_u32);
-    dynamicBuffer[1]["f2"].write((int64_t) 20);
-    dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
+    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
+    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
     dynamicBuffer[2]["key"].write(0_u32);
-    dynamicBuffer[2]["f2"].write((int64_t) 30);
+    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
     dynamicBuffer[3]["key"].write(0_u32);
-    dynamicBuffer[3]["f2"].write((int64_t) 40);
+    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -232,35 +233,35 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
     dynamicBuffer[0]["key"].write(0_u32);
-    dynamicBuffer[0]["f2"].write((int64_t) 10);
-    dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
+    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
+    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
     dynamicBuffer[1]["key"].write(0_u32);
-    dynamicBuffer[1]["f2"].write((int64_t) 20);
-    dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
+    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
+    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
     dynamicBuffer[2]["key"].write(0_u32);
-    dynamicBuffer[2]["f2"].write((int64_t) 30);
+    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify, closes the threshold window for key 0
+    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify, closes the threshold window for key 0
     dynamicBuffer[3]["key"].write(0_u32);
-    dynamicBuffer[3]["f2"].write((int64_t) 40);
+    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
 
-    dynamicBuffer[4]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[4]["f1"].write<int64_t>(1_s64);// does not qualify
     dynamicBuffer[4]["key"].write(1_u32);
-    dynamicBuffer[4]["f2"].write((int64_t) 100);
-    dynamicBuffer[5]["f1"].write((int64_t) 2);// qualifies
+    dynamicBuffer[4]["f2"].write<int64_t>(100_s64);
+    dynamicBuffer[5]["f1"].write<int64_t>(2_s64);// qualifies
     dynamicBuffer[5]["key"].write(1_u32);
-    dynamicBuffer[5]["f2"].write((int64_t) 200);
-    dynamicBuffer[6]["f1"].write((int64_t) 3);// qualifies
+    dynamicBuffer[5]["f2"].write<int64_t>(200_s64);
+    dynamicBuffer[6]["f1"].write<int64_t>(3_s64);// qualifies
     dynamicBuffer[6]["key"].write(1_u32);
-    dynamicBuffer[6]["f2"].write((int64_t) 300);
+    dynamicBuffer[6]["f2"].write<int64_t>(300_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[7]["f1"].write((int64_t) 1);// does not qualify, closes the threshold window for key 1
+    dynamicBuffer[7]["f1"].write<int64_t>(1_s64);// does not qualify, closes the threshold window for key 1
     dynamicBuffer[7]["key"].write(1_u32);
-    dynamicBuffer[7]["f2"].write((int64_t) 400);
+    dynamicBuffer[7]["f2"].write<int64_t>(400_s64);
     dynamicBuffer.setNumberOfTuples(8);
 
     auto executablePipeline = provider->create(pipeline, options);

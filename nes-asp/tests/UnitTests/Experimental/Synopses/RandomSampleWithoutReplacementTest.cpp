@@ -155,9 +155,9 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
     
     auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
@@ -184,9 +184,9 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestCount) {
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
     
     auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
@@ -213,9 +213,9 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
     
     auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
@@ -242,9 +242,9 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
     
     auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);
@@ -271,9 +271,9 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestSum) {
 TEST_F(RandomSampleWithoutReplacementTest, sampleTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
     
     auto [approximateBuffers, outputSchema] = fillRandomSample(aggregationType, getInputData(*inputSchema), queryKeys);

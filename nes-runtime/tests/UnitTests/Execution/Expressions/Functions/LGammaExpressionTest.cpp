@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -38,13 +39,13 @@ TEST_F(LGammaExpressionTest, lGammaIntegers) {
 
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 2));
+        auto resultValue = expression.eval(Value<Int8>(2_s8));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 2));
+        auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// Int32
@@ -55,7 +56,7 @@ TEST_F(LGammaExpressionTest, lGammaIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 2));
+        auto resultValue = expression.eval(Value<Int64>(2_s64));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -66,13 +67,13 @@ TEST_F(LGammaExpressionTest, lGammaUnsignedIntegers) {
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 2));
+        auto resultValue = expression.eval(Value<UInt8>(2_u8));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2));
+        auto resultValue = expression.eval(Value<UInt16>(2_u16));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// UInt32

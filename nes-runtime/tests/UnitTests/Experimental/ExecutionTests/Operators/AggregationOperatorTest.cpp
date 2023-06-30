@@ -158,7 +158,7 @@ TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0; i < 10; i++) {
         dynamicBuffer[i]["key"].write((int64_t) i % 2);
-        dynamicBuffer[i]["value"].write((int64_t) 1);
+        dynamicBuffer[i]["value"].write(1_s64);
     }
     dynamicBuffer.setNumberOfTuples(10);
     executablePipeline->setup();
@@ -166,7 +166,7 @@ TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 2);
+    ASSERT_EQ(currentSize, 2_s64);
 }
 
 TEST_P(AggregationOperatorTest, aggQueryTest) {
@@ -198,7 +198,7 @@ TEST_P(AggregationOperatorTest, aggQueryTest) {
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 10);
+    ASSERT_EQ(sumState->sum, 10_s64);
 }
 
 INSTANTIATE_TEST_CASE_P(testAggregationOperator,

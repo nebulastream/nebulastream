@@ -243,7 +243,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
 
         uint64_t maxTimestamp = 0Ul;
-        Value<UInt64> zeroVal(0_u64UL);
+        Value<UInt64> zeroVal(0_u64);
         for (auto& leftRecord : allLeftRecords) {
             auto timestamp = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
@@ -271,7 +271,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         auto collector = std::make_shared<Operators::CollectOperator>();
         nljSink.setChild(collector);
 
-        Value<UInt64> zeroValue(0_u64UL);
+        Value<UInt64> zeroValue(0_u64);
         auto maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize) * windowSize;
         for (auto windowIdentifier = windowSize; windowIdentifier < maxWindowIdentifier; windowIdentifier += windowSize) {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);

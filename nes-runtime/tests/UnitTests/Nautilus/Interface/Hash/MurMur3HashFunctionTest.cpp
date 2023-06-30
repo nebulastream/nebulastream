@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus::Interface {
@@ -42,9 +41,9 @@ class HashTest : public Testing::NESBaseTest {
 };
 
 TEST_F(HashTest, IntHashTest) {
-    auto f1 = Value<Int8>((int8_t) 42);
+    auto f1 = Value<Int8>(42_s8);
     auto res = hf->calculate(f1);
-    ASSERT_EQ(res, 9297814887077134198_u64ul);
+    ASSERT_EQ(res, 9297814887077134198_u64);
 }
 
 }// namespace NES::Nautilus::Interface

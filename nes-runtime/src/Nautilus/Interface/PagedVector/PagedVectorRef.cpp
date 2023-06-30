@@ -94,7 +94,7 @@ PagedVectorRefIter PagedVectorRef::at(Value<UInt64> pos) {
 PagedVectorRefIter PagedVectorRef::end() { return at(this->getTotalNumberOfEntries()); }
 
 PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRef& pagedVectorRef)
-    : pos(0_u64UL), pagedVectorRef(pagedVectorRef) {}
+    : pos(0_u64), pagedVectorRef(pagedVectorRef) {}
 
 PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRefIter& it) : pos(it.pos), pagedVectorRef(it.pagedVectorRef) {}
 

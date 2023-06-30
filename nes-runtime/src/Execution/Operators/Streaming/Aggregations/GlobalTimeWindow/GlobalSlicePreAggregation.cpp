@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {

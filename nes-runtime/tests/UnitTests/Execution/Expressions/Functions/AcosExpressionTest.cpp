@@ -37,20 +37,20 @@ TEST_F(AcosExpressionTest, evaluateAcosExpressionInteger) {
     auto expression = UnaryExpressionWrapper<AcosExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 1));
+        auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 1));
+        auto resultValue = expression.eval(Value<Int32>(1_s32));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 1));
+        auto resultValue = expression.eval(Value<Int64>(1_s64));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

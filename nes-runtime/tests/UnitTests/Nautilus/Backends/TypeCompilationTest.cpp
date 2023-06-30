@@ -186,12 +186,11 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 [[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
 
 Value<> customValueType() {
-
-    auto c1 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
-    auto c2 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
+    auto c1 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
+    auto c2 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
 
     c1 = c1 + c2;
-    c1 = c1 * (int64_t) 2;
+    c1 = c1 * 2_s64;
     return c1.getValue().x;
 }
 
@@ -261,10 +260,10 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 }
 
 TEST_P(TypeCompilationTest, castInteger) {
-    Value<> i8 = Value<Int8>((int8_t) 42);
-    Value<> i16 = Value<Int16>((int16_t) 42);
-    Value<> i32 = Value<Int32>((int32_t) 42);
-    Value<> i64 = Value<Int64>((int64_t) 42);
+    Value<> i8 = Value<Int8>(42_s8);
+    Value<> i16 = Value<Int16>(42_s16);
+    Value<> i32 = Value<Int32>(42_s32);
+    Value<> i64 = Value<Int64>(42_s64);
 
     {
         auto engine = compileCast(i8, i16);
@@ -299,8 +298,8 @@ TEST_P(TypeCompilationTest, castInteger) {
 }
 
 TEST_P(TypeCompilationTest, castUInteger) {
-    Value<> ui8 = Value<UInt8>((uint8_t) 42);
-    Value<> ui16 = Value<UInt16>((uint16_t) 42);
+    Value<> ui8 = Value<UInt8>(42_u8);
+    Value<> ui16 = Value<UInt16>(42_u16);
     Value<> ui32 = Value<UInt32>(42_u32);
     Value<> ui64 = Value<UInt64>(42_u64);
 
@@ -337,12 +336,12 @@ TEST_P(TypeCompilationTest, castUInteger) {
 }
 
 TEST_P(TypeCompilationTest, castIntegerToUInteger) {
-    Value<> i8 = Value<Int8>((int8_t) 42);
-    Value<> i16 = Value<Int16>((int16_t) 42);
-    Value<> i32 = Value<Int32>((int32_t) 42);
-    Value<> i64 = Value<Int64>((int64_t) 42);
-    Value<> ui8 = Value<UInt8>((uint8_t) 42);
-    Value<> ui16 = Value<UInt16>((uint16_t) 42);
+    Value<> i8 = Value<Int8>(42_s8);
+    Value<> i16 = Value<Int16>(42_s16);
+    Value<> i32 = Value<Int32>(42_s32);
+    Value<> i64 = Value<Int64>(42_s64);
+    Value<> ui8 = Value<UInt8>(42_u8);
+    Value<> ui16 = Value<UInt16>(42_u16);
     Value<> ui32 = Value<UInt32>(42_u32);
     Value<> ui64 = Value<UInt64>(42_u64);
     {
@@ -403,9 +402,9 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
 }
 
 TEST_P(TypeCompilationTest, castFloat) {
-    auto i16 = Value<Int16>((int16_t) 42);
-    auto i32 = Value<Int32>((int32_t) 42);
-    auto i64 = Value<Int64>((int64_t) 42);
+    auto i16 = Value<Int16>(42_s16);
+    auto i32 = Value<Int32>(42_s32);
+    auto i64 = Value<Int64>(42_s64);
     auto floatV = Value<Float>(1.0f);
     auto doubleV = Value<Double>(1.0);
 

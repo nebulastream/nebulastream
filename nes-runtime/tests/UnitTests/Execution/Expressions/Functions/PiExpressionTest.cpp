@@ -37,25 +37,25 @@ TEST_F(PiExpressionTest, evaluatePiExpressionInteger) {
     auto expression = UnaryExpressionWrapper<PiExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 1));
+        auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 2));
+        auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 3));
+        auto resultValue = expression.eval(Value<Int32>(3_s32));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

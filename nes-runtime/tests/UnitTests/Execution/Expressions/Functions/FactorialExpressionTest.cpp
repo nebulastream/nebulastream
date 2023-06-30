@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -38,24 +39,24 @@ TEST_F(FactorialExpressionTest, factorialIntegers) {
 
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 4));
+        auto resultValue = expression.eval(Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 4));
+        auto resultValue = expression.eval(Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -66,13 +67,13 @@ TEST_F(FactorialExpressionTest, factorialUnsignedIntegers) {
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 4));
+        auto resultValue = expression.eval(Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 4));
+        auto resultValue = expression.eval(Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, (double) 24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// UInt32

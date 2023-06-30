@@ -33,7 +33,7 @@ uint64_t operator"" _u64(unsigned long long value);
 template<typename T>
 struct HelperStructLiterals {
     T val;
-    inline HelperStructLiterals(T v) : val(v) {}
+    [[maybe_unused]] inline HelperStructLiterals(T v) : val(v) {}
 
     inline T operator-() const { return -val; }
 

@@ -159,9 +159,9 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestCount) {
     const auto entrySize = sizeof(double_t);
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
@@ -200,9 +200,9 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestSum) {
     const auto entrySize = sizeof(double_t);
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
@@ -240,9 +240,9 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
     const auto entrySize = sizeof(double_t);
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
@@ -280,9 +280,9 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
     const auto entrySize = sizeof(double_t);
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);
@@ -320,9 +320,9 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestAverage) {
     const auto entrySize = sizeof(double_t) * 2; // one for the count and one for the sum
 
     // Creating query keys for all histograms
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto [approximateBuffers, outputSchema] = fillHistogram(aggregationType, getInputData(*inputSchema), queryKeys, entrySize);

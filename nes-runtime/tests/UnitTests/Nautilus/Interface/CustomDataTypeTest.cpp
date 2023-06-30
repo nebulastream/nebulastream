@@ -18,6 +18,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
@@ -76,8 +77,8 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 [[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
 
 TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
-    Value<Int64> x = (int64_t) 32;
-    Value<Int64> y = (int64_t) 32;
+    Value<Int64> x(32_s64);
+    Value<Int64> y(32_s64);
 
     auto c1 = Value<CustomType>(CustomType(x, y));
     auto c2 = Value<CustomType>(CustomType(x, y));
@@ -151,11 +152,11 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeConstructurTest) {
     //Test String Constructor
     auto textValue = Value<Text>("1970-01-07T14:23:27");
     auto c3 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue));
-    EXPECT_EQ(c3->getMilliSeconds(), 570207000_u64L);
+    EXPECT_EQ(c3->getMilliSeconds(), 570207000_u64);
     //
     auto textValue1 = Value<Text>("1970-01-07");
     auto c4 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue1));
-    EXPECT_EQ(c4->getMilliSeconds(), 518400000_u64L);
+    EXPECT_EQ(c4->getMilliSeconds(), 518400000_u64);
 }
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeIntervalTest) {

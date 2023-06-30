@@ -22,6 +22,7 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus {

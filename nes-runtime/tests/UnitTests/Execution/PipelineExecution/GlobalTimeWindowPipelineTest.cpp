@@ -116,18 +116,18 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write((int64_t) 1);
-    dynamicBuffer[0]["f2"].write((int64_t) 10);
-    dynamicBuffer[0]["ts"].write((int64_t) 1);
-    dynamicBuffer[1]["f1"].write((int64_t) 2);
-    dynamicBuffer[1]["f2"].write((int64_t) 20);
-    dynamicBuffer[1]["ts"].write((int64_t) 1);
-    dynamicBuffer[2]["f1"].write((int64_t) 3);
-    dynamicBuffer[2]["f2"].write((int64_t) 30);
-    dynamicBuffer[2]["ts"].write((int64_t) 2);
-    dynamicBuffer[3]["f1"].write((int64_t) 1);
-    dynamicBuffer[3]["f2"].write((int64_t) 40);
-    dynamicBuffer[3]["ts"].write((int64_t) 3);
+    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);
+    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
+    dynamicBuffer[0]["ts"].write<int64_t>(1_s64);
+    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);
+    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
+    dynamicBuffer[1]["ts"].write<int64_t>(1_s64);
+    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);
+    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[2]["ts"].write<int64_t>(2_s64);
+    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);
+    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["ts"].write<int64_t>(3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
@@ -215,18 +215,18 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write((int64_t) 1);
-    dynamicBuffer[0]["f2"].write((int64_t) 10);
-    dynamicBuffer[0]["ts"].write((int64_t) 1);
-    dynamicBuffer[1]["f1"].write((int64_t) 2);
-    dynamicBuffer[1]["f2"].write((int64_t) 20);
-    dynamicBuffer[1]["ts"].write((int64_t) 1);
-    dynamicBuffer[2]["f1"].write((int64_t) 3);
-    dynamicBuffer[2]["f2"].write((int64_t) 30);
-    dynamicBuffer[2]["ts"].write((int64_t) 2);
-    dynamicBuffer[3]["f1"].write((int64_t) 1);
-    dynamicBuffer[3]["f2"].write((int64_t) 40);
-    dynamicBuffer[3]["ts"].write((int64_t) 3);
+    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);
+    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
+    dynamicBuffer[0]["ts"].write<int64_t>(1_s64);
+    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);
+    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
+    dynamicBuffer[1]["ts"].write<int64_t>(1_s64);
+    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);
+    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[2]["ts"].write<int64_t>(2_s64);
+    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);
+    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["ts"].write<int64_t>(3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);

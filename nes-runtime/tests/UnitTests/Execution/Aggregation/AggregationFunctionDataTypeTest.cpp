@@ -23,6 +23,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -63,17 +64,17 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
 
     static Nautilus::Value<> getIncomingValue(std::string dataTypeString) {
         if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
-            return Nautilus::Value<Nautilus::Int8>((int8_t) 1);
+            return Nautilus::Value<Nautilus::Int8>(1_s8);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
-            return Nautilus::Value<Nautilus::Int16>((int16_t) 1);
+            return Nautilus::Value<Nautilus::Int16>(1_s16);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
-            return Nautilus::Value<Nautilus::Int32>((int32_t) 1);
+            return Nautilus::Value<Nautilus::Int32>(1_s32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
-            return Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+            return Nautilus::Value<Nautilus::Int64>(1_s64);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
-            return Nautilus::Value<Nautilus::UInt8>((uint8_t) 1);
+            return Nautilus::Value<Nautilus::UInt8>(1_u8);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
-            return Nautilus::Value<Nautilus::UInt16>((uint16_t) 1);
+            return Nautilus::Value<Nautilus::UInt16>(1_u16);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
             return Nautilus::Value<Nautilus::UInt32>(1_u32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {

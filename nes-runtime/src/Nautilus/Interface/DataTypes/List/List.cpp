@@ -13,6 +13,8 @@
 */
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
+
 namespace NES::Nautilus {
 
 template<typename T>

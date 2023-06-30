@@ -15,6 +15,8 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/StdInt.hpp>
+
 namespace NES::Runtime::Execution::Aggregation {
 
 CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputType,

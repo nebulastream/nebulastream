@@ -23,41 +23,41 @@ std::unique_ptr<AggregationState> AvgFunction::createState() {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
                 case Nautilus::IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<AvgState>(Value<>((uint8_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_u8), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<AvgState>(Value<>((uint16_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_u16), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<AvgState>(Value<>(0_u32), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_u32), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<AvgState>(Value<>(0_u64), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_u64), Value<>(0_s64));
                 };
             }
         } else {
             switch (integerStamp->getBitWidth()) {
                 case Nautilus::IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<AvgState>(Value<>((int8_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_s8), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<AvgState>(Value<>((int16_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_s16), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<AvgState>(Value<>((int32_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_s32), Value<>(0_s64));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<AvgState>(Value<>((int64_t) 0), Value<>((int64_t) 0));
+                    return std::make_unique<AvgState>(Value<>(0_s64), Value<>(0_s64));
                 };
             }
         }
     } else if (auto floatStamp = cast_if<Nautilus::IR::Types::FloatStamp>(stamp.get())) {
         switch (floatStamp->getBitWidth()) {
             case Nautilus::IR::Types::FloatStamp::F32: {
-                return std::make_unique<AvgState>(Value<>(0.0f), Value<>((int64_t) 0));
+                return std::make_unique<AvgState>(Value<>(0.0f), Value<>(0_s64));
             };
             case Nautilus::IR::Types::FloatStamp::F64: {
-                return std::make_unique<AvgState>(Value<>(0.0), Value<>((int64_t) 0));
+                return std::make_unique<AvgState>(Value<>(0.0), Value<>(0_s64));
             };
         }
     }
@@ -71,7 +71,7 @@ void AvgFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& 
     auto sumState = (AvgState*) state.get();
     auto value = expression->execute(record);
     sumState->sum = sumState->sum + value;
-    sumState->count = sumState->count + (int64_t) 1;
+    sumState->count = sumState->count + 1_s64;
 }
 
 void AvgFunction::combine(std::unique_ptr<AggregationState>& leftState, std::unique_ptr<AggregationState>& rightState) {

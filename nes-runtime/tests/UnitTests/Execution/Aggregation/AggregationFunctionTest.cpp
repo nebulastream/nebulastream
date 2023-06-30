@@ -23,6 +23,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/StdInt.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -51,7 +52,7 @@ TEST_F(AggregationFunctionTest, sumAggregation) {
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto inputRecord = Record({{"value", incomingValue}});
     // test lift
     sumAgg.lift(memref, inputRecord);
@@ -117,7 +118,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>(2_s64);
     // test lift
     auto inputRecord = Record({{"value", incomingValue}});
     avgAgg.lift(memref, inputRecord);
@@ -153,10 +154,10 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
-    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
-    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
-    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
-    auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10_s64);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
+    auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>(2_s64);
 
     // lift value in minAgg with an initial value of 5, thus the current min should be 5
     auto inputRecord = Record({{"value", incomingValueFive}});
@@ -219,10 +220,10 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
-    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
-    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
-    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
-    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10_s64);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
+    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>(15_s64);
 
     // lift value in maxAgg with an initial value of 5, thus the current min should be 5
 

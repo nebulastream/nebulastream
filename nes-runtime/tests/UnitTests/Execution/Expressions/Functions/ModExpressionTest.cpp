@@ -37,20 +37,20 @@ TEST_F(ModExpressionTest, evaluateModExpressionInteger) {
     auto expression = BinaryExpressionWrapper<ModExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 17), Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>(17_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 17), Value<Int32>((int32_t) 4));
+        auto resultValue = expression.eval(Value<Int32>(17_s32), Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 17), Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(17_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
