@@ -13,11 +13,11 @@
 */
 
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
@@ -51,13 +51,13 @@ TEST_F(AddExpressionTest, addIntegers) {
 
     // Int8
     {
-        auto resultValue = addExpression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) 42));
+        auto resultValue = addExpression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
     // Int16
     {
-        auto resultValue = addExpression.eval(Value<Int16>((int16_t) 42), Value<Int16>((int16_t) 42));
+        auto resultValue = addExpression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
     }// Int32
@@ -68,7 +68,7 @@ TEST_F(AddExpressionTest, addIntegers) {
     }
     // Int64
     {
-        auto resultValue = addExpression.eval(Value<Int64>((int64_t) 42), Value<Int64>((int64_t) 42));
+        auto resultValue = addExpression.eval(Value<Int64>(42_s64), Value<Int64>(42_s64));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int64>());
     }
@@ -79,24 +79,24 @@ TEST_F(AddExpressionTest, addUnsignedIntegers) {
 
     // UInt8
     {
-        auto resultValue = addExpression.eval(Value<UInt8>((uint8_t) 42), Value<UInt8>((uint8_t) 42));
-        ASSERT_EQ(resultValue, (uint8_t) 84u);
+        auto resultValue = addExpression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
+        ASSERT_EQ(resultValue, 84_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
     // UInt16
     {
-        auto resultValue = addExpression.eval(Value<UInt16>((uint16_t) 42), Value<UInt16>((uint16_t) 42));
-        ASSERT_EQ(resultValue, (uint16_t) 84u);
+        auto resultValue = addExpression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
+        ASSERT_EQ(resultValue, 84_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
     }// UInt32
     {
         auto resultValue = addExpression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
-        ASSERT_EQ(resultValue, 84_u32u);
+        ASSERT_EQ(resultValue, 84_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
         auto resultValue = addExpression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
-        ASSERT_EQ(resultValue, 84_u64u);
+        ASSERT_EQ(resultValue, 84_u64);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
 }

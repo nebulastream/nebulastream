@@ -94,7 +94,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 10);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f2"].write<int64_t>(1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 

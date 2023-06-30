@@ -21,6 +21,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

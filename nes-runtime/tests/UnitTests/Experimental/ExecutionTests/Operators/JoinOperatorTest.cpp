@@ -158,14 +158,14 @@ TEST_P(JoinOperatorTest, joinBuildQueryTest) {
     auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
     for (auto i = 0; i < 10; i++) {
         buildSideDynBuffer[i]["key"].write((int64_t) i % 2);
-        buildSideDynBuffer[i]["value"].write((int64_t) 1);
+        buildSideDynBuffer[i]["value"].write(1_s64);
     }
     buildSideDynBuffer.setNumberOfTuples(10);
     buildSidePipeline->setup();
     buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
 
     auto currentSize = sharedHashMap->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 10);
+    ASSERT_EQ(currentSize, 10_s64);
 }
 
 TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
@@ -222,7 +222,7 @@ TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
     auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
     for (auto i = 0; i < 10; i++) {
         buildSideDynBuffer[i]["key"].write((int64_t) i);
-        buildSideDynBuffer[i]["valueLeft"].write((int64_t) 666);
+        buildSideDynBuffer[i]["valueLeft"].write(666_s64);
     }
     buildSideDynBuffer.setNumberOfTuples(10);
 
@@ -230,7 +230,7 @@ TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
     auto probeSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(probeSideMemoryLayout, probeSideBuffer);
     for (auto i = 0; i < 10; i++) {
         probeSideDynBuffer[i]["key"].write((int64_t) i % 5);
-        probeSideDynBuffer[i]["valueRight"].write((int64_t) 42);
+        probeSideDynBuffer[i]["valueRight"].write(42_s64);
     }
     probeSideDynBuffer.setNumberOfTuples(10);
 
@@ -238,7 +238,7 @@ TEST_P(JoinOperatorTest, joinBuildAndPropeQueryTest) {
     buildSidePipeline->execute(*runtimeWorkerContext, buildSideBuffer);
 
     auto currentSize = sharedHashMap->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 10);
+    ASSERT_EQ(currentSize, 10_s64);
 
     executablePropePipeline->setup();
     executablePropePipeline->execute(*runtimeWorkerContext, probeSideBuffer);

@@ -18,6 +18,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {

@@ -73,7 +73,7 @@ Value<> addExpression(Value<Int64> x) {
 }
 
 TEST_F(FlounderExpressionExecutionTest, addI8Test) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx = 0_s64;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return addExpression(tempx);
@@ -91,13 +91,13 @@ TEST_F(FlounderExpressionExecutionTest, addI8Test) {
 }
 
 Value<> addExpressionConst() {
-    Value<Int64> y = (int64_t) 58;
-    Value<Int64> x = (int64_t) 42;
+    Value<Int64> y = 58_s64;
+    Value<Int64> x = 42_s64;
     auto r = x + y;
-    if (r == (int64_t) 42) {
-        r = r + (int64_t) 1;
+    if (r == 42_s64) {
+        r = r + 1_s64;
     }
-    return r + (int64_t) 42;
+    return r + 42_s64;
 }
 
 int64_t test(int64_t) { return 10; };
@@ -105,12 +105,12 @@ int64_t test(int64_t) { return 10; };
 Value<> sumLoop(Value<MemRef> ptr) {
     auto agg = ptr.load<Int64>();
     //agg = FunctionCall<>("callUDFProxyFunction", test, agg);
-    for (Value start = (int64_t) 0; start < (int64_t) 10; start = start + (int64_t) 1) {
+    for (Value start = 0_s64; start < 10_s64; start = start + 1_s64) {
 
-        for (Value start2 = (int64_t) 0; start2 < (int64_t) 10; start2 = start2 + (int64_t) 1) {
-            agg = agg + (int64_t) 10;
+        for (Value start2 = 0_s64; start2 < 10_s64; start2 = start2 + 1_s64) {
+            agg = agg + 10_s64;
         }
-        agg = agg + (int64_t) 10;
+        agg = agg + 10_s64;
     }
     ptr.store(agg);
     return agg;
@@ -143,19 +143,19 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
 }
 
 Value<> longExpression(Value<Int64> i1) {
-    auto i2 = i1 + (int64_t) 1;
-    auto i3 = i1 + (int64_t) 1;
-    auto i4 = i1 + (int64_t) 1;
-    auto i5 = i1 + (int64_t) 1;
-    auto i6 = i1 + (int64_t) 1;
-    auto i7 = i1 + (int64_t) 1;
-    auto i8 = i1 + (int64_t) 1;
-    auto i9 = i1 + (int64_t) 1;
+    auto i2 = i1 + 1_s64;
+    auto i3 = i1 + 1_s64;
+    auto i4 = i1 + 1_s64;
+    auto i5 = i1 + 1_s64;
+    auto i6 = i1 + 1_s64;
+    auto i7 = i1 + 1_s64;
+    auto i8 = i1 + 1_s64;
+    auto i9 = i1 + 1_s64;
     return i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9;
 }
 
 TEST_F(FlounderExpressionExecutionTest, longExpressionTest) {
-    Value<Int64> tempx = (int64_t) 0;
+    Value<Int64> tempx = 0_s64;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return longExpression(tempx);
@@ -238,7 +238,7 @@ Value<> ifThenElseConditionParameter(Value<> x) {
 }
 
 TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionParameterTests) {
-    Value<Int32> tempx = (int32_t) 0;
+    Value<Int32> tempx = 0_s32;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return ifThenElseConditionParameter(tempx);
@@ -358,7 +358,7 @@ TEST_F(FlounderExpressionExecutionTest, loadFunctionTest) {
 
 void storeFunction(Value<MemRef> ptr) {
     auto value = ptr.load<Int64>();
-    auto tmp = value + (int64_t) 1;
+    auto tmp = value + 1_s64;
     ptr.store(tmp);
 }
 
@@ -391,8 +391,8 @@ TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
 int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
-    auto x = Value<Int64>((int64_t) 2);
-    auto y = Value<Int64>((int64_t) 3);
+    auto x = Value<Int64>(2_s64);
+    auto y = Value<Int64>(3_s64);
     Value<Int64> res = FunctionCall<>("add", addInt, x, y);
     return res;
 }
@@ -446,12 +446,12 @@ TEST_F(FlounderExpressionExecutionTest, andIfFunctionTest) {
 
 /*
 Value<> int16AddExpression(Value<Int16> x) {
-    Value<Int16> y = (int16_t) 5;
+    Value<Int16> y = 5_s16;
     return x + y;
 }
 
 TEST_F(FlounderExpressionExecutionTest, addI16Test) {
-    Value<Int16> tempx = (int16_t) 0;
+    Value<Int16> tempx = 0_s16;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int16AddExpression(tempx);
@@ -555,7 +555,7 @@ Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
 }
 
 TEST_F(FlounderExpressionExecutionTest, castInt8ToInt64Test) {
-    Value<Int8> tempx = (int8_t) 0;
+    Value<Int8> tempx = 0_s8;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
@@ -573,7 +573,7 @@ Value<> castInt8ToInt64AddExpression2(Value<> x) {
 }
 
 TEST_F(FlounderExpressionExecutionTest, castInt8ToInt64Test2) {
-    Value<Int8> tempx = (int8_t) 0 ;
+    Value<Int8> tempx = 0_s8 ;
     tempx.ref.blockId = -1;
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);

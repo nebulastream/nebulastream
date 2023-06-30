@@ -229,7 +229,7 @@ TEST_P(Query1Test, tpchQ1) {
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-    ASSERT_EQ(currentSize, (int64_t) 4);
+    ASSERT_EQ(currentSize, 4_s64);
 
     auto entryBuffer = globalState->threadLocalAggregationSlots[0].get()->getEntries().get()[0];
 

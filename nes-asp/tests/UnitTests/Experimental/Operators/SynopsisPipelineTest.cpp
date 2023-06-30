@@ -198,9 +198,9 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
         executablePipeline->execute(buffer, *pipelineContext, *workerContext);
     }
 
-    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>((int64_t)0), Nautilus::Value<>((int64_t)1),
-        Nautilus::Value<>((int64_t)2), Nautilus::Value<>((int64_t)3),
-        Nautilus::Value<>((int64_t)4),
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0_s64), Nautilus::Value<>(1_s64),
+        Nautilus::Value<>(2_s64), Nautilus::Value<>(3_s64),
+        Nautilus::Value<>(4_s64),
     };
 
     auto approximateBuffers = synopsis->getApproximateForKeys(handlerIndex, executionContext, queryKeys, bufferManager);

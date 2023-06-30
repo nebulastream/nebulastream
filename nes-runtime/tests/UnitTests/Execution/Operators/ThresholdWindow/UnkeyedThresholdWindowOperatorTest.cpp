@@ -30,6 +30,7 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <utility>
@@ -93,9 +94,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -145,9 +146,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -195,9 +196,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -246,9 +247,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -295,13 +296,13 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>((int64_t) 1)}});
+    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1_s64)}});
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -348,13 +349,13 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>((int64_t) 1)}});
+    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1_s64)}});
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 4)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 6)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(4_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(6_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -405,13 +406,13 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>((int64_t) 1)}});
+    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1_s64)}});
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 4)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 6)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(4_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(6_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -493,18 +494,18 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordFifty = Record({{"f1", Value<>((int64_t) 50)},
-                               {"f2", Value<>((int64_t) 2)},
-                               {"f3", Value<>((int64_t) 50)},
-                               {"f4", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>((int64_t) 90)},
-                                {"f2", Value<>((int64_t) 3)},
-                                {"f3", Value<>((int64_t) 90)},
-                                {"f4", Value<>((int64_t) 4)}});
-    auto recordTwenty = Record({{"f1", Value<>((int64_t) 20)},
-                                {"f2", Value<>((int64_t) 4)},
-                                {"f3", Value<>((int64_t) 50)},
-                                {"f4", Value<>((int64_t) 2)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50_s64)},
+                               {"f2", Value<>(2_s64)},
+                               {"f3", Value<>(50_s64)},
+                               {"f4", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90_s64)},
+                                {"f2", Value<>(3_s64)},
+                                {"f3", Value<>(90_s64)},
+                                {"f4", Value<>(4_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20_s64)},
+                                {"f2", Value<>(4_s64)},
+                                {"f3", Value<>(50_s64)},
+                                {"f4", Value<>(2_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -560,9 +561,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50.25)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90.35)}, {"f2", Value<>((int64_t) 3)}});
-    auto recordTwenty = Record({{"f1", Value<>(20.85)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50.25)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90.35)}, {"f2", Value<>(3_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20.85)}, {"f2", Value<>(4_s64)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -624,12 +625,12 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipl
     thresholdWindowOperator->execute(ctx, recordTen);
     EXPECT_EQ(collector->records.size(), 0);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>((int64_t) 4)}});
-    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>((int64_t) 4)}});// closes the window
-    auto recordSixty = Record({{"f1", Value<>(60)}, {"f2", Value<>((int64_t) 1)}});
-    auto recordSeventy = Record({{"f1", Value<>(70)}, {"f2", Value<>((int64_t) 7)}});
-    auto recordTwelve = Record({{"f1", Value<>(12)}, {"f2", Value<>((int64_t) 8)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2_s64)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(4_s64)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4_s64)}});// closes the window
+    auto recordSixty = Record({{"f1", Value<>(60)}, {"f2", Value<>(1_s64)}});
+    auto recordSeventy = Record({{"f1", Value<>(70)}, {"f2", Value<>(7_s64)}});
+    auto recordTwelve = Record({{"f1", Value<>(12)}, {"f2", Value<>(8_s64)}});// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);

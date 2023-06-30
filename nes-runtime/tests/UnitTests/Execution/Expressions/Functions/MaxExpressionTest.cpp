@@ -36,41 +36,41 @@ TEST_F(MaxExpressionTest, evaluateMaxExpressionInteger) {
     auto expression = BinaryExpressionWrapper<MaxExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 17), Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>(17_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 17), Value<Int16>((int16_t) 4));
+        auto resultValue = expression.eval(Value<Int16>(17_s16), Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 17), Value<Int32>((int32_t) 4));
+        auto resultValue = expression.eval(Value<Int32>(17_s32), Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 17), Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(17_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 17), Value<UInt8>((uint8_t) 4));
+        auto resultValue = expression.eval(Value<UInt8>(17_u8), Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 17), Value<UInt16>((uint16_t) 4));
+        auto resultValue = expression.eval(Value<UInt16>(17_u16), Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

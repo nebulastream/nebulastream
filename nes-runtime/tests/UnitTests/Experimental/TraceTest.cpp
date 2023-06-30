@@ -45,8 +45,8 @@ class TraceTest : public Testing::NESBaseTest {
 };
 
 void assignmentOperator() {
-    Value<> iw = Value<Int16>((int16_t) 1);
-    Value<> iw2 = Value<Int16>((int16_t) 2);
+    Value<> iw = Value<Int16>(1_s16);
+    Value<> iw2 = Value<Int16>(2_s16);
     iw = iw2 + iw;
 }
 
@@ -68,10 +68,10 @@ TEST_F(TraceTest, assignmentOperatorTest) {
 }
 
 void arithmeticExpression() {
-    Value iw = Value<Int64>((int64_t) 1);
-    Value iw2 = Value<Int64>((int64_t) 2);
-    Value iw3 = Value<Int64>((int64_t) 3);
-    auto result = iw - iw3 + (int64_t) 2 * iw2 / iw;
+    Value iw = Value<Int64>(1_s64);
+    Value iw2 = Value<Int64>(2_s64);
+    Value iw3 = Value<Int64>(3_s64);
+    auto result = iw - iw3 + 2_s64 * iw2 / iw;
 }
 
 TEST_F(TraceTest, arithmeticExpressionTest) {

@@ -124,7 +124,7 @@ void UnkeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) cons
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
                 // Log the closing of window and along with agg result
-                auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
+                auto aggregatedValue = Value<Int64>(1_s64);// default value to aggregate (i.e., for countAgg)
                 auto allFieldNames = record.getAllFields();
                 NES_DEBUG("Threshold window ends, closing value:{} | aggVal:{}",
                           std::accumulate(allFieldNames.begin(),

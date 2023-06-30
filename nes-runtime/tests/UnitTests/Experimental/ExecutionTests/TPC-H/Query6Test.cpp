@@ -200,7 +200,7 @@ TEST_P(Query6Test, tpchQ6) {
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
 
-    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
+    ASSERT_EQ(sumState->sum, 204783021253_s64);
 }
 
 TEST_P(Query6Test, DISABLED_tpchQ6and) {
@@ -276,7 +276,7 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-    ASSERT_EQ(sumState->sum, (int64_t) 204783021253);
+    ASSERT_EQ(sumState->sum, 204783021253_s64);
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testTPCHQ6,

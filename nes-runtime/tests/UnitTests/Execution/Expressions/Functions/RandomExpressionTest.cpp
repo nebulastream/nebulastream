@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -36,37 +37,37 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     auto expression = UnaryExpressionWrapper<RandomExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 1));
+        auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 2));
+        auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 3));
+        auto resultValue = expression.eval(Value<Int32>(3_s32));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 1));
+        auto resultValue = expression.eval(Value<UInt8>(1_u8));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2));
+        auto resultValue = expression.eval(Value<UInt16>(2_u16));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

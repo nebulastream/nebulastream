@@ -37,25 +37,25 @@ TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger) {
     auto expression = UnaryExpressionWrapper<RadiansExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 90));
+        auto resultValue = expression.eval(Value<Int8>(90_s8));
         ASSERT_EQ(resultValue, M_PI_2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 180));
+        auto resultValue = expression.eval(Value<Int16>(180_s16));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 360));
+        auto resultValue = expression.eval(Value<Int32>(360_s32));
         ASSERT_EQ(resultValue, 2 * M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 45));
+        auto resultValue = expression.eval(Value<Int64>(45_s64));
         ASSERT_EQ(resultValue, M_PI_4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

@@ -71,7 +71,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnarDynamicBufferTest)
 
 TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
     for (int i = 0; i < 10; i++) {
-        dynamicBuffer->pushRecordToBuffer(std::make_tuple((uint16_t) 42, true, 42 * 2.0));
+        dynamicBuffer->pushRecordToBuffer(std::make_tuple(42_u16, true, 42 * 2.0));
     }
 
     for (auto tuple : *dynamicBuffer) {

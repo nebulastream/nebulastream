@@ -52,9 +52,9 @@ TEST_F(ValueTest, assignMentTest) {
     auto anyValue = Value<Int32>(std::move(intValue));
     anyValue = anyValue + 10;
 
-    Value<Int8> val = Value<Int8>((int8_t) 42);
+    Value<Int8> val = Value<Int8>(42_s8);
     ASSERT_TRUE(val.value->getType()->isInteger());
-    Value<Int8> val2 = (int8_t) 42;
+    Value<Int8> val2 = 42_s8;
     ASSERT_TRUE(val2.value->getType()->isInteger());
     Value<Any> va = val2;
     Value<Any> va2 = Value<>(10);

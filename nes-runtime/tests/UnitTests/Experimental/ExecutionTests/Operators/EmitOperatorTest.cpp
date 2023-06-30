@@ -157,7 +157,7 @@ TEST_P(EmitOperatorTest, scanAndEmitTest) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0; i < 10; i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f2"].write(1_s64);
     }
     dynamicBuffer.setNumberOfTuples(10);
 

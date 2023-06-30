@@ -56,7 +56,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
 
 void storeFunction(Value<MemRef> ptr) {
     auto value = ptr.load<Int64>();
-    auto tmp = value + (int64_t) 1;
+    auto tmp = value + 1_s64;
     ptr.store(tmp);
 }
 
@@ -76,9 +76,9 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
 }
 
 Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
-    Value<Int64> sum = (int64_t) 0;
-    for (auto i = Value((int64_t) 0); i < size; i = i + (int64_t) 1) {
-        auto address = ptr + i * (int64_t) 8;
+    Value<Int64> sum(0_s64);
+    for (auto i = Value<Int64>(0_s64); i < size; i = i + 1_s64) {
+        auto address = ptr + i * 8_s64;
         auto value = address.as<MemRef>().load<Int64>();
         sum = sum + value;
     }
@@ -88,7 +88,7 @@ Value<Int64> memScan(Value<MemRef> ptr, Value<Int64> size) {
 TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
     auto memPtr = Value<MemRef>(nullptr);
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto size = Value<Int64>((int64_t) 0);
+    auto size = Value<Int64>(0_s64);
     size.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memPtr, &size]() {
         return memScan(memPtr, size);

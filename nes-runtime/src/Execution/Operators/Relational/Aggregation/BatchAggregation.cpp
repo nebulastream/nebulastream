@@ -17,6 +17,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

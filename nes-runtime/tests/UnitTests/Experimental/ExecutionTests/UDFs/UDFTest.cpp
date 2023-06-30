@@ -267,7 +267,7 @@ TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
 
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0ull; i < dynamicBuffer.getCapacity() - 1; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) 1);
+        dynamicBuffer[i]["f1"].write(1_s64);
     }
     dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity() - 1);
 

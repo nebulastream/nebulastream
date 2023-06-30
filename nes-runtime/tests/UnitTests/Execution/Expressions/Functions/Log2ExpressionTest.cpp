@@ -38,25 +38,25 @@ TEST_F(Log2ExpressionTest, evaluateLog2ExpressionInteger) {
     auto expression = UnaryExpressionWrapper<Log2Expression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 8));
+        auto resultValue = expression.eval(Value<Int8>(8_s8));
         ASSERT_EQ(resultValue, 3.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 8));
+        auto resultValue = expression.eval(Value<Int16>(8_s16));
         ASSERT_EQ(resultValue, 3.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 8));
+        auto resultValue = expression.eval(Value<Int32>(8_s32));
         ASSERT_EQ(resultValue, 3.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 8));
+        auto resultValue = expression.eval(Value<Int64>(8_s64));
         ASSERT_EQ(resultValue, 3.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

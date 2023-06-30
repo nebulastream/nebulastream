@@ -883,9 +883,9 @@ inline std::string reflect(T const& value) {
     return "(" + reflect<T>() + ")" + detail::value_string(value);
 }
 // Non-type template arg reflection (implicit conversion to int64_t)
-// E.g., reflect<7>() -> "(int64_t)7"
+// E.g., reflect<7>() -> "7_s64"
 /*! Generate a code-string for an integer non-type template argument.
- *  \code{.cpp}reflect<7>() --> "(int64_t)7"\endcode
+ *  \code{.cpp}reflect<7>() --> "7_s64"\endcode
  */
 template<int64_t N>
 inline std::string reflect() {

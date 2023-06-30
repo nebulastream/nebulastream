@@ -38,13 +38,13 @@ TEST_F(MulExpressionTest, mulIntegers) {
 
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 4), Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>(4_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, 16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 4), Value<Int16>((int16_t) 4));
+        auto resultValue = expression.eval(Value<Int16>(4_s16), Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, 16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
     }// Int32
@@ -55,7 +55,7 @@ TEST_F(MulExpressionTest, mulIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 4), Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>(4_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, 16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int64>());
     }
@@ -66,14 +66,14 @@ TEST_F(MulExpressionTest, addUnsignedIntegers) {
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 4), Value<UInt8>((uint8_t) 4));
-        ASSERT_EQ(resultValue, (uint8_t) 16);
+        auto resultValue = expression.eval(Value<UInt8>(4_u8), Value<UInt8>(4_u8));
+        ASSERT_EQ(resultValue, 16_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 4), Value<UInt16>((uint16_t) 4));
-        ASSERT_EQ(resultValue, (uint16_t) 16);
+        auto resultValue = expression.eval(Value<UInt16>(4_u16), Value<UInt16>(4_u16));
+        ASSERT_EQ(resultValue, 16_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
     }// UInt32
     {

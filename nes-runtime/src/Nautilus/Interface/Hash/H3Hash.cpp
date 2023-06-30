@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface {
 
@@ -26,7 +27,7 @@ OUT customBitCastProxy(IN f) {
     return ret;
 }
 
-HashFunction::HashValue H3Hash::init() { return 0_u64UL; }
+HashFunction::HashValue H3Hash::init() { return 0_u64; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
 
@@ -42,7 +43,7 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
                              value.as<Float>());
     }
 
-    for (Value<UInt8> i((uint8_t) 0); i < numberOfKeyBits; i = i + 1) {
+    for (Value<UInt8> i(0_u8); i < numberOfKeyBits; i = i + 1) {
         auto isBitSet = (value >> i) & 1;
         auto h3SeedMemRef = (state + (entrySizeH3HashSeed * i)).as<MemRef>();
         auto h3Seed = h3SeedMemRef.load<UInt64>();

@@ -46,7 +46,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-
+#include <Util/StdInt.hpp>
 #ifdef TFDEF
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #endif//TFDEF
@@ -2349,7 +2349,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
         auto defaultKeyAssignment = VarDeclStatement(keyVariableDeclaration)
-                                        .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((int64_t) 0))));
+                                        .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_s64))));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(defaultKeyAssignment));
     }
 

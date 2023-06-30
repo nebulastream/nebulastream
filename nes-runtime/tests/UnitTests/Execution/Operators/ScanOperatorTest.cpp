@@ -61,7 +61,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f2"].write<int64_t>(1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
@@ -73,7 +73,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
         auto& record = collector->records[i];
         ASSERT_EQ(record.numberOfFields(), 2);
         ASSERT_EQ(record.read("f1"), (int64_t) i % 2);
-        ASSERT_EQ(record.read("f2"), (int64_t) 1);
+        ASSERT_EQ(record.read("f2"), 1_s64);
     }
 }
 
@@ -97,7 +97,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f2"].write<int64_t>(1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
@@ -109,7 +109,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
         auto& record = collector->records[i];
         ASSERT_EQ(record.numberOfFields(), 2);
         ASSERT_EQ(record.read("f1"), (int64_t) i % 2);
-        ASSERT_EQ(record.read("f2"), (int64_t) 1);
+        ASSERT_EQ(record.read("f2"), 1_s64);
     }
 }
 

@@ -319,7 +319,7 @@ TEST_P(Query3Test, tpchQ3) {
         auto tag = *((int64_t*) aggregation.get());
         auto globalState = (GroupedAggregationState*) executablePipeline3->getExecutionContext()->getGlobalOperatorState(tag);
         auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
-        EXPECT_EQ(currentSize, (int64_t) 11620);
+        EXPECT_EQ(currentSize, 11620_s64);
     }
 
     NES_INFO("QueryCompilationTime: {}", compilationTimer);
