@@ -31,7 +31,6 @@ class FilterLogicalOperatorNode;
 using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 }// namespace NES
 
-
 namespace NES::Optimizer {
 
 class PredicateReorderingRule;
@@ -82,7 +81,6 @@ class PredicateReorderingRule : public BaseRewriteRule {
      * @return boolean, true when a consecutive filter is found
      */
     static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
-
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_
