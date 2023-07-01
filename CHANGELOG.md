@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.128](https://github.com/nebulastream/nebulastream/tree/v0.5.128) (2023-07-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.127...v0.5.128)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add predicate reordering rule [\#3830](https://github.com/nebulastream/nebulastream/issues/3830)
+
 ## [v0.5.127](https://github.com/nebulastream/nebulastream/tree/v0.5.127) (2023-06-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.126...v0.5.127)
