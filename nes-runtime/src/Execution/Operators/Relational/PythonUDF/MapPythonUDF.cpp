@@ -344,14 +344,11 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
             FunctionCall("createShortObject", createShortObject, handler, record.read(fieldName).as<Int16>()); // Short
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
             FunctionCall("createByteObject", createByteObject, handler, record.read(fieldName).as<Int8>());// Byte
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-            //FunctionCall("createStringObject", createStringObject, handler, record.read(fieldName).as<Text>()->getReference());
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
         FunctionCall("setPythonTupleAtPosition", setPythonTupleAtPosition, handler, Value<Int32>(i));
     }
-
     auto outputPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler);
 
     record = Record();
@@ -386,7 +383,6 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
         FunctionCall("setPythonTupleAtPosition", setPythonTupleAtPosition, handler, Value<Int32>(i));
-
     }
     // Trigger execution of next operator
     child->execute(ctx, (Record&) record);
