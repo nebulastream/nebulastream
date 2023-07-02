@@ -84,16 +84,6 @@ class PythonUDFOperatorHandler : public OperatorHandler {
             }
             NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
         }
-        // set function to this newly created function
-       /*this->pythonFunction = PyObject_GetAttrString(this->pythonModule, this->functionName.c_str());
-
-        if (this->pythonFunction == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-            NES_THROW_RUNTIME_ERROR("Cannot find function " << this->functionName << " inside module " << this->moduleName);
-        }*/
     }
 
     /**
@@ -111,7 +101,6 @@ class PythonUDFOperatorHandler : public OperatorHandler {
                 NES_THROW_RUNTIME_ERROR("Something went wrong with finalizing Python");
             }
         }
-
     }
 
     /**
@@ -154,7 +143,6 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      * @return python module as a PyObject
      */
     PyObject* getPythonModule() const { return this->pythonModule; }
-
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
