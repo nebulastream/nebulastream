@@ -153,13 +153,13 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
         valuePtr = valuePtr + aggregationFunction->getSize();
     }
 }
-void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& ) const {
     auto sliceStore = reinterpret_cast<LocalKeyedSliceStoreState*>(ctx.getLocalState(this));
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerKeyedThreadLocalWindow
     // with the current watermark ts to check if we can trigger a window.
-    Nautilus::FunctionCall("triggerKeyedThreadLocalWindow",
+    /*Nautilus::FunctionCall("triggerKeyedThreadLocalWindow",
                            triggerKeyedThreadLocalWindow,
                            globalOperatorHandler,
                            ctx.getWorkerContext(),
@@ -167,7 +167,7 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& record
                            ctx.getWorkerId(),
                            ctx.getOriginId(),
                            recordBuffer.getSequenceNr(),
-                           ctx.getWatermarkTs());
+                           ctx.getWatermarkTs());*/
 }
 
 }// namespace NES::Runtime::Execution::Operators

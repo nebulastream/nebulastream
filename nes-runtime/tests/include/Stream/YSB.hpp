@@ -69,7 +69,7 @@ class YSB {
         DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
         auto schema = table->getLayout()->getSchema();
         PipelinePlan plan;
-        std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {"event_type", "campaign_id"};
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()),
             projections);
