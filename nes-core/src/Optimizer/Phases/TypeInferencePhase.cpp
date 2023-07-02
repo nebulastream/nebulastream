@@ -38,7 +38,6 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     try {
-
         auto typeInferencePhaseContext = TypeInferencePhaseContext(sourceCatalog, udfCatalog);
 
         // first we have to check if all source operators have a correct source descriptors
@@ -88,6 +87,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         return queryPlan;
     } catch (std::exception& e) {
         NES_ERROR2("TypeInferencePhase: Exception occurred during type inference phase {}", e.what());
+        NES_ERROR2("GlobalQueryPlanUpdatePhase: Exception occurred while updating global query plan with id:  {}", queryPlan->getQueryId());
         auto queryId = queryPlan->getQueryId();
         throw TypeInferenceException(queryId, e.what());
     }

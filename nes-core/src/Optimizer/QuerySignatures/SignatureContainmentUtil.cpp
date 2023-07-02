@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Util/Common.hpp"
+#include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -414,9 +416,11 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
             auto watermarkOperator = watermarkOperatorCopy->as<WatermarkAssignerLogicalOperatorNode>();
             if (watermarkOperator->getWatermarkStrategyDescriptor()
                     ->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+                auto fieldName = field->getName();
+                auto containerSourceNames = NES::Util::splitWithStringDelimiter<std::string>(fieldName, "$")[0];
                 auto watermarkStrategyDescriptor =
                     watermarkOperator->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-                watermarkStrategyDescriptor->setOnField(Attribute("start").getExpressionNode());
+                watermarkStrategyDescriptor->setOnField(Attribute(containerSourceNames + "$start").getExpressionNode());
                 watermarkStrategyDescriptor->setTimeUnit(containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
             } else {
                 return {};

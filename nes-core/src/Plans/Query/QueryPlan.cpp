@@ -217,7 +217,7 @@ bool QueryPlan::replaceOperator(const OperatorNodePtr& oldOperator, const Operat
 }
 
 QueryPlanPtr QueryPlan::copy() {
-    NES_INFO2("QueryPlan: make copy of this query plan");
+    NES_DEBUG2("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};

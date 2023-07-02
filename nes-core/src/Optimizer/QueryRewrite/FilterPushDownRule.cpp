@@ -36,7 +36,7 @@ FilterPushDownRule::FilterPushDownRule() = default;
 
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 
-    NES_INFO2("Applying FilterPushDownRule to query {}", queryPlan->toString());
+    NES_DEBUG2("Applying FilterPushDownRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
     std::vector<FilterLogicalOperatorNodePtr> filterOperators;
     for (const auto& rootOperator : rootOperators) {
@@ -55,7 +55,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     for (const auto& filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
     }
-    NES_INFO2("FilterPushDownRule: Return the updated query plan {}", queryPlan->toString());
+    NES_DEBUG2("FilterPushDownRule: Return the updated query plan {}", queryPlan->toString());
     return queryPlan;
 }
 

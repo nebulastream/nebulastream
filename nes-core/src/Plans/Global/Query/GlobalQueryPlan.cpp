@@ -107,7 +107,7 @@ SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
 }
 
 bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_INFO2("GlobalQueryPlan: updating the shared query metadata information");
+    NES_DEBUG2("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     //Mark the shared query plan as updated post merging new queries
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
@@ -120,7 +120,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
 }
 
 void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
-    NES_INFO2("GlobalQueryPlan: remove empty metadata information.");
+    NES_DEBUG2("GlobalQueryPlan: remove empty metadata information.");
     //Following associative-container erase idiom
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
         auto sharedQueryPlan = itr->second;

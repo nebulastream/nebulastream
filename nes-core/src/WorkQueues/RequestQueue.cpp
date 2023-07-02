@@ -38,7 +38,7 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
     availabilityTrigger.wait(lock, [&] {
         return isNewRequestAvailable();
     });
-    NES_INFO2("QueryRequestQueue: Fetching Queries to Schedule");
+    NES_DEBUG2("QueryRequestQueue: Fetching Queries to Schedule");
     std::vector<NESRequestPtr> queriesToSchedule;
     queriesToSchedule.reserve(batchSize);
     if (!requestQueue.empty()) {
@@ -49,11 +49,11 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
             requestQueue.pop_front();
             currentBatchSize++;
         }
-        NES_INFO2("QueryRequestQueue: Optimizing {} queryIdAndCatalogEntryMapping.", queriesToSchedule.size());
+        NES_DEBUG2("QueryRequestQueue: Optimizing {} queryIdAndCatalogEntryMapping.", queriesToSchedule.size());
         setNewRequestAvailable(!requestQueue.empty());
         return queriesToSchedule;
     }
-    NES_INFO2("QueryRequestQueue: Nothing to schedule.");
+    NES_DEBUG2("QueryRequestQueue: Nothing to schedule.");
     setNewRequestAvailable(!requestQueue.empty());
     return queriesToSchedule;
 }

@@ -180,7 +180,19 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<JoinLogicalOperatorNode>(); }// todo
+bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const {
+    if (rhs->instanceOf<JoinLogicalOperatorNode>()) {
+        auto rhsJoin = rhs->as<JoinLogicalOperatorNode>();
+        return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
+            && joinDefinition->getLeftJoinKey()->equal(rhsJoin->joinDefinition->getLeftJoinKey())
+            && joinDefinition->getRightJoinKey()->equal(rhsJoin->joinDefinition->getRightJoinKey())
+            && joinDefinition->getOutputSchema()->equals(rhsJoin->joinDefinition->getOutputSchema())
+            && joinDefinition->getRightSourceType()->equals(
+                rhsJoin->joinDefinition->getRightSourceType())
+                && joinDefinition->getLeftSourceType()->equals(rhsJoin->joinDefinition->getLeftSourceType());
+    }
+    return false;
+}// todo
 
 void JoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();

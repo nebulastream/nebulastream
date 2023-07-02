@@ -23,7 +23,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(OperatorId id) : id(id), properties() { NES_INFO2("Creating Operator {}", id); }
+OperatorNode::OperatorNode(OperatorId id) : id(id), properties() { NES_DEBUG2("Creating Operator {}", id); }
 
 OperatorId OperatorNode::getId() const { return id; }
 
@@ -43,7 +43,7 @@ bool OperatorNode::hasMultipleChildren() { return !getChildren().empty() && getC
 bool OperatorNode::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorNodePtr OperatorNode::duplicate() {
-    NES_INFO2("OperatorNode: Create copy of the operator");
+    NES_DEBUG2("OperatorNode: Create copy of the operator");
     const OperatorNodePtr copyOperator = copy();
 
     NES_DEBUG2("OperatorNode: copy all parents");

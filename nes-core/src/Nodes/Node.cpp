@@ -139,7 +139,7 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
         }
     }
 
-    NES_INFO2("Node: Remove all parents of this node.");
+    NES_DEBUG2("Node: Remove all parents of this node.");
     removeAllParent();
 
     if (!addParent(newNode)) {
@@ -161,10 +161,10 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
         return false;
     }
 
-    NES_INFO2("Node: Create temporary copy of this nodes parents.");
+    NES_DEBUG2("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfChildren = children;
 
-    NES_INFO2("Node: Remove all childs of this node.");
+    NES_DEBUG2("Node: Remove all childs of this node.");
     removeChildren();
 
     if (!addChild(newNode)) {
@@ -172,7 +172,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
         return false;
     }
 
-    NES_INFO2("Node: Add copy of this nodes parent as parent to the input node.");
+    NES_DEBUG2("Node: Add copy of this nodes parent as parent to the input node.");
     for (const NodePtr& child : copyOfChildren) {
         if (!newNode->addChild(child)) {
             NES_ERROR2("Node: Unable to add child of this node as child to input node.");
@@ -184,24 +184,24 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
 }
 
 void Node::removeAllParent() {
-    NES_INFO2("Node: Removing all parents for current node");
+    NES_DEBUG2("Node: Removing all parents for current node");
     auto nodeItr = parents.begin();
     while (nodeItr != parents.end()) {
         if (!this->removeParent(*nodeItr)) {
             nodeItr++;
         }
-        NES_INFO2("Node: Removed node as parent of this node");
+        NES_DEBUG2("Node: Removed node as parent of this node");
     }
 }
 
 void Node::removeChildren() {
-    NES_INFO2("Node: Removing all children for current node");
+    NES_DEBUG2("Node: Removing all children for current node");
     auto nodeItr = children.begin();
     while (nodeItr != children.end()) {
         if (!this->removeChild(*nodeItr)) {
             nodeItr++;
         }
-        NES_INFO2("Node: Removed node as child of this node");
+        NES_DEBUG2("Node: Removed node as child of this node");
     }
 }
 
@@ -608,7 +608,7 @@ void Node::getAndFlattenAllChildrenHelper(const NodePtr& node,
 }
 
 std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
-    NES_INFO2("Node: Get this node, all its parents, and Ancestors");
+    NES_DEBUG2("Node: Get this node, all its parents, and Ancestors");
     std::vector<NodePtr> result{shared_from_this()};
     for (auto& parent : parents) {
         NES_TRACE2("Node: Get this node, all its parents, and Ancestors");

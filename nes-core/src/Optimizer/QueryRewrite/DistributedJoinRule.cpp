@@ -28,7 +28,7 @@ DistributeJoinRule::DistributeJoinRule() = default;
 DistributeJoinRulePtr DistributeJoinRule::create() { return std::make_shared<DistributeJoinRule>(DistributeJoinRule()); }
 
 QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO2("DistributeJoinRule: Apply DistributeJoinRule.");
+    NES_DEBUG2("DistributeJoinRule: Apply DistributeJoinRule.");
     NES_DEBUG2("DistributeJoinRule::apply: plan before replace\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     if (!joinOps.empty()) {
