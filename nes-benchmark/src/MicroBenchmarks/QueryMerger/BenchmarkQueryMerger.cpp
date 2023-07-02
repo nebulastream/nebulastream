@@ -247,11 +247,14 @@ int main(int argc, const char* argv[]) {
 
     NES::Logger::setupLogging("BenchmarkQueryMerger.log", NES::LogLevel::LOG_INFO);
     std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
+
     std::stringstream benchmarkOutput;
-    benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
-                       "SharedOperators,OperatorEfficiency,NES_Version,Run_Num,Start_"
-                       "Time,End_Time,Total_Run_Time"
-                    << std::endl;
+    benchmarkOutput
+        << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
+           "SharedOperators,OperatorEfficiency,NES_Version,Run_Num,Start_"
+           "Time,End_Time,Total_Run_Time,typeInferencePhase1,queryRewritePhaseTime,typeInferencePhase2,signatureInferencePhase1,"
+           "topologySpecificRewritePhase,typeInferencePhase3,globalQueryPlanAddition,mergerExecutionPhase"
+        << std::endl;
 
     //Load all command line arguments
     std::map<std::string, std::string> commandLineParams;
@@ -273,7 +276,6 @@ int main(int argc, const char* argv[]) {
     }
 
     NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
-
     //Load individual query set from the query set location and run the benchmark
     for (const auto& file : directory_iterator(querySetLocation)) {
 
@@ -399,14 +401,19 @@ int main(int argc, const char* argv[]) {
                                 << noOfPhysicalSources[configNum] << "," << numOfQueries << ","
                                 << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
                                 << mergedOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
-                                << "," << endTime << "," << endTime - startTime << std::endl;
+                                << "," << endTime << "," << endTime - startTime << "," << gqp->typeInferencePhase1 / numOfQueries
+                                << "," << gqp->queryRewritePhaseTime / numOfQueries << ","
+                                << gqp->typeInferencePhase2 / numOfQueries << "," << gqp->signatureInferencePhase1 / numOfQueries
+                                << "," << gqp->topologySpecificRewritePhase / numOfQueries << ","
+                                << gqp->typeInferencePhase3 / numOfQueries << "," << gqp->globalQueryPlanAddition / numOfQueries
+                                << "," << gqp->mergerExecutionPhase / numOfQueries << "," << gqp->containmentIdentification << ","
+                                << gqp->callsToContainmentIdentification << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 //Stop NES coordinator
                 auto coordinatorSopped = coordinator->stopCoordinator(true);
                 std::cout << "Coordinator stopped: " << coordinatorSopped << std::endl;
                 queryIter += numOfQueries;
             }
-            benchmarkOutput << std::endl << std::endl;
             std::cout << benchmarkOutput.str();
         }
     }

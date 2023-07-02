@@ -82,7 +82,13 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<UnionLogicalOperatorNode>(); }
+bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const {
+    if (rhs->instanceOf<UnionLogicalOperatorNode>()) {
+        auto rhsUnion = rhs->as<UnionLogicalOperatorNode>();
+        return leftInputSchema->equals(rhsUnion->getRightInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
+    }
+    return false;
+}
 
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
