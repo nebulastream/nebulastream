@@ -58,7 +58,6 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
                                                                                      targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-            auto timerStart = std::chrono::system_clock::now();
             std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> relationshipAndOperators;
 
             //Fetch the host query plan to merge
@@ -121,8 +120,16 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                             }
 
                             //Match the target and host operator signatures to see if a match is present
+                            auto startQR =
+                                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                                    .count();
                             relationshipAndOperators =
                                 SignatureContainmentUtil->checkContainmentRelationshipTopDown(hostOperator, targetOperator);
+                            auto endQR =
+                                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                                    .count();
+                            globalQueryPlan->containmentIdentification += endQR - startQR;
+                            globalQueryPlan->callsToContainmentIdentification++;
                             if (get<0>(relationshipAndOperators) != ContainmentType::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
