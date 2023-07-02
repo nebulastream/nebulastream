@@ -12,28 +12,28 @@
 # limitations under the License.
 
 
-#find_package(Doxygen)
-#if (NOT ${DOXYGEN_FOUND})
-#        message(WARNING "Doxygen not found.")
-#        return ()
-#endif ()
+find_package(Doxygen)
+if (NOT ${DOXYGEN_FOUND})
+        message(WARNING "Doxygen not found.")
+        return ()
+endif ()
 
-#if (${DOXYGEN_DOT_FOUND})
-#        set(DOXYGEN_HAVE_DOT YES)
-#else ()
-#        set(DOXYGEN_HAVE_DOT NO)
-#endif ()
+if (${DOXYGEN_DOT_FOUND})
+        set(DOXYGEN_HAVE_DOT YES)
+else ()
+        set(DOXYGEN_HAVE_DOT NO)
+endif ()
 
-#execute_process(COMMAND ${DOXYGEN_EXECUTABLE} --version
-#                OUTPUT_VARIABLE DOXYGEN_VERSION
-#                OUTPUT_STRIP_TRAILING_WHITESPACE)
-#message(STATUS "Doxygen version: ${DOXYGEN_VERSION}")
+execute_process(COMMAND ${DOXYGEN_EXECUTABLE} --version
+                OUTPUT_VARIABLE DOXYGEN_VERSION
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "Doxygen version: ${DOXYGEN_VERSION}")
 
-#configure_file("Doxyfile.in"
-#               "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
-#               ESCAPE_QUOTES)
+configure_file("Doxyfile.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+               ESCAPE_QUOTES)
 
-#add_custom_target(nes-doc COMMAND ${CMAKE_COMMAND} -E env "DOX_PROJECT_NUMBER=${${PROJECT_NAME}_VERSION}" ${DOXYGEN_EXECUTABLE}  "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
-#                  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+add_custom_target(nes-doc COMMAND ${CMAKE_COMMAND} -E env "DOX_PROJECT_NUMBER=${${PROJECT_NAME}_VERSION}" ${DOXYGEN_EXECUTABLE}  "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+                  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
 
