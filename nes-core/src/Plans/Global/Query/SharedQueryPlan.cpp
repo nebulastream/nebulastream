@@ -315,23 +315,72 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);
 }
 
-void SharedQueryPlan::insetBetweenNodesTheNewPlacementPath(const std::set<uint64_t>& newNodesUsedForPlacement) {
-    for (const auto& nodeUsedForPlacement : newNodesUsedForPlacement) {
-        this->placementPath.emplace(nodeUsedForPlacement);
-    }
-}
-
-std::queue<uint64_t> SharedQueryPlan::getPlacementPath() { return placementPath; }
-
-void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
-                                                 const std::set<uint64_t>& downstreamOperatorIds) {
+void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>& removedEdges) {
 
     std::set<OperatorNodePtr> upstreamOperators;
+    std::set<OperatorNodePtr> downstreamOperators;
+    if (removedEdges.size() == 1) {
+        auto operatorsPlacedOnDownstreamNode = nodeToOperatorsMappings[removedEdges[0].downstreamNodeId];
+
+        for (auto firstItr = operatorsPlacedOnDownstreamNode.begin(); firstItr != operatorsPlacedOnDownstreamNode.end();) {
+            bool incFirstItr = true;
+            for (auto nextItr = nextUpstreamOperators.begin(); nextItr != nextUpstreamOperators.end();) {
+                if ((*firstItr)->getId() == (*nextItr)->getId()) {
+                    // Insert item in the temp upstream operator list
+                    upstreamOperators.insert((*firstItr));
+                    // It is okay to erase these operators as there won't be any other operators with same id in the change logs entries.
+                    firstItr =
+                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
+                    nextUpstreamOperators.erase(nextItr);
+                    incFirstItr = false;
+                    break;
+                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
+                    // Insert item in the temp upstream operator list
+                    tempUpstreamOperators.insert((*firstItr));
+                    // It is okay to erase this next operator as there won't be any other operator in the first upstream operator list
+                    // that can be this operator's upstream operator
+                    nextItr =
+                        nextUpstreamOperators.erase(nextItr);// Please note that we are assigning the iterator to the next item
+                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
+                    tempUpstreamOperators.insert((*nextItr));
+                    //It is okay to erase this first operator as no other upstream operator can be its upstream operator
+                    firstItr =
+                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
+                    incFirstItr = false;
+                    break;
+                } else {
+                    nextItr++;// move to the next item
+                }
+            }
+
+            // Increment the first iterator
+            if (incFirstItr) {
+                firstItr++;
+            }
+        }
+
+        //Add remaining upstream operators to the temp upstream operator set.
+        if (!firstUpstreamOperators.empty()) {
+            tempUpstreamOperators.insert(firstUpstreamOperators.begin(), firstUpstreamOperators.end());
+        }
+        if (!nextUpstreamOperators.empty()) {
+            tempUpstreamOperators.insert(nextUpstreamOperators.begin(), nextUpstreamOperators.end());
+        }
+
+        auto operatorsPlacedOnUpstreamNode = nodeToOperatorsMappings[removedEdges[0].upstreamNodeId];
+    }
+
+    for (uint64_t i = 0; i < removedEdges.size(); i++) {
+        auto removeEdge = removedEdges[i];
+        if (0 == i) {
+            auto downstreamNodeId = removeEdge.downstreamNodeId;
+        }
+    }
+
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
         upstreamOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId));
     }
 
-    std::set<OperatorNodePtr> downstreamOperators;
     for (const auto& downstreamOperatorId : downstreamOperatorIds) {
         downstreamOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId));
     }
