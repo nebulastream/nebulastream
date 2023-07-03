@@ -18,7 +18,7 @@
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/PersonDataPool.hpp>
-#include <DataGeneration/NEXMarkGeneration/UniformIntDistributions.hpp>
+#include <DataGeneration/NEXMarkGeneration/RandomNumberGenerators.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
@@ -75,19 +75,19 @@ class PersonGenerator : public DataGenerator {
 
     /**
      * @brief generates an address
-     * @param uniformIntDistributions
+     * @param randomGenerators
      * @param fields
      * @return zipcode
      */
-    uint32_t generatePersonAddress(UniformIntDistributions uniformIntDistributions, std::vector<std::string>& fields);
+    uint32_t generatePersonAddress(RandomNumberGenerators randomGenerators, std::vector<std::string>& fields);
 
     /**
      * @brief generates a profile
-     * @param uniformIntDistributions
+     * @param randomGenerators
      * @param fields
      * @return income, business, age
      */
-    std::tuple<double, bool, uint8_t> generatePersonProfile(UniformIntDistributions uniformIntDistributions, std::vector<std::string>& fields);
+    std::tuple<double, bool, uint8_t> generatePersonProfile(RandomNumberGenerators randomGenerators, std::vector<std::string>& fields);
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

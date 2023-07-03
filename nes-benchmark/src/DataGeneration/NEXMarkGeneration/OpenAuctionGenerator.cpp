@@ -13,7 +13,7 @@
 */
 
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
-#include <DataGeneration/NEXMarkGeneration/UniformIntDistributions.hpp>
+#include <DataGeneration/NEXMarkGeneration/RandomNumberGenerators.hpp>
 #include <Util/Core.hpp>
 #include <cmath>
 
@@ -53,32 +53,32 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
 
 OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& auctions,
                                                                   uint64_t auctionsIndex, Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    static auto uniformIntDistributions = UniformIntDistributions();
+    static auto randomGenerators = RandomNumberGenerators();
 
     // create random reserve
     auto reserve = 0UL;
-    if (uniformIntDistributions.generateRandomBoolean()) {
-        reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformIntDistributions.generateRandomReserve() / 1000.0));
+    if (randomGenerators.generateRandomBoolean()) {
+        reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + randomGenerators.generateRandomReserve() / 1000.0));
     }
 
     // create random privacy
     auto privacy = false;
-    if (uniformIntDistributions.generateRandomBoolean()) {
+    if (randomGenerators.generateRandomBoolean()) {
         privacy = true;
     }
 
     // create random category and quantity
-    auto category = uniformIntDistributions.generateRandomCategory();
-    auto quantity = uniformIntDistributions.generateRandomQuantity();
+    auto category = randomGenerators.generateRandomCategory();
+    auto quantity = randomGenerators.generateRandomQuantity();
 
     // create random type
     std::ostringstream oss;
-    if (uniformIntDistributions.generateRandomBoolean()) {
+    if (randomGenerators.generateRandomBoolean()) {
         oss << "Regular";
     } else {
         oss << "Featured";
     }
-    if (quantity > 1 && uniformIntDistributions.generateRandomBoolean()) {
+    if (quantity > 1 && randomGenerators.generateRandomBoolean()) {
         oss << "; Dutch";
     }
     auto type = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), oss.str());

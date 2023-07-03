@@ -52,48 +52,48 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
 
 PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& persons, uint64_t personsIndex,
                                                    Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    static auto uniformIntDistributions = UniformIntDistributions();
+    static auto randomGenerators = RandomNumberGenerators();
     std::vector<std::string> fields;
     fields.reserve(12);
 
     // create random name and email
-    auto firstnameIdx = uniformIntDistributions.generateRandomFirstname();
-    auto lastnameIdx = uniformIntDistributions.generateRandomLastname();
+    auto firstnameIdx = randomGenerators.generateRandomFirstname();
+    auto lastnameIdx = randomGenerators.generateRandomLastname();
     fields.emplace_back(PersonDataPool().firstnames[firstnameIdx] + " " + PersonDataPool().lastnames[lastnameIdx]);
-    auto emailIdx = uniformIntDistributions.generateRandomEmail();
+    auto emailIdx = randomGenerators.generateRandomEmail();
     fields.emplace_back(PersonDataPool().lastnames[lastnameIdx] + "@" + PersonDataPool().emails[emailIdx]);
 
     // create random phone number
     std::ostringstream phone;
-    if (uniformIntDistributions.generateRandomBoolean()) {
-        phone << "+" << uniformIntDistributions.generateRandomOneHundred() << "("
-              << uniformIntDistributions.generateRandomPhonePrefix() << ")"
-              << uniformIntDistributions.generateRandomPhoneSuffix();
+    if (randomGenerators.generateRandomBoolean()) {
+        phone << "+" << randomGenerators.generateRandomOneHundred() << "("
+              << randomGenerators.generateRandomPhonePrefix() << ")"
+              << randomGenerators.generateRandomPhoneSuffix();
     }
     fields.emplace_back(phone.str());
 
     // create random address
-    auto zipcode = generatePersonAddress(uniformIntDistributions, fields);
+    auto zipcode = generatePersonAddress(randomGenerators, fields);
 
     // create random homepage
     std::ostringstream homepage;
-    if (uniformIntDistributions.generateRandomBoolean()) {
+    if (randomGenerators.generateRandomBoolean()) {
         homepage << "http://www." << PersonDataPool().emails[emailIdx] << "/~" << PersonDataPool().lastnames[lastnameIdx];
     }
     fields.emplace_back(homepage.str());
 
     // create random credit card
     std::ostringstream creditcard;
-    if (uniformIntDistributions.generateRandomBoolean()) {
-        creditcard << uniformIntDistributions.generateRandomCreditcard() << " "
-                   << uniformIntDistributions.generateRandomCreditcard() << " "
-                   << uniformIntDistributions.generateRandomCreditcard() << " "
-                   << uniformIntDistributions.generateRandomCreditcard();
+    if (randomGenerators.generateRandomBoolean()) {
+        creditcard << randomGenerators.generateRandomCreditcard() << " "
+                   << randomGenerators.generateRandomCreditcard() << " "
+                   << randomGenerators.generateRandomCreditcard() << " "
+                   << randomGenerators.generateRandomCreditcard();
     }
     fields.emplace_back(creditcard.str());
 
     // create random profile
-    auto profile = generatePersonProfile(uniformIntDistributions, fields);
+    auto profile = generatePersonProfile(randomGenerators, fields);
 
     // write strings to childBuffer in order to store them in TupleBuffer
     std::vector<uint32_t> childIdx;
@@ -113,7 +113,7 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
                            business, age, timestamp);
 }
 
-uint32_t PersonGenerator::generatePersonAddress(NEXMarkGeneration::UniformIntDistributions uniformIntDistributions,
+uint32_t PersonGenerator::generatePersonAddress(NEXMarkGeneration::RandomNumberGenerators randomGenerators,
                                                 std::vector<std::string>& fields) {
     std::ostringstream street;
     std::ostringstream city;
@@ -121,13 +121,13 @@ uint32_t PersonGenerator::generatePersonAddress(NEXMarkGeneration::UniformIntDis
     std::ostringstream province;
     auto zipcode = 0U;
 
-    if (uniformIntDistributions.generateRandomBoolean()) {
-        auto streetIdx = uniformIntDistributions.generateRandomLastname();
-        auto cityIdx = uniformIntDistributions.generateRandomCity();
-        auto countryIdx = uniformIntDistributions.isCountryUS() ? 0 : uniformIntDistributions.generateRandomCountry();
-        auto provinceIdx = countryIdx == 0 ? uniformIntDistributions.generateRandomProvince() : uniformIntDistributions.generateRandomLastname();
+    if (randomGenerators.generateRandomBoolean()) {
+        auto streetIdx = randomGenerators.generateRandomLastname();
+        auto cityIdx = randomGenerators.generateRandomCity();
+        auto countryIdx = randomGenerators.isCountryUS() ? 0 : randomGenerators.generateRandomCountry();
+        auto provinceIdx = countryIdx == 0 ? randomGenerators.generateRandomProvince() : randomGenerators.generateRandomLastname();
 
-        street << uniformIntDistributions.generateRandomOneHundred() << " " << PersonDataPool().lastnames[streetIdx] << " St";
+        street << randomGenerators.generateRandomOneHundred() << " " << PersonDataPool().lastnames[streetIdx] << " St";
         city << PersonDataPool().cities[cityIdx];
 
         if (countryIdx == 0) {
@@ -138,7 +138,7 @@ uint32_t PersonGenerator::generatePersonAddress(NEXMarkGeneration::UniformIntDis
             province << PersonDataPool().lastnames[provinceIdx];
         }
 
-        zipcode = uniformIntDistributions.generateRandomZipcode();
+        zipcode = randomGenerators.generateRandomZipcode();
     }
 
     fields.emplace_back(street.str());
@@ -149,7 +149,7 @@ uint32_t PersonGenerator::generatePersonAddress(NEXMarkGeneration::UniformIntDis
     return zipcode;
 }
 
-std::tuple<double, bool, uint8_t> PersonGenerator::generatePersonProfile(NEXMarkGeneration::UniformIntDistributions uniformIntDistributions,
+std::tuple<double, bool, uint8_t> PersonGenerator::generatePersonProfile(NEXMarkGeneration::RandomNumberGenerators randomGenerators,
                                                                          std::vector<std::string>& fields) {
     std::ostringstream interest;
     std::ostringstream education;
@@ -158,32 +158,32 @@ std::tuple<double, bool, uint8_t> PersonGenerator::generatePersonProfile(NEXMark
     auto business = false;
     auto age = 0U;
 
-    if (uniformIntDistributions.generateRandomBoolean()) {
-        auto numInterests = uniformIntDistributions.generateRandomInterest();
+    if (randomGenerators.generateRandomBoolean()) {
+        auto numInterests = randomGenerators.generateRandomInterest();
         for (auto i = 0; i < numInterests; ++i) {
-            interest << uniformIntDistributions.generateRandomCategory();
+            interest << randomGenerators.generateRandomCategory();
             if (i < numInterests - 1) {
                 interest << "; ";
             }
         }
 
-        if (uniformIntDistributions.generateRandomBoolean()) {
-            education << PersonDataPool().education[uniformIntDistributions.generateRandomEducation()];
+        if (randomGenerators.generateRandomBoolean()) {
+            education << PersonDataPool().education[randomGenerators.generateRandomEducation()];
         }
 
-        if (uniformIntDistributions.generateRandomBoolean()) {
-            gender << (uniformIntDistributions.generateRandomBoolean() == 0 ? "male" : "female");
+        if (randomGenerators.generateRandomBoolean()) {
+            gender << (randomGenerators.generateRandomBoolean() == 0 ? "male" : "female");
         }
 
-        if (uniformIntDistributions.generateRandomBoolean()) {
-            age = uniformIntDistributions.generateRandomAge();
+        if (randomGenerators.generateRandomBoolean()) {
+            age = randomGenerators.generateRandomAge();
         }
 
-        if (uniformIntDistributions.generateRandomBoolean()) {
+        if (randomGenerators.generateRandomBoolean()) {
             business = true;
         }
 
-        income = uniformIntDistributions.generateRandomIncome() + uniformIntDistributions.generateRandomOneHundred() / 100.0;
+        income = randomGenerators.generateRandomIncome() + randomGenerators.generateRandomOneHundred() / 100.0;
     }
 
     fields.emplace_back(interest.str());

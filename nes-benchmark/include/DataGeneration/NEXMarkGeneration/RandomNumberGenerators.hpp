@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_UNIFORMINTDISTRIBUTIONS_HPP
-#define NES_UNIFORMINTDISTRIBUTIONS_HPP
+#ifndef NES_RANDOMNUMBERGENERATORS_HPP
+#define NES_RANDOMNUMBERGENERATORS_HPP
 
 #include <cstdint>
 #include <random>
@@ -22,12 +22,12 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 auto constexpr generatorSeed = 42;
 
-class UniformIntDistributions {
+class RandomNumberGenerators {
   public:
     /**
      * @brief constructor of UniformIntDistribution - initializes generator with seed
      */
-    UniformIntDistributions();
+    RandomNumberGenerators();
 
     /**
      * @brief generates a random boolean
@@ -153,4 +153,4 @@ class UniformIntDistributions {
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
-#endif//NES_UNIFORMINTDISTRIBUTIONS_HPP
+#endif//NES_RANDOMNUMBERGENERATORS_HPP
