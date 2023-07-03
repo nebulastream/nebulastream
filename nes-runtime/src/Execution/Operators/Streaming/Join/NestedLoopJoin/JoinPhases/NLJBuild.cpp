@@ -70,8 +70,12 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
+    //update last seen watermark by this worker
+    opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
+    auto minWatermark = opHandler->getMinWatermarkForWorker();
+
     //TODO: Multi threaded this can become a problem
-    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(watermarkTs, sequenceNumber, originId);
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
     if (windowIdentifiersToBeTriggered.size() > 0) {
         opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
