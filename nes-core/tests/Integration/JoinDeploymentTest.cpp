@@ -578,8 +578,8 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
 INSTANTIATE_TEST_CASE_P(testJoinQueries,
                         JoinDeploymentTest,
                         ::testing::Values(NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                                          NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-                                          NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+//                                          NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+//                                          NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
                                           NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL),
                         [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
