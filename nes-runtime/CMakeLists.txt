@@ -21,7 +21,7 @@ add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-runtime SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+add_library(nes-runtime SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES} src/Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.cpp include/Execution/Operators/Relational/PythonUDF/PythonUDFUtils.hpp)
 # if musl we cant use can't use backtrace for tracing
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
