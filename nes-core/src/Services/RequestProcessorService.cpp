@@ -107,7 +107,7 @@ void RequestProcessorService::start() {
 
                     for (const auto& queryRequest : requests) {
                         auto queryId = queryRequest->as<RunQueryRequest>()->getQueryId();
-                        if (queryId == 1000) {
+                        if (queryId == 400) {
                             readyForPlacementAndDeployment = true;
                             break;
                         }
