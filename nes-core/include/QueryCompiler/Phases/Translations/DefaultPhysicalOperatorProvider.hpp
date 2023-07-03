@@ -23,10 +23,10 @@ namespace NES::QueryCompilation {
  * @brief Stores a window operator and window definition, as well as in- and output schema
  */
 struct WindowOperatorProperties {
-    WindowOperatorNodePtr& windowOperator;
-    SchemaPtr& windowInputSchema;
-    SchemaPtr& windowOutputSchema;
-    Windowing::LogicalWindowDefinitionPtr& windowDefinition;
+    WindowOperatorNodePtr windowOperator;
+    SchemaPtr windowInputSchema;
+    SchemaPtr windowOutputSchema;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
 /**
