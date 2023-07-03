@@ -16,6 +16,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   git \
   wget \
   python3 \
+  python3-dev \
   libsodium-dev \
   tar \
   python3-pip \
