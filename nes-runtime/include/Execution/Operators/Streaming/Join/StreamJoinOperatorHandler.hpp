@@ -73,13 +73,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     void deleteWindow(uint64_t windowIdentifier);
 
     /**
-     * @brief Retrieves the schema for the left or right stream
-     * @param isLeftSide
-     * @return SchemaPtr
-     */
-    SchemaPtr getSchema(bool isLeftSide);
-
-    /**
      * @brief Retrieves the start and end of a window
      * @param windowIdentifier
      * @return Pair<windowStart, windowEnd>

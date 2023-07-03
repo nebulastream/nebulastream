@@ -81,7 +81,7 @@ class PagedVector {
     size_t getNumberOfEntriesOnCurrentPage();
 
     /**
-     * @brief Appends a new page and updates the current page and number of enties.
+     * @brief Appends a new page and updates the current page and number of entries.
      * @return int8_t* page
      */
     int8_t* appendPage();
