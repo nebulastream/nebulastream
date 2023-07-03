@@ -137,11 +137,11 @@ void RequestProcessorService::start() {
                                 //3.2. If the shared query plan is newly created
                                 if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
 
-                                    NES_DEBUG2("QueryProcessingService: Shared Query Plan is new.");
+                                    NES_INFO2("QueryProcessingService: Shared Query Plan is new. Shared Query Id: {}", sharedQueryId);
 
                                     //3.2.1. Perform placement of new shared query plan
                                     auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                    NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
+                                    NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
                                     bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                     if (!placementSuccessful) {
                                         throw QueryPlacementException(
@@ -166,7 +166,7 @@ void RequestProcessorService::start() {
                                     // 3.3. Check if the shared query plan was updated after addition or removal of operators
                                 } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
 
-                                    NES_DEBUG2(
+                                    NES_INFO2(
                                         "QueryProcessingService: Shared Query Plan is non empty and an older version is already "
                                         "running.");
 
@@ -175,7 +175,7 @@ void RequestProcessorService::start() {
 
                                     //3.3.2. Perform placement of updated shared query plan
                                     auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                    NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
+                                    NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
                                     bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                     if (!placementSuccessful) {
                                         throw QueryPlacementException(
@@ -201,7 +201,7 @@ void RequestProcessorService::start() {
                                 } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
                                            || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
 
-                                    NES_DEBUG2(
+                                    NES_INFO2(
                                         "QueryProcessingService: Shared Query Plan is empty and an older version is already "
                                         "running.");
 
