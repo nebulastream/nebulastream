@@ -15,6 +15,9 @@
 #ifndef NES_PERSONDATAPOOL_HPP
 #define NES_PERSONDATAPOOL_HPP
 
+#include <string>
+#include <vector>
+
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 /**
