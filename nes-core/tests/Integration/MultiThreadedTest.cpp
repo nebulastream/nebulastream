@@ -48,6 +48,10 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
+    coordinatorConfig->worker.queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+
+
     NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -61,6 +65,8 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
     NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
     workerConfig1->numberOfSlots = (12);
@@ -68,6 +74,8 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numWorkerThreads = (numberOfWorkerThreads);
     workerConfig2->numberOfSlots = (12);
+    workerConfig2->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
