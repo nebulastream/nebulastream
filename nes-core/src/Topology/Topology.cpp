@@ -73,7 +73,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
                                                        const std::vector<TopologyNodePtr>& destinationNodes) {
     std::unique_lock lock(topologyLock);
-    NES_INFO("Topology: Finding path between set of start and destination nodes");
+//    NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (const auto& sourceNode : sourceNodes) {
         NES_TRACE("Topology: Finding all paths between the source node " << sourceNode << " and a set of destination nodes");
@@ -206,14 +206,14 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& startNode,
                                                             const TopologyNodePtr& destinationNode) {
     std::unique_lock lock(topologyLock);
-    NES_DEBUG("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
+//    NES_DEBUG("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
     std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> searchedNodes{destinationNode};
     std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
     TopologyNodePtr found = find(startNode, searchedNodes, mapOfUniqueNodes);
     if (found) {
-        NES_DEBUG("Topology: Found path between " << startNode->toString() << " and " << destinationNode->toString());
+//        NES_DEBUG("Topology: Found path between " << startNode->toString() << " and " << destinationNode->toString());
         return found;
     }
     NES_WARNING("Topology: Unable to find path between " << startNode->toString() << " and " << destinationNode->toString());
@@ -230,7 +230,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     });
 
     if (found != searchedNodes.end()) {
-        NES_DEBUG("Topology: found the destination node");
+//        NES_DEBUG("Topology: found the destination node");
         if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
             NES_TRACE("Topology: Insert the information about the test node in the unique node map");
             const TopologyNodePtr copyOfTestNode = testNode->copy();

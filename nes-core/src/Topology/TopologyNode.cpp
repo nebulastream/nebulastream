@@ -115,7 +115,7 @@ void TopologyNode::increaseResources(uint64_t freedCapacity) {
 }
 
 void TopologyNode::reduceResources(uint64_t usedCapacity) {
-    NES_DEBUG("TopologyNode: Reducing resources " << usedCapacity << " of " << resources);
+//    NES_DEBUG("TopologyNode: Reducing resources " << usedCapacity << " of " << resources);
     if (usedCapacity > resources) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
     }
@@ -127,7 +127,7 @@ void TopologyNode::reduceResources(uint64_t usedCapacity) {
 }
 
 void TopologyNode::reduceMemoryCapacity(double usedCapacity) {
-    NES_DEBUG("PhysicalNode: Reducing memory " << initialMemoryCapacity << " of " << usedMemory);
+//    NES_DEBUG("PhysicalNode: Reducing memory " << initialMemoryCapacity << " of " << usedMemory);
     if (usedCapacity > initialMemoryCapacity) {
         NES_WARNING("PhysicalNode: amount of memory to be used should not be more than actual memory");
     }
@@ -138,7 +138,7 @@ void TopologyNode::reduceMemoryCapacity(double usedCapacity) {
 }
 
 void TopologyNode::reduceNetworkCapacity(double usedCapacity) {
-    NES_DEBUG("PhysicalNode: Reducing network " << initialNetworkCapacity << " of " << usedNetwork);
+//    NES_DEBUG("PhysicalNode: Reducing network " << initialNetworkCapacity << " of " << usedNetwork);
     if (usedCapacity > initialNetworkCapacity) {
         NES_WARNING("PhysicalNode: amount of network to be used should not be more than actual network");
     }

@@ -33,7 +33,7 @@ bool OperatorNode::hasMultipleChildrenOrParents() {
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
     //has multiple parent operator
     bool hasMultipleParent = (!getParents().empty()) && getParents().size() > 1;
-    NES_DEBUG("OperatorNode: has multiple children " << hasMultipleChildren << " or has multiple parent " << hasMultipleParent);
+//    NES_DEBUG("OperatorNode: has multiple children " << hasMultipleChildren << " or has multiple parent " << hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
 }
 
@@ -42,17 +42,17 @@ bool OperatorNode::hasMultipleChildren() { return !getChildren().empty() && getC
 bool OperatorNode::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorNodePtr OperatorNode::duplicate() {
-    NES_INFO("OperatorNode: Create copy of the operator");
+//    NES_INFO("OperatorNode: Create copy of the operator");
     const OperatorNodePtr copyOperator = copy();
 
-    NES_DEBUG("OperatorNode: copy all parents");
+//    NES_DEBUG("OperatorNode: copy all parents");
     for (const auto& parent : getParents()) {
         if (!copyOperator->addParent(getDuplicateOfParent(parent->as<OperatorNode>()))) {
             NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add parent to copy");
         }
     }
 
-    NES_DEBUG("OperatorNode: copy all children");
+//    NES_DEBUG("OperatorNode: copy all children");
     for (const auto& child : getChildren()) {
         if (!copyOperator->addChild(getDuplicateOfChild(child->as<OperatorNode>()->duplicate()))) {
             NES_THROW_RUNTIME_ERROR("OperatorNode: Unable to add child to copy");
@@ -62,7 +62,7 @@ OperatorNodePtr OperatorNode::duplicate() {
 }
 
 OperatorNodePtr OperatorNode::getDuplicateOfParent(const OperatorNodePtr& operatorNode) {
-    NES_DEBUG("OperatorNode: create copy of the input operator");
+//    NES_DEBUG("OperatorNode: create copy of the input operator");
     const OperatorNodePtr& copyOfOperator = operatorNode->copy();
     if (operatorNode->getParents().empty()) {
         NES_TRACE("OperatorNode: No ancestor of the input node. Returning the copy of the input operator");
@@ -78,7 +78,7 @@ OperatorNodePtr OperatorNode::getDuplicateOfParent(const OperatorNodePtr& operat
 }
 
 OperatorNodePtr OperatorNode::getDuplicateOfChild(const OperatorNodePtr& operatorNode) {
-    NES_DEBUG("OperatorNode: create copy of the input operator");
+//    NES_DEBUG("OperatorNode: create copy of the input operator");
     OperatorNodePtr copyOfOperator = operatorNode->copy();
     if (operatorNode->getChildren().empty()) {
         NES_TRACE("OperatorNode: No children of the input node. Returning the copy of the input operator");
@@ -111,12 +111,12 @@ bool OperatorNode::addChild(NodePtr newNode) {
     });
 
     if (found == currentChildren.end()) {
-        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the children.");
+//        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the children.");
         children.push_back(newNode);
         newNode->addParent(shared_from_this());
         return true;
     }
-    NES_DEBUG("OperatorNode: the node is already part of its children so skip add child operation.");
+//    NES_DEBUG("OperatorNode: the node is already part of its children so skip add child operation.");
     return false;
 }
 
@@ -138,12 +138,12 @@ bool OperatorNode::addParent(NodePtr newNode) {
     });
 
     if (found == currentParents.end()) {
-        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the Parents.");
+//        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the Parents.");
         parents.push_back(newNode);
         newNode->addChild(shared_from_this());
         return true;
     }
-    NES_DEBUG("OperatorNode: the node is already part of its parent so skip add parent operation.");
+//    NES_DEBUG("OperatorNode: the node is already part of its parent so skip add parent operation.");
     return false;
 }
 

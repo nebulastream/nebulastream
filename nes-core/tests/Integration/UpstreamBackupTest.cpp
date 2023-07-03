@@ -50,15 +50,20 @@ const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
 
 // ((1934 + 1) * 15 + 1) * 5
-//const uint64_t numberOfNodesPerLevel3 = 1934;
-//const uint64_t numberOfNodesPerLevel2 = 15;
-//const uint64_t numberOfNodesPerLevel1 = 5;
-//const uint64_t numberOfNodes = 145130;
+const uint64_t numberOfNodesPerLevel3 = 95;
+const uint64_t numberOfNodesPerLevel2 = 21;
+const uint64_t numberOfNodesPerLevel1 = 8;
+const uint64_t numberOfNodes = 16035;
 
-const uint64_t numberOfNodesPerLevel3 = 56;
-const uint64_t numberOfNodesPerLevel2 = 7;
-const uint64_t numberOfNodesPerLevel1 = 3;
-const uint64_t numberOfNodes = 1200;
+//const uint64_t numberOfNodesPerLevel3 = 176;
+//const uint64_t numberOfNodesPerLevel2 = 21;
+//const uint64_t numberOfNodesPerLevel1 = 8;
+//const uint64_t numberOfNodes = 29743;
+
+//const uint64_t numberOfNodesPerLevel3 = 140;
+//const uint64_t numberOfNodesPerLevel2 = 25;
+//const uint64_t numberOfNodesPerLevel1 = 12;
+//const uint64_t numberOfNodes = 42311;
 
 
 class UpstreamBackupTest : public Testing::NESBaseTest {

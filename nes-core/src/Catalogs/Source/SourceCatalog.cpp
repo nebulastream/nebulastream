@@ -124,7 +124,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName) {
 
 bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, const SourceCatalogEntryPtr& newSourceCatalogEntry) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical source in addPhysicalSource() " << logicalSourceName);
+//    NES_DEBUG("SourceCatalog: search for logical source in addPhysicalSource() " << logicalSourceName);
 
     // check if logical source exists
     if (!containsLogicalSource(logicalSourceName)) {
@@ -132,8 +132,8 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
                                                    << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
     } else {
-        NES_DEBUG("SourceCatalog: logical source " << logicalSourceName << " exists try to add physical source "
-                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+//        NES_DEBUG("SourceCatalog: logical source " << logicalSourceName << " exists try to add physical source "
+//                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
         //get current physical source for this logical source
         std::vector<SourceCatalogEntryPtr> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
@@ -141,8 +141,8 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         //check if physical source does not exist yet
         for (const SourceCatalogEntryPtr& sourceCatalogEntry : physicalSources) {
             auto physicalSourceToTest = sourceCatalogEntry->getPhysicalSource();
-            NES_DEBUG("test node id=" << sourceCatalogEntry->getNode()->getId()
-                                      << " phyStr=" << physicalSourceToTest->getPhysicalSourceName());
+//            NES_DEBUG("test node id=" << sourceCatalogEntry->getNode()->getId()
+//                                      << " phyStr=" << physicalSourceToTest->getPhysicalSourceName());
             if (physicalSourceToTest->getPhysicalSourceName()
                     == newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
                 && sourceCatalogEntry->getNode()->getId() == newSourceCatalogEntry->getNode()->getId()) {
@@ -153,22 +153,22 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         }
     }
 
-    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
-                                                << " does not exist, try to add");
+//    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
+//                                                << " does not exist, try to add");
 
     //if first one
     if (testIfLogicalSourceExistsInLogicalToPhysicalMapping(logicalSourceName)) {
-        NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
+//        NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     } else {
-        NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
+//        NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
         logicalToPhysicalSourceMapping.insert(
             std::pair<std::string, std::vector<SourceCatalogEntryPtr>>(logicalSourceName, std::vector<SourceCatalogEntryPtr>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     }
 
-    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()
-                                                << " id=" << newSourceCatalogEntry->getNode()->getId() << " successful added");
+//    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()
+//                                                << " id=" << newSourceCatalogEntry->getNode()->getId() << " successful added");
     return true;
 }
 

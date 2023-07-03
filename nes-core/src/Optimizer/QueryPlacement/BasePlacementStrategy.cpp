@@ -397,7 +397,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("BasePlacementStrategy: Place all pinned upstream operators.");
+//    NES_DEBUG("BasePlacementStrategy: Place all pinned upstream operators.");
     //0. Iterate over all pinned upstream operators and place them
     for (auto& pinnedOperator : pinnedUpStreamOperators) {
         NES_TRACE("BasePlacementStrategy: Place operator " << pinnedOperator->toString());
@@ -501,7 +501,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             NES_TRACE("BasePlacementStrategy: Place the information about the candidate execution plan and operator id in "
                       "the map.");
             operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
-            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by 1");
+//            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
 //            pinnedNode->reduceResources(1);
@@ -530,7 +530,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             placePinnedOperators(queryId, nextPinnedUpstreamOperators, pinnedDownStreamOperators);
         }
     }
-    NES_DEBUG("BasePlacementStrategy: Finished placing query operators into the global execution plan");
+//    NES_DEBUG("BasePlacementStrategy: Finished placing query operators into the global execution plan");
 }
 
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
@@ -610,7 +610,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId query
 bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
                                                   FaultToleranceType::Value faultToleranceType,
                                                   LineageType::Value lineageType) {
-    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
+//    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
     auto anyTopologicalNode = topologyMap.begin();
     auto currentEpoch = std::any_cast<uint64_t>(anyTopologicalNode->second->getEpochValue());
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -948,7 +948,7 @@ bool BasePlacementStrategy::operatorPresentInCollection(const OperatorNodePtr& o
 
 std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode) {
     std::vector<TopologyNodePtr> childTopologyNodes;
-    NES_DEBUG("BasePlacementStrategy: Get topology nodes with children operators");
+//    NES_DEBUG("BasePlacementStrategy: Get topology nodes with children operators");
     std::vector<NodePtr> children = operatorNode->getChildren();
     for (auto& child : children) {
         if (!child->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
@@ -959,7 +959,7 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenO
             topologyMap[std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
         childTopologyNodes.push_back(childTopologyNode);
     }
-    NES_DEBUG("BasePlacementStrategy: returning list of topology nodes where children operators are placed");
+//    NES_DEBUG("BasePlacementStrategy: returning list of topology nodes where children operators are placed");
     return childTopologyNodes;
 }
 
@@ -967,8 +967,8 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
                                                                      const OperatorNodePtr& operatorNode,
                                                                      const ExecutionNodePtr& executionNode) {
 
-    NES_DEBUG("BasePlacementStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
-                                                                                  << executionNode->getId());
+//    NES_DEBUG("BasePlacementStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
+//                                                                                  << executionNode->getId());
 
     // Get all query sub plans for the query id on the execution node
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);

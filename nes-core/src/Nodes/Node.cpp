@@ -407,28 +407,28 @@ bool Node::containAsGrandChild(NodePtr node) {
 const std::vector<NodePtr>& Node::getParents() const { return parents; }
 
 std::vector<NodePtr> Node::getAllRootNodes() {
-    NES_DEBUG("Node: Get all root nodes for this node");
+//    NES_DEBUG("Node: Get all root nodes for this node");
     std::vector<NodePtr> rootNodes;
 
     if (getParents().empty()) {
-        NES_DEBUG("Node: Inserting this node to the collection");
+//        NES_DEBUG("Node: Inserting this node to the collection");
         rootNodes.push_back(shared_from_this());
     }
 
     for (auto& parent : parents) {
         if (parent->getParents().empty()) {
-            NES_DEBUG("Node: Inserting root node to the collection");
+//            NES_DEBUG("Node: Inserting root node to the collection");
             rootNodes.push_back(parent);
         } else {
-            NES_DEBUG("Node: Iterating over all parents to find more root nodes");
+//            NES_DEBUG("Node: Iterating over all parents to find more root nodes");
             for (const auto& parentOfParent : parent->getParents()) {
                 std::vector<NodePtr> parentNodes = parentOfParent->getAllRootNodes();
-                NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
+//                NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
             }
         }
     }
-    NES_DEBUG("Node: Found " << rootNodes.size() << " leaf nodes");
+//    NES_DEBUG("Node: Found " << rootNodes.size() << " leaf nodes");
     return rootNodes;
 }
 
