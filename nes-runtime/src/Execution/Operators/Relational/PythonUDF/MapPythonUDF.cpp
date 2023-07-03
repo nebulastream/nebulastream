@@ -1,17 +1,17 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
-#ifdef MIS_PYTHON_UDF_ENABLED
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
@@ -20,6 +20,7 @@ limitations under the License.
 #include <Python.h>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
@@ -31,7 +32,7 @@ limitations under the License.
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief executes the python udf
+ * @brief Executes the python udf
  * @param state is the python udf operator handler
  * @return the result of the python udf
  */
@@ -42,33 +43,14 @@ void* executeMapUdf(void* state) {
     // get module and python arguments for the udf
     // we need the module bc inside this module is the python udf
     auto *pythonArguments = handler->getPythonArguments();
-    if (pythonArguments == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-            NES_THROW_RUNTIME_ERROR("No arguments for the python udf can be found.");
-        }
+    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "No arguments for the python udf can be found.");
 
     PyObject *module = handler->getPythonModule();
-
-    if(module == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Could not get the python module.");
-    }
+    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Could not get the python module.");
 
     // we get the python function
     auto pythonFunction = PyObject_GetAttrString(module, handler->getFunctionName().c_str());
-    if (pythonFunction == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Could not find the python udf " << handler->getFunctionName() << " inside the module");
-    }
+    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Could not find the python udf " + handler->getFunctionName() + " inside the module");
 
     if(!PyCallable_Check(pythonFunction)){
         //  PyCallable_Check returns 1 if the object is callable (= is a function) and 0 otherwise.
@@ -81,22 +63,18 @@ void* executeMapUdf(void* state) {
 
     // execute python udf
     auto result = PyObject_CallObject(pythonFunction, pythonArguments);
-    if (result == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Something went wrong. Result of the Python UDF is NULL");
-    }
+    pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Something went wrong. Result of the Python UDF is NULL");
+
     return result;
 }
 
 /**
- * @brief creates the boolean object for the python udf argument
+ * @brief Creates the boolean object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value boolean value
  */
 void createBooleanObject(void* state, bool value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     if(value) {
         handler->setPythonVariable(Py_True);
@@ -106,80 +84,100 @@ void createBooleanObject(void* state, bool value) {
 }
 
 /**
- * @brief creates the float object for the python udf argument
+ * @brief Creates the float object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value float value
  */
 void createFloatObject(void* state, float value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+    // Calling this function returns a PyFloatObject
     handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
 /**
- * @brief creates the double object for the python udf argument
+ * @brief Creates the double object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value double value
  */
 void createDoubleObject(void* state, double value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+    // Calling this function returns a PyFloatObject
     handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
 /**
- * @brief creates the integer object for the python udf argument
+ * @brief Creates the integer object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value integer value
  */
 void createIntegerObject(void* state, int32_t value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyLong_FromLong for all Integer Objects
+    // Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
- * @brief creates the long object for the python udf argument
+ * @brief Creates the long object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value long value
  */
 void createLongObject(void* state, int64_t value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyLong_FromLong for all Integer Objects
+    // Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
- * @brief creates the short object for the python udf argument
+ * @brief Creates the short object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value short value
  */
 void createShortObject(void* state, int16_t value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyLong_FromLong for all Integer Objects
+    // Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
- * @brief creates the byte object for the python udf argument
+ * @brief Creates the byte object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value byte value
  */
 void createByteObject(void* state, int8_t value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    // The Python C-API only has PyLong_FromLong for all Integer Objects
+    // Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
 /**
- * @brief initalizes the python interpreter
+ * @brief Initalizes the python interpreter
  * @param state PythonUDFOperatorHandler
  */
 void createPythonEnvironment(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     handler->initPython();
 }
 
 /**
- * @brief creates a python tuple with a specific size and set it as the argument
+ * @brief Creates a python tuple with a specific size and set it as the argument
  * @param state PythonUDFOperatorHandler
  * @param size of tuple
  */
 void initPythonTupleSize(void* state, int size) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     PyObject *pythonArguments = handler->getPythonArguments();
     pythonArguments = PyTuple_New(size);
@@ -187,11 +185,12 @@ void initPythonTupleSize(void* state, int size) {
 }
 
 /**
- * @brief adds the value that we set in the create functions into the python tuple (the argument)
+ * @brief Adds the value that we set in the create functions into the python tuple (the argument)
  * @param state PythonUDFOperatorHandler
  * @param position position inside tuple
  */
-void setPythonTupleAtPosition(void* state, int position) {
+void setPythonArgumentAtPosition(void* state, int position) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     PyObject *pythonArguments = handler->getPythonArguments();
     PyObject *pythonValue = handler->getPythonVariable();
@@ -199,7 +198,7 @@ void setPythonTupleAtPosition(void* state, int position) {
     handler->setPythonArguments(pythonArguments);
 }
 /**
- * @brief transforms python object output into c++ data types
+ * @brief Transforms python object output into c++ data types
  * @tparam T
  * @param state
  * @param outputPtr
@@ -209,6 +208,7 @@ void setPythonTupleAtPosition(void* state, int position) {
  */
 template<typename T>
 T transformOutputType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     auto output = static_cast<PyObject*>(outputPtr);
     if (tupleSize > 1) {
         output = PyTuple_GetItem(output, position);
@@ -223,10 +223,14 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
             value = false;
         }
     } else if  constexpr (std::is_same<T, float>::value){
+        // The Python C-API only has PyFloat_AsDouble for all Floating Point Objects
+        // Calling this function returns a double
         value = PyFloat_AsDouble(output);
     } else if constexpr (std::is_same<T, double>::value) {
         value = PyFloat_AsDouble(output);
     } else if constexpr (std::is_same<T, int64_t>::value) {
+        // The Python C-API only has PyLong_AsLong for all Integer Objects
+        // Calling this function returns a long because all integers are implemented as long in Python
         value = PyLong_AsLong(output);
     } else if constexpr (std::is_same<T, int32_t>::value) {
         value = PyLong_AsLong(output);
@@ -241,93 +245,101 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
 }
 
 /**
- * @brief transforms the PyObject into a boolean
+ * @brief Transforms the PyObject into a boolean
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
- * @return transformed output as a c++  data type
+ * @return transformed output as a c++ data type
  */
 bool transformBooleanType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<bool>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into a float
+ * @brief Transforms the PyObject into a float
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 float transformFloatType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<float>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into a boolean
+ * @brief Transforms the PyObject into a boolean
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 double transformDoubleType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<double>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into an integer
+ * @brief Transforms the PyObject into an integer
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 int32_t transformIntegerType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<int32_t>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into a long
+ * @brief Transforms the PyObject into a long
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 int64_t transformLongType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<int64_t>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into a short
+ * @brief Transforms the PyObject into a short
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 int16_t transformShortType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<int16_t>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief transforms the PyObject into a byte
+ * @brief Transforms the PyObject into a byte
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
  * @return transformed output as a c++  data type
  */
 int8_t transformByteType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<int8_t>(outputPtr, position, tupleSize);
 }
 
 /**
- * @brief undo initialization of the python interpreter
+ * @brief Undo initialization of the python interpreter
  * @param state
  */
 void finalizePython(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "OutputPtr should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     handler->finalize();
 }
 
 /**
- * Operator execution function
+ * @brief Operator execution function
  * @param ctx operator context
  * @param record input record
  */
@@ -360,7 +372,7 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
-        FunctionCall("setPythonTupleAtPosition", setPythonTupleAtPosition, handler, Value<Int32>(i));
+        FunctionCall("setPythonArgumentAtPosition", setPythonArgumentAtPosition, handler, Value<Int32>(i));
     }
     auto outputPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler);
 
@@ -395,14 +407,13 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
-        FunctionCall("setPythonTupleAtPosition", setPythonTupleAtPosition, handler, Value<Int32>(i));
     }
     // Trigger execution of next operator
     child->execute(ctx, (Record&) record);
 }
 
 /**
- * @brief terminate operator
+ * @brief Terminate operator
  * @param ctx execution context
  */
 void MapPythonUDF::terminate(ExecutionContext& ctx) const {
@@ -410,4 +421,4 @@ void MapPythonUDF::terminate(ExecutionContext& ctx) const {
     FunctionCall<>("finalizePython", finalizePython, handler);
 }
 }
-#endif
+#endif //NAUTILUS_PYTHON_UDF_ENABLED
