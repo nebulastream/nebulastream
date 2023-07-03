@@ -37,15 +37,11 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @brief Constructor for a NLJOperatorHandler
      * @param origins
      * @param windowSize
-     * @param sizeOfTupleInByteLeft
-     * @param sizeOfTupleInByteRight
      */
     explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 uint64_t sizeOfTupleInByteLeft,
                                 uint64_t sizeOfTupleInByteRight,
-                                uint64_t leftEntrySize,
                                 uint64_t leftPageSize,
-                                uint64_t rightEntrySize,
                                 uint64_t rightPageSize,
                                 size_t windowSize);
 
@@ -96,9 +92,7 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
                                         const uint64_t sizeOfTupleInByteLeft,
                                         const uint64_t sizeOfTupleInByteRight,
-                                        const uint64_t leftEntrySize,
                                         const uint64_t leftPageSize,
-                                        const uint64_t rightEntrySize,
                                         const uint64_t rightPageSize,
                                         const size_t windowSize);
 
@@ -126,6 +120,10 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
  * @return void*
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
+
+uint64_t getNLJWindowStartProxy(void* ptrNljWindow);
+
+uint64_t getNLJWindowEndProxy(void* ptrNljWindow);
 
 }// namespace NES::Runtime::Execution::Operators
 

@@ -142,7 +142,6 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             joinFieldNameLeft,
             timeStampFieldLeft,
             /*isLeftSide*/ true,
-            leftEntrySize,
             leftPageSize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
 
@@ -152,7 +151,6 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             joinFieldNameRight,
             timeStampFieldRight,
             /*isLeftSide*/ false,
-            rightEntrySize,
             rightPageSize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
@@ -169,14 +167,12 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
-        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(joinFieldNameLeft,
-                                                                            joinFieldNameRight,
-                                                                            originIds,
-                                                                            leftEntrySize,
-                                                                            leftPageSize,
-                                                                            rightEntrySize,
-                                                                            rightPageSize,
-                                                                            windowSize);
+        auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
+                                                                        leftEntrySize,
+                                                                        rightEntrySize,
+                                                                        leftPageSize,
+                                                                        rightPageSize,
+                                                                        windowSize);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
@@ -194,11 +190,11 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;
         auto pipelineExecCtxLeft =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOpHandler, curPipelineId++);
+            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
         auto pipelineExecCtxRight =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOpHandler, curPipelineId++);
+            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
         auto pipelineExecCtxSink =
-            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOpHandler, curPipelineId++);
+            NestedLoopJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, nljOperatorHandler, curPipelineId++);
 
         auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
         auto executablePipelineRight = provider->create(pipelineBuildRight, options);

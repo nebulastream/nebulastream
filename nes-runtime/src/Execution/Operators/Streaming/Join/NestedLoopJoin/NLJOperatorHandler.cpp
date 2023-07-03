@@ -25,17 +25,15 @@ namespace NES::Runtime::Execution::Operators {
 NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                        uint64_t sizeOfTupleInByteLeft,
                                        uint64_t sizeOfTupleInByteRight,
-                                       uint64_t leftEntrySize,
                                        uint64_t leftPageSize,
-                                       uint64_t rightEntrySize,
                                        uint64_t rightPageSize,
                                        size_t windowSize)
     : StreamJoinOperatorHandler(origins,
                                 windowSize,
                                 NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
-                                sizeOfTupleInByteRight), leftEntrySize(leftEntrySize),
-                                leftPageSize(leftPageSize), rightEntrySize(rightEntrySize), rightPageSize(rightPageSize) {}
+                                sizeOfTupleInByteRight), leftEntrySize(sizeOfTupleInByteLeft),
+                                leftPageSize(leftPageSize), rightEntrySize(sizeOfTupleInByteRight), rightPageSize(rightPageSize) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -44,15 +42,14 @@ void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uin
 uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        auto sizeOfTupleInByte = isLeftSide ? sizeOfRecordLeft : sizeOfRecordRight;
         NLJWindow* nljWindow = static_cast<NLJWindow*>(window.value().get());
-        return nljWindow->getNumberOfTuples(sizeOfTupleInByte, isLeftSide);
+        return nljWindow->getNumberOfTuples(isLeftSide);
     }
 
     return -1;
 }
 
-void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop HashJoinOperatorHandler"); }
+void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG2("stop HashJoinOperatorHandler"); }
 
 void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
                                         WorkerContext* workerCtx,
@@ -76,18 +73,14 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
 NLJOperatorHandlerPtr NLJOperatorHandler::create(const std::vector<OriginId>& origins,
                                                  const uint64_t sizeOfTupleInByteLeft,
                                                  const uint64_t sizeOfTupleInByteRight,
-                                                 const uint64_t leftEntrySize,
                                                  const uint64_t leftPageSize,
-                                                 const uint64_t rightEntrySize,
                                                  const uint64_t rightPageSize,
                                                  const size_t windowSize) {
 
     return std::make_shared<NLJOperatorHandler>(origins,
                                                 sizeOfTupleInByteLeft,
                                                 sizeOfTupleInByteRight,
-                                                leftEntrySize,
                                                 leftPageSize,
-                                                rightEntrySize,
                                                 rightPageSize,
                                                 windowSize);
 }
@@ -119,6 +112,18 @@ void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftS
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
     return nljWindow->getPagedVectorRef(isLeftSide, workerId);
+}
+
+uint64_t getNLJWindowStartProxy(void* ptrNljWindow) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getWindowStart();
+}
+
+uint64_t getNLJWindowEndProxy(void* ptrNljWindow) {
+    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
+    return nljWindow->getWindowEnd();
 }
 
 }// namespace NES::Runtime::Execution::Operators

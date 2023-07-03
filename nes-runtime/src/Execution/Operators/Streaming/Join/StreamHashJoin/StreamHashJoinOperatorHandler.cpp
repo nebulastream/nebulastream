@@ -93,7 +93,7 @@ uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windo
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         auto hashWindow = static_cast<StreamHashJoinWindow*>(window.value().get());
-        return hashWindow->getNumberOfTuples(workerId, isLeftSide);
+        return hashWindow->getNumberOfTuplesOfWorker(workerId, isLeftSide);
     }
 
     return -1;

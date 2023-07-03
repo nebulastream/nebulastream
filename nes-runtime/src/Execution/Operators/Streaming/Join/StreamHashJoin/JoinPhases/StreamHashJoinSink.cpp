@@ -150,7 +150,7 @@ void markPartitionFinishProxyForHashJoin(void* hashWindowPtr, void* ptrOpHandler
     auto hashWindow = static_cast<StreamHashJoinWindow*>(hashWindowPtr);
     auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
 
-    if (hashWindow->markPartionAsFinished()) {
+    if (hashWindow->markPartitionAsFinished()) {
         opHandler->deleteWindow(windowIdentifier);
     }
 }

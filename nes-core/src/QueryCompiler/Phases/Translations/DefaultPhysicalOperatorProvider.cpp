@@ -408,14 +408,14 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NodePtr leftJoinBuildOperator;
         NodePtr rightJoinBuildOperator;
         auto joinStrategy = options->getStreamJoinStratgy();
-        if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL
-            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
-            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL
+            || joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+            || joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
             // TODO we should pass this not as an enum.
             Runtime::Execution::StreamJoinStrategy runtimeJoinStrategy;
-            if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+            if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL) {
                 runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL;
-            } else if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+            } else if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
                 runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
             } else {
                 runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
@@ -453,13 +453,11 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
             rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
             operatorNode->replace(joinSinkOperator);
-        } else if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN) {
+        } else if (joinStrategy == Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN) {
             auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
                                                                   joinOperator->getLeftInputSchema()->getSize(),
                                                                   joinOperator->getRightInputSchema()->getSize(),
-                                                                  joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
                                                                   Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                                  joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
                                                                   Nautilus::Interface::PagedVector::PAGE_SIZE,
                                                                   windowSize);
 
