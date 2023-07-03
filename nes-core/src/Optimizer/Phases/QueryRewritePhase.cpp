@@ -43,8 +43,9 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    return filterPushDownRule->apply(duplicateQueryPlan);
+    //duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
+    //return filterPushDownRule->apply(duplicateQueryPlan);
+    return duplicateQueryPlan;
 }
 
 }// namespace NES::Optimizer
