@@ -121,10 +121,10 @@ void RequestProcessorService::start() {
                         //3. Iterate over shared query plans and take decision to a. deploy, b. undeploy, or c. redeploy
                         for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
 
-                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                            /*for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                 NES_DEBUG2("Setting status to Running for query {}", queryId);
                                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
-                            }
+                            }*/
 
                             // Check if experimental feature for reconfiguring shared query plans without redeployment is disabled
                             if (!queryReconfiguration) {
