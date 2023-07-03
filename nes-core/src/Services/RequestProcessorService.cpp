@@ -128,94 +128,87 @@ void RequestProcessorService::start() {
 
                             // Check if experimental feature for reconfiguring shared query plans without redeployment is disabled
                             if (!queryReconfiguration) {
+                            }
+                            //3.1. Fetch the shared query plan id
+                            SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
+                            NES_INFO2("QueryProcessingService: Updating Query Plan with global query id : {}", sharedQueryId);
+                            NES_INFO2("Status : {}", magic_enum::enum_name(sharedQueryPlan->getStatus()));
 
-                                //3.1. Fetch the shared query plan id
-                                SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
-                                NES_DEBUG2("QueryProcessingService: Updating Query Plan with global query id : {}",
-                                           sharedQueryId);
+                            //3.2. If the shared query plan is newly created
+                            if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
 
-                                //3.2. If the shared query plan is newly created
-                                if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
+                                NES_INFO2("QueryProcessingService: Shared Query Plan is new. Shared Query Id: {}", sharedQueryId);
 
-                                    NES_INFO2("QueryProcessingService: Shared Query Plan is new. Shared Query Id: {}", sharedQueryId);
-
-                                    //3.2.1. Perform placement of new shared query plan
-                                    auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                    NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
-                                    bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-                                    if (!placementSuccessful) {
-                                        throw QueryPlacementException(
-                                            sharedQueryId,
-                                            "QueryProcessingService: Failed to perform query placement for "
-                                            "query plan with shared query id: "
-                                                + std::to_string(sharedQueryId));
-                                    }
-
-                                    //3.2.2. Perform deployment of placed shared query plan
-                                    bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
-                                    if (!deploymentSuccessful) {
-                                        throw QueryDeploymentException(
-                                            sharedQueryId,
-                                            "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                                + std::to_string(sharedQueryId));
-                                    }
-
-                                    //Update the shared query plan as deployed
-                                    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
-
-                                    // 3.3. Check if the shared query plan was updated after addition or removal of operators
-                                } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
-
-                                    NES_INFO2(
-                                        "QueryProcessingService: Shared Query Plan is non empty and an older version is already "
-                                        "running.");
-
-                                    //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                                    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
-
-                                    //3.3.2. Perform placement of updated shared query plan
-                                    auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                    NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
-                                    bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-                                    if (!placementSuccessful) {
-                                        throw QueryPlacementException(
-                                            sharedQueryId,
-                                            "QueryProcessingService: Failed to perform query placement for "
-                                            "query plan with shared query id: "
-                                                + std::to_string(sharedQueryId));
-                                    }
-
-                                    //3.3.3. Perform deployment of re-placed shared query plan
-                                    bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
-                                    if (!deploymentSuccessful) {
-                                        throw QueryDeploymentException(
-                                            sharedQueryId,
-                                            "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                                + std::to_string(sharedQueryId));
-                                    }
-
-                                    //Update the shared query plan as deployed
-                                    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
-
-                                    // 3.4. Check if the shared query plan is empty and already running
-                                } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
-                                           || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
-
-                                    NES_INFO2(
-                                        "QueryProcessingService: Shared Query Plan is empty and an older version is already "
-                                        "running.");
-
-                                    //3.4.1. Undeploy the running shared query plan
-                                    queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-
-                                    //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
-                                    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                                        queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
-                                    }
+                                //3.2.1. Perform placement of new shared query plan
+                                auto queryPlan = sharedQueryPlan->getQueryPlan();
+                                NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
+                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                                if (!placementSuccessful) {
+                                    throw QueryPlacementException(sharedQueryId,
+                                                                  "QueryProcessingService: Failed to perform query placement for "
+                                                                  "query plan with shared query id: "
+                                                                      + std::to_string(sharedQueryId));
                                 }
 
-                            } else {
-                                //Yet another cool feature under development
+                                //3.2.2. Perform deployment of placed shared query plan
+                                bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
+                                if (!deploymentSuccessful) {
+                                    throw QueryDeploymentException(
+                                        sharedQueryId,
+                                        "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                            + std::to_string(sharedQueryId));
+                                }
+
+                                //Update the shared query plan as deployed
+                                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+
+                                // 3.3. Check if the shared query plan was updated after addition or removal of operators
+                            } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+
+                                NES_INFO2(
+                                    "QueryProcessingService: Shared Query Plan is non empty and an older version is already "
+                                    "running.");
+
+                                //3.3.1. First undeploy the running shared query plan with the shared query plan id
+                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+
+                                //3.3.2. Perform placement of updated shared query plan
+                                auto queryPlan = sharedQueryPlan->getQueryPlan();
+                                NES_INFO2("QueryProcessingService: Performing Operator placement for shared query plan");
+                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                                if (!placementSuccessful) {
+                                    throw QueryPlacementException(sharedQueryId,
+                                                                  "QueryProcessingService: Failed to perform query placement for "
+                                                                  "query plan with shared query id: "
+                                                                      + std::to_string(sharedQueryId));
+                                }
+
+                                //3.3.3. Perform deployment of re-placed shared query plan
+                                bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
+                                if (!deploymentSuccessful) {
+                                    throw QueryDeploymentException(
+                                        sharedQueryId,
+                                        "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                            + std::to_string(sharedQueryId));
+                                }
+
+                                //Update the shared query plan as deployed
+                                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+
+                                // 3.4. Check if the shared query plan is empty and already running
+                            } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
+                                       || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
+
+                                NES_INFO2("QueryProcessingService: Shared Query Plan is empty and an older version is already "
+                                          "running.");
+
+                                //3.4.1. Undeploy the running shared query plan
+                                queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
+
+                                //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
+                                for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
+                                }
                             }
                         }
                     }
