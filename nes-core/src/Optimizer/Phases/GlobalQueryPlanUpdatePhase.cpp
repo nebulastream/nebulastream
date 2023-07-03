@@ -231,6 +231,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
         NES_DEBUG2("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         for (const auto& item : globalQueryPlan->getAllSharedQueryPlans()) {
             typeInferencePhase->execute(item->getQueryPlan());
+            item->setStatus(SharedQueryPlanStatus::Created);
         }
         return globalQueryPlan;
     } catch (std::exception& ex) {

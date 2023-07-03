@@ -170,7 +170,7 @@ void RequestProcessorService::start() {
                                     "running.");
 
                                 //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                                //queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
 
                                 //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
