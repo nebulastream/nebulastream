@@ -32,8 +32,7 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 windowSize,
                                 NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
-                                sizeOfTupleInByteRight), leftEntrySize(sizeOfTupleInByteLeft),
-                                leftPageSize(leftPageSize), rightEntrySize(sizeOfTupleInByteRight), rightPageSize(rightPageSize) {}
+                                sizeOfTupleInByteRight), leftPageSize(leftPageSize), rightPageSize(rightPageSize) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -92,16 +91,8 @@ StreamWindow* NLJOperatorHandler::getCurrentWindow() {
     return windows.back().get();
 }
 
-uint64_t NLJOperatorHandler::getLeftEntrySize() const {
-    return leftEntrySize;
-}
-
 uint64_t NLJOperatorHandler::getLeftPageSize() const {
     return leftPageSize;
-}
-
-uint64_t NLJOperatorHandler::getRightEntrySize() const {
-    return rightEntrySize;
 }
 
 uint64_t NLJOperatorHandler::getRightPageSize() const {

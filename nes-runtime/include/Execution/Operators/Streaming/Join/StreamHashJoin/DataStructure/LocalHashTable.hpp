@@ -59,38 +59,7 @@ class LocalHashTable : public StreamJoinHashTable {
      * @param key
      * @return Pointer to free memory space where the data shall be written
      */
-    uint8_t* insert(uint64_t key) const override;
-
-    /**
-     * @brief Returns the bucket at bucketPos
-     * @param bucketPos
-     * @return bucket
-     */
-    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos);
-
-    /**
-     * @brief Calculates the bucket position for the hash
-     * @param hash
-     * @return bucket position
-     */
-    size_t getBucketPos(uint64_t hash) const;
-
-    /**
-     * @brief debug mehtod to print the statistics of the hash table
-     * @return
-     */
-    std::string getStatistics();
-
-    /**
-     * @brief get number of tuples in hash table
-     * @return
-     */
-    uint64_t getNumberOfTuples();
-
-  private:
-    std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
-    size_t mask;
-    size_t numPartitions;
+    virtual uint8_t* insert(uint64_t key) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
