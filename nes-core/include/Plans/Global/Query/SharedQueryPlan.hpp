@@ -53,6 +53,11 @@ using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 
 using Timestamp = uint64_t;
 
+struct RemovedEdge {
+    TopologyNodeId downstreamNodeId;
+    TopologyNodeId upstreamNodeId;
+};
+
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
  * the queryIdAndCatalogEntryMapping participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
@@ -126,11 +131,11 @@ class SharedQueryPlan {
     bool removeQuery(QueryId queryId);
 
     /**
-     * @brief Mark all operators between (excluding) upstream and downstream operators for re-operator placement
-     * @param upstreamOperatorIds: upstream operator ids
-     * @param downstreamOperatorIds: downstream Operator ids
+     * @brief Mark all operators placed on the removed edges for re-operator placement.
+     * Note: the state of operators on the most upstream and most downstream operators will remain unchanged
+     * @param removedEdges: vector (from the IoT towards Cloud layer) of removed topology edges used by the shared query plan
      */
-    void performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds, const std::set<uint64_t>& downstreamOperatorIds);
+    void performReOperatorPlacement(const std::vector<RemovedEdge>& removedEdges);
 
     /**
      * @brief Clear all MetaData information
@@ -209,18 +214,6 @@ class SharedQueryPlan {
      */
     [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-    /**
-     * @brief update the nodes used for placement by adding the input nodes
-     * @param newNodesUsedForPlacement: the nodes used for the placement
-     */
-    void insetBetweenNodesTheNewPlacementPath(const std::set<uint64_t>& newNodesUsedForPlacement);
-
-    /**
-     * @brief get the placement path used by this shared query plan
-     * @return queue containing the node ids where operators from this shared query plans are placed
-     */
-    std::queue<uint64_t> getPlacementPath();
-
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -248,8 +241,8 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
-    //Front of the queue is the source nodes and the end of the queue is the sink nodes
-    std::queue<uint64_t> placementPath;
+    std::map<OperatorId, TopologyNodeId> operatorToNodeMappings;
+    std::map<TopologyNodeId, std::set<OperatorNodePtr>> nodeToOperatorsMappings;
 };
 }// namespace NES
 

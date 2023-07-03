@@ -392,7 +392,6 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
                   status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
-    return false;
 }
 
 bool WorkerRPCClient::updateNetworkSink(const std::string& address,
