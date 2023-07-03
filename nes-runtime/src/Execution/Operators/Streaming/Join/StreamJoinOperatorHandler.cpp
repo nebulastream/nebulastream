@@ -104,7 +104,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      const StreamJoinStrategy joinStrategy,
                                                      size_t sizeOfRecordLeft,
                                                      size_t sizeOfRecordRight)
-    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize), watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
+    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize),
+      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
       joinStrategy(joinStrategy), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
@@ -129,6 +130,12 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
 
+uint64_t StreamJoinOperatorHandler::getLastWatermark() { return watermarkProcessor->getCurrentWatermark(); }
+
+void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
+    workerIdToWatermarkMap[workerId] = watermark;
+}
+
 void StreamJoinOperatorHandler::addOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
 
 OperatorId StreamJoinOperatorHandler::getOperatorId() { return operatorId; }
@@ -141,7 +148,7 @@ uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
-StreamJoinStrategy StreamJoinOperatorHandler::getJoinStrategy() { return joinStrategy; }
+
 std::vector<uint64_t>
 StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
     std::vector<uint64_t> triggerableWindowIdentifiers;
