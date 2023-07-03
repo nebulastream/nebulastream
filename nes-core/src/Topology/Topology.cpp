@@ -60,14 +60,11 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
         return false;
     }
 
-    bool success = rootNode->remove(nodeToRemove);
-    if (success) {
-        indexOnNodeIds.erase(idOfNodeToRemove);
-        NES_DEBUG2("Topology: Successfully removed the node.");
-        return true;
-    }
-    NES_WARNING2("Topology: Unable to remove the node.");
-    return false;
+    nodeToRemove->removeAllParent();
+    nodeToRemove->removeChildren();
+    indexOnNodeIds.erase(idOfNodeToRemove);
+    NES_DEBUG2("Topology: Successfully removed the node.");
+    return true;
 }
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
