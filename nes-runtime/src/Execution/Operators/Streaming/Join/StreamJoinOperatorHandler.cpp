@@ -125,8 +125,7 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     }
     alreadySetup = true;
 
-    NES_DEBUG("HashJoinOperatorHandler::setup was called!");
-    // It does not matter here if we put true or false as a parameter
+    NES_DEBUG2("HashJoinOperatorHandler::setup was called!");
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
 
