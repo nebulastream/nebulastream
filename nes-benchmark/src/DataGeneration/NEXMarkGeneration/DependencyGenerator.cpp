@@ -36,7 +36,7 @@ DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSi
     auto bidSchemaSize = BidGenerator().getSchema()->getSchemaSizeInBytes();
     auto totalBufferSizeInBytes = numberOfBuffers * bufferSize;
     numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10.0 + auctionSchemaSize + 10.0 * bidSchemaSize);
-    NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
+    NES_ASSERT2_FMT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
 
     auto timeInSec = 0_u64;
 

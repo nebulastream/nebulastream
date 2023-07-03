@@ -26,23 +26,23 @@ class PersonGeneratorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PersonGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PersonGeneratorTest test class.");
+        NES_INFO2("Setup PersonGeneratorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup PersonGeneratorTest test case.");
+        NES_INFO2("Setup PersonGeneratorTest test case.");
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_INFO("Tear down PersonGeneratorTest test case.");
+        NES_INFO2("Tear down PersonGeneratorTest test case.");
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down PersonGeneratorTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down PersonGeneratorTest test class."); }
 
     std::shared_ptr<Runtime::BufferManager> bufferManager = std::make_shared<Runtime::BufferManager>(128, 2048);
     NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(

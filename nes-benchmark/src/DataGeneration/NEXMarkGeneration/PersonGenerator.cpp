@@ -28,7 +28,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = std::ceil(personsToProcess * getSchema()->getSchemaSizeInBytes() / (bufferSize * 1.0));
     createdBuffers.reserve(numberOfBuffersToCreate);
-    NES_INFO("personsToProcess: " << personsToProcess << "\tnumberOfPersonsBuffersToCreate: " << numberOfBuffersToCreate);
+    NES_INFO2("personsToProcess: {}\tnumberOfPersonsBuffersToCreate: {}", personsToProcess, numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedPersons = 0UL;

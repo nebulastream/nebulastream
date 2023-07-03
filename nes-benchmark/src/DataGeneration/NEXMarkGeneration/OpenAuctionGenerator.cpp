@@ -29,7 +29,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = std::ceil(auctionsToProcess * getSchema()->getSchemaSizeInBytes() / (bufferSize * 1.0));
     createdBuffers.reserve(numberOfBuffersToCreate);
-    NES_INFO("auctionsToProcess: " << auctionsToProcess << "\tnumberOfAuctionsBuffersToCreate: " << numberOfBuffersToCreate);
+    NES_INFO2("auctionsToProcess: {}\tnumberOfAuctionsBuffersToCreate: {}", auctionsToProcess, numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedAuctions = 0UL;

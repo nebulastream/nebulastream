@@ -28,7 +28,7 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = std::ceil(bidsToProcess * getSchema()->getSchemaSizeInBytes() / (bufferSize * 1.0));
     createdBuffers.reserve(numberOfBuffersToCreate);
-    NES_INFO("bidsToProcess: " << bidsToProcess << "\tnumberOfBidsBuffersToCreate: " << numberOfBuffersToCreate);
+    NES_INFO2("bidsToProcess: {}\tnumberOfBidsBuffersToCreate: {}", bidsToProcess, numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedBids = 0UL;
