@@ -89,7 +89,6 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
 
 void RequestProcessorService::start() {
     try {
-        auto readyForPlacementAndDeployment = false;
         while (isQueryProcessorRunning()) {
             NES_DEBUG2("QueryRequestProcessorService: Waiting for new query request trigger");
             auto requests = queryRequestQueue->getNextBatch();
@@ -108,14 +107,14 @@ void RequestProcessorService::start() {
                     for (const auto& queryRequest : requests) {
                         auto queryId = queryRequest->as<RunQueryRequest>()->getQueryId();
                         NES_INFO2("QueryId: {} ", queryId);
-                        if (queryId == 400) {
+                        if (queryId == 50) {
                             readyForPlacementAndDeployment = true;
                             break;
                         }
                     }
 
                     if (readyForPlacementAndDeployment) {
-
+                        NES_INFO2("Starting Query Placement and Deployment");
                         //2. Fetch all shared query plans updated post applying the requests
                         auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 

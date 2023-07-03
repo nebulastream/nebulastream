@@ -131,6 +131,7 @@ class RequestProcessorService {
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    bool readyForPlacementAndDeployment = false;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
