@@ -83,7 +83,7 @@ class StreamWindow {
      * @param newWindowState
      * @return Bool
      */
-    inline bool compareExchangeStrong(WindowState expectedState, WindowState newWindowState);
+    bool compareExchangeStrong(WindowState expectedState, WindowState newWindowState);
 
     /**
      * @brief Creates a string representation of this window

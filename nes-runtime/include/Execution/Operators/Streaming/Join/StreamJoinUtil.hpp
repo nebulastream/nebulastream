@@ -47,7 +47,7 @@ static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
 static constexpr auto DEFAULT_JOIN_STRATEGY = StreamJoinStrategy::NESTED_LOOP_JOIN;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 17179869184*2;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdTWindowIdentifier {
