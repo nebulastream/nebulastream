@@ -165,12 +165,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     OperatorId getOperatorId();
 
     /**
-     * @brief get the applied join strategy
-     * @return join strategy
-     */
-    StreamJoinStrategy getJoinStrategy();
-
-    /**
      * @brief Returns the next sequence number for the operator that this operator handler is responsible for
      * @return uint64_t
      */
