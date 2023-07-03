@@ -13,6 +13,7 @@
 */
 
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
@@ -37,7 +38,7 @@ DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSi
     numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10.0 + auctionSchemaSize + 10.0 * bidSchemaSize);
     NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
 
-    auto timeInSec = 0UL;
+    auto timeInSec = 0_u64;
 
     // first generate some persons and open auctions that can be bid on
     for (auto i = 0; i < recordsInit; ++i) {
