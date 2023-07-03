@@ -15,7 +15,6 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Util/Common.hpp>
-#include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -30,40 +29,6 @@ uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
     return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
-}
-
-size_t LocalHashTable::getBucketPos(uint64_t hash) const {
-    if (mask == 0) {
-        return 0;
-    }
-    return hash % mask;
-}
-
-FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) {
-    NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
-
-    return buckets[bucketPos].get();
-}
-
-uint64_t LocalHashTable::getNumberOfTuples() {
-    size_t cnt = 0;
-    for (auto& bucket : buckets) {
-        NES_TRACE2("BUCKET ", cnt++);
-        for (auto& page : bucket->getPages()) {
-            cnt += page->size();
-        }
-    }
-    return cnt;
-}
-
-std::string LocalHashTable::getStatistics() {
-    size_t cnt = 0;
-    std::stringstream ss;
-    ss << " numPartitions=" << numPartitions;
-    for (auto& bucket : buckets) {
-        ss << " BUCKET " << cnt++ << bucket->getStatistics();
-    }
-    return ss.str();
 }
 
 }// namespace NES::Runtime::Execution::Operators

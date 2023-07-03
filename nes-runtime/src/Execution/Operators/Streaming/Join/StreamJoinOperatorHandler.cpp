@@ -39,9 +39,9 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
         NLJOperatorHandler* nljOpHandler = static_cast<NLJOperatorHandler*>(this);
         NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd, numberOfWorkerThreads,
-                                                         nljOpHandler->getLeftEntrySize(),
+                                                         sizeOfRecordLeft,
                                                          nljOpHandler->getLeftPageSize(),
-                                                         nljOpHandler->getRightEntrySize(),
+                                                         sizeOfRecordRight,
                                                          nljOpHandler->getRightPageSize()));
     } else {
         StreamHashJoinOperatorHandler* ptr = static_cast<StreamHashJoinOperatorHandler*>(this);

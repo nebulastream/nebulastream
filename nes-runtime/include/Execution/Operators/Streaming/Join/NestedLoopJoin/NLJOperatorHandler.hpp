@@ -103,15 +103,12 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      */
     StreamWindow* getCurrentWindow();
 
-    uint64_t getLeftEntrySize() const;
     uint64_t getLeftPageSize() const;
-    uint64_t getRightEntrySize() const;
+
     uint64_t getRightPageSize() const;
 
   private:
-    const uint64_t leftEntrySize;
     const uint64_t leftPageSize;
-    const uint64_t rightEntrySize;
     const uint64_t rightPageSize;
 };
 
