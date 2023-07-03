@@ -63,7 +63,6 @@ class NLJBuild : public ExecutableOperator {
              const std::string& joinFieldName,
              const std::string& timeStampField,
              bool isLeftSide,
-             const uint64_t entrySize,
              const uint64_t pageSize,
              std::shared_ptr<TimeFunction> timeFunction);
 

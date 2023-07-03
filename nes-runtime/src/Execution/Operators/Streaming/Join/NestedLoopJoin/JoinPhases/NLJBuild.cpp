@@ -50,19 +50,7 @@ void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    return opHandler->getWindowByTimestampOrCreateIt2(timestamp);
-}
-
-uint64_t getNLJWindowStartProxy(void* ptrNljWindow) {
-    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
-    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
-    return nljWindow->getWindowStart();
-}
-
-uint64_t getNLJWindowEndProxy(void* ptrNljWindow) {
-    NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
-    auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
-    return nljWindow->getWindowEnd();
+    return opHandler->getWindowByTimestampOrCreateIt(timestamp).get();
 }
 
 /**
@@ -171,10 +159,9 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
                    bool isLeftSide,
-                   const uint64_t entrySize,
                    const uint64_t pageSize,
                    std::shared_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      isLeftSide(isLeftSide), entrySize(entrySize), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
+      isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -59,13 +59,15 @@ class StreamHashJoinWindow : public StreamWindow {
 
     ~StreamHashJoinWindow() = default;
 
+    uint64_t getNumberOfTuples(bool leftSide) override;
+
     /**
      * @brief Returns the number of tuples in this window
      * @param workerIdx
      * @param leftSide
-     * @return uint64_t
+     * @return size_t
      */
-    uint64_t getNumberOfTuples(bool leftSide) override;
+    size_t getNumberOfTuplesOfWorker(uint64_t workerIdx, bool leftSide);
 
     /**
      * @brief Creates a string representation of this window
@@ -92,7 +94,7 @@ class StreamHashJoinWindow : public StreamWindow {
      * @brief this method marks that one partition of this window was finally processed by the sink
      * @param bool indicating if all partitions are done
      */
-    bool markPartionAsFinished();
+    bool markPartitionAsFinished();
 
   protected:
     uint64_t numberOfWorker;

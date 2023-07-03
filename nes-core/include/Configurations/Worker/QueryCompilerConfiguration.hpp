@@ -122,9 +122,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
                                    NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                    "Maximum size of hash table"};
 
-    EnumOption<QueryCompilation::QueryCompilerOptions::StreamJoinStrategy> joinStrategy = {
+    EnumOption<NES::Runtime::Execution::StreamJoinStrategy> joinStrategy = {
         JOIN_STRATEGY,
-        QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN,
+        NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
         "Indicates the windowingStrategy"
         "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 

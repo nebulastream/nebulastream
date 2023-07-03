@@ -30,7 +30,7 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(uint64_t work
     }
 }
 
-size_t StreamHashJoinWindow::getNumberOfTuples(uint64_t workerId, bool isLeft) {
+size_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(uint64_t workerId, bool isLeft) {
     return getHashTable(workerId, isLeft)->getNumberOfTuples();
 }
 
@@ -111,13 +111,28 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
               sizeOfRecordRight);
 }
 
-bool StreamHashJoinWindow::markPartionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
+bool StreamHashJoinWindow::markPartitionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
 
 std::string StreamHashJoinWindow::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "StreamHashJoinWindow(windowState: "
                        << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
+}
+
+uint64_t StreamHashJoinWindow::getNumberOfTuples(bool leftSide) {
+    uint64_t sum = 0;
+    if (leftSide) {
+        for (auto& hashTable : hashTableLeftSide) {
+            sum += hashTable->getNumberOfTuples();
+        }
+    } else {
+        for (auto& hashTable : hashTableRightSide) {
+            sum += hashTable->getNumberOfTuples();
+        }
+    }
+
+    return sum;
 }
 
 }// namespace NES::Runtime::Execution

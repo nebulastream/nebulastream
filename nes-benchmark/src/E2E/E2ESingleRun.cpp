@@ -72,16 +72,16 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL;
+            NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL;
     } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCKING") {
         coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
+            NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
     } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCK_FREE") {
         coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
+            NES::Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
     } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
         coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN;
+            NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN;
     } else {
         NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
     }

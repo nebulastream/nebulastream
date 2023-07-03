@@ -108,13 +108,6 @@ class QueryCompilerOptions {
         BITMASK
     };
 
-    enum class StreamJoinStrategy : uint8_t {
-        HASH_JOIN_LOCAL,
-        HASH_JOIN_GLOBAL_LOCKING,
-        HASH_JOIN_GLOBAL_LOCK_FREE,
-        NESTED_LOOP_JOIN
-    };
-
     class StreamHashJoinOptions {
       public:
         /**
@@ -181,12 +174,15 @@ class QueryCompilerOptions {
     static QueryCompilerOptionsPtr createDefaultOptions();
 
     [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
+
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
     [[nodiscard]] QueryCompiler getQueryCompiler() const;
+
     void setQueryCompiler(QueryCompiler pipeliningStrategy);
 
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
+
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
@@ -217,21 +213,17 @@ class QueryCompilerOptions {
 
     WindowingStrategy getWindowingStrategy() const;
 
-    void setJoinStratgy(StreamJoinStrategy strategy);
-
-    [[nodiscard]] StreamJoinStrategy getJoinStratgy() const;
-
     /**
      * @brief Sets the strategy for the stream join
      * @param strategy
      */
-    void setStreamJoinStratgy(StreamJoinStrategy strategy);
+    void setStreamJoinStratgy(Runtime::Execution::StreamJoinStrategy strategy);
 
     /**
      * @brief gets the stream join strategy.
      * @return
      */
-    [[nodiscard]] StreamJoinStrategy getStreamJoinStratgy() const;
+    [[nodiscard]] Runtime::Execution::StreamJoinStrategy getStreamJoinStratgy() const;
 
     /**
      * @brief Return hash join options
@@ -276,7 +268,7 @@ class QueryCompilerOptions {
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
     std::string cudaSdkPath;
-    StreamJoinStrategy joinStrategy;
+    Runtime::Execution::StreamJoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation
 

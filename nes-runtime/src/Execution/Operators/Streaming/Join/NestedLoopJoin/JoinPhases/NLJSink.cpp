@@ -52,26 +52,6 @@ void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifi
     opHandler->deleteWindow(windowIdentifier);
 }
 
-uint64_t getWindowStartProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
-
-    return opHandler->getWindowStartEnd(windowIdentifier).first;
-}
-
-uint64_t getWindowEndProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
-
-    return opHandler->getWindowStartEnd(windowIdentifier).second;
-}
-
 uint64_t getSequenceNumberProxyForNestedLoopJoin(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
@@ -102,12 +82,10 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);
     Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
 
-    Value<Any> windowStart =
-        Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, operatorHandlerMemRef, windowIdentifierMemRef);
-    Value<Any> windowEnd =
-        Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+    Value<UInt64> windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
+    Value<UInt64> windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, windowReference);
 
-    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    ctx.setWatermarkTs(windowEnd);
     auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin",
                                                  getSequenceNumberProxyForNestedLoopJoin,
                                                  operatorHandlerMemRef);
