@@ -582,6 +582,7 @@ KeyedOperatorHandlers DefaultPhysicalOperatorProvider::createKeyedOperatorHandle
         keyedOperatorHandlers.sliceMergingOperatorHandler =
             std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
 
+        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         keyedOperatorHandlers.preAggregationWindowHandler =
             std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
@@ -617,6 +618,7 @@ GlobalOperatorHandlers DefaultPhysicalOperatorProvider::createGlobalOperatorHand
         globalOperatorHandlers.sliceMergingOperatorHandler =
             std::make_shared<Runtime::Execution::Operators::GlobalSliceMergingHandler>(sliceStaging);
 
+        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         globalOperatorHandlers.preAggregationWindowHandler =
             std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregationHandler>(
