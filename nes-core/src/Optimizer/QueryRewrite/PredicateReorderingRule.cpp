@@ -31,8 +31,8 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
         if (visitedNodesIds.find(filter->getId()) == visitedNodesIds.end()) {
             std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_TRACE("PredicateReorderingRule: Filter {} has {} consecutive filters as children",
-                       filter->getId(),
-                       consecutiveFilters.size());
+                      filter->getId(),
+                      consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2) {
                 std::vector<NodePtr> filterChainParents = consecutiveFilters.front()->getParents();
                 std::vector<NodePtr> filterChainChildren = consecutiveFilters.back()->getChildren();
@@ -65,12 +65,12 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
                     auto leastSelectiveFilter = consecutiveFilters.front();
                     auto mostSelectiveFilter = consecutiveFilters.back();
                     NES_TRACE("PredicateReorderingRule: Least selective filter goes to the top (closer to sink), his new "
-                               "parents will be the chain parents'");
+                              "parents will be the chain parents'");
                     for (auto& filterChainParent : filterChainParents) {
                         leastSelectiveFilter->addParent(filterChainParent);
                     }
                     NES_TRACE("PredicateReorderingRule: Most selective filter goes to the bottom (closer to the source), his "
-                               "new children will be the chain children");
+                              "new children will be the chain children");
                     for (auto& filterChainChild : filterChainChildren) {
                         mostSelectiveFilter->addChild(filterChainChild);
                     }
