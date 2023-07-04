@@ -36,6 +36,7 @@ std::string AddQueryRequest::toString() {
     return "RunQueryRequest { QueryId: " + std::to_string(queryPlan->getQueryId()) + ", QueryPlan: " + queryPlan->toString()
         + ", QueryPlacementStrategy: " + std::string(magic_enum::enum_name(queryPlacementStrategy)) + "}";
 }
+
 uint64_t AddQueryRequest::getQueryId() { return queryPlan->getQueryId(); }
 
 RequestType AddQueryRequest::getRequestType() { return RequestType::AddQuery; }
