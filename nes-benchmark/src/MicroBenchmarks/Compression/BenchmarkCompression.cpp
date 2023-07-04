@@ -51,7 +51,6 @@ class BenchmarkCompression {
 
   private:
     size_t numBuffers{};
-    size_t bufferSize{};
     std::vector<CompressedDynamicTupleBuffer> buffers;
 };
 BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
@@ -64,7 +63,6 @@ BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
     NES::Exceptions::installGlobalErrorListener(listener);
 
     this->numBuffers = numBuffers;
-    this->bufferSize = bufferSize;
     NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, numBuffers);
 
     // create data
@@ -150,6 +148,7 @@ void BM_RepeatingValues(benchmark::State& state, Args&&... args) {
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
 
+    bool failed = false;
     size_t compressedSize = 0;
     double compressionRatio = 0;
     double compressionTime = 0;
@@ -160,23 +159,31 @@ void BM_RepeatingValues(benchmark::State& state, Args&&... args) {
             auto start = std::chrono::high_resolution_clock::now();
             auto res = bench.compress(compressionAlgorithm);
             auto end = std::chrono::high_resolution_clock::now();
-            compressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            compressionTime += std::chrono::duration<double, std::milli>(end - start).count();
             compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
             compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
 
             start = std::chrono::high_resolution_clock::now();
             bench.decompress();
             end = std::chrono::high_resolution_clock::now();
-            decompressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            decompressionTime += std::chrono::duration<double, std::milli>(end - start).count();
         } catch (NES::Exceptions::RuntimeException const& err) {
             // compressed size might be larger than original
             EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
+            failed = true;
         }
     }
-    state.counters["CompressedSize"] = (double) compressedSize / (double) state.iterations();
-    state.counters["CompressionRatio"] = compressionRatio / (double) state.iterations();
-    state.counters["CompressionTime"] = compressionTime / (double) state.iterations();
-    state.counters["DecompressionTime"] = decompressionTime / (double) state.iterations();
+    if (failed) {
+        state.counters["CompressedSize"] = 0;
+        state.counters["CompressionRatio"] = 0;
+        state.counters["CompressionTime"] = 0;
+        state.counters["DecompressionTime"] = 0;
+    } else {
+        state.counters["CompressedSize"] = (double) compressedSize / (double) state.iterations();
+        state.counters["CompressionRatio"] = compressionRatio / (double) state.iterations();
+        state.counters["CompressionTime"] = compressionTime / (double) state.iterations();
+        state.counters["DecompressionTime"] = decompressionTime / (double) state.iterations();
+    }
 }
 
 template<class... Args>
@@ -240,14 +247,14 @@ void BM_Uniform(benchmark::State& state, Args&&... args) {
             auto start = std::chrono::high_resolution_clock::now();
             auto res = bench.compress(compressionAlgorithm);
             auto end = std::chrono::high_resolution_clock::now();
-            compressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            compressionTime += std::chrono::duration<double, std::milli>(end - start).count();
             compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
             compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
 
             start = std::chrono::high_resolution_clock::now();
             bench.decompress();
             end = std::chrono::high_resolution_clock::now();
-            decompressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            decompressionTime += std::chrono::duration<double, std::milli>(end - start).count();
         } catch (NES::Exceptions::RuntimeException const& err) {
             // compressed size might be larger than original
             EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
@@ -322,14 +329,14 @@ void BM_Binomial(benchmark::State& state, Args&&... args) {
             auto start = std::chrono::high_resolution_clock::now();
             auto res = bench.compress(compressionAlgorithm);
             auto end = std::chrono::high_resolution_clock::now();
-            compressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            compressionTime += std::chrono::duration<double, std::milli>(end - start).count();
             compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
             compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
 
             start = std::chrono::high_resolution_clock::now();
             bench.decompress();
             end = std::chrono::high_resolution_clock::now();
-            decompressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            decompressionTime += std::chrono::duration<double, std::milli>(end - start).count();
         } catch (NES::Exceptions::RuntimeException const& err) {
             // compressed size might be larger than original
             EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
@@ -403,14 +410,14 @@ void BM_Zipf(benchmark::State& state, Args&&... args) {
             auto start = std::chrono::high_resolution_clock::now();
             auto res = bench.compress(compressionAlgorithm);
             auto end = std::chrono::high_resolution_clock::now();
-            compressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            compressionTime += std::chrono::duration<double, std::milli>(end - start).count();
             compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
             compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
 
             start = std::chrono::high_resolution_clock::now();
             bench.decompress();
             end = std::chrono::high_resolution_clock::now();
-            decompressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            decompressionTime += std::chrono::duration<double, std::milli>(end - start).count();
         } catch (NES::Exceptions::RuntimeException const& err) {
             // compressed size might be larger than original
             EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
@@ -424,16 +431,16 @@ void BM_Zipf(benchmark::State& state, Args&&... args) {
 
 // ------------------------------------------------------------
 // Benchmark Parameters
-// have to be changed by hand...
+// have to be changed by hand (except compression algorithm) ...
 // ------------------------------------------------------------
 // TODO? use environment variables for all variables?
 size_t NUM_BENCHMARK_ITERATIONS = 10;
 auto COMPRESSION_ALGORITHM = getCompressionAlgorithmByName(std::getenv("CA"));
 size_t SEED_VALUE = 42;
 bool SORT = true;
-size_t NUM_BUFFERS = 10;
+size_t NUM_BUFFERS = 1;
 size_t BUFFER_SIZE = 4096;
-size_t NUM_COLS = 3;
+size_t NUM_COLS = 4;
 size_t MIN_VALUE = 48;
 size_t MAX_VALUE = 57;
 
@@ -505,7 +512,7 @@ BENCHMARK_CAPTURE(BM_RepeatingValues,
 // Uniform distribution
 // ------------------------------------------------------------
 BENCHMARK_CAPTURE(BM_Uniform,
-                  UnfiormRowHori,
+                  UniformRowHori,
                   MemoryLayout_::ROW,
                   CompressionMode::HORIZONTAL,
                   COMPRESSION_ALGORITHM,
@@ -520,7 +527,7 @@ BENCHMARK_CAPTURE(BM_Uniform,
     ->Iterations(NUM_BENCHMARK_ITERATIONS);
 
 BENCHMARK_CAPTURE(BM_Uniform,
-                  UnfiormColHori,
+                  UniformColHori,
                   MemoryLayout_::COLUMN,
                   CompressionMode::HORIZONTAL,
                   COMPRESSION_ALGORITHM,
@@ -535,7 +542,7 @@ BENCHMARK_CAPTURE(BM_Uniform,
     ->Iterations(NUM_BENCHMARK_ITERATIONS);
 
 BENCHMARK_CAPTURE(BM_Uniform,
-                  UnfiormColVert,
+                  UniformColVert,
                   MemoryLayout_::COLUMN,
                   CompressionMode::VERTICAL,
                   COMPRESSION_ALGORITHM,

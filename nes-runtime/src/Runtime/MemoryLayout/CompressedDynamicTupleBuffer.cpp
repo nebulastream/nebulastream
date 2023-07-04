@@ -85,8 +85,8 @@ void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t size) 
 }
 
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayoutPtr& memoryLayout) {
-    if (dynamic_cast<RowLayout*>(memoryLayout.get())) {
-        return {0};
+    if (auto rowLayout = dynamic_cast<RowLayout*>(memoryLayout.get())) {
+        return rowLayout->getFieldOffSets();
     } else if (auto columnLayout = dynamic_cast<ColumnLayout*>(memoryLayout.get())) {
         return columnLayout->getColumnOffsets();
     }
@@ -433,6 +433,8 @@ static size_t compress(const uint8_t* src, size_t srcLen, uint8_t* out) {
     uint8_t count = 1;
     size_t compressedSize = 0;
     for (size_t i = 1; i < srcLen; i++) {
+        if (compressedSize >= srcLen)
+            return SIZE_MAX;
         if (src[i] == value) {
             count++;
             if (count == 255) {
