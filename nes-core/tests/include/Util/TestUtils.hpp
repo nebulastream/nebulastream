@@ -662,19 +662,17 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
 void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints);
 
 /**
- * @brief Creates multiple dynamic tuple buffers from the csv file
+ * @brief Creates multiple tuple buffers from the csv file
  * @param csvFileName
- * @param buffer
  * @param schema
  * @param bufferManager
- * @return Vector of DynamicTupleBuffer
+ * @return Vector of TupleBuffer
  */
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
-                                                                          Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
-                                                                          const SchemaPtr schema,
-                                                                          Runtime::BufferManagerPtr bufferManager);
+std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
+                                                    const SchemaPtr& schema,
+                                                    const Runtime::BufferManagerPtr& bufferManager);
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
+std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

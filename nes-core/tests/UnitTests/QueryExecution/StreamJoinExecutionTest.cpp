@@ -53,18 +53,6 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
-    std::vector<PhysicalTypePtr> retVector;
-
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : schema->fields) {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        retVector.push_back(physicalField);
-    }
-
-    return retVector;
-}
-
 std::istream& operator>>(std::istream& is, std::string& l) {
     std::getline(is, l);
     return is;

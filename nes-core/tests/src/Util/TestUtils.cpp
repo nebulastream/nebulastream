@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Common/Identifiers.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -24,6 +27,7 @@
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <Util/StdInt.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
@@ -742,10 +746,10 @@ void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::D
     ASSERT_FALSE(outFile.fail());
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
-                                                                          const SchemaPtr schema,
-                                                                          Runtime::BufferManagerPtr bufferManager) {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> allBuffers;
+std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
+                                                    const SchemaPtr& schema,
+                                                    const Runtime::BufferManagerPtr& bufferManager) {
+    std::vector<Runtime::TupleBuffer> allBuffers;
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
     NES_DEBUG("read file=" << fullPath);
@@ -756,17 +760,36 @@ std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> fillBufferFromCsv(const 
     std::ifstream inputFile(fullPath);
     std::istream_iterator<std::string> beginIt(inputFile);
     std::istream_iterator<std::string> endIt;
-    auto tupleCount = 0;
+    auto tupleCount = 0_u64;
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+
     for (auto it = beginIt; it != endIt; ++it) {
-        std::string line = *it;
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
+        const std::string& line = *it;
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
         tupleCount++;
+
+        if (tupleCount >= maxTuplePerBuffer) {
+            tupleBuffer.setNumberOfTuples(tupleCount);
+            allBuffers.emplace_back(tupleBuffer);
+            tupleCount = 0;
+
+            tupleBuffer = bufferManager->getBufferBlocking();
+        }
     }
-    buffer.setNumberOfTuples(tupleCount);
+
+    if (tupleCount > 0) {
+        tupleBuffer.setNumberOfTuples(tupleCount);
+        allBuffers.emplace_back(tupleBuffer);
+        tupleCount = 0;
+    }
+
     return allBuffers;
 }
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
+std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema) {
     std::vector<PhysicalTypePtr> retVector;
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
