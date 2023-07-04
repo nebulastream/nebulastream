@@ -102,7 +102,7 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
         NES_NOT_IMPLEMENTED();
     }
 
-    NES_DEBUG2("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
+    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
                "sizeOfRecordLeft={} sizeOfRecordRight={}",
                numberOfWorker,
                numPartitions,

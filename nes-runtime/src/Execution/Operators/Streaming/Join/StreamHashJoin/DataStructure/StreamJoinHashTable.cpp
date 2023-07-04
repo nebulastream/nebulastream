@@ -66,7 +66,7 @@ uint64_t StreamJoinHashTable::getNumberOfTuples() {
     size_t bucketPos = 0;
 
     for (auto& bucket : buckets) {
-        NES_DEBUG2("BUCKET ", bucketPos++);
+        NES_DEBUG("BUCKET {}", bucketPos++);
         for (auto& page : bucket->getPages()) {
             cnt += page->size();
         }

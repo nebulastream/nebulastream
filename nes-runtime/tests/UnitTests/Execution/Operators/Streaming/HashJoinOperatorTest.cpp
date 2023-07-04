@@ -336,7 +336,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
             Nautilus::Record({{hashJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
                               {hashJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
                               {hashJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
-        NES_DEBUG("Tuple right f1_left=" << i + 1000 << " kef2_left(key)=" << (i % 10) + 10 << " ts=" << i);
+        NES_DEBUG("Tuple right f1_left={} kef2_left(key)={} ts={}", i + 1000, (i % 10) + 10, i);
 
         if (recordRight.read(hashJoinSinkHelper.timeStampFieldRight) > lastTupleTimeStampWindow) {
             NES_DEBUG("rects={} >= {}", recordRight.read(hashJoinSinkHelper.timeStampFieldRight)->toString(), lastTupleTimeStampWindow);
@@ -414,7 +414,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
     if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows() != 1) {
-        NES_ERROR("Not exactly one active window! {}"
+        NES_ERROR("Not exactly one active window! {}",
                   hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows());
         //TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
         //        return false;
@@ -440,12 +440,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
         if (existingNumberOfTuplesInWindowLeft != expectedNumberOfTuplesInWindowLeft
             || existingNumberOfTuplesInWindowRight != expectedNumberOfTuplesInWindowRight) {
-            NES_ERROR("wrong number of inputs are created existingNumberOfTuplesInWindowLeft="
-                      << existingNumberOfTuplesInWindowLeft
-                      << " expectedNumberOfTuplesInWindowLeft=" << expectedNumberOfTuplesInWindowLeft
-                      << " existingNumberOfTuplesInWindowRight=" << existingNumberOfTuplesInWindowRight
-                      << " expectedNumberOfTuplesInWindowRight=" << expectedNumberOfTuplesInWindowRight
-                      << " windowIdentifier=" << windowIdentifier);
+            NES_ERROR("wrong number of inputs are created existingNumberOfTuplesInWindowLeft={} expectedNumberOfTuplesInWindowLeft={} existingNumberOfTuplesInWindowRight={} expectedNumberOfTuplesInWindowRight={} windowIdentifier={}",
+                      existingNumberOfTuplesInWindowLeft, expectedNumberOfTuplesInWindowLeft, existingNumberOfTuplesInWindowRight, expectedNumberOfTuplesInWindowRight, windowIdentifier);
             EXPECT_TRUE(false);
             EXIT_FAILURE;
         }
@@ -503,7 +499,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                             // Check if this joinedRecord is in the emitted records
                             auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
                             if (it == collector->records.end()) {
-                                NES_ERROR2("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
+                                NES_ERROR("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
                                 return false;
                             }
 

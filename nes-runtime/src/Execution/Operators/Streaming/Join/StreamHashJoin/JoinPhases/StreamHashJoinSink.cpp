@@ -203,8 +203,7 @@ void StreamHashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer)
                                hashWindowRef,
                                operatorHandlerMemRef,
                                windowIdentifier);
-        NES_TRACE("Mark partition for done numberOfPagesLeft=" << numberOfPagesLeft
-                                                               << " numberOfPagesRight=" << numberOfPagesRight);
+        NES_TRACE("Mark partition for done numberOfPagesLeft={} numberOfPagesRight={}", numberOfPagesLeft->toString(), numberOfPagesRight->toString());
         return;
     }
 
@@ -278,9 +277,9 @@ void StreamHashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer)
                             joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                         }
 
-                        NES_DEBUG2(" write record={}", joinedRecord.toString());
-                        NES_DEBUG2(" write left record={}", leftRecord.toString());
-                        NES_DEBUG2(" write right record={}", rightRecord.toString());
+                        NES_DEBUG(" write record={}", joinedRecord.toString());
+                        NES_DEBUG(" write left record={}", leftRecord.toString());
+                        NES_DEBUG(" write right record={}", rightRecord.toString());
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
 

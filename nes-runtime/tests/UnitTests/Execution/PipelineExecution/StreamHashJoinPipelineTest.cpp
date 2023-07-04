@@ -391,7 +391,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     }
     executablePipelineSink->stop(pipelineExecCtxSink);
 
-    NES_DEBUG2("Calling sink created buffers {}", pipelineExecCtxSink.emittedBuffers.size());
+    NES_DEBUG("Calling sink created buffers {}", pipelineExecCtxSink.emittedBuffers.size());
 
     std::vector<Runtime::TupleBuffer> nljBuffers;
     performNLJ(nljBuffers,

@@ -35,7 +35,7 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
     auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
     //TODO create a factory class for stream join windows #3900
     if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN) {
-        NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
+        NES_DEBUG("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd));
     } else {
         StreamHashJoinOperatorHandler* ptr = static_cast<StreamHashJoinOperatorHandler*>(this);
@@ -50,7 +50,7 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
                                                                 ptr->getNumPartitions(),
                                                                 joinStrategy);
         windows.emplace_back(newWindow);
-        NES_DEBUG2("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
+        NES_DEBUG("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         return newWindow;
     }
     return getWindowByTimestampOrCreateIt(timestamp);
