@@ -122,9 +122,9 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const std::string fileNameBuffersSink("stream_join_sink.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
+    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
+    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
+    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
 
     auto testSink = executionEngine->createDataSink(joinSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -215,8 +215,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, leftInputSchema, bufferManager)[0];
-    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, rightInputSchema, bufferManager)[0];
+    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftInputSchema, bufferManager)[0];
+    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightInputSchema, bufferManager)[0];
 
     auto testSink = executionEngine->createDataSink(sinkSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);

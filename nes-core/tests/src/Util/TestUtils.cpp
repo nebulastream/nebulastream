@@ -746,9 +746,9 @@ void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::D
     ASSERT_FALSE(outFile.fail());
 }
 
-std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
-                                                    const SchemaPtr& schema,
-                                                    const Runtime::BufferManagerPtr& bufferManager) {
+std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string& csvFileName,
+                                                               const SchemaPtr& schema,
+                                                               const Runtime::BufferManagerPtr& bufferManager) {
     std::vector<Runtime::TupleBuffer> allBuffers;
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
@@ -789,9 +789,8 @@ std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileNa
     return allBuffers;
 }
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema) {
+std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema) {
     std::vector<PhysicalTypePtr> retVector;
-
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
     for (const auto& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
