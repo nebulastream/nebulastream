@@ -40,6 +40,8 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     void emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer);
 
+    void emitBuffer(Runtime::TupleBuffer& buffer);
+
   private:
     std::promise<bool> canTerminate;
 };
