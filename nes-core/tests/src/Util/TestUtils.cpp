@@ -17,6 +17,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -739,6 +740,42 @@ void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::D
     }
     outFile.close();
     ASSERT_FALSE(outFile.fail());
+}
+
+std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
+                                                                          const SchemaPtr schema,
+                                                                          Runtime::BufferManagerPtr bufferManager) {
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> allBuffers;
+
+    auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
+    NES_DEBUG("read file=" << fullPath);
+    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
+    const std::string delimiter = ",";
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+
+    std::ifstream inputFile(fullPath);
+    std::istream_iterator<std::string> beginIt(inputFile);
+    std::istream_iterator<std::string> endIt;
+    auto tupleCount = 0;
+    for (auto it = beginIt; it != endIt; ++it) {
+        std::string line = *it;
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
+        tupleCount++;
+    }
+    buffer.setNumberOfTuples(tupleCount);
+    return allBuffers;
+}
+
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
+    std::vector<PhysicalTypePtr> retVector;
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        retVector.push_back(physicalField);
+    }
+
+    return retVector;
 }
 
 }// namespace NES
