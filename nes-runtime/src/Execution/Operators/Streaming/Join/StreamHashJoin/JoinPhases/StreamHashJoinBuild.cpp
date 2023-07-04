@@ -121,7 +121,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
 
-    NES_TRACE2("build for record=", record.toString());
+    NES_TRACE("build for record={}", record.toString());
     //check if we can resuse window
     if (!(joinState->windowStart <= tsValue && tsValue < joinState->windowEnd)) {
         //we need a new window
@@ -139,7 +139,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
         joinState->windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, joinState->windowReference);
-        //        NES_TRACE2("reinit join state with start={} end={} for ts={}",
+        //        NES_TRACE("reinit join state with start={} end={} for ts={}",
         //                   (uint64_t) joinState->windowStart,
         //                   (uint64_t) joinState->windowEnd,
         //                   (uint64_t) tsValue);
@@ -155,7 +155,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     for (auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        NES_TRACE("write key=" << field->getName() << " value=" << record.read(fieldName));
+        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }

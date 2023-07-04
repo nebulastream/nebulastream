@@ -66,10 +66,14 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
             //we need a new page
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
             pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
-            NES_TRACE("Adding a new page for " << hash << " thread=" << std::this_thread::get_id());
+            std::stringstream idAsString;
+            idAsString << std::this_thread::get_id();
+            NES_TRACE("Adding a new page for {} thread={}", hash, idAsString.str());
         } else {
             //there is a free page left
-            NES_TRACE("use existing page for " << hash << " thread=" << std::this_thread::get_id());
+            std::stringstream idString;
+            idString << std::this_thread::get_id();
+            NES_TRACE("use existing page for {} thread={}", hash, idString.str());
         }
 
         //increment the position, this is atomic but maybe could also go without
