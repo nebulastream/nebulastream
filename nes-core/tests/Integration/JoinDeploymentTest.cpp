@@ -49,45 +49,11 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
-    std::vector<PhysicalTypePtr> retVector;
 
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : schema->fields) {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        retVector.push_back(physicalField);
-    }
-
-    return retVector;
-}
 
 std::istream& operator>>(std::istream& is, std::string& l) {
     std::getline(is, l);
     return is;
-}
-
-Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFileName,
-                                                      Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
-                                                      const SchemaPtr schema,
-                                                      BufferManagerPtr bufferManager) {
-
-    auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
-    NES_DEBUG("read file=" << fullPath);
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
-    std::ifstream inputFile(fullPath);
-    std::istream_iterator<std::string> beginIt(inputFile);
-    std::istream_iterator<std::string> endIt;
-    auto tupleCount = 0;
-    for (auto it = beginIt; it != endIt; ++it) {
-        std::string line = *it;
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
-        tupleCount++;
-    }
-    buffer.setNumberOfTuples(tupleCount);
-    return buffer;
 }
 
 /**
@@ -117,9 +83,9 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     const std::string fileNameBuffersSink("window_sink.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 20);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -192,9 +158,9 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     const std::string fileNameBuffersSink("window_sink.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     NES_DEBUG2("leftInputHuffer: {}", NES::Util::printTupleBufferAsCSV(leftBuffer.getBuffer(), leftSchema));
     NES_DEBUG2("rightInputHuffer: {}", NES::Util::printTupleBufferAsCSV(rightBuffer.getBuffer(), rightSchema));
@@ -267,9 +233,9 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     const std::string fileNameBuffersSink("window_sink2.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 20);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -338,9 +304,9 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     const std::string fileNameBuffersSink("window_sink3.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 20);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -412,9 +378,9 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     const std::string fileNameBuffersSink("window_sink5.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 40);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -486,9 +452,9 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     const std::string fileNameBuffersSink("window_sink6.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 40);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -558,9 +524,9 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     const std::string fileNameBuffersSink("window_sink4.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(joinSchema, 2);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);

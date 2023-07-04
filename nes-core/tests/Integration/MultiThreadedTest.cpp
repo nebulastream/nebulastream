@@ -43,7 +43,16 @@ class MultiThreadedTest : public Testing::NESBaseTest {
     }
 };
 
+
 TEST_F(MultiThreadedTest, testFilterQuery) {
+    auto inputSchema = Schema::create()->addField(createField("value", BasicType::UINT64))
+                                       ->addField(createField("id", BasicType::UINT64))
+                                       ->addField(createField("timestamp", BasicType::UINT64));
+
+
+}
+
+TEST_F(MultiThreadedTest, testFilterQuery_OLD) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -70,12 +79,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
     workerConfig1->numberOfSlots = (12);
-    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->coordinatorPort = port;
-    workerConfig2->numWorkerThreads = (numberOfWorkerThreads);
-    workerConfig2->numberOfSlots = (12);
-    workerConfig2->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
-    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
