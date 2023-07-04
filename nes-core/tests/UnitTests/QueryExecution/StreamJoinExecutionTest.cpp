@@ -58,30 +58,6 @@ std::istream& operator>>(std::istream& is, std::string& l) {
     return is;
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFileName,
-                                                      Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
-                                                      const SchemaPtr schema,
-                                                      BufferManagerPtr bufferManager) {
-
-    auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
-    std::ifstream inputFile(fullPath);
-    std::istream_iterator<std::string> beginIt(inputFile);
-    std::istream_iterator<std::string> endIt;
-    auto tupleCount = 0;
-    for (auto it = beginIt; it != endIt; ++it) {
-        std::string line = *it;
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
-        tupleCount++;
-    }
-    buffer.setNumberOfTuples(tupleCount);
-    buffer.getBuffer().setWatermark(1000);
-    return buffer;
-}
-
 /**
  * @brief checks if the buffers contain the same tuples
  * @param buffer1
@@ -146,9 +122,9 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const std::string fileNameBuffersSink("stream_join_sink.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
-    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
+    auto expectedSinkBuffer = fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
 
     auto testSink = executionEngine->createDataSink(joinSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -170,14 +146,14 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
-    leftBuffer.getBuffer().setWatermark(1000);
-    leftBuffer.getBuffer().setOriginId(2);
-    leftBuffer.getBuffer().setSequenceNumber(1);
+    leftBuffer.setWatermark(1000);
+    leftBuffer.setOriginId(2);
+    leftBuffer.setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
 
-    rightBuffer.getBuffer().setWatermark(1000);
-    rightBuffer.getBuffer().setOriginId(3);
-    rightBuffer.getBuffer().setSequenceNumber(1);
+    rightBuffer.setWatermark(1000);
+    rightBuffer.setOriginId(3);
+    rightBuffer.setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
 
     testSink->waitTillCompleted();
@@ -186,11 +162,11 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
-    NES_DEBUG2("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
+    NES_DEBUG2("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
     ASSERT_TRUE(
-        checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+        checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
 }
 
 TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
@@ -239,10 +215,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer =
-        fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftInputSchema), leftInputSchema, bufferManager);
-    auto rightBuffer =
-        fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightInputSchema), rightInputSchema, bufferManager);
+    auto leftBuffer = fillBufferFromCsv(fileNameBuffersLeft, leftInputSchema, bufferManager)[0];
+    auto rightBuffer = fillBufferFromCsv(fileNameBuffersRight, rightInputSchema, bufferManager)[0];
 
     auto testSink = executionEngine->createDataSink(sinkSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -270,14 +244,14 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
-    leftBuffer.getBuffer().setWatermark(1000);
-    leftBuffer.getBuffer().setOriginId(2);
-    leftBuffer.getBuffer().setSequenceNumber(1);
+    leftBuffer.setWatermark(1000);
+    leftBuffer.setOriginId(2);
+    leftBuffer.setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
 
-    rightBuffer.getBuffer().setWatermark(1000);
-    rightBuffer.getBuffer().setOriginId(3);
-    rightBuffer.getBuffer().setSequenceNumber(1);
+    rightBuffer.setWatermark(1000);
+    rightBuffer.setOriginId(3);
+    rightBuffer.setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
