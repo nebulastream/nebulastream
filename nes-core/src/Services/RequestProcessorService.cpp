@@ -38,10 +38,10 @@
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <exception>
 
 #include <utility>
@@ -69,18 +69,19 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
     queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
-    queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryDeploymentPhase =
-        QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
-    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                queryCatalogService,
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
                                                                                coordinatorConfiguration,
-                                                                               udfCatalog);
+                                                                               udfCatalog,
+                                                                               globalExecutionPlan);
+    queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
+    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+
     queryMigrationPhase =
         Experimental::QueryMigrationPhase::create(globalExecutionPlan, topology, workerRpcClient, queryPlacementPhase);
 }

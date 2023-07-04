@@ -30,14 +30,15 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -50,6 +51,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     TopologyPtr topology;
+    GlobalExecutionPlanPtr globalExecutionPlan;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -78,6 +80,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
         sourceCatalog->addPhysicalSource("default_logical", sourceCatalogEntry1);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        globalExecutionPlan = GlobalExecutionPlan::create();
     }
 
     z3::ContextPtr context;
@@ -106,10 +109,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
     auto catalogEntry1 =
         Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::OPTIMIZING);
-    auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
+    auto request = AddQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
     EXPECT_THROW(phase->execute(batchOfQueryRequests), GlobalQueryPlanUpdateException);
@@ -141,9 +145,10 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
-    auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     auto resultPlan = phase->execute(batchOfQueryRequests);
 
@@ -179,10 +184,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
-    auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> nesRequests = {request, request};
     //Assert
     EXPECT_THROW(phase->execute(nesRequests), GlobalQueryPlanUpdateException);
@@ -218,13 +224,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
-    auto request1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto request2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry2->getQueryPlacementStrategy());
+    auto request1 = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto request2 = AddQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry2->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> requests = {request1, request2};
     auto resultPlan = phase->execute(requests);
 
@@ -264,10 +271,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
-    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest1 = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1};
 
     //Assert
@@ -303,15 +311,16 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
     queryCatalogService->checkAndMarkForHardStop(2);
 
-    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest1 = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest2 = AddQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     auto nesRequest3 = StopQueryRequest::create(catalogEntry2->getInputQueryPlan()->getQueryId());
 
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1, nesRequest2, nesRequest3};
@@ -343,7 +352,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
     for (auto& [key, value] : allQueries) {
-        auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
+        auto nesRequest = AddQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
@@ -362,7 +371,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
@@ -407,7 +417,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
     for (auto& [key, value] : allQueries) {
-        auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
+        auto nesRequest = AddQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
 
@@ -446,7 +456,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
@@ -503,15 +514,16 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                globalQueryPlan,
                                                                context,
                                                                coordinatorConfig,
-                                                               udfCatalog);
+                                                               udfCatalog,
+                                                               globalExecutionPlan);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
     queryCatalogService->checkAndMarkForHardStop(2);
 
-    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
-    auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest1 = AddQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest2 = AddQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     auto nesRequest3 = StopQueryRequest::create(catalogEntry2->getInputQueryPlan()->getQueryId());
 
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1, nesRequest2};

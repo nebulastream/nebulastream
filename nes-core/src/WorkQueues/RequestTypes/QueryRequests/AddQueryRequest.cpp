@@ -14,27 +14,27 @@
 
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <utility>
 
 namespace NES {
 
-RunQueryRequest::RunQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy)
+AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy)
     : queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
 }
 
-RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy) {
-    return std::make_shared<RunQueryRequest>(RunQueryRequest(std::move(queryPlan), queryPlacementStrategy));
+AddQueryRequestPtr AddQueryRequest::create(QueryPlanPtr queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy) {
+    return std::make_shared<AddQueryRequest>(AddQueryRequest(std::move(queryPlan), queryPlacementStrategy));
 }
 
-QueryPlanPtr RunQueryRequest::getQueryPlan() { return queryPlan; }
+QueryPlanPtr AddQueryRequest::getQueryPlan() { return queryPlan; }
 
-Optimizer::PlacementStrategy RunQueryRequest::getQueryPlacementStrategy() { return queryPlacementStrategy; }
+Optimizer::PlacementStrategy AddQueryRequest::getQueryPlacementStrategy() { return queryPlacementStrategy; }
 
-std::string RunQueryRequest::toString() {
+std::string AddQueryRequest::toString() {
     return "RunQueryRequest { QueryId: " + std::to_string(queryPlan->getQueryId()) + ", QueryPlan: " + queryPlan->toString()
         + ", QueryPlacementStrategy: " + std::string(magic_enum::enum_name(queryPlacementStrategy)) + "}";
 }
-uint64_t RunQueryRequest::getQueryId() { return queryPlan->getQueryId(); }
+uint64_t AddQueryRequest::getQueryId() { return queryPlan->getQueryId(); }
 }// namespace NES

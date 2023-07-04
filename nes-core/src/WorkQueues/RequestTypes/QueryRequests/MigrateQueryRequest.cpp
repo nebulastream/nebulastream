@@ -13,7 +13,7 @@
 */
 
 #include <Util/magicenum/magic_enum.hpp>
-#include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/MigrateQueryRequest.hpp>
 
 NES::Experimental::MigrateQueryRequestPtr
 NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experimental::MigrationType migrationType) {

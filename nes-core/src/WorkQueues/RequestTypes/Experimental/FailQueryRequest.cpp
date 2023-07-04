@@ -61,7 +61,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
-    globalQueryPlan->removeQuery(queryId, RequestType::Fail);
+    globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 
     //undeploy queries
     try {

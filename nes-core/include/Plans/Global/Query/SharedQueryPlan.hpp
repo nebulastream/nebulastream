@@ -58,6 +58,8 @@ struct RemovedEdge {
     TopologyNodeId upstreamNodeId;
 };
 
+const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
+
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
  * the queryIdAndCatalogEntryMapping participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
@@ -131,11 +133,18 @@ class SharedQueryPlan {
     bool removeQuery(QueryId queryId);
 
     /**
-     * @brief Mark all operators placed on the removed edges for re-operator placement.
-     * Note: the state of operators on the most upstream and most downstream operators will remain unchanged
-     * @param removedEdges: vector (from the IoT towards Cloud layer) of removed topology edges used by the shared query plan
+     * @brief Mark all operators between (excluding) upstream and downstream operators for re-operator placement
+     * @param upstreamOperatorIds: upstream operator ids
+     * @param downstreamOperatorIds: downstream Operator ids
      */
-    void performReOperatorPlacement(const std::vector<RemovedEdge>& removedEdges);
+    void performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
+                                    const std::set<uint64_t>& downstreamOperatorIds);
+
+    /**
+     * @brief Method to update the placement information and state of the shared query plan operators
+     * @param updatedOperators: operators with new mappings
+     */
+    void updateOperators(const std::set<OperatorNodePtr>& updatedOperators);
 
     /**
      * @brief Clear all MetaData information
@@ -241,8 +250,6 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
-    std::map<OperatorId, TopologyNodeId> operatorToNodeMappings;
-    std::map<TopologyNodeId, std::set<OperatorNodePtr>> nodeToOperatorsMappings;
 };
 }// namespace NES
 

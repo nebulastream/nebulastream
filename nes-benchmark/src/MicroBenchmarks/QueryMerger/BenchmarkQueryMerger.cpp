@@ -23,13 +23,11 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
@@ -37,7 +35,6 @@
 #include <unistd.h>
 
 using namespace NES;
-using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 uint64_t sourceCnt;
