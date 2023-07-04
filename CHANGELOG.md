@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.129](https://github.com/nebulastream/nebulastream/tree/v0.5.129) (2023-07-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.128...v0.5.129)
+
+### Bug Fixes 🐛
+
+- \[BUG\] On a worker failure Topology::removePhysicalNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
+
 ## [v0.5.128](https://github.com/nebulastream/nebulastream/tree/v0.5.128) (2023-07-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.127...v0.5.128)
