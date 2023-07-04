@@ -43,12 +43,12 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
 void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
 
-    if (RequestType::Fail == requestType) {
+    if (RequestType::FailQuery == requestType) {
         //For failure request query id is nothing but id of the shared query plan
         auto sharedQueryPlan = sharedQueryIdToPlanMap[queryId];
         //Instead of removing query we mark the status of the shared query plan to failed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Failed);
-    } else if (RequestType::Stop == requestType) {
+    } else if (RequestType::StopQuery == requestType) {
         //Check if the query id present in the Global query Plan
         if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
             //Fetch the shared query plan id and remove the query and associated operators

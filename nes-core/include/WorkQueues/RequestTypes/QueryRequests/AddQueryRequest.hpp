@@ -24,13 +24,13 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class RunQueryRequest;
-using RunQueryRequestPtr = std::shared_ptr<RunQueryRequest>;
+class AddQueryRequest;
+using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
 
 /**
  * @brief This request is used for running a new query in NES cluster
  */
-class RunQueryRequest : public Request {
+class AddQueryRequest : public Request {
   public:
     /**
      * @brief Create instance of RunQueryRequest
@@ -38,7 +38,7 @@ class RunQueryRequest : public Request {
      * @param queryPlacementStrategy: the placement strategy name
      * @return shared pointer to the instance of Run query request
      */
-    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy);
+    static AddQueryRequestPtr create(QueryPlanPtr queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy);
 
     /// Virtual destructor for inheritance
     /**
@@ -58,7 +58,7 @@ class RunQueryRequest : public Request {
     uint64_t getQueryId();
 
   private:
-    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy);
+    explicit AddQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy);
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
 };

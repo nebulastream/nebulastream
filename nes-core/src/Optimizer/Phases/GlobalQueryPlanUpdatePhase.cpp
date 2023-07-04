@@ -30,9 +30,9 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -40,17 +40,19 @@ namespace NES::Optimizer {
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
     TopologyPtr topology,
     QueryCatalogServicePtr queryCatalogService,
-    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    Catalogs::Source::SourceCatalogPtr sourceCatalog,
     GlobalQueryPlanPtr globalQueryPlan,
     z3::ContextPtr z3Context,
     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-    const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
-    : topology(topology), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
+    Catalogs::UDF::UDFCatalogPtr udfCatalog,
+    GlobalExecutionPlanPtr globalExecutionPlan)
+    : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)),
+      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
     sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
     queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
     originIdInferencePhase = OriginIdInferencePhase::create();
@@ -67,14 +69,16 @@ GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                   Catalogs::UDF::UDFCatalogPtr udfCatalog) {
+                                   Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                   GlobalExecutionPlanPtr globalExecutionPlan) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(topology),
                                                                                    std::move(queryCatalogService),
-                                                                                   sourceCatalog,
+                                                                                   std::move(sourceCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
                                                                                    coordinatorConfiguration,
-                                                                                   udfCatalog));
+                                                                                   std::move(udfCatalog),
+                                                                                   std::move(globalExecutionPlan)));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {
@@ -86,16 +90,16 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 auto stopQueryRequest = nesRequest->as<StopQueryRequest>();
                 QueryId queryId = stopQueryRequest->getQueryId();
                 NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
-                globalQueryPlan->removeQuery(queryId, RequestType::Stop);
+                globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
             } else if (nesRequest->instanceOf<FailQueryRequest>()) {
                 auto failQueryRequest = nesRequest->as<FailQueryRequest>();
                 QueryId queryId = failQueryRequest->getQueryId();
                 NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
-                globalQueryPlan->removeQuery(queryId, RequestType::Fail);
-            } else if (nesRequest->instanceOf<RunQueryRequest>()) {
-                auto runQueryRequest = nesRequest->as<RunQueryRequest>();
+                globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+            } else if (nesRequest->instanceOf<AddQueryRequest>()) {
+                auto runQueryRequest = nesRequest->as<AddQueryRequest>();
                 QueryId queryId = runQueryRequest->getQueryId();
-                auto runRequest = nesRequest->as<RunQueryRequest>();
+                auto runRequest = nesRequest->as<AddQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();
                 try {
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);

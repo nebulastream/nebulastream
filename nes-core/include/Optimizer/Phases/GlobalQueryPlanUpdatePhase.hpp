@@ -58,6 +58,9 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -108,7 +111,8 @@ class GlobalQueryPlanUpdatePhase {
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                                Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                                                Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                                GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -120,13 +124,15 @@ class GlobalQueryPlanUpdatePhase {
   private:
     explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                         QueryCatalogServicePtr queryCatalogService,
-                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
+                                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                        GlobalExecutionPlanPtr globalExecutionPlan);
 
     TopologyPtr topology;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;

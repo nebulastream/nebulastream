@@ -29,9 +29,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
@@ -83,7 +83,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
             return queryId;
         }
@@ -130,7 +130,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
             return queryId;
         }

@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <string>
-
 namespace NES {
 
-RestartQueryRequest::RestartQueryRequest(QueryId queryId) : queryId(queryId) {}
+StopQueryRequest::StopQueryRequest(QueryId queryId) : queryId(queryId) {}
 
-RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
-    return std::make_shared<RestartQueryRequest>(RestartQueryRequest(queryId));
+StopQueryRequestPtr StopQueryRequest::create(QueryId queryId) {
+    return std::make_shared<StopQueryRequest>(StopQueryRequest(queryId));
 }
 
-std::string RestartQueryRequest::toString() { return "RestartQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
-QueryId RestartQueryRequest::getQueryId() const { return queryId; }
+std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
+
+QueryId StopQueryRequest::getQueryId() const { return queryId; }
+
 }// namespace NES

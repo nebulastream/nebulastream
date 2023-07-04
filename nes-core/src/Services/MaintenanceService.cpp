@@ -25,7 +25,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
-#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/RestartQueryRequest.hpp>
 
 namespace NES::Experimental {
 

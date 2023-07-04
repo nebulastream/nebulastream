@@ -496,7 +496,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::StopQuery);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
@@ -607,7 +607,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     }
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::StopQuery);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 

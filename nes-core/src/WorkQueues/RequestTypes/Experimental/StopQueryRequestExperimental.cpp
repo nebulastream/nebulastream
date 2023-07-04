@@ -92,7 +92,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             throw e;
         }
         //remove single query from global query plan
-        globalQueryPlan->removeQuery(queryId, RequestType::Stop);
+        globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         //undeploy SQP

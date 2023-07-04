@@ -42,7 +42,7 @@
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -399,15 +399,16 @@ int main(int argc, const char* argv[]) {
             Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
             auto globalQueryPlan = GlobalQueryPlan::create();
+            auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                         queryCatalogService,
                                                                                         sourceCatalog,
                                                                                         globalQueryPlan,
                                                                                         z3Context,
                                                                                         coordinatorConfiguration,
-                                                                                        udfCatalog);
+                                                                                        udfCatalog,
+                                                                                        globalExecutionPlan);
 
-            auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
             auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                               topology,
@@ -421,7 +422,7 @@ int main(int argc, const char* argv[]) {
                 queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
                 Optimizer::PlacementStrategy queryPlacementStrategy =
                     magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
-                auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
+                auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();

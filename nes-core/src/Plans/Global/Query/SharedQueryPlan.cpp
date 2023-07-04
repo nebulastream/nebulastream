@@ -315,72 +315,15 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);
 }
 
-void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>& removedEdges) {
+void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
+                                                 const std::set<uint64_t>& downstreamOperatorIds) {
 
     std::set<OperatorNodePtr> upstreamOperators;
-    std::set<OperatorNodePtr> downstreamOperators;
-    if (removedEdges.size() == 1) {
-        auto operatorsPlacedOnDownstreamNode = nodeToOperatorsMappings[removedEdges[0].downstreamNodeId];
-
-        for (auto firstItr = operatorsPlacedOnDownstreamNode.begin(); firstItr != operatorsPlacedOnDownstreamNode.end();) {
-            bool incFirstItr = true;
-            for (auto nextItr = nextUpstreamOperators.begin(); nextItr != nextUpstreamOperators.end();) {
-                if ((*firstItr)->getId() == (*nextItr)->getId()) {
-                    // Insert item in the temp upstream operator list
-                    upstreamOperators.insert((*firstItr));
-                    // It is okay to erase these operators as there won't be any other operators with same id in the change logs entries.
-                    firstItr =
-                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
-                    nextUpstreamOperators.erase(nextItr);
-                    incFirstItr = false;
-                    break;
-                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
-                    // Insert item in the temp upstream operator list
-                    tempUpstreamOperators.insert((*firstItr));
-                    // It is okay to erase this next operator as there won't be any other operator in the first upstream operator list
-                    // that can be this operator's upstream operator
-                    nextItr =
-                        nextUpstreamOperators.erase(nextItr);// Please note that we are assigning the iterator to the next item
-                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
-                    tempUpstreamOperators.insert((*nextItr));
-                    //It is okay to erase this first operator as no other upstream operator can be its upstream operator
-                    firstItr =
-                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
-                    incFirstItr = false;
-                    break;
-                } else {
-                    nextItr++;// move to the next item
-                }
-            }
-
-            // Increment the first iterator
-            if (incFirstItr) {
-                firstItr++;
-            }
-        }
-
-        //Add remaining upstream operators to the temp upstream operator set.
-        if (!firstUpstreamOperators.empty()) {
-            tempUpstreamOperators.insert(firstUpstreamOperators.begin(), firstUpstreamOperators.end());
-        }
-        if (!nextUpstreamOperators.empty()) {
-            tempUpstreamOperators.insert(nextUpstreamOperators.begin(), nextUpstreamOperators.end());
-        }
-
-        auto operatorsPlacedOnUpstreamNode = nodeToOperatorsMappings[removedEdges[0].upstreamNodeId];
-    }
-
-    for (uint64_t i = 0; i < removedEdges.size(); i++) {
-        auto removeEdge = removedEdges[i];
-        if (0 == i) {
-            auto downstreamNodeId = removeEdge.downstreamNodeId;
-        }
-    }
-
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
         upstreamOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId));
     }
 
+    std::set<OperatorNodePtr> downstreamOperators;
     for (const auto& downstreamOperatorId : downstreamOperatorIds) {
         downstreamOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId));
     }
@@ -388,7 +331,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>&
     //Perform a DFS iteration starting from downstream operators and mark all intermediate nodes for re-operator placement
     std::set<OperatorNodePtr> visitedOperator;
     std::queue<OperatorNodePtr> operatorsToVisit;
-    //initialize with upstream operators
+    //initialize the operators to visit with upstream operators of all downstream operators
     for (const auto& pinnedDownStreamOperator : downstreamOperators) {
         auto children = pinnedDownStreamOperator->getChildren();
         for (const auto& child : children) {
@@ -396,8 +339,8 @@ void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>&
         }
     }
 
+    // Go over all operators to visit and travers through their children to mark the operator state as re-place
     while (!operatorsToVisit.empty()) {
-
         auto logicalOperator = operatorsToVisit.front();//fetch the front operator
         operatorsToVisit.pop();                         //pop the front operator
 
@@ -412,7 +355,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>&
 
             //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
             if (found == upstreamOperators.end()) {
-                //TODO: Set the status of the logical operator to replacement  as part of the issue #3899
+                //TODO: Set the status of the logical operator to re-place as part of the issue #3899
                 for (const auto& upstreamOperator : logicalOperator->getChildren()) {
                     operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
                 }
@@ -423,6 +366,17 @@ void SharedQueryPlan::performReOperatorPlacement(const std::vector<RemovedEdge>&
     //add change log entry indicating the addition
     long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
+}
+
+void SharedQueryPlan::updateOperators(const std::set<OperatorNodePtr>& updatedOperators) {
+
+    //Iterate over all updated operators and update the corresponding operator in the shared query plan with correct properties and state.
+    for (const auto& placedOperator : updatedOperators) {
+        auto topologyNodeId = std::any_cast<TopologyNodeId>(placedOperator->getProperty(PINNED_NODE_ID));
+        auto operatorInQueryPlan = queryPlan->getOperatorWithId(placedOperator->getId());
+        operatorInQueryPlan->addProperty(PINNED_NODE_ID, topologyNodeId);
+        //TODO: Set the status of the logical operator to placed as part of the issue #3899
+    }
 }
 
 }// namespace NES

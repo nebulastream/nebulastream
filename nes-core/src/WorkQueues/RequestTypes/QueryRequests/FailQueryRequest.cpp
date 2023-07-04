@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 
 namespace NES {
 
