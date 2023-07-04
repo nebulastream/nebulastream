@@ -111,6 +111,9 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     EXPECT_TRUE(success);
 }
 
+/**
+ * Remove a non-root node.
+ */
 TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     TopologyPtr topology = Topology::create();
 
@@ -135,7 +138,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     auto childNode2 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode2);
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(success);
 
     int node3Id = 3;
     std::string node3Address = "localhost";
@@ -144,7 +147,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     auto childNode3 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources, properties);
 
     bool success2 = topology->addNewTopologyNodeAsChild(childNode2, childNode3);
-    EXPECT_TRUE(success2);
+    ASSERT_TRUE(success2);
 
     int node4Id = 4;
     std::string node4Address = "localhost";
@@ -153,7 +156,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     auto childNode4 = TopologyNode::create(node4Id, node4Address, grpcPort, dataPort, resources, properties);
 
     bool success3 = topology->addNewTopologyNodeAsChild(childNode2, childNode4);
-    EXPECT_TRUE(success3);
+    ASSERT_TRUE(success3);
 
     EXPECT_TRUE(rootNode->containAsChild(childNode2));
     EXPECT_TRUE(rootNode->containAsChild(childNode3));
