@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/Synchronized.h>
 #include <list>
 #include <memory>
 
@@ -50,6 +51,9 @@ class ThreadLocalSliceStore {
             throw WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
                                             + std::to_string(lastWatermarkTs));
         }
+        // get a read lock
+        auto readLock = lockedSlices.rlock();
+        auto& slices = readLock.asNonConstUnsafe();
         // Find the correct slice.
         // Reverse iteration over all slices from the end to the start,
         // as it is expected that ts is in a more recent slice.
@@ -70,13 +74,15 @@ class ThreadLocalSliceStore {
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
-            return slices.emplace_front(std::move(newSlice));
+            readLock.unlock();
+            return lockedSlices.wlock()->emplace_front(std::move(newSlice));
         } else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts) {
             // We are in case 2. thus we have to append a new slice after the current iterator
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
-            auto slice = slices.emplace(sliceIter.base(), std::move(newSlice));
+            readLock.unlock();
+            auto slice = lockedSlices.wlock()->emplace(sliceIter.base(), std::move(newSlice));
             return *slice;
         } else if ((*sliceIter)->coversTs(ts)) {
             // We are in case 3. and found a slice which covers the current ts.
@@ -93,21 +99,40 @@ class ThreadLocalSliceStore {
      * @brief Returns the slice end ts for the first slice in the slice store.
      * @return uint64_t
      */
-    inline SliceTypePtr& getFirstSlice() { return slices.front(); }
+    inline SliceTypePtr& getFirstSlice() {
+        auto lock = lockedSlices.rlock();
+        return lock->front();
+    }
 
     /**
      * @brief Returns the slice end ts for the last slice in the slice store.
      * @return uint64_t
      */
-    inline SliceTypePtr& getLastSlice() { return slices.back(); }
+    inline SliceTypePtr& getLastSlice() {
+        auto lock = lockedSlices.rlock();
+        return lock.asNonConstUnsafe().back();
+    }
+
+    std::list<SliceTypePtr> extractSlicesUntilTs(uint64_t ts) {
+        // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
+        auto lock = lockedSlices.wlock();
+        auto& slices = *lock;
+        std::list<SliceTypePtr> resultSlices;
+        while (!slices.empty() && slices.front()->getEnd() <= ts) {
+            resultSlices.emplace_back(std::move(slices.front()));
+            lock->pop_front();
+        }
+        return resultSlices;
+    }
 
     /**
      * @brief Deletes the slice with the smalles slice index.
      */
-    void removeSlicesUntilTs(
-        uint64_t ts) {// drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
-        while (!slices.empty() && slices.front()->getEnd() <= ts) {
-            slices.pop_front();
+    void removeSlicesUntilTs(uint64_t ts) {
+        // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
+        auto lock = lockedSlices.wlock();
+        while (!lock->empty() && lock->front()->getEnd() <= ts) {
+            lock->pop_front();
         }
     }
 
@@ -127,20 +152,26 @@ class ThreadLocalSliceStore {
      * @brief Returns the number of currently stored slices
      * @return uint64_t
      */
-    uint64_t getNumberOfSlices() { return slices.size(); }
+    uint64_t getNumberOfSlices() {
+        auto lock = lockedSlices.rlock();
+        return lock->size();
+    }
 
     /**
-     * @brief Gets a reference to all slices
+     * @brief Gets an unprotected reference to all slices
      * @return std::list<KeyedSlicePtr>
      */
-    auto& getSlices() { return slices; }
+    auto& getSlices() {
+        auto lock = lockedSlices.rlock();
+        return *lock;
+    }
 
   private:
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
   private:
     const SliceAssigner windowAssigner;
-    std::list<SliceTypePtr> slices;
+    folly::Synchronized<std::list<SliceTypePtr>> lockedSlices;
     uint64_t lastWatermarkTs = 0;
 };
 }// namespace NES::Runtime::Execution::Operators

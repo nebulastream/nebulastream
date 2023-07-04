@@ -41,6 +41,7 @@ std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer,
 bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(m);
 
+    NES_DEBUG("Writing to the resultBuffer from worker {}", workerContext.getId());
     resultBuffers.emplace_back(std::move(inputBuffer));
     NES_DEBUG("Already saw {} buffers and expects a total of {}", resultBuffers.size(), expectedBuffer);
     if (resultBuffers.size() == expectedBuffer) {

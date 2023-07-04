@@ -56,6 +56,12 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     inline KeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
+     * @brief Returns the next sequence number for the operator that this operator handler is responsible for
+     * @return uint64_t
+     */
+    uint64_t getNextSequenceNumber();
+
+    /**
      * @brief Gets a weak pointer to the slice staging
      * @return std::weak_ptr<KeyedSliceStaging>
      */
@@ -73,6 +79,7 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     uint64_t keySize;
     uint64_t valueSize;
     std::shared_ptr<KeyedSliceStaging> sliceStaging;
+    std::atomic<uint64_t> sequenceNumber;
 };
 
 }// namespace NES::Runtime::Execution::Operators

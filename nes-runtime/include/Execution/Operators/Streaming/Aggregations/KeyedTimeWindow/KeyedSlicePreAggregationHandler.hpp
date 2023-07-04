@@ -102,6 +102,8 @@ class KeyedSlicePreAggregationHandler
     std::weak_ptr<KeyedSliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<KeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
+    std::atomic<uint64_t> lastTriggerWatermark = 0;
+    std::mutex triggerMutex;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
