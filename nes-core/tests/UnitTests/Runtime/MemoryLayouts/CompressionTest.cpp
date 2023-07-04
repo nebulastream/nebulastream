@@ -40,7 +40,7 @@ class CompressionTest : public Testing::TestWithErrorHandling {
     }
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = std::make_shared<BufferManager>(4096, 2);
     }
 
   protected:
@@ -94,23 +94,14 @@ void CompressionTest::fillBufferMultiColumn(CompressedDynamicTupleBuffer& buffer
 void CompressionTest::fillBufferMultiColumnRle(CompressedDynamicTupleBuffer& buffer) {
     const size_t numTuples = 1000;
     buffer.setNumberOfTuples(numTuples);
-    //const int character = 65;// == 'A'
-    /*
-    for (size_t j = 0; j < buffer.getOffsets().size(); j++) {
-        for (size_t i = 0; i < 500; i++)
-            buffer[i][j].write<uint8_t>(0xff);
-        for (size_t i = 500; i < numTuples; i++)
-            buffer[i][j].write<uint8_t>(0x00);
-    }
-     */
-    for (size_t j = 0; j < buffer.getOffsets().size(); j++) {
-        size_t i = 0;
-        while (i < numTuples) {
-            if ((i % 4) == 0)
-                buffer[i][j].write<uint8_t>(0xff);
+    for (size_t col = 0; col < buffer.getOffsets().size(); col++) {
+        size_t row = 0;
+        while (row < numTuples) {
+            if ((row % 4) == 0)
+                buffer[row][col].write<uint8_t>(0xff);
             else
-                buffer[i][j].write<uint8_t>(0x00);
-            i++;
+                buffer[row][col].write<uint8_t>(0x00);
+            row++;
         }
     }
 }
