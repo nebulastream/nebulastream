@@ -816,6 +816,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
 
         if (tupleCount >= numTuplesPerBuffer) {
             tupleBuffer.setNumberOfTuples(tupleCount);
+            NES_DEBUG("Adding tupleBuffer {}", Util::printTupleBufferAsCSV(tupleBuffer, schema));
             allBuffers.emplace_back(tupleBuffer);
             tupleCount = 0;
 

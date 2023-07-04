@@ -22,6 +22,12 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <atomic>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <tuple>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -32,8 +38,9 @@ KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t window
                                                                  std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr)
     : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(std::move(weakSliceStagingPtr)),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
-
+class NewTag;
 KeyedThreadLocalSliceStore* KeyedSlicePreAggregationHandler::getThreadLocalSliceStore(uint64_t workerId) {
+
     auto index = workerId % threadLocalSliceStores.size();
     return threadLocalSliceStores[index].get();
 }
@@ -49,48 +56,52 @@ void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutio
 
 void KeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                                               Runtime::Execution::PipelineExecutionContext& ctx,
-                                                              uint64_t workerId,
+                                                              uint64_t,
                                                               OriginId originId,
                                                               uint64_t sequenceNumber,
                                                               uint64_t watermarkTs) {
-
-    auto* threadLocalSliceStore = getThreadLocalSliceStore(workerId);
-
     // the watermark update is an atomic process and returns the last and the current watermark.
-    auto newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
+    auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 
-    // check if the current max watermark is larger than the thread local watermark
-    if (newGlobalWatermark > threadLocalSliceStore->getLastWatermark()) {
-        for (auto& slice : threadLocalSliceStore->getSlices()) {
-            if (slice->getEnd() > newGlobalWatermark) {
-                break;
-            }
-            auto& sliceState = slice->getState();
-            // each worker adds its local state to the staging area
-            auto sliceStaging = this->weakSliceStaging.lock();
-            if (!sliceStaging) {
-                NES_FATAL_ERROR("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
-                return;
-            }
-            // add slice to slice staging
-            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
-            // if all worker threads added a slice, the slice merging is ready for merging
-            if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
-                if (numberOfBuffers != 0) {
-                    NES_DEBUG("Deploy merge task for slice {} with {} buffers.", slice->getEnd(), numberOfBuffers);
-                    auto buffer = wctx.allocateTupleBuffer();
-                    auto task = buffer.getBuffer<SliceMergeTask>();
-                    task->startSlice = slice->getStart();
-                    task->endSlice = slice->getEnd();
-                    buffer.setNumberOfTuples(1);
-                    ctx.dispatchBuffer(buffer);
-                } else {
-                    NES_DEBUG("Slice {} is empty. Don't deploy merge task.", slice->getEnd());
-                }
-            }
+    // todo try cas
+    if (lastTriggerWatermark == currentWatermark) {
+        // if the current watermark has not changed, we don't have to trigger any windows and return.
+        return;
+    }
+
+    // get the lock to trigger
+    std::lock_guard<std::mutex> lock(triggerMutex);
+    // update currentWatermark, such that other threads to have to acquire the lock
+    auto oldWatermark = lastTriggerWatermark.load();
+    lastTriggerWatermark.exchange(currentWatermark);
+
+    NES_TRACE("Trigger slices between {}-{}", oldWatermark, lastTriggerWatermark);
+    auto sliceStaging = this->weakSliceStaging.lock();
+    if (!sliceStaging) {
+        NES_FATAL_ERROR("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
+        return;
+    }
+
+    std::set<std::tuple<uint64_t, uint64_t>> sliceMetaData;
+    for (auto& threadLocalSliceStore : threadLocalSliceStores) {
+        auto slices = threadLocalSliceStore->extractSlicesUntilTs(currentWatermark);
+        for (auto& slice : slices) {
+              sliceMetaData.emplace(slice->getStart(), slice->getEnd());
+              NES_TRACE("Assign thread local slices {}-{} with n records {}",
+                     slice->getStart(),
+                     slice->getEnd(), slice->getState()->getCurrentSize());
+            sliceStaging->addToSlice(slice->getEnd(), std::move(slice->getState()));
         }
-        threadLocalSliceStore->removeSlicesUntilTs(newGlobalWatermark);
-        threadLocalSliceStore->setLastWatermark(newGlobalWatermark);
+    }
+
+    for (const auto& [sliceStart, sliceEnd] : sliceMetaData) {
+        NES_TRACE("Deploy merge task for slice {}-{} ", sliceStart, sliceEnd);
+        auto buffer = wctx.allocateTupleBuffer();
+        auto task = buffer.getBuffer<SliceMergeTask>();
+        task->startSlice = sliceStart;
+        task->endSlice = sliceEnd;
+        buffer.setNumberOfTuples(1);
+        ctx.dispatchBuffer(buffer);
     }
 }
 
@@ -102,31 +113,33 @@ void KeyedSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryTe
                                            Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
 
+    // get the lock to trigger -> this should actually not be necessary, as stop can not be called concurrently to the processing.
+    std::lock_guard<std::mutex> lock(triggerMutex);
+
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto sliceStaging = this->weakSliceStaging.lock();
         NES_ASSERT(sliceStaging, "SliceStaging is invalid, this should only happen after a soft stop.");
+
+        std::set<std::tuple<uint64_t, uint64_t>> sliceMetaData;
+
         for (auto& threadLocalSliceStore : threadLocalSliceStores) {
+            // we can directly access the slices as no other worker can concurrently change them
             for (auto& slice : threadLocalSliceStore->getSlices()) {
                 auto& sliceState = slice->getState();
                 // each worker adds its local state to the staging area
-                auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
-                if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
-                    if (numberOfBuffers != 0) {
-                        NES_DEBUG("Deploy merge task for slice ({}-{}) with {} buffers.",
-                                  slice->getStart(),
-                                  slice->getEnd(),
-                                  numberOfBuffers);
-                        auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
-                        auto task = buffer.getBuffer<SliceMergeTask>();
-                        task->startSlice = slice->getStart();
-                        task->endSlice = slice->getEnd();
-                        buffer.setNumberOfTuples(1);
-                        pipelineExecutionContext->dispatchBuffer(buffer);
-                    } else {
-                        NES_DEBUG("Slice {} is empty. Don't deploy merge task.", slice->getEnd());
-                    }
-                }
+                sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
+                sliceMetaData.emplace(slice->getStart(), slice->getEnd());
             }
+        }
+
+        for (const auto& [sliceStart, sliceEnd] : sliceMetaData) {
+            NES_TRACE("Deploy merge task for slice {}-{} ", sliceStart, sliceEnd);
+            auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
+            auto task = buffer.getBuffer<SliceMergeTask>();
+            task->startSlice = sliceStart;
+            task->endSlice = sliceEnd;
+            buffer.setNumberOfTuples(1);
+            pipelineExecutionContext->dispatchBuffer(buffer);
         }
     }
 }

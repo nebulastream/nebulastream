@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
@@ -68,6 +69,13 @@ void setupKeyedSliceMergingHandler(void* ss, void* ctx, uint64_t keySize, uint64
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
 }
 
+uint64_t getSeqNumberProxyForKeyedSliceMerging(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    auto handler = static_cast<KeyedSliceMergingHandler*>(ptrOpHandler);
+    NES_DEBUG("Getting next sequence number");
+    return handler->getNextSequenceNumber();
+}
+
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
                                      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,
@@ -107,6 +115,9 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     auto sliceMergeTask = buffer.getBuffer();
     Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
     Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
+    Value<> sequenceNumber = FunctionCall("getSeqNumberProxyForKeyedSliceMerging",
+                                          getSeqNumberProxyForKeyedSliceMerging,
+                                          globalOperatorHandler);
 
     // 2. initialize global slice state, which is represented by a chained hashtable
     auto globalSlice = Nautilus::FunctionCall("createKeyedState", createKeyedState, globalOperatorHandler, sliceMergeTask);
@@ -117,7 +128,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     combineThreadLocalSlices(globalOperatorHandler, globalHashTable, endSliceTs);
 
     // 4. emit global slice when we have a tumbling window.
-    emitWindow(ctx, startSliceTs, endSliceTs, globalHashTable);
+    emitWindow(ctx, startSliceTs, endSliceTs, sequenceNumber, globalHashTable);
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
@@ -127,6 +138,8 @@ void KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHa
     auto partition =
         Nautilus::FunctionCall("eraseKeyedPartition", eraseKeyedPartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfKeyedPartition", getNumberOfKeyedPartition, partition);
+    NES_TRACE("combine {} slice stores for slice {}", numberOfPartitions->toString(), endSliceTs->toString())
+
     for (Value<UInt64> i = 0_u64; i < numberOfPartitions; i = i + 1_u64) {
         auto partitionState = Nautilus::FunctionCall("getKeyedPartitionState", getKeyedPartitionState, partition, i);
         auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keyDataTypes, keySize, valueSize);
@@ -143,14 +156,20 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
         // 2. insert entry or update existing one with same key.
         globalSliceHashMap.insertEntryOrUpdate(threadLocalEntry, [&](auto& globalEntry) {
             // 2b. update aggregation if the entry was already existing in the global hash map
+            auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
-            auto globalValue = globalEntry.getValuePtr();
+            Value<MemRef> globalValue = globalEntry.getValuePtr();
+            NES_TRACE("merge key {} th {} gb {}", key.load<UInt64>()->toString(),
+                      threadLocalValue.load<UInt64>()->toString(),
+                      globalValue.load<UInt64>()->toString())
             // 2c. apply aggregation functions and combine the values
             for (const auto& function : aggregationFunctions) {
-                function->combine(threadLocalValue, globalValue);
+                function->combine(globalValue, threadLocalValue);
                 threadLocalValue = threadLocalValue + function->getSize();
+                NES_TRACE("result value {}", globalValue.load<UInt64>()->toString());
                 globalValue = globalValue + function->getSize();
             }
+
         });
     }
 }
@@ -158,9 +177,12 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
 void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowStart,
                                    Value<>& windowEnd,
+                                   Value<>& sequenceNumber,
                                    Interface::ChainedHashMapRef& globalSliceHashMap) const {
+    NES_TRACE("Emit window: {}-{}", windowStart->toString(), windowEnd->toString());
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     ctx.setOrigin(resultOriginId);
+    ctx.setSequenceNumber(sequenceNumber.as<UInt64>());
     // create the final window content and emit it to the downstream operator
     for (const auto& globalEntry : globalSliceHashMap) {
         Record resultWindow;
