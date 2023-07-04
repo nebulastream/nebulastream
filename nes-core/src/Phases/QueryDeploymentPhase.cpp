@@ -159,26 +159,53 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     nlohmann::json payload;
                     nlohmann::json deviceInfo;
                     deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
-                    deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] = std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
+                    deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] =
+                        std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
                     nlohmann::json maxWorkItems{};
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
                     deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
-                    deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
-                    deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
-                    deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] = std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
+                    deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] =
+                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
+                    deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] =
+                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
+                    deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
                     payload[DEVICE_INFO_KEY] = deviceInfo;
 
-                    //4. Extract the Java UDF code
+                    //4. Extract the Java UDF metadata
                     auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
-                    //FIXME: Add the UDF code
                     payload["functionCode"] = javaDescriptor->getMethodName();
 
-                    //5. Make Acceleration Service Call
+                    //find the bytecode for the udf class
+                    auto className = javaDescriptor->getClassName();
+                    auto byteCodeList = javaDescriptor->getByteCodeList();
+                    auto classByteCode = std::find_if(byteCodeList.cbegin(),
+                                                      byteCodeList.cend(),
+                                                      [&](const Catalogs::UDF::JavaClassDefinition& c) {
+                                                          return c.first == className;
+                                                      });
+
+                    if (classByteCode == byteCodeList.end()) {
+                        throw QueryDeploymentException(queryId,
+                                                       "The bytecode list of classes implementing the "
+                                                       "UDF must contain the fully-qualified name of the UDF");
+                    }
+                    Catalogs::UDF::JavaByteCode javaByteCode = classByteCode->second;
+
+                    //5. Prepare the multi-part message
+                    cpr::Part part1 = {"firstPayload", to_string(payload)};
+                    cpr::Part part2 = {"secondPayload", &javaByteCode[0]};
+                    cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
+
+                    //6. Make Acceleration Service Call
                     cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
                                                        cpr::Header{{"Content-Type", "application/json"}},
-                                                       cpr::Body{payload.dump()},
+                                                       multipartPayload,
                                                        cpr::Timeout(3000));
                     if (response.status_code != 200) {
                         throw QueryDeploymentException(
