@@ -153,11 +153,13 @@ void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& 
                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
+
 void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
                                                       [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
+
 void StopQueryRequestExperimental::rollBack(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly

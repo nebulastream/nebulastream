@@ -40,6 +40,8 @@ class RemoveTopologyLinkRequest : public Request {
 
     std::string toString() override;
 
+    RequestType getRequestType() override;
+
   private:
     explicit RemoveTopologyLinkRequest(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
 

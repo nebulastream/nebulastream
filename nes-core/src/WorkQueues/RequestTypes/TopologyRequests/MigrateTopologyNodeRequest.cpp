@@ -50,4 +50,6 @@ std::string MigrateTopologyNodeRequest::toString() {
     return ss.str();
 }
 
+RequestType MigrateTopologyNodeRequest::getRequestType() { return RequestType::MigrateTopologyNode; }
+
 }// namespace NES::Experimental

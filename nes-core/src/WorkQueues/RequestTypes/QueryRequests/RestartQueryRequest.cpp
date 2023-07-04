@@ -24,5 +24,8 @@ RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
 }
 
 std::string RestartQueryRequest::toString() { return "RestartQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
+
 QueryId RestartQueryRequest::getQueryId() const { return queryId; }
+
+RequestType RestartQueryRequest::getRequestType() { return RequestType::RestartQuery; }
 }// namespace NES

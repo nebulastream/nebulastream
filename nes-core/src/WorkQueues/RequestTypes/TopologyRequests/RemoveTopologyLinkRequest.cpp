@@ -32,4 +32,6 @@ std::string RemoveTopologyLinkRequest::toString() {
     return "RemoveTopologyLinkRequest { UpstreamNodeId: " + std::to_string(upstreamNodeId)
         + ", DownstreamNodeId: " + std::to_string(downstreamNodeId) + "}";
 }
+
+RequestType RemoveTopologyLinkRequest::getRequestType() { return RequestType::RemoveTopologyLink; }
 }// namespace NES::Experimental

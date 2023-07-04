@@ -13,11 +13,12 @@
 */
 
 #include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <utility>
 
 namespace NES {
 
-FailQueryRequest::FailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason)
-    : queryId(sharedQueryId), failureReason(failureReason) {}
+FailQueryRequest::FailQueryRequest(SharedQueryId sharedQueryId, std::string  failureReason)
+    : queryId(sharedQueryId), failureReason(std::move(failureReason)) {}
 
 FailQueryRequestPtr FailQueryRequest::create(SharedQueryId sharedQueryId, const std::string& failureReason) {
     return std::make_shared<FailQueryRequest>(FailQueryRequest(sharedQueryId, failureReason));
@@ -28,6 +29,9 @@ std::string FailQueryRequest::getFailureReason() { return failureReason; }
 std::string FailQueryRequest::toString() {
     return "FailQueryRequest { Shared Query Plan Id: " + std::to_string(queryId) + ", Failure Reason: " + failureReason + "}";
 }
-uint64_t FailQueryRequest::getQueryId() { return queryId; }
+
+uint64_t FailQueryRequest::getQueryId() const { return queryId; }
+
+RequestType FailQueryRequest::getRequestType() { return RequestType::FailQuery; }
 
 }// namespace NES

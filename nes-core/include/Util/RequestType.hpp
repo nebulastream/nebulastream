@@ -28,7 +28,19 @@ namespace NES {
  * Migrate: Migrate query.
  * Update: Update running query.
  */
-enum class RequestType : uint8_t { AddQuery = 0, StopQuery, RestartQuery, FailQuery, MigrateQuery, UpdateQuery, TopologyChange };
+enum class RequestType : uint8_t {
+    AddQuery = 0,
+    StopQuery,
+    RestartQuery,
+    FailQuery,
+    MigrateQuery,
+    UpdateQuery,
+    AddTopologyNode,
+    RemoveTopologyNode,
+    MigrateTopologyNode,
+    AddTopologyLink,
+    RemoveTopologyLink
+};
 
 }// namespace NES
 

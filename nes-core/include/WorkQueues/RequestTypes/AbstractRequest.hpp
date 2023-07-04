@@ -90,6 +90,11 @@ class AbstractRequest {
      */
     bool retry();
 
+    /**
+     * @brief destructor
+     */
+    virtual ~AbstractRequest() = default;
+
   protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back

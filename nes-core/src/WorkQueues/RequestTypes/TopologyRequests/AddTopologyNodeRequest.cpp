@@ -59,4 +59,6 @@ std::string AddTopologyNodeRequest::toString() {
         + ", Number Of Slots: " + std::to_string(numberOfSlots) + ", GeoLocation: " + geoLocation.toString() + "}";
 }
 
+RequestType AddTopologyNodeRequest::getRequestType() { return RequestType::AddTopologyNode; }
+
 }// namespace NES::Experimental

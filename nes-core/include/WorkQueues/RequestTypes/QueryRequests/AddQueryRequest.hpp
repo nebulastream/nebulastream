@@ -53,9 +53,11 @@ class AddQueryRequest : public Request {
      */
     Optimizer::PlacementStrategy getQueryPlacementStrategy();
 
+    uint64_t getQueryId();
+
     std::string toString() override;
 
-    uint64_t getQueryId();
+    RequestType getRequestType() override;
 
   private:
     explicit AddQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy);

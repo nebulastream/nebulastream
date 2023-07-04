@@ -32,4 +32,7 @@ std::string AddTopologyLinkRequest::toString() {
     return "AddTopologyLinkRequest { UpstreamNodeId: " + std::to_string(upstreamNodeId)
         + ", DownstreamNodeId: " + std::to_string(downstreamNodeId) + "}";
 }
+
+RequestType AddTopologyLinkRequest::getRequestType() { return RequestType::AddTopologyLink; }
+
 }// namespace NES::Experimental

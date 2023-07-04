@@ -47,7 +47,6 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
@@ -117,7 +116,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   udfCatalog);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
-    maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, queryRequestQueue);
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
     monitoringService =
@@ -208,7 +206,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
-                                              maintenanceService,
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
@@ -355,8 +352,6 @@ Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
-
-NES::Experimental::MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
 
 void NesCoordinator::onFatalError(int, std::string) {}
 
