@@ -339,7 +339,9 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         NES_DEBUG("Tuple right f1_left={} kef2_left(key)={} ts={}", i + 1000, (i % 10) + 10, i);
 
         if (recordRight.read(hashJoinSinkHelper.timeStampFieldRight) > lastTupleTimeStampWindow) {
-            NES_DEBUG("rects={} >= {}", recordRight.read(hashJoinSinkHelper.timeStampFieldRight)->toString(), lastTupleTimeStampWindow);
+            NES_DEBUG("rects={} >= {}",
+                      recordRight.read(hashJoinSinkHelper.timeStampFieldRight)->toString(),
+                      lastTupleTimeStampWindow);
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
             rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
@@ -367,7 +369,10 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         //for one record in the buffer
         for (auto u = 0UL; u < leftRecords[i].size(); u++) {
             hashJoinBuildLeft->execute(executionContext, leftRecords[i][u]);
-            NES_DEBUG("Tuple insert id={} key={} ts={}", i, leftRecords[i][u].read("f2_left")->toString(), leftRecords[i][u].read(hashJoinSinkHelper.timeStampFieldLeft)->toString());
+            NES_DEBUG("Tuple insert id={} key={} ts={}",
+                      i,
+                      leftRecords[i][u].read("f2_left")->toString(),
+                      leftRecords[i][u].read(hashJoinSinkHelper.timeStampFieldLeft)->toString());
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
@@ -440,8 +445,14 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
         if (existingNumberOfTuplesInWindowLeft != expectedNumberOfTuplesInWindowLeft
             || existingNumberOfTuplesInWindowRight != expectedNumberOfTuplesInWindowRight) {
-            NES_ERROR("wrong number of inputs are created existingNumberOfTuplesInWindowLeft={} expectedNumberOfTuplesInWindowLeft={} existingNumberOfTuplesInWindowRight={} expectedNumberOfTuplesInWindowRight={} windowIdentifier={}",
-                      existingNumberOfTuplesInWindowLeft, expectedNumberOfTuplesInWindowLeft, existingNumberOfTuplesInWindowRight, expectedNumberOfTuplesInWindowRight, windowIdentifier);
+            NES_ERROR(
+                "wrong number of inputs are created existingNumberOfTuplesInWindowLeft={} expectedNumberOfTuplesInWindowLeft={} "
+                "existingNumberOfTuplesInWindowRight={} expectedNumberOfTuplesInWindowRight={} windowIdentifier={}",
+                existingNumberOfTuplesInWindowLeft,
+                expectedNumberOfTuplesInWindowLeft,
+                existingNumberOfTuplesInWindowRight,
+                expectedNumberOfTuplesInWindowRight,
+                windowIdentifier);
             EXPECT_TRUE(false);
             EXIT_FAILURE;
         }

@@ -103,12 +103,12 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
     }
 
     NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
-               "sizeOfRecordLeft={} sizeOfRecordRight={}",
-               numberOfWorker,
-               numPartitions,
-               pageSize,
-               sizeOfRecordLeft,
-               sizeOfRecordRight);
+              "sizeOfRecordLeft={} sizeOfRecordRight={}",
+              numberOfWorker,
+              numPartitions,
+              pageSize,
+              sizeOfRecordLeft,
+              sizeOfRecordRight);
 }
 
 bool StreamHashJoinWindow::markPartionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }

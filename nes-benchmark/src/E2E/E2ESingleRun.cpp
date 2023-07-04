@@ -114,7 +114,7 @@ void E2ESingleRun::createSources() {
 
         allBufferManagers.emplace_back(bufferManager);
 
-        NES_INFO("Creating #{}physical sources for logical source {}",
+        NES_INFO("Creating #{} physical sources for logical source {}",
                  numberOfPhysicalSrc,
                  logicalSource->getLogicalSourceName());
 
