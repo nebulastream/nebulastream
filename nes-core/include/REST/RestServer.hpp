@@ -65,11 +65,6 @@ using UdfCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
-namespace Experimental {
-class MaintenanceService;
-using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
-}//namespace Experimental
-
 /**
  * @brief : This class is responsible for starting the REST server.
  */
@@ -92,7 +87,6 @@ class RestServer {
                GlobalExecutionPlanPtr globalExecutionPlan,
                QueryServicePtr queryService,
                MonitoringServicePtr monitoringService,
-               NES::Experimental::MaintenanceServicePtr maintenanceService,
                GlobalQueryPlanPtr globalQueryPlan,
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
@@ -129,7 +123,6 @@ class RestServer {
     TopologyManagerServicePtr topologyManagerService;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     LocationServicePtr locationService;
-    Experimental::MaintenanceServicePtr maintenanceService;
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;
     std::condition_variable cvar;

@@ -27,4 +27,6 @@ TopologyNodeId RemoveTopologyNodeRequest::getTopologyNodeId() const { return top
 std::string RemoveTopologyNodeRequest::toString() {
     return "RemoveTopologyNodeRequest { TopologyNodeId: " + std::to_string(topologyNodeId) + "}";
 }
+
+RequestType RemoveTopologyNodeRequest::getRequestType() { return RequestType::RemoveTopologyNode; }
 }// namespace NES::Experimental

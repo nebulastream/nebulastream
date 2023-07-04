@@ -128,9 +128,6 @@ add_nes_integration_test(query-controller-integration-tests "Integration/REST/Co
 ### NES Source Catalog Controller Test ###
 add_nes_integration_test(source-catalog-controller-integration-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
 
-### NES Maintenance Controller Tests ###
-add_nes_integration_test(maintenance-controller-integration-test "Integration/REST/Controller/MaintenanceControllerTest.cpp")
-
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerIntegrationTest.cpp")
 
@@ -312,11 +309,6 @@ add_nes_unit_test(source-catalog-service-tests "UnitTests/Services/SourceCatalog
 
 ### TopologyManagerService Tests ###
 add_nes_unit_test(topology-manager-service-tests "UnitTests/Services/TopologyManagerServiceTest.cpp")
-
-
-### MaintenanceService Tests ###
-add_nes_unit_test(maintenance-service-tests "UnitTests/Services/MaintenanceServiceTest.cpp")
-
 
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")

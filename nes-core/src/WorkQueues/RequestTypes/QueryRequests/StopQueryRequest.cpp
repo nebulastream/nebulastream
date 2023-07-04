@@ -26,4 +26,6 @@ std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: "
 
 QueryId StopQueryRequest::getQueryId() const { return queryId; }
 
+RequestType StopQueryRequest::getRequestType() { return RequestType::StopQuery; }
+
 }// namespace NES

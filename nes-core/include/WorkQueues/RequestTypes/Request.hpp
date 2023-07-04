@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
 
 #include <Common/Identifiers.hpp>
+#include <Util/RequestType.hpp>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -56,6 +57,8 @@ class Request : public std::enable_shared_from_this<Request> {
     }
 
     virtual std::string toString() = 0;
+
+    virtual RequestType getRequestType() = 0;
 };
 }// namespace NES
 

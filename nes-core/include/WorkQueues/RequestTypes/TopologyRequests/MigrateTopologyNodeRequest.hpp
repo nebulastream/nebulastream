@@ -44,6 +44,8 @@ class MigrateTopologyNodeRequest : public Request {
 
     std::string toString() override;
 
+    RequestType getRequestType() override;
+
   private:
     explicit MigrateTopologyNodeRequest(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
                                         std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd);

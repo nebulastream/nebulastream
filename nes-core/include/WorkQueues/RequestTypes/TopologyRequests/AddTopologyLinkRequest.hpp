@@ -42,6 +42,8 @@ class AddTopologyLinkRequest : public Request {
 
     std::string toString() override;
 
+    RequestType getRequestType() override;
+
   private:
     explicit AddTopologyLinkRequest(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
 

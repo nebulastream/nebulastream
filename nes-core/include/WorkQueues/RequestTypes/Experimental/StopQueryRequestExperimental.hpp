@@ -80,7 +80,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequestExperimental : public Request, public AbstractRequest {
+class StopQueryRequestExperimental : public AbstractRequest {
 
   public:
     static StopQueryRequestPtr create(QueryId queryId,
@@ -89,14 +89,20 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
-    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void preExecution(StorageHandler& storageHandle) override;
-    void postExecution(StorageHandler& storageHandle) override;
-    std::string toString() override;
 
-    ~StopQueryRequestExperimental() override = default;
+    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void preExecution(StorageHandler& storageHandle) override;
+
+    void postExecution(StorageHandler& storageHandle) override;
+
+    std::string toString();
+
+    ~StopQueryRequestExperimental() = default;
 
   private:
     StopQueryRequestExperimental(QueryId queryId,

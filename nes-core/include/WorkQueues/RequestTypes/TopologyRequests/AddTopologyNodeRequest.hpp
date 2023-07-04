@@ -70,6 +70,8 @@ class AddTopologyNodeRequest : public Request {
 
     std::string toString() override;
 
+    RequestType getRequestType() override;
+
   private:
     explicit AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
                                     std::string address,

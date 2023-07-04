@@ -38,6 +38,8 @@ class RemoveTopologyNodeRequest : public Request {
 
     std::string toString() override;
 
+    RequestType getRequestType() override;
+
   private:
     explicit RemoveTopologyNodeRequest(TopologyNodeId topologyNodeId);
 

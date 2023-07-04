@@ -37,12 +37,14 @@ class FailQueryRequest : public Request {
 
     std::string getFailureReason();
 
+    uint64_t getQueryId() const;
+
     std::string toString() override;
 
-    uint64_t getQueryId();
+    RequestType getRequestType() override;
 
   private:
-    explicit FailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason);
+    explicit FailQueryRequest(SharedQueryId sharedQueryId, std::string  failureReason);
 
     SharedQueryId queryId;
     std::string failureReason;

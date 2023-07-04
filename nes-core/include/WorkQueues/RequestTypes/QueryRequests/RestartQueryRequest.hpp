@@ -35,9 +35,11 @@ class RestartQueryRequest : public Request {
      */
     static RestartQueryRequestPtr create(QueryId queryId);
 
+    QueryId getQueryId() const;
+
     std::string toString() override;
 
-    QueryId getQueryId() const;
+    RequestType getRequestType() override;
 
   private:
     explicit RestartQueryRequest(QueryId queryId);

@@ -37,4 +37,7 @@ std::string AddQueryRequest::toString() {
         + ", QueryPlacementStrategy: " + std::string(magic_enum::enum_name(queryPlacementStrategy)) + "}";
 }
 uint64_t AddQueryRequest::getQueryId() { return queryPlan->getQueryId(); }
+
+RequestType AddQueryRequest::getRequestType() { return RequestType::AddQuery; }
+
 }// namespace NES

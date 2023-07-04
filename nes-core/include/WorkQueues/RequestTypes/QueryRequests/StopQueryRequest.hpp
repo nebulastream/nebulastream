@@ -35,11 +35,11 @@ class StopQueryRequest : public Request {
      */
     static StopQueryRequestPtr create(QueryId queryId);
 
+    QueryId getQueryId() const;
+
     std::string toString() override;
 
-    ~StopQueryRequest() override = default;
-
-    QueryId getQueryId() const;
+    RequestType getRequestType() override;
 
   private:
     explicit StopQueryRequest(QueryId queryId);
