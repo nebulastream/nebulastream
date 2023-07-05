@@ -56,6 +56,6 @@ void PythonUDFOperatorHandler::finalize() {
     }
 }
 
-    }// namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
 #endif// NAUTILUS_PYTHON_UDF_ENABLED

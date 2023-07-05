@@ -17,8 +17,8 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -29,18 +29,18 @@
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {
-        class MapPythonUdfOperatorTest : public testing::Test {
-          public:
-            /* Will be called before any test in this class are executed. */
-            static void SetUpTestCase() {
-                NES::Logger::setupLogging("MapPythonUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-                std::cout << "Setup MapPythonUdfOperatorTest test class." << std::endl;
-            }
-        };
+class MapPythonUdfOperatorTest : public testing::Test {
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MapPythonUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup MapPythonUdfOperatorTest test class." << std::endl;
+    }
+};
 
-        std::string method = "map";
-        SchemaPtr inputSchema, outputSchema;
-        std::string function, functionName;
+std::string method = "map";
+SchemaPtr inputSchema, outputSchema;
+std::string function, functionName;
 
 /**
 * @brief Test simple UDF with integer objects as input and output
@@ -53,10 +53,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     functionName = "integer_test";
 
     int32_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                            functionName,
-                                                            inputSchema,
-                                                            outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -78,10 +75,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
     functionName = "long_test";
 
     int64_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                            functionName,
-                                                            inputSchema,
-                                                            outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -103,10 +97,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
     functionName = "double_test";
 
     double initialValue = 42.0;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                            functionName,
-                                                            inputSchema,
-                                                            outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -128,10 +119,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
     functionName = "float_test";
 
     float initialValue = 42.0;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                              functionName,
-                                                              inputSchema,
-                                                              outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -153,10 +141,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
     functionName = "boolean_test";
 
     auto initialValue = true;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                              functionName,
-                                                              inputSchema,
-                                                              outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -175,21 +160,21 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     inputSchema = Schema::create()
-                ->addField("byteVariable", BasicType::INT8)
-                ->addField("shortVariable", BasicType::INT16)
-                ->addField("intVariable", BasicType::INT32)
-                ->addField("longVariable", BasicType::INT64)
-                ->addField("floatVariable", BasicType::FLOAT32)
-                ->addField("doubleVariable", BasicType::FLOAT64)
-                ->addField("booleanVariable", BasicType::BOOLEAN);
+                      ->addField("byteVariable", BasicType::INT8)
+                      ->addField("shortVariable", BasicType::INT16)
+                      ->addField("intVariable", BasicType::INT32)
+                      ->addField("longVariable", BasicType::INT64)
+                      ->addField("floatVariable", BasicType::FLOAT32)
+                      ->addField("doubleVariable", BasicType::FLOAT64)
+                      ->addField("booleanVariable", BasicType::BOOLEAN);
     outputSchema = Schema::create()
-                 ->addField("byteVariable", BasicType::INT8)
-                 ->addField("shortVariable", BasicType::INT16)
-                 ->addField("intVariable", BasicType::INT32)
-                 ->addField("longVariable", BasicType::INT64)
-                 ->addField("floatVariable", BasicType::FLOAT32)
-                 ->addField("doubleVariable", BasicType::FLOAT64)
-                 ->addField("booleanVariable", BasicType::BOOLEAN);
+                       ->addField("byteVariable", BasicType::INT8)
+                       ->addField("shortVariable", BasicType::INT16)
+                       ->addField("intVariable", BasicType::INT32)
+                       ->addField("longVariable", BasicType::INT64)
+                       ->addField("floatVariable", BasicType::FLOAT32)
+                       ->addField("doubleVariable", BasicType::FLOAT64)
+                       ->addField("booleanVariable", BasicType::BOOLEAN);
     function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
                "\n\tbyte_var = byte_var + 10"
                "\n\tshort_var = short_var + 10"
@@ -208,10 +193,7 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     float initialFloat = 15.0;
     double initialDouble = 16.0;
     bool initialBool = true;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function,
-                                                              functionName,
-                                                              inputSchema,
-                                                              outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -236,4 +218,4 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
 }
 
 }// namespace NES::Runtime::Execution::Operators
-#endif //NAUTILUS_PYTHON_UDF_ENABLED
+#endif//NAUTILUS_PYTHON_UDF_ENABLED
