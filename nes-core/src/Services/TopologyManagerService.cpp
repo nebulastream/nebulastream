@@ -64,7 +64,7 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
             id = getNextTopologyNodeId();
         }
         // check if an inactive worker with workerId already exists
-        else if (healthCheckService && healthCheckService->isWorkerInactive(workerId)) {
+        else if (wasAnnouncedFailedWorker(workerId)) {
             // node is reregistering (was inactive and became active again)
             NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
             id = workerId;
