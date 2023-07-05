@@ -236,6 +236,8 @@ class CoordinatorRPCClient {
      */
     bool announceFailedWorkers(TopologyNodeId sourceWorkerId, std::vector<TopologyNodeId> failedWorkersIds);
 
+    std::vector<std::string> getChildrenData (TopologyNodeId workerId);
+
 
   private:
     uint64_t workerId;

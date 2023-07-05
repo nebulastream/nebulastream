@@ -698,4 +698,20 @@ bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, 
 
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
+
+std::vector<std::string> CoordinatorRPCClient::getChildrenData(TopologyNodeId workerId){
+    ClientContext context;
+    GetChildrenDataRequest request;
+    GetChildrenDataReply reply;
+
+    request.set_workerid(workerId);
+
+    coordinatorStub->GetChildrenData(&context, request, &reply);
+    std::vector<std::string> childrenData;
+    for (auto childData : reply.childrendata()) {
+        childrenData.push_back(childData);
+    }
+    return childrenData;
+}
+
 }// namespace NES
