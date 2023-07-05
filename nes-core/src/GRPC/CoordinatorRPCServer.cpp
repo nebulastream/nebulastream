@@ -466,6 +466,22 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
 
     NES_WARNING2("CoordinatorRPCServer::AnnounceFailedWorkers one or more workerIds were not removed from topology");
     return Status::CANCELLED;
+}
+Status CoordinatorRPCServer::GetChildrenData(ServerContext*,
+                                             const GetChildrenDataRequest* request,
+                                             GetChildrenDataReply* reply) {
+    NES_DEBUG2("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
+    auto workerId = request->workerid();
+    auto children = topologyManagerService->findNodeWithId(workerId)->getChildren();
+    for (auto child : children) {
+        int i = 0;
+        uint64_t childWorkerId = child->as<TopologyNode>()->getId();
+        std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
+        auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
+        std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
+        reply->set_childrendata(i, childData);
+        i++;
+    }
 
-
+    return Status::OK;
 }
