@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.131](https://github.com/nebulastream/nebulastream/tree/v0.5.131) (2023-07-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.130...v0.5.131)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create the Nautilus Operator for the Python UDF  Map Operator [\#3910](https://github.com/nebulastream/nebulastream/issues/3910)
+
 ## [v0.5.130](https://github.com/nebulastream/nebulastream/tree/v0.5.130) (2023-07-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.129...v0.5.130)
