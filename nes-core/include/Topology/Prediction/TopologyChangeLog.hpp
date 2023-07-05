@@ -34,13 +34,17 @@ class TopologyChangeLog {
     /**
      * @brief add another changelog to this one. If an edge is removed in one changelog and added in the other, it will be
      * removed from both lists
-     * @param addedChangelog the changelog whose contents are to be added to this changelog
+     * @param addedChangelog the changelog whose contents are to be added to this changelog. The caller has to ensure that the
+     * added changelog does not contain any added edges which are already present as added or any removed edges which are
+     * already present as removed edges
      */
     void add(const TopologyChangeLog& addedChangelog);
 
     /**
      * @brief insert information about added and removed edges from a topology delta to this changelog
-     * @param newDelta the delta whose information is to be inserted into this changelog
+     * @param newDelta the delta whose information is to be inserted into this changelog. The caller has to ensure that the added
+     * delta does not contain any added edges which are already present as added in the changelog or any removed edges which are
+     * already present as removed edges
      */
     void insert(const TopologyDelta& newDelta);
 
