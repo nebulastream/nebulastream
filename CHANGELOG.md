@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.130](https://github.com/nebulastream/nebulastream/tree/v0.5.130) (2023-07-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.129...v0.5.130)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor JoinDeploymentTest [\#3929](https://github.com/nebulastream/nebulastream/issues/3929)
+
 ## [v0.5.129](https://github.com/nebulastream/nebulastream/tree/v0.5.129) (2023-07-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.128...v0.5.129)
