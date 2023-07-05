@@ -16,7 +16,7 @@
 
 #include <Common/Identifiers.hpp>
 #include <Topology/Prediction/Edge.hpp>
-#include <unordered_set>
+#include <unordered_map>
 #include <Topology/Prediction/TopologyDelta.hpp>
 
 namespace NES::Experimental::TopologyPrediction {
