@@ -90,10 +90,8 @@ void DataSource::emitWorkFromSourcePartitioned(Runtime::TupleBuffer& buffer) {
     std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> partitionedBuffers;
 
     //allocate buffer
-    if (numberOfQueues != 1) {
-        for (uint64_t i = 0; i < numberOfQueues; i++) {
-            partitionedBuffers.emplace_back(allocateBuffer());
-        }
+    for (uint64_t i = 0; i < numberOfQueues; i++) {
+        partitionedBuffers.emplace_back(allocateBuffer());
     }
     size_t tupleCnt = 0;
     auto currentBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
