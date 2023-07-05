@@ -631,8 +631,9 @@ GlobalOperatorHandlers DefaultPhysicalOperatorProvider::createGlobalOperatorHand
     return globalOperatorHandlers;
 }
 
-std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                                              const LogicalOperatorNodePtr& operatorNode) {
+std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(
+    WindowOperatorProperties& windowOperatorProperties,
+    const LogicalOperatorNodePtr& operatorNode) {
 
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     auto& windowInputSchema = windowOperatorProperties.windowInputSchema;
@@ -641,9 +642,11 @@ std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBa
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
     if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+        // Handle tumbling window
         return PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema, windowOutputSchema,
                                                                           windowDefinition);
-    } else if (windowType == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
+    } else {
+        // Handle sliding window
         auto globalSliceStore =
             std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::KeyedSlice>>();
         auto globalSliceStoreAppendOperator =
@@ -659,23 +662,25 @@ std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBa
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema, windowOutputSchema,
                                                                          slidingWindowSinkOperator);
-    } else {
-        throw QueryCompilationException("No support for this window type. This should not happen.");
     }
 }
 
-std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                                               const NES::LogicalOperatorNodePtr& operatorNode) {
+std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(
+    WindowOperatorProperties& windowOperatorProperties,
+    const LogicalOperatorNodePtr& operatorNode) {
 
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     auto& windowInputSchema = windowOperatorProperties.windowInputSchema;
     auto& windowOutputSchema = windowOperatorProperties.windowOutputSchema;
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+        // Handle tumbling window
         return PhysicalOperators::PhysicalGlobalTumblingWindowSink::create(windowInputSchema, windowOutputSchema,
                                                                            windowDefinition);
-    } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
+    } else {
+        // Handle sliding window
         auto globalSliceStore =
             std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
         auto globalSliceStoreAppendOperator =
@@ -691,8 +696,6 @@ std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBa
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalGlobalSlidingWindowSink::create(windowInputSchema, windowOutputSchema,
                                                                           slidingWindowSinkOperator);
-    } else {
-        throw QueryCompilationException("No support for this window type. This should not happen.");
     }
 }
 
