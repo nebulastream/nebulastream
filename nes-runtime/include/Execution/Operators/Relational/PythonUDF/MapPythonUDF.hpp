@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This operator evaluates a map expression defined as a python function on input records.
  * Its state is managed inside a PythonUDFOperatorHandler.
  */
-class MapPythonUDF  : public ExecutableOperator {
+class MapPythonUDF : public ExecutableOperator {
   public:
     MapPythonUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
         : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
@@ -44,5 +44,5 @@ class MapPythonUDF  : public ExecutableOperator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif //NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
-#endif //NAUTILUS_PYTHON_UDF_ENABLED
+#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
+#endif//NAUTILUS_PYTHON_UDF_ENABLED

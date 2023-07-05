@@ -16,10 +16,10 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPPYTHONUDFOPERATORHANDLER_HPP_
 
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Python.h>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <utility>
-#include <Python.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -30,10 +30,9 @@ class PythonUDFOperatorHandler : public OperatorHandler {
   public:
     explicit PythonUDFOperatorHandler(const std::string& function,
                                       const std::string& functionName,
-                                    SchemaPtr inputSchema,
-                                    SchemaPtr outputSchema)
-        : function(function), functionName(functionName), inputSchema(inputSchema),
-          outputSchema(outputSchema) {}
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema)
+        : function(function), functionName(functionName), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
     /**
      * @brief This method returns the udf as a string
@@ -46,7 +45,6 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      * @return std::string python udf
      */
     const std::string& getFunctionName() const { return this->functionName; }
-
 
     /**
      * @brief This method returns the input schema of the python udf
@@ -76,7 +74,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      * @brief Sets the arguments that go into the python udf function
      * @param pythonArguments arguments for the udf function as a PyObject
      */
-    void setPythonArguments(PyObject* pythonArguments) {this->pythonArguments = pythonArguments; }
+    void setPythonArguments(PyObject* pythonArguments) { this->pythonArguments = pythonArguments; }
 
     /**
      * @brief Getter function for the arguments that go into the python udf function
@@ -88,7 +86,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      * @brief Sets the arguments that go into the python udf function
      * @param pythonArguments arguments for the udf function as a PyObject
      */
-    void setPythonVariable(PyObject* pythonVariable) {this->pythonVariable = pythonVariable; }
+    void setPythonVariable(PyObject* pythonVariable) { this->pythonVariable = pythonVariable; }
     /**
      * @brief Getter function for the python function
      * @return the python function as a PyObject
@@ -120,13 +118,12 @@ class PythonUDFOperatorHandler : public OperatorHandler {
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     std::string moduleName;
-    PyObject* pythonArguments; // arguments of python user defined function
+    PyObject* pythonArguments;// arguments of python user defined function
     PyObject* pythonFunction; // python function object
-    PyObject* pythonModule; // python module object
+    PyObject* pythonModule;   // python module object
     PyObject* pythonVariable; // temp python variable for setting arguments
-
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif //NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPPYTHONUDFOPERATORHANDLER_HPP_
-#endif //NAUTILUS_PYTHON_UDF_ENABLED
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPPYTHONUDFOPERATORHANDLER_HPP_
+#endif//NAUTILUS_PYTHON_UDF_ENABLED
