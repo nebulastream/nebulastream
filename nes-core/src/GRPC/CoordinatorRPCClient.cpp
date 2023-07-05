@@ -659,15 +659,18 @@ std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
     return parentIds;
 }
 
-bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, std::vector<TopologyNodeId> failedWorkersIds){
+bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, std::set<TopologyNodeId> failedWorkersIds){
     NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers from workerId={}, number of workerIds={}", sourceWorkerId, failedWorkersIds.size());
 
     AnnounceFailedWorkersRequest request;
     request.set_sourceworkerid(sourceWorkerId);
     //->Add(std::all_of(failedWorkersIds.begin(), failedWorkersIds.end(), ))
-    for (unsigned long i=0; i<failedWorkersIds.size(); i++) {
-        request.mutable_failedworkersids()->Add(failedWorkersIds.at(i));
+    for (auto element : failedWorkersIds) {
+        request.add_failedworkersids(element);
     }
+//    for (unsigned long i=0; i<failedWorkersIds.size(); i++) {
+//        request.mutable_failedworkersids()->Add(std::all_of(failedWorkersIds.begin(), failedWorkersIds.end(), );
+//    }
 
     NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers request={}", request.DebugString());
 

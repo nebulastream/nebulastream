@@ -234,7 +234,7 @@ class CoordinatorRPCClient {
      * @param failedWorkersIds list of ids of failed workers
      * @return true if the information has been successfully processed
      */
-    bool announceFailedWorkers(TopologyNodeId sourceWorkerId, std::vector<TopologyNodeId> failedWorkersIds);
+    bool announceFailedWorkers(TopologyNodeId sourceWorkerId, std::set<TopologyNodeId> failedWorkersIds);
 
     std::vector<std::string> getChildrenData (TopologyNodeId workerId);
 
