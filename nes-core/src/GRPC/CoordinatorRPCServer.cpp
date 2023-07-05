@@ -438,50 +438,57 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
     auto failedWorkersIds = request->failedworkersids();
     // for each id, add to announcedFailedWorkers list and unregister
     for (auto failedWorkerId : failedWorkersIds) {
-
-        auto spatialType = topologyManagerService->findNodeWithId(failedWorkerId)->getSpatialNodeType();
-        bool success = topologyManagerService->removeGeoLocation(failedWorkerId)
+        topologyManagerService->addAnnouncedFailedWorker(failedWorkerId);
+        auto failedWorker = topologyManagerService->findNodeWithId(failedWorkerId);
+        if (failedWorker) {
+            auto spatialType = failedWorker->getSpatialNodeType();
+            bool success = topologyManagerService->removeGeoLocation(failedWorkerId)
                 || spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION
                 || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
-
-        if (success) {
-            if (!topologyManagerService->unregisterNode(failedWorkerId)) {
-                NES_ERROR2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} was not removed", failedWorkerId);
+            if (success) {
+                if (!topologyManagerService->unregisterNode(failedWorkerId)) {
+                    NES_ERROR2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} was not removed", failedWorkerId);
+                    reply->set_success(false);
+                    //return Status::CANCELLED;
+                }
+                monitoringManager->removeMonitoringNode(failedWorkerId);
+                NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} successfully removed", failedWorkerId);
+                reply->set_success(true);
+                //return Status::OK;
+            } else {
+                NES_ERROR2("CoordinatorRPCServer::UnregisterNode: sensor workerId={} was not removed", failedWorkerId);
                 reply->set_success(false);
-                //return Status::CANCELLED;
             }
-            monitoringManager->removeMonitoringNode(failedWorkerId);
-            NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} successfully removed", failedWorkerId);
-            reply->set_success(true);
-            topologyManagerService->addAnnouncedFailedWorker(failedWorkerId);
-            //return Status::OK;
         }
-        NES_ERROR2("CoordinatorRPCServer::UnregisterNode: sensor workerId={} was not removed", failedWorkerId);
-        reply->set_success(false);
-        //return Status::CANCELLED;
+        reply->set_success(true);
+        //return Status::OK;
     }
     if (reply->success()) {
         return Status::OK;
     }
 
     NES_WARNING2("CoordinatorRPCServer::AnnounceFailedWorkers one or more workerIds were not removed from topology");
-    return Status::CANCELLED;
+    return Status::OK;
 }
 Status CoordinatorRPCServer::GetChildrenData(ServerContext*,
                                              const GetChildrenDataRequest* request,
                                              GetChildrenDataReply* reply) {
     NES_DEBUG2("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
     auto workerId = request->workerid();
-    auto children = topologyManagerService->findNodeWithId(workerId)->getChildren();
-    for (auto child : children) {
-        int i = 0;
-        uint64_t childWorkerId = child->as<TopologyNode>()->getId();
-        std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
-        auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
-        std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
-        reply->set_childrendata(i, childData);
-        i++;
+    auto worker = topologyManagerService->findNodeWithId(workerId);
+    if (worker) {
+        auto children = worker->getChildren();
+        for (auto child : children) {
+            int i = 0;
+            uint64_t childWorkerId = child->as<TopologyNode>()->getId();
+            std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
+            auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
+            std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
+            reply->add_childrendata(childData);
+            //reply->set_childrendata(i, childData);
+            i++;
+        }
+        return Status::OK;
     }
-
-    return Status::OK;
+    return Status::CANCELLED;
 }
