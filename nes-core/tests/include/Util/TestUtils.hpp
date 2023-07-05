@@ -633,7 +633,6 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
                                   const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager);
 
-
 /**
  * @brief Creates multiple tuple buffers from the csv file
  * @param csvFileName
@@ -641,9 +640,8 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
  * @param bufferManager
  * @return Vector of TupleBuffer
  */
-std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
-                                                    const SchemaPtr& schema,
-                                                    const Runtime::BufferManagerPtr& bufferManager);
+std::vector<Runtime::TupleBuffer>
+fillBufferFromCsv(const std::string& csvFileName, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 

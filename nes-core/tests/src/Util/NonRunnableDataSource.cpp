@@ -55,9 +55,7 @@ void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffe
     emitBuffer(buf);
 }
 
-void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer) {
-    DataSource::emitWorkFromSource(buffer);
-}
+void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer) { DataSource::emitWorkFromSource(buffer); }
 
 DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager,

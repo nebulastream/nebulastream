@@ -50,8 +50,6 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-
-
 std::istream& operator>>(std::istream& is, std::string& l) {
     std::getline(is, l);
     return is;
