@@ -23,7 +23,7 @@ class TopologyDeltaTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyDeltaTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Set up TopologyDelta test class");
+        NES_DEBUG("Set up TopologyDelta test class");
     }
 };
 

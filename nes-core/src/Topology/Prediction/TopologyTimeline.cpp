@@ -80,7 +80,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalT
                         copiedChild = originalChild->as<TopologyNode>()->copy();
                         queue.push(copiedChild);
                     }
-                    NES_DEBUG2("adding edge based on copy from {} to {}", nodeId, childId);
+                    NES_DEBUG("adding edge based on copy from {} to {}", nodeId, childId);
                     copiedTopology->addNewTopologyNodeAsChild(copiedNode, copiedChild);
                 }
             }
@@ -112,7 +112,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalT
                 //queue the newly created node to be iterated over
                 queue.push(childNode);
             }
-            NES_DEBUG2("adding edge based on prediction from {} to {}", nodeId, childNode->getId());
+            NES_DEBUG("adding edge based on prediction from {} to {}", nodeId, childNode->getId());
             //add a link between parent and child
             copiedTopology->addNewTopologyNodeAsChild(copiedNode, childNode);
         }

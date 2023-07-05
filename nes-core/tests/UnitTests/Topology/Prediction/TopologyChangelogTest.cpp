@@ -25,7 +25,7 @@ class TopologyChangeLogTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyChangelogTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Set up TopologyChangelog test class");
+        NES_DEBUG("Set up TopologyChangelog test class");
     }
 };
 
