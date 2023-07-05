@@ -752,7 +752,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string
     std::vector<Runtime::TupleBuffer> allBuffers;
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
-    NES_DEBUG2("read file={}", fullPath);
+    NES_DEBUG("read file={}", fullPath);
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
     const std::string delimiter = ",";
     auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
