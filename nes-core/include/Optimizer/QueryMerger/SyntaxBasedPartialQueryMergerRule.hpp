@@ -102,4 +102,4 @@ class SyntaxBasedPartialQueryMergerRule : public BaseQueryMergerRule {
                                                                 const OperatorNodePtr& hostOperator);
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif // NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
