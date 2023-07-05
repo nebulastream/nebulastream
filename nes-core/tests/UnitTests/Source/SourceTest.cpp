@@ -436,6 +436,7 @@ class LambdaSourceProxy : public LambdaSource {
                        gatheringMode,
                        0,
                        0,
+                       1,
                        successors){};
 
   private:

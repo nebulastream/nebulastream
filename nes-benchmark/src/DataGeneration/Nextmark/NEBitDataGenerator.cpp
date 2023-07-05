@@ -64,9 +64,9 @@ std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOf
                 bidder = personId + activePersons - n;
             }
 
-            dynamicBuffer[currentRecord]["auctionId"].write<uint64_t>(auction);
+            dynamicBuffer[currentRecord]["id"].write<uint64_t>(auction);
             dynamicBuffer[currentRecord]["bidderId"].write<uint64_t>(bidder);
-            dynamicBuffer[currentRecord]["price"].write<double>(0.1);
+            dynamicBuffer[currentRecord]["price"].write<uint64_t>(1);
         }
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         buffers.emplace_back(buffer);
@@ -77,9 +77,9 @@ SchemaPtr NEBitDataGenerator::getSchema() {
     return Schema::create()
         ->addField("creationTS", BasicType::UINT64)
         ->addField("timestamp", BasicType::UINT64)
-        ->addField("auctionId", BasicType::UINT64)
+        ->addField("id", BasicType::UINT64)
         ->addField("bidderId", BasicType::UINT64)
-        ->addField("price", BasicType::FLOAT64);
+        ->addField("price", BasicType::UINT64);
 }
 
 std::string NEBitDataGenerator::toString() {

@@ -376,6 +376,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   lambdaSourceType->getGatheringMode(),
                                                   lambdaSourceType->getSourceAffinity(),
                                                   lambdaSourceType->getTaskQueueId(),
+                                                  lambdaSourceType->getNumberOfQueues(),
                                                   logicalSourceName,
                                                   physicalSourceName);
         }

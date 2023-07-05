@@ -77,6 +77,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
+    Configurations::StringConfigOption queryManagerMode;
     std::map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
     Configurations::StringConfigOption connectionString;
     Configurations::StringConfigOption joinStrategy;

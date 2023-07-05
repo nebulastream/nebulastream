@@ -71,6 +71,15 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
     coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
 
+    //FOR TESTING ONLY
+    if (configOverAllRuns.queryManagerMode->getValue() == "Static") {
+        coordinatorConf->worker.queryManagerMode = Runtime::QueryExecutionMode::Static;
+        coordinatorConf->worker.numberOfThreadsPerQueue = 1;
+        coordinatorConf->worker.numberOfQueues = coordinatorConf->worker.numWorkerThreads;
+    } else {
+        coordinatorConf->worker.queryManagerMode = Runtime::QueryExecutionMode::Dynamic;
+    }
+
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy =
             QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL;
@@ -172,7 +181,8 @@ void E2ESingleRun::createSources() {
                                              /* gatheringValue */ 0,
                                              GatheringMode::INTERVAL_MODE,
                                              sourceAffinity,
-                                             taskQueueId);
+                                             taskQueueId,
+                                             configPerRun.numberOfWorkerThreads->getValue());
 
                 auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
                 coordinatorConf->worker.physicalSources.add(physicalSource);

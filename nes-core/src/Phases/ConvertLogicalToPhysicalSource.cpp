@@ -268,6 +268,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
+                                  lambdaSourceDescriptor->getNumberOfQueues(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
         NES_INFO2("ConvertLogicalToPhysicalSource: Creating materialized view source");

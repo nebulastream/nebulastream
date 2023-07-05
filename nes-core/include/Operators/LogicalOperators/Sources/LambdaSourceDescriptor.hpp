@@ -44,6 +44,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
         uint64_t taskQueueId,
+        uint64_t numberOfQueues,
         std::string logicalSourceName,
         std::string physicalSourceName);
 
@@ -63,6 +64,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
            GatheringMode gatheringMode,
            uint64_t sourceAffinity = 0,
            uint64_t taskQueueId = 0,
+           uint64_t numberOfQueues = 1 ,
            std::string logicalSourceName = "",
            std::string physicalSourceName = "");
 
@@ -117,6 +119,12 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     */
     uint64_t getTaskQueueId() const;
 
+    /**
+    * @brief return the task queue id thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getNumberOfQueues() const;
+
   private:
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
@@ -124,6 +132,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     GatheringMode gatheringMode;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
+    uint64_t numberOfQueues;
 };
 }// namespace NES
 

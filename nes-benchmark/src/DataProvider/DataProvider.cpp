@@ -67,6 +67,10 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
             };
         }
     }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("No buffer could be provided");
+    }
 }
 
 }// namespace NES::Benchmark::DataProvision

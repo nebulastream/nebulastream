@@ -26,11 +26,12 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
+    uint64_t numberOfQueues,
     std::string logicalSourceName,
     std::string physicalSourceName)
     : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName),
       generationFunction(std::move(generationFunction)), numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue),
-      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), numberOfQueues(numberOfQueues) {}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     const SchemaPtr& schema,
@@ -40,6 +41,7 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
+    uint64_t numberOfQueues,
     std::string logicalSourceName,
     std::string physicalSourceName) {
     NES_ASSERT(schema, "invalid schema");
@@ -50,6 +52,7 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
                                                     gatheringMode,
                                                     sourceAffinity,
                                                     taskQueueId,
+                                                    numberOfQueues,
                                                     logicalSourceName,
                                                     physicalSourceName);
 }
@@ -82,6 +85,7 @@ SourceDescriptorPtr LambdaSourceDescriptor::copy() {
                                                gatheringMode,
                                                sourceAffinity,
                                                taskQueueId,
+                                               numberOfQueues,
                                                logicalSourceName,
                                                physicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
@@ -91,4 +95,5 @@ SourceDescriptorPtr LambdaSourceDescriptor::copy() {
 uint64_t LambdaSourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
 
 uint64_t LambdaSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
+uint64_t LambdaSourceDescriptor::getNumberOfQueues() const { return numberOfQueues; }
 }// namespace NES

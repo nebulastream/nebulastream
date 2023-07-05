@@ -338,8 +338,8 @@ class DynamicTupleBuffer {
      * @return true if the record was pushed successfully, false otherwise.
      */
     template<typename... Types>
-    void pushRecordToBuffer(std::tuple<Types...> record) {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
+    bool pushRecordToBuffer(std::tuple<Types...> record) {
+        return pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
     }
 
     /**
@@ -353,12 +353,13 @@ class DynamicTupleBuffer {
      * @return true if the record was pushed successfully, false otherwise.
      */
     template<typename... Types>
-    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
+    bool pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
         if (recordIndex >= buffer.getBufferSize()) {
-            throw BufferAccessException("Current buffer is not big enough for index. Current buffer size: "
-                                        + std::to_string(buffer.getBufferSize()) + ", Index: " + std::to_string(recordIndex));
+            return false;
+//            throw BufferAccessException("Current buffer is not big enough for index. Current buffer size: "
+//                                        + std::to_string(buffer.getBufferSize()) + ", Index: " + std::to_string(recordIndex));
         }
         // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         // On each iteration, the lambda function is called with the current field value, and the field index is increased.
@@ -370,6 +371,7 @@ class DynamicTupleBuffer {
         if (recordIndex + 1 > numberOfRecords) {
             this->setNumberOfTuples(recordIndex + 1);
         }
+        return true;
     }
 
     /**

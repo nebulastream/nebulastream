@@ -66,7 +66,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
-                        uint64_t taskQueueId = 0);
+                        uint64_t taskQueueId = 0,
+                        uint64_t numberOfQueues = 1
+                        );
 
     DataSource() = delete;
 
@@ -286,6 +288,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::promise<bool> completedPromise;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
+    uint64_t numberOfQueues;
     bool sourceSharing = false;
 
     //this counter is used to count the number of queries that use this source
@@ -299,6 +302,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
+    void emitWorkFromSourcePartitioned(Runtime::TupleBuffer& buffer);
     NES::Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
 
   protected:
@@ -331,6 +335,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::unique_ptr<KalmanFilter> kFilter;// TODO(Dimitrios) is this the right place to have it?
 
     bool endOfStreamSent{false};// protected by startStopMutex
+
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

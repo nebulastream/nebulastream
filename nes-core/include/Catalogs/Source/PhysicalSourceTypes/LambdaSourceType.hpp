@@ -47,7 +47,8 @@ class LambdaSourceType : public PhysicalSourceType {
            uint64_t gatheringValue,
            GatheringMode gatheringMode,
            uint64_t sourceAffinity = 0,
-           uint64_t taskQueueId = 0);
+           uint64_t taskQueueId = 0,
+           uint64_t numberOfQueues = 1);
 
     std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> getGenerationFunction() const;
 
@@ -58,6 +59,8 @@ class LambdaSourceType : public PhysicalSourceType {
     GatheringMode getGatheringMode() const;
 
     uint64_t getTaskQueueId() const;
+
+    uint64_t getNumberOfQueues() const;
 
     uint64_t getSourceAffinity() const;
 
@@ -78,7 +81,8 @@ class LambdaSourceType : public PhysicalSourceType {
         uint64_t gatheringValue,
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
-        uint64_t taskQueueId);
+        uint64_t taskQueueId,
+        uint64_t numberOfQueues);
 
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProduce;
@@ -86,6 +90,7 @@ class LambdaSourceType : public PhysicalSourceType {
     GatheringMode gatheringMode;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
+    uint64_t numberOfQueues;
 };
 
 }// namespace NES

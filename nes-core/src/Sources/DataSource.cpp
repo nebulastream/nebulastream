@@ -64,11 +64,13 @@ DataSource::DataSource(SchemaPtr pSchema,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
-                       uint64_t taskQueueId)
+                       uint64_t taskQueueId,
+                       uint64_t numberOfQueues)
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), kFilter(std::make_unique<KalmanFilter>()) {
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), numberOfQueues(numberOfQueues),
+      kFilter(std::make_unique<KalmanFilter>()) {
     this->kFilter->setDefaultValues();
     NES_DEBUG2("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
@@ -84,7 +86,85 @@ DataSource::DataSource(SchemaPtr pSchema,
     }
 }
 
+void DataSource::emitWorkFromSourcePartitioned(Runtime::TupleBuffer& buffer) {
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> partitionedBuffers;
+
+    //allocate buffer
+    if (numberOfQueues != 1) {
+        for (uint64_t i = 0; i < numberOfQueues; i++) {
+            partitionedBuffers.emplace_back(allocateBuffer());
+        }
+    }
+    size_t tupleCnt = 0;
+    auto currentBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (auto iter = currentBuffer.begin(); iter != currentBuffer.end(); iter++) {
+        if (originId == 2) {
+            //bit
+            auto partitionId = iter.operator*()["bit$id"].read<std::uint64_t>() % numberOfQueues;
+            //            std::cout << "write tuple " << tupleCnt++ << " out of " << buffer.getNumberOfTuples() << "/"
+            //                      << currentBuffer.getCapacity() << " partitionedBuffers[" << partitionId << "]="
+            //                      << partitionedBuffers[partitionId].getNumberOfTuples() << "/"
+            //                      << partitionedBuffers[partitionId].getCapacity() << std::endl;
+            std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> writeRecord(
+                iter.operator*()["bit$creationTS"].read<std::uint64_t>(),
+                iter.operator*()["bit$timestamp"].read<std::uint64_t>(),
+                iter.operator*()["bit$id"].read<std::uint64_t>(),
+                iter.operator*()["bit$bidderId"].read<std::uint64_t>(),
+                iter.operator*()["bit$price"].read<std::uint64_t>());
+            //in this version it cannot be a fail as input buffer and outputbuffer are of same size
+            partitionedBuffers[partitionId].pushRecordToBuffer(writeRecord);
+        } else {
+            //auction
+            auto partitionId = iter.operator*()["auction$id"].read<std::uint64_t>() % numberOfQueues;
+            std::tuple<uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t,
+                       uint64_t>
+                writeRecord(iter.operator*()["auction$id"].read<std::uint64_t>(),
+                            iter.operator*()["auction$itemName"].read<std::uint64_t>(),
+                            iter.operator*()["auction$itemNamePad"].read<std::uint64_t>(),
+                            iter.operator*()["auction$description"].read<std::uint64_t>(),
+                            iter.operator*()["auction$descriptionPad"].read<std::uint64_t>(),
+                            iter.operator*()["auction$initialBit"].read<std::uint64_t>(),
+                            iter.operator*()["auction$reserve"].read<std::uint64_t>(),
+                            iter.operator*()["auction$dateTime"].read<std::uint64_t>(),
+                            iter.operator*()["auction$seller"].read<std::uint64_t>(),
+                            iter.operator*()["auction$expires"].read<std::uint64_t>(),
+                            iter.operator*()["auction$category"].read<std::uint64_t>());
+            partitionedBuffers[partitionId].pushRecordToBuffer(writeRecord);
+        }
+    }//end of for buffer
+
+    //emit all buffer
+    for (uint64_t i = 0; i < partitionedBuffers.size(); i++) {
+        if (partitionedBuffers[i].getNumberOfTuples() != 0) {
+            NES_DEBUG2("Emit buffer for partition = {}", i);
+            buffer.setOriginId(originId);
+            // set the creation timestamp
+            buffer.setCreationTimestampInMS(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                std::chrono::high_resolution_clock::now().time_since_epoch())
+                                                .count());
+            // Set the sequence number of this buffer.
+            // A data source generates a monotonic increasing sequence number
+            maxSequenceNumber++;
+            buffer.setSequenceNumber(maxSequenceNumber);
+            for (const auto& successor : executableSuccessors) {
+                queryManager->addWorkForNextPipeline(buffer, successor, i);
+            }
+        }
+    }
+}
+
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
+    return emitWorkFromSourcePartitioned(buffer);
+
     // set the origin id for this source
     buffer.setOriginId(originId);
     // set the creation timestamp

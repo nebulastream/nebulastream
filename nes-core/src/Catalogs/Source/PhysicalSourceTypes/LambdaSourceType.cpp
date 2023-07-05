@@ -25,10 +25,11 @@ LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&
                                    uint64_t gatheringValue,
                                    GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
-                                   uint64_t taskQueueId)
+                                   uint64_t taskQueueId,
+                                   uint64_t numberOfQueues)
     : PhysicalSourceType(SourceType::LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
       numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(std::move(gatheringMode)),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), numberOfQueues(numberOfQueues) {}
 
 LambdaSourceTypePtr LambdaSourceType::create(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
@@ -36,13 +37,15 @@ LambdaSourceTypePtr LambdaSourceType::create(
     uint64_t gatheringValue,
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
-    uint64_t taskQueueId) {
+    uint64_t taskQueueId,
+    uint64_t numberOfQueues) {
     return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(generationFunction),
                                                                numBuffersToProcess,
                                                                gatheringValue,
                                                                gatheringMode,
                                                                sourceAffinity,
-                                                               taskQueueId));
+                                                               taskQueueId,
+                                                               numberOfQueues));
 }
 
 std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> LambdaSourceType::getGenerationFunction() const {
@@ -57,6 +60,7 @@ GatheringMode LambdaSourceType::getGatheringMode() const { return gatheringMode;
 
 uint64_t LambdaSourceType::getSourceAffinity() const { return sourceAffinity; }
 uint64_t LambdaSourceType::getTaskQueueId() const { return taskQueueId; }
+uint64_t LambdaSourceType::getNumberOfQueues() const { return numberOfQueues; }
 
 std::string LambdaSourceType::toString() {
     std::stringstream ss;
@@ -66,6 +70,7 @@ std::string LambdaSourceType::toString() {
     ss << "GatheringMode :" << std::string(magic_enum::enum_name(gatheringMode));
     ss << "sourceAffinity :" << sourceAffinity;
     ss << "taskQueueId :" << taskQueueId;
+    ss << "numberOfQueues:  :" << numberOfQueues;
     ss << "\n}";
     return ss.str();
 }

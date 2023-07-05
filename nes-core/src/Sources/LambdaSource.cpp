@@ -39,6 +39,7 @@ LambdaSource::LambdaSource(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
+    uint64_t numberOfQueues,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -61,6 +62,7 @@ LambdaSource::LambdaSource(
     numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
+    this->numberOfQueues = numberOfQueues;
 }
 
 std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {

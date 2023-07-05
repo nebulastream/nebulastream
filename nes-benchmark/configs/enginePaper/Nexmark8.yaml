@@ -21,13 +21,17 @@ pageSize: 65536
 numberOfPartitions: 16
 preAllocPageCnt: 32
 
+queryManagerMode: Static
+numberOfThreadsPerQueue: 1
+sourceToQueueMapList: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64
+
 #maxHashTableSize: 34359738368
 maxHashTableSize: 34359738368
 #for node55
 #maxHashTableSize: 137438953472
-#joinStrategy: HASH_JOIN_LOCAL
+joinStrategy: HASH_JOIN_LOCAL
 #joinStrategy: HASH_JOIN_GLOBAL_LOCKING
-joinStrategy: HASH_JOIN_GLOBAL_LOCK_FREE
+#joinStrategy: HASH_JOIN_GLOBAL_LOCK_FREE
 #joinStrategy: NESTED_LOOP_JOIN
 #
 logicalSources:
@@ -45,7 +49,7 @@ dataProvider: Internal
 dataProviderMode: ZeroCopy
 
 #query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(RecordCreationTs()), Hours(12))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(IngestionTime(),Hours(12))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(IngestionTime(),Hours(12))).sink(NullOutputSinkDescriptor::create());'
 
 gatheringValues: 50000
 #generatorPinList: 12

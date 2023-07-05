@@ -112,6 +112,7 @@ createLambdaSource(const SchemaPtr& schema,
                    GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
                    uint64_t taskQueueId,
+                   uint64_t numberOfQueues,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
@@ -125,6 +126,7 @@ createLambdaSource(const SchemaPtr& schema,
                                           gatheringMode,
                                           sourceAffinity,
                                           taskQueueId,
+                                          numberOfQueues,
                                           successors);
 }
 
