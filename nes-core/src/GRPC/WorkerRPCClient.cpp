@@ -128,9 +128,6 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             } else if (mode == RpcClientModes::Stop) {
                 auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
                 status = call->status.ok();
-                if (!status) {
-                    NES_ERROR("RPC Failed: {}", call->status.error_message());
-                }
                 delete call;
             } else {
                 NES_NOT_IMPLEMENTED();
