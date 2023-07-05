@@ -61,9 +61,10 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-}// namespace NES
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
-namespace NES::Optimizer {
+namespace Optimizer {
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
@@ -131,6 +132,18 @@ class GlobalQueryPlanUpdatePhase {
                                         Catalogs::UDF::UDFCatalogPtr udfCatalog,
                                         GlobalExecutionPlanPtr globalExecutionPlan);
 
+    /**
+     * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.
+     * Note: If the upstream or downstream execution node consists only of system generated operators then successive execution
+     * nodes are explored till a logical operator is found.
+     * @param sharedQueryId: id of the shared query plan
+     * @param upstreamExecutionNode: the upstream execution node
+     * @param downstreamExecutionNode: the downstream execution node
+     */
+    void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryId,
+                                             const ExecutionNodePtr& upstreamExecutionNode,
+                                             const ExecutionNodePtr& downstreamExecutionNode);
+
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
@@ -145,5 +158,6 @@ class GlobalQueryPlanUpdatePhase {
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
 };
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_
