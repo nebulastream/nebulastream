@@ -266,6 +266,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status AnnounceFailedWorkers (ServerContext* context, const AnnounceFailedWorkersRequest* request, AnnounceFailedWorkersReply* reply) override;
 
+    Status GetChildrenData (ServerContext* context, const GetChildrenDataRequest* request, GetChildrenDataReply* reply) override;
+
   private:
     QueryServicePtr queryService;
     TopologyManagerServicePtr topologyManagerService;

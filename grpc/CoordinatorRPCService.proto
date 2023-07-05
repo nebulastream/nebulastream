@@ -72,6 +72,16 @@ service CoordinatorRPCService {
 
   rpc AnnounceFailedWorkers(AnnounceFailedWorkersRequest) returns(AnnounceFailedWorkersReply) {}
 
+  rpc GetChildrenData(GetChildrenDataRequest) returns(GetChildrenDataReply) {}
+
+}
+
+message GetChildrenDataRequest {
+	uint64 workerId = 1;
+}
+
+message GetChildrenDataReply {
+	repeated string childrenData = 1;
 }
 
 message AnnounceFailedWorkersRequest {
