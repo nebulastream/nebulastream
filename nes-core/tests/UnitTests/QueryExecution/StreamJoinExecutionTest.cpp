@@ -52,8 +52,9 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
-
-    void setWaterMarkAndOriginId(TupleBuffer& buffer, const uint64_t originId, const uint64_t waterMarkTimestamp = 1000,
+    void setWaterMarkAndOriginId(TupleBuffer& buffer,
+                                 const uint64_t originId,
+                                 const uint64_t waterMarkTimestamp = 1000,
                                  const uint64_t sequenceNumber = 1) {
 
         buffer.setWatermark(waterMarkTimestamp);
@@ -157,7 +158,6 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     setWaterMarkAndOriginId(rightBuffer, rightOriginId);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
-
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);

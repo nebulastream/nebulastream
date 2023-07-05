@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -24,10 +24,10 @@
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Util/StdInt.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
