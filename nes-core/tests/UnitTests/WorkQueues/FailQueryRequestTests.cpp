@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -79,11 +80,13 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
     NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
+    //todo: move to integration tests
+    //todo: replace with lambde source num buffers zero
     NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
-    csvSourceType->setGatheringInterval(1);
+    csvSourceType->setGatheringInterval(1000);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType->setNumberOfBuffersToProduce(100000);
     csvSourceType->setSkipHeader(false);
@@ -110,7 +113,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
-    //wait until query has been succesfully deployed on worker 1
+    //wait until query has been successfully deployed on worker 1
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
@@ -129,6 +132,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     }
     ASSERT_EQ(crd->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
+    //todo: this should be enough
     //check status of query in the query catalog
     start_timestamp = std::chrono::system_clock::now();
     while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING
@@ -556,7 +560,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
         //fail the test if exception was not thrown within timeout
         FAIL();
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
-        NES_DEBUG2("Caught query undeployment exception: {}", e.what());
+        NES_DEBUG("Caught query undeployment exception: {}", e.what());
         ASSERT_EQ(e.getMode(), RpcClientModes::Stop);
         ASSERT_EQ(e.getFailedExecutionNodeIds(), std::vector {workerId});
     }
