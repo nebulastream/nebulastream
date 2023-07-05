@@ -62,11 +62,6 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 };
 
-//std::istream& operator>>(std::istream& is, std::string& l) {
-//    std::getline(is, l);
-//    return is;
-//}
-
 /**
  * @brief checks if the buffers contain the same tuples
  * @param buffer1
