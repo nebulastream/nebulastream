@@ -23,7 +23,11 @@ target_link_libraries(nes-compiler PUBLIC nes-common)
 target_include_directories(nes-compiler PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-compiler REUSE_FROM nes-common)
+    # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
+    target_compile_options(nes-compiler PUBLIC "-fPIC")
+endif ()
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

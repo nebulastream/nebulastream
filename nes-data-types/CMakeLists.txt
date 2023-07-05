@@ -23,6 +23,9 @@ target_link_libraries(nes-data-types PUBLIC nes-common)
 target_include_directories(nes-data-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-data-types REUSE_FROM nes-common)
+endif ()
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

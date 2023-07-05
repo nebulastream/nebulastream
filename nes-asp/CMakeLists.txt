@@ -24,7 +24,9 @@ get_source(nes-asp NES_APPROX_SOURCE_FILES)
 # Add nes-benchmark library
 add_library(nes-asp SHARED ${NES_APPROX_SOURCE_FILES})
 target_link_libraries(nes-asp PUBLIC nes-runtime nes)
-
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-asp REUSE_FROM nes-common)
+endif ()
 
 # Enabling test, if cmake flag is set
 if (NES_ENABLES_TESTS)

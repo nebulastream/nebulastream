@@ -41,8 +41,9 @@ option(ENABLE_CLANG_TIDY OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
-option(NES_USE_LLD "Use LLD" OFF)
+option(NES_USE_LLD "Use LLD" ON)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
+option(NES_ENABLE_PRECOMPILED_HEADERS "Enable Precompiled Headers" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
@@ -693,6 +694,17 @@ if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
 endif (NES_BUILD_BENCHMARKS)
 
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
+    if (NES_USE_CCACHE)
+        # Need to set these to enable interplay between ccache and precompiled headers
+        # https://ccache.dev/manual/4.8.html#_precompiled_headers
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpch-preprocess -fno-pch-timestamp")
+        set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros")
+    else ()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpch-preprocess")
+    endif ()
+endif ()
 
 # Documentation
 add_subdirectory(cmake/docs)
