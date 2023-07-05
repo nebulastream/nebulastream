@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.132](https://github.com/nebulastream/nebulastream/tree/v0.5.132) (2023-07-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.131...v0.5.132)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] change to spd logging [\#3903](https://github.com/nebulastream/nebulastream/issues/3903)
+
 ## [v0.5.131](https://github.com/nebulastream/nebulastream/tree/v0.5.131) (2023-07-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.130...v0.5.131)
