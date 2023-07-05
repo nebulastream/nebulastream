@@ -219,22 +219,22 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         restServer->start();//this call is blocking
     }));
 
-    NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
+    NES_DEBUG2("NesCoordinator::startCoordinatorRESTServer: ready");
 
     healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
                                                                          workerRpcClient,
                                                                          HEALTH_SERVICE_NAME,
                                                                          coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
-    NES_DEBUG("NesCoordinator start health check");
+    NES_DEBUG2("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
-        NES_DEBUG("NesCoordinator started, join now and waiting for work");
+        NES_DEBUG2("NesCoordinator started, join now and waiting for work");
         restThread->join();
-        NES_DEBUG("NesCoordinator Required stopping");
+        NES_DEBUG2("NesCoordinator Required stopping");
     } else {//non-blocking is used for tests to continue execution
-        NES_DEBUG("NesCoordinator started, return without blocking on port {}", rpcPort);
+        NES_DEBUG2("NesCoordinator started, return without blocking on port {}", rpcPort);
         return rpcPort;
     }
     return 0UL;
@@ -247,63 +247,63 @@ ReplicationServicePtr NesCoordinator::getReplicationService() const { return rep
 TopologyPtr NesCoordinator::getTopology() const { return topology; }
 
 bool NesCoordinator::stopCoordinator(bool force) {
-    NES_DEBUG("NesCoordinator: stopCoordinator force={}", force);
+    NES_DEBUG2("NesCoordinator: stopCoordinator force={}", force);
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
 
-        NES_DEBUG("NesCoordinator::stop health check");
+        NES_DEBUG2("NesCoordinator::stop health check");
         healthCheckService->stopHealthCheck();
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
-            NES_ERROR("NesCoordinator::stop node engine stop not successful");
+            NES_ERROR2("NesCoordinator::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
         }
-        NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
+        NES_DEBUG2("NesCoordinator::stop Node engine stopped successfully");
 
-        NES_DEBUG("NesCoordinator: stopping rest server");
+        NES_DEBUG2("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
-            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+            NES_ERROR2("NesCoordinator::stopCoordinator: error while stopping restServer");
             NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
         }
-        NES_DEBUG("NesCoordinator: rest server stopped {}", successStopRest);
+        NES_DEBUG2("NesCoordinator: rest server stopped {}", successStopRest);
 
         if (restThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join restThread");
+            NES_DEBUG2("NesCoordinator: join restThread");
             restThread->join();
         } else {
-            NES_ERROR("NesCoordinator: rest thread not joinable");
+            NES_ERROR2("NesCoordinator: rest thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         queryRequestProcessorService->shutDown();
         if (queryRequestProcessorThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join queryRequestProcessorThread");
+            NES_DEBUG2("NesCoordinator: join queryRequestProcessorThread");
             queryRequestProcessorThread->join();
-            NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
+            NES_DEBUG2("NesCoordinator: joined queryRequestProcessorThread");
         } else {
-            NES_ERROR("NesCoordinator: query processor thread not joinable");
+            NES_ERROR2("NesCoordinator: query processor thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
-        NES_DEBUG("NesCoordinator: stopping rpc server");
+        NES_DEBUG2("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
         rpcServer->Wait();
 
         if (rpcThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join rpcThread");
+            NES_DEBUG2("NesCoordinator: join rpcThread");
             rpcThread->join();
             rpcThread.reset();
 
         } else {
-            NES_ERROR("NesCoordinator: rpc thread not joinable");
+            NES_ERROR2("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         return true;
     }
-    NES_DEBUG("NesCoordinator: already stopped");
+    NES_DEBUG2("NesCoordinator: already stopped");
     return true;
 }
 
@@ -336,13 +336,13 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 
     rpcServer = builder.BuildAndStart();
     prom->set_value(true);
-    NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address={}", address);
+    NES_DEBUG2("NesCoordinator: buildAndStartGRPCServerServer listening on address={}", address);
     rpcServer->Wait();//blocking call
-    NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
+    NES_DEBUG2("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
-    NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
+    NES_INFO2("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
