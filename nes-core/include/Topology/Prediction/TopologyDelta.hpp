@@ -13,8 +13,10 @@ class TopologyDelta {
   public:
     /**
    * @brief constructor
-   * @param added a list of edges to be added to the topology
-   * @param removed a list of edges to be removed from the topology
+   * @param added a list of edges to be added to the topology. It is the callers responsibility to ensure that this list does not
+   * contain any duplicates
+   * @param removed a list of edges to be removed from the topology. It is the callers responsibility to ensure that this list does not
+   * contain any duplicates
    */
     TopologyDelta(std::vector<Edge> added, std::vector<Edge> removed);
 
