@@ -169,12 +169,12 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
         // Checking if the window has not been emitted and both sides (left and right) have at least one tuple in their windows.
         auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
         if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK) &&
-            window->getNumberOfTuples(/*isLeftSide*/ true) > 0 &&
-            window->getNumberOfTuples(/*isLeftSide*/ false) > 0) {
+            window->getNumberOfTuplesLeft() > 0 &&
+            window->getNumberOfTuplesRight() > 0) {
             triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
             NES_DEBUG2("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
-                       window->getWindowIdentifier(), window->getNumberOfTuples(/*isLeftSide*/ true),
-                       window->getNumberOfTuples(/*isLeftSide*/ false));
+                       window->getWindowIdentifier(), window->getNumberOfTuplesLeft(),
+                       window->getNumberOfTuplesRight());
         }
     }
 

@@ -59,7 +59,7 @@ TEST_F(PagedVectorTest, changePageSize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto pagedVector = PagedVector(std::move(allocator), entrySize, 2048);
-    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), (uint64_t) entrySize, (uint64_t) 2048);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), (uint64_t) entrySize);
 
     for (auto i = 0; i < 1000; i++) {
         pagedVectorRef.allocateEntry();

@@ -37,17 +37,18 @@ NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numberOf
     NES_DEBUG2("Created NLJWindow {}", NLJWindow::toString());
 }
 
-
-uint64_t NLJWindow::getNumberOfTuples(bool leftSide) {
+uint64_t NLJWindow::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
-    if (leftSide) {
-        for (auto& pagedVec : leftTuples) {
-            sum += pagedVec->getNumberOfEntries();
-        }
-    } else {
-        for (auto& pagedVec : rightTuples) {
-            sum += pagedVec->getNumberOfEntries();
-        }
+    for (auto& pagedVec : leftTuples) {
+        sum += pagedVec->getNumberOfEntries();
+    }
+    return sum;
+}
+
+uint64_t NLJWindow::getNumberOfTuplesRight() {
+    uint64_t sum = 0;
+    for (auto& pagedVec : rightTuples) {
+        sum += pagedVec->getNumberOfEntries();
     }
     return sum;
 }
@@ -57,18 +58,18 @@ std::string NLJWindow::toString() {
     basicOstringstream << "NLJWindow(windowStart: " << windowStart
                        << " windowEnd: " << windowEnd
                        << " windowState: " << std::string(magic_enum::enum_name<WindowState>(windowState))
-                       << " leftNumberOfTuples: " << getNumberOfTuples(/*isLeftSide*/ true)
-                       << " rightNumberOfTuples: " << getNumberOfTuples(/*isLeftSide*/ false)
+                       << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
+                       << " rightNumberOfTuples: " << getNumberOfTuplesRight()
                        << ")";
     return basicOstringstream.str();
 }
 
-void* NLJWindow::getPagedVectorRef(bool leftSide, uint64_t workerId) {
-    if (leftSide) {
-        return leftTuples[workerId % leftTuples.size()].get();
-    } else {
-        return rightTuples[workerId % rightTuples.size()].get();
-    }
+void* NLJWindow::getPagedVectorRefLeft(uint64_t workerId) {
+    return leftTuples[workerId % leftTuples.size()].get();
+}
+
+void* NLJWindow::getPagedVectorRefRight(uint64_t workerId) {
+    return rightTuples[workerId % rightTuples.size()].get();
 }
 
 void NLJWindow::combinePagedVectors() {

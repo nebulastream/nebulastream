@@ -65,11 +65,16 @@ class StreamWindow {
     uint64_t getWindowEnd() const;
 
     /**
-     * @brief Returns the number of tuples in this window for the given side
-     * @param isLeftSide: If we return the number of tuples of the left or right side
+     * @brief Returns the number of tuples in this window for the left side
      * @return uint64_t
      */
-    virtual uint64_t getNumberOfTuples(bool isLeftSide) = 0;
+    virtual uint64_t getNumberOfTuplesLeft() = 0;
+
+    /**
+     * @brief Returns the number of tuples in this window for the right side
+     * @return uint64_t
+     */
+    virtual uint64_t getNumberOfTuplesRight() = 0;
 
     /**
      * @brief Returns the identifier for this window. For now, the identifier is the windowEnd
