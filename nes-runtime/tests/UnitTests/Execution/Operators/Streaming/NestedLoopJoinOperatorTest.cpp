@@ -198,7 +198,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 auto leftRecordMemRef = *leftPagedVector.at(pos);
                 auto& leftRecord = allLeftRecords[pos];
                 auto readRecordLeft = memoryProviderLeft->read({}, leftRecordMemRef, zeroVal);
-                NES_TRACE2("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
+                NES_TRACE("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
 
                 for (auto& field : leftSchema->fields) {
                     EXPECT_EQ(readRecordLeft.read(field->getName()), leftRecord.read(field->getName()));
@@ -214,7 +214,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 auto rightRecordMemRef = *leftPagedVector.at(pos);
                 auto& rightRecord = allRightRecords[pos];
                 auto readRecordRight = memoryProviderRight->read({}, rightRecordMemRef, zeroVal);
-                NES_TRACE2("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
+                NES_TRACE("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
 
                 for (auto& field : rightSchema->fields) {
                     EXPECT_EQ(readRecordRight.read(field->getName()), rightRecord.read(field->getName()));
@@ -366,7 +366,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
         joinFieldnameLeft,
         timestampFieldLeft,
         /*isLeftSide*/ true,
-        leftPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
@@ -374,7 +373,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
         joinFieldnameRight,
         timestampFieldRight,
         /*isLeftSide*/ false,
-        rightPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -419,7 +417,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
         joinFieldnameLeft,
         timestampFieldLeft,
         /*isLeftSide*/ true,
-        leftPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
@@ -427,7 +424,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
         joinFieldnameRight,
         timestampFieldRight,
         /*isLeftSide*/ false,
-        rightPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -470,7 +466,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
         joinFieldNameLeft,
         timestampFieldLeft,
         /*isLeftSide*/ true,
-        leftPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
@@ -478,7 +473,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
         joinFieldNameRight,
         timestampFieldRight,
         /*isLeftSide*/ false,
-        rightPageSize,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -518,9 +512,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneWindow) {
                                                         rightSchema,
                                                         joinSchema,
                                                         leftEntrySize,
-                                                        leftPageSize,
                                                         rightEntrySize,
-                                                        rightPageSize,
                                                         joinFieldNameLeft,
                                                         joinFieldNameRight);
     NLJSinkPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -561,9 +553,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
                                                         rightSchema,
                                                         joinSchema,
                                                         leftEntrySize,
-                                                        leftPageSize,
                                                         rightEntrySize,
-                                                        rightPageSize,
                                                         joinFieldNameLeft,
                                                         joinFieldNameRight);
     NLJSinkPiplineExecutionContext pipelineContext(nljOperatorHandler);

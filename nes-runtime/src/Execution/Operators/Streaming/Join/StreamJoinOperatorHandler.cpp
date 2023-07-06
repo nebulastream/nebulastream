@@ -37,7 +37,7 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
     //TODO create a factory class for stream join windows #3900
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
         NLJOperatorHandler* nljOpHandler = static_cast<NLJOperatorHandler*>(this);
-        NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
+        NES_DEBUG("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd, numberOfWorkerThreads,
                                                          sizeOfRecordLeft,
                                                          nljOpHandler->getLeftPageSize(),
@@ -63,10 +63,10 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 }
 
 void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
-    NES_DEBUG2("StreamJoinOperatorHandler trying to delete window with id={}", windowIdentifier);
+    NES_DEBUG("StreamJoinOperatorHandler trying to delete window with id={}", windowIdentifier);
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        NES_DEBUG2("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
+        NES_DEBUG("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
         windows.remove(window.value());
     }
 }
@@ -125,7 +125,7 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     }
     alreadySetup = true;
 
-    NES_DEBUG2("HashJoinOperatorHandler::setup was called!");
+    NES_DEBUG("HashJoinOperatorHandler::setup was called!");
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
 
@@ -172,7 +172,7 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
             window->getNumberOfTuplesLeft() > 0 &&
             window->getNumberOfTuplesRight() > 0) {
             triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
-            NES_DEBUG2("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
+            NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
                        window->getWindowIdentifier(), window->getNumberOfTuplesLeft(),
                        window->getNumberOfTuplesRight());
         }
