@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <vector>
 
 namespace NES::Runtime::Execution {
@@ -55,7 +56,7 @@ class StreamHashJoinWindow : public StreamWindow {
                                   size_t pageSize,
                                   size_t preAllocPageSizeCnt,
                                   size_t numPartitions,
-                                  StreamJoinStrategy joinStrategy);
+                                  QueryCompilation::StreamJoinStrategy joinStrategy);
 
     ~StreamHashJoinWindow() = default;
 
@@ -104,7 +105,7 @@ class StreamHashJoinWindow : public StreamWindow {
     Operators::MergingHashTable mergingHashTableRightSide;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
     std::atomic<uint64_t> partitionFinishedCounter;
-    StreamJoinStrategy joinStrategy;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
 };
 
 }// namespace NES::Runtime::Execution

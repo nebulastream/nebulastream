@@ -131,7 +131,6 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                 }
 
                 // Calling the child operator for this joinedRecord
-                NES_DEBUG2("Calling execute on child for record");
                 child->execute(ctx, joinedRecord);
             }
         }
@@ -145,15 +144,15 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 }
 
 NLJSink::NLJSink(const uint64_t operatorHandlerIndex,
-                 const SchemaPtr leftSchema,
-                 const SchemaPtr rightSchema,
-                 const SchemaPtr joinSchema,
+                 const SchemaPtr& leftSchema,
+                 const SchemaPtr& rightSchema,
+                 const SchemaPtr& joinSchema,
                  const uint64_t leftEntrySize,
                  const uint64_t leftPageSize,
                  const uint64_t rightEntrySize,
                  const uint64_t rightPageSize,
-                 const std::string joinFieldNameLeft,
-                 const std::string joinFieldNameRight)
+                 const std::string& joinFieldNameLeft,
+                 const std::string& joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
       joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), leftPageSize(leftPageSize),
       rightEntrySize(rightEntrySize), rightPageSize(rightPageSize), joinFieldNameLeft(joinFieldNameLeft),

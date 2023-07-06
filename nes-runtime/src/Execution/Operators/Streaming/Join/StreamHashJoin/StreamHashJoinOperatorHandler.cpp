@@ -34,7 +34,7 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<O
                                                              size_t pageSize,
                                                              size_t preAllocPageSizeCnt,
                                                              size_t numPartitions,
-                                                             StreamJoinStrategy joinStrategy)
+                                                             QueryCompilation::StreamJoinStrategy joinStrategy)
     : StreamJoinOperatorHandler(origins, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
@@ -64,7 +64,7 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
 
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
             //for local we have to merge the tables first
-            if (joinStrategy == StreamJoinStrategy::HASH_JOIN_LOCAL) {
+            if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
                 //push actual bucket from local to global hash table for left side
 
                 //page before merging:
@@ -107,7 +107,7 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std
                                                                        size_t pageSize,
                                                                        size_t preAllocPageSizeCnt,
                                                                        size_t numPartitions,
-                                                                       StreamJoinStrategy joinStrategy) {
+                                                                       QueryCompilation::StreamJoinStrategy joinStrategy) {
 
     return std::make_shared<StreamHashJoinOperatorHandler>(origins,
                                                            windowSize,

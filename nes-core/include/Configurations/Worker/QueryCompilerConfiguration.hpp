@@ -21,12 +21,12 @@
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Util/Common.hpp>
 #include <iostream>
 #include <map>
 #include <string>
 #include <thread>
 #include <utility>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Configurations {
 
@@ -122,9 +122,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
                                    NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                    "Maximum size of hash table"};
 
-    EnumOption<NES::Runtime::Execution::StreamJoinStrategy> joinStrategy = {
+    EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy = {
         JOIN_STRATEGY,
-        NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
+        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
         "Indicates the windowingStrategy"
         "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 

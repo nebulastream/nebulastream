@@ -11,8 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Runtime/RuntimeForwardRefs.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Common.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
@@ -23,7 +24,6 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -43,7 +43,6 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -56,7 +55,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
@@ -64,7 +62,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -408,17 +405,17 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NodePtr leftJoinBuildOperator;
         NodePtr rightJoinBuildOperator;
         auto joinStrategy = options->getStreamJoinStratgy();
-        if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL
-            || joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
-            || joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
+            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
             // TODO we should pass this not as an enum.
-            Runtime::Execution::StreamJoinStrategy runtimeJoinStrategy;
-            if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL) {
-                runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_LOCAL;
-            } else if (joinStrategy == Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
-                runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
+            QueryCompilation::StreamJoinStrategy runtimeJoinStrategy;
+            if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+                runtimeJoinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
+            } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+                runtimeJoinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
             } else {
-                runtimeJoinStrategy = Runtime::Execution::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
+                runtimeJoinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
             }
             auto joinOperatorHandler =
                 StreamHashJoinOperatorHandler::create(joinOperator->getAllInputOriginIds(),
@@ -453,7 +450,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
             rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
             operatorNode->replace(joinSinkOperator);
-        } else if (joinStrategy == Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN) {
+        } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
             auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
                                                                   joinOperator->getLeftInputSchema()->getSize(),
                                                                   joinOperator->getRightInputSchema()->getSize(),

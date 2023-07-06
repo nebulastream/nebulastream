@@ -13,10 +13,9 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <Util/Common.hpp>
 #include <cstdint>
 #include <string>
 namespace NES::QueryCompilation {
@@ -217,13 +216,13 @@ class QueryCompilerOptions {
      * @brief Sets the strategy for the stream join
      * @param strategy
      */
-    void setStreamJoinStratgy(Runtime::Execution::StreamJoinStrategy strategy);
+    void setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy strategy);
 
     /**
      * @brief gets the stream join strategy.
      * @return
      */
-    [[nodiscard]] Runtime::Execution::StreamJoinStrategy getStreamJoinStratgy() const;
+    [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStratgy() const;
 
     /**
      * @brief Return hash join options
@@ -268,7 +267,7 @@ class QueryCompilerOptions {
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
     std::string cudaSdkPath;
-    Runtime::Execution::StreamJoinStrategy joinStrategy;
+    StreamJoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation
 

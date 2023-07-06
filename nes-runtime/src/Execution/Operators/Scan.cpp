@@ -17,7 +17,6 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

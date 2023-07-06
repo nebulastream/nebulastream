@@ -291,14 +291,17 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
+        auto leftInputSchema = sinkOperator->getLeftInputSchema();
+        auto rightInputSchema = sinkOperator->getRightInputSchema();
+
         auto joinSinkNautilus =
             std::make_shared<Runtime::Execution::Operators::NLJSink>(handlerIndex,
-                                                                     sinkOperator->getLeftInputSchema(),
-                                                                     sinkOperator->getRightInputSchema(),
+                                                                     leftInputSchema,
+                                                                     rightInputSchema,
                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
-                                                                     sinkOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                                     leftInputSchema->getSchemaSizeInBytes(),
                                                                      sinkOperator->getOperatorHandler()->getLeftPageSize(),
-                                                                     sinkOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                                     rightInputSchema->getSchemaSizeInBytes(),
                                                                      sinkOperator->getOperatorHandler()->getRightPageSize(),
                                                                      sinkOperator->getJoinFieldNameLeft(),
                                                                      sinkOperator->getJoinFieldNameRight());

@@ -59,12 +59,12 @@ class NLJBuild : public ExecutableOperator {
      * @param isLeftSide
      */
     NLJBuild(uint64_t operatorHandlerIndex,
-             const SchemaPtr schema,
+             const SchemaPtr& schema,
              const std::string& joinFieldName,
              const std::string& timeStampField,
              bool isLeftSide,
              const uint64_t pageSize,
-             TimeFunctionPtr timeFunction);
+             const TimeFunctionPtr& timeFunction);
 
     void setup(ExecutionContext &executionCtx) const override;
 
