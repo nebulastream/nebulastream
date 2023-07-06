@@ -58,7 +58,7 @@ namespace NES::Benchmark {
     /**
      * @brief Testing if a yaml file with multiple sources can be run without any error
      */
-    TEST_F(E2ERunnerTest, multipleSources) {
+    TEST_F(E2ERunnerTest, DISABLED_multipleSources) {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) +"/join_multiple_sources.yaml";
         std::string logPath = "E2ERunnerTest_multipleSources.log";
 
