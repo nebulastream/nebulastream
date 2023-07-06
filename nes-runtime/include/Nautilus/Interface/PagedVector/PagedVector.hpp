@@ -72,7 +72,7 @@ class PagedVector {
      * @brief Returns the capacity per page
      * @return size_t
      */
-    size_t capacityPerPage();
+    size_t getCapacityPerPage();
 
     /**
      * @brief Returns the number of entries on the current page
@@ -82,7 +82,7 @@ class PagedVector {
 
     /**
      * @brief Appends a new page and updates the current page and number of entries.
-     * @return int8_t* page
+     * @return int8_t* page address
      */
     int8_t* appendPage();
 
@@ -104,13 +104,7 @@ class PagedVector {
      * @brief Combines this PagedVector with another one by adding the other.pages to these pages
      * @param other: PagedVector that contains pages, which should be added to this one
      */
-    void combinePagedVectors(const PagedVector& other);
-
-    /**
-     * @brief Getter for the entry size
-     * @return uint64_t
-     */
-    uint64_t getEntrySize() const;
+    void appendAllPages(const PagedVector& other);
 
     /**
      * @brief Getter for the page size
@@ -128,6 +122,7 @@ class PagedVector {
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     uint64_t pageSize;
+    uint64_t capacityPerPage;
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;

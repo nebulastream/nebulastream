@@ -166,6 +166,7 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
             continue;
         }
 
+        // Checking if the window has not been emitted and both sides (left and right) have at least one tuple in their windows.
         auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
         if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK) &&
             window->getNumberOfTuples(/*isLeftSide*/ true) > 0 &&

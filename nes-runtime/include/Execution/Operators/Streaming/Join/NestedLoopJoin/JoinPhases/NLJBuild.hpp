@@ -64,7 +64,7 @@ class NLJBuild : public ExecutableOperator {
              const std::string& timeStampField,
              bool isLeftSide,
              const uint64_t pageSize,
-             std::shared_ptr<TimeFunction> timeFunction);
+             TimeFunctionPtr timeFunction);
 
     void setup(ExecutionContext &executionCtx) const override;
 
@@ -104,7 +104,7 @@ class NLJBuild : public ExecutableOperator {
     const bool isLeftSide;
     const uint64_t entrySize;
     const uint64_t pageSize;
-    const std::shared_ptr<TimeFunction> timeFunction;
+    const TimeFunctionPtr timeFunction;
 };
 }// namespace NES::Runtime::Execution::Operators
 

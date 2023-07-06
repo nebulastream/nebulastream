@@ -1,3 +1,4 @@
+
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface {
 PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, Value<UInt64> entrySize, Value<UInt64> pageSize)
@@ -31,21 +33,21 @@ void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     return pagedVector->getPages()[pagePos];
 }
 
-Value<UInt64> PagedVectorRef::getEntriesPerPage() const {
-    return (pageSize / entrySize).as<UInt64>();
+Value<UInt64> PagedVectorRef::getCapacityPerPage() const {
+    return getMember(pagedVectorRef, PagedVector, capacityPerPage).load<UInt64>();
 }
 
 Value<MemRef> PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
-    Value<UInt64> entriesPerPage = getEntriesPerPage();
-    if (getNumberOfEntries() >= entriesPerPage) {
+    Value<UInt64> capacityPerPage = getCapacityPerPage();
+    if (getNumberOfEntries() >= capacityPerPage) {
         FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
     auto entry = page + (getNumberOfEntries() * entrySize);
-    setNumberOfEntries(getNumberOfEntries() + (uint64_t) 1);
-    setNumberOfTotalEntries(getTotalNumberOfEntries() + (uint64_t) 1);
+    setNumberOfEntries(getNumberOfEntries() + 1_u64);
+    setNumberOfTotalEntries(getTotalNumberOfEntries() + 1_u64);
 
     NES_DEBUG("getNumberOfEntries() after insert is {}", getNumberOfEntries().getValue().toString());
     return entry.as<MemRef>();
@@ -62,9 +64,10 @@ Value<UInt64> PagedVectorRef::getTotalNumberOfEntries() {
 }
 
 Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
-    Value<UInt64> entriesPerPage = getEntriesPerPage();
-    auto pagePos = (pos / entriesPerPage).as<UInt64>();
-    auto positionOnPage = pos - (pagePos * entriesPerPage);
+    // Calculating on what page and at what position the entry lies
+    Value<UInt64> capacityPerPage = getCapacityPerPage();
+    auto pagePos = (pos / capacityPerPage).as<UInt64>();
+    auto positionOnPage = pos - (pagePos * capacityPerPage);
 
     auto page =
         Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));

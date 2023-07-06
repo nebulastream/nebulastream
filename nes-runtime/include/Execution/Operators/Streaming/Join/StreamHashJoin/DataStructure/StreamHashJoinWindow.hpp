@@ -59,15 +59,15 @@ class StreamHashJoinWindow : public StreamWindow {
 
     ~StreamHashJoinWindow() = default;
 
-    uint64_t getNumberOfTuples(bool leftSide) override;
+    uint64_t getNumberOfTuples(bool isLeftSide) override;
 
     /**
      * @brief Returns the number of tuples in this window
      * @param workerIdx
-     * @param leftSide
-     * @return size_t
+     * @param isLeftSide
+     * @return uint64_t
      */
-    size_t getNumberOfTuplesOfWorker(uint64_t workerIdx, bool leftSide);
+    uint64_t getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx);
 
     /**
      * @brief Creates a string representation of this window
@@ -81,7 +81,7 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTable* getHashTable(uint64_t index, bool leftSide);
+    Operators::StreamJoinHashTable* getHashTable(bool isLeftSide, uint64_t index);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side

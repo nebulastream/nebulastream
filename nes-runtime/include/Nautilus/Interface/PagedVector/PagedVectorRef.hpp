@@ -76,7 +76,7 @@ class PagedVectorRef {
      * @brief Returns the maximum number of records per page
      * @return Value<UInt64>
      */
-    Value<UInt64> getEntriesPerPage() const;
+    Value<UInt64> getCapacityPerPage() const;
 
     /**
      * @brief Returns an iterator that points to the begin of this listRef

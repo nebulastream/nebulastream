@@ -146,7 +146,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     uint64_t getMinWatermarkForWorker();
 
     /**
-     * @brief Add the id of the operator this handler is responsible for
+     * @brief Add the id of the operator this handler is responsible for this join
      * @param operatorId
      */
     void addOperatorId(OperatorId operatorId);

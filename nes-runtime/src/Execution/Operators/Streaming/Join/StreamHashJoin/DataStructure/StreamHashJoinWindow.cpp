@@ -15,7 +15,7 @@
 
 namespace NES::Runtime::Execution {
 
-Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(uint64_t workerId, bool leftSide) {
+Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(bool leftSide, uint64_t workerId) {
     if (joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         workerId = 0;
@@ -30,8 +30,8 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(uint64_t work
     }
 }
 
-size_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(uint64_t workerId, bool isLeft) {
-    return getHashTable(workerId, isLeft)->getNumberOfTuples();
+size_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx) {
+    return getHashTable(workerIdx, isLeftSide)->getNumberOfTuples();
 }
 
 Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLeftSide) {
@@ -120,9 +120,9 @@ std::string StreamHashJoinWindow::toString() {
     return basicOstringstream.str();
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuples(bool leftSide) {
+uint64_t StreamHashJoinWindow::getNumberOfTuples(bool isLeftSide) {
     uint64_t sum = 0;
-    if (leftSide) {
+    if (isLeftSide) {
         for (auto& hashTable : hashTableLeftSide) {
             sum += hashTable->getNumberOfTuples();
         }
@@ -131,7 +131,6 @@ uint64_t StreamHashJoinWindow::getNumberOfTuples(bool leftSide) {
             sum += hashTable->getNumberOfTuples();
         }
     }
-
     return sum;
 }
 

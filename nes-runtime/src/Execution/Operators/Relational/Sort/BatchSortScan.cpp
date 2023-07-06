@@ -319,7 +319,7 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
         uint32_t elementIndex = maxElement.elementIndex;
 
         // Add the max element to the merged array
-        if (resultCnt++ % tmp->capacityPerPage() == 0) {
+        if (resultCnt++ % tmp->getCapacityPerPage() == 0) {
             tmp->appendPage();
         }
         std::memcpy(tmp->getEntry(resultCnt), maxElement.value, rowWidth);
@@ -331,7 +331,7 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
                 heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
         } else {// other pages
-            if (elementIndex + 1 < origin->capacityPerPage()) {
+            if (elementIndex + 1 < origin->getCapacityPerPage()) {
                 heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
         }
@@ -350,7 +350,7 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
             tempPtr = handler->getTempState()->appendPage();
         }
 
-        auto count = handler->getState()->capacityPerPage();
+        auto count = handler->getState()->getCapacityPerPage();
         if (i + 1 == handler->getState()->getNumberOfPages()) {
             count = handler->getState()->getNumberOfEntriesOnCurrentPage();
         }
