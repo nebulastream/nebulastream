@@ -37,9 +37,7 @@ class NLJSink : public Operator {
                      const SchemaPtr& rightSchema,
                      const SchemaPtr& joinSchema,
                      const uint64_t leftEntrySize,
-                     const uint64_t leftPageSize,
                      const uint64_t rightEntrySize,
-                     const uint64_t rightPageSize,
                      const std::string& joinFieldNameLeft,
                      const std::string& joinFieldNameRight);
 
@@ -56,9 +54,7 @@ class NLJSink : public Operator {
     const SchemaPtr rightSchema;
     const SchemaPtr joinSchema;
     const uint64_t leftEntrySize;
-    const uint64_t leftPageSize;
     const uint64_t rightEntrySize;
-    const uint64_t rightPageSize;
 
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;

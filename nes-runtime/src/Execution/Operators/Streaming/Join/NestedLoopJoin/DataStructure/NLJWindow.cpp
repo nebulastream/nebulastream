@@ -34,7 +34,7 @@ NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numberOf
                                                                                     rightEntrySize,
                                                                                     rightPageSize));
     }
-    NES_DEBUG2("Created NLJWindow {}", NLJWindow::toString());
+    NES_DEBUG("Created NLJWindow {}", NLJWindow::toString());
 }
 
 uint64_t NLJWindow::getNumberOfTuplesLeft() {

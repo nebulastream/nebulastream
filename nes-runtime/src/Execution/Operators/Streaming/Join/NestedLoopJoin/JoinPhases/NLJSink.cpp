@@ -147,14 +147,11 @@ NLJSink::NLJSink(const uint64_t operatorHandlerIndex,
                  const SchemaPtr& rightSchema,
                  const SchemaPtr& joinSchema,
                  const uint64_t leftEntrySize,
-                 const uint64_t leftPageSize,
                  const uint64_t rightEntrySize,
-                 const uint64_t rightPageSize,
                  const std::string& joinFieldNameLeft,
                  const std::string& joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), leftPageSize(leftPageSize),
-      rightEntrySize(rightEntrySize), rightPageSize(rightPageSize), joinFieldNameLeft(joinFieldNameLeft),
-      joinFieldNameRight(joinFieldNameRight) {}
+      joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
+      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
 
 }// namespace NES::Runtime::Execution::Operators

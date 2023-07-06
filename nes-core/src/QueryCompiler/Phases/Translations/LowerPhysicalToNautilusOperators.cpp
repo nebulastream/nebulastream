@@ -273,7 +273,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return parentOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
-        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
@@ -300,9 +300,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                      rightInputSchema,
                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
                                                                      leftInputSchema->getSchemaSizeInBytes(),
-                                                                     sinkOperator->getOperatorHandler()->getLeftPageSize(),
                                                                      rightInputSchema->getSchemaSizeInBytes(),
-                                                                     sinkOperator->getOperatorHandler()->getRightPageSize(),
                                                                      sinkOperator->getJoinFieldNameLeft(),
                                                                      sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
@@ -359,7 +357,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                           buildOperator->getJoinFieldName(),
                                                                                           buildOperator->getTimeStampFieldName(),
                                                                                           isLeftSide,
-                                                                                          pageSize,
                                                                                           std::move(timeFunction));
         } else {
             auto timeStampFieldRecord =
@@ -370,7 +367,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                           buildOperator->getJoinFieldName(),
                                                                                           buildOperator->getTimeStampFieldName(),
                                                                                           isLeftSide,
-                                                                                          pageSize,
                                                                                           std::move(timeFunction));
         }
 
