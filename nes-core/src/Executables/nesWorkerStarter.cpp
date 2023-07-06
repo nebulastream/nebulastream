@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
         auto workerConfigPath = commandLineParams.find("--configPath");
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
         if (workerConfigPath != commandLineParams.end()) {
+            workerConfiguration->configPath = workerConfigPath->second;
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
         }
 
