@@ -13,6 +13,8 @@
 */
 
 #include <Configurations/BaseConfiguration.hpp>
+#include <filesystem>
+#include <fstream>
 
 namespace NES::Configurations {
 
@@ -114,6 +116,46 @@ std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionM
         optionMap[identifier] = option;
     }
     return optionMap;
+}
+
+void BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite) {
+    std::ifstream configFile(yamlFilePath);
+    std::stringstream buffer;
+    std::string yamlKeyToLookFor = "workerId: ";
+
+    if (!withOverwrite) {
+        std::string yamlKeyString = "\nworkerId: ";
+        std::string yamlValueString = std::to_string(workerId);
+        std::string yamlConfigValue = yamlKeyString + yamlValueString;
+
+        if (!yamlFilePath.empty() && std::filesystem::exists(yamlFilePath)) {
+            configFile >> buffer.rdbuf();
+            try {
+                std::ofstream output;
+                output.open(yamlFilePath, std::ios::app); // append mode
+                output << yamlConfigValue;
+            } catch (std::exception& e) {
+                throw ConfigurationException("Exception while persisting in yaml file", e.what());
+            }
+        }
+    } else {
+        buffer << configFile.rdbuf();
+        std::string yamlContent = buffer.str();
+
+        size_t startPos = yamlContent.find(yamlKeyToLookFor);
+        if (startPos != std::string::npos) {
+            // move the position to the start of the value
+            startPos += yamlKeyToLookFor.size();
+            // find the end of the line
+            size_t endPos = yamlContent.find('\n', startPos);
+            // replace the old value with the new value for workerId
+            yamlContent.replace(startPos, endPos - startPos, std::to_string(workerId));
+        }
+
+        std::ofstream output(yamlFilePath);
+        output << yamlContent;
+    }
+    configFile.close();
 }
 
 }// namespace NES::Configurations

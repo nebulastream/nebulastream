@@ -335,6 +335,16 @@ bool NesWorker::connect() {
     workerId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
+        if (workerId != workerConfig->workerId) {
+            if (workerConfig->workerId == INVALID_TOPOLOGY_NODE_ID) {
+                // workerId value is written in the yaml for the first time
+                NES_DEBUG("NesWorker::connect() Persisting workerId={} in yaml file.", workerId);
+                getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, false);
+            } else {
+                // a value was in the yaml file but it's being overwritten, because the coordinator assigns a new value
+                getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, true);
+            }
+        }
         NES_DEBUG("NesWorker::registerWorker rpc register success with id {}", workerId);
         connected = true;
         nodeEngine->setNodeId(workerId);
