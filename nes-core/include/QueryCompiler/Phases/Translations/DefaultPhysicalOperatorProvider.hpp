@@ -221,6 +221,31 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      */
     std::shared_ptr<Node> replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
                                                                    const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Lowers a join operator for the old default query compiler
+     * @param operatorNode
+     * @param joinOperator
+     */
+    void lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode,
+                                          std::shared_ptr<JoinLogicalOperatorNode>& joinOperator);
+
+    /**
+     * @brief Lowers a join operator for the nautilus query compiler
+     * @param operatorNode
+     * @param joinOperator
+     */
+    void lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode, std::shared_ptr<JoinLogicalOperatorNode>& joinOperator);
+
+    /**
+     * @brief Returns the left and right timestamp
+     * @param joinOperator
+     * @param windowType
+     * @return {
+     */
+    [[nodiscard]] std::tuple<std::string, std::string>
+    getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+                             const Windowing::TimeBasedWindowTypePtr& windowType) const;
 };
 
 }// namespace NES::QueryCompilation
