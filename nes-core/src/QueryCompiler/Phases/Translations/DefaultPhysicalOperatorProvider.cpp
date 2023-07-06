@@ -314,101 +314,44 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
 
     if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
-        // create join operator handler, to establish a common Runtime object for build and prob.
-        auto joinOperatorHandler =
-            Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
-
-        auto leftInputOperator =// the child or child group on the left input side of the join
-            getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-        auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
-                                                                                          joinOperator->getOutputSchema(),
-                                                                                          joinOperatorHandler,
-                                                                                          JoinBuildSideType::Left);
-        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
-
-        auto rightInputOperator =// the child or child group on the right input side of the join
-            getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-        auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                                           joinOperator->getOutputSchema(),
-                                                                                           joinOperatorHandler,
-                                                                                           JoinBuildSideType::Right);
-        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-
-        auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                            joinOperator->getRightInputSchema(),
-                                                                            joinOperator->getOutputSchema(),
-                                                                            joinOperatorHandler);
-        operatorNode->replace(joinSink);
+        lowerOldDefaultQueryCompilerJoin(operatorNode, joinOperator);
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        using namespace Runtime::Execution::Operators;
+        lowerNautilusJoin(operatorNode, joinOperator);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode,
+                                                        std::shared_ptr<JoinLogicalOperatorNode>& joinOperator) {
+    using namespace Runtime::Execution::Operators;
 
-        auto joinDefinition = joinOperator->getJoinDefinition();
-        auto joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
-        auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
+    auto joinDefinition = joinOperator->getJoinDefinition();
+    auto joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
+    auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
 
-        auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
-        //FIXME Once #3353 is merged, sliding window can be added
-        NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
-                   "Only a tumbling window is currently supported for StreamJoin");
+    auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    //FIXME Once #3353 is merged, sliding window can be added
+    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
+               "Only a tumbling window is currently supported for StreamJoin");
 
-        std::string timeStampFieldNameLeft;
-        std::string timeStampFieldNameRight;
+    auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
 
-        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
-            NES_DEBUG("Skip eventime identification as we use ingestion time");
-            timeStampFieldNameLeft = "IngestionTime";
-            timeStampFieldNameRight = "IngestionTime";
-        } else {
-            // FIXME Once #3407 is done, we can change this to get the left and right fieldname
-            auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+    auto windowSize = windowType->getSize().getTime();
+    auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
+    auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-            auto timeStampFieldNameWithoutSourceName =
-                timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+    auto leftInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    auto rightInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
 
-            // Extract the schema of the right side
-            auto rightSchema = joinOperator->getRightInputSchema();
-            // Extract the first field from right schema and trim it to find the schema qualifier for the right side
-            bool found = false;
-            for (auto& field : rightSchema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
-                    timeStampFieldNameRight = field->getName();
-                    found = true;
-                }
-            }
-
-            NES_ASSERT(found, " right schema does not contain a timestamp attribute");
-
-            //Extract the schema of the right side
-            auto leftSchema = joinOperator->getLeftInputSchema();
-            //Extract the first field from right schema and trim it to find the schema qualifier for the right side
-            found = false;
-            for (auto& field : leftSchema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
-                    timeStampFieldNameLeft = field->getName();
-                    found = true;
-                }
-            }
-            NES_ASSERT(found, " left schema does not contain a timestamp attribute");
-            NES_DEBUG("leftSchema:{} rightSchema: {}", leftSchema->toString(), rightSchema->toString());
-            NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-                       "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
-            NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
-        }
-        auto windowSize = windowType->getSize().getTime();
-        auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
-        auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
-
-        auto leftInputOperator =
-            getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-        auto rightInputOperator =
-            getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-
-        NodePtr leftJoinBuildOperator;
-        NodePtr rightJoinBuildOperator;
-        auto joinStrategy = options->getStreamJoinStratgy();
-        if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
-            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
-            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+    continue here with extracting each joinStrategy in an own method
+    NodePtr leftJoinBuildOperator;
+    NodePtr rightJoinBuildOperator;
+    auto joinStrategy = options->getStreamJoinStratgy();
+    if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL
+            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
             // TODO we should pass this not as an enum.
             QueryCompilation::StreamJoinStrategy runtimeJoinStrategy;
             if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
@@ -487,7 +430,67 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         } else {
             NES_NOT_IMPLEMENTED();
         }
+}
+std::tuple<std::string, std::string>
+DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+                                                          const Windowing::TimeBasedWindowTypePtr& windowType) const {
+    if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
+        NES_DEBUG("Skip eventime identification as we use ingestion time");
+        return {"IngestionTime", "IngestionTime"};
+    } else {
+
+        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameWithoutSourceName =
+            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        // Lambda function for extracting the timestamp from a schema
+        auto findTimeStampFieldName = [&](const SchemaPtr& schema) {
+            for (const auto& field : schema->fields) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                    return field->getName();
+                }
+            }
+            return std::string();
+        };
+
+        // Extracting the left and right timestamp
+        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
+        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
+
+        NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+        NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
+
+        return {timeStampFieldNameLeft, timeStampFieldNameRight};
     }
+}
+
+void DefaultPhysicalOperatorProvider::lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode,
+                                                                       std::shared_ptr<JoinLogicalOperatorNode>& joinOperator) {
+    // create join operator handler, to establish a common Runtime object for build and prob.
+    auto joinOperatorHandler =
+        Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
+
+    auto createJoinBuildOperator = [&](const SchemaPtr& inputSchema, const std::vector<OperatorNodePtr>& inputOperators,
+                                       JoinBuildSideType buildSideType) {
+        auto joinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(inputSchema,
+                                                                                      joinOperator->getOutputSchema(),
+                                                                                      joinOperatorHandler,
+                                                                                      buildSideType);
+        auto inputOperator = getJoinBuildInputOperator(joinOperator, inputSchema, inputOperators);
+        inputOperator->insertBetweenThisAndParentNodes(joinBuildOperator);
+    };
+
+    // Calling above lambda function for left and right side
+    createJoinBuildOperator(joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators(), JoinBuildSideType::Left);
+    createJoinBuildOperator(joinOperator->getRightInputSchema(), joinOperator->getRightOperators(), JoinBuildSideType::Right);
+
+    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                        joinOperator->getRightInputSchema(),
+                                                                        joinOperator->getOutputSchema(),
+                                                                        joinOperatorHandler);
+    operatorNode->replace(joinSink);
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
