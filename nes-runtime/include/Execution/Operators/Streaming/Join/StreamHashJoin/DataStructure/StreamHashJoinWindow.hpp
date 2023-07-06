@@ -108,7 +108,6 @@ class StreamHashJoinWindow : public StreamWindow {
     bool markPartitionAsFinished();
 
   protected:
-    uint64_t numberOfWorker;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
     Operators::MergingHashTable mergingHashTableLeftSide;

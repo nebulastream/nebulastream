@@ -53,8 +53,7 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t preAllocPageSizeCnt,
                                            size_t numPartitions,
                                            QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
-      mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+    : StreamWindow(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 

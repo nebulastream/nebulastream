@@ -86,6 +86,9 @@ void E2ESingleRun::setupCoordinatorConfig() {
         NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
     }
 
+    coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
+    NES_INFO("Using joinStrategy {}", magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
+
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;
         coordinatorConf->worker.queryCompiler.useCompilationCache = true;

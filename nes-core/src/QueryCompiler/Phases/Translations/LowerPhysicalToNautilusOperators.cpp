@@ -346,8 +346,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         auto tsField = buildOperator->getTimeStampFieldName();
         auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
-        auto pageSize = isLeftSide ? buildOperator->getOperatorHandler()->getLeftPageSize() :
-                                   buildOperator->getOperatorHandler()->getRightPageSize();
         std::shared_ptr<Runtime::Execution::Operators::NLJBuild> joinBuildNautilus;
 
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
