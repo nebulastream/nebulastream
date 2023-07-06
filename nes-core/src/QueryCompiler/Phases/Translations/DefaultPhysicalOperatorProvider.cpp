@@ -351,8 +351,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
                    "Only a tumbling window is currently supported for StreamJoin");
 
-        std::string timeStampFieldNameLeft = "";
-        std::string timeStampFieldNameRight = "";
+        std::string timeStampFieldNameLeft;
+        std::string timeStampFieldNameRight;
 
         if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             NES_DEBUG("Skip eventime identification as we use ingestion time");
@@ -489,6 +489,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         }
     }
 }
+
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
     const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
     SchemaPtr outputSchema,
