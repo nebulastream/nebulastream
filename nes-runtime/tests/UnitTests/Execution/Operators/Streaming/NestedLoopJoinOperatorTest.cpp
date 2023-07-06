@@ -189,8 +189,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByWindowIdentifier(windowIdentifier).value());
             Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
 
-            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ true, /*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);
+            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+            Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
             auto windowStartPos = windowIdentifier - windowSize;
             auto windowEndPosLeft = windowStartPos + expectedNumberOfTuplesInWindowLeft;
             uint64_t posInWindow = 0UL;
@@ -207,8 +207,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
             posInWindow = 0;
             auto windowEndPosRight = windowStartPos + expectedNumberOfTuplesInWindowRight;
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ false, /*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
+            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
 
             for (auto pos = windowStartPos; pos < windowEndPosRight; ++pos, ++posInWindow) {
                 auto rightRecordMemRef = *leftPagedVector.at(pos);
@@ -249,8 +249,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
-            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ true, /*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);
+            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+            Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
 
             auto memRefToRecord = leftPagedVector.allocateEntry();
             memoryProviderLeft->write(zeroVal, memRefToRecord, leftRecord);
@@ -261,8 +261,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRef(/*isLeftSide*/ false, /*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
+            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
 
             auto memRefToRecord = rightPagedVector.allocateEntry();
             memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);

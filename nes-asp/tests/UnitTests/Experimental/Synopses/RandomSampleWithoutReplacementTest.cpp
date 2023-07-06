@@ -90,7 +90,7 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
         // Setting up the synopsis and creating the local operator state
         randomSample.setup(handlerIndex, *executionContext);
         auto sampleMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getPagedVectorRef());
-        auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize, pageSize);
+        auto samples = Nautilus::Interface::PagedVectorRef(sampleMemRef, entrySize);
         auto opState = std::make_unique<RandomSampleWithoutReplacement::LocalRandomSampleOperatorState>(samples);
 
         // Inserting records

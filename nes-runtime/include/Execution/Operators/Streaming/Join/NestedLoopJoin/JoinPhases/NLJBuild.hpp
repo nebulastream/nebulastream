@@ -64,11 +64,11 @@ class NLJBuild : public ExecutableOperator {
              const std::string& timeStampField,
              bool isLeftSide,
              const uint64_t pageSize,
-             const TimeFunctionPtr& timeFunction);
+             TimeFunctionPtr timeFunction);
 
-    void setup(ExecutionContext &executionCtx) const override;
+    void setup(ExecutionContext& executionCtx) const override;
 
-    void open(ExecutionContext& ctx, RecordBuffer &recordBuffer) const override;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
     /**
      * @brief Stores the record in the corresponding window

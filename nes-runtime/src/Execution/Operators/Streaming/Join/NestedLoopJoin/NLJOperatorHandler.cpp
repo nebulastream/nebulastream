@@ -35,14 +35,19 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 sizeOfTupleInByteRight), leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG("start HashJoinOperatorHandler");
+    NES_DEBUG2("start HashJoinOperatorHandler");
 }
 
 uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         NLJWindow* nljWindow = static_cast<NLJWindow*>(window.value().get());
-        return nljWindow->getNumberOfTuples(isLeftSide);
+        if (isLeftSide) {
+            return nljWindow->getNumberOfTuplesLeft();
+        } else {
+            return nljWindow->getNumberOfTuplesRight();
+        }
+
     }
 
     return -1;
@@ -103,7 +108,11 @@ uint64_t NLJOperatorHandler::getRightPageSize() const {
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
-    return nljWindow->getPagedVectorRef(isLeftSide, workerId);
+    if (isLeftSide) {
+        return nljWindow->getPagedVectorRefLeft(workerId);
+    } else {
+        return nljWindow->getPagedVectorRefRight(workerId);
+    }
 }
 
 uint64_t getNLJWindowStartProxy(void* ptrNljWindow) {

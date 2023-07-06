@@ -105,7 +105,7 @@ void RandomSampleWithoutReplacement::getApproximateRecord(const uint64_t handler
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize, pageSize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
 
     // The buffer size does not matter to us, as the record always lie in a row
     auto memoryProviderInput = MemoryProvider::MemoryProvider::createMemoryProvider(inputSchema->getSchemaSizeInBytes(),
@@ -211,7 +211,7 @@ bool RandomSampleWithoutReplacement::storeLocalOperatorState(const uint64_t hand
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize, pageSize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
 
     ctx.setLocalOperatorState(op, std::make_unique<LocalRandomSampleOperatorState>(pagedVectorRef));
     return true;

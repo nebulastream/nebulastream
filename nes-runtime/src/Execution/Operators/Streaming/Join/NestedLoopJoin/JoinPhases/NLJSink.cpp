@@ -82,8 +82,8 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                       windowReference, workerIdForPagedVectors,
                                                       Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ false));
 
-    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);
-    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize, rightPageSize);
+    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
+    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
 
     Value<UInt64> windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
     Value<UInt64> windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, windowReference);
@@ -97,14 +97,13 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
         Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
     ctx.setOrigin(originId);
 
+    // As we know that the tuples are lying one after the other (row layout), we can ignore the buffer size
     auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);
     auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema);
 
     Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
-    for (auto leftIt = leftPagedVector.begin(); leftIt != leftPagedVector.end(); ++leftIt) {
-        for (auto rightIt = rightPagedVector.begin(); rightIt != rightPagedVector.end(); ++rightIt) {
-            auto leftRecordMemRef = *leftIt;
-            auto rightRecordMemRef = *rightIt;
+    for (auto leftRecordMemRef : leftPagedVector) {
+        for (auto rightRecordMemRef : rightPagedVector) {
             auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
             auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
 

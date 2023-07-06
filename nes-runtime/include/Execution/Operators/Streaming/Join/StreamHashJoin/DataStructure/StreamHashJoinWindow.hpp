@@ -60,7 +60,17 @@ class StreamHashJoinWindow : public StreamWindow {
 
     ~StreamHashJoinWindow() = default;
 
-    uint64_t getNumberOfTuples(bool isLeftSide) override;
+    /**
+     * @brief Returns the number of tuples in this window for the left side
+     * @return uint64_t
+     */
+    uint64_t getNumberOfTuplesLeft() override;
+
+    /**
+     * @brief Returns the number of tuples in this window for the right side
+     * @return uint64_t
+     */
+    uint64_t getNumberOfTuplesRight() override;
 
     /**
      * @brief Returns the number of tuples in this window

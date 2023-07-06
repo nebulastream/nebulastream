@@ -48,11 +48,17 @@ class NLJWindow : public StreamWindow {
 
     /**
      * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param leftSide: If the side is the left or right side
      * @param workerId: The id of the worker, which request the PagedVectorRef
      * @return Void pointer to the pagedVector
      */
-    void* getPagedVectorRef(bool leftSide, uint64_t workerId);
+    void* getPagedVectorRefLeft(uint64_t workerId);
+
+    /**
+     * @brief Retrieves the pointer to paged vector for the left or right side
+     * @param workerId: The id of the worker, which request the PagedVectorRef
+     * @return Void pointer to the pagedVector
+     */
+    void* getPagedVectorRefRight(uint64_t workerId);
 
     /**
      * @brief combines the PagedVectors for the left and right side. Afterwards, all tuples are stored in the first
@@ -61,11 +67,16 @@ class NLJWindow : public StreamWindow {
     void combinePagedVectors();
 
     /**
-     * @brief Returns the number of tuples in this window
-     * @param leftSide
+     * @brief Returns the number of tuples in this window for the left side
      * @return uint64_t
      */
-    uint64_t getNumberOfTuples(bool leftSide) override;
+    uint64_t getNumberOfTuplesLeft() override;
+
+    /**
+     * @brief Returns the number of tuples in this window for the right side
+     * @return uint64_t
+     */
+    uint64_t getNumberOfTuplesRight() override;
 
     /**
      * @brief Creates a string representation of this window

@@ -93,7 +93,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
                                                        localJoinState->windowReference, workerId,
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
-    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
+    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     localJoinState->windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy,
                                                          localJoinState->windowReference);
     localJoinState->windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy,
@@ -140,7 +140,7 @@ void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
                                                        windowReference, workerId,
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize, pageSize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
@@ -164,7 +164,7 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& timeStampField,
                    bool isLeftSide,
                    const uint64_t pageSize,
-                   const TimeFunctionPtr& timeFunction)
+                   TimeFunctionPtr timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
       isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
 

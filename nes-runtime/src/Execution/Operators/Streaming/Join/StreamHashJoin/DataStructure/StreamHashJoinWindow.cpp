@@ -121,16 +121,18 @@ std::string StreamHashJoinWindow::toString() {
     return basicOstringstream.str();
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuples(bool isLeftSide) {
+uint64_t StreamHashJoinWindow::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
-    if (isLeftSide) {
-        for (auto& hashTable : hashTableLeftSide) {
-            sum += hashTable->getNumberOfTuples();
-        }
-    } else {
-        for (auto& hashTable : hashTableRightSide) {
-            sum += hashTable->getNumberOfTuples();
-        }
+    for (auto& hashTable : hashTableLeftSide) {
+        sum += hashTable->getNumberOfTuples();
+    }
+    return sum;
+}
+
+uint64_t StreamHashJoinWindow::getNumberOfTuplesRight() {
+    uint64_t sum = 0;
+    for (auto& hashTable : hashTableRightSide) {
+        sum += hashTable->getNumberOfTuples();
     }
     return sum;
 }
