@@ -314,12 +314,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                                          windowSize,
                                                          leftSchema->getSchemaSizeInBytes(),
                                                          rightSchema->getSchemaSizeInBytes(),
-
                                                          NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
                                                          NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
-                                                         StreamJoinStrategy::HASH_JOIN_LOCAL);
+                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);

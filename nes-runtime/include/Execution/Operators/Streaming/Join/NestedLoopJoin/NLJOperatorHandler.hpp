@@ -36,6 +36,10 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     /**
      * @brief Constructor for a NLJOperatorHandler
      * @param origins
+     * @param sizeOfTupleInByteLeft
+     * @param sizeOfTupleInByteRight
+     * @param sizePageLeft
+     * @param sizePageRight
      * @param windowSize
      */
     explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
@@ -43,7 +47,7 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                                 uint64_t sizeOfTupleInByteRight,
                                 uint64_t sizePageLeft,
                                 uint64_t sizePageRight,
-                                size_t windowSize);
+                                uint64_t windowSize);
 
     ~NLJOperatorHandler() = default;
     /**

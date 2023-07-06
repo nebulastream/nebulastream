@@ -21,6 +21,7 @@
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/Common.hpp>
 #include <list>
 #include <map>
 #include <optional>
@@ -41,8 +42,8 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param JoinStrategy
      */
     StreamJoinOperatorHandler(const std::vector<OriginId>& origins,
-                              size_t windowSize,
-                              StreamJoinStrategy joinStrategy,
+                              uint64_t windowSize,
+                              QueryCompilation::StreamJoinStrategy joinStrategy,
                               size_t sizeOfRecordLeft,
                               size_t sizeOfRecordRight);
 
@@ -174,7 +175,7 @@ protected:
     std::list<StreamWindowPtr> windows;
     SliceAssigner sliceAssigner;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    StreamJoinStrategy joinStrategy;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
     OperatorId operatorId;

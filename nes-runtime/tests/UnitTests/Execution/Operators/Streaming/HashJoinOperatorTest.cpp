@@ -103,7 +103,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
                                                                               buildHelper.pageSize,
                                                                               1,
                                                                               buildHelper.numPartitions,
-                                                                              StreamJoinStrategy::HASH_JOIN_LOCAL);
+                                                                              QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -264,7 +264,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                          hashJoinSinkHelper.pageSize,
                                                          1,
                                                          hashJoinSinkHelper.numPartitions,
-                                                         StreamJoinStrategy::HASH_JOIN_LOCAL);
+                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(

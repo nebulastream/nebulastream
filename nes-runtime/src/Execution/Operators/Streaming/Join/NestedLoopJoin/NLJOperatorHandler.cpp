@@ -27,10 +27,10 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                        uint64_t sizeOfTupleInByteRight,
                                        uint64_t sizePageLeft,
                                        uint64_t sizePageRight,
-                                       size_t windowSize)
+                                       uint64_t windowSize)
     : StreamJoinOperatorHandler(origins,
                                 windowSize,
-                                NES::Runtime::Execution::StreamJoinStrategy::NESTED_LOOP_JOIN,
+                                QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
                                 sizeOfTupleInByteRight), leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
 

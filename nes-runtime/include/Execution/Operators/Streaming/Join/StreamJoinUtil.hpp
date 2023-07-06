@@ -16,6 +16,7 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -34,19 +35,12 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace NES::Runtime::Execution {
 
-enum class StreamJoinStrategy : uint8_t {
-    HASH_JOIN_LOCAL,
-    HASH_JOIN_GLOBAL_LOCKING,
-    HASH_JOIN_GLOBAL_LOCK_FREE,
-    NESTED_LOOP_JOIN
-};
 
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
-static constexpr auto DEFAULT_JOIN_STRATEGY = StreamJoinStrategy::NESTED_LOOP_JOIN;
 static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 
 namespace Operators {

@@ -22,6 +22,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/Common.hpp>
 #include <cstddef>
 #include <list>
 #include <queue>
@@ -66,7 +67,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
                                            size_t numPartitions,
-                                           StreamJoinStrategy joinStrategy);
+                                           QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
@@ -90,7 +91,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                                    size_t pageSize,
                                                    size_t preAllocPageSizeCnt,
                                                    size_t numPartitions,
-                                                   StreamJoinStrategy joinStrategy);
+                                                   QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Starts the operator handler

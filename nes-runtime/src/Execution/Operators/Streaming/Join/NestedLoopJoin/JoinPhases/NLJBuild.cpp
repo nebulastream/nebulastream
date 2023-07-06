@@ -159,12 +159,12 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 }
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
-                   const SchemaPtr schema,
+                   const SchemaPtr& schema,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
                    bool isLeftSide,
                    const uint64_t pageSize,
-                   TimeFunctionPtr timeFunction)
+                   const TimeFunctionPtr& timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
       isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
 

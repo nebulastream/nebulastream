@@ -20,7 +20,7 @@ namespace NES::Testing {
 
 TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
-                                         const NES::Runtime::Execution::StreamJoinStrategy& joinStrategy) {
+                                         const QueryCompilation::StreamJoinStrategy& joinStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
