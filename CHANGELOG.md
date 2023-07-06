@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.133](https://github.com/nebulastream/nebulastream/tree/v0.5.133) (2023-07-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.132...v0.5.133)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator [\#3896](https://github.com/nebulastream/nebulastream/issues/3896)
+
 ## [v0.5.132](https://github.com/nebulastream/nebulastream/tree/v0.5.132) (2023-07-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.131...v0.5.132)
