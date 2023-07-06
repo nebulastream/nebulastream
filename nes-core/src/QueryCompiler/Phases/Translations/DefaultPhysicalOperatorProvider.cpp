@@ -702,7 +702,7 @@ std::shared_ptr<Node> DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBa
 void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const QueryPlanPtr&,
                                                                      const LogicalOperatorNodePtr& operatorNode) {
 
-    NES_DEBUG2("Create Thread local window aggregation");
+    NES_DEBUG("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
