@@ -32,7 +32,6 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
-//#include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution {
 
 class HashJoinOperatorTest : public Testing::NESBaseTest {
