@@ -144,7 +144,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         auto window = hashJoinOpHandler->getWindowByTimestampOrCreateIt(timeStamp);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(window.get());
 
-        auto hashTable = hashWindow->getHashTable(workerContext->getId(), buildHelper.isLeftSide);
+        auto hashTable = hashWindow->getHashTable(buildHelper.isLeftSide, workerContext->getId());
 
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
@@ -677,7 +677,6 @@ TEST_F(HashJoinOperatorTest, joinSinkTest) {
     hashJoinSinkHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinSinkHelper.numPartitions = 2;
     hashJoinSinkHelper.windowSize = 20;
-    hashJoinSinkHelper.numberOfTuplesToProduce = 2 * hashJoinSinkHelper.windowSize + 1;
 
     ASSERT_TRUE(hashJoinSinkAndCheck(hashJoinSinkHelper));
 }
