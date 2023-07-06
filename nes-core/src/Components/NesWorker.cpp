@@ -44,8 +44,6 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
 
-#include <filesystem>
-#include <fstream>
 #include <utility>
 
 using namespace std;
@@ -335,30 +333,6 @@ bool NesWorker::connect() {
 
     NES_DEBUG("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
     workerId = coordinatorRpcClient->getId();
-
-    // add this newly assigned workerId value in the corresponding yaml file
-    if (workerConfig->workerId.getValue() == -1 && successPRCRegister) {
-        std::string pathToYaml = workerConfig->configPath;
-        std::string yamlKeyString = "\nworkerId: ";
-        std::string yamlValueString = std::to_string(workerId);
-        std::string yamlConfigValue = yamlKeyString + yamlValueString;
-        if (!pathToYaml.empty() && std::filesystem::exists(pathToYaml)) {
-            NES_INFO2("Changing yaml config file {}", pathToYaml);
-            std::ifstream configFile(pathToYaml);
-            std::stringstream ss;
-            configFile >> ss.rdbuf();
-
-            try {
-                Yaml::Node config;
-                std::ofstream fout;
-                fout.open(pathToYaml, ios::app);
-                fout << yamlConfigValue;
-            } catch (std::exception& e) {
-                NES_WARNING("NesSourceConfig: Could not parse sourceConfig as YAML: " << e.what());
-            }
-        }
-    }
-
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerWorker rpc register success with id {}", workerId);

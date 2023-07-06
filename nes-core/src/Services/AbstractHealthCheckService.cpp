@@ -62,10 +62,6 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
     nodeIdToTopologyNodeMap.erase(node->getId());
 }
 
-cuckoohash_map<uint64_t, TopologyNodePtr> AbstractHealthCheckService::getNodeIdToTopologyNodeMap() {
-    return nodeIdToTopologyNodeMap;
-}
-
 bool AbstractHealthCheckService::getRunning() { return isRunning; }
 
 bool AbstractHealthCheckService::isWorkerInactive(TopologyNodeId workerId) {
