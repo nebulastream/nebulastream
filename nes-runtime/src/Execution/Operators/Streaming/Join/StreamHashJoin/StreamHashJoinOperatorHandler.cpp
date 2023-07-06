@@ -69,11 +69,11 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
 
                 //page before merging:
 
-                auto localHashTableLeft = hashWindow->getHashTable(workerCtx->getId(), /* isLeftSide=*/true);
+                auto localHashTableLeft = hashWindow->getHashTable(/* isLeftSide=*/true, workerCtx->getId());
                 sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
                 //push actual bucket from local to global hash table for right side
-                auto localHashTableRight = hashWindow->getHashTable(workerCtx->getId(), /* isLeftSide=*/false);
+                auto localHashTableRight = hashWindow->getHashTable(/* isLeftSide=*/false, workerCtx->getId());
                 sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
             }
 
