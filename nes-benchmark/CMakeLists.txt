@@ -48,6 +48,9 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 ### Compression Benchmark ###
 add_nes_benchmarks(compression-benchmark "src/MicroBenchmarks/Compression/BenchmarkCompression.cpp")
 
+### MemoryLayout Benchmark ###
+add_nes_benchmarks(memory-layout-benchmark "src/MicroBenchmarks/MemoryLayout/BenchmarkMemoryLayout.cpp")
+
 ### Query Merger Benchmark ###
 add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
 
