@@ -32,7 +32,7 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(bool leftSide
 }
 
 size_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx) {
-    return getHashTable(workerIdx, isLeftSide)->getNumberOfTuples();
+    return getHashTable(isLeftSide, workerIdx)->getNumberOfTuples();
 }
 
 Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLeftSide) {
