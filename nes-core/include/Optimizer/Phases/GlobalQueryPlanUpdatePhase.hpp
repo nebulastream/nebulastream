@@ -133,6 +133,36 @@ class GlobalQueryPlanUpdatePhase {
                                         GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
+     * @brief Process add query request
+     * @param nesRequest:add query request
+     */
+    void processAddQueryRequest(const NESRequestPtr& nesRequest);
+
+    /**
+     * @brief Process fail query request
+     * @param nesRequest: fail query request
+     */
+    void processFailQueryRequest(const NESRequestPtr& nesRequest);
+
+    /**
+     * @brief Process stop query request
+     * @param nesRequest: stop query request
+     */
+    void processStopQueryRequest(const NESRequestPtr& nesRequest);
+
+    /**
+     * @brief Process Remove Topology Link request
+     * @param nesRequest: Remove Topology Link request
+     */
+    void processRemoveTopologyLinkRequest(const NESRequestPtr& nesRequest);
+
+    /**
+     * @brief Process Remove Topology Node request
+     * @param nesRequest: Remove Topology Node request
+     */
+    void processRemoveTopologyNodeRequest(const NESRequestPtr& nesRequest);
+
+    /**
      * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.
      * Note: If the upstream or downstream execution node consists only of system generated operators then successive execution
      * nodes are explored till a logical operator is found.
