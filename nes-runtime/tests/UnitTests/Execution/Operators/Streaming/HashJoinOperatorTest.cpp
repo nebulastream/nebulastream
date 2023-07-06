@@ -237,7 +237,7 @@ uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdent
         totalTuples -= windowSize;
     }
     tmpVec.emplace_back(totalTuples);
-    auto noWindow = windowIdentifier / windowSize;
+    auto noWindow = (windowIdentifier - 1) / windowSize;
     return tmpVec[noWindow];
 }
 
@@ -330,7 +330,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
             Nautilus::Record({{hashJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
                               {hashJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
                               {hashJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
-        NES_DEBUG("Tuple id={} key={} ts={}", i, (i % 10) + 10, i);
+        NES_DEBUG("Tuple left id={} key={} ts={}", i, (i % 10) + 10, i);
         auto recordRight =
             Nautilus::Record({{hashJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
                               {hashJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
@@ -368,10 +368,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         //for one record in the buffer
         for (auto u = 0UL; u < leftRecords[i].size(); u++) {
             hashJoinBuildLeft->execute(executionContext, leftRecords[i][u]);
-            NES_DEBUG("Tuple insert id={} key={} ts={}",
-                      i,
-                      leftRecords[i][u].read("f2_left")->toString(),
-                      leftRecords[i][u].read(hashJoinSinkHelper.timeStampFieldLeft)->toString());
+            NES_DEBUG("Insert left tuple {}", leftRecords[i][u].toString());
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldLeft).as<UInt64>());
@@ -381,9 +378,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
     }
-    NES_DEBUG("filling right side")
-    std::cout << "right side=" << rightRecords.size() << std::endl;
-    ;
+
+    NES_DEBUG("filling right side with size = {}", rightRecords.size());
     for (auto i = 0UL; i < rightRecords.size(); i++) {
         auto tupleBuffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
         RecordBuffer recordBufferRight = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
@@ -395,16 +391,18 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
         //for one record in the buffer
         for (auto u = 0UL; u < rightRecords[i].size(); u++) {
             hashJoinBuildRight->execute(executionContext, rightRecords[i][u]);
+            NES_DEBUG("Insert right tuple {}", rightRecords[i][u].toString());
         }
         executionContext.setWatermarkTs(rightRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setOrigin(uint64_t(2));
         executionContext.setSequenceNumber(uint64_t(i));
+        NES_DEBUG("trigger left with ts={}", rightRecords[i][size - 1].read(hashJoinSinkHelper.timeStampFieldRight)->toString());
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
-    NES_DEBUG("trigger sink");
     auto numberOfEmittedBuffersBuild = hashJoinOperatorTest->emittedBuffers.size();
+    NES_DEBUG("trigger sink for numberOfEmittedBuffersBuild = {}", numberOfEmittedBuffersBuild);
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
         auto tupleBuffer = hashJoinOperatorTest->emittedBuffers[cnt];
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
@@ -679,6 +677,7 @@ TEST_F(HashJoinOperatorTest, joinSinkTest) {
     hashJoinSinkHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinSinkHelper.numPartitions = 2;
     hashJoinSinkHelper.windowSize = 20;
+    hashJoinSinkHelper.numberOfTuplesToProduce = 2 * hashJoinSinkHelper.windowSize + 1;
 
     ASSERT_TRUE(hashJoinSinkAndCheck(hashJoinSinkHelper));
 }
