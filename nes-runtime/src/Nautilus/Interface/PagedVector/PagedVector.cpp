@@ -18,10 +18,11 @@
 namespace NES::Nautilus::Interface {
 
 PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize, uint64_t pageSize)
-    : allocator(std::move(allocator)), entrySize(entrySize), pageSize(pageSize), numberOfEntries(0), totalNumberOfEntries(0) {
+    : allocator(std::move(allocator)), entrySize(entrySize), pageSize(pageSize), capacityPerPage(pageSize / entrySize),
+      numberOfEntries(0), totalNumberOfEntries(0) {
     appendPage();
     NES_ASSERT2_FMT(entrySize > 0, "Entrysize for a pagedVector has to be larger than 0!");
-    NES_ASSERT2_FMT(capacityPerPage() > 0, "There has to fit at least one tuple on a page!");
+    NES_ASSERT2_FMT(capacityPerPage > 0, "There has to fit at least one tuple on a page!");
 }
 
 int8_t* PagedVector::appendPage() {
@@ -33,8 +34,8 @@ int8_t* PagedVector::appendPage() {
 }
 
 int8_t* PagedVector::getEntry(uint64_t pos) {
-    auto pagePos = pos / capacityPerPage();
-    auto positionOnPage = pos % capacityPerPage();
+    auto pagePos = pos / capacityPerPage;
+    auto positionOnPage = pos % capacityPerPage;
 
     return (pages[pagePos] + positionOnPage * entrySize);
 }
@@ -51,7 +52,7 @@ void PagedVector::setNumberOfEntries(size_t entries) { totalNumberOfEntries = en
 
 size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
-size_t PagedVector::capacityPerPage() { return pageSize / entrySize; }
+size_t PagedVector::getCapacityPerPage() { return capacityPerPage; }
 
 const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
@@ -66,7 +67,7 @@ void PagedVector::clear() { pages.clear(); }
 
 size_t PagedVector::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
 
-void PagedVector::combinePagedVectors(const PagedVector& other) {
+void PagedVector::appendAllPages(const PagedVector& other) {
     NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes");
 
     pages.reserve(pages.size() + other.pages.size());
@@ -78,9 +79,7 @@ void PagedVector::combinePagedVectors(const PagedVector& other) {
     numberOfEntries = other.numberOfEntries;
     totalNumberOfEntries += other.totalNumberOfEntries;
 }
-uint64_t PagedVector::getEntrySize() const {
-    return entrySize;
-}
+
 uint64_t PagedVector::getPageSize() const {
     return pageSize;
 }

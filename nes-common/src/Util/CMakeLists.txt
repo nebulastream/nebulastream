@@ -19,6 +19,7 @@ add_source_files(nes-common
         NonBlockingMonotonicSeqQueue.cpp
         DumpHelper.cpp
         Common.cpp
+        StdInt.cpp
 )
 add_subdirectory(yaml)
 add_subdirectory(Logger)

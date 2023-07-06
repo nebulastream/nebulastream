@@ -19,11 +19,7 @@ namespace NES::Runtime {
 
 void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
     void* tmp = nullptr;
-    auto retMem = posix_memalign(&tmp, alignment, bytes);
-    if (retMem != 0) {
-        std::cout << "retMem" << retMem << std::endl;
-    }
-    NES_ASSERT2_FMT(retMem == 0, "memory allocation failed with alignment");
+    NES_ASSERT2_FMT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
     return tmp;
 }
 

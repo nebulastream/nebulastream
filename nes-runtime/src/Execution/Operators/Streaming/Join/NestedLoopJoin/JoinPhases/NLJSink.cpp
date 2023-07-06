@@ -26,6 +26,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -70,13 +71,15 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifierMemRef = recordBuffer.getBuffer();
+    // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0
+    Value<UInt64> workerIdForPagedVectors(0_u64);
     auto windowReference = Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy,
                                                   operatorHandlerMemRef, windowIdentifierMemRef);
     auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
-                                                     windowReference, Nautilus::Value<UInt64>((uint64_t) 0),
+                                                     windowReference, workerIdForPagedVectors,
                                                      Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ true));
     auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy", getNLJPagedVectorProxy,
-                                                      windowReference, Nautilus::Value<UInt64>((uint64_t) 0),
+                                                      windowReference, workerIdForPagedVectors,
                                                       Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ false));
 
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize, leftPageSize);

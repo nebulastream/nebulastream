@@ -41,8 +41,8 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 uint64_t sizeOfTupleInByteLeft,
                                 uint64_t sizeOfTupleInByteRight,
-                                uint64_t leftPageSize,
-                                uint64_t rightPageSize,
+                                uint64_t sizePageLeft,
+                                uint64_t sizePageRight,
                                 size_t windowSize);
 
     ~NLJOperatorHandler() = default;
@@ -62,14 +62,6 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param pipelineExecutionContext
      */
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
-
-    /**
-     * @brief Retrieves the pointer to paged vector for the left or right side
-     * @param timestamp
-     * @param leftSide
-     * @return Void pointer to the pagedVector
-     */
-    void* getPagedVectorRef(uint64_t timestamp, bool leftSide);
 
     /**
      * @brief Retrieves the number of tuples for a stream (left or right) and a window
@@ -92,8 +84,8 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
                                         const uint64_t sizeOfTupleInByteLeft,
                                         const uint64_t sizeOfTupleInByteRight,
-                                        const uint64_t leftPageSize,
-                                        const uint64_t rightPageSize,
+                                        const uint64_t sizePageLeft,
+                                        const uint64_t sizePageRight,
                                         const size_t windowSize);
 
     /**
@@ -101,10 +93,18 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * a window with the timestamp 0 will be created
      * @return StreamWindow*
      */
-    StreamWindow* getCurrentWindow();
+    StreamWindow* getCurrentWindowOrCreate();
 
+    /**
+     * @brief Returns the page size of the left PagedVector
+     * @return uint64_t
+     */
     uint64_t getLeftPageSize() const;
 
+    /**
+     * @brief Returns the page size of the right PagedVector
+     * @return uint64_t
+     */
     uint64_t getRightPageSize() const;
 
   private:
@@ -118,8 +118,18 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
 
+/**
+ * @brief Proxy function for returning the start timestamp of this window
+ * @param ptrNljWindow
+ * @return uint64_t
+ */
 uint64_t getNLJWindowStartProxy(void* ptrNljWindow);
 
+/**
+ * @brief Proxy function for returning the end timestamp of this window
+ * @param ptrNljWindow
+ * @return uint64_t
+ */
 uint64_t getNLJWindowEndProxy(void* ptrNljWindow);
 
 }// namespace NES::Runtime::Execution::Operators

@@ -43,7 +43,7 @@ void* getCurrentWindowProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    return opHandler->getCurrentWindow();
+    return opHandler->getCurrentWindowOrCreate();
 }
 
 void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
@@ -164,7 +164,7 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& timeStampField,
                    bool isLeftSide,
                    const uint64_t pageSize,
-                   std::shared_ptr<TimeFunction> timeFunction)
+                   TimeFunctionPtr timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
       isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()), pageSize(pageSize), timeFunction(std::move(timeFunction)) {}
 
