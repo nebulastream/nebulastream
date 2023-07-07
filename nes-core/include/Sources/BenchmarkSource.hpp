@@ -42,8 +42,18 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param memoryAreaSize the non-zero size of the memory area
      * @param bufferManager valid pointer to the buffer manager
      * @param queryManager valid pointer to the query manager
-     * @param
-     * @param operatorId the valid id of the source
+     * @param numBuffersToProcess
+     * @param gatheringValue value that depending on the gatheringMode either represents a time interval or
+     * @param operatorId current operator id
+     * @param originId represents an origin
+     * @param numSourceLocalBuffers number of local source buffers
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param sourceMode
+     * @param sourceAffinity
+     * @param taskQueueId
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @return a DataSourcePtr pointing to the data source
      */
     explicit BenchmarkSource(SchemaPtr schema,
                              const std::shared_ptr<uint8_t>& memoryArea,
