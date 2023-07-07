@@ -30,6 +30,7 @@ class DefaultSource : public GeneratorSource {
                   OperatorId operatorId,
                   OriginId originId,
                   size_t numSourceLocalBuffers,
+                  std::string physicalSourceName = "defaultPhysicalSourceName",
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;

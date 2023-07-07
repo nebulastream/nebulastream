@@ -63,6 +63,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
+                        std::string physicalSourceName,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -287,6 +288,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
     bool sourceSharing = false;
+    std::string physicalSourceName;
 
     //this counter is used to count the number of queries that use this source
     std::atomic<uint64_t> refCounter = 0;

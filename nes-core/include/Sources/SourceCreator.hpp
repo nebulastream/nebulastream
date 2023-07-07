@@ -72,6 +72,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                OperatorId operatorId,
                                                OriginId originId,
                                                size_t numSourceLocalBuffers,
+                                               std::string physicalSourceName,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -112,6 +113,7 @@ createLambdaSource(const SchemaPtr& schema,
                    GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
                    uint64_t taskQueueId,
+                   std::string physicalSourceName,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -132,6 +134,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
+                              std::string physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -150,6 +153,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     std::string physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -168,6 +172,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                 OperatorId operatorId,
                                 OriginId originId,
                                 size_t numSourceLocalBuffers,
+                                std::string physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -188,6 +193,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   OperatorId operatorId,
                                   OriginId originId,
                                   size_t numSourceLocalBuffers,
+                                  std::string physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -215,6 +221,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  GatheringMode gatheringMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
+                                 std::string physicalSourceName,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -236,6 +243,7 @@ DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     std::string physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 }// namespace Experimental
 /**
@@ -264,6 +272,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     SourceMode sourceMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
+                                    std::string physicalSourceName,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -284,6 +293,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   size_t numSourceLocalBuffers,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
+                                  std::string physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -305,6 +315,7 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     std::string physicalSourceName,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
 namespace Experimental::MaterializedView {
@@ -326,6 +337,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const OperatorId operatorId,
                                            OriginId originId,
                                            const size_t numSourceLocalBuffers,
+                                           std::string physicalSourceName,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
 }// namespace Experimental::MaterializedView
@@ -357,6 +369,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       size_t batchSize,
+                                      std::string physicalSourceName,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 #ifdef ENABLE_OPC_BUILD
@@ -379,6 +392,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     std::string password,
                                     OperatorId operatorId,
                                     size_t numSourceLocalBuffers,
+                                    std::string physicalSourceName,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 #endif
 
@@ -398,6 +412,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                OriginId originId,
                                size_t numSourceLocalBuffers,
+                               std::string physicalSourceName,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
@@ -422,6 +437,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
+                              std::string physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 }// namespace NES

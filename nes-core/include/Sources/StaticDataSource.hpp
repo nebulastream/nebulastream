@@ -49,6 +49,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
+                              std::string physicalSourceName,
                               std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

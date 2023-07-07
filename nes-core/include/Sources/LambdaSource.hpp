@@ -47,6 +47,7 @@ class LambdaSource : public GeneratorSource {
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
         uint64_t taskQueueId,
+        std::string physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     SourceType getType() const override;
