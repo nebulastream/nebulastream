@@ -392,8 +392,6 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
     wrkConf2->workerId = 2u;
-    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker-1.yaml";
-    wrkConf2->configPath = configPath;
     NesWorkerPtr wrk2copy = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2copy);
@@ -489,8 +487,6 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerId = 123;
-//    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
-//    wrkConf->configPath = configPath;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

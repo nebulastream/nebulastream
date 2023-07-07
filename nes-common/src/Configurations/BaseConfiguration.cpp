@@ -150,7 +150,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             // replace the old value with the new value for workerId
             yamlContent.replace(startPos, endPos - startPos, std::to_string(workerId));
         } else {
-            throw ConfigurationException("Search key \"workerId\" is not in the yaml file.");
+            return false;
         }
 
         std::ofstream output(yamlFilePath);
