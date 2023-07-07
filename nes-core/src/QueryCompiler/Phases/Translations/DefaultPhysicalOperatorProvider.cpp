@@ -703,16 +703,13 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(Window
 }
 
 void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const QueryPlanPtr&,
-                                                                     const LogicalOperatorNodePtr& operatorNode) {
-
+                                                                     const LogicalOperatorNodePtr& operatorNode,
+                                                                     WindowOperatorProperties& windowOperatorProperties) {
     NES_DEBUG("Create Thread local window aggregation");
-    auto windowOperator = operatorNode->as<WindowOperatorNode>();
-    auto windowInputSchema = windowOperator->getInputSchema();
-    auto windowOutputSchema = windowOperator->getOutputSchema();
-    auto windowDefinition = windowOperator->getWindowDefinition();
-
-    auto windowOperatorProperties =
-        WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
+    auto& windowOperator = windowOperatorProperties.windowOperator;
+    auto& windowInputSchema = windowOperatorProperties.windowInputSchema;
+    auto& windowOutputSchema = windowOperatorProperties.windowOutputSchema;
+    auto& windowDefinition = windowOperatorProperties.windowDefinition;
 
     if (windowOperator->getInputOriginIds().empty()) {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
@@ -769,14 +766,35 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
     }
 }
 
+void DefaultPhysicalOperatorProvider::lowerDefaultWindowOperator(const QueryPlanPtr&,
+                                                                 const LogicalOperatorNodePtr& operatorNode,
+                                                                 WindowOperatorProperties& windowOperatorProperties) {
+    NES_DEBUG("Create default window aggregation");
+    auto& windowInputSchema = windowOperatorProperties.windowInputSchema;
+    auto& windowOutputSchema = windowOperatorProperties.windowOutputSchema;
+    auto& windowOperatorHandler = windowOperatorProperties.windowOperatorHandler;
+
+    // Translates a central window operator to SlicePreAggregationOperator and WindowSinkOperator
+    auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
+                                                                                                 windowOutputSchema,
+                                                                                                 windowOperatorHandler);
+    operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
+    auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
+                                                                            windowOutputSchema,
+                                                                            windowOperatorHandler);
+    operatorNode->replace(windowSink);
+}
+
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& plan, const LogicalOperatorNodePtr& operatorNode) {
     NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
+    // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
+    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
 
-    auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowInputSchema,
+    auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowOperatorHandler, windowInputSchema,
                                                              windowOutputSchema, windowDefinition);
 
     if (windowOperator->getInputOriginIds().empty()) {
@@ -785,11 +803,13 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     // TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
-    // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
+
+
+
+
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
-        //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
+        //TODO: At this point we are already a central window, we do not want the threshold window to become a central window in the first place
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
             auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
             // check different content-based window types
@@ -801,24 +821,14 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                                                                                windowOutputSchema,
                                                                                windowOperatorHandler);
                 operatorNode->replace(thresholdWindowPhysicalOperator);
-                return;
             } else {
                 throw QueryCompilationException("No support for this window type."
                                                 + windowDefinition->getWindowType()->toString());
             }
-        }
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
-            lowerThreadLocalWindowOperator(plan, operatorNode);
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+            lowerThreadLocalWindowOperator(plan, operatorNode, windowOperatorProperties);
         } else {
-            // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
-            auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
-                                                                                                         windowOutputSchema,
-                                                                                                         windowOperatorHandler);
-            operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-            auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
-                                                                                    windowOutputSchema,
-                                                                                    windowOperatorHandler);
-            operatorNode->replace(windowSink);
+            lowerDefaultWindowOperator(plan, operatorNode, windowOperatorProperties);
         }
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // Translate a slice creation operator in -> SlicePreAggregationOperator -> SliceSinkOperator
@@ -838,7 +848,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
-        // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
+        // Translates a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
@@ -848,6 +858,11 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
+
+
+
+
+
     NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n{}", plan->toString());
 }
 

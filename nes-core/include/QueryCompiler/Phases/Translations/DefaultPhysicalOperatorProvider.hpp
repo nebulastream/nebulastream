@@ -24,10 +24,11 @@
 namespace NES::QueryCompilation {
 
 /**
- * @brief Stores a window operator and window definition, as well as in- and output schema
+ * @brief Stores a window operator, a window operator handler and window definition, as well as in- and output schema
  */
 struct WindowOperatorProperties {
     WindowOperatorNodePtr windowOperator;
+    Windowing::WindowOperatorHandlerPtr windowOperatorHandler;
     SchemaPtr windowInputSchema;
     SchemaPtr windowOutputSchema;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
@@ -146,8 +147,10 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @brief Lowers a thread local window operator
     * @param queryPlan current plan
     * @param operatorNode current operator
+    * @param windowOperatorProperties properties of the current operator
     */
-    void lowerThreadLocalWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerThreadLocalWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode,
+                                        WindowOperatorProperties& windowOperatorProperties);
 
     /**
     * @brief Lowers a watermark assignment operator
@@ -221,6 +224,15 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      */
     std::shared_ptr<Node> replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
                                                                    const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Lowers a default window operator
+     * @param queryPlan current plan
+     * @param operatorNode current operator
+     * @param windowOperatorProperties properties of the current operator
+    */
+    void lowerDefaultWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode,
+                                    WindowOperatorProperties& windowOperatorProperties);
 };
 
 }// namespace NES::QueryCompilation
