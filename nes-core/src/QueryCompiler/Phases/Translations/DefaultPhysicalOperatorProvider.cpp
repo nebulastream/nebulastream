@@ -770,11 +770,15 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& plan, const LogicalOperatorNodePtr& operatorNode) {
+    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
+
+    auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowInputSchema,
+                                                             windowOutputSchema, windowDefinition);
+
     if (windowOperator->getInputOriginIds().empty()) {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
