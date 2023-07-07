@@ -55,6 +55,16 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
+     * @param bufferManager the buffer manager
+     * @param queryManager the query manager
+     * @param operatorId current operator id
+     * @param originId represents an origin
+     * @param numSourceLocalBuffers number of local source buffers
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+     * @param taskQueueId the
      */
     explicit DataSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
