@@ -84,6 +84,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
     }
+    this->physicalSourceName = physicalSourceName;
 }
 
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
