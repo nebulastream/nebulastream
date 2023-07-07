@@ -124,7 +124,7 @@ void BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
     std::string yamlKeyToLookFor = "workerId: ";
 
     if (!withOverwrite) {
-        std::string yamlKeyString = "\nworkerId: ";
+        std::string yamlKeyString = "\n" + yamlKeyToLookFor;
         std::string yamlValueString = std::to_string(workerId);
         std::string yamlConfigValue = yamlKeyString + yamlValueString;
 
