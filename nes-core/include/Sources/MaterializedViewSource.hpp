@@ -38,6 +38,7 @@ class MaterializedViewSource : public DataSource {
                            OriginId originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
+                           std::string physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                            MaterializedViewPtr view);
 

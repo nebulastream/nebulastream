@@ -30,6 +30,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            OriginId originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
+                           std::string physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -38,6 +39,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  originId,
                  numSourceLocalBuffers,
                  gatheringMode,
+                 physicalSourceName,
                  std::move(successors)),
       input(std::ifstream(_file_path.c_str())), filePath(_file_path) {
     if (!(input.is_open() && input.good())) {

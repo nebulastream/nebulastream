@@ -42,6 +42,7 @@ class NetworkSource : public DataSource {
                   size_t numSourceLocalBuffers,
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
+                  std::string physicalSourceName,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

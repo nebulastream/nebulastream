@@ -46,6 +46,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            GatheringMode gatheringMode,
                            uint64_t sourceAffinity,
                            uint64_t taskQueueId,
+                           std::string physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -55,6 +56,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                       originId,
                       numSourceLocalBuffers,
                       gatheringMode,
+                      physicalSourceName,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
     this->numberOfBuffersToProduce = numBuffersToProcess;
