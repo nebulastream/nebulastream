@@ -46,6 +46,7 @@ class KafkaSource : public DataSource {
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
                 uint64_t batchSize,
+                std::string physicalSourceName,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**

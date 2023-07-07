@@ -62,6 +62,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
+                       std::string physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
@@ -82,6 +83,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
     }
+    this->physicalSourceName = physicalSourceName;
 }
 
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {

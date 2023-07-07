@@ -44,6 +44,7 @@ class GeneratorSource : public DataSource {
                     OriginId originId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
+                    std::string physicalSourceName,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(std::move(schema),
                      std::move(bufferManager),
@@ -52,6 +53,7 @@ class GeneratorSource : public DataSource {
                      originId,
                      numSourceLocalBuffers,
                      gatheringMode,
+                     physicalSourceName,
                      std::move(successors)) {
         this->numberOfBuffersToProduce = numbersOfBufferToProduce;
     }
