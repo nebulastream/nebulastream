@@ -40,6 +40,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              OperatorId operatorId,
                              OriginId originId,
                              size_t numSourceLocalBuffers,
+                             std::string physicalSourceName,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -48,7 +49,8 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
-                      GatheringMode ::INTERVAL_MODE,
+                      GatheringMode::INTERVAL_MODE,
+                      physicalSourceName,
                       std::move(successors)) {
     this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }

@@ -37,6 +37,7 @@ class SenseSource : public DataSource {
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
+                         std::string physicalSourceName,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

@@ -48,6 +48,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                                    OperatorId operatorId,
                                    OriginId originId,
                                    size_t numSourceLocalBuffers,
+                                   std::string physicalSourceName,
                                    std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -57,6 +58,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       originId,
                       numSourceLocalBuffers,
                       GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
+                      physicalSourceName,
                       std::move(successors)),
       lateStart(lateStart), pathTableFile(pathTableFile) {
 
