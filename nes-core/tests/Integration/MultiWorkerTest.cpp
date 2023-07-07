@@ -22,6 +22,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -391,6 +392,8 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
     wrkConf2->workerId = 2u;
+    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    wrkConf2->configPath = configPath;
     NesWorkerPtr wrk2copy = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2copy);
@@ -486,6 +489,8 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerId = 123;
+    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    wrkConf->configPath = configPath;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -544,6 +549,87 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     NES_DEBUG("Stopping worker 2");
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("Stopping coordinator");
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
+    // start the coordinator
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_DEBUG("Starting coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("Coordinator started successfully");
+
+    // start worker 1, with no configured workerId
+    NES_DEBUG("Starting worker 1");
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = port;
+    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    wrkConf->configPath = configPath;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    // expected behavior: worker 1 gets assigned the next available workerId, 2
+    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    std::ifstream configFile(configPath);
+    std::stringstream ss;
+    ss << configFile.rdbuf();
+    std::string yamlContent = ss.str();
+    EXPECT_NE(yamlContent.find("workerId: 2"), std::string::npos);
+
+    // stop worker 1
+    NES_DEBUG("Stopping worker 1");
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+    NES_DEBUG("Worker 1 stopped successfully");
+
+    NES_DEBUG("Stopping coordinator");
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+TEST_F(MultiWorkerTest, checkPersistenceOfOverwrittenWorkerIdInYaml) {
+    // start the coordinator
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_DEBUG("Starting coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("Coordinator started successfully");
+
+    // start worker 1, with no configured workerId
+    NES_DEBUG("Starting worker 1");
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = port;
+    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    wrkConf->configPath = configPath;
+    wrkConf->workerId = 3u;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    // expected behavior: worker 1 gets assigned the next available workerId, 2
+    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
+    std::ifstream configFile(configPath);
+    std::stringstream ss;
+    ss << configFile.rdbuf();
+    std::string yamlContent = ss.str();
+    EXPECT_NE(yamlContent.find("workerId: 2"), std::string::npos);
+
+    // stop worker 1
+    NES_DEBUG("Stopping worker 1");
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+    NES_DEBUG("Worker 1 stopped successfully");
 
     NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
