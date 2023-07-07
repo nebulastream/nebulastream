@@ -58,8 +58,8 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                            operatorId,
                                            originId,
                                            numSourceLocalBuffers,
-                                           physicalSourceName,
-                                           successors);
+                                           successors,
+                                           physicalSourceName);
 }
 
 DataSourcePtr
@@ -81,8 +81,8 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                            operatorId,
                                            originId,
                                            numSourceLocalBuffers,
-                                           physicalSourceName,
-                                           successors);
+                                           successors,
+                                           physicalSourceName);
 }
 
 DataSourcePtr
@@ -101,8 +101,8 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                            operatorId,
                                            originId,
                                            numSourceLocalBuffers,
-                                           physicalSourceName,
-                                           successors);
+                                           successors,
+                                           physicalSourceName);
 }
 
 DataSourcePtr
