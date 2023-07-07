@@ -118,18 +118,17 @@ std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionM
     return optionMap;
 }
 
-void BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite) {
+bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite) {
     std::ifstream configFile(yamlFilePath);
-    std::stringstream buffer;
-    std::string yamlKeyToLookFor = "workerId: ";
+    std::stringstream ss;
+    std::string searchKey = "workerId: ";
 
     if (!withOverwrite) {
-        std::string yamlKeyString = "\n" + yamlKeyToLookFor;
-        std::string yamlValueString = std::to_string(workerId);
-        std::string yamlConfigValue = yamlKeyString + yamlValueString;
+        std::string yamlValueAsString = std::to_string(workerId);
+        std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
 
         if (!yamlFilePath.empty() && std::filesystem::exists(yamlFilePath)) {
-            configFile >> buffer.rdbuf();
+            configFile >> ss.rdbuf();
             try {
                 std::ofstream output;
                 output.open(yamlFilePath, std::ios::app); // append mode
@@ -139,23 +138,26 @@ void BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             }
         }
     } else {
-        buffer << configFile.rdbuf();
-        std::string yamlContent = buffer.str();
+        ss << configFile.rdbuf();
+        std::string yamlContent = ss.str();
 
-        size_t startPos = yamlContent.find(yamlKeyToLookFor);
+        size_t startPos = yamlContent.find(searchKey);
         if (startPos != std::string::npos) {
             // move the position to the start of the value
-            startPos += yamlKeyToLookFor.size();
+            startPos += searchKey.size();
             // find the end of the line
             size_t endPos = yamlContent.find('\n', startPos);
             // replace the old value with the new value for workerId
             yamlContent.replace(startPos, endPos - startPos, std::to_string(workerId));
+        } else {
+            throw ConfigurationException("Search key \"workerId\" is not in the yaml file.");
         }
 
         std::ofstream output(yamlFilePath);
         output << yamlContent;
     }
     configFile.close();
+    return true;
 }
 
 }// namespace NES::Configurations
