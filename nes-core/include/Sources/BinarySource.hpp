@@ -26,9 +26,18 @@ namespace NES {
 class BinarySource : public DataSource {
   public:
     /**
-     * @brief constructor for binary source
+     * @brief constructor for the binary source
      * @param schema of the data source
-     * @param file path
+     * @param bufferManager the buffer manager
+     * @param queryManager the query manager
+     * @param file_path path to the binary file
+     * @param operatorId current operator id
+     * @param originId represents an origin
+     * @param numSourceLocalBuffers number of local source buffers
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @return a DataSourcePtr pointing to the data source
      */
     explicit BinarySource(const SchemaPtr& schema,
                           Runtime::BufferManagerPtr bufferManager,

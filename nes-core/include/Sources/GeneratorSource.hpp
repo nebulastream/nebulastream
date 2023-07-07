@@ -32,14 +32,21 @@ class GeneratorSource : public DataSource {
   public:
     /**
    * @brief constructor to create a generator source
-   * @param schema of the source
-   * @param number of buffer that should be processed
-   * @param via template, the functor that determines what to do
+   * @param schema of the data that this source produces
+   * @param bufferManager the buffer manager
+   * @param queryManager the query manager
+   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+   * @param operatorId current operator id
+   * @param originId represents an origin
+   * @param numSourceLocalBuffers ...
+   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+   * @param physicalSourceName the name and unique identifier of a physical source
+   * @param numSourceLocalBuffers number of local source buffers
    */
     GeneratorSource(SchemaPtr schema,
                     Runtime::BufferManagerPtr bufferManager,
                     Runtime::QueryManagerPtr queryManager,
-                    uint64_t numbersOfBufferToProduce,
+                    uint64_t numberOfBufferToProduce,
                     OperatorId operatorId,
                     OriginId originId,
                     size_t numSourceLocalBuffers,
@@ -55,7 +62,7 @@ class GeneratorSource : public DataSource {
                      gatheringMode,
                      physicalSourceName,
                      std::move(successors)) {
-        this->numberOfBuffersToProduce = numbersOfBufferToProduce;
+        this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }
     /**
    * @brief override function to create one buffer

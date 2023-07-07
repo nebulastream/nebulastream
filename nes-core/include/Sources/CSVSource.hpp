@@ -35,11 +35,13 @@ class CSVSource : public DataSource {
    * @param bufferManager the buffer manager
    * @param queryManager the query manager
    * @param csvSourceType points to the current source configuration object, look at mqttSourceType and CSVSourceType for info
-   * @param delimiter inside the file, default ","
    * @param operatorId current operator id
-   * @param numSourceLocalBuffers
-   * @param gatheringMode
-   * @param successors
+   * @param originId represents an origin
+   * @param numSourceLocalBuffers number of local source buffers
+   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+   * @param physicalSourceName the name and unique identifier of a physical source
+   * @param successors the subsequent operators in the pipeline to which the data is pushed
+   * @return a DataSourcePtr pointing to the data source
    */
     explicit CSVSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
