@@ -323,64 +323,85 @@ void GlobalQueryPlanUpdatePhase::markOperatorsForReOperatorPlacement(SharedQuery
                                                                      const ExecutionNodePtr& upstreamExecutionNode,
                                                                      const ExecutionNodePtr& downstreamExecutionNode) {
 
-    //1. Compute the upstream and downstream operator ids
+    //1. Iterate over all upstream sub query plans and extract the operator id of most upstream non-system
+    // generated (anything except Network Sink or Source) operator.
     std::set<OperatorId> upstreamOperatorIds;
+    getUpstreamPinnedOperatorIds(sharedQueryPlanId, upstreamExecutionNode, upstreamOperatorIds);
+
+    //2. Iterate over all sub query plans in the downstream execution node and extract the operator ids of most upstream non-system
+    // generated (anything except Network Sink or Source) operator.
     std::set<OperatorId> downstreamOperatorIds;
-
-    //2. Iterate over all upstream sub query plans and extract the operator id of most upstream non-system
-    // generated (anything except Network Sink or Source) operator.
-    auto upstreamSubQueryPlans = upstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
-    for (const auto& upstreamSubQueryPlan : upstreamSubQueryPlans) {
-        //2.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
-        auto sinkOperators = upstreamSubQueryPlan->getSinkOperators();
-        for (const auto& sinkOperator : sinkOperators) {
-            //2.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
-            auto children = sinkOperator->getChildren();
-            for (const NodePtr& child : children) {
-                OperatorId upstreamOperatorId;
-                if (child->instanceOf<SourceLogicalOperatorNode>()
-                    && child->as<SourceLogicalOperatorNode>()
-                           ->getSourceDescriptor()
-                           ->instanceOf<Network::NetworkSourceDescriptor>()) {
-                    //FIXME: add logic to find the next possible non-system generated downstream operator
-                } else {
-                    upstreamOperatorId = child->as<LogicalOperatorNode>()->getId();
-                }
-                upstreamOperatorIds.insert(upstreamOperatorId);
-            }
-        }
-    }
-
-    //3. Iterate over all downstream sub query plans and extract the operator id of most upstream non-system
-    // generated (anything except Network Sink or Source) operator.
-    auto downstreamSubQueryPlans = downstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
-    for (const auto& downstreamSubQueryPlan : downstreamSubQueryPlans) {
-        //3.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
-        auto sourceOperators = downstreamSubQueryPlan->getSourceOperators();
-        for (const SourceLogicalOperatorNodePtr& sourceOperator : sourceOperators) {
-            //3.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
-            auto parents = sourceOperator->getParents();
-            for (const NodePtr& parent : parents) {
-                OperatorId downstreamOperatorId;
-                if (parent->instanceOf<SinkLogicalOperatorNode>()
-                    && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                    //FIXME: add logic to find the next possible non-system generated downstream operator
-                } else {
-                    downstreamOperatorId = parent->as<LogicalOperatorNode>()->getId();
-                }
-                downstreamOperatorIds.insert(downstreamOperatorId);
-            }
-        }
-    }
+    getDownstreamPinnedOperatorIds(sharedQueryPlanId, downstreamExecutionNode, downstreamOperatorIds);
 
     //Note to self - do we need to consider the possibility that a sub query plan that is placed on the given upstream node does not
     // communicate with the given downstream node?
 
-    //4. Fetch the shared query plan
+    //3. Fetch the shared query plan
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
 
-    //5. Mark the operators for re-operator placement
+    //4. Mark the operators for re-operator placement
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+}
+
+void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                                              const ExecutionNodePtr& upstreamExecutionNode,
+                                                              std::set<OperatorId>& upstreamOperatorIds) const {
+
+    auto upstreamSubQueryPlans = upstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    for (const auto& upstreamSubQueryPlan : upstreamSubQueryPlans) {
+        //1.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
+        auto sinkOperators = upstreamSubQueryPlan->getSinkOperators();
+        for (const auto& sinkOperator : sinkOperators) {
+            //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
+            auto children = sinkOperator->getChildren();
+            for (const NodePtr& child : children) {
+                if (child->instanceOf<SourceLogicalOperatorNode>()
+                    && child->as<SourceLogicalOperatorNode>()
+                           ->getSourceDescriptor()
+                           ->instanceOf<Network::NetworkSourceDescriptor>()) {
+
+                    //1.3 Identify non-system generated pinned upstream operator from the next upstream execution node
+                    for (const auto& nextUpstreamExecutionNode : upstreamExecutionNode->getChildren()) {
+                        getDownstreamPinnedOperatorIds(sharedQueryPlanId,
+                                                       nextUpstreamExecutionNode->as<ExecutionNode>(),
+                                                       upstreamOperatorIds);
+                    }
+                } else {
+                    OperatorId upstreamOperatorId = child->as<LogicalOperatorNode>()->getId();
+                    upstreamOperatorIds.insert(upstreamOperatorId);
+                }
+            }
+        }
+    }
+}
+
+void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                                                const ExecutionNodePtr& downstreamExecutionNode,
+                                                                std::set<OperatorId>& downstreamOperatorIds) const {
+
+    auto downstreamSubQueryPlans = downstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    for (const auto& downstreamSubQueryPlan : downstreamSubQueryPlans) {
+        //1.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
+        auto sourceOperators = downstreamSubQueryPlan->getSourceOperators();
+        for (const SourceLogicalOperatorNodePtr& sourceOperator : sourceOperators) {
+            //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
+            auto parents = sourceOperator->getParents();
+            for (const NodePtr& parent : parents) {
+                if (parent->instanceOf<SinkLogicalOperatorNode>()
+                    && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    //1.3 Identify non-system generated pinned downstream operator from the next downstream execution node
+                    for (const auto& nextDownstreamExecutionNode : downstreamExecutionNode->getParents()) {
+                        getDownstreamPinnedOperatorIds(sharedQueryPlanId,
+                                                       nextDownstreamExecutionNode->as<ExecutionNode>(),
+                                                       downstreamOperatorIds);
+                    }
+                } else {
+                    OperatorId downstreamOperatorId = parent->as<LogicalOperatorNode>()->getId();
+                    downstreamOperatorIds.insert(downstreamOperatorId);
+                }
+            }
+        }
+    }
 }
 
 }// namespace NES::Optimizer

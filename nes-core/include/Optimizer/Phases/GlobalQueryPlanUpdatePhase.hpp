@@ -187,6 +187,12 @@ class GlobalQueryPlanUpdatePhase {
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
+    void getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                         const ExecutionNodePtr& downstreamExecutionNode,
+                                         std::set<OperatorId>& downstreamOperatorIds) const;
+    void getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                      const ExecutionNodePtr& upstreamExecutionNode,
+                                      std::set<OperatorId>& upstreamOperatorIds) const;
 };
 }// namespace Optimizer
 }// namespace NES
