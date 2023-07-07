@@ -180,6 +180,7 @@ class MockDataSource : public DataSource {
                      0,
                      numSourceLocalBuffers,
                      gatheringMode,
+                     "defaultPhysicalStreamName",
                      executableSuccessors){
             // nop
         };
@@ -225,6 +226,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      0,
                      numSourceLocalBuffers,
                      gatheringMode,
+                     "defaultPhysicalStreamName",
                      executableSuccessors) {
         ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
             completedPromise.set_value(true);
@@ -258,6 +260,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                      0,
                      numSourceLocalBuffers,
                      gatheringMode,
+                     "defaultPhysicalStreamName",
                      executableSuccessors){};
 
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
@@ -303,6 +306,7 @@ class BinarySourceProxy : public BinarySource {
                        0,
                        numSourceLocalBuffers,
                        GatheringMode::INTERVAL_MODE,
+                       "defaultPhysicalStreamName",
                        successors){};
 
   private:
@@ -331,6 +335,7 @@ class CSVSourceProxy : public CSVSource {
                     0,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
+                    "defaultPhysicalStreamName",
                     successors){};
 
   private:
@@ -360,6 +365,7 @@ class TCPSourceProxy : public TCPSource {
                     0,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
+                    "defaultPhysicalStreamName",
                     successors){};
 
   private:
@@ -386,6 +392,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                           0,
                           numSourceLocalBuffers,
                           gatheringMode,
+                          "defaultPhysicalStreamName",
                           successors){};
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
 };
@@ -408,7 +415,8 @@ class DefaultSourceProxy : public DefaultSource {
                         operatorId,
                         0,
                         numSourceLocalBuffers,
-                        successors){};
+                        successors,
+                        "defaultPhysicalStreamName"){};
 };
 
 class LambdaSourceProxy : public LambdaSource {
@@ -436,6 +444,7 @@ class LambdaSourceProxy : public LambdaSource {
                        gatheringMode,
                        0,
                        0,
+                       "defaultPhysicalStreamName",
                        successors){};
 
   private:
@@ -459,6 +468,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            operatorId,
                            0,
                            numSourceLocalBuffers,
+                           "defaultPhysicalStreamName",
                            successors){};
 };
 
@@ -615,6 +625,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->operatorId,
                                                       this->originId,
                                                       this->numSourceLocalBuffersDefault,
+                                                      "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
@@ -627,6 +638,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
                                                                                    this->operatorId,
                                                                                    this->originId,
                                                                                    this->numSourceLocalBuffersDefault,
+                                                                                   "defaultPhysicalSourceName",
                                                                                    {});
     } catch (Exceptions::RuntimeException const& ex) {
         SUCCEED();
@@ -643,6 +655,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->operatorId,
                                                       this->originId,
                                                       this->numSourceLocalBuffersDefault,
+                                                      "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getSchema(), this->schema);
 }

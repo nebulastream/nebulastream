@@ -40,8 +40,8 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              OperatorId operatorId,
                              OriginId originId,
                              size_t numSourceLocalBuffers,
-                             std::string physicalSourceName,
-                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                             std::string physicalSourceName)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
