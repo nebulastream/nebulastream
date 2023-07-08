@@ -30,7 +30,7 @@
 
 namespace NES::Benchmark {
 
-/*
+/**
  * @brief this class encapsulates a single benchmark run
  */
 class E2ESingleRun {
@@ -113,6 +113,18 @@ class E2ESingleRun {
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:
+    /**
+     * @brief Creates either KafkaSourceType or LambdaSourceType depending on the data generator.
+     * Also creates a data provider for LambdaSourceType.
+     * @param createdBuffers
+     * @param sourceCnt
+     * @param groupId
+     * @param generator
+     * @return KafkaSourceType or LambdaSourceType
+     */
+    PhysicalSourceTypePtr createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
+                                                   size_t sourceCnt, uint64_t groupId, std::string& generator);
+
     E2EBenchmarkConfigPerRun& configPerRun;
     E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
     int rpcPortSingleRun;
