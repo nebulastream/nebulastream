@@ -109,6 +109,8 @@ const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
+const std::string HEALTH_CHECK_RETRY_COUNT = "healthCheckRetryCount";
+const std::string HEALTH_CHECK_RETRY_TIME = "healthCheckRetryTime";
 
 //worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";

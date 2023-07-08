@@ -254,6 +254,18 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 10, "Number of seconds to wait between health checks"};
 
+    /**
+     * @brief Configuration of number of times a worker can retry pinging another worker until it considers it failed.
+     * Set the number of times pinging another worker
+     */
+    UIntOption workerHealthCheckRetryCount = {HEALTH_CHECK_RETRY_COUNT, 3, "Number of times a worker will try to ping another worker"};
+
+    /**
+     * @brief Configuration of waiting time between pinging worker again
+     * Set the number of seconds waiting to ping a worker again
+     */
+    UIntOption workerHealthCheckRetryTime = {HEALTH_CHECK_RETRY_TIME, 3, "Number of seconds to wait between pinging another worker"};
+
     /* Network specific settings */
 
     IntOption senderHighwatermark = {SENDER_HIGH_WATERMARK,
@@ -294,6 +306,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
+                &workerHealthCheckRetryCount,
+                &workerHealthCheckRetryTime,
                 &configPath,
 #ifdef TFDEF
                 &isTensorflowSupported
