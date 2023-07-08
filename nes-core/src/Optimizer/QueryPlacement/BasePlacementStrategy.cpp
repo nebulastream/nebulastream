@@ -66,6 +66,7 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
 
 void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::vector<OperatorNodePtr>& downStreamPinnedOperators,
+                                                 FaultToleranceType::Value faultToleranceType,
                                                  FaultTolerancePlacement::Value ftPlacement) {
 
     //1. Find the topology nodes that will host upstream operators
@@ -121,6 +122,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
         throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
 
+
     if (ftPlacement != FaultTolerancePlacement::NONE) {
         std::optional<TopologyNodePtr> topologiesForPlacement;
         std::vector<std::vector<TopologyNodePtr>> availablePaths;
@@ -153,6 +155,8 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     }
     //4. Map nodes in the selected topology by their ids.
 
+    bool isFt = faultToleranceType != FaultToleranceType::NONE;
+    bool noFtp = ftPlacement == FaultTolerancePlacement::NONE;
     topologyMap.clear();
     // fetch root node from the identified path
     auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
@@ -160,6 +164,9 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        if (isFt && noFtp) {
+            currentTopologyNode->addNodeProperty("isBuffering", 1);
+        }
         topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
         ++topologyIterator;
     }
@@ -192,8 +199,8 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
     auto topologyIterator = ++selectedPath.begin();
     while (topologyIterator != selectedPath.end()) {
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        currentTopologyNode->addNodeProperty("isBuffering", 1);
         topology->reduceResources(currentTopologyNode->getId(), 1);
+        currentTopologyNode->addNodeProperty("isBuffering", 1);
         ++topologyIterator;
     }
     return selectedPath;
@@ -322,6 +329,7 @@ PlacementScore BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNo
             continue;
         }
         else {
+            individualScores.insert({currentNode->getId(), std::pair(resourcesPerPath.requiredNetwork, resourcesPerPath.requiredMemory)});
             finalPlacement = initialPlacement;
             finalPlacement.insert(finalPlacement.end(), currentPlacement.rbegin(), currentPlacement.rend());
             resourcesPerPath = findResourcesAvailable(finalPlacement, originalPath);
@@ -333,7 +341,6 @@ PlacementScore BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNo
                        / (resourcesPerPath.maxMemory - resourcesPerPath.minMemory))
                 + w_safety * resourcesPerPath.providedSafety;
             if (score > currentMaxScore.score) {
-                individualScores.insert({currentNode->getId(), std::pair(resourcesPerPath.requiredNetwork, resourcesPerPath.requiredMemory)});
                 currentMaxScore = {score, finalPlacement, individualScores};
             }
         }
@@ -501,7 +508,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             NES_TRACE("BasePlacementStrategy: Place the information about the candidate execution plan and operator id in "
                       "the map.");
             operatorToExecutionNodeMap[pinnedOperator->getId()] = candidateExecutionNode;
-//            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by 1");
+            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by 1");
             // Reduce the processing capacity by 1
             // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
 //            pinnedNode->reduceResources(1);
@@ -530,7 +537,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             placePinnedOperators(queryId, nextPinnedUpstreamOperators, pinnedDownStreamOperators);
         }
     }
-//    NES_DEBUG("BasePlacementStrategy: Finished placing query operators into the global execution plan");
+    NES_DEBUG("BasePlacementStrategy: Finished placing query operators into the global execution plan");
 }
 
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
@@ -610,7 +617,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId query
 bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
                                                   FaultToleranceType::Value faultToleranceType,
                                                   LineageType::Value lineageType) {
-//    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
+    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
     auto anyTopologicalNode = topologyMap.begin();
     auto currentEpoch = std::any_cast<uint64_t>(anyTopologicalNode->second->getEpochValue());
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);

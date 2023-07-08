@@ -73,12 +73,25 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
         throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
     }
 
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
                                                                    faultToleranceType,
                                                                    lineageType,
                                                                    ftPlacement,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
+
+    now = std::chrono::system_clock::now();
+    now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    epoch = now_ms.time_since_epoch();
+    auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+    std::cout << "The Decision time was: " << valueAfter.count() - value.count();
+
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return success;
 }

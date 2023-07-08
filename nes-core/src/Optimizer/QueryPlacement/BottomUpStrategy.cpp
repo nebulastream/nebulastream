@@ -58,7 +58,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
         // 1. Find the path where operators need to be placed
 
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, ftPlacement);
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType, ftPlacement);
 
         now = std::chrono::system_clock::now();
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);

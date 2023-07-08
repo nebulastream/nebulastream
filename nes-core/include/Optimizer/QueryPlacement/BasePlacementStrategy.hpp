@@ -165,6 +165,7 @@ class BasePlacementStrategy {
      */
     void performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
                               const std::vector<OperatorNodePtr>& downStreamPinnedOperators,
+                              FaultToleranceType::Value faultToleranceType,
                               FaultTolerancePlacement::Value ftPlacement);
 
     /**
