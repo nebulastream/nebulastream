@@ -26,12 +26,20 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <NesBaseTest.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -39,6 +47,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
+#include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -65,20 +75,64 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-        topology = Topology::create();
+
         //Setup source catalog
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+        //Setup topology
+        topology = Topology::create();
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100, properties);
+        rootNode->addNodeProperty("slots", 100);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr nextNode = TopologyNode::create(2, "localhost", 123, 124, 100, properties);
+        rootNode->addNodeProperty("slots", 100);
+        topology->addNewTopologyNodeAsChild(rootNode, nextNode);
+
+        TopologyNodePtr middleNode1 = TopologyNode::create(3, "localhost", 123, 124, 10, properties);
+        middleNode1->addNodeProperty("slots", 10);
+        topology->addNewTopologyNodeAsChild(nextNode, middleNode1);
+
+        TopologyNodePtr middleNode2 = TopologyNode::create(4, "localhost", 123, 124, 10, properties);
+        middleNode2->addNodeProperty("slots", 10);
+        topology->addNewTopologyNodeAsChild(nextNode, middleNode2);
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(5, "localhost", 123, 124, 1, properties);
+        sourceNode1->addNodeProperty("slots", 1);
+        topology->addNewTopologyNodeAsChild(middleNode1, sourceNode1);
+
+        TopologyNodePtr sourceNode2 = TopologyNode::create(6, "localhost", 123, 124, 1, properties);
+        sourceNode2->addNodeProperty("slots", 1);
+        topology->addNewTopologyNodeAsChild(middleNode2, sourceNode2);
+
+        //Prepare sources
+        auto logicalSource1 = LogicalSource::create("source1", Schema::create());
+        auto logicalSource2 = LogicalSource::create("source2", Schema::create());
+
+        auto inputSchema = Schema::create();
+        inputSchema->addField("f1", BasicType::INT32);
+        inputSchema->addField("f2", BasicType::INT8);
+        sourceCatalog->addLogicalSource("source1", inputSchema);
+        sourceCatalog->addLogicalSource("source2", inputSchema);
+
+        //Physical source1
         auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource = PhysicalSource::create("default_logical", "test1", defaultSourceType);
-        auto logicalSource = LogicalSource::create("default_logical", Schema::create());
+        auto physicalSource1 = PhysicalSource::create("source1", "physicalSource1", defaultSourceType);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
-        sourceCatalog->addPhysicalSource("default_logical", sourceCatalogEntry1);
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, sourceNode1);
+
+        //Physical source2
+        auto physicalSource2 = PhysicalSource::create("source2", "physicalSource2", defaultSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, sourceNode2);
+
+        sourceCatalog->addPhysicalSource("source1", sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource("source2", sourceCatalogEntry2);
+
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         globalExecutionPlan = GlobalExecutionPlan::create();
     }
@@ -93,7 +147,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
 
     //Coordinator configuration
@@ -126,8 +180,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
     queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -161,12 +215,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
 /**
  * @brief In this test we execute query merger phase on same valid query plan twice.
  */
-TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplicateValidQueryPlan) {
+TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
-    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
     queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -200,11 +254,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQueryPlan) {
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create two valid queryIdAndCatalogEntryMapping.");
-    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString1 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString2 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q2 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
@@ -248,7 +302,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new valid query.");
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     int queryId = 1;
     q1.getQueryPlan()->setQueryId(queryId);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -288,11 +342,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
 TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQueryRequestsWithAddAndRemoval) {
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create two valid queryIdAndCatalogEntryMapping.");
-    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString1 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString2 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q2 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
@@ -340,11 +394,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
 
     for (int i = 1; i <= 10; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+        auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
         q1.getQueryPlan()->setQueryId(i);
         queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     }
@@ -389,7 +443,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
-    const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
 
     //    auto queryCatalogService = std::make_shared<Catalogs::Query::QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
@@ -490,8 +544,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create two valid queryIdAndCatalogEntryMapping.");
-    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    const auto* queryString1 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
     const auto* queryString2 = R"(Query::from("example").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("example").sink(PrintSinkDescriptor::create());
@@ -543,4 +597,295 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto& sharedQueryMetadataToDeploy2 = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_EQ(sharedQueryMetadataToDeploy2.size(), 1u);
 }
+
+/**
+ * @brief In this test we execute a link removal request over a topology link that is not used by and placed query for data transfer.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUnusedLink) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+
+    int queryId = 1;
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId(queryId);
+    const std::string placementStrategy = "TopDown";
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfig->enableQueryReconfiguration = true;
+    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
+    auto globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                                                    queryCatalogService,
+                                                                                    sourceCatalog,
+                                                                                    globalQueryPlan,
+                                                                                    context,
+                                                                                    coordinatorConfig,
+                                                                                    udfCatalog,
+                                                                                    globalExecutionPlan);
+
+    //Execute Add query request
+    globalQueryPlanUpdatePhase->execute({nesAddQueryRequest});
+
+    //Fetch the updated shared query plans and assert on the change logs
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    uint64_t nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+
+    //Perform query placement
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+
+    //Execute remove topology link request
+    auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(4, 6);
+    globalQueryPlanUpdatePhase->execute({removeTopologyLinkRequest});
+
+    //Fetch updated shared query plans and assert on the change logs
+    updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_TRUE(changelogs.empty());
+}
+
+/**
+ * @brief In this test we execute a link removal request over a topology link that is used by and placed query for data transfer.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
+
+    int queryId = 1;
+    auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId(queryId);
+    const std::string placementStrategy = "TopDown";
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfig->enableQueryReconfiguration = true;
+    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
+    auto globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                                                    queryCatalogService,
+                                                                                    sourceCatalog,
+                                                                                    globalQueryPlan,
+                                                                                    context,
+                                                                                    coordinatorConfig,
+                                                                                    udfCatalog,
+                                                                                    globalExecutionPlan);
+
+    //Execute Add query request
+    globalQueryPlanUpdatePhase->execute({nesAddQueryRequest});
+
+    //Fetch the updated shared query plans and assert on the change logs
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    uint64_t nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+
+    //Perform query placement
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+
+    //Execute remove topology link request
+    auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(3, 5);
+    globalQueryPlanUpdatePhase->execute({removeTopologyLinkRequest});
+
+    //Fetch updated shared query plans and assert on the change logs
+    updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+    auto changelogEntry = changelogs[0].second;
+    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
+    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
+    EXPECT_TRUE((*changelogEntry->upstreamOperators.begin())->instanceOf<SourceLogicalOperatorNode>());
+    EXPECT_TRUE((*changelogEntry->downstreamOperators.begin())->instanceOf<SinkLogicalOperatorNode>());
+}
+
+/**
+ * @brief In this test we execute a link removal request over a topology link that is used by and placed query for data transfer.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilterQuery) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    const auto* queryString = R"(Query::from("source1").filter(Attribute("f1") < 1000).sink(PrintSinkDescriptor::create()))";
+
+    int queryId = 1;
+    auto q1 = Query::from("source1").filter(Attribute("f1") < 1000).sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId(queryId);
+    const std::string placementStrategy = "BottomUp";
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfig->enableQueryReconfiguration = true;
+    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
+    auto globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                                                    queryCatalogService,
+                                                                                    sourceCatalog,
+                                                                                    globalQueryPlan,
+                                                                                    context,
+                                                                                    coordinatorConfig,
+                                                                                    udfCatalog,
+                                                                                    globalExecutionPlan);
+
+    //Execute Add query request
+    globalQueryPlanUpdatePhase->execute({nesAddQueryRequest});
+
+    //Fetch the updated shared query plans and assert on the change logs
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    uint64_t nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+
+    //Perform query placement
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+
+    //Execute remove topology link request
+    auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(3, 5);
+    globalQueryPlanUpdatePhase->execute({removeTopologyLinkRequest});
+
+    //Fetch updated shared query plans and assert on the change logs
+    updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+    auto changelogEntry = changelogs[0].second;
+    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
+    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
+    EXPECT_TRUE((*changelogEntry->upstreamOperators.begin())->instanceOf<FilterLogicalOperatorNode>());
+    EXPECT_TRUE((*changelogEntry->downstreamOperators.begin())->instanceOf<SinkLogicalOperatorNode>());
+}
+
+/**
+ * @brief In this test we execute a link removal request over a topology link that is used by and placed query for data transfer.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnionQuery) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    const auto* queryString = R"(Query::from("source1").unionWith(Query::from("source2")).sink(PrintSinkDescriptor::create()))";
+
+    int queryId = 1;
+    auto q1 = Query::from("source1").unionWith(Query::from("source2")).sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId(queryId);
+    const std::string placementStrategy = "TopDown";
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+
+    //Coordinator configuration
+    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfig->enableQueryReconfiguration = true;
+    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfig->optimizer = optimizerConfiguration;
+
+    auto globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                                                    queryCatalogService,
+                                                                                    sourceCatalog,
+                                                                                    globalQueryPlan,
+                                                                                    context,
+                                                                                    coordinatorConfig,
+                                                                                    udfCatalog,
+                                                                                    globalExecutionPlan);
+
+    //Execute Add query request
+    globalQueryPlanUpdatePhase->execute({nesAddQueryRequest});
+
+    //Fetch the updated shared query plans and assert on the change logs
+    auto updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    uint64_t nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+
+    //Perform query placement
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+
+    //Execute remove topology link request
+    auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(1, 2);
+    globalQueryPlanUpdatePhase->execute({removeTopologyLinkRequest});
+
+    //Fetch updated shared query plans and assert on the change logs
+    updatedSharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_EQ(updatedSharedQueryPlans.size(), 1);
+    // Get current time stamp
+    nowInMicroSec =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
+    EXPECT_EQ(changelogs.size(), 1);
+    auto changelogEntry = changelogs[0].second;
+    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 2);
+    EXPECT_EQ(changelogEntry->downstreamOperators.size(), 2);
+    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
+    auto downstreamIterator = changelogEntry->downstreamOperators.begin();
+    EXPECT_TRUE((*downstreamIterator)->instanceOf<UnionLogicalOperatorNode>());
+    ++downstreamIterator;
+    EXPECT_TRUE((*downstreamIterator)->instanceOf<ProjectionLogicalOperatorNode>());
+    auto upstreamIterator = changelogEntry->upstreamOperators.begin();
+    EXPECT_TRUE((*upstreamIterator)->instanceOf<SourceLogicalOperatorNode>());
+    ++upstreamIterator;
+    EXPECT_TRUE((*upstreamIterator)->instanceOf<SourceLogicalOperatorNode>());
+}
+
 }// namespace NES

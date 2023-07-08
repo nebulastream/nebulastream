@@ -362,7 +362,7 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(SharedQueryId shar
 
                     //1.3 Identify non-system generated pinned upstream operator from the next upstream execution node
                     for (const auto& nextUpstreamExecutionNode : upstreamExecutionNode->getChildren()) {
-                        getDownstreamPinnedOperatorIds(sharedQueryPlanId,
+                        getUpstreamPinnedOperatorIds(sharedQueryPlanId,
                                                        nextUpstreamExecutionNode->as<ExecutionNode>(),
                                                        upstreamOperatorIds);
                     }

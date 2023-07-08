@@ -28,11 +28,11 @@ class RemoveTopologyLinkRequest : public Request {
   public:
     /**
      * @brief Creates an instance of remove topology link request
-     * @param upstreamNodeId: the identifier of upstream topology node
      * @param downstreamNodeId: the identifier of downstream topology node
+     * @param upstreamNodeId: the identifier of upstream topology node
      * @return a shared pointer to the TopologyChangeRequest
      */
-    static RemoveTopologyLinkRequestPtr create(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
+    static RemoveTopologyLinkRequestPtr create(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId);
 
     TopologyNodeId getUpstreamNodeId() const;
 
@@ -43,10 +43,10 @@ class RemoveTopologyLinkRequest : public Request {
     RequestType getRequestType() override;
 
   private:
-    explicit RemoveTopologyLinkRequest(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
+    explicit RemoveTopologyLinkRequest(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId);
 
-    NES::TopologyNodeId upstreamNodeId;
     NES::TopologyNodeId downstreamNodeId;
+    NES::TopologyNodeId upstreamNodeId;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYLINKREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYLINKREQUEST_HPP_
