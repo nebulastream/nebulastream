@@ -76,6 +76,8 @@ void WorkerHealthCheckService::startHealthCheck() {
         setThreadName("nesHealth");
         NES_DEBUG("NesWorker: start health checking on topological neighbors");
         auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
+        auto retryCount = worker->getWorkerConfiguration()->workerHealthCheckRetryCount.getValue();
+        auto retryTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckRetryTime.getValue());
         while (isRunning) {
             NES_DEBUG("NesWorker::topological neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
