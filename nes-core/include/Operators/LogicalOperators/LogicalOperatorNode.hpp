@@ -101,6 +101,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
     /**
      * @brief Update state of the operator
      * @param newOperatorState : new state of the operator
+     * @throws InvalidOperatorStateException
      */
     void setOperatorState(OperatorState newOperatorState);
 
