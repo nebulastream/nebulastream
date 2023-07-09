@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
@@ -61,18 +62,46 @@ void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, const std::s
 
 void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) {
 
+    //Set the new operator state after validating the previous state
     switch (newOperatorState) {
-        case OperatorState::TO_BE_PLACED: break;
+        case OperatorState::TO_BE_PLACED:
+            throw InvalidOperatorStateException(
+                id,
+                {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_REPLACED, OperatorState::PLACED},
+                this->operatorState);
         case OperatorState::TO_BE_REMOVED:
             if (this->operatorState != OperatorState::REMOVED) {
                 this->operatorState = OperatorState::TO_BE_REMOVED;
                 break;
             }
-            throw NES::
-            NES_NOT_IMPLEMENTED();
-        case OperatorState::TO_BE_REPLACED: break;
-        case OperatorState::PLACED: break;
-        case OperatorState::REMOVED: break;
+            throw InvalidOperatorStateException(
+                id,
+                {OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
+                this->operatorState);
+        case OperatorState::TO_BE_REPLACED:
+            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED) {
+                this->operatorState = OperatorState::TO_BE_REPLACED;
+                break;
+            }
+            throw InvalidOperatorStateException(
+                id,
+                {OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
+                this->operatorState);
+        case OperatorState::PLACED:
+            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED
+                && this->operatorState != OperatorState::PLACED) {
+                this->operatorState = OperatorState::PLACED;
+                break;
+            }
+            throw InvalidOperatorStateException(id,
+                                                {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
+                                                this->operatorState);
+        case OperatorState::REMOVED:
+            if (this->operatorState == OperatorState::TO_BE_REMOVED) {
+                this->operatorState = OperatorState::REMOVED;
+                break;
+            }
+            throw InvalidOperatorStateException(id, {OperatorState::TO_BE_REMOVED}, this->operatorState);
     }
 }
 
