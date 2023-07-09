@@ -64,6 +64,8 @@ std::string SqrtExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr SqrtExpressionNode::copy() { return std::make_shared<SqrtExpressionNode>(SqrtExpressionNode(this)); }
+ExpressionNodePtr SqrtExpressionNode::copy() {
+    return SqrtExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

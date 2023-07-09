@@ -89,7 +89,7 @@ void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCo
 }
 
 ExpressionNodePtr FieldRenameExpressionNode::copy() {
-    return std::make_shared<FieldRenameExpressionNode>(FieldRenameExpressionNode(this));
+    return FieldRenameExpressionNode::create(originalField->copy()->as<FieldAccessExpressionNode>(), newFieldName);
 }
 
 }// namespace NES

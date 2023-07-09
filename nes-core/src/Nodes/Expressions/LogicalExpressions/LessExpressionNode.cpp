@@ -38,6 +38,8 @@ std::string LessExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr LessExpressionNode::copy() { return std::make_shared<LessExpressionNode>(LessExpressionNode(this)); }
+ExpressionNodePtr LessExpressionNode::copy() {
+    return LessExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

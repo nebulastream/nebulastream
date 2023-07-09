@@ -55,6 +55,8 @@ std::string AbsExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr AbsExpressionNode::copy() { return std::make_shared<AbsExpressionNode>(AbsExpressionNode(this)); }
+ExpressionNodePtr AbsExpressionNode::copy() {
+    return AbsExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

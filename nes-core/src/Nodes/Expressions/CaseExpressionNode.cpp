@@ -122,6 +122,14 @@ std::string CaseExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr CaseExpressionNode::copy() { return std::make_shared<CaseExpressionNode>(CaseExpressionNode(this)); }
+ExpressionNodePtr CaseExpressionNode::copy() {
+    std::vector<ExpressionNodePtr> copyOfWhenExpressions;
+    for (auto whenExpression : getWhenChildren()){
+        auto expChild = whenExpression->as<ExpressionNode>()->copy();
+        copyOfWhenExpressions.push_back(whenExpression->as<ExpressionNode>()->copy());
+    }
+
+    return CaseExpressionNode::create(copyOfWhenExpressions, getDefaultExp()->copy());
+}
 
 }// namespace NES

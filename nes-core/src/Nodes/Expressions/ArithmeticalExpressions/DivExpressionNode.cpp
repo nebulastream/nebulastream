@@ -42,6 +42,8 @@ std::string DivExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr DivExpressionNode::copy() { return std::make_shared<DivExpressionNode>(DivExpressionNode(this)); }
+ExpressionNodePtr DivExpressionNode::copy() {
+    return DivExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

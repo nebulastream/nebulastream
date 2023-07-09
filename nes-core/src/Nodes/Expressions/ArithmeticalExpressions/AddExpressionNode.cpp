@@ -42,6 +42,8 @@ std::string AddExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr AddExpressionNode::copy() { return std::make_shared<AddExpressionNode>(AddExpressionNode(this)); }
+ExpressionNodePtr AddExpressionNode::copy() {
+    return AddExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

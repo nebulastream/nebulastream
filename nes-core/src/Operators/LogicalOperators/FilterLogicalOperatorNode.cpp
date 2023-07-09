@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -26,6 +27,10 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
 }
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() const { return predicate; }
+
+void FilterLogicalOperatorNode::updatePredicate(NES::ExpressionNodePtr newPredicate) {
+    predicate = std::move(newPredicate);
+}
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;

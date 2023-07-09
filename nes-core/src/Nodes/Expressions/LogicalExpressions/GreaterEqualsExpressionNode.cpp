@@ -40,7 +40,7 @@ std::string GreaterEqualsExpressionNode::toString() const {
 }
 
 ExpressionNodePtr GreaterEqualsExpressionNode::copy() {
-    return std::make_shared<GreaterEqualsExpressionNode>(GreaterEqualsExpressionNode(this));
+    return GreaterEqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
 }// namespace NES

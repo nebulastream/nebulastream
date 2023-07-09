@@ -60,6 +60,9 @@ std::string WhenExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr WhenExpressionNode::copy() { return std::make_shared<WhenExpressionNode>(WhenExpressionNode(this)); }
+ExpressionNodePtr WhenExpressionNode::copy() {
+
+    return WhenExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

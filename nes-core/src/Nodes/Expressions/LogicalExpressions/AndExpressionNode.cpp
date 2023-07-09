@@ -55,6 +55,8 @@ void AndExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
                                 + getRight()->getStamp()->toString());
     }
 }
-ExpressionNodePtr AndExpressionNode::copy() { return std::make_shared<AndExpressionNode>(AndExpressionNode(this)); }
+ExpressionNodePtr AndExpressionNode::copy() {
+    return AndExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

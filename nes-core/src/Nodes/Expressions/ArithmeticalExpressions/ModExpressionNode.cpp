@@ -107,6 +107,8 @@ std::string ModExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr ModExpressionNode::copy() { return std::make_shared<ModExpressionNode>(ModExpressionNode(this)); }
+ExpressionNodePtr ModExpressionNode::copy() {
+    return ModExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES
