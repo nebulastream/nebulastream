@@ -13,6 +13,7 @@
 */
 
 #include <WorkQueues/RequestTypes/TopologyRequests/AddTopologyLinkRequest.hpp>
+#include <string>
 
 namespace NES::Experimental {
 
