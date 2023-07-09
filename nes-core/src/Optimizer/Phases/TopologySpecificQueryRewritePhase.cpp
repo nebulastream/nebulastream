@@ -27,7 +27,7 @@ TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                           Configurations::OptimizerConfiguration configuration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(topology, std::move(sourceCatalog), configuration));
+        TopologySpecificQueryRewritePhase(std::move(topology), std::move(sourceCatalog), std::move(configuration)));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr topology,
