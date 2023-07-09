@@ -53,6 +53,8 @@ void OrExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& ty
                                 + getRight()->getStamp()->toString());
     }
 }
-ExpressionNodePtr OrExpressionNode::copy() { return std::make_shared<OrExpressionNode>(OrExpressionNode(this)); }
+ExpressionNodePtr OrExpressionNode::copy() {
+    return OrExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

@@ -39,6 +39,8 @@ std::string EqualsExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr EqualsExpressionNode::copy() { return std::make_shared<EqualsExpressionNode>(EqualsExpressionNode(this)); }
+ExpressionNodePtr EqualsExpressionNode::copy() {
+    return EqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

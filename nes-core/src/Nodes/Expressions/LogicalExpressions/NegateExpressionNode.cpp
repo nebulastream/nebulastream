@@ -50,6 +50,8 @@ void NegateExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext
                                + child()->getStamp()->toString());
     }
 }
-ExpressionNodePtr NegateExpressionNode::copy() { return std::make_shared<NegateExpressionNode>(NegateExpressionNode(this)); }
+ExpressionNodePtr NegateExpressionNode::copy() {
+    return NegateExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

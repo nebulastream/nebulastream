@@ -53,6 +53,7 @@ std::string FloorExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr FloorExpressionNode::copy() { return std::make_shared<FloorExpressionNode>(FloorExpressionNode(this)); }
+ExpressionNodePtr FloorExpressionNode::copy() {
+    return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
 
 }// namespace NES

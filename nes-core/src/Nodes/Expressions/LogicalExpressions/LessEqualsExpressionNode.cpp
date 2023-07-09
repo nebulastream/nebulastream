@@ -39,7 +39,7 @@ std::string LessEqualsExpressionNode::toString() const {
 }
 
 ExpressionNodePtr LessEqualsExpressionNode::copy() {
-    return std::make_shared<LessEqualsExpressionNode>(LessEqualsExpressionNode(this));
+    return LessEqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
 }// namespace NES

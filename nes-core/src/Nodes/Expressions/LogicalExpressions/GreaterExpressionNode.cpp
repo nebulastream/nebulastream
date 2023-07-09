@@ -38,6 +38,8 @@ std::string GreaterExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr GreaterExpressionNode::copy() { return std::make_shared<GreaterExpressionNode>(GreaterExpressionNode(this)); }
+ExpressionNodePtr GreaterExpressionNode::copy() {
+    return GreaterExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

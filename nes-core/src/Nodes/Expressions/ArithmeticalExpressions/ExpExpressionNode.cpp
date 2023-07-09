@@ -53,6 +53,8 @@ std::string ExpExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr ExpExpressionNode::copy() { return std::make_shared<ExpExpressionNode>(ExpExpressionNode(this)); }
+ExpressionNodePtr ExpExpressionNode::copy() {
+    return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES
