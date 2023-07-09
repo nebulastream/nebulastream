@@ -24,7 +24,7 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
-                                     QueryStatus queryStatus)
+                                     QueryState queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
       inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
 
@@ -41,7 +41,7 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
     this->executedQueryPlan = executedQueryPlan;
 }
 
-QueryStatus QueryCatalogEntry::getQueryStatus() const {
+QueryState QueryCatalogEntry::getQueryStatus() const {
     std::unique_lock lock(mutex);
     return queryStatus;
 }
@@ -51,7 +51,7 @@ std::string QueryCatalogEntry::getQueryStatusAsString() const {
     return std::string(magic_enum::enum_name(queryStatus));
 }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) {
+void QueryCatalogEntry::setQueryStatus(QueryState queryStatus) {
     std::unique_lock lock(mutex);
     this->queryStatus = queryStatus;
 }
@@ -83,7 +83,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::RUNNING, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryState::RUNNING, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

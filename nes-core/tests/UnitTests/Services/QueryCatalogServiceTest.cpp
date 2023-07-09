@@ -89,7 +89,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::REGISTERED);
+    auto run = queryCatalog->getQueriesWithStatus(QueryState::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -159,7 +159,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryWithMultipleSinks) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::REGISTERED);
+    auto run = queryCatalog->getQueriesWithStatus(QueryState::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -203,7 +203,7 @@ TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
+    queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
 
     //Assert
     std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus("RUNNING");

@@ -16,11 +16,13 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/OperatorState.hpp>
 #include <utility>
+
 namespace NES {
 
 LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
-    : OperatorNode(id), z3Signature(nullptr), hashBasedSignature(), hashGenerator() {}
+    : OperatorNode(id), z3Signature(nullptr), hashBasedSignature(), hashGenerator(), operatorState(OperatorState::TO_BE_PLACED) {}
 
 Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 
@@ -47,7 +49,7 @@ void LogicalOperatorNode::setHashBasedSignature(std::map<size_t, std::set<std::s
     this->hashBasedSignature = std::move(signature);
 }
 
-void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, std::string stringSignature) {
+void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, const std::string& stringSignature) {
     if (hashBasedSignature.find(hashCode) != hashBasedSignature.end()) {
         auto stringSignatures = hashBasedSignature[hashCode];
         stringSignatures.emplace(stringSignature);
@@ -56,4 +58,24 @@ void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, std::string 
         hashBasedSignature[hashCode] = {stringSignature};
     }
 }
+
+void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) {
+
+    switch (newOperatorState) {
+        case OperatorState::TO_BE_PLACED: break;
+        case OperatorState::TO_BE_REMOVED:
+            if (this->operatorState != OperatorState::REMOVED) {
+                this->operatorState = OperatorState::TO_BE_REMOVED;
+                break;
+            }
+            throw NES::
+            NES_NOT_IMPLEMENTED();
+        case OperatorState::TO_BE_REPLACED: break;
+        case OperatorState::PLACED: break;
+        case OperatorState::REMOVED: break;
+    }
+}
+
+OperatorState LogicalOperatorNode::getOperatorState() { return operatorState; }
+
 }// namespace NES

@@ -191,7 +191,7 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-std::string RemoteClient::getQueries(QueryStatus status) {
+std::string RemoteClient::getQueries(QueryState status) {
     std::string queryStatus = std::string(magic_enum::enum_name(status));
 
     cpr::AsyncResponse future =

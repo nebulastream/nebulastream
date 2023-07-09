@@ -38,7 +38,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Core.hpp>
-#include <Util/QueryStatus.hpp>
+#include <Util/QueryState.hpp>
 #include <regex>
 #include <utility>
 
@@ -312,7 +312,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::STOPPED) {
+        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
@@ -336,10 +336,10 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
             return false;
         }
         NES_TRACE("MonitoringManager: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus status = queryCatalogEntry->getQueryStatus();
+        QueryState status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::RUNNING: {
+            case QueryState::RUNNING: {
                 NES_DEBUG("MonitoringManager: Query is now running {}", queryId);
                 return true;
             }

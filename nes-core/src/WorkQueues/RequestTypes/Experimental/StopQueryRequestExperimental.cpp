@@ -100,7 +100,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
-                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryStatus::STOPPED, "Hard Stopped");
+                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
             }
             globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
@@ -134,7 +134,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         //  - Query status of the removed query is marked as stopped.
         // Actual Result:
         //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
 
     } catch (RequestExecutionException& e) {
         handleError(e, storageHandler);

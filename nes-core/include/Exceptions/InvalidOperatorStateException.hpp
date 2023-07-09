@@ -12,25 +12,28 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
+#include <Util/OperatorState.hpp>
 #include <stdexcept>
 #include <vector>
 
-namespace NES::Exceptions {
+namespace NES {
 /**
- * @brief Exception is raised when the query is in an Invalid status
+ * @brief Exception is raised when the operator is in an Invalid status
  */
-class InvalidQueryStatusException : public RequestExecutionException {
+class InvalidOperatorStateException : public RequestExecutionException {
   public:
-    explicit InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatus, QueryStatus actualStatus);
+    explicit InvalidOperatorStateException(OperatorId operatorId,
+                                           const std::vector<OperatorState>& expectedStatus,
+                                           OperatorState actualStatus);
     [[nodiscard]] const char* what() const noexcept override;
 
   private:
     std::string message;
 };
-}// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
+}// namespace NES
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
