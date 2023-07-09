@@ -731,10 +731,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getLeafOperators();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
-    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
-    EXPECT_TRUE((*changelogEntry->upstreamOperators.begin())->instanceOf<SourceLogicalOperatorNode>());
-    EXPECT_TRUE((*changelogEntry->downstreamOperators.begin())->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+    auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
+    EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
+    EXPECT_EQ(expectedDownstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
 }
 
 /**
@@ -803,10 +807,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
-    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
-    EXPECT_TRUE((*changelogEntry->upstreamOperators.begin())->instanceOf<FilterLogicalOperatorNode>());
-    EXPECT_TRUE((*changelogEntry->downstreamOperators.begin())->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+    auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
+    EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
+    EXPECT_EQ(expectedDownstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
 }
 
 /**
@@ -875,17 +883,30 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getSourceOperators();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 2);
+    EXPECT_EQ(expectedUpstreamOperators.size(), 2);
+    //Actual upstream operator should have same operator id as one of the two expected operators
+    auto actualUpstreamOperatorIterator = changelogEntry->upstreamOperators.begin();
+    EXPECT_TRUE((*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[0]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId());
+    ++actualUpstreamOperatorIterator;
+    EXPECT_TRUE((*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[0]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId());
+
+    auto expectedUnionOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<UnionLogicalOperatorNode>();
+    auto expectedProjectionOperators =
+        updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 2);
-    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
-    auto downstreamIterator = changelogEntry->downstreamOperators.begin();
-    EXPECT_TRUE((*downstreamIterator)->instanceOf<UnionLogicalOperatorNode>());
-    ++downstreamIterator;
-    EXPECT_TRUE((*downstreamIterator)->instanceOf<ProjectionLogicalOperatorNode>());
-    auto upstreamIterator = changelogEntry->upstreamOperators.begin();
-    EXPECT_TRUE((*upstreamIterator)->instanceOf<SourceLogicalOperatorNode>());
-    ++upstreamIterator;
-    EXPECT_TRUE((*upstreamIterator)->instanceOf<SourceLogicalOperatorNode>());
+    EXPECT_EQ(expectedUnionOperators.size(), 1);
+    EXPECT_EQ(expectedProjectionOperators.size(), 1);
+    //Actual downstream operator should have same operator id as one of the two expected operators
+    auto actualDownstreamOperatorIterator = changelogEntry->downstreamOperators.begin();
+    EXPECT_TRUE((*actualDownstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId()
+                || (*actualDownstreamOperatorIterator)->getId() == expectedUnionOperators[0]->getId());
+    ++actualDownstreamOperatorIterator;
+    EXPECT_TRUE((*actualDownstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId()
+                || (*actualDownstreamOperatorIterator)->getId() == expectedUnionOperators[0]->getId());
 }
 
 /**
@@ -1020,14 +1041,16 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithFilt
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
+
     auto changelogEntry = changelogs[0].second;
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
+    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+    auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
-    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
-    auto downstreamIterator = changelogEntry->downstreamOperators.begin();
-    EXPECT_TRUE((*downstreamIterator)->instanceOf<SinkLogicalOperatorNode>());
-    auto upstreamIterator = changelogEntry->upstreamOperators.begin();
-    EXPECT_TRUE((*upstreamIterator)->instanceOf<FilterLogicalOperatorNode>());
+    EXPECT_EQ(expectedDownstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
 }
 
 /**
@@ -1096,15 +1119,29 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
+
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getSourceOperators();
+    auto expectedProjectionOperators =
+        updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 2);
+    EXPECT_EQ(expectedProjectionOperators.size(), 1);
+    EXPECT_EQ(expectedUpstreamOperators.size(), 2);
+    //Actual upstream operator should have same operator id as one of the two expected operators
+    auto actualUpstreamOperatorIterator = changelogEntry->upstreamOperators.begin();
+    EXPECT_TRUE((*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[0]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId());
+    ++actualUpstreamOperatorIterator;
+    EXPECT_TRUE((*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[0]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId()
+                || (*actualUpstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId());
+
+    auto expectedSinkOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<SinkLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
-    auto upstreamOperator = q1.getQueryPlan()->getLeafOperators()[0];
-    auto downstreamIterator = changelogEntry->downstreamOperators.begin();
-    EXPECT_TRUE((*downstreamIterator)->instanceOf<SinkLogicalOperatorNode>());
-    auto upstreamIterator = changelogEntry->upstreamOperators.begin();
-    EXPECT_TRUE((*upstreamIterator)->instanceOf<SourceLogicalOperatorNode>());
-    ++upstreamIterator;
-    EXPECT_TRUE((*upstreamIterator)->instanceOf<ProjectionLogicalOperatorNode>());
+    EXPECT_EQ(expectedSinkOperators.size(), 1);
+    //Actual upstream operator should have same operator id as one of the two expected operators
+    auto actualDownstreamOperatorIterator = changelogEntry->downstreamOperators.begin();
+    EXPECT_TRUE((*actualDownstreamOperatorIterator)->getId() == expectedSinkOperators[0]->getId());
 }
 
 }// namespace NES

@@ -13,6 +13,7 @@
 */
 
 #include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
+#include <string>
 
 namespace NES::Experimental {
 
