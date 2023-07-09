@@ -66,7 +66,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
     queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
     originIdInferencePhase = OriginIdInferencePhase::create();
     topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+        TopologySpecificQueryRewritePhase::create(this->topology, sourceCatalog, optimizerConfigurations);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
 }
