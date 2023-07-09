@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
 
 #include <Common/Identifiers.hpp>
-#include <Util/QueryStatus.hpp>
+#include <Util/QueryState.hpp>
 #include <memory>
 
 namespace NES {
@@ -30,13 +30,13 @@ using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 class QuerySubPlanMetaData {
 
   public:
-    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus, uint64_t workerId);
+    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
 
     /**
      * Update the status of the qub query
      * @param queryStatus : new status
      */
-    void updateStatus(QueryStatus queryStatus);
+    void updateStatus(QueryState queryStatus);
 
     /**
      * Update the meta information
@@ -48,17 +48,17 @@ class QuerySubPlanMetaData {
      * Get status of query sub plan
      * @return status
      */
-    QueryStatus getQuerySubPlanStatus();
+    QueryState getQuerySubPlanStatus();
 
     QuerySubPlanId getQuerySubPlanId() const;
 
-    QueryStatus getSubQueryStatus() const;
+    QueryState getSubQueryStatus() const;
 
     uint64_t getWorkerId() const;
 
     const std::string& getMetaInformation() const;
 
-    QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus, uint64_t workerId);
+    QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
 
   private:
     /**
@@ -69,7 +69,7 @@ class QuerySubPlanMetaData {
     /**
      * status of the sub query
      */
-    QueryStatus subQueryStatus;
+    QueryState subQueryStatus;
 
     /**
      * worker id where the sub query is deployed

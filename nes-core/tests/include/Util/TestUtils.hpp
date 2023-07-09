@@ -495,13 +495,13 @@ template<typename T>
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file {}", outputFilePath);
 
         auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryStatus() == QueryStatus::FAILED) {
+        if (entry->getQueryStatus() == QueryState::FAILED) {
             // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
-        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::STOPPED;
+        auto isQueryStopped = entry->getQueryStatus() == QueryState::STOPPED;
 
         // check if result is ready.
         std::ifstream ifs(outputFilePath);

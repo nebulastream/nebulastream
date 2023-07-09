@@ -152,7 +152,7 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
 
     //2. Set query status as Optimizing
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::OPTIMIZING, "");
+    queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
     //3. Execute type inference phase
     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);

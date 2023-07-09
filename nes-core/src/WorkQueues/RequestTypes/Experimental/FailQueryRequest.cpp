@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -74,7 +74,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     //update global query plan
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
+        queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
 }
 }// namespace NES::Experimental

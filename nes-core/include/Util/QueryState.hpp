@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_UTIL_QUERYSTATUS_HPP_
 
 #include <cinttypes>
-#include <stdint.h>
 #include <string>
 #include <unordered_map>
 
@@ -36,7 +35,7 @@ namespace NES {
      * Restarting: restarting the query
      * Migrating: migrating query
      */
-enum class QueryStatus : uint8_t {
+enum class QueryState : uint8_t {
     REGISTERED = 0,
     OPTIMIZING,
     DEPLOYED,

@@ -91,7 +91,7 @@ bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::DEPLOYED, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
     }
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
@@ -105,7 +105,7 @@ bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
     }
 
     NES_DEBUG("QueryService: start query");

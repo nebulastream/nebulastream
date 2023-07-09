@@ -166,7 +166,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                udfCatalog,
                                                                globalExecutionPlan);
     auto catalogEntry1 =
-        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::OPTIMIZING);
+        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryState::OPTIMIZING);
     auto request = AddQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -308,7 +308,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Random reason");
+    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, "Random reason");
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();

@@ -92,7 +92,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, exc.what());
+        queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
         throw exc;
     }
     throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
@@ -139,7 +139,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, exc.what());
+        queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
         throw exc;
     }
     throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");

@@ -18,7 +18,7 @@
 #include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Common/Identifiers.hpp>
-#include <Util/QueryStatus.hpp>
+#include <Util/QueryState.hpp>
 #include <chrono>
 
 namespace NES {
@@ -110,7 +110,7 @@ class RemoteClient {
      * @param QueryStatus query status, i.e. registered
      * @return query information
      */
-    std::string getQueries(QueryStatus status);
+    std::string getQueries(QueryState status);
 
     /**
      * @brief add a logical source

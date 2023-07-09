@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryStatusException.hpp"
+#include "Exceptions/InvalidQueryStateException.hpp"
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
@@ -23,13 +23,13 @@ InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<Query
     : RequestExecutionException("Invalid query status") {
 
     std::stringstream expectedStatus;
-    for (QueryStatus status : expectedStatuses) {
+    for (QueryState status : expectedStatuses) {
         expectedStatus << std::string(magic_enum::enum_name(status)) << " ";
     }
     message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
         + std::string(magic_enum::enum_name(actualStatus));
 }
 
-const char* InvalidQueryStatusException::what() const noexcept { return message.c_str(); }
+const char* InvalidQueryStateException::what() const noexcept { return message.c_str(); }
 
 }// namespace NES::Exceptions
