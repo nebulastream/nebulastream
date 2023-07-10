@@ -55,8 +55,8 @@ class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilat
 };
 
 Value<> negativeIntegerTest() {
-    Value four = Value<>(4);
-    Value five = Value<>(5);
+    Value four  = 4;
+    Value five  = 5;
     Value minusOne = four - five;
     return minusOne;
 }
@@ -73,8 +73,8 @@ TEST_P(TypeCompilationTest, negativeIntegerTest) {
 Value<> unsignedIntegerTest() {
     uint32_t four = 4;
     uint32_t five = 5;
-    Value unsignedFour = Value(four);
-    Value unsignedFive = Value(five);
+    Value unsignedFour  = four;
+    Value unsignedFive  = five;
     Value minusOne = unsignedFour - unsignedFive;
     return minusOne;
 }
@@ -90,8 +90,8 @@ TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
 }
 
 Value<> boolCompareTest() {
-    Value value = Value(1);
-    Value iw = Value(true);
+    Value value  = 1;
+    Value iw  = true;
     if (iw == false) {
         return value + 41;
     } else {
@@ -110,7 +110,7 @@ TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
 }
 
 Value<> floatTest() {
-    // Value iw = Value(1.3);
+    // Value iw  = 1.3;
     // return iw;
     return Value(1);
 }
@@ -126,8 +126,8 @@ TEST_P(TypeCompilationTest, DISABLED_floatTest) {
 }
 
 Value<> mixBoolAndIntTest() {
-    Value boolValue = Value(true);
-    Value intValue = Value(4);
+    Value boolValue  = true;
+    Value intValue  = 4;
     return boolValue + intValue;
 }
 
@@ -260,10 +260,10 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 }
 
 TEST_P(TypeCompilationTest, castInteger) {
-    Value<> i8 = Value<Int8>(42_s8);
-    Value<> i16 = Value<Int16>(42_s16);
-    Value<> i32 = Value<Int32>(42_s32);
-    Value<> i64 = Value<Int64>(42_s64);
+    Value<> i8  = +42_s8;
+    Value<> i16  = +42_s16;
+    Value<> i32  = +42_s32;
+    Value<> i64  = +42_s64;
 
     {
         auto engine = compileCast(i8, i16);
@@ -298,10 +298,10 @@ TEST_P(TypeCompilationTest, castInteger) {
 }
 
 TEST_P(TypeCompilationTest, castUInteger) {
-    Value<> ui8 = Value<UInt8>(42_u8);
-    Value<> ui16 = Value<UInt16>(42_u16);
-    Value<> ui32 = Value<UInt32>(42_u32);
-    Value<> ui64 = Value<UInt64>(42_u64);
+    Value<> ui8  = 42_u8;
+    Value<> ui16  = 42_u16;
+    Value<> ui32  = 42_u32;
+    Value<> ui64  = 42_u64;
 
     {
         auto engine = compileCast(ui8, ui16);
@@ -336,13 +336,13 @@ TEST_P(TypeCompilationTest, castUInteger) {
 }
 
 TEST_P(TypeCompilationTest, castIntegerToUInteger) {
-    Value<> i8 = Value<Int8>(42_s8);
-    Value<> i16 = Value<Int16>(42_s16);
-    Value<> i32 = Value<Int32>(42_s32);
-    Value<> i64 = Value<Int64>(42_s64);
-    Value<> ui8 = Value<UInt8>(42_u8);
-    Value<> ui16 = Value<UInt16>(42_u16);
-    Value<> ui32 = Value<UInt32>(42_u32);
+    Value<> i8  = +42_s8;
+    Value<> i16  = +42_s16;
+    Value<> i32  = +42_s32;
+    Value<> i64  = +42_s64;
+    Value<> ui8  = 42_u8;
+    Value<> ui16  = 42_u16;
+    Value<> ui32  = 42_u32;
     Value<> ui64 = Value<UInt64>(42_u64);
     {
         auto engine = compileCast(i8, ui8);
@@ -406,7 +406,7 @@ TEST_P(TypeCompilationTest, castFloat) {
     auto i32 = Value<Int32>(42_s32);
     auto i64 = Value<Int64>(42_s64);
     auto floatV = Value<Float>(1.0f);
-    auto doubleV = Value<Double>(1.0);
+    auto doubleV  = Value<Double>(1.0);
 
     {
         auto engine = compileCast(floatV, doubleV);

@@ -43,7 +43,7 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
                              value.as<Float>());
     }
 
-    for (Value<UInt8> i(0_u8); i < numberOfKeyBits; i = i + 1) {
+    for (auto i = 0_u64; i < numberOfKeyBits; i = i + 1) {
         auto isBitSet = (value >> i) & 1;
         auto h3SeedMemRef = (state + (entrySizeH3HashSeed * i)).as<MemRef>();
         auto h3Seed = h3SeedMemRef.load<UInt64>();

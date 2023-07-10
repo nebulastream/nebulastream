@@ -59,9 +59,9 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write<int64_t>(1_s64);
+    for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); i++) {
+        dynamicBuffer[i]["f1"].write(i % 2);
+        dynamicBuffer[i]["f2"].write(+1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
@@ -97,7 +97,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write<int64_t>(1_s64);
+        dynamicBuffer[i]["f2"].write(+1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
