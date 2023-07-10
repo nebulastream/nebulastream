@@ -30,13 +30,13 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public DataSource {
   public:
     /**
-   * @brief constructor of CSV source
+   * @brief constructor the CSV source
    * @param schema of the source
-   * @param bufferManager the buffer manager
-   * @param queryManager the query manager
+   * @param bufferManager valid pointer to the buffer manager
+   * @param queryManager valid pointer to the query manager
    * @param csvSourceType points to the current source configuration object, look at mqttSourceType and CSVSourceType for info
    * @param operatorId current operator id
-   * @param originId represents an origin
+   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
    * @param numSourceLocalBuffers number of local source buffers
    * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
    * @param physicalSourceName the name and unique identifier of a physical source

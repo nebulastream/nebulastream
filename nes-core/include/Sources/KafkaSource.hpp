@@ -31,6 +31,17 @@ namespace NES {
 
 class KafkaSource : public DataSource {
   public:
+  /**
+   * @brief constructor for a kafka source
+   * @param schema schema of the elements
+   * @param brokers list of brokers
+   * @param topic kafka topic
+   * @param groupId group id
+   * @param autoCommit bool indicating if offset has to be committed automatically or not
+   * @param kafkaConsumerTimeout  kafka consumer timeout
+   * @param operatorId: operator id
+   * @return
+   */
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
                 Runtime::QueryManagerPtr queryManager,
