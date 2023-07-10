@@ -113,14 +113,14 @@ void WorkerHealthCheckService::startHealthCheck() {
             }
 
             {
-                std::unique_lock<std::mutex> lk(cvMutex);
-                cv.wait_for(lk, waitTime, [this] {
+                std::unique_lock<std::mutex> lk(cvMutex2);
+                cv2.wait_for(lk, waitTime, [this] {
                     return isRunning == false;
                 });
             }
         }
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
-        shutdownRPC->set_value(true);
+        shutdownRPC2->set_value(true);
         NES_DEBUG("NesWorker::healthCheck: stop health checking id= {}", id);
     }));
 }
