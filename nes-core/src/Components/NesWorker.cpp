@@ -367,8 +367,12 @@ bool NesWorker::connect() {
                                                                         std::make_shared<WorkerRPCClient>(),
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
-        NES_DEBUG("NesWorker start health check");
-        healthCheckService->startHealthCheck();
+        if (coordinatorRpcClient->getId() != 1) {
+            NES_DEBUG("NesWorker start health check");
+            healthCheckService->startHealthCheck();
+        } else {
+            NES_DEBUG("This is the coordinator. Not running worker health check.")
+        }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         if (!configPhysicalSources.empty()) {
