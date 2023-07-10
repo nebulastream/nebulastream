@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/LocationFactory.hpp>
+#include <Configurations/Worker/GeoLocationFactory.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
@@ -20,7 +20,7 @@
 namespace NES::Configurations::Spatial::Index::Experimental {
 
 NES::Spatial::DataTypes::Experimental::GeoLocation
-LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+GeoLocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -34,7 +34,7 @@ LocationFactory::createFromString(std::string, std::map<std::string, std::string
     return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(std::move(coordStr));
 }
 
-NES::Spatial::DataTypes::Experimental::GeoLocation LocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
+NES::Spatial::DataTypes::Experimental::GeoLocation GeoLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
     auto configString = yamlConfig.As<std::string>();
     if (!configString.empty() && configString != "\n") {
         return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(configString);

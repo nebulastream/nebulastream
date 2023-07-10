@@ -25,7 +25,7 @@ class GeoLocation;
 
 namespace NES::Configurations::Spatial::Index::Experimental {
 
-class LocationFactory {
+class GeoLocationFactory {
 
   public:
     /**
