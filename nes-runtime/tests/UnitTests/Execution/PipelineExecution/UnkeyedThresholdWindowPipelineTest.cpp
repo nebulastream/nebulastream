@@ -123,16 +123,16 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[0]["f2"].write(+10_s64);
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
+    dynamicBuffer[1]["f2"].write(+20_s64);
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -204,16 +204,16 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[0]["f2"].write(+10_s64);
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
+    dynamicBuffer[1]["f2"].write(+20_s64);
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -284,16 +284,16 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[0]["f2"].write(+10_s64);
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
+    dynamicBuffer[1]["f2"].write(+20_s64);
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -364,16 +364,16 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[0]["f2"].write(+10_s64);
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
+    dynamicBuffer[1]["f2"].write(+20_s64);
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -444,16 +444,16 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[0]["f2"].write(+10_s64);
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
+    dynamicBuffer[1]["f2"].write(+20_s64);
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -522,15 +522,15 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write<int64_t>(1_s64);// does not qualify
+    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
     dynamicBuffer[0]["f2"].write((float) 10.0);
-    dynamicBuffer[1]["f1"].write<int64_t>(2_s64);// qualifies
+    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
     dynamicBuffer[1]["f2"].write((float) 20.0);
-    dynamicBuffer[2]["f1"].write<int64_t>(3_s64);// qualifies
+    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
     dynamicBuffer[2]["f2"].write((float) 30.0);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write<int64_t>(1_s64);// does not qualify
+    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
     dynamicBuffer[3]["f2"].write((float) 40.0);
     dynamicBuffer.setNumberOfTuples(4);
 
@@ -603,15 +603,15 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 
     // Fill buffer
     dynamicBuffer[0]["f1"].write((float) 0.5);// does not qualify
-    dynamicBuffer[0]["f2"].write<int64_t>(10_s64);
+    dynamicBuffer[0]["f2"].write(+10_s64);
     dynamicBuffer[1]["f1"].write((float) 2.5);// qualifies
-    dynamicBuffer[1]["f2"].write<int64_t>(20_s64);
+    dynamicBuffer[1]["f2"].write(+20_s64);
     dynamicBuffer[2]["f1"].write((float) 3.75);// qualifies
-    dynamicBuffer[2]["f2"].write<int64_t>(30_s64);
+    dynamicBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
     dynamicBuffer[3]["f1"].write((float) 0.25);// does not qualify
-    dynamicBuffer[3]["f2"].write<int64_t>(40_s64);
+    dynamicBuffer[3]["f2"].write(+40_s64);
     dynamicBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);

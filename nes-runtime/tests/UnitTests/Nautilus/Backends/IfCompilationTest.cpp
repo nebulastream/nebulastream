@@ -170,7 +170,7 @@ Value<> orCondition(Value<> value) {
 }
 
 TEST_P(IfCompilationTest, orConditionTest) {
-    Value<Int32> value = Value<Int32>(1_s32);
+    Value<Int32> value  = +1_s32;
     value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
 
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
@@ -192,10 +192,10 @@ Value<> andCondition(Value<> x, Value<> y) {
 }
 
 TEST_P(IfCompilationTest, andConditionTest) {
-    Value<Int32> x = Value<Int32>(1_s32);
+    Value<Int32> x  = +1_s32;
     x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
 
-    Value<Int32> y = Value<Int32>(1_s32);
+    Value<Int32> y  = +1_s32;
     y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
 
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {
@@ -272,10 +272,10 @@ Value<Boolean> andFunction(const Value<Int64>& value) {
 }
 
 TEST_P(IfCompilationTest, nestedBooleanFunction) {
-    Value<Int64> value = Value<Int64>(42_s64);
+    Value<Int64> value  = +42_s64;
     value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
-        Value<Int64> res = Value<Int64>(42_s64);
+        Value<Int64> res  = +42_s64;
         if (andFunction(value)) {
             res = res + 1;
         }

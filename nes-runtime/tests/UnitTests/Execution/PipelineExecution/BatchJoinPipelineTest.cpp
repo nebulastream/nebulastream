@@ -101,14 +101,14 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["k1"].write<int64_t>(1_s64);
-    dynamicBuffer[0]["v1"].write<int64_t>(10_s64);
-    dynamicBuffer[1]["k1"].write<int64_t>(1_s64);
-    dynamicBuffer[1]["v1"].write<int64_t>(1_s64);
-    dynamicBuffer[2]["k1"].write<int64_t>(2_s64);
-    dynamicBuffer[2]["v1"].write<int64_t>(2_s64);
-    dynamicBuffer[3]["k1"].write<int64_t>(3_s64);
-    dynamicBuffer[3]["v1"].write<int64_t>(10_s64);
+    dynamicBuffer[0]["k1"].write(+1_s64);
+    dynamicBuffer[0]["v1"].write(+10_s64);
+    dynamicBuffer[1]["k1"].write(+1_s64);
+    dynamicBuffer[1]["v1"].write(+1_s64);
+    dynamicBuffer[2]["k1"].write(+2_s64);
+    dynamicBuffer[2]["v1"].write(+2_s64);
+    dynamicBuffer[3]["k1"].write(+3_s64);
+    dynamicBuffer[3]["v1"].write(+10_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);

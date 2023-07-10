@@ -68,9 +68,9 @@ TEST_F(TraceTest, assignmentOperatorTest) {
 }
 
 void arithmeticExpression() {
-    Value iw = Value<Int64>(1_s64);
-    Value iw2 = Value<Int64>(2_s64);
-    Value iw3 = Value<Int64>(3_s64);
+    Value iw = 1_s64;
+    Value iw2 = 2_s64;
+    Value iw3 = 3_s64;
     auto result = iw - iw3 + 2_s64 * iw2 / iw;
 }
 
@@ -97,7 +97,7 @@ TEST_F(TraceTest, arithmeticExpressionTest) {
 }
 
 void logicalExpressionLessThan() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw < 2;
 }
 
@@ -114,7 +114,7 @@ TEST_F(TraceTest, logicalExpressionLessThanTest) {
 }
 
 void logicalExpressionEquals() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw == 2;
 }
 
@@ -132,7 +132,7 @@ TEST_F(TraceTest, logicalExpressionEqualsTest) {
 }
 
 void logicalExpressionLessEquals() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw <= 2;
 }
 
@@ -151,7 +151,7 @@ TEST_F(TraceTest, logicalExpressionLessEqualsTest) {
 }
 
 void logicalExpressionGreater() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw > 2;
 }
 
@@ -168,7 +168,7 @@ TEST_F(TraceTest, logicalExpressionGreaterTest) {
 }
 
 void logicalExpressionGreaterEquals() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw >= 2;
 }
 
@@ -186,7 +186,7 @@ TEST_F(TraceTest, logicalExpressionGreaterEqualsTest) {
 }
 
 void logicalExpression() {
-    Value iw = Value(1);
+    Value iw = 1;
     auto result = iw == 2 && iw < 1 || true;
 }
 
@@ -210,8 +210,8 @@ TEST_F(TraceTest, logicalExpressionTest) {
 }
 
 void ifCondition(bool flag) {
-    Value boolFlag = Value(flag);
-    Value iw = Value(1);
+    Value boolFlag = flag;
+    Value iw = 1;
     if (boolFlag) {
         iw = iw - 1;
     }
@@ -263,9 +263,9 @@ TEST_F(TraceTest, ifConditionTest) {
 }
 
 void ifElseCondition(bool flag) {
-    Value boolFlag = Value(flag);
-    Value iw = Value(1);
-    Value iw2 = Value(1);
+    Value boolFlag = flag;
+    Value iw = 1;
+    Value iw2 = 1;
     if (boolFlag) {
         iw = iw - 1;
     } else {
@@ -320,8 +320,8 @@ TEST_F(TraceTest, ifElseConditionTest) {
 }
 
 void emptyLoop() {
-    Value iw = Value(1);
-    Value iw2 = Value(2);
+    Value iw = 1;
+    Value iw2 = 2;
 
     //auto result = t1 + t2;
 
@@ -372,8 +372,8 @@ TEST_F(TraceTest, emptyLoopTest) {
 }
 
 void longEmptyLoop() {
-    Value iw = Value(1);
-    Value iw2 = Value(2);
+    Value iw = 1;
+    Value iw2 = 2;
     for (auto start = iw; start < 20000; start = start + 1) {
     }
     auto iw3 = iw2 - 5;
@@ -418,8 +418,8 @@ TEST_F(TraceTest, longEmptyLoopTest) {
 }
 
 void sumLoop() {
-    Value agg = Value(1);
-    for (auto start = Value(0); start < 10; start = start + 1) {
+    Value agg = 1;
+    for (auto start = 0; start < 10; start = start + 1) {
         agg = agg + 1;
     }
     auto res = agg == 10;
@@ -468,7 +468,7 @@ TEST_F(TraceTest, sumLoopTest) {
 }
 
 void sumWhileLoop() {
-    Value agg = Value(1);
+    Value agg = 1;
     while (agg < 20) {
         agg = agg + 1;
     }
@@ -514,8 +514,8 @@ TEST_F(TraceTest, sumWhileLoopTest) {
 }
 
 void invertedLoop() {
-    Value i = Value(0);
-    Value end = Value(300);
+    Value i = 0;
+    Value end = 300;
     do {
         // body
         i = i + 1;

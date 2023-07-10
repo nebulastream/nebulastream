@@ -21,10 +21,18 @@
 /**
  * @brief Implements unsigned user-defined literals that return the corresponding uintX_t type
  */
-uint8_t operator"" _u8(unsigned long long value);
-uint16_t operator"" _u16(unsigned long long value);
-uint32_t operator"" _u32(unsigned long long value);
-uint64_t operator"" _u64(unsigned long long value);
+constexpr uint8_t operator"" _u8(unsigned long long value) {
+    return static_cast<uint8_t>(value);
+}
+constexpr uint16_t operator"" _u16(unsigned long long value) {
+    return static_cast<uint16_t>(value);
+}
+constexpr uint32_t operator"" _u32(unsigned long long value) {
+    return static_cast<uint32_t>(value);
+}
+constexpr uint64_t operator"" _u64(unsigned long long value) {
+    return static_cast<uint64_t>(value);
+}
 
 /**
  * @brief We require this helper struct, as there is no such thing as a negative integer literal (https://stackoverflow.com/a/23430371)
@@ -33,18 +41,28 @@ uint64_t operator"" _u64(unsigned long long value);
 template<typename T>
 struct HelperStructLiterals {
     T val;
-    [[maybe_unused]] inline HelperStructLiterals(T v) : val(v) {}
+    [[maybe_unused]] constexpr inline explicit HelperStructLiterals(T v) : val(v) {}
 
-    inline T operator-() const { return -val; }
+    constexpr inline T operator-() const { return -val; }
 
-    inline operator T() const { return val; }
+    constexpr inline T operator+() const { return +val; }
+
+    constexpr inline operator T() const { return val; }
 };
 
 /**
  * @brief We have to return here our own helper struct as otherwise, we can not parse negative constants.
  */
-HelperStructLiterals<int8_t> operator"" _s8(unsigned long long value);
-HelperStructLiterals<int16_t> operator"" _s16(unsigned long long value);
-HelperStructLiterals<int32_t> operator"" _s32(unsigned long long value);
-HelperStructLiterals<int64_t> operator"" _s64(unsigned long long value);
+constexpr HelperStructLiterals<int8_t> operator"" _s8(unsigned long long value) {
+    return HelperStructLiterals<int8_t>(value);
+}
+constexpr HelperStructLiterals<int16_t> operator"" _s16(unsigned long long value) {
+    return HelperStructLiterals<int16_t>(value);
+}
+constexpr HelperStructLiterals<int32_t> operator"" _s32(unsigned long long value) {
+    return HelperStructLiterals<int32_t>(value);
+}
+constexpr HelperStructLiterals<int64_t> operator"" _s64(unsigned long long value) {
+    return HelperStructLiterals<int64_t>(value);
+}
 #endif//NES_NES_COMMON_INCLUDE_UTIL_STDINT_HPP_

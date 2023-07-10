@@ -44,17 +44,17 @@ TEST_F(Fixed2DArrayTest, insertSimpleDataTypes) {
     Fixed2DArray fixed2DArray(*allocator, numRows, numCols, entrySize);
     Fixed2DArrayRef fixed2DArrayRef(Value<MemRef>((int8_t*) &fixed2DArray), entrySize, numCols);
 
-    for (Value<UInt64> row = 0_u64; row < numRows; row = row + 1) {
-        for (Value<UInt64> col = 0_u64; col < numCols; col = col + 1) {
-            Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
+    for (auto row = 0_u64; row < numRows; row = row + 1) {
+        for (auto col = 0_u64; col < numCols; col = col + 1) {
+            Value<UInt64> expectedValue(col + row * numCols);
             auto cell = fixed2DArrayRef[row][col];
             cell.store(expectedValue);
         }
     }
 
-    for (Value<UInt64> row = 0_u64; row < numRows; row = row + 1) {
-        for (Value<UInt64> col = 0_u64; col < numCols; col = col + 1) {
-            Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
+    for (auto row = 0_u64; row < numRows; row = row + 1) {
+        for (auto col = 0_u64; col < numCols; col = col + 1) {
+            Value<UInt64> expectedValue(col + row * numCols);
             auto cell = fixed2DArrayRef[row][col];
             auto resultValue = cell.load<UInt64>();
             EXPECT_EQ(expectedValue, resultValue);
@@ -70,28 +70,28 @@ TEST_F(Fixed2DArrayTest, insertCustomClass) {
     };
 
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    auto numRows = 5UL;
-    auto numCols = 5UL;
+    auto numRows = 5_u64;
+    auto numCols = 5_u64;
     auto entrySize = sizeof(CustomClass);
 
     Fixed2DArray fixed2DArray(*allocator, numRows, numCols, entrySize);
     Fixed2DArrayRef fixed2DArrayRef(Value<MemRef>((int8_t*) &fixed2DArray), entrySize, numCols);
 
-    for (Value<UInt64> row = 0_u64; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = 0_u64; col < (uint64_t) numCols; col = col + 1) {
+    for (auto row = 0_u64; row < numRows; row = row + 1) {
+        for (auto col = 0_u64; col < numCols; col = col + 1) {
             auto cellCustomClass = static_cast<CustomClass*>(fixed2DArrayRef[row][col].getValue().getValue());
-            cellCustomClass->id = col.getValue().getValue() + row.getValue().getValue() * numCols;
+            cellCustomClass->id = col + row  * numCols;
             cellCustomClass->val1 = 42;
-            cellCustomClass->val2 = 42.0 / col.getValue().getValue();
+            cellCustomClass->val2 = 42.0 / col;
         }
     }
 
-    for (Value<UInt64> row = 0_u64; row < (uint64_t) numRows; row = row + 1) {
-        for (Value<UInt64> col = 0_u64; col < (uint64_t) numCols; col = col + 1) {
+    for (auto row = 0_u64; row < numRows; row = row + 1) {
+        for (auto col = 0_u64; col < numCols; col = col + 1) {
             auto cellCustomClass = static_cast<CustomClass*>(fixed2DArrayRef[row][col].getValue().getValue());
-            EXPECT_EQ(cellCustomClass->id, col.getValue().getValue() + row.getValue().getValue() * numCols);
+            EXPECT_EQ(cellCustomClass->id, col + row * numCols);
             EXPECT_EQ(cellCustomClass->val1, 42);
-            EXPECT_EQ(cellCustomClass->val2, 42.0 / col.getValue().getValue());
+            EXPECT_EQ(cellCustomClass->val2, 42.0 / col);
         }
     }
 }

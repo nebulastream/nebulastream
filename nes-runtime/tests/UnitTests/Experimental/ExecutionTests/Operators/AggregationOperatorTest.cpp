@@ -157,7 +157,7 @@ TEST_P(AggregationOperatorTest, groupedAggQueryTest) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0; i < 10; i++) {
-        dynamicBuffer[i]["key"].write((int64_t) i % 2);
+        dynamicBuffer[i]["key"].write(i % 2_s64);
         dynamicBuffer[i]["value"].write(1_s64);
     }
     dynamicBuffer.setNumberOfTuples(10);

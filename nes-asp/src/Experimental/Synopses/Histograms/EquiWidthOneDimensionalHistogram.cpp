@@ -19,6 +19,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <utility>
 
 namespace NES::ASP {
 
@@ -45,7 +46,7 @@ void EquiWidthOneDimensionalHistogram::addToSynopsis(const uint64_t, Runtime::Ex
     auto& bins = localState->bins;
 
     auto binDimensionPos = ((readKeyExpression->execute(record) - minValue) / binWidth);
-    aggregationFunction->lift(bins[0_u64][binDimensionPos], record);
+    aggregationFunction->lift(bins[0][binDimensionPos], record);
 }
 
 void EquiWidthOneDimensionalHistogram::getApproximateRecord(const uint64_t handlerIndex,
@@ -60,7 +61,7 @@ void EquiWidthOneDimensionalHistogram::getApproximateRecord(const uint64_t handl
 
     // Calculating the bin position and then lowering the approximation
     auto binDimensionPos = ((key - minValue) / binWidth);
-    aggregationFunction->lower(bins[0_u64][binDimensionPos], outputRecord);
+    aggregationFunction->lower(bins[0][binDimensionPos], outputRecord);
 
     // Writing the key, lower and upper value of the current bin
     auto lowerBinBound = binDimensionPos * binWidth;
@@ -82,7 +83,7 @@ void EquiWidthOneDimensionalHistogram::setup(const uint64_t handlerIndex, Runtim
     auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
 
     for (Nautilus::Value<> bin = 0_u64; bin < numberOfBins; bin = bin + 1) {
-        aggregationFunction->reset(binsRef[0_u64][bin]);
+        aggregationFunction->reset(binsRef[0][bin]);
     }
 }
 
@@ -99,9 +100,9 @@ bool EquiWidthOneDimensionalHistogram::storeLocalOperatorState(const uint64_t ha
 
 EquiWidthOneDimensionalHistogram::EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
                                  const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
-                                 const std::string& lowerBinBoundString, const std::string& upperBinBoundString)
+                                 std::string  lowerBinBoundString, const std::string& upperBinBoundString)
         : AbstractSynopsis(aggregationConfig), minValue(minValue), numberOfBins(numberOfBins),
-        binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), lowerBinBoundString(lowerBinBoundString),
+        binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), lowerBinBoundString(std::move(lowerBinBoundString)),
         upperBinBoundString(upperBinBoundString){
 }
 } // namespace NES::ASP

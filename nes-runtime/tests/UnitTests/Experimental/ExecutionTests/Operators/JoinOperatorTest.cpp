@@ -157,7 +157,7 @@ TEST_P(JoinOperatorTest, joinBuildQueryTest) {
     auto buildSideBuffer = bm->getBufferBlocking();
     auto buildSideDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(buildSideMemoryLayout, buildSideBuffer);
     for (auto i = 0; i < 10; i++) {
-        buildSideDynBuffer[i]["key"].write((int64_t) i % 2);
+        buildSideDynBuffer[i]["key"].write(i % 2_s64);
         buildSideDynBuffer[i]["value"].write(1_s64);
     }
     buildSideDynBuffer.setNumberOfTuples(10);

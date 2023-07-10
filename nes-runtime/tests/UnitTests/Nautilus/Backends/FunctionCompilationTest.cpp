@@ -96,7 +96,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 }
 
 TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
-    Value<Int64> tempPara = Value<Int64>(0_s64);
+    Value<Int64> tempPara = +0_s64;
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);

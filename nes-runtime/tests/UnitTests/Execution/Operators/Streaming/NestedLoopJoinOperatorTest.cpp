@@ -119,10 +119,10 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         std::mt19937 generator(randomSeed);
         std::uniform_int_distribution<uint64_t> distribution(minValue, maxValue);
 
-        for (auto i = 0UL; i < numberOfRecords; ++i) {
+        for (auto i = 0_u64; i < numberOfRecords; ++i) {
             retVector.emplace_back(Record({{schema->get(0)->getName(), Value<UInt64>(0_u64)},
-                                           {schema->get(1)->getName(), Value<UInt64>(i + 1000_u64)},
-                                           {schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}}));
+                                           {schema->get(1)->getName(), Value<UInt64>(i + 1000)},
+                                           {schema->get(2)->getName(), Value<UInt64>(i)}}));
         }
 
         return retVector;
