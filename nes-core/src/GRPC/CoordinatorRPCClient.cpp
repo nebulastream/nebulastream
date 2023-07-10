@@ -660,7 +660,7 @@ std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
 }
 
 bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, std::set<TopologyNodeId> failedWorkersIds){
-    NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers from workerId={}, number of workerIds={}", sourceWorkerId, failedWorkersIds.size());
+    NES_DEBUG("CoordinatorRPCClient::announceFailedWorkers from workerId={}, number of workerIds={}", sourceWorkerId, failedWorkersIds.size());
 
     AnnounceFailedWorkersRequest request;
     request.set_sourceworkerid(sourceWorkerId);
@@ -672,7 +672,7 @@ bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, 
 //        request.mutable_failedworkersids()->Add(std::all_of(failedWorkersIds.begin(), failedWorkersIds.end(), );
 //    }
 
-    NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers request={}", request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::announceFailedWorkers request={}", request.DebugString());
 
     class AnnounceFailedWorkersListener : public detail::RpcExecutionListener<bool, AnnounceFailedWorkersRequest, AnnounceFailedWorkersReply> {
       public:
@@ -687,11 +687,11 @@ bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, 
             return coordinatorStub->AnnounceFailedWorkers(&context, request, reply);
         }
         bool onSuccess(const AnnounceFailedWorkersReply& reply) override {
-            NES_DEBUG2("CoordinatorRPCClient::announceFailedWorkers: status ok return success={}", reply.success());
+            NES_DEBUG("CoordinatorRPCClient::announceFailedWorkers: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG2(" CoordinatorRPCClient::announceFailedWorkers error={}: {}", status.error_code(), status.error_message());
+            NES_DEBUG(" CoordinatorRPCClient::announceFailedWorkers error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }

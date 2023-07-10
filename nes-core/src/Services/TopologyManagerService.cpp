@@ -375,7 +375,7 @@ void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId
     if (announcedFailedWorkers.find(workerId) != announcedFailedWorkers.end()) {
         announcedFailedWorkers.erase(workerId);
     } else {
-        NES_DEBUG2("TopologyManagerService::removeAnnouncedFailedWorker could not remove workerId={} from announcedFailedWorkers set because it is not present", workerId);
+        NES_DEBUG("TopologyManagerService::removeAnnouncedFailedWorker could not remove workerId={} from announcedFailedWorkers set because it is not present", workerId);
     }
 }
 

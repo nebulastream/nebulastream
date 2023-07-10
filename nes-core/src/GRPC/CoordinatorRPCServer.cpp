@@ -434,7 +434,7 @@ Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest*
 Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
                                                    const AnnounceFailedWorkersRequest* request,
                                                    AnnounceFailedWorkersReply* reply) {
-    NES_DEBUG2("CoordinatorRPCServer::AnnounceFailedWorker: request ={}", request->DebugString());
+    NES_DEBUG("CoordinatorRPCServer::AnnounceFailedWorker: request ={}", request->DebugString());
     auto failedWorkersIds = request->failedworkersids();
     // for each id, add to announcedFailedWorkers list and unregister
     for (auto failedWorkerId : failedWorkersIds) {
@@ -447,16 +447,16 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
                 || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
             if (success) {
                 if (!topologyManagerService->unregisterNode(failedWorkerId)) {
-                    NES_ERROR2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} was not removed", failedWorkerId);
+                    NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker workerId={} was not removed", failedWorkerId);
                     reply->set_success(false);
                     //return Status::CANCELLED;
                 }
                 monitoringManager->removeMonitoringNode(failedWorkerId);
-                NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: Worker workerId={} successfully removed", failedWorkerId);
+                NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker workerId={} successfully removed", failedWorkerId);
                 reply->set_success(true);
                 //return Status::OK;
             } else {
-                NES_ERROR2("CoordinatorRPCServer::UnregisterNode: sensor workerId={} was not removed", failedWorkerId);
+                NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor workerId={} was not removed", failedWorkerId);
                 reply->set_success(false);
             }
         }
@@ -467,13 +467,13 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
         return Status::OK;
     }
 
-    NES_WARNING2("CoordinatorRPCServer::AnnounceFailedWorkers one or more workerIds were not removed from topology");
+    NES_WARNING("CoordinatorRPCServer::AnnounceFailedWorkers one or more workerIds were not removed from topology");
     return Status::OK;
 }
 Status CoordinatorRPCServer::GetChildrenData(ServerContext*,
                                              const GetChildrenDataRequest* request,
                                              GetChildrenDataReply* reply) {
-    NES_DEBUG2("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
+    NES_DEBUG("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
     auto workerId = request->workerid();
     auto worker = topologyManagerService->findNodeWithId(workerId);
     if (worker) {
