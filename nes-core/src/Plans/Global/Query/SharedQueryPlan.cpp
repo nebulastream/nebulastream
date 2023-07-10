@@ -143,8 +143,6 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             //set host operator as the upstream operator in the change log
             clEntryUpstreamOperators.insert(hostOperator);
 
-            NES_INFO("{},    {}", hostOperator->toString(), targetOperator->toString());
-
             //fetch all root operator of the target operator to compute downstream operator list for the change log entry
             for (const auto& newRootOperator : targetOperator->getAllRootNodes()) {
                 clEntryDownstreamOperators.insert(newRootOperator->as<LogicalOperatorNode>());
@@ -154,12 +152,9 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             auto downstreamTargetOperators = targetOperator->getParents();
             for (const auto& downstreamTargetOperator : downstreamTargetOperators) {
                 //Clear as upstream the target operator
-                bool success1 = downstreamTargetOperator->removeChild(targetOperator);
-
+                downstreamTargetOperator->removeChild(targetOperator);
                 //add host operator as the upstream operator to the downstreamTargetOperator
-                bool success = hostOperator->addParent(downstreamTargetOperator);
-
-                NES_INFO("{},{}", success, success1);
+                hostOperator->addParent(downstreamTargetOperator);
             }
         }
 
@@ -184,8 +179,6 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
         changeLog->addChangeLogEntry(
             now,
             Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
-
-        NES_INFO("{}", queryPlan->toString());
     }
 
     //add the new sink operators as root to the query plan
@@ -368,7 +361,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstr
 
             //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
             if (found == upstreamOperators.end()) {
-                //TODO: Set the status of the logical operator to re-place as part of the issue #3899
+                logicalOperator->setOperatorState(OperatorState::TO_BE_REPLACED);//Mark the operator for replacement
                 for (const auto& upstreamOperator : logicalOperator->getChildren()) {
                     operatorsToVisit.emplace(upstreamOperator->as<LogicalOperatorNode>());// add children for future visit
                 }
@@ -388,7 +381,7 @@ void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorNodePtr>& up
         auto topologyNodeId = std::any_cast<TopologyNodeId>(placedOperator->getProperty(PINNED_NODE_ID));
         auto operatorInQueryPlan = queryPlan->getOperatorWithId(placedOperator->getId());
         operatorInQueryPlan->addProperty(PINNED_NODE_ID, topologyNodeId);
-        //TODO: Set the status of the logical operator to placed as part of the issue #3899
+        placedOperator->setOperatorState(OperatorState::PLACED);
     }
 }
 
