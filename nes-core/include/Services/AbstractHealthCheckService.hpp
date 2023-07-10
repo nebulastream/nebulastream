@@ -101,11 +101,14 @@ class AbstractHealthCheckService {
     std::shared_ptr<std::thread> healthCheckingOnCoordinatorThread;
     std::atomic<bool> isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
+    std::shared_ptr<std::promise<bool>> shutdownRPC2 = std::make_shared<std::promise<bool>>();
     cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     uint64_t id;
     std::string healthServiceName;
     std::condition_variable cv;
     std::mutex cvMutex;
+    std::condition_variable cv2;
+    std::mutex cvMutex2;
     std::set<TopologyNodeId> inactiveWorkers;
 };
 
