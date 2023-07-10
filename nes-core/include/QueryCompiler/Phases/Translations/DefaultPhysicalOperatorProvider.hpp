@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <vector>
 namespace NES::QueryCompilation {
@@ -246,6 +247,18 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     [[nodiscard]] std::tuple<std::string, std::string>
     getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
+
+
+    void lowerStreamingHashJoin(const LogicalOperatorNodePtr& operatorNode,
+                                std::shared_ptr<JoinLogicalOperatorNode>& logicalJoinOperatorNode,
+                                const std::string& joinFieldNameLeft,
+                                const std::string& joinFieldNameRight,
+                                const std::string& timeStampFieldNameLeft,
+                                const std::string& timeStampFieldNameRight,
+                                const uint64_t windowSize,
+                                OperatorNodePtr& leftInputOperator,
+                                OperatorNodePtr& rightInputOperator,
+                                const QueryCompilerOptions::StreamJoinStrategy& joinStrategy);
 };
 
 }// namespace NES::QueryCompilation
