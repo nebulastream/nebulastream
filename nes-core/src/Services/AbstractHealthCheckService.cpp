@@ -37,9 +37,9 @@ void AbstractHealthCheckService::stopHealthCheck() {
     if (healthCheckingOnCoordinatorThread->joinable()) {
         healthCheckingOnCoordinatorThread->join();
         healthCheckingOnCoordinatorThread.reset();
-        NES_DEBUG2("AbstractHealthCheckService::stopHealthCheck successfully stopped");
+        NES_DEBUG("AbstractHealthCheckService::stopHealthCheck successfully stopped");
     } else {
-        NES_ERROR2("HealthCheckService: health thread not joinable");
+        NES_ERROR("HealthCheckService: health thread not joinable");
         NES_THROW_RUNTIME_ERROR("Error while stopping healthCheckingOnCoordinatorThread->join");
     }
 

@@ -46,17 +46,16 @@ void WorkerHealthCheckService::startHealthCheck() {
 
     healthCheckingOnCoordinatorThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
-        NES_TRACE("NesWorker: start health checking");
-        auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
+        NES_DEBUG("NesWorker: start health checking on coordinator");
+        auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue() * 2);
         while (isRunning) {
-            NES_TRACE("NesWorker::healthCheck for worker id=  {}", coordinatorRpcClient->getId());
-
+            NES_DEBUG("NesWorker::healthCheck on coordinator for worker id=  {}", coordinatorRpcClient->getId());
             bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
             if (isAlive) {
-                NES_TRACE("NesWorker::healthCheck: for worker id={} is alive", coordinatorRpcClient->getId());
+                NES_DEBUG("NesWorker::healthCheck: for worker id={} coordinator is alive", coordinatorRpcClient->getId());
             } else {
                 NES_ERROR("NesWorker::healthCheck: for worker id={} coordinator went down so shutting down the worker with ip",
-                          coordinatorRpcClient->getId());
+                           coordinatorRpcClient->getId());
                 worker->stop(true);
             }
             {
@@ -76,8 +75,6 @@ void WorkerHealthCheckService::startHealthCheck() {
         setThreadName("nesHealth");
         NES_DEBUG("NesWorker: start health checking on topological neighbors");
         auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
-        auto retryCount = worker->getWorkerConfiguration()->workerHealthCheckRetryCount.getValue();
-        auto retryTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckRetryTime.getValue());
         while (isRunning) {
             NES_DEBUG("NesWorker::topological neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
