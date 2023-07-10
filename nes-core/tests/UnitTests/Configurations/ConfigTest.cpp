@@ -19,6 +19,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -200,6 +201,17 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
                     || physicalSource.getValue()->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
     }
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
+}
+
+TEST_F(ConfigTest, testWorkerYAMLFileFixedLocationNode) {
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    auto yamlPath = std::string(TEST_DATA_DIRECTORY) + "fixedLocationNode.yaml";
+    std::ofstream outFile(yamlPath);
+    outFile << "fieldNodeLocationCoordinates: \"23.88,-3.4\"" << std::endl << "nodeSpatialType: FIXED_LOCATION" << std::endl;
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(yamlPath);
+
+    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::DataTypes::Experimental::GeoLocation(23.88, -3.4));
+    EXPECT_EQ(workerConfigPtr->nodeSpatialType.getValue(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
