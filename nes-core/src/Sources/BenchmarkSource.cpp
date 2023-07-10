@@ -39,7 +39,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  size_t memoryAreaSize,
                                  Runtime::BufferManagerPtr bufferManager,
                                  Runtime::QueryManagerPtr queryManager,
-                                 uint64_t numBuffersToProcess,
+                                 uint64_t numberOfBuffersToProcess,
                                  uint64_t gatheringValue,
                                  OperatorId operatorId,
                                  OriginId originId,
@@ -53,7 +53,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
-                      numBuffersToProcess,
+                      numberOfBuffersToProcess,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
@@ -62,7 +62,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
-    this->numberOfBuffersToProduce = numBuffersToProcess;
+    this->numberOfBuffersToProduce = numberOfBuffersToProcess;
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
@@ -90,7 +90,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("BenchmarkSource() numBuffersToProcess={} memoryAreaSize={}", numBuffersToProcess, memoryAreaSize);
+    NES_DEBUG("BenchmarkSource() numberOfBuffersToProcess={} memoryAreaSize={}", numberOfBuffersToProcess, memoryAreaSize);
 }
 
 BenchmarkSource::~BenchmarkSource() { numaLocalMemoryArea.release(); }
