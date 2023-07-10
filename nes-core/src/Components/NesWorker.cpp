@@ -339,17 +339,20 @@ bool NesWorker::connect() {
             if (workerConfig->workerId == INVALID_TOPOLOGY_NODE_ID) {
                 // workerId value is written in the yaml for the first time
                 NES_DEBUG("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
-                bool success = getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, false);
-                if (!success){
+                bool success =
+                    getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, false);
+                if (!success) {
                     NES_WARNING("NesWorker::connect() Could not persist workerId in yaml config file");
                 } else {
                     NES_DEBUG("NesWorker::connect() Persisted workerId={} successfully in yaml file.", workerId);
                 }
             } else {
                 // a value was in the yaml file but it's being overwritten, because the coordinator assigns a new value
-                NES_DEBUG("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file", workerId);
-                bool success = getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, true);
-                if (!success){
+                NES_DEBUG("NesWorker::connect() Coordinator assigned new workerId value. Persisting workerId={} in yaml file",
+                          workerId);
+                bool success =
+                    getWorkerConfiguration()->persistWorkerIdInYamlConfigFile(workerConfig->configPath, workerId, true);
+                if (!success) {
                     NES_WARNING("NesWorker::connect() Could not persist workerId in yaml config file");
                 } else {
                     NES_DEBUG("NesWorker::connect() Persisted workerId={} successfully in yaml file.", workerId);
