@@ -25,12 +25,12 @@ class DefaultSource : public GeneratorSource {
   /*
    * @brief public constructor for the default source
    * @param schema of the data that this source produces
-   * @param bufferManager the buffer manager
-   * @param queryManager the query manager
+   * @param bufferManager valid pointer to the buffer manager
+   * @param queryManager valid pointer to the query manager
    * @param numberOfBuffersToProduce the number of buffers to be produced by the source
    * @param gatheringInterval the interval at which new buffers are produced
    * @param operatorId current operator id
-   * @param originId represents an origin
+   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
    * @param numSourceLocalBuffers number of local source buffers
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @param physicalSourceName the name and unique identifier of a physical source
