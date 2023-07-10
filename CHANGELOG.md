@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.134](https://github.com/nebulastream/nebulastream/tree/v0.5.134) (2023-07-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.133...v0.5.134)
+
+**Implemented enhancements:**
+
+- \[TASK\] Join Multi-Threading [\#3818](https://github.com/nebulastream/nebulastream/issues/3818)
+
+#### Fault Tolerance
+
+- \[Feature\] Centralized failure detection should determine old nodes [\#3637](https://github.com/nebulastream/nebulastream/issues/3637)
+
 ## [v0.5.133](https://github.com/nebulastream/nebulastream/tree/v0.5.133) (2023-07-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.132...v0.5.133)
