@@ -17,7 +17,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/LocationFactory.hpp>
+#include <Configurations/Worker/GeoLocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
@@ -189,7 +189,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::LocationFactory>
+    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::GeoLocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
