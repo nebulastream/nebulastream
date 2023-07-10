@@ -53,7 +53,6 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
     if ((faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE)
         && isBuffering) {
-        std::cout << "create network sink";
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
@@ -161,14 +160,26 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ResendData: {
             NES_DEBUG("NetworkSink: ResendData called " << nesPartition.toString() << " parent plan " << querySubPlanId);
-            NES_WARNING("Start resending data");
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            auto epoch = now_ms.time_since_epoch();
+            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+            auto ts = std::chrono::system_clock::now();
+            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            std::cout << "Start resending data" << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X");
             auto tuplesToResend = workerContext.resendDataFromDataStorage(this->nesPartition);
             while (!tuplesToResend.empty()) {
                 auto tupleBuffer = tuplesToResend.top();
                 writeData(tupleBuffer, workerContext);
                 tuplesToResend.pop();
             }
-            NES_WARNING("End resending data");
+            now = std::chrono::system_clock::now();
+            now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            epoch = now_ms.time_since_epoch();
+            value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+            ts = std::chrono::system_clock::now();
+            timeNow = std::chrono::system_clock::to_time_t(ts);
+            std::cout << "End resending data" << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X");
             break;
         }
         default: {

@@ -155,20 +155,25 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     }
     //4. Map nodes in the selected topology by their ids.
 
-    bool isFt = faultToleranceType != FaultToleranceType::NONE;
+    bool isALO = faultToleranceType == FaultToleranceType::AT_LEAST_ONCE;
     bool noFtp = ftPlacement == FaultTolerancePlacement::NONE;
     topologyMap.clear();
     // fetch root node from the identified path
     auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
     auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+
+    TopologyNodePtr currentTopologyNode;
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
-        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        if (isFt && noFtp) {
+        currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        if (isALO && noFtp) {
             currentTopologyNode->addNodeProperty("isBuffering", 1);
         }
         topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
         ++topologyIterator;
+    }
+    if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+        currentTopologyNode->addNodeProperty("isBuffering", 1);
     }
 }
 
