@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.135](https://github.com/nebulastream/nebulastream/tree/v0.5.135) (2023-07-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.134...v0.5.135)
+
+**Implemented enhancements:**
+
+- \[TASK\] Serialize/deserialize FlatMap Java UDF operator [\#3866](https://github.com/nebulastream/nebulastream/issues/3866)
+
 ## [v0.5.134](https://github.com/nebulastream/nebulastream/tree/v0.5.134) (2023-07-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.133...v0.5.134)
