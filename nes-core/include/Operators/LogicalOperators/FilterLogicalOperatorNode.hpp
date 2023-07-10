@@ -36,7 +36,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @brief exchanges the predicate of a filter with a new predicate
      * @param newPredicate the predicate which will be the new predicate of the filter
      */
-    void updatePredicate(ExpressionNodePtr newPredicate);
+    void setPredicate(const ExpressionNodePtr& newPredicate);
     float getSelectivity();
     void setSelectivity(float newSelectivity);
 
