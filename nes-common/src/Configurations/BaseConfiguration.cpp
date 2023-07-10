@@ -131,7 +131,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             configFile >> ss.rdbuf();
             try {
                 std::ofstream output;
-                output.open(yamlFilePath, std::ios::app); // append mode
+                output.open(yamlFilePath, std::ios::app);// append mode
                 output << yamlConfigValue;
             } catch (std::exception& e) {
                 throw ConfigurationException("Exception while persisting in yaml file", e.what());
