@@ -556,7 +556,7 @@ template<typename T>
  * @brief checks if the buffers contain the same tuples
  * @param buffer1
  * @param buffer2
- * @param schema
+ * @param schemaSizeInByte
  * @return True if the buffers contain the same tuples
  */
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
