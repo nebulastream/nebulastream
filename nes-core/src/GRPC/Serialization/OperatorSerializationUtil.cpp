@@ -185,11 +185,15 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
 
     } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
         // Serialize Map Java UDF operator
-        serializeJavaUDFOperator<MapJavaUDFLogicalOperatorNode, SerializableOperator_MapJavaUdfDetails>(*operatorNode->as<MapJavaUDFLogicalOperatorNode>(), serializedOperator);
+        serializeJavaUDFOperator<MapJavaUDFLogicalOperatorNode, SerializableOperator_MapJavaUdfDetails>(
+            *operatorNode->as<MapJavaUDFLogicalOperatorNode>(),
+            serializedOperator);
 
     } else if (operatorNode->instanceOf<FlatMapJavaUDFLogicalOperatorNode>()) {
         // Serialize FlatMap Java UDF operator
-        serializeJavaUDFOperator<FlatMapJavaUDFLogicalOperatorNode, SerializableOperator_FlatMapJavaUdfDetails>(*operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>(), serializedOperator);
+        serializeJavaUDFOperator<FlatMapJavaUDFLogicalOperatorNode, SerializableOperator_FlatMapJavaUdfDetails>(
+            *operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>(),
+            serializedOperator);
 
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
@@ -1922,9 +1926,8 @@ OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOpe
     return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, Util::getNextOperatorId());
 }
 
-template <typename T, typename D>
-void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperatorNode,
-                                                            SerializableOperator& serializedOperator) {
+template<typename T, typename D>
+void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperatorNode, SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize {}", javaUdfOperatorNode.toString());
     auto javaUdfDetails = D();
     UDFSerializationUtil::serializeJavaUDFDescriptor(*javaUdfOperatorNode.getJavaUDFDescriptor(),
@@ -1938,8 +1941,8 @@ OperatorSerializationUtil::deserializeMapJavaUDFOperator(const SerializableOpera
     return LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
 }
 
-LogicalUnaryOperatorNodePtr
-OperatorSerializationUtil::deserializeFlatMapJavaUDFOperator(const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUdfDetails) {
+LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeFlatMapJavaUDFOperator(
+    const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUdfDetails) {
     auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(flatMapJavaUdfDetails.javaudfdescriptor());
     return LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
 }
