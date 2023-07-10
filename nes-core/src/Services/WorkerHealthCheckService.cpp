@@ -42,8 +42,6 @@ void WorkerHealthCheckService::startHealthCheck() {
     isRunning = true;
     NES_DEBUG("start health checking on worker");
 
-
-
     healthCheckingOnCoordinatorThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
         NES_DEBUG("NesWorker: start health checking on coordinator");
@@ -107,12 +105,10 @@ void WorkerHealthCheckService::startHealthCheck() {
                 NES_DEBUG("NesWorker::healthCheck: announcing failed children workers to coordinator");
                 bool success = coordinatorRpcClient->announceFailedWorkers(id, failedChildrenWorkers);
                 if (success) {
-                    //std::cout << "aici?????";
                     for (auto failedChildrenWorkerId : failedChildrenWorkers) {
                         children.erase(failedChildrenWorkerId);
                     }
                     failedChildrenWorkers.clear();
-                    //std::cout << children.size();
                 }
             }
 
