@@ -60,7 +60,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write(i % 2);
+        dynamicBuffer[i]["f1"].write((int64_t) i % 2_s64);
         dynamicBuffer[i]["f2"].write(+1_s64);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
