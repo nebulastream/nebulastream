@@ -34,11 +34,10 @@ LocationFactory::createFromString(std::string, std::map<std::string, std::string
     return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(std::move(coordStr));
 }
 
-//TODO 2655 make this function work. it currently returns the standard value even if another value is supplied via yaml
 NES::Spatial::DataTypes::Experimental::GeoLocation LocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
-    auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
+    auto configString = yamlConfig.As<std::string>();
     if (!configString.empty() && configString != "\n") {
-        return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(std::move(configString));
+        return NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(configString);
     }
     return {};
 }
