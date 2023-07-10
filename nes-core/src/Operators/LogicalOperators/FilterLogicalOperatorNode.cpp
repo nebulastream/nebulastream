@@ -28,8 +28,8 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() const { return predicate; }
 
-void FilterLogicalOperatorNode::setPredicate(const ExpressionNodePtr& newPredicate) {
-    predicate = newPredicate;
+void FilterLogicalOperatorNode::setPredicate(ExpressionNodePtr newPredicate) {
+    predicate = std::move(newPredicate);
 }
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
