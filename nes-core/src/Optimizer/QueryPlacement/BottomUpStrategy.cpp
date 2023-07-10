@@ -44,8 +44,8 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  FaultToleranceType faultToleranceType,
                                                  LineageType lineageType,
-                                                 const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -68,8 +68,8 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
 }
 
 void BottomUpStrategy::pinOperators(QueryId queryId,
-                                    const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                    const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
@@ -86,7 +86,7 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 identifyPinningLocation(queryId,
-                                        downStreamNode->as<OperatorNode>(),
+                                        downStreamNode->as<LogicalOperatorNode>(),
                                         candidateTopologyNode,
                                         pinnedDownStreamOperators);
             }
@@ -104,9 +104,9 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
 }
 
 void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
-                                               const OperatorNodePtr& operatorNode,
+                                               const LogicalOperatorNodePtr& operatorNode,
                                                TopologyNodePtr candidateTopologyNode,
-                                               const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                               const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
@@ -199,7 +199,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
     NES_TRACE("BottomUpStrategy: Place further upstream operators.");
     for (const auto& parent : operatorNode->getParents()) {
-        identifyPinningLocation(queryId, parent->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
+        identifyPinningLocation(queryId, parent->as<LogicalOperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
 }
 

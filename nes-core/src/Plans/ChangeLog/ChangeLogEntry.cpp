@@ -20,12 +20,13 @@
 
 namespace NES::Optimizer::Experimental {
 
-ChangeLogEntryPtr ChangeLogEntry::create(std::set<OperatorNodePtr> upstreamOperators,
-                                         std::set<OperatorNodePtr> downstreamOperators) {
+ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorNodePtr> upstreamOperators,
+                                         std::set<LogicalOperatorNodePtr> downstreamOperators) {
     return std::make_shared<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
 }
 
-ChangeLogEntry::ChangeLogEntry(std::set<OperatorNodePtr> upstreamOperators, std::set<OperatorNodePtr> downstreamOperators)
+ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorNodePtr> upstreamOperators,
+                               std::set<LogicalOperatorNodePtr> downstreamOperators)
     : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)),
       poSetOfSubQueryPlan(computePoSet()) {}
 
@@ -55,7 +56,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
             }
 
             // Check if the visiting operator is also one of the downstream operators
-            if (downstreamOperators.find(visitingOperator->as<OperatorNode>()) != downstreamOperators.end()) {
+            if (downstreamOperators.find(visitingOperator->as<LogicalOperatorNode>()) != downstreamOperators.end()) {
                 // Skip rest of the operation
                 continue;
             }
@@ -68,7 +69,8 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                 for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
                     bool visit = false;
                     // If the operator to visit is one of the input downstream operators then add the operator to visit list
-                    if (downstreamOperators.find(downStreamOperatorToVisit->as<OperatorNode>()) != downstreamOperators.end()) {
+                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperatorNode>())
+                        != downstreamOperators.end()) {
                         visit = true;
                     } else {// Check if the path is to be explored
                         // visit only those downstream operators that are connected

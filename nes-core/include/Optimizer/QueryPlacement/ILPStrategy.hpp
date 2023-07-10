@@ -43,8 +43,8 @@ class ILPStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static BasePlacementStrategyPtr
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
@@ -79,7 +79,7 @@ class ILPStrategy : public BasePlacementStrategy {
     // context from the Z3 library used for optimization
     z3::ContextPtr z3Context;
     //map to hold operators to place
-    std::map<OperatorId, OperatorNodePtr> operatorMap;
+    std::map<OperatorId, LogicalOperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
 
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -116,7 +116,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param pinnedUpStreamOperators: pinned upstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<uint64_t, double> computeMileage(const std::set<OperatorNodePtr>& pinnedUpStreamOperators);
+    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node
@@ -130,14 +130,14 @@ class ILPStrategy : public BasePlacementStrategy {
      * @param operatorNode : the operator for which output values are needed
      * @return weight for the output
      */
-    double getDefaultOperatorOutput(OperatorNodePtr operatorNode);
+    double getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode);
 
     /**
      * Get default value for operator cost
      * @param operatorNode : operator for which cost is to be computed
      * @return weight indicating operator cost
      */
-    int getDefaultOperatorCost(OperatorNodePtr operatorNode);
+    int getDefaultOperatorCost(LogicalOperatorNodePtr operatorNode);
 };
 }// namespace NES::Optimizer
 

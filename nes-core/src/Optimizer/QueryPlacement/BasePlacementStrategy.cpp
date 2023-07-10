@@ -66,8 +66,8 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan,
     }
 }
 
-void BasePlacementStrategy::performPathSelection(const std::set<OperatorNodePtr>& upStreamPinnedOperators,
-                                                 const std::set<OperatorNodePtr>& downStreamPinnedOperators) {
+void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
+                                                 const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
 
@@ -128,8 +128,8 @@ void BasePlacementStrategy::performPathSelection(const std::set<OperatorNodePtr>
 }
 
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
-                                                 const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG("BasePlacementStrategy: Place all pinned upstream operators.");
     //0. Iterate over all pinned upstream operators and place them
@@ -253,11 +253,11 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
         //4. Check if this operator is not in the list of pinned downstream operators then recursively call this function for its downstream operators.
         if (isOperatorAPinnedDownStreamOperator == pinnedDownStreamOperators.end()) {
             //4.1 Prepare next set of pinned upstream operators to place.
-            std::set<OperatorNodePtr> nextPinnedUpstreamOperators;
+            std::set<LogicalOperatorNodePtr> nextPinnedUpstreamOperators;
             for (const auto& downStreamOperator : pinnedOperator->getParents()) {
                 //4.1.1 Only select the operators that are not placed.
-                if (!downStreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
-                    nextPinnedUpstreamOperators.insert(downStreamOperator->as<OperatorNode>());
+                if (!downStreamOperator->as_if<LogicalOperatorNode>()->hasProperty(PLACED)) {
+                    nextPinnedUpstreamOperators.insert(downStreamOperator->as<LogicalOperatorNode>());
                 }
             }
             //4.2 Recursively call this function for next set of pinned upstream operators.
@@ -299,7 +299,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
     return found->second;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
+LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
                                                                  uint64_t sourceOperatorId,
                                                                  const TopologyNodePtr& sourceTopologyNode) {
 
@@ -312,7 +312,7 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES));
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
+LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
                                                                    SchemaPtr inputSchema,
                                                                    uint64_t operatorId,
                                                                    const TopologyNodePtr& sinkTopologyNode) {
@@ -354,8 +354,8 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
 }
 
 void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
-                                                             const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_INFO("{}", globalExecutionPlan->getAsString());
 
@@ -367,8 +367,8 @@ void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
 }
 
 void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
-                                                 const OperatorNodePtr& upStreamOperator,
-                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const LogicalOperatorNodePtr& upStreamOperator,
+                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Get execution node where operator is placed");
     // 1. Fetch the execution node containing the input operator
@@ -384,7 +384,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
     for (const auto& parent : upStreamOperator->getParents()) {
 
         // 4. Check if the downstream operator was provided for placement
-        OperatorNodePtr downStreamOperator = parent->as<OperatorNode>();
+        LogicalOperatorNodePtr downStreamOperator = parent->as<LogicalOperatorNode>();
         auto found = operatorToExecutionNodeMap.find(downStreamOperator->getId());
 
         // 5. Skip the step if the downstream operator was not provided for placement
@@ -530,9 +530,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                 NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Combining parent and child as they are in different "
                           "plans but have same execution plan.");
                 //Construct a unified query plan
-                auto downStreamOperatorCopy = downStreamOperator->copy();
+                auto downStreamOperatorCopy = downStreamOperator->copy()->as<LogicalOperatorNode>();
                 for (const auto& upstreamOptr : downStreamOperator->getChildren()) {
-                    auto upstreamOperatorId = upstreamOptr->as<OperatorNode>()->getId();
+                    auto upstreamOperatorId = upstreamOptr->as<LogicalOperatorNode>()->getId();
                     if (queryPlanForUpStreamOperator->hasOperatorWithId(upstreamOperatorId)) {
                         const OperatorNodePtr& childOpInSubPlan =
                             queryPlanForUpStreamOperator->getOperatorWithId(upstreamOperatorId);
@@ -596,8 +596,8 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNo
     }
 }
 
-bool BasePlacementStrategy::isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator,
-                                                            const OperatorNodePtr& downStreamOperator) {
+bool BasePlacementStrategy::isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator,
+                                                            const LogicalOperatorNodePtr& downStreamOperator) {
     // 1. Fetch execution nodes for both operators
     auto upStreamExecutionNode = operatorToExecutionNodeMap[upStreamOperator->getId()];
     auto downStreamExecutionNode = operatorToExecutionNodeMap[downStreamOperator->getId()];
@@ -654,8 +654,8 @@ bool BasePlacementStrategy::isSourceAndDestinationConnected(const OperatorNodePt
     return false;// return false as connection not found
 }
 
-bool BasePlacementStrategy::operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
-                                                        const std::set<OperatorNodePtr>& operatorCollection) {
+bool BasePlacementStrategy::operatorPresentInCollection(const LogicalOperatorNodePtr& operatorToSearch,
+                                                        const std::set<LogicalOperatorNodePtr>& operatorCollection) {
 
     auto isPresent = std::find_if(operatorCollection.begin(),
                                   operatorCollection.end(),
@@ -665,7 +665,7 @@ bool BasePlacementStrategy::operatorPresentInCollection(const OperatorNodePtr& o
     return isPresent != operatorCollection.end();
 }
 
-std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode) {
+std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode) {
     std::vector<TopologyNodePtr> childTopologyNodes;
     NES_DEBUG("BasePlacementStrategy: Get topology nodes with children operators");
     std::vector<NodePtr> children = operatorNode->getChildren();
@@ -683,7 +683,7 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenO
 }
 
 QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId queryId,
-                                                                     const OperatorNodePtr& operatorNode,
+                                                                     const LogicalOperatorNodePtr& operatorNode,
                                                                      const ExecutionNodePtr& executionNode) {
 
     NES_DEBUG("BasePlacementStrategy: Get candidate query plan for the operator {} on execution node with id {}",

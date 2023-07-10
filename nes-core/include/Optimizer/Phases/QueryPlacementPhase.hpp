@@ -37,8 +37,8 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -98,14 +98,14 @@ class QueryPlacementPhase {
      * @brief: analyze the set and pin all unpinned sink operators
      * @param operators: set of operators to check
      */
-    void pinAllSinkOperators(const std::set<OperatorNodePtr>& operators);
+    void pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators);
 
     /**
      * This method checks if the operators in the set are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool checkIfAllArePinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators);
+    bool checkIfAllArePinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

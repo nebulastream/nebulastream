@@ -16,8 +16,8 @@
 
 namespace NES {
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
 namespace Optimizer {
 
@@ -30,13 +30,13 @@ using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 class MatchedOperatorPair {
 
   public:
-    static MatchedOperatorPairPtr create(OperatorNodePtr hostOperator, OperatorNodePtr targetOperator);
+    static MatchedOperatorPairPtr create(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator);
 
-    OperatorNodePtr hostOperator;
-    OperatorNodePtr targetOperator;
+    LogicalOperatorNodePtr hostOperator;
+    LogicalOperatorNodePtr targetOperator;
 
   private:
-    explicit MatchedOperatorPair(OperatorNodePtr hostOperator, OperatorNodePtr targetOperator);
+    explicit MatchedOperatorPair(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator);
 };
 }// namespace Optimizer
 }// namespace NES

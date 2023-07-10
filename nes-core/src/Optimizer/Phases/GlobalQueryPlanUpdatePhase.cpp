@@ -42,26 +42,24 @@
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
 #include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
-#include <utility>
 
 namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
-    TopologyPtr topology,
-    QueryCatalogServicePtr queryCatalogService,
-    Catalogs::Source::SourceCatalogPtr sourceCatalog,
-    GlobalQueryPlanPtr globalQueryPlan,
-    z3::ContextPtr z3Context,
+    const TopologyPtr& topology,
+    const QueryCatalogServicePtr& queryCatalogService,
+    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    const GlobalQueryPlanPtr& globalQueryPlan,
+    const z3::ContextPtr& z3Context,
     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-    Catalogs::UDF::UDFCatalogPtr udfCatalog,
-    GlobalExecutionPlanPtr globalExecutionPlan)
-    : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
-      z3Context(std::move(z3Context)) {
+    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+    const GlobalExecutionPlanPtr& globalExecutionPlan)
+    : topology(topology), globalExecutionPlan(globalExecutionPlan), queryCatalogService(queryCatalogService),
+      globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-    queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
+    queryMergerPhase = QueryMergerPhase::create(z3Context, optimizerConfigurations.queryMergerRule);
+    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
     queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
     originIdInferencePhase = OriginIdInferencePhase::create();
@@ -72,22 +70,22 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
 }
 
 GlobalQueryPlanUpdatePhasePtr
-GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
-                                   QueryCatalogServicePtr queryCatalogService,
-                                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                   GlobalQueryPlanPtr globalQueryPlan,
-                                   z3::ContextPtr z3Context,
+GlobalQueryPlanUpdatePhase::create(const TopologyPtr& topology,
+                                   const QueryCatalogServicePtr& queryCatalogService,
+                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                   const GlobalQueryPlanPtr& globalQueryPlan,
+                                   const z3::ContextPtr& z3Context,
                                    const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                   Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                                   GlobalExecutionPlanPtr globalExecutionPlan) {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(topology),
-                                                                                   std::move(queryCatalogService),
-                                                                                   std::move(sourceCatalog),
-                                                                                   std::move(globalQueryPlan),
-                                                                                   std::move(z3Context),
+                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                   const GlobalExecutionPlanPtr& globalExecutionPlan) {
+    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
+                                                                                   queryCatalogService,
+                                                                                   sourceCatalog,
+                                                                                   globalQueryPlan,
+                                                                                   z3Context,
                                                                                    coordinatorConfiguration,
-                                                                                   std::move(udfCatalog),
-                                                                                   std::move(globalExecutionPlan)));
+                                                                                   udfCatalog,
+                                                                                   globalExecutionPlan));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {

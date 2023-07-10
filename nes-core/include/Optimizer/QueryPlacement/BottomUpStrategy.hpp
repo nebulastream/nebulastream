@@ -41,8 +41,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -57,8 +57,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @throws exception if the operator can't be placed.
      */
     void pinOperators(QueryId queryId,
-                      const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                      const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                      const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                      const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
@@ -68,9 +68,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
     void identifyPinningLocation(QueryId queryId,
-                                 const OperatorNodePtr& operatorNode,
+                                 const LogicalOperatorNodePtr& operatorNode,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 };
 }// namespace NES::Optimizer
 

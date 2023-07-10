@@ -122,8 +122,8 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType faultToleranceType,
                                            LineageType lineageType,
-                                           const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::set<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
+                                           const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
     /**
      * @brief Sets pinned node to the operator's property
@@ -139,8 +139,8 @@ class BasePlacementStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::set<OperatorNodePtr>& upStreamPinnedOperators,
-                              const std::set<OperatorNodePtr>& downStreamPinnedOperators);
+    void performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
+                              const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
@@ -150,8 +150,8 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamOperators the downstream operators succeeding all operators to place
      */
     void placePinnedOperators(QueryId queryId,
-                              const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                              const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Get Execution node for the input topology node
@@ -174,8 +174,8 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamOperators: the downstream operators of the query plan
      */
     void addNetworkSourceAndSinkOperators(QueryId queryId,
-                                          const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                          const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
@@ -191,7 +191,7 @@ class BasePlacementStrategy {
      * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended
@@ -201,7 +201,7 @@ class BasePlacementStrategy {
      * @return the query plan to which the input operator is to be appended
      */
     static QueryPlanPtr
-    getCandidateQueryPlanForOperator(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+    getCandidateQueryPlanForOperator(QueryId queryId, const LogicalOperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -218,7 +218,7 @@ class BasePlacementStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    static OperatorNodePtr
+    static LogicalOperatorNodePtr
     createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
 
     /**
@@ -229,7 +229,7 @@ class BasePlacementStrategy {
      * @param sinkTopologyNode: sink topology node
      * @return the instance of network source operator
      */
-    static OperatorNodePtr createNetworkSourceOperator(QueryId queryId,
+    static LogicalOperatorNodePtr createNetworkSourceOperator(QueryId queryId,
                                                        SchemaPtr inputSchema,
                                                        uint64_t operatorId,
                                                        const TopologyNodePtr& sinkTopologyNode);
@@ -241,8 +241,8 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamOperators: the collection of pinned downstream operator after which to stop
      */
     void placeNetworkOperator(QueryId queryId,
-                              const OperatorNodePtr& upStreamOperator,
-                              const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const LogicalOperatorNodePtr& upStreamOperator,
+                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * Check if operator present in the given collection
@@ -250,8 +250,8 @@ class BasePlacementStrategy {
      * @param operatorCollection : collection to search into
      * @return true if successful
      */
-    bool operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
-                                     const std::set<OperatorNodePtr>& operatorCollection);
+    bool operatorPresentInCollection(const LogicalOperatorNodePtr& operatorToSearch,
+                                     const std::set<LogicalOperatorNodePtr>& operatorCollection);
 
     /**
      * @brief Add an execution node as root of the global execution plan
@@ -266,7 +266,7 @@ class BasePlacementStrategy {
      * @param downStreamOperator : The down stream operator
      * @return true if operators connected otherwise false
      */
-    bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
+    bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator, const LogicalOperatorNodePtr& downStreamOperator);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
