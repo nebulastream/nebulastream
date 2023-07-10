@@ -28,8 +28,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -144,7 +144,7 @@ class SharedQueryPlan {
      * @brief Method to update the placement information and state of the shared query plan operators
      * @param updatedOperators: operators with new mappings
      */
-    void updateOperators(const std::set<OperatorNodePtr>& updatedOperators);
+    void updateOperators(const std::set<LogicalOperatorNodePtr>& updatedOperators);
 
     /**
      * @brief Clear all MetaData information
@@ -167,13 +167,13 @@ class SharedQueryPlan {
      * @brief Get the vector of sink operators sharing common upstream operators
      * @return the vector of Sink Operators
      */
-    std::vector<OperatorNodePtr> getSinkOperators();
+    std::vector<LogicalOperatorNodePtr> getSinkOperators();
 
     /**
      * @brief Get the collection of registered query ids and their sink operators
      * @return map of registered query ids and their sink operators
      */
-    std::map<QueryId, std::set<OperatorNodePtr>> getQueryIdToSinkOperatorMap();
+    std::map<QueryId, std::set<LogicalOperatorNodePtr>> getQueryIdToSinkOperatorMap();
 
     /**
      * @brief Get the shared query id
@@ -233,7 +233,7 @@ class SharedQueryPlan {
      * @param operatorToRemove : the operator to remove
      * @return last upstream operators that are not removed
      */
-    std::set<OperatorNodePtr> removeOperator(const OperatorNodePtr& operatorToRemove);
+    std::set<LogicalOperatorNodePtr> removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
 
     /**
      * @brief Update the hash based signatures with new values
@@ -245,7 +245,7 @@ class SharedQueryPlan {
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
-    std::map<QueryId, std::set<OperatorNodePtr>> queryIdToSinkOperatorMap;
+    std::map<QueryId, std::set<LogicalOperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;

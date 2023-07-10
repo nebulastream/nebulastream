@@ -29,8 +29,8 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static std::unique_ptr<ManualPlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);

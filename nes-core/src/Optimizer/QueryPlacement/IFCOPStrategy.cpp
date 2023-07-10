@@ -317,8 +317,8 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                               FaultToleranceType /*faultToleranceType*/,
                                               LineageType /*lineageType*/,
-                                              const std::set<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                              const std::set<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+                                              const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
+                                              const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/) {
     NES_NOT_IMPLEMENTED();
 }
 

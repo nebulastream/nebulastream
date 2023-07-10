@@ -47,8 +47,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
     explicit ElegantPlacementStrategy(std::string serviceURL,
@@ -63,8 +63,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators of the plan to be placed
      * @return json representing the payload
      */
-    nlohmann::json prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                       const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+    nlohmann::json prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief: Prepare the topology payload for the external placement service
@@ -79,7 +79,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param response: Json representing the placement response received from the external service
      */
     void pinOperatorsBasedOnElegantService(QueryId queryId,
-                                           const std::set<OperatorNodePtr>& pinnedDownStreamOperators,
+                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                            cpr::Response& response) const;
 
     std::string serviceURL;
