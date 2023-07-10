@@ -314,9 +314,8 @@ class OperatorSerializationUtil {
      * @tparam T The LogicalOperatorNode (either MapJavaUDFLogicalOperatorNode or FlatMapJavaUDFLogicalOperatorNode)
      * @tparam D The GRPC SerializeOperator details message (either SerializableOperator_MapJavaUdfDetails or SerializableOperator_FlatMapJavaUdfDetails)
      */
-    template <typename T, typename D>
-    static void serializeJavaUDFOperator(const T& mapJavaUDFOperatorNode,
-                                         SerializableOperator& serializedOperator);
+    template<typename T, typename D>
+    static void serializeJavaUDFOperator(const T& mapJavaUDFOperatorNode, SerializableOperator& serializedOperator);
 
     /**
      * @brief deserializes a Map Java UDF operator
