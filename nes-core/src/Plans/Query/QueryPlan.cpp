@@ -22,6 +22,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
+#include <stack>
 #include <utility>
 
 namespace NES {
@@ -287,6 +288,111 @@ Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return pl
 
 void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy) {
     this->placementStrategy = placementStrategy;
+}
+
+std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(std::set<OperatorNodePtr> downstreamOperators,
+                                                             std::set<OperatorNodePtr> upstreamOperators) {
+
+    std::set<OperatorNodePtr> operatorsToReturn;
+
+    std::stack<OperatorNodePtr> visitedOperators;
+
+    std::queue<LogicalOperatorNodePtr> operatorsToVisit;
+
+    //initialize the operators to visit with upstream operators of all downstream operators
+    for (const auto& downStreamOperator : downstreamOperators) {
+        for (const auto& operatorToVisit : downStreamOperator->getChildren()) {
+            operatorsToVisit.emplace(operatorToVisit);
+        }
+    }
+
+    //Iterate over operatorsToVisit till it is not empty
+    while (!operatorsToVisit.empty()) {
+        bool reachedUpstreamOperator = false;
+
+        auto operatorToCheck = operatorsToVisit.front();
+
+        auto found = std::find_if(upstreamOperators.begin(), upstreamOperators.end(), [&](const auto& upstreamOperator) {
+            return upstreamOperator->getId() == operatorToCheck->as<OperatorNode>()->getId();
+        });
+
+        if (found == upstreamOperators.end() && !operatorToCheck->getChildren().empty()) {
+
+            //Iterate over all children
+            auto nextUpstreamOperatorsToVisit = operatorToCheck->getChildren();
+            for (const auto& nextUpstreamOperator : nextUpstreamOperatorsToVisit) {
+
+            }
+        }
+
+        //pop the operator to visit
+        operatorsToVisit.pop();
+
+        if (reachedUpstreamOperator) {
+            operatorsToReturn.insert(operatorToCheck);
+        }
+
+        //Iterate over all children
+        auto nextUpstreamOperatorsToVisit = operatorToCheck->getChildren();
+        for (const auto& nextUpstreamOperator : nextUpstreamOperatorsToVisit) {
+
+            auto found = std::find_if(upstreamOperators.begin(), upstreamOperators.end(), [&](const auto& upstreamOperator) {
+                return upstreamOperator->getId() == nextUpstreamOperator->as<OperatorNode>()->getId();
+            });
+
+            if (found == upstreamOperators.end() && nextUpstreamOperator->getChildren().empty()) {
+                //Start poping visited operators from the stack
+
+            } else if (found != upstreamOperators.end()) {
+                reachedUpstreamOperator = true;
+                //Start poping visited operators from the stack
+                auto visitedOperator = visitedOperators.top();
+            } else {
+            }
+        }
+
+        if (reachedUpstreamOperator) {
+            operatorsToReturn.insert(downStreamOperator);
+        }
+    }
+
+    // Go over all operators to visit and travers through their children to mark the operator state as re-place
+    while (!operatorsToVisit.empty()) {
+        auto logicalOperator = operatorsToVisit.front();//fetch the front operator
+        operatorsToVisit.pop();                         //pop the front operator
+
+        //if operator was not previously visited
+        if (visitedOperator.insert(logicalOperator).second) {
+
+            auto found = std::find_if(upstreamOperators.begin(),
+                                      upstreamOperators.end(),
+                                      [logicalOperator](const OperatorNodePtr& pinnedOperator) {
+                                          return pinnedOperator->getId() == logicalOperator->getId();
+                                      });
+
+            //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
+            if (found == upstreamOperators.end()) {
+
+                for (const auto& upstreamOperator : logicalOperator->getChildren()) {
+                    operatorsToVisit.emplace(upstreamOperator->as<LogicalOperatorNode>());// add children for future visit
+                }
+            }
+        }
+    }
+
+    return std::set<OperatorNodePtr>();
+}
+
+bool QueryPlan::reachedUpstreamOperator(NES::OperatorNodePtr downstreamOperator,
+                                        const std::set<OperatorNodePtr>& upstreamOperators) {
+
+    auto found = std::find_if(upstreamOperators.begin(), upstreamOperators.end(), [&](const auto& upstreamOperator) {
+        return upstreamOperator->getId() == downstreamOperator->getId();
+    });
+
+    if (found == upstreamOperators.end()) {
+        return false;
+    }
 }
 
 }// namespace NES

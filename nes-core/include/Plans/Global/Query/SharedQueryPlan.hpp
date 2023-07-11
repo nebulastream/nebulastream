@@ -58,6 +58,8 @@ struct RemovedEdge {
     TopologyNodeId upstreamNodeId;
 };
 
+using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;
+
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 
 /**
@@ -192,7 +194,7 @@ class SharedQueryPlan {
      * @param timestamp: the timestamp until the change log entries need to be retrieved
      * @return the change log entries with timestamp of their creation
      */
-    std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>> getChangeLogEntries(Timestamp timestamp);
+    ChangeLogEntries getChangeLogEntries(Timestamp timestamp);
 
     /**
      * @brief: update the timestamp till which the changes have been processed

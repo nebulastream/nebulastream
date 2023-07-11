@@ -197,7 +197,7 @@ void RequestProcessorService::start() {
                 //Remove all query plans that are either stopped or failed
                 globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 
-                //FIXME: This is a work-around for an edge case. To reproduce this:
+                //FIXME: #2496 This is a work-around for an edge case. To reproduce this:
                 // 1. The query merging feature is enabled.
                 // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
                 // Expected Result:
@@ -225,16 +225,16 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+                for (auto queryId : sharedQueryPlan->getQueryIds()) {
                     queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
                 }
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+                for (auto queryId : sharedQueryPlan->getQueryIds()) {
                     queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
                 }
             } catch (TypeInferenceException& ex) {

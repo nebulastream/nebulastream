@@ -645,11 +645,21 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUnusedLink) {
     auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
 
+    //Check state of the operators in the changelog entry
+    auto changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
+
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(4, 6);
@@ -712,11 +722,21 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
     auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
 
+    //Check state of the operators in the changelog entry
+    auto changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
+
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(3, 5);
@@ -792,7 +812,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(3, 5);
@@ -868,7 +888,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyLinkRequest::create(1, 2);
@@ -960,7 +980,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUnusedNodeWithFi
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(4);
@@ -1027,7 +1047,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithFilt
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(2);
@@ -1104,7 +1124,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
-    queryPlacementPhase->execute(updatedSharedQueryPlans[0]);
+    ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(2);
@@ -1142,6 +1162,15 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     //Actual upstream operator should have same operator id as one of the two expected operators
     auto actualDownstreamOperatorIterator = changelogEntry->downstreamOperators.begin();
     EXPECT_TRUE((*actualDownstreamOperatorIterator)->getId() == expectedSinkOperators[0]->getId());
+
+    //Check state of the operators in the changelog entry
+    for (const auto& downstreamOperator : changelogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changelogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
 }
 
 }// namespace NES

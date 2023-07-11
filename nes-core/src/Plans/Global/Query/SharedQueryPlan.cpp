@@ -22,7 +22,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
 namespace NES {
 
@@ -294,8 +293,7 @@ std::set<LogicalOperatorNodePtr> SharedQueryPlan::removeOperator(const LogicalOp
     return upstreamOperatorsToReturn;
 }
 
-std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>
-SharedQueryPlan::getChangeLogEntries(Timestamp timestamp) {
+ChangeLogEntries SharedQueryPlan::getChangeLogEntries(Timestamp timestamp) {
     return changeLog->getCompactChangeLogEntriesBeforeTimestamp(timestamp);
 }
 
@@ -321,8 +319,8 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);
 }
 
-void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
-                                                 const std::set<uint64_t>& downstreamOperatorIds) {
+void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
+                                                 const std::set<OperatorId>& downstreamOperatorIds) {
 
     std::set<LogicalOperatorNodePtr> upstreamOperators;
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
@@ -334,40 +332,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<uint64_t>& upstr
         downstreamOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId)->as<LogicalOperatorNode>());
     }
 
-    //Perform a DFS iteration starting from downstream operators and mark all intermediate nodes for re-operator placement
-    std::set<LogicalOperatorNodePtr> visitedOperator;
-    std::queue<LogicalOperatorNodePtr> operatorsToVisit;
-    //initialize the operators to visit with upstream operators of all downstream operators
-    for (const auto& pinnedDownStreamOperator : downstreamOperators) {
-        auto children = pinnedDownStreamOperator->getChildren();
-        for (const auto& child : children) {
-            operatorsToVisit.emplace(child->as<LogicalOperatorNode>());
-        }
-    }
-
-    // Go over all operators to visit and travers through their children to mark the operator state as re-place
-    while (!operatorsToVisit.empty()) {
-        auto logicalOperator = operatorsToVisit.front();//fetch the front operator
-        operatorsToVisit.pop();                         //pop the front operator
-
-        //if operator was not previously visited
-        if (visitedOperator.insert(logicalOperator).second) {
-
-            auto found = std::find_if(upstreamOperators.begin(),
-                                      upstreamOperators.end(),
-                                      [logicalOperator](const OperatorNodePtr& pinnedOperator) {
-                                          return pinnedOperator->getId() == logicalOperator->getId();
-                                      });
-
-            //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
-            if (found == upstreamOperators.end()) {
-                logicalOperator->setOperatorState(OperatorState::TO_BE_REPLACED);//Mark the operator for replacement
-                for (const auto& upstreamOperator : logicalOperator->getChildren()) {
-                    operatorsToVisit.emplace(upstreamOperator->as<LogicalOperatorNode>());// add children for future visit
-                }
-            }
-        }
-    }
+    auto operatorsToBeReplaced = queryPlan->findAllOperatorsBetween(downstreamOperators, upstreamOperators);
 
     //add change log entry indicating the addition
     long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

@@ -195,6 +195,26 @@ class GlobalQueryPlanUpdatePhase {
                                              const ExecutionNodePtr& upstreamExecutionNode,
                                              const ExecutionNodePtr& downstreamExecutionNode);
 
+    /**
+     * @brief
+     * @param sharedQueryPlanId
+     * @param downstreamExecutionNode
+     * @param downstreamOperatorIds
+     */
+    void getDownstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
+                                        const ExecutionNodePtr& downstreamExecutionNode,
+                                        std::set<OperatorId>& downstreamOperatorIds) const;
+
+    /**
+     * @brief
+     * @param sharedQueryPlanId
+     * @param upstreamExecutionNode
+     * @param upstreamOperatorIds
+     */
+    void getUpstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
+                                      const ExecutionNodePtr& upstreamExecutionNode,
+                                      std::set<OperatorId>& upstreamOperatorIds) const;
+
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
@@ -208,12 +228,6 @@ class GlobalQueryPlanUpdatePhase {
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
-    void getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
-                                        const ExecutionNodePtr& downstreamExecutionNode,
-                                        std::set<OperatorId>& downstreamOperatorIds) const;
-    void getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
-                                      const ExecutionNodePtr& upstreamExecutionNode,
-                                      std::set<OperatorId>& upstreamOperatorIds) const;
 };
 }// namespace Optimizer
 }// namespace NES

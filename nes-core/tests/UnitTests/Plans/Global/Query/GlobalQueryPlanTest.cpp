@@ -44,7 +44,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan) {
         NES_DEBUG("GlobalQueryPlanTest: create an empty global query plan");
         GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
         SUCCEED();
-    } catch (std::exception ex) {
+    } catch (std::exception& ex) {
         FAIL();
     }
 }
@@ -185,14 +185,14 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert To check if Global Query Plan is created properly
     //Get MetaData information
-    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryPlansToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     //Assert
-    EXPECT_TRUE(sharedQueryMetaData.size() == 2u);
-    auto queryIdToSinkGQNs1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
+    EXPECT_TRUE(sharedQueryPlansToDeploy.size() == 2u);
+    auto queryIdToSinkGQNs1 = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkGQNs1.size(), 1u);
     EXPECT_TRUE(queryIdToSinkGQNs1.find(queryId1) != queryIdToSinkGQNs1.end());
-    auto queryIdToSinkGQNs2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
+    auto queryIdToSinkGQNs2 = sharedQueryPlansToDeploy[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkGQNs2.size(), 1u);
     EXPECT_TRUE(queryIdToSinkGQNs2.find(queryId2) != queryIdToSinkGQNs1.end());
 }
@@ -230,11 +230,11 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     syntaxBasedCompleteQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryPlansToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     //Assert
-    EXPECT_TRUE(sharedQueryMetaData.size() == 1);
-    auto queryIdToSinkGQNsMap = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
+    EXPECT_TRUE(sharedQueryPlansToDeploy.size() == 1);
+    auto queryIdToSinkGQNsMap = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId1) != queryIdToSinkGQNsMap.end());
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId2) != queryIdToSinkGQNsMap.end());
 }
@@ -279,22 +279,22 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
-    std::vector<SharedQueryPlanPtr> sharedQueryMetaData = globalQueryPlan->getSharedQueryPlansToDeploy();
+    std::vector<SharedQueryPlanPtr> sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     //Assert
-    EXPECT_TRUE(sharedQueryMetaData.size() == 2u);
-    auto queryIdToSinkOperatorMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
+    EXPECT_TRUE(sharedQueryPlansToDeploy.size() == 2u);
+    auto queryIdToSinkOperatorMap1 = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) != queryIdToSinkOperatorMap1.end());
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
     globalQueryPlan->removeQuery(queryId1, RequestType::StopQuery);
     //Get MetaData information
-    sharedQueryMetaData = globalQueryPlan->getSharedQueryPlansToDeploy();
-    queryIdToSinkOperatorMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
+    sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    queryIdToSinkOperatorMap1 = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) == queryIdToSinkOperatorMap1.end());
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
-    auto queryIdToSinkOperatorMap2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
+    auto queryIdToSinkOperatorMap2 = sharedQueryPlansToDeploy[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkOperatorMap2.size(), 1u);
     EXPECT_TRUE(queryIdToSinkOperatorMap2.find(queryId3) != queryIdToSinkOperatorMap1.end());
 }
