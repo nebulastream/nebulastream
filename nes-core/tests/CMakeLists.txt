@@ -604,6 +604,11 @@ if (NES_USE_TF)
     add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
 endif ()
 
+if (NES_USE_ARROW)
+### ArrowSourceIntegrationTest ###
+add_nes_integration_test(arrow-source-integration-test "Integration/Source/ArrowSourceIntegrationTest.cpp")
+endif()
+
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
 

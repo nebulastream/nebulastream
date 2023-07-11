@@ -35,7 +35,7 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       view(std::move(view)) {}
 
-// It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
+// It is somehow required to clear the view at the sink shutdown due to NES's memory management
 void MaterializedViewSink::shutdown() { view->clear(); }
 
 void MaterializedViewSink::setup(){};
