@@ -51,6 +51,41 @@ struct GlobalOperatorHandlers {
 };
 
 /**
+ * @brief Stores all operator nodes for lowering the stream joins
+ */
+struct StreamJoinOperatorNodes {
+    StreamJoinOperatorNodes(const LogicalOperatorNodePtr& operatorNode,
+                            const OperatorNodePtr& leftInputOperator,
+                            const OperatorNodePtr& rightInputOperator)
+        : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator) {}
+    const LogicalOperatorNodePtr& operatorNode;
+    const OperatorNodePtr& leftInputOperator;
+    const OperatorNodePtr& rightInputOperator;
+};
+
+/**
+ * @brief Stores all join configuration, e.g., window size, timestamp field name, join strategy, ...
+ */
+struct StreamJoinConfigs {
+    StreamJoinConfigs(const std::string& joinFieldNameLeft,
+                      const std::string& joinFieldNameRight,
+                      const uint64_t windowSize,
+                      const std::string& timeStampFieldNameLeft,
+                      const std::string& timeStampFieldNameRight,
+                      const QueryCompilerOptions::StreamJoinStrategy& joinStrategy)
+        : joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowSize(windowSize),
+          timeStampFieldNameLeft(timeStampFieldNameLeft), timeStampFieldNameRight(timeStampFieldNameRight),
+          joinStrategy(joinStrategy) {}
+
+    const std::string& joinFieldNameLeft;
+    const std::string& joinFieldNameRight;
+    const uint64_t windowSize;
+    const std::string& timeStampFieldNameLeft;
+    const std::string& timeStampFieldNameRight;
+    const QueryCompilerOptions::StreamJoinStrategy& joinStrategy;
+};
+
+/**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
  */
 class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
@@ -226,17 +261,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     /**
      * @brief Lowers a join operator for the old default query compiler
      * @param operatorNode
-     * @param joinOperator
      */
-    void lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode,
-                                          std::shared_ptr<JoinLogicalOperatorNode>& joinOperator);
+    void lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler
      * @param operatorNode
-     * @param joinOperator
      */
-    void lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode, std::shared_ptr<JoinLogicalOperatorNode>& joinOperator);
+    void lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Returns the left and right timestamp
@@ -248,17 +280,21 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
 
+    /**
+     * @brief Lowers the stream hash join
+     * @param streamJoinOperatorNodes
+     * @param streamJoinConfig
+     */
+    void lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+                                const StreamJoinConfigs& streamJoinConfig);
 
-    void lowerStreamingHashJoin(const LogicalOperatorNodePtr& operatorNode,
-                                std::shared_ptr<JoinLogicalOperatorNode>& logicalJoinOperatorNode,
-                                const std::string& joinFieldNameLeft,
-                                const std::string& joinFieldNameRight,
-                                const std::string& timeStampFieldNameLeft,
-                                const std::string& timeStampFieldNameRight,
-                                const uint64_t windowSize,
-                                OperatorNodePtr& leftInputOperator,
-                                OperatorNodePtr& rightInputOperator,
-                                const QueryCompilerOptions::StreamJoinStrategy& joinStrategy);
+    /**
+     * @brief Lowers the stream nested loop join
+     * @param streamJoinOperatorNodes
+     * @param streamJoinConfig
+     */
+    void lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+                                      const StreamJoinConfigs& streamJoinConfig);
 };
 
 }// namespace NES::QueryCompilation
