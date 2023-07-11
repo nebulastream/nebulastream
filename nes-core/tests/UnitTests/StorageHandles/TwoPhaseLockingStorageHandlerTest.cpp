@@ -18,6 +18,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Exceptions/ResourceLockingException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -41,11 +42,11 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(globalExecutionPlan,
-                                                     topology,
-                                                     queryCatalogService,
-                                                     globalQueryPlan,
-                                                     sourceCatalog,
-                                                     udfCatalog);
+                                                                   topology,
+                                                                   queryCatalogService,
+                                                                   globalQueryPlan,
+                                                                   sourceCatalog,
+                                                                   udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get(), std::exception);
@@ -108,12 +109,13 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                                    sourceCatalog,
                                                                    udfCatalog);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology,
-                                                              ResourceType::GlobalExecutionPlan,
-                                                              ResourceType::QueryCatalogService,
-                                                              ResourceType::GlobalQueryPlan,
-                                                              ResourceType::SourceCatalog,
-                                                              ResourceType::UdfCatalog}));
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+                                                            {ResourceType::Topology,
+                                                             ResourceType::GlobalExecutionPlan,
+                                                             ResourceType::QueryCatalogService,
+                                                             ResourceType::GlobalQueryPlan,
+                                                             ResourceType::SourceCatalog,
+                                                             ResourceType::UdfCatalog}));
     });
     thread->join();
 
@@ -130,11 +132,13 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
 
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan,
-                                                              ResourceType::QueryCatalogService,
-                                                              ResourceType::GlobalQueryPlan,
-                                                              ResourceType::SourceCatalog,
-                                                              ResourceType::UdfCatalog}));
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+                                                            {ResourceType::GlobalExecutionPlan,
+                                                             ResourceType::QueryCatalogService,
+                                                             ResourceType::GlobalQueryPlan,
+                                                             ResourceType::SourceCatalog,
+                                                             ResourceType::UdfCatalog}));
     });
     thread->join();
 
@@ -150,16 +154,21 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
 
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService,
-                                                              ResourceType::GlobalQueryPlan,
-                                                              ResourceType::SourceCatalog,
-                                                              ResourceType::UdfCatalog}));
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+                                                            {ResourceType::QueryCatalogService,
+                                                             ResourceType::GlobalQueryPlan,
+                                                             ResourceType::SourceCatalog,
+                                                             ResourceType::UdfCatalog}));
     });
     thread->join();
 
     twoPLAccessHandle->releaseResources(1);
     twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources( 1,
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(
+        1,
         {ResourceType::Topology, ResourceType::GlobalExecutionPlan, ResourceType::QueryCatalogService}));
     ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
     ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
@@ -168,14 +177,21 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources( 2,
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(
+            2,
             {ResourceType::GlobalQueryPlan, ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
     });
     thread->join();
 
     twoPLAccessHandle->releaseResources(1);
     twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology,
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+                                                        {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan}));
@@ -186,6 +202,13 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+                     Exceptions::ResourceLockingException);
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
     });
     thread->join();
@@ -194,7 +217,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     twoPLAccessHandle->releaseResources(1);
     //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology,
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+                                                        {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan,
@@ -206,6 +230,15 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get());
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+                     Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+                     Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog}),
+                   Exceptions::ResourceLockingException);
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::UdfCatalog}));
     });
     thread->join();
@@ -214,7 +247,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     twoPLAccessHandle->releaseResources(1);
     //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology,
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+                                                        {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan,
@@ -227,6 +261,17 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get());
     ASSERT_NO_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get());
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+                   Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+                   Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+                   Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog}),
+                   Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::UdfCatalog}),
+                   Exceptions::ResourceLockingException);
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {}));
     });
     thread->join();
@@ -261,16 +306,25 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     threads.reserve(numThreads);
     for (uint64_t i = 1; i < numThreads; ++i) {
         threads.emplace_back([i, &lockHolder, &resourceVector, &reverseResourceVector, twoPLAccessHandle]() {
-            if (i % 2 == 0) {
-                ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, resourceVector));
-                NES_TRACE("Previous lock holder {}", lockHolder)
-                lockHolder = i;
-                NES_TRACE("Locked using resource vector in thread {}", i)
-            } else {
-                ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, reverseResourceVector));
-                NES_TRACE("Previous lock holder {}", lockHolder)
-                lockHolder = i;
-                NES_TRACE("Locked using reverse resource vector in thread {}", i)
+            while (true) {//todo: insert timeout
+                try {
+                    if (i % 2 == 0) {
+                        //ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, resourceVector));
+                        twoPLAccessHandle->acquireResources(i, resourceVector);
+                        NES_TRACE("Previous lock holder {}", lockHolder)
+                        lockHolder = i;
+                        NES_TRACE("Locked using resource vector in thread {}", i)
+                    } else {
+                        //ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, reverseResourceVector));
+                        twoPLAccessHandle->acquireResources(i, reverseResourceVector);
+                        NES_TRACE("Previous lock holder {}", lockHolder)
+                        lockHolder = i;
+                        NES_TRACE("Locked using reverse resource vector in thread {}", i)
+                    }
+                } catch (Exceptions::ResourceLockingException& e) {
+                    continue;
+                }
+                break;
             }
             ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(i).get());

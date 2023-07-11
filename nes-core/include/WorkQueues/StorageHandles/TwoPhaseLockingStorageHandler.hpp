@@ -133,7 +133,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param resourceType type of the resource for which the lockinfo is requested
      * @return a struct containing mutex and holder of the lock to the resource
      */
-    ResourceLockInfo& getHolder(ResourceType resourceType);
+    std::atomic<QueryId>& getHolder(ResourceType resourceType);
 
     /**
      * @brief indicates if a request holds a lock on any resource
@@ -152,12 +152,20 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
+    /*
     ResourceLockInfo globalExecutionPlanHolder;
     ResourceLockInfo topologyHolder;
     ResourceLockInfo queryCatalogServiceHolder;
     ResourceLockInfo globalQueryPlanHolder;
     ResourceLockInfo sourceCatalogHolder;
     ResourceLockInfo udfCatalogHolder;
+     */
+    std::atomic<RequestId> globalExecutionPlanHolder;
+    std::atomic<RequestId> topologyHolder;
+    std::atomic<RequestId> queryCatalogServiceHolder;
+    std::atomic<RequestId> globalQueryPlanHolder;
+    std::atomic<RequestId> sourceCatalogHolder;
+    std::atomic<RequestId> udfCatalogHolder;
 };
 }// namespace NES
 
