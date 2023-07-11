@@ -111,21 +111,20 @@ std::string ArrowSource::toString() const {
 void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer) {
     // make sure that we have a batch to read
     if(currentRecordBatch == nullptr) {
-        auto readBatchStatus = readNextBatch();
-        if(!readBatchStatus.ok()) {
-            NES_THROW_RUNTIME_ERROR(
-                    "ArrowSource::fillBuffer: error reading recordBatch: " << readBatchStatus.ToString());
-        }
+        readNextBatch();
     }
 
-    NES_TRACE2("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
-               fileSize);
+    // check if file has not ended
     if (this->fileEnded) {
         NES_WARNING2("ArrowSource::fillBuffer: but file has already ended");
         return;
     }
 
+    NES_TRACE2("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
+               fileSize);
+
     uint64_t generatedTuplesThisPass = 0;
+
     // densely pack the buffer
     if (numberOfTuplesToProducePerBuffer == 0) {
         generatedTuplesThisPass = buffer.getCapacity();
@@ -154,17 +153,17 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
         // of tuples
         while (tupleCount < generatedTuplesThisPass) {
             // read in a new record batch
-            auto readBatchStatus = readNextBatch();
+            readNextBatch();
 
             // only continue if the file has not ended
             if(this->fileEnded == true) break;
 
-            // write the whole batch to the tuple buffer
+            // case when we have to write the whole batch to the tuple buffer
             if((tupleCount + currentRecordBatch->num_rows()) <= generatedTuplesThisPass) {
                 writeRecordBatchToTupleBuffer(tupleCount, buffer, currentRecordBatch);
                 tupleCount += currentRecordBatch->num_rows();
             }
-            // write only part of the batch to the tuple buffer
+            // case when we have to write only a part of the batch to the tuple buffer
             else {
                 uint64_t lastBatchSize = generatedTuplesThisPass - tupleCount;
                 recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, lastBatchSize);
@@ -208,21 +207,30 @@ arrow::Status ArrowSource::openFile() {
     return arrow::Status::OK();
 }
 
-arrow::Status ArrowSource::readNextBatch() {
-    //set the index to 0 and read the new batch
+void ArrowSource::readNextBatch() {
+    //set the internal index to 0 and read the new batch
     indexWithinCurrentRecordBatch = 0;
     auto readStatus = recordBatchStreamReader->ReadNext(&currentRecordBatch);
 
     // file ended
-    if(currentRecordBatch == nullptr) this->fileEnded = true;
+    if(currentRecordBatch == nullptr) {
+        this->fileEnded = true;
+        NES_TRACE2("ArrowSource::readNextBatch: file ended.");
+    }
+
+    // error reading batch
+    if(!readStatus.ok()) {
+        NES_THROW_RUNTIME_ERROR("ArrowSource::fillBuffer: error reading recordBatch: " << readStatus.ToString());
+    }
 
     NES_TRACE2("ArrowSource::readNextBatch: read the following record batch {}",
                currentRecordBatch->ToString());
-
-    return arrow::Status::OK();
 }
 
 // TODO move all logic below to Parser / Format?
+// Core Logic in writeRecordBatchToTupleBuffer() and writeArrowArrayToTupleBuffer(): Arrow (and Parquet) format(s)
+// is(are) column-oriented. Instead of reconstructing each tuple due to high reconstruction cost, we instead retrieve
+// each column from the arrow RecordBatch and then write out the whole column in the tuple buffer.
 void ArrowSource::writeRecordBatchToTupleBuffer(uint64_t tupleCount,
                                                 Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
                                                 std::shared_ptr<arrow::RecordBatch> recordBatch) {
@@ -483,6 +491,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
             // We do not support any other ARROW types (such as Lists, Maps, Tensors) yet. We could however later store
             // them in the childBuffers similar to how we store TEXT and push the computation supported by arrow down to
             // them.
+            NES_NOT_IMPLEMENTED();
         }
     } catch (const std::exception& e) {
         NES_ERROR2("Failed to convert the arrowArray to desired NES data type. Error: {}", e.what());

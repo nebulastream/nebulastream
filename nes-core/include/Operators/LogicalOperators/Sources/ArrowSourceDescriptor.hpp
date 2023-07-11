@@ -25,32 +25,30 @@ namespace NES {
  * @brief Descriptor defining properties used for creating physical Arrow source
  */
 class ArrowSourceDescriptor : public SourceDescriptor {
+  public:
+    static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType,
+                                      std::string logicalSourceName, std::string physicalSourceName);
 
- public:
-  static SourceDescriptorPtr
-  create(SchemaPtr schema,
-         ArrowSourceTypePtr arrowSourceType,
-         std::string logicalSourceName,
-         std::string physicalSourceName);
+    static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
 
-  static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
+    /**
+     * @brief get source config ptr with all configurations for Arrow source
+     */
+    ArrowSourceTypePtr getSourceConfig() const;
 
-  /**
-   * @brief get source config ptr with all configurations for Arrow source
-   */
-  ArrowSourceTypePtr getSourceConfig() const;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
 
-  [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
-  std::string toString() const override;
-  SourceDescriptorPtr copy() override;
+    std::string toString() const override;
 
- private:
-  explicit ArrowSourceDescriptor(SchemaPtr schema,
-                                 ArrowSourceTypePtr sourceConfig,
-                                 std::string logicalSourceName,
-                                 std::string physicalSourceName);
+    SourceDescriptorPtr copy() override;
 
-  ArrowSourceTypePtr arrowSourceType;
+  private:
+    explicit ArrowSourceDescriptor(SchemaPtr schema,
+                                   ArrowSourceTypePtr sourceConfig,
+                                   std::string logicalSourceName,
+                                   std::string physicalSourceName);
+
+    ArrowSourceTypePtr arrowSourceType;
 };
 
 using ArrowSourceDescriptorPtr = std::shared_ptr<ArrowSourceDescriptor>;
