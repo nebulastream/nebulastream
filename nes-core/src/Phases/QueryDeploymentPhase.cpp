@@ -206,7 +206,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
                                                        cpr::Header{{"Content-Type", "application/json"}},
                                                        multipartPayload,
-                                                       cpr::Timeout(3000));
+                                                       cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
                     if (response.status_code != 200) {
                         throw QueryDeploymentException(
                             queryId,

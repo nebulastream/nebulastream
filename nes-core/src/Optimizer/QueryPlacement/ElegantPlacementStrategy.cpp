@@ -85,7 +85,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
                                            cpr::Header{{"Content-Type", "application/json"}},
                                            cpr::Body{payload.dump()},
-                                           cpr::Timeout(3000));
+                                           cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
             throw QueryPlacementException(
                 queryId,
