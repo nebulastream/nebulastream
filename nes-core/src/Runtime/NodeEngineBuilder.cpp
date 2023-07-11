@@ -28,6 +28,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -95,6 +96,11 @@ NodeEngineBuilder& NodeEngineBuilder::setJITCompiler(Compiler::JITCompilerPtr ji
 
 NodeEngineBuilder& NodeEngineBuilder::setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory) {
     this->phaseFactory = phaseFactory;
+    return *this;
+}
+
+NodeEngineBuilder& NodeEngineBuilder::setOpenCLManager(NES::Runtime::OpenCLManagerPtr openCLManager) {
+    this->openCLManager = openCLManager;
     return *this;
 }
 
@@ -228,6 +234,10 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         for (auto entry : workerConfiguration->physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
         }
+        if (!openCLManager) {
+            NES_DEBUG("Creating default OpenCLManager");
+            openCLManager = std::make_shared<OpenCLManager>();
+        }
         std::shared_ptr<NodeEngine> engine = std::make_shared<NodeEngine>(
             physicalSources,
             std::move(hardwareManager),
@@ -247,6 +257,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(stateManager),
             std::move(nesWorker),
             std::move(materializedViewManager),
+            std::move(openCLManager),
             nodeEngineId,
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),

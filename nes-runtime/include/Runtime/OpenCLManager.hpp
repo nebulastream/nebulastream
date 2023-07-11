@@ -70,8 +70,6 @@ class OpenCLManager {
     std::vector<OpenCLDeviceInfo> devices;
 };
 
-using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
-
 
 }// namespace NES::Runtime
 
