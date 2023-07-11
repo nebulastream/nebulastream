@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.138](https://github.com/nebulastream/nebulastream/tree/v0.5.138) (2023-07-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.137...v0.5.138)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create more fine grained exceptions for the query undeployment process [\#3817](https://github.com/nebulastream/nebulastream/issues/3817)
+
 ## [v0.5.137](https://github.com/nebulastream/nebulastream/tree/v0.5.137) (2023-07-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.136...v0.5.137)
