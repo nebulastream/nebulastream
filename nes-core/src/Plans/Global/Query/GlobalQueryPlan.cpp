@@ -83,18 +83,17 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
 }
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
-    NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
-    std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
-    NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
+    NES_DEBUG("GlobalQueryPlan: Get the shared query plans to deploy.");
+    std::vector<SharedQueryPlanPtr> sharedQueryPlansToDeploy;
     for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
         if (SharedQueryPlanStatus::Deployed == sharedQueryPlan->getStatus()) {
-            NES_TRACE("GlobalQueryPlan: Skipping! found already deployed query meta data.");
+            NES_TRACE("GlobalQueryPlan: Skipping! found already deployed shared query plan.");
             continue;
         }
-        sharedQueryMetaDataToDeploy.push_back(sharedQueryPlan);
+        sharedQueryPlansToDeploy.push_back(sharedQueryPlan);
     }
-    NES_DEBUG("GlobalQueryPlan: Found {} Shared Query MetaData to be deployed.", sharedQueryMetaDataToDeploy.size());
-    return sharedQueryMetaDataToDeploy;
+    NES_DEBUG("GlobalQueryPlan: Found {} Shared Query plan to be deployed.", sharedQueryPlansToDeploy.size());
+    return sharedQueryPlansToDeploy;
 }
 
 SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
@@ -151,9 +150,10 @@ void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> sharedQueryPlans;
+    sharedQueryPlans.reserve(sharedQueryIdToPlanMap.size());
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
-        sharedQueryPlans.emplace_back(sharedQueryMetaData);
+    for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
+        sharedQueryPlans.emplace_back(sharedQueryPlan);
     }
     NES_TRACE("GlobalQueryPlan: Found {} Shared Query MetaData.", sharedQueryPlans.size());
     return sharedQueryPlans;

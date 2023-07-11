@@ -340,7 +340,7 @@ void GlobalQueryPlanUpdatePhase::markOperatorsForReOperatorPlacement(SharedQuery
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 }
 
-void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
                                                               const ExecutionNodePtr& upstreamExecutionNode,
                                                               std::set<OperatorId>& upstreamOperatorIds) const {
 
@@ -372,7 +372,7 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(SharedQueryId shar
     }
 }
 
-void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
                                                                 const ExecutionNodePtr& downstreamExecutionNode,
                                                                 std::set<OperatorId>& downstreamOperatorIds) const {
 

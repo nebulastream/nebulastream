@@ -267,6 +267,15 @@ class QueryPlan {
      */
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
+    /**
+     * @brief Find all operators between given set of downstream and upstream operators
+     * @param downstreamOperators : the downstream operators
+     * @param upstreamOperators : the upstream operators
+     * @return all operators between (excluding) downstream and upstream operators
+     */
+    std::set<OperatorNodePtr> findAllOperatorsBetween(std::set<OperatorNodePtr> downstreamOperators,
+                                                      std::set<OperatorNodePtr> upstreamOperators);
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -293,6 +302,8 @@ class QueryPlan {
      * @brief initialize an empty query plan
      */
     QueryPlan();
+
+    bool reachedUpstreamOperator(OperatorNodePtr downstreamOperators, const std::set<OperatorNodePtr>& upstreamOperators);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
