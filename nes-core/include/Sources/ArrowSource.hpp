@@ -34,13 +34,14 @@ namespace NES {
 
 class ArrowParser;
 using ArrowParserPtr = std::shared_ptr<ArrowParser>;
+
 /**
  * @brief this class implement the Arrow as an input source
  * @brief more specifically we currently support the Arrow IPC format (a.k.a Feather v2)
  * @see https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc
  */
 class ArrowSource : public DataSource {
-public:
+  public:
     /**
    * @brief constructor of Arrow source
    * @param schema of the source
@@ -97,10 +98,10 @@ public:
      */
     const ArrowSourceTypePtr &getSourceConfig() const;
 
-protected:
+  protected:
     bool fileEnded;
 
-private:
+  private:
     ArrowSourceTypePtr arrowSourceType;
     std::string filePath;
     uint64_t tupleSize;
@@ -135,7 +136,7 @@ private:
      * @brief reads the next record batch in the recordBatchStreamReader
      * @return returns an arrow status
      */
-    arrow::Status readNextBatch();
+    void readNextBatch();
 
     /**
      * @brief this function writes the data from the record batches to DynamicTupleBuffer

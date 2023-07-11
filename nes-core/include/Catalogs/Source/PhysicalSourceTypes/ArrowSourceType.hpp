@@ -31,123 +31,122 @@ using ArrowSourceTypePtr = std::shared_ptr<ArrowSourceType>;
  * define configurations for a Arrow source, i.e. this source reads from data from a Arrow file
  */
 class ArrowSourceType : public PhysicalSourceType {
+  public:
+    ~ArrowSourceType() noexcept override = default;
 
- public:
-  ~ArrowSourceType()
-  noexcept override =
-  default;
+    /**
+     * @brief create a ArrowSourceTypePtr object
+     * @param sourceConfigMap inputted config options
+     * @return ArrowSourceTypePtr
+     */
+    static ArrowSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
-  /**
-   * @brief create a ArrowSourceTypePtr object
-   * @param sourceConfigMap inputted config options
-   * @return ArrowSourceTypePtr
-   */
-  static ArrowSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    /**
+     * @brief create a ArrowSourceTypePtr object
+     * @param sourceConfigMap inputted config options
+     * @return ArrowSourceTypePtr
+     */
+    static ArrowSourceTypePtr create(Yaml::Node yamlConfig);
 
-  /**
-   * @brief create a ArrowSourceTypePtr object
-   * @param sourceConfigMap inputted config options
-   * @return ArrowSourceTypePtr
-   */
-  static ArrowSourceTypePtr create(Yaml::Node yamlConfig);
+    /**
+     * @brief create a default ArrowSourceTypePtr object
+     * @return ArrowSourceTypePtr
+     */
+    static ArrowSourceTypePtr create();
 
-  /**
-   * @brief create a default ArrowSourceTypePtr object
-   * @return ArrowSourceTypePtr
-   */
-  static ArrowSourceTypePtr create();
+    /**
+     * @brief creates a string representation of the source
+     * @return
+     */
+    std::string toString() override;
 
-  /**
-   * @brief creates a string representation of the source
-   * @return
-   */
-  std::string toString() override;
+    /**
+     * Checks equality
+     * @param other mqttSourceType ot check equality for
+     * @return true if equal, false otherwise
+     */
+    bool equal(PhysicalSourceTypePtr const &other) override;
 
-  /**
-   * Checks equality
-   * @param other mqttSourceType ot check equality for
-   * @return true if equal, false otherwise
-   */
-  bool equal(PhysicalSourceTypePtr const &other) override;
+    void reset() override;
 
-  void reset() override;
+    /**
+     * @brief Get file path, needed for: ArrowSource, BinarySource
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
 
-  /**
-   * @brief Get file path, needed for: ArrowSource, BinarySource
-   */
-  [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
+    /**
+     * @brief Set file path, needed for: ArrowSource, BinarySource
+     */
+    void setFilePath(std::string filePath);
 
-  /**
-   * @brief Set file path, needed for: ArrowSource, BinarySource
-   */
-  void setFilePath(std::string filePath);
+    /**
+     * @brief gets a ConfigurationOption object with sourceGatheringInterval
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
 
-  /**
-   * @brief gets a ConfigurationOption object with sourceGatheringInterval
-   */
-  [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
+    /**
+     * @brief set the value for sourceGatheringInterval with the appropriate data format
+     */
+    void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
 
-  /**
-   * @brief set the value for sourceGatheringInterval with the appropriate data format
-   */
-  void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
+    /**
+     * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
-  /**
-   * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
-   */
-  [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    /**
+     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
-  /**
-   * @brief set the value for numberOfBuffersToProduce with the appropriate data format
-   */
-  void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+    /**
+     * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>>
+    getNumberOfTuplesToProducePerBuffer() const;
 
-  /**
-   * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
-   */
-  [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+    /**
+     * @brief Get gathering mode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
 
-  /**
-   * @brief Get gathering mode
-   */
-  [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
+    /**
+     * @brief Set gathering mode
+     */
+    void setGatheringMode(std::string inputGatheringMode);
 
-  /**
-   * @brief Set gathering mode
-   */
-  void setGatheringMode(std::string inputGatheringMode);
+    /**
+     * @brief Sets the gathering mode given as GatheringMode
+     * @param inputGatheringMode
+     */
+    void setGatheringMode(GatheringMode inputGatheringMode);
 
-  /**
-   * @brief Sets the gathering mode given as GatheringMode
-   * @param inputGatheringMode
-   */
-  void setGatheringMode(GatheringMode inputGatheringMode);
+    /**
+     * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
+     */
+    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
 
-  /**
-   * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
-   */
-  void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
+private:
+    /**
+     * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
+     */
+    explicit ArrowSourceType(std::map<std::string, std::string> sourceConfigMap);
 
- private:
-  /**
-   * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
-   */
-  explicit ArrowSourceType(std::map<std::string, std::string> sourceConfigMap);
+    /**
+     * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
+     */
+    explicit ArrowSourceType(Yaml::Node yamlConfig);
 
-  /**
-   * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
-   */
-  explicit ArrowSourceType(Yaml::Node yamlConfig);
+    /**
+     * @brief constructor to create a new Arrow source config object initialized with default values
+     */
+    ArrowSourceType();
 
-  /**
-   * @brief constructor to create a new Arrow source config object initialized with default values
-   */
-  ArrowSourceType();
-  Configurations::StringConfigOption filePath;
-  Configurations::IntConfigOption numberOfBuffersToProduce;
-  Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
-  Configurations::IntConfigOption sourceGatheringInterval;
-  Configurations::GatheringModeConfigOption gatheringMode;
+    Configurations::StringConfigOption filePath;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
+    Configurations::IntConfigOption sourceGatheringInterval;
+    Configurations::GatheringModeConfigOption gatheringMode;
 };
 
 }// namespace NES
