@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.136](https://github.com/nebulastream/nebulastream/tree/v0.5.136) (2023-07-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.135...v0.5.136)
+
+### Bug Fixes 🐛
+
+- \[BUG\] copy of ExpressionNode and derived classes are not working [\#3945](https://github.com/nebulastream/nebulastream/issues/3945)
+
 ## [v0.5.135](https://github.com/nebulastream/nebulastream/tree/v0.5.135) (2023-07-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.134...v0.5.135)
