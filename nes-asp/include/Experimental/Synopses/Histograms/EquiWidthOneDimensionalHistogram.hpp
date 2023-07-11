@@ -47,7 +47,7 @@ public:
      */
     EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
                                      const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
-                                     std::string  lowerBinBoundString, const std::string& upperBinBoundString);
+                                     const std::string& lowerBinBoundString, const std::string& upperBinBoundString);
 
     /**
      * @brief Adds the record to the histogram, by first calculating the position and then calling the aggregation function
