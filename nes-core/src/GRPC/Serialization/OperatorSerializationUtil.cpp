@@ -363,7 +363,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         operatorNode = deserializeFlatMapJavaUDFOperator(flatMapJavaUDFDetails);
 
     } else if (details.Is<SerializableOperator_OpenCLOperatorDetails>()) {
-        NES_TRACE2("Deserialize Open CL operator.");
+        NES_TRACE("Deserialize Open CL operator.");
         auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
         details.UnpackTo(&openCLDetails);
         operatorNode = deserializeOpenCLOperator(openCLDetails);
@@ -1959,7 +1959,7 @@ LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeFlatMapJavaUDF
 
 void OperatorSerializationUtil::serializeOpenCLOperator(const OpenCLLogicalOperatorNode& openCLLogicalOperatorNode,
                                                         SerializableOperator& serializedOperator) {
-    NES_TRACE2("OperatorSerializationUtil:: serialize to OpenCLLogicalOperatorNode");
+    NES_TRACE("OperatorSerializationUtil:: serialize to OpenCLLogicalOperatorNode");
     auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
     UDFSerializationUtil::serializeJavaUDFDescriptor(*openCLLogicalOperatorNode.getJavaUDFDescriptor(),
                                                      *openCLDetails.mutable_javaudfdescriptor());
