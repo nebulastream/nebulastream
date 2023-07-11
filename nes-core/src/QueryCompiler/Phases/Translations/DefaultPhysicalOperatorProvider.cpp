@@ -324,26 +324,26 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
     using namespace Runtime::Execution::Operators;
 
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    auto joinDefinition = joinOperator->getJoinDefinition();
-    auto joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
-    auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
+    const auto& joinDefinition = joinOperator->getJoinDefinition();
+    const auto& joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
+    const auto& joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
 
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
-    auto windowSize = windowType->getSize().getTime();
+    const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    const auto& windowSize = windowType->getSize().getTime();
     //FIXME Once #3353 is merged, sliding window can be added
     NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
                "Only a tumbling window is currently supported for StreamJoin");
 
-    auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
-    auto leftInputOperator =
-        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-    auto rightInputOperator =
-        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    auto joinStrategy = options->getStreamJoinStratgy();
+    const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
+    const auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
+                                                             joinOperator->getLeftOperators());
+    const auto rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(),
+                                                              joinOperator->getRightOperators());
+    const auto joinStrategy = options->getStreamJoinStratgy();
 
-    StreamJoinOperatorNodes streamJoinOperatorNodes(operatorNode, leftInputOperator, rightInputOperator);
-    StreamJoinConfigs streamJoinConfig(joinFieldNameLeft, joinFieldNameRight, windowSize, timeStampFieldNameLeft,
-                                      timeStampFieldNameRight, joinStrategy);
+    const StreamJoinOperatorNodes streamJoinOperatorNodes(operatorNode, leftInputOperator, rightInputOperator);
+    const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft, joinFieldNameRight, windowSize, timeStampFieldNameLeft,
+                                             timeStampFieldNameRight, joinStrategy);
 
 
     if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL
@@ -361,11 +361,11 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                    const StreamJoinConfigs& streamJoinConfig) {
 
     using namespace Runtime::Execution;
-    auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
-    auto joinOperatorHandler = Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
-                                                                     streamJoinConfig.windowSize,
-                                                                     joinOperator->getLeftInputSchema()->getSize(),
-                                                                     joinOperator->getRightInputSchema()->getSize());
+    const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
+    const auto joinOperatorHandler = Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
+                                                                           streamJoinConfig.windowSize,
+                                                                           joinOperator->getLeftInputSchema()->getSize(),
+                                                                           joinOperator->getRightInputSchema()->getSize());
 
 
     auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema, JoinBuildSideType buildSideType,
@@ -378,16 +378,16 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                               joinFieldName);
     };
 
-    auto leftJoinBuildOperator = createNLJBuildOperator(joinOperator->getLeftInputSchema(),
-                                                        JoinBuildSideType::Left,
-                                                        streamJoinConfig.timeStampFieldNameLeft,
-                                                        streamJoinConfig.joinFieldNameLeft);
-    auto rightJoinBuildOperator = createNLJBuildOperator(joinOperator->getRightInputSchema(),
-                                                         JoinBuildSideType::Right,
-                                                         streamJoinConfig.timeStampFieldNameRight,
-                                                         streamJoinConfig.joinFieldNameRight);
+    const auto leftJoinBuildOperator = createNLJBuildOperator(joinOperator->getLeftInputSchema(),
+                                                              JoinBuildSideType::Left,
+                                                              streamJoinConfig.timeStampFieldNameLeft,
+                                                              streamJoinConfig.joinFieldNameLeft);
+    const auto rightJoinBuildOperator = createNLJBuildOperator(joinOperator->getRightInputSchema(),
+                                                               JoinBuildSideType::Right,
+                                                               streamJoinConfig.timeStampFieldNameRight,
+                                                               streamJoinConfig.joinFieldNameRight);
 
-    auto joinSinkOperator =
+    const auto joinSinkOperator =
         PhysicalOperators::PhysicalNestedLoopJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
                                                                       joinOperator->getRightInputSchema(),
                                                                       joinOperator->getOutputSchema(),
@@ -414,8 +414,8 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
         runtimeJoinStrategy = StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
     }
 
-    auto logicalJoinOperatorNode = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
-    auto joinOperatorHandler = Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
+    const auto logicalJoinOperatorNode = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
+    const auto joinOperatorHandler = Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
                                                                                 streamJoinConfig.windowSize,
                                                                                 logicalJoinOperatorNode->getLeftInputSchema()->getSchemaSizeInBytes(),
                                                                                 logicalJoinOperatorNode->getRightInputSchema()->getSchemaSizeInBytes(),
@@ -435,19 +435,22 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
                                                                         joinFieldName);
     };
 
-    auto leftJoinBuildOperator = createHashJoinBuildOperator(logicalJoinOperatorNode->getLeftInputSchema(),
-                                                             JoinBuildSideType::Left, streamJoinConfig.timeStampFieldNameLeft,
-                                                             streamJoinConfig.joinFieldNameLeft);
-    auto rightJoinBuildOperator = createHashJoinBuildOperator(logicalJoinOperatorNode->getRightInputSchema(),
-                                                              JoinBuildSideType::Right, streamJoinConfig.timeStampFieldNameRight,
-                                                              streamJoinConfig.joinFieldNameRight);
+    const auto leftJoinBuildOperator = createHashJoinBuildOperator(logicalJoinOperatorNode->getLeftInputSchema(),
+                                                                   JoinBuildSideType::Left,
+                                                                   streamJoinConfig.timeStampFieldNameLeft,
+                                                                   streamJoinConfig.joinFieldNameLeft);
+    const auto rightJoinBuildOperator = createHashJoinBuildOperator(logicalJoinOperatorNode->getRightInputSchema(),
+                                                                    JoinBuildSideType::Right,
+                                                                    streamJoinConfig.timeStampFieldNameRight,
+                                                                    streamJoinConfig.joinFieldNameRight);
 
-    auto joinSinkOperator = PhysicalOperators::PhysicalHashJoinSinkOperator::create(logicalJoinOperatorNode->getLeftInputSchema(),
-                                                                                    logicalJoinOperatorNode->getRightInputSchema(),
-                                                                                    logicalJoinOperatorNode->getOutputSchema(),
-                                                                                    streamJoinConfig.joinFieldNameLeft,
-                                                                                    streamJoinConfig.joinFieldNameRight,
-                                                                                    joinOperatorHandler);
+    const auto joinSinkOperator =
+        PhysicalOperators::PhysicalHashJoinSinkOperator::create(logicalJoinOperatorNode->getLeftInputSchema(),
+                                                                logicalJoinOperatorNode->getRightInputSchema(),
+                                                                logicalJoinOperatorNode->getOutputSchema(),
+                                                                streamJoinConfig.joinFieldNameLeft,
+                                                                streamJoinConfig.joinFieldNameRight,
+                                                                joinOperatorHandler);
     streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
     streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);
