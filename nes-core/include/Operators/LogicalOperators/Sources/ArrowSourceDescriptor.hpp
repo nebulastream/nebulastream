@@ -17,6 +17,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+
 #include <chrono>
 
 namespace NES {

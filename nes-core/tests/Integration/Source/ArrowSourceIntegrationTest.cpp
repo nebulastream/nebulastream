@@ -26,8 +26,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+
 #include <iostream>
-#include <string.h>
 
 namespace NES {
 class ArrowSourceIntegrationTest : public Testing::NESBaseTest {
