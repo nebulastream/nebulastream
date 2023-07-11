@@ -51,8 +51,6 @@ std::string CeilExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr CeilExpressionNode::copy() {
-    return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
-}
+ExpressionNodePtr CeilExpressionNode::copy() { return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
 
 }// namespace NES

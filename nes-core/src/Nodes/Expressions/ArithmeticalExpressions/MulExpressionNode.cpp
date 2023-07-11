@@ -43,6 +43,7 @@ std::string MulExpressionNode::toString() const {
 }
 
 ExpressionNodePtr MulExpressionNode::copy() {
-    return MulExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy()); }
+    return MulExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

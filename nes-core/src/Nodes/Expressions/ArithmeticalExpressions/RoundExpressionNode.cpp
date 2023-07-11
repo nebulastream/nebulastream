@@ -55,8 +55,6 @@ std::string RoundExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr RoundExpressionNode::copy() {
-    return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
-}
+ExpressionNodePtr RoundExpressionNode::copy() { return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
 
 }// namespace NES
