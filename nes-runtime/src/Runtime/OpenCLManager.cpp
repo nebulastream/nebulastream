@@ -111,6 +111,7 @@ std::string retrieveOpenCLDeviceInfo<char[], std::string>(const cl_device_id dev
     return result;
 }
 
+// Special function to retrieve information about support for double-precision floating point.
 bool retrieveOpenCLDoubleFPSupport(const cl_device_id device) {
     auto deviceFpConfig = retrieveOpenCLDeviceInfo<cl_device_fp_config, cl_device_fp_config>(device,
                                                                                              CL_DEVICE_DOUBLE_FP_CONFIG,
@@ -118,6 +119,8 @@ bool retrieveOpenCLDoubleFPSupport(const cl_device_id device) {
     return deviceFpConfig > 0;// TODO How to evaluate this bitfield?
 }
 
+// Special function to retrieve information about the maximum work group size.
+// Assumes and enforces that the OpenCL ND range has 3 dimensions.
 std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id device) {
     auto dimensions = retrieveOpenCLDeviceInfo<cl_uint, unsigned>(device,
                                                                   CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
@@ -131,6 +134,7 @@ std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id device) {
     return maxWorkItems;
 }
 
+// Special function to retrieve information about the device type.
 // TODO Why not just return the bits instead of strings?
 std::string retrieveOpenCLDeviceType(const cl_device_id device) {
     auto deviceType = retrieveOpenCLDeviceInfo<cl_device_type, cl_device_type>(device, CL_DEVICE_TYPE, "CL_DEVICE_TYPE");

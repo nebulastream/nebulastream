@@ -30,6 +30,9 @@
 
 namespace NES::Runtime {
 
+/**
+ * Data structure to hold the information needed by the ELEGANT Acceleration Service to compile a kernel for an OpenCL device.
+ */
 struct OpenCLDeviceInfo {
   public:
     OpenCLDeviceInfo(const cl_platform_id platformId,
@@ -62,6 +65,9 @@ struct OpenCLDeviceInfo {
     unsigned availableProcessors;
 };
 
+/**
+ * Retrieve and store information about installed OpenCL devices.
+ */
 class OpenCLManager {
   public:
     OpenCLManager();
