@@ -14,27 +14,18 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 
-#include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <atomic>
 #include <vector>
 
 namespace NES {
-class LockManager;
-
-struct ResourceLockInfo {
-    uint64_t id;
-    std::mutex mutex;
-};
-
-using TwoPhaseLockManagerPtr = std::shared_ptr<LockManager>;
-
 /**
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.
  */
 class TwoPhaseLockingStorageHandler : public StorageHandler {
   public:
+    //todo #3956: implement one data structure which wraps these pointers
     explicit TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          QueryCatalogServicePtr queryCatalogService,
@@ -61,8 +52,12 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @param requiredResources the types of the resources to be locked
      */
-    void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
+    void acquireResources(RequestId requestId, const std::vector<ResourceType>& requiredResources) override;
 
+    /**
+     * Releases all the locks a request holds on any data structure
+     * @param requestId the id of the lock holding request
+     */
     void releaseResources(RequestId requestId) override;
 
     /**
@@ -115,34 +110,26 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
   private:
     /**
-     * @brief Locks the mutex corresponding to a resource and maintains the lock until resources are released
+     * @brief Locks the resource for the calling request and maintains the lock until resources are released on request of the request
      * @param requestId: The id of the request instance which is trying to lock the resource
      * @param resourceType: The type of resource to be locked
      */
     void lockResource(ResourceType resourceType, RequestId requestId);
 
     /**
-     * @brief lock the the resource corresponding to the supplied lockInfo object
-     * @param lockInfo a struct containing a mutex and the request id of the holder
-     * @param requestId the id of the request trying to acquire the lock
+     * @brief get a mutable reference to the member variable which stores the id of the request which currently holds the lock
+     * on a resource
+     * @param resourceType type of the resource for which the lock info is requested
+     * @return an atomic containing the id of the lock holding request or INVALID_REQUEST_ID if the resource is not currently locked
      */
-    static void lockResource(ResourceLockInfo& lockInfo, RequestId requestId);
-
-    /**
-     * @brief get the lockInfo object for a resource
-     * @param resourceType type of the resource for which the lockinfo is requested
-     * @return a struct containing mutex and holder of the lock to the resource
-     */
-    std::atomic<QueryId>& getHolder(ResourceType resourceType);
+    std::atomic<RequestId>& getHolder(ResourceType resourceType);
 
     /**
      * @brief indicates if a request holds a lock on any resource
      * @param requestId the id of the request in question
-     * @return true if the request holds a lock to at least one reasource
+     * @return true if the request holds a lock to at least one resource
      */
     bool isLockHolder(RequestId requestId);
-
-    TwoPhaseLockManagerPtr lockManager;
 
     //resource pointers
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -152,14 +139,6 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
-    /*
-    ResourceLockInfo globalExecutionPlanHolder;
-    ResourceLockInfo topologyHolder;
-    ResourceLockInfo queryCatalogServiceHolder;
-    ResourceLockInfo globalQueryPlanHolder;
-    ResourceLockInfo sourceCatalogHolder;
-    ResourceLockInfo udfCatalogHolder;
-     */
     std::atomic<RequestId> globalExecutionPlanHolder;
     std::atomic<RequestId> topologyHolder;
     std::atomic<RequestId> queryCatalogServiceHolder;

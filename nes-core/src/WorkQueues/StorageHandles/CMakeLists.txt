@@ -14,4 +14,5 @@ add_source_files(nes-core
         SerialStorageHandler.cpp
         UnlockDeleter.cpp
         TwoPhaseLockingStorageHandler.cpp
+        StorageHandler.cpp
         )

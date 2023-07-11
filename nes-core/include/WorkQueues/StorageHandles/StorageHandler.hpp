@@ -18,12 +18,12 @@
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
 #include <vector>
-#include <Common/Identifiers.hpp>
 
 namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
+using RequestId = uint64_t;
 class UnlockDeleter;
 template<typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
@@ -70,17 +70,19 @@ class StorageHandler {
     virtual ~StorageHandler() = default;
 
     /**
-     * Performs tasks necessary before request execution and locks resources if necessary
+     * This function is to be executed before the request logic. It's base class implementation is empty. Derived classes need
+     * to override this function in case they need to lock resources or perform other actions before a request is executed.
      * @param requestId The id of the request which calls this function
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) = 0;
+    virtual void acquireResources(RequestId requestId, const std::vector<ResourceType>& requiredResources);
 
     /**
-     * Performs tasks necessary after request execution, releases resources if necessary
+     * This function is called after the request finished executing. The base class implementation is empty. Derived classes need
+     * to override this function in case they need to release resources or perform other actions after a request finished executing
      * @param requestId The id of the request which calls this function
      */
-    virtual void releaseResources(RequestId requestId) = 0;
+    virtual void releaseResources(RequestId requestId);
 
     /**
      * @brief Obtain a mutable global execution plan handle.

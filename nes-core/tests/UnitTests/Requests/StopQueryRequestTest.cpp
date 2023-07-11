@@ -44,20 +44,22 @@ class StopQueryRequestTest : public Testing::NESBaseTest {
  * @brief Test that the constructor of StopQueryRequest works as expected
  */
 TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
-    QueryId queryId = 1;
+    constexpr QueryId queryId = 1;
+    constexpr RequestId requestId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(1, queryId, 0, workerRPCClient, coordinatorConfiguration);
+    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 /**
  * @brief Test that the preExecution method of StopQueryRequest works as expected
  */
 TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
-    QueryId queryId = 1;
+    constexpr QueryId queryId = 1;
+    constexpr RequestId requestId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(1, queryId, 0, workerRPCClient, coordinatorConfiguration);
+    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -83,7 +85,7 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     {
         ASSERT_NO_THROW(stopQueryRequest->preExecution(*twoPLAccessHandle));
         auto thread = std::make_shared<std::thread>([&twoPLAccessHandle2]() {
-            ASSERT_THROW(twoPLAccessHandle2->getTopologyHandle(1), std::exception);
+            ASSERT_THROW(twoPLAccessHandle2->getTopologyHandle(requestId), std::exception);
         });
         //release lock
         stopQueryRequest->postExecution(*twoPLAccessHandle);
@@ -91,7 +93,7 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     }
     //now thread 2 should be able to acquire lock on topology manager service
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(1), std::exception);
+        ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(requestId), std::exception);
     });
     thread->join();
 }

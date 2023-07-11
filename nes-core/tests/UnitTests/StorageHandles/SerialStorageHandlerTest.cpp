@@ -33,6 +33,7 @@ class SerialStorageHandlerTest : public Testing::TestWithErrorHandling {
 };
 
 TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
+    constexpr RequestId requestId = 1;
     //create access handle
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
@@ -49,12 +50,12 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
                                                            udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
-    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle(1).get());
-    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogServiceHandle(1).get());
-    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(1).get());
-    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(1).get());
-    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(1).get());
+    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());
+    ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle(requestId).get());
+    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogServiceHandle(requestId).get());
+    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(requestId).get());
+    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(requestId).get());
+    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(requestId).get());
 }
 
 }// namespace NES

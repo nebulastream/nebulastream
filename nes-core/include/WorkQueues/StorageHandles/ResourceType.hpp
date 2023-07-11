@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_
 #include <cstdint>
+#include <vector>
 
 namespace NES {
 
@@ -28,8 +29,14 @@ enum class ResourceType : uint8_t {
     GlobalExecutionPlan,
     GlobalQueryPlan,
     UdfCatalog,
-    Last = UdfCatalog,
 };
+
+const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
+                                                    ResourceType::QueryCatalogService,
+                                                    ResourceType::SourceCatalog,
+                                                    ResourceType::GlobalExecutionPlan,
+                                                    ResourceType::GlobalQueryPlan,
+                                                    ResourceType::UdfCatalog};
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_
