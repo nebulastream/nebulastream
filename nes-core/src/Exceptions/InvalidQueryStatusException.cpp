@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryStatusException.hpp"
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 

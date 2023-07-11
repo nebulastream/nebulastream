@@ -37,4 +37,5 @@ add_source_files(nes-core
         RPCQueryUndeploymentException.cpp
         SharedQueryPlanNotFoundException.cpp
         RequestExecutionException.cpp
+        ResourceLockingException.cpp
 )
