@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.137](https://github.com/nebulastream/nebulastream/tree/v0.5.137) (2023-07-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.136...v0.5.137)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create and process acceleration request for ELEGANT Acceleration Service [\#3869](https://github.com/nebulastream/nebulastream/issues/3869)
+
+### Miscellaneous Issues ✌️
+
+- Implement reading of workers geographical Location from yaml config file [\#2655](https://github.com/nebulastream/nebulastream/issues/2655)
+
 ## [v0.5.136](https://github.com/nebulastream/nebulastream/tree/v0.5.136) (2023-07-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.135...v0.5.136)
