@@ -56,9 +56,8 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
-                                     + " in the global query plan");
+                                                 + " in the global query plan");
     }
-
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
@@ -69,7 +68,8 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
         queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
-        throw Exceptions::QueryUndeploymentException(sharedQueryId, "failed to undeploy query with id " + std::to_string(queryId));
+        throw Exceptions::QueryUndeploymentException(sharedQueryId,
+                                                     "failed to undeploy query with id " + std::to_string(queryId));
     }
 
     //update global query plan

@@ -14,4 +14,4 @@
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES::Exceptions {
 RequestExecutionException::RequestExecutionException(const std::string& message) : std::runtime_error(message) {}
-}
+}// namespace NES::Exceptions

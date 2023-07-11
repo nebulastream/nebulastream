@@ -112,16 +112,16 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
             NES_WARNING("QueryCatalogService: Query can not be marked for failure as query in {} status.",
                         queryCatalogEntry->getQueryStatusAsString());
             throw Exceptions::InvalidQueryStatusException({QueryStatus::REGISTERED,
-                                               QueryStatus::OPTIMIZING,
-                                               QueryStatus::DEPLOYED,
-                                               QueryStatus::RUNNING,
-                                               QueryStatus::MARKED_FOR_HARD_STOP,
-                                               QueryStatus::MARKED_FOR_SOFT_STOP,
-                                               QueryStatus::SOFT_STOP_TRIGGERED,
-                                               QueryStatus::SOFT_STOP_COMPLETED,
-                                               QueryStatus::RESTARTING,
-                                               QueryStatus::MIGRATING},
-                                              currentQueryStatus);
+                                                           QueryStatus::OPTIMIZING,
+                                                           QueryStatus::DEPLOYED,
+                                                           QueryStatus::RUNNING,
+                                                           QueryStatus::MARKED_FOR_HARD_STOP,
+                                                           QueryStatus::MARKED_FOR_SOFT_STOP,
+                                                           QueryStatus::SOFT_STOP_TRIGGERED,
+                                                           QueryStatus::SOFT_STOP_COMPLETED,
+                                                           QueryStatus::RESTARTING,
+                                                           QueryStatus::MIGRATING},
+                                                          currentQueryStatus);
         }
     }
 
@@ -208,13 +208,13 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus querySt
         }
         default:
             throw Exceptions::InvalidQueryStatusException({QueryStatus::REGISTERED,
-                                               QueryStatus::OPTIMIZING,
-                                               QueryStatus::RESTARTING,
-                                               QueryStatus::MIGRATING,
-                                               QueryStatus::STOPPED,
-                                               QueryStatus::RUNNING,
-                                               QueryStatus::FAILED},
-                                              queryStatus);
+                                                           QueryStatus::OPTIMIZING,
+                                                           QueryStatus::RESTARTING,
+                                                           QueryStatus::MIGRATING,
+                                                           QueryStatus::STOPPED,
+                                                           QueryStatus::RUNNING,
+                                                           QueryStatus::FAILED},
+                                                          queryStatus);
     }
 }
 
@@ -319,7 +319,7 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
         case QueryStatus::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
             throw Exceptions::InvalidQueryStatusException({QueryStatus::SOFT_STOP_TRIGGERED, QueryStatus::SOFT_STOP_COMPLETED},
-                                              subQueryStatus);
+                                                          subQueryStatus);
     }
     return true;
 }

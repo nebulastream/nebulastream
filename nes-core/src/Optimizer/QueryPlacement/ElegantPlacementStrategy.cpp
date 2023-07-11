@@ -139,8 +139,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
 
         if (!pinned) {
             throw Exceptions::QueryPlacementException(queryId,
-                                          "ElegantPlacementStrategy: Unable to find operator with id "
-                                              + std::to_string(operatorId) + " in the given list of operators.");
+                                                      "ElegantPlacementStrategy: Unable to find operator with id "
+                                                          + std::to_string(operatorId) + " in the given list of operators.");
         }
     }
 }

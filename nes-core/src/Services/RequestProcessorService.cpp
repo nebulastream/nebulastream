@@ -126,10 +126,11 @@ void RequestProcessorService::start() {
                                 NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
-                                    throw Exceptions::QueryPlacementException(sharedQueryId,
-                                                                  "QueryProcessingService: Failed to perform query placement for "
-                                                                  "query plan with shared query id: "
-                                                                      + std::to_string(sharedQueryId));
+                                    throw Exceptions::QueryPlacementException(
+                                        sharedQueryId,
+                                        "QueryProcessingService: Failed to perform query placement for "
+                                        "query plan with shared query id: "
+                                            + std::to_string(sharedQueryId));
                                 }
 
                                 //3.2.2. Perform deployment of placed shared query plan
@@ -159,10 +160,11 @@ void RequestProcessorService::start() {
                                 NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                                 if (!placementSuccessful) {
-                                    throw Exceptions::QueryPlacementException(sharedQueryId,
-                                                                  "QueryProcessingService: Failed to perform query placement for "
-                                                                  "query plan with shared query id: "
-                                                                      + std::to_string(sharedQueryId));
+                                    throw Exceptions::QueryPlacementException(
+                                        sharedQueryId,
+                                        "QueryProcessingService: Failed to perform query placement for "
+                                        "query plan with shared query id: "
+                                            + std::to_string(sharedQueryId));
                                 }
 
                                 //3.3.3. Perform deployment of re-placed shared query plan

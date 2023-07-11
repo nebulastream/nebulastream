@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
 #define NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <Common/Identifiers.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 namespace NES::Exceptions {
 
 /**
@@ -45,5 +45,5 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
   private:
     TopologyNodeId id;
 };
-}
+}// namespace NES::Exceptions
 #endif//NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
