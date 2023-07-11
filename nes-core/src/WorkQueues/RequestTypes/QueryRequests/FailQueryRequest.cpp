@@ -17,10 +17,10 @@
 
 namespace NES {
 
-FailQueryRequest::FailQueryRequest(SharedQueryId sharedQueryId, std::string failureReason)
+FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId, std::string failureReason)
     : queryId(sharedQueryId), failureReason(std::move(failureReason)) {}
 
-FailQueryRequestPtr FailQueryRequest::create(SharedQueryId sharedQueryId, std::string failureReason) {
+FailQueryRequestPtr FailQueryRequest::create(const SharedQueryId sharedQueryId, std::string failureReason) {
     return std::make_shared<FailQueryRequest>(FailQueryRequest(sharedQueryId, std::move(failureReason)));
 }
 

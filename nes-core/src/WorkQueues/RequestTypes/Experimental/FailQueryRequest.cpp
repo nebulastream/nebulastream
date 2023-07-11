@@ -26,9 +26,9 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(RequestId requestId, NES::QueryId queryId,
-                                   NES::QuerySubPlanId failedSubPlanId,
-                                   uint8_t maxRetries,
+FailQueryRequest::FailQueryRequest(const RequestId requestId, const NES::QueryId queryId,
+                                   const NES::QuerySubPlanId failedSubPlanId,
+                                   const uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
     : AbstractRequest(requestId, {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
@@ -37,11 +37,11 @@ FailQueryRequest::FailQueryRequest(RequestId requestId, NES::QueryId queryId,
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
-void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
+void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-void FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {}
+void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) {}
 
-void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {
+void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 
     //todo #3727: perform error handling
 }

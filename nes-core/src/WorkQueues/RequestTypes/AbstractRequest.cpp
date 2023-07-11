@@ -17,10 +17,10 @@
 
 namespace NES {
 
-AbstractRequest::AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries)
+AbstractRequest::AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
     : requestId(requestId), maxRetries(maxRetries), actualRetries(0), requiredResources(requiredResources) {}
 
-void AbstractRequest::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
+void AbstractRequest::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 

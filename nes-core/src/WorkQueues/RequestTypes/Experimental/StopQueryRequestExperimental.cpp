@@ -31,8 +31,8 @@
 
 namespace NES {
 
-StopQueryRequestExperimental::StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
-                                                           size_t maxRetries,
+StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId, const QueryId queryId,
+                                                           const size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
                                                            Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : AbstractRequest(
@@ -49,8 +49,8 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(RequestId requestId, 
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
-StopQueryRequestPtr StopQueryRequestExperimental::create(RequestId requestId, QueryId queryId,
-                                                         size_t maxRetries,
+StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId, const QueryId queryId,
+                                                         const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<StopQueryRequestExperimental>(
@@ -153,18 +153,18 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
-void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex,
+void StopQueryRequestExperimental::preRollbackHandle(const RequestExecutionException& ex,
                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
+void StopQueryRequestExperimental::postRollbackHandle(const RequestExecutionException& ex,
                                                       [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
 
-void StopQueryRequestExperimental::rollBack(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }

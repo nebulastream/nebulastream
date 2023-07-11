@@ -90,11 +90,11 @@ class StopQueryRequestExperimental : public AbstractRequest {
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
 
-    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
-    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
-    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     void preExecution(StorageHandler& storageHandle) override;
 
