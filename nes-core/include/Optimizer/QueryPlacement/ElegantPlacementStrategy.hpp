@@ -85,6 +85,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     std::string serviceURL;
     float timeWeight;
 
+    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
+
     //Query payload constants
     const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
     const std::string OPERATOR_ID_KEY = "operatorId";
