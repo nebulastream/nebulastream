@@ -53,7 +53,7 @@ void CountMin::addToSynopsis(const uint64_t, Runtime::Execution::ExecutionContex
     auto& h3SeedsMemRef = localState->h3SeedsMemRef;
 
     auto key = readKeyExpression->execute(record);
-    for (Nautilus::Value<> row = 0; row < numberOfRows; row = row + 1) {
+    for (Nautilus::Value<> row = 0_u64; row < numberOfRows; row = row + 1) {
         auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
         auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
         auto colPos = hash % numberOfCols;
@@ -76,7 +76,7 @@ void CountMin::getApproximateRecord(const uint64_t handlerIndex, Runtime::Execut
     auto colPosFirstRow = hashFirstRow % numberOfCols;
 
     // Getting the actual value out over all rows
-    for (auto row = 1_u64; row < numberOfRows; row = row + 1) {
+    for (Nautilus::Value<> row = 1_u64; row < numberOfRows; row = row + 1) {
         auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
         auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
         auto colPos = hash % numberOfCols;
@@ -97,8 +97,8 @@ void CountMin::setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionC
 
     auto sketchArrayMemRef = Nautilus::FunctionCall("getSketchArrayProxy", getSketchArrayProxy, opHandler);
     auto sketchArray = Nautilus::Interface::Fixed2DArrayRef(sketchArrayMemRef, entrySize, numberOfCols);
-    for (auto row = 0_u64; row < numberOfRows; row = row + 1) {
-        for (auto col = 0_u64; col < numberOfCols; col = col + 1) {
+    for (Nautilus::Value<> row = 0_u64; row < numberOfRows; row = row + 1) {
+        for (Nautilus::Value<> col = 0_u64; col < numberOfCols; col = col + 1) {
             aggregationFunction->reset(sketchArray[row][col]);
         }
     }
