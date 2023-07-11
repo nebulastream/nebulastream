@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -108,6 +109,7 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
         case SourceType::MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
+        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
@@ -125,6 +127,7 @@ PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::strin
         case SourceType::OPC_SOURCE: return OPCSourceType::create(yamlConfig);
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
+        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(yamlConfig);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
