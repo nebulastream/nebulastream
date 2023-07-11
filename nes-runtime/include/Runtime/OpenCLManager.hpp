@@ -1,0 +1,78 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_OPENCLMANAGER_H
+#define NES_OPENCLMANAGER_H
+
+#include <array>
+#include <memory>
+#include <string>
+#include <vector>
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+namespace NES::Runtime {
+
+struct OpenCLDeviceInfo {
+  public:
+    OpenCLDeviceInfo(const cl_platform_id platformId,
+                     const cl_device_id deviceId,
+                     const std::string& platformVendor,
+                     const std::string& platformName,
+                     const std::string& deviceName,
+                     bool doubleFPSupport,
+                     std::array<size_t, 3> maxWorkItems,
+                     unsigned deviceAddressBits,
+                     const std::string& deviceType,
+                     const std::string& deviceExtensions,
+                     unsigned availableProcessors)
+        : platformId(platformId), deviceId(deviceId), platformVendor(platformVendor), platformName(platformName),
+          deviceName(deviceName), doubleFPSupport(doubleFPSupport), maxWorkItems(maxWorkItems),
+          deviceAddressBits(deviceAddressBits), deviceType(deviceType), deviceExtensions(deviceExtensions),
+          availableProcessors(availableProcessors) {}
+
+  public:
+    cl_platform_id platformId;
+    cl_device_id deviceId;
+    std::string platformVendor;
+    std::string platformName;
+    std::string deviceName;
+    bool doubleFPSupport;
+    std::array<size_t, 3> maxWorkItems;
+    unsigned deviceAddressBits;
+    std::string deviceType;
+    std::string deviceExtensions;
+    unsigned availableProcessors;
+};
+
+class OpenCLManager {
+  public:
+    OpenCLManager();
+
+  private:
+    std::vector<OpenCLDeviceInfo> devices;
+};
+
+using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
+
+
+}// namespace NES::Runtime
+
+#endif//NES_OPENCLMANAGER_H
