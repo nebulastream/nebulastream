@@ -20,4 +20,4 @@ ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string
     : RequestExecutionException(message), id(INVALID_TOPOLOGY_NODE_ID) {}
 
 NodeId ExecutionNodeNotFoundException::getNodeId() const { return id; }
-}// namespace NES
+}// namespace NES::Exceptions

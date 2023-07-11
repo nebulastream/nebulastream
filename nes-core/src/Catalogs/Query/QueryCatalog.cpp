@@ -115,7 +115,8 @@ void QueryCatalog::mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalo
 std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId) {
     if (sharedQueryIdAndCatalogEntryMapping.find(sharedQueryId) == sharedQueryIdAndCatalogEntryMapping.end()) {
         NES_ERROR("QueryCatalog: Unable to find shared query plan with id {}", std::to_string(sharedQueryId));
-        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id " + std::to_string(sharedQueryId));
+        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id "
+                                                 + std::to_string(sharedQueryId));
     }
     return sharedQueryIdAndCatalogEntryMapping[sharedQueryId];
 }
@@ -123,7 +124,8 @@ std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQ
 void QueryCatalog::removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId) {
     if (sharedQueryIdAndCatalogEntryMapping.find(sharedQueryId) == sharedQueryIdAndCatalogEntryMapping.end()) {
         NES_ERROR("QueryCatalog: Unable to find shared query plan with id {}", std::to_string(sharedQueryId));
-        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id " + std::to_string(sharedQueryId));
+        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id "
+                                                 + std::to_string(sharedQueryId));
     }
     sharedQueryIdAndCatalogEntryMapping.erase(sharedQueryId);
 }

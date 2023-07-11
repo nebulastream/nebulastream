@@ -15,8 +15,8 @@
 #define NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 
 #include <exception>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace NES::Exceptions {
 
@@ -40,6 +40,6 @@ class RequestExecutionException : public std::runtime_error {
         return false;
     };
 };
-}// namespace NES
+}// namespace NES::Exceptions
 
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

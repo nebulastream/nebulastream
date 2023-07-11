@@ -50,7 +50,6 @@ class RpcException : public RequestExecutionException {
      */
     std::vector<RpcFailureInformation> getFailedCalls();
 
-
     /**
      * @brief get the mode of the failed operation
      * @return register, unregister, stop or start

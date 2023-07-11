@@ -45,5 +45,5 @@ class QueryUndeploymentException : public RequestExecutionException {
   private:
     SharedQueryId sharedQueryId;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

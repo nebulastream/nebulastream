@@ -13,8 +13,8 @@
 */
 #ifndef NES_NOSUCHSQPINGLOBALQUERYPLANEXCEPTION_H
 #define NES_NOSUCHSQPINGLOBALQUERYPLANEXCEPTION_H
-#include <Exceptions/RequestExecutionException.hpp>
 #include <Common/Identifiers.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 
 namespace NES::Exceptions {
 
@@ -30,8 +30,9 @@ class SharedQueryPlanNotFoundException : public RequestExecutionException {
     SharedQueryPlanNotFoundException(const std::string& message, SharedQueryId id);
 
     [[nodiscard]] SharedQueryId getSharedQueryId() const;
+
   private:
     SharedQueryId id;
 };
-}
+}// namespace NES::Exceptions
 #endif//NES_NOSUCHSQPINGLOBALQUERYPLANEXCEPTION_H

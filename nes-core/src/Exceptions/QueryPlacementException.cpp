@@ -22,4 +22,4 @@ SharedQueryId QueryPlacementException::getSharedQueryId() const { return sharedQ
 
 const char* QueryPlacementException::what() const noexcept { return RequestExecutionException::what(); }
 
-}// namespace NES
+}// namespace NES::Exceptions

@@ -52,8 +52,8 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
-                                         + " is deployed");
+        throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query "
+                                                         + std::to_string(queryId) + " is deployed");
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
@@ -85,7 +85,9 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     }
 
     if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-        throw Exceptions::QueryUndeploymentException(queryId, "Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(queryId,
+                                                     "Failed to remove query subplans for the query " + std::to_string(queryId)
+                                                         + '.');
     }
 }
 
@@ -118,7 +120,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
             NES_NOT_IMPLEMENTED();
         }
 
-       //todo 3916: this function als oalways returns true if there is no exception thrown
+        //todo 3916: this function als oalways returns true if there is no exception thrown
         bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queryTerminationType, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::markQueryForStop {} to {} successful", queryId, rpcAddress);
@@ -160,8 +162,8 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
-                   executionNode->getId(),
-                   rpcAddress);
+                  executionNode->getId(),
+                  rpcAddress);
         bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::undeployQuery query {} to {} successful", queryId, rpcAddress);

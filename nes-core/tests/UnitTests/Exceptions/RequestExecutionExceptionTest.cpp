@@ -21,9 +21,9 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-using Exceptions::RequestExecutionException;
 using Exceptions::InvalidQueryStatusException;
 using Exceptions::QueryNotFoundException;
+using Exceptions::RequestExecutionException;
 
 class RequestExecutionExceptionTest : public Testing::NESBaseTest {
   public:

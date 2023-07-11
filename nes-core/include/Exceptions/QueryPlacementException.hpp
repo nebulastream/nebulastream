@@ -16,9 +16,9 @@
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 
 #include <Common/Identifiers.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
-#include <Exceptions/RequestExecutionException.hpp>
 
 namespace NES::Exceptions {
 
@@ -32,10 +32,10 @@ class QueryPlacementException : public RequestExecutionException {
 
     SharedQueryId getSharedQueryId() const;
 
-    const char * what() const noexcept override;
+    const char* what() const noexcept override;
 
   private:
     SharedQueryId sharedQueryId;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_

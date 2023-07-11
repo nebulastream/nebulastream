@@ -29,5 +29,5 @@ class QueryNotFoundException : public RequestExecutionException {
 
     const char* what() const noexcept override;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
