@@ -183,24 +183,24 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
                           ->addField("d", DataTypeFactory::createUInt64())
                           ->addField("e", DataTypeFactory::createUInt64())
                           ->addField("f", DataTypeFactory::createUInt64())
-                          ->addField("g", DataTypeFactory::createUInt64())
-                          ->addField("h", DataTypeFactory::createUInt64())
-                          ->addField("i", DataTypeFactory::createUInt64())
-                          ->addField("j", DataTypeFactory::createUInt64())
-                          ->addField("k", DataTypeFactory::createUInt64())
-                          ->addField("l", DataTypeFactory::createUInt64())
-                          ->addField("m", DataTypeFactory::createUInt64())
-                          ->addField("n", DataTypeFactory::createUInt64())
-                          ->addField("o", DataTypeFactory::createUInt64())
-                          ->addField("p", DataTypeFactory::createUInt64())
-                          ->addField("q", DataTypeFactory::createUInt64())
-                          ->addField("r", DataTypeFactory::createUInt64())
-                          ->addField("s", DataTypeFactory::createUInt64())
-                          ->addField("t", DataTypeFactory::createUInt64())
-                          ->addField("u", DataTypeFactory::createUInt64())
-                          ->addField("v", DataTypeFactory::createUInt64())
-                          ->addField("w", DataTypeFactory::createUInt64())
-                          ->addField("x", DataTypeFactory::createUInt64())
+//                          ->addField("g", DataTypeFactory::createUInt64())
+//                          ->addField("h", DataTypeFactory::createUInt64())
+//                          ->addField("i", DataTypeFactory::createUInt64())
+//                          ->addField("j", DataTypeFactory::createUInt64())
+//                          ->addField("k", DataTypeFactory::createUInt64())
+//                          ->addField("l", DataTypeFactory::createUInt64())
+//                          ->addField("m", DataTypeFactory::createUInt64())
+//                          ->addField("n", DataTypeFactory::createUInt64())
+//                          ->addField("o", DataTypeFactory::createUInt64())
+//                          ->addField("p", DataTypeFactory::createUInt64())
+//                          ->addField("q", DataTypeFactory::createUInt64())
+//                          ->addField("r", DataTypeFactory::createUInt64())
+//                          ->addField("s", DataTypeFactory::createUInt64())
+//                          ->addField("t", DataTypeFactory::createUInt64())
+//                          ->addField("u", DataTypeFactory::createUInt64())
+//                          ->addField("v", DataTypeFactory::createUInt64())
+//                          ->addField("w", DataTypeFactory::createUInt64())
+//                          ->addField("x", DataTypeFactory::createUInt64())
                           ->addField("timestamp1", DataTypeFactory::createUInt64())
                           ->addField("timestamp2", DataTypeFactory::createUInt64());
     }
@@ -416,9 +416,9 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp",
-                                                                    FaultToleranceType::AT_LEAST_ONCE,
+                                                                    FaultToleranceType::AT_MOST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTP);
+                                                                    FaultTolerancePlacement::NONE);
 
 
 
@@ -542,6 +542,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());

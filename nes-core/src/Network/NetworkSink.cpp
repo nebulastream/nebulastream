@@ -53,6 +53,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
     if ((faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE)
         && isBuffering) {
+        std::cout << "Create Network Sink\n";
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };

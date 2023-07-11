@@ -61,11 +61,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
-    auto now = std::chrono::system_clock::now();
-    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-    auto epoch = now_ms.time_since_epoch();
-    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType, ftPlacement);
 
