@@ -88,24 +88,24 @@ ArrowSource::ArrowSource(SchemaPtr schema,
 }
 
 std::optional<Runtime::TupleBuffer> ArrowSource::receiveData() {
-  NES_TRACE2("ArrowSource::receiveData called on  {}", operatorId);
-  auto buffer = allocateBuffer();
-  fillBuffer(buffer);
-  NES_TRACE2("ArrowSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
+    NES_TRACE2("ArrowSource::receiveData called on  {}", operatorId);
+    auto buffer = allocateBuffer();
+    fillBuffer(buffer);
+    NES_TRACE2("ArrowSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
-  if (buffer.getNumberOfTuples() == 0) {
-    return std::nullopt;
-  }
-  return buffer.getBuffer();
+    if (buffer.getNumberOfTuples() == 0) {
+        return std::nullopt;
+    }
+    return buffer.getBuffer();
 }
 
 std::string ArrowSource::toString() const {
-  std::stringstream ss;
-  ss << "ARROW_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq="
-     << this->gatheringInterval.count()
-     << "ms"
-     << " numBuff=" << this->numberOfBuffersToProduce << ")";
-  return ss.str();
+    std::stringstream ss;
+    ss << "ARROW_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq="
+       << this->gatheringInterval.count()
+       << "ms"
+       << " numBuff=" << this->numberOfBuffersToProduce << ")";
+    return ss.str();
 }
 
 void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer) {
@@ -132,34 +132,47 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
     } else {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(),
-                        "ArrowSource::fillBuffer: Wrong parameters");
+                        "ArrowSource::fillBuffer: not enough space in tuple buffer to fill tuples in this pass.");
     }
     NES_TRACE2("ArrowSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
-    std::string line;
     uint64_t tupleCount = 0;
 
     // Compute how many tuples we can generate from the current batch
     uint64_t tuplesRemainingInCurrentBatch = currentRecordBatch->num_rows() - indexWithinCurrentRecordBatch;
 
-    // Case 1. The number of remaining records in the currentRecordBatch are less generatedTuplesThisPass. Copy the
-    // records from the record batch and read in a new record batch to fill the rest of the buffer
+    // Case 1. The number of remaining records in the currentRecordBatch are less than generatedTuplesThisPass. Copy the
+    // records from the record batch and keep reading and copying new record batches to fill the buffer.
     if (tuplesRemainingInCurrentBatch < generatedTuplesThisPass) {
         // get the slice of the record batch, slicing is a no copy op
         auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, tuplesRemainingInCurrentBatch);
         // write the batch to the tuple buffer
-        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+        writeRecordBatchToTupleBuffer(tupleCount, buffer, recordBatchSlice);
+        tupleCount += tuplesRemainingInCurrentBatch;
 
-        // read in a new record batch
-        auto readBatchStatus = readNextBatch();
-        indexWithinCurrentRecordBatch = 0;
+        // keep reading record batch and writing to tuple buffer until we have generated generatedTuplesThisPass number
+        // of tuples
+        while (tupleCount < generatedTuplesThisPass) {
+            // read in a new record batch
+            auto readBatchStatus = readNextBatch();
 
-        // get the slice of the record batch with remaining tuples to generate
-        recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch,
-                                                     generatedTuplesThisPass - tuplesRemainingInCurrentBatch);
-        indexWithinCurrentRecordBatch += generatedTuplesThisPass - tuplesRemainingInCurrentBatch;
-        // write the batch to the tuple buffer
-        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+            // only continue if the file has not ended
+            if(this->fileEnded == true) break;
+
+            // write the whole batch to the tuple buffer
+            if((tupleCount + currentRecordBatch->num_rows()) <= generatedTuplesThisPass) {
+                writeRecordBatchToTupleBuffer(tupleCount, buffer, currentRecordBatch);
+                tupleCount += currentRecordBatch->num_rows();
+            }
+            // write only part of the batch to the tuple buffer
+            else {
+                uint64_t lastBatchSize = generatedTuplesThisPass - tupleCount;
+                recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, lastBatchSize);
+                writeRecordBatchToTupleBuffer(tupleCount, buffer, recordBatchSlice);
+                tupleCount += lastBatchSize;
+                indexWithinCurrentRecordBatch += lastBatchSize;
+            }
+        }
     }
     // Case 2. The number of remaining records in the currentRecordBatch are greater than generatedTuplesThisPass.
     // simply copy the desired number of tuples from the recordBatch to the tuple buffer
@@ -167,7 +180,8 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
         // get the slice of the record batch with desired number of tuples
         auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, generatedTuplesThisPass);
         // write the batch to the tuple buffer
-        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+        writeRecordBatchToTupleBuffer(tupleCount, buffer, recordBatchSlice);
+        tupleCount += generatedTuplesThisPass;
     }
 
     buffer.setNumberOfTuples(tupleCount);
@@ -204,13 +218,13 @@ arrow::Status ArrowSource::readNextBatch() {
 
     NES_TRACE2("ArrowSource::readNextBatch: read the following record batch {}",
                currentRecordBatch->ToString());
-    std::cout << "ArrowSource::readNextBatch: read the following record batch {}:" << currentRecordBatch->ToString() << std::endl;
 
     return arrow::Status::OK();
 }
 
 // TODO move all logic below to Parser / Format?
-void ArrowSource::writeRecordBatchToTupleBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
+void ArrowSource::writeRecordBatchToTupleBuffer(uint64_t tupleCount,
+                                                Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
                                                 std::shared_ptr<arrow::RecordBatch> recordBatch) {
     auto fields = schema->fields;
     uint64_t numberOfSchemaFields = schema->getSize();
@@ -220,11 +234,12 @@ void ArrowSource::writeRecordBatchToTupleBuffer(Runtime::MemoryLayouts::DynamicT
         auto arrowColumn = recordBatch->column(columnItr);
 
         // write the column to the tuple buffer
-        writeArrowArrayToTupleBuffer(columnItr, buffer, arrowColumn);
+        writeArrowArrayToTupleBuffer(tupleCount, columnItr, buffer, arrowColumn);
     }
 }
 
-void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
+void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
+                                               uint64_t schemaFieldIndex,
                                                Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                                const std::shared_ptr<arrow::Array> arrowArray) {
     if(arrowArray == nullptr) {
@@ -234,9 +249,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-    auto arrayLength = arrowArray->length();
-
-    std::cout << "Accessing field num: " << schemaFieldIndex << std::endl;
+    uint64_t arrayLength = static_cast<uint64_t>(arrowArray->length());
 
     // nothing to be done if the array is empty
     if (arrayLength == 0) {
@@ -246,8 +259,6 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
     try {
         if (physicalType->isBasicType()) {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-
-            std::cout << "Native type is : " << basicPhysicalType->toString() << std::endl;
 
             switch (basicPhysicalType->nativeType) {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
@@ -259,9 +270,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::Int8Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         int8_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<int8_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<int8_t>(value);
                     }
                     break;
                 }
@@ -274,9 +286,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::Int16Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         int16_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<int16_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<int16_t>(value);
                     }
                     break;
                 }
@@ -289,9 +302,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::Int32Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         int32_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<int32_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<int32_t>(value);
                     }
                     break;
                 }
@@ -304,9 +318,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::Int64Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         int64_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<int64_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<int64_t>(value);
                     }
                     break;
                 }
@@ -319,9 +334,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::UInt8Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         uint8_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<uint8_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<uint8_t>(value);
                     }
                     break;
                 }
@@ -334,9 +350,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::UInt16Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         uint16_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<uint16_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<uint16_t>(value);
                     }
                     break;
                 }
@@ -349,9 +366,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::UInt32Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         uint32_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<uint32_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<uint32_t>(value);
                     }
                     break;
                 }
@@ -364,9 +382,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::UInt64Array>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         uint64_t value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<uint64_t>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<uint64_t>(value);
                     }
                     break;
                 }
@@ -375,13 +394,14 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                        "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT data types. Type found"
                        " in IPC file: " + arrowArray->type()->ToString());
 
-                    // cast the arrow array to the uint8_t type
+                    // cast the arrow array to the float type
                     auto values = std::static_pointer_cast<arrow::FloatArray>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         float value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<float>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<float>(value);
                     }
                     break;
                 }
@@ -391,12 +411,13 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                        " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the float64 type
-                    auto values = std::static_pointer_cast<arrow::FloatArray>(arrowArray);
+                    auto values = std::static_pointer_cast<arrow::DoubleArray>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         double value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<double>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<double>(value);
                     }
                     break;
                 }
@@ -414,9 +435,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::StringArray>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
-                        //std::string value = values->Value(index);
-                        auto value = values->Value(index);
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
+                        auto value = values->GetString(index);
 
                         auto sizeOfValue = value.size();
                         auto totalSize = sizeOfValue + sizeof(uint32_t);
@@ -435,9 +456,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                         // attach the child buffer to the parent buffer and write the child buffer index in the
                         // schema field index of the tuple buffer
                         auto childIdx = tupleBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
-                        tupleBuffer[index][schemaFieldIndex].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
-
-                        break;
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
                     }
                     break;
                 }
@@ -450,9 +469,10 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                     auto values = std::static_pointer_cast<arrow::BooleanArray>(arrowArray);
 
                     // write all values to the tuple buffer
-                    for (int64_t index = 0; index < arrayLength; ++index) {
+                    for (uint64_t index = 0; index < arrayLength; ++index) {
+                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
                         bool value = values->Value(index);
-                        tupleBuffer[index][schemaFieldIndex].write<bool>(value);
+                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<bool>(value);
                     }
                     break;
                 }
