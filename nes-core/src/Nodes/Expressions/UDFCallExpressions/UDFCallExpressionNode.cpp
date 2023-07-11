@@ -91,7 +91,7 @@ std::string UDFCallExpressionNode::toString() const {
 
 ExpressionNodePtr UDFCallExpressionNode::copy() {
     std::vector<ExpressionNodePtr> copyOfFunctionArguments;
-    for (auto functionArgument: functionArguments) {
+    for (auto functionArgument : functionArguments) {
         copyOfFunctionArguments.push_back(functionArgument->copy());
     }
     return UDFCallExpressionNode::create(udfName->copy()->as<ConstantValueExpressionNode>(), copyOfFunctionArguments);

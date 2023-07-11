@@ -59,6 +59,7 @@ std::string PowExpressionNode::toString() const {
 }
 
 ExpressionNodePtr PowExpressionNode::copy() {
-    return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());}
+    return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES
