@@ -24,6 +24,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -70,6 +71,24 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     sourceCatalog->addPhysicalSource("default_logical", sce1);
+}
+
+bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields){
+    if (!filter->instanceOf<FilterLogicalOperatorNode>()) { return false; }
+
+    auto count = accessedFields.size();
+
+    DepthFirstNodeIterator depthFirstNodeIterator(filter->as<FilterLogicalOperatorNode>()->getPredicate());
+    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
+        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            if (std::find(accessedFields.begin(), accessedFields.end(), accessExpressionNode->getFieldName()) == accessedFields.end()) {
+                return false;
+            }
+            count--;
+        }
+    }
+    return count == 0;
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
@@ -819,7 +838,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToSrc1) {
                       .where(Attribute("id"))
                       .equalsTo(Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                      .filter(Attribute("A") < 9999 || Attribute("src1$ts") < 9999)
+                      .filter(Attribute("A") < 9999)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -938,6 +957,88 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinNotPossible) {
     EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(watermarkOperatorAboveSrc1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
+}
+
+/* tests if a filter is correctly pushed below a join if all its attributes are part of the join condition. The order of the
+operators in the updated query plan is validated, and it is checked that the input and output schema of the filter that is now at
+a new position is still correct */
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowJoinToBothSources) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+    //setup source 1
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("A", NES::BasicType::UINT64)
+                                ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src1", schema);
+
+    //setup source two
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("X", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src2", schema2);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery = Query::from("src2");
+
+    Query query = Query::from("src1")
+                      .joinWith(subQuery)
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                      .filter(Attribute("src1$id") < 9999)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    //type inference
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
+    typeInferencePhase->execute(queryPlan);
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc1 = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: {}", (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: {}", (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(joinOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc2->equal((*itr)));
+    ++itr;
+    std::vector<std::string> accessedFields;
+    accessedFields.push_back("src2$id"); //a duplicate filter that accesses src2$id should be pushed down
+    EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), accessedFields));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
 }
@@ -1085,3 +1186,4 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossibleMultipl
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
+

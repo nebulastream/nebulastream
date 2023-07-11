@@ -128,7 +128,6 @@ ExpressionNodePtr CaseExpressionNode::copy() {
         auto expChild = whenExpression->as<ExpressionNode>()->copy();
         copyOfWhenExpressions.push_back(whenExpression->as<ExpressionNode>()->copy());
     }
-
     return CaseExpressionNode::create(copyOfWhenExpressions, getDefaultExp()->copy());
 }
 
