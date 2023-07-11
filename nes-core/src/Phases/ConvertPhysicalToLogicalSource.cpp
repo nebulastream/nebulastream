@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -27,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
+#include <Sources/ArrowSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -115,6 +117,15 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                                                                                         opcSourcePtr->getUser(),
                                                                                         opcSourcePtr->getPassword());
             return opcSourceDescriptor;
+        }
+#endif
+#ifdef ENABLE_ARROW_BUILD
+        case SourceType::ARROW_SOURCE: {
+            NES_INFO2("ConvertPhysicalToLogicalSource: Creating Arrow File source");
+            const ArrowSourcePtr arrowSourcePtr = std::dynamic_pointer_cast<ArrowSource>(dataSource);
+            const SourceDescriptorPtr arrowSourceDescriptor =
+                    ArrowSourceDescriptor::create(arrowSourcePtr->getSchema(), arrowSourcePtr->getSourceConfig());
+            return arrowSourceDescriptor;
         }
 #endif
         case SourceType::SENSE_SOURCE: {

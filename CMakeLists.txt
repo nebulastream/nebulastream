@@ -470,6 +470,17 @@ endif (NES_USE_MQTT)
 # Library containing Apache Arrow
 if (NES_USE_ARROW)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+
+    # explicitly find the brotli package from Arrow and include it
+    find_package(unofficial-brotli REQUIRED)
+    if(unofficial-brotli_FOUND)
+        message(STATUS "Brotli lib required by Arrow found.")
+        set(LIBRARIES ${LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static)
+    else()
+        message(FATAL_ERROR "Brotli lib required by Arrow not found.")
+    endif()
+
+    # find Arrow package
     find_package(Arrow REQUIRED CONFIG)
     if(Arrow_FOUND)
         message(STATUS "Arrow version ${ARROW_VERSION}")
