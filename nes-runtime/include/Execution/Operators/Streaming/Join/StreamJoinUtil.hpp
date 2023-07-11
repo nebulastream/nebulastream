@@ -67,7 +67,6 @@ namespace Util {
  */
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName);
 
-
 }// namespace Util
 }// namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

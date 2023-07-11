@@ -103,7 +103,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
  * @param bufferManager
  * @return Filled TupleBuffer
  */
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+Runtime::TupleBuffer
+getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
  * @brief create CSV lines from the tuples
@@ -112,7 +113,6 @@ Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord,
  * @return a full string stream as string
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
-
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
@@ -171,7 +171,6 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
  * @return True if the buffers contain the same tuples
  */
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
-
 
 /**
  * @brief Gets the physical type of a given type given as template parameter

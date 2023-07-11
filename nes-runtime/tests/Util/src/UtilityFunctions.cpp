@@ -195,7 +195,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
     return retVector;
 }
 
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+Runtime::TupleBuffer
+getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
     auto buffer = bufferManager->getBufferBlocking();
     auto* bufferPtr = (int8_t*) buffer.getBuffer();
 
@@ -228,7 +229,6 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     }
     return ss.str();
 }
-
 
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
                                                                             const SchemaPtr& schema,
@@ -491,4 +491,4 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
-} // namespace NES::Runtime::Execution::Util
+}// namespace NES::Runtime::Execution::Util
