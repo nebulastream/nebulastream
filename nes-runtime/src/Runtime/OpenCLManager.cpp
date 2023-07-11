@@ -83,45 +83,57 @@ std::vector<cl_device_id> retrieveOpenCLDevices(const cl_platform_id platform) {
     return devices;
 }
 
-std::string retrieveOpenCLDeviceName(const cl_device_id device) {
-    char buffer[1024];
-    auto status = clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(buffer), buffer, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get device name");
-    std::string deviceName(buffer);
-    return deviceName;
+// Wrapper around clGetDeviceInfo which adds error handling and optionally converts to a non-OpenCL type used in NES.
+template<typename CLType, typename NESType>
+NESType retrieveOpenCLDeviceInfo(const cl_device_id device, const cl_device_info param, const std::string& paramName) {
+    CLType result;
+    auto status = clGetDeviceInfo(device, param, sizeof(result), &result, nullptr);
+    ASSERT_OPENCL_SUCCESS(status, "Could not get information for OpenCL device parameter " + paramName);
+    return NESType(result);
+}
+
+// Specialization to retrieve OpenCL device parameters that are strings.
+template<>
+std::string retrieveOpenCLDeviceInfo<char[], std::string>(const cl_device_id device,
+                                                          const cl_device_info param,
+                                                          const std::string& paramName) {
+    size_t size;
+    auto status = clGetDeviceInfo(device, param, 0, nullptr, &size);
+    ASSERT_OPENCL_SUCCESS(status, "Could not get result size for OpenCL device parameter " + paramName);
+    // The size returned by the OpenCL API includes the end-of-string terminator \0.
+    // We must allocate enough space, so that the API can write the result.
+    // However, if we print this string, it would include the terminator as a special character in the output.
+    // Therefore, we resize the string after retrieving the value to exclude the terminator.
+    std::string result(size, '\0');
+    status = clGetDeviceInfo(device, param, size, const_cast<char*>(result.c_str()), nullptr);
+    ASSERT_OPENCL_SUCCESS(status, "Could not get information for OpenCL device parameter " + paramName);
+    result.resize(size - 1);
+    return result;
 }
 
 bool retrieveOpenCLDoubleFPSupport(const cl_device_id device) {
-    cl_device_fp_config deviceFpConfig;
-    auto status = clGetDeviceInfo(device, CL_DEVICE_DOUBLE_FP_CONFIG, sizeof(cl_device_fp_config), &deviceFpConfig, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_DOUBLE_FP_CONFIG information");
+    auto deviceFpConfig = retrieveOpenCLDeviceInfo<cl_device_fp_config, cl_device_fp_config>(device,
+                                                                                             CL_DEVICE_DOUBLE_FP_CONFIG,
+                                                                                             "CL_DEVICE_DOUBLE_FP_CONFIG");
     return deviceFpConfig > 0;// TODO How to evaluate this bitfield?
 }
 
 std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id device) {
-    cl_uint dimensions;
-    auto status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &dimensions, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS information");
+    auto dimensions = retrieveOpenCLDeviceInfo<cl_uint, unsigned>(device,
+                                                                  CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                                                                  "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS");
     if (dimensions != 3) {
         throw OpenCLInitializationException("Only three work items are supported", dimensions);
     }
     std::array<size_t, 3> maxWorkItems;
-    status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(maxWorkItems), maxWorkItems.data(), nullptr);
+    cl_uint status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(maxWorkItems), maxWorkItems.data(), nullptr);
     ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_MAX_WORK_ITEM_SIZES information");
     return maxWorkItems;
 }
 
-unsigned retrieveOpenCLDeviceAddressBits(const cl_device_id device) {
-    cl_uint deviceAddressBits;
-    auto status = clGetDeviceInfo(device, CL_DEVICE_ADDRESS_BITS, sizeof(cl_uint), &deviceAddressBits, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_ADDRESS_BITS information");
-    return deviceAddressBits;
-}
-
+// TODO Why not just return the bits instead of strings?
 std::string retrieveOpenCLDeviceType(const cl_device_id device) {
-    cl_device_type deviceType;
-    auto status = clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(deviceType), &deviceType, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_TYPE information");
+    auto deviceType = retrieveOpenCLDeviceInfo<cl_device_type, cl_device_type>(device, CL_DEVICE_TYPE, "CL_DEVICE_TYPE");
     switch (deviceType) {
         case CL_DEVICE_TYPE_CPU: return "CL_DEVICE_TYPE_CPU"; break;
         case CL_DEVICE_TYPE_GPU: return "CL_DEVICE_TYPE_GPU"; break;
@@ -129,21 +141,6 @@ std::string retrieveOpenCLDeviceType(const cl_device_id device) {
         case CL_DEVICE_TYPE_CUSTOM: return "CL_DEVICE_TYPE_CUSTOM"; break;
         default: throw OpenCLInitializationException("Unknown device type", deviceType);
     }
-}
-
-std::string retrieveOpenCLDeviceExtensions(const cl_device_id device) {
-    char buffer[1024];
-    auto status = clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get device extensions");
-    std::string extensions(buffer);
-    return extensions;
-}
-
-unsigned retrieveOpenCLAvailableProcessors(const cl_device_id device) {
-    cl_uint maxComputeUnits;
-    auto status = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &maxComputeUnits, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_MAX_COMPUTE_UNITS information");
-    return maxComputeUnits;
 }
 
 OpenCLManager::OpenCLManager() {
@@ -155,13 +152,17 @@ OpenCLManager::OpenCLManager() {
             NES_DEBUG("Found OpenCL platform: {} {}", platformVendor, platformName);
             auto devices = retrieveOpenCLDevices(platform);
             for (const auto& device : devices) {
-                auto deviceName = retrieveOpenCLDeviceName(device);
+                auto deviceName = retrieveOpenCLDeviceInfo<char[], std::string>(device, CL_DEVICE_NAME, "CL_DEVICE_NAME");
+                auto deviceAddressBits =
+                    retrieveOpenCLDeviceInfo<cl_uint, unsigned>(device, CL_DEVICE_ADDRESS_BITS, "CL_DEVICE_ADDRESS_BITS");
+                auto deviceExtensions =
+                    retrieveOpenCLDeviceInfo<char[], std::string>(device, CL_DEVICE_EXTENSIONS, "CL_DEVICE_EXTENSIONS");
+                auto availableProcessors = retrieveOpenCLDeviceInfo<cl_uint, unsigned>(device,
+                                                                                       CL_DEVICE_MAX_COMPUTE_UNITS,
+                                                                                       "CL_DEVICE_MAX_COMPUTE_UNITS");
                 auto doubleFPSupport = retrieveOpenCLDoubleFPSupport(device);
                 auto maxWorkItems = retrieveOpenCLMaxWorkItems(device);
-                auto deviceAddressBits = retrieveOpenCLDeviceAddressBits(device);
                 auto deviceType = retrieveOpenCLDeviceType(device);
-                auto deviceExtensions = retrieveOpenCLDeviceExtensions(device);
-                auto availableProcessors = retrieveOpenCLAvailableProcessors(device);
                 NES_INFO(
                     "Found OpenCL device: [platformVendor={}, platformName={}, deviceName={}, doubleFPSupport={}, "
                     "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, availableProcessors={}",
