@@ -34,6 +34,7 @@ class TwoPhaseLockingStorageHandlerTest : public Testing::TestWithErrorHandling 
 };
 
 TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
+    constexpr QueryId queryId1 = 1;
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -49,15 +50,16 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
                                                                    udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
-    ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
 }
 
 TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
+    constexpr QueryId queryId1 = 1;
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -71,11 +73,12 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
                                                                    globalQueryPlan,
                                                                    sourceCatalog,
                                                                    udfCatalog);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
 }
 
 TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
+    constexpr QueryId queryId1 = 1;
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -89,11 +92,13 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
                                                                    globalQueryPlan,
                                                                    sourceCatalog,
                                                                    udfCatalog);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology}));
-    ASSERT_THROW(twoPLAccessHandle->acquireResources(1, {}), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
+    ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId1, {}), std::exception);
 }
 
 TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
+    constexpr QueryId queryId1 = 1;
+    constexpr QueryId queryId2 = 2;
     std::shared_ptr<std::thread> thread;
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
@@ -109,7 +114,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                                    sourceCatalog,
                                                                    udfCatalog);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
                                                             {ResourceType::Topology,
                                                              ResourceType::GlobalExecutionPlan,
                                                              ResourceType::QueryCatalogService,
@@ -119,21 +124,21 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
-    twoPLAccessHandle->releaseResources(1);
-    twoPLAccessHandle->releaseResources(2);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
+    twoPLAccessHandle->releaseResources(queryId1);
+    twoPLAccessHandle->releaseResources(queryId2);
 
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
 
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
                                                             {ResourceType::GlobalExecutionPlan,
                                                              ResourceType::QueryCatalogService,
                                                              ResourceType::GlobalQueryPlan,
@@ -142,22 +147,22 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    twoPLAccessHandle->releaseResources(1);
-    twoPLAccessHandle->releaseResources(2);
+    twoPLAccessHandle->releaseResources(queryId1);
+    twoPLAccessHandle->releaseResources(queryId2);
 
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology, ResourceType::GlobalExecutionPlan}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology, ResourceType::GlobalExecutionPlan}));
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get());
+    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
 
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalExecutionPlan}),
                      Exceptions::ResourceLockingException);
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2,
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
                                                             {ResourceType::QueryCatalogService,
                                                              ResourceType::GlobalQueryPlan,
                                                              ResourceType::SourceCatalog,
@@ -165,114 +170,114 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    twoPLAccessHandle->releaseResources(1);
-    twoPLAccessHandle->releaseResources(2);
+    twoPLAccessHandle->releaseResources(queryId1);
+    twoPLAccessHandle->releaseResources(queryId2);
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(
-        1,
+        queryId1,
         {ResourceType::Topology, ResourceType::GlobalExecutionPlan, ResourceType::QueryCatalogService}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get());
-    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get());
+    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalExecutionPlan}),
                      Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::QueryCatalogService}),
                      Exceptions::ResourceLockingException);
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(
-            2,
+            queryId2,
             {ResourceType::GlobalQueryPlan, ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
     });
     thread->join();
 
-    twoPLAccessHandle->releaseResources(1);
-    twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+    twoPLAccessHandle->releaseResources(queryId1);
+    twoPLAccessHandle->releaseResources(queryId2);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1,
                                                         {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get());
-    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get());
+    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalExecutionPlan}),
                      Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::QueryCatalogService}),
                      Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalQueryPlan}),
                      Exceptions::ResourceLockingException);
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
     });
     thread->join();
 
     //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
-    twoPLAccessHandle->releaseResources(1);
+    twoPLAccessHandle->releaseResources(queryId1);
     //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
-    twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+    twoPLAccessHandle->releaseResources(queryId2);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1,
                                                         {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan,
                                                          ResourceType::SourceCatalog}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get());
-    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get(), std::exception);
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get());
+    ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalExecutionPlan}),
                      Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::QueryCatalogService}),
                      Exceptions::ResourceLockingException);
-        ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+        ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalQueryPlan}),
                      Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::SourceCatalog}),
                    Exceptions::ResourceLockingException);
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::UdfCatalog}));
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::UdfCatalog}));
     });
     thread->join();
 
     //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
-    twoPLAccessHandle->releaseResources(1);
+    twoPLAccessHandle->releaseResources(queryId1);
     //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
-    twoPLAccessHandle->releaseResources(2);
-    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1,
+    twoPLAccessHandle->releaseResources(queryId2);
+    ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1,
                                                         {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
                                                          ResourceType::QueryCatalogService,
                                                          ResourceType::GlobalQueryPlan,
                                                          ResourceType::SourceCatalog,
                                                          ResourceType::UdfCatalog}));
-    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(1).get());
-    ASSERT_NO_THROW(twoPLAccessHandle->getUDFCatalogHandle(1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get());
+    ASSERT_NO_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get());
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalExecutionPlan}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::Topology}), Exceptions::ResourceLockingException);
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalExecutionPlan}),
                    Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::QueryCatalogService}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::QueryCatalogService}),
                    Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::GlobalQueryPlan}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::GlobalQueryPlan}),
                    Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::SourceCatalog}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::SourceCatalog}),
                    Exceptions::ResourceLockingException);
-      ASSERT_THROW(twoPLAccessHandle->acquireResources(2, {ResourceType::UdfCatalog}),
+      ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId2, {ResourceType::UdfCatalog}),
                    Exceptions::ResourceLockingException);
-        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(2, {}));
+        ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2, {}));
     });
     thread->join();
 }

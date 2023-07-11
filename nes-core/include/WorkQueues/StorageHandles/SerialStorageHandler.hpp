@@ -17,7 +17,6 @@
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 namespace NES {
-
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
@@ -42,25 +41,12 @@ class SerialStorageHandler : public StorageHandler {
      * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
      * @return shared pointer to the serial storage manager
      */
-    static std::shared_ptr<SerialStorageHandler> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                        const TopologyPtr& topology,
-                                                        const QueryCatalogServicePtr& queryCatalogService,
-                                                        const GlobalQueryPlanPtr& globalQueryPlan,
-                                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
-
-    /**
-     * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
-     * @param requestId The id of the request making the call
-     * @param requiredResources The resources required for request execution
-     */
-    void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
-
-    /**
-     * @brief This function does nothing. Because no the serial storage handler does not acquire resources, none need to be released
-     * @param requestId The id of the request making the call
-     */
-    void releaseResources(RequestId requestId) override;
+    static std::shared_ptr<SerialStorageHandler> create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                        TopologyPtr topology,
+                                                        QueryCatalogServicePtr queryCatalogService,
+                                                        GlobalQueryPlanPtr globalQueryPlan,
+                                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Obtain a mutable topology handle.

@@ -38,4 +38,6 @@ add_source_files(nes-core
         SharedQueryPlanNotFoundException.cpp
         RequestExecutionException.cpp
         ResourceLockingException.cpp
+        StorageHandlerAcquireResourcesException.cpp
+        AccessNonLockedResourceException.cpp
 )
