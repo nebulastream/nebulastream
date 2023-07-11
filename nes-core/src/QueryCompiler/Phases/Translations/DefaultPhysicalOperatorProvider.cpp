@@ -712,7 +712,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
 
     if (windowOperator->getInputOriginIds().empty()) {
-        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
+        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero!");
     }
     // TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
