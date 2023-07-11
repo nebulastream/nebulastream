@@ -80,8 +80,8 @@ namespace NES {
     // setup Arrow source
     ArrowSourceTypePtr arrowSourceTypePtr = ArrowSourceType::create();
     arrowSourceTypePtr->setFilePath(inputFilePath);
-    arrowSourceTypePtr->setNumberOfTuplesToProducePerBuffer(4);
-    arrowSourceTypePtr->setNumberOfBuffersToProduce(8);
+    arrowSourceTypePtr->setNumberOfTuplesToProducePerBuffer(32);
+    arrowSourceTypePtr->setNumberOfBuffersToProduce(1);
     auto physicalSource = PhysicalSource::create("arrow_data", "test_stream", arrowSourceTypePtr);
 
     // setup worker

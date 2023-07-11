@@ -32,26 +32,6 @@
 #include <utility>
 #include <vector>
 
-#define ARROW_READ_NOT_OK(s)                                                \
-    do {                                                                    \
-        arrow::Status _s = (s);                                             \
-        if (!_s.ok()) {                                                     \
-            throw USER_EXCEPTION(                                           \
-                SCIDB_SE_ARRAY_WRITER, SCIDB_LE_ILLEGAL_OPERATION)          \
-                    << _s.ToString().c_str();                               \
-        }                                                                   \
-    } while (0)
-
-#define THROW_NOT_OK_FILE(s)                                            \
-    do {                                                                \
-        arrow::Status _s = (s);                                         \
-        if (!_s.ok()) {                                                 \
-            throw USER_EXCEPTION(                                       \
-                SCIDB_SE_ARRAY_WRITER, SCIDB_LE_FILE_WRITE_ERROR)       \
-                    << _s.ToString().c_str() << (int)_s.code();         \
-        }                                                               \
-    } while(0)
-
 namespace NES {
 
 ArrowSource::ArrowSource(SchemaPtr schema,
@@ -74,36 +54,37 @@ ArrowSource::ArrowSource(SchemaPtr schema,
       fileEnded(false), arrowSourceType(arrowSourceType), filePath(arrowSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(arrowSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()) {
 
-  this->numberOfBuffersToProduce = arrowSourceType->getNumberOfBuffersToProduce()->getValue();
-  this->gatheringInterval = std::chrono::milliseconds(arrowSourceType->getGatheringInterval()->getValue());
-  this->tupleSize = schema->getSchemaSizeInBytes();
+    this->numberOfBuffersToProduce = arrowSourceType->getNumberOfBuffersToProduce()->getValue();
+    this->gatheringInterval = std::chrono::milliseconds(arrowSourceType->getGatheringInterval()->getValue());
+    this->tupleSize = schema->getSchemaSizeInBytes();
 
-  struct Deleter {
-    void operator()(const char *ptr) { std::free(const_cast<char *>(ptr)); }
-  };
-  auto path = std::unique_ptr<const char, Deleter>(const_cast<const char *>(realpath(filePath.c_str(), nullptr)));
-  if (path == nullptr) {
-    NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource: Could not determine absolute pathname: " << filePath.c_str());
-  }
+    struct Deleter {
+        void operator()(const char *ptr) { std::free(const_cast<char *>(ptr)); }
+    };
+    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char *>(realpath(filePath.c_str(), nullptr)));
+    if (path == nullptr) {
+        NES_THROW_RUNTIME_ERROR(
+                "ArrowSource::ArrowSource: Could not determine absolute pathname: " << filePath.c_str());
+    }
 
-  auto openFileStatus = openFile();
+    auto openFileStatus = openFile();
 
-  if(!openFileStatus.ok()) {
-      NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource file error: " << openFileStatus.ToString());
-  }
+    if (!openFileStatus.ok()) {
+        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource file error: " << openFileStatus.ToString());
+    }
 
-  NES_DEBUG2("ArrowSource: Opened Arrow IPC file {}", path.get());
-  NES_DEBUG2("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-             this->tupleSize,
-             this->gatheringInterval.count(),
-             this->numberOfBuffersToProduce,
-             this->numberOfTuplesToProducePerBuffer);
+    NES_DEBUG2("ArrowSource: Opened Arrow IPC file {}", path.get());
+    NES_DEBUG2("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+               this->tupleSize,
+               this->gatheringInterval.count(),
+               this->numberOfBuffersToProduce,
+               this->numberOfTuplesToProducePerBuffer);
 
-  DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-  for (const AttributeFieldPtr &field : schema->fields) {
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-    physicalTypes.push_back(physicalField);
-  }
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr &field: schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
 }
 
 std::optional<Runtime::TupleBuffer> ArrowSource::receiveData() {
@@ -128,69 +109,74 @@ std::string ArrowSource::toString() const {
 }
 
 void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer) {
-  NES_TRACE2("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(), fileSize);
-  if (this->fileEnded) {
-    NES_WARNING2("ArrowSource::fillBuffer: but file has already ended");
-    return;
-  }
+    // make sure that we have a batch to read
+    if(currentRecordBatch == nullptr) {
+        auto readBatchStatus = readNextBatch();
+        if(!readBatchStatus.ok()) {
+            NES_THROW_RUNTIME_ERROR(
+                    "ArrowSource::fillBuffer: error reading recordBatch: " << readBatchStatus.ToString());
+        }
+    }
 
-  uint64_t generatedTuplesThisPass = 0;
-  // densely pack the buffer
-  if (numberOfTuplesToProducePerBuffer == 0) {
-    generatedTuplesThisPass = buffer.getCapacity();
-  } else {
-    generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-    NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "ArrowSource::fillBuffer: Wrong parameters");
-  }
-  NES_TRACE2("ArrowSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
+    NES_TRACE2("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
+               fileSize);
+    if (this->fileEnded) {
+        NES_WARNING2("ArrowSource::fillBuffer: but file has already ended");
+        return;
+    }
 
-  std::string line;
-  uint64_t tupleCount = 0;
+    uint64_t generatedTuplesThisPass = 0;
+    // densely pack the buffer
+    if (numberOfTuplesToProducePerBuffer == 0) {
+        generatedTuplesThisPass = buffer.getCapacity();
+    } else {
+        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(),
+                        "ArrowSource::fillBuffer: Wrong parameters");
+    }
+    NES_TRACE2("ArrowSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
-  // make sure that we have a batch to read
-  if(currentRecordBatch == nullptr) {
-      auto readBatchStatus = readNextBatch();
-      NES_THROW_RUNTIME_ERROR("ArrowSource::fillBuffer: error reading recordBatch: " << readBatchStatus.ToString());
-  }
+    std::string line;
+    uint64_t tupleCount = 0;
 
-  // Compute how many tuples we can generate from the current batch
-  uint64_t tuplesRemainingInCurrentBatch = currentRecordBatch->num_rows() - indexWithinCurrentRecordBatch;
+    // Compute how many tuples we can generate from the current batch
+    uint64_t tuplesRemainingInCurrentBatch = currentRecordBatch->num_rows() - indexWithinCurrentRecordBatch;
 
-  // Case 1. The number of remaining records in the currentRecordBatch are less generatedTuplesThisPass. Copy the
-  // records from the record batch and read in a new record batch to fill the rest of the buffer
-  if(tuplesRemainingInCurrentBatch < generatedTuplesThisPass) {
-      // get the slice of the record batch, this is a no copy op
-      auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, tuplesRemainingInCurrentBatch);
-      // write the batch to the tuple buffer
-      writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+    // Case 1. The number of remaining records in the currentRecordBatch are less generatedTuplesThisPass. Copy the
+    // records from the record batch and read in a new record batch to fill the rest of the buffer
+    if (tuplesRemainingInCurrentBatch < generatedTuplesThisPass) {
+        // get the slice of the record batch, slicing is a no copy op
+        auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, tuplesRemainingInCurrentBatch);
+        // write the batch to the tuple buffer
+        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
 
-      // read in a new record batch
-      auto readBatchStatus = readNextBatch();
-      indexWithinCurrentRecordBatch = 0;
+        // read in a new record batch
+        auto readBatchStatus = readNextBatch();
+        indexWithinCurrentRecordBatch = 0;
 
-      // get the slice of the record batch with remaining tuples to generate
-      recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch,
-                                                   generatedTuplesThisPass - tuplesRemainingInCurrentBatch);
-      indexWithinCurrentRecordBatch += generatedTuplesThisPass - tuplesRemainingInCurrentBatch;
-      // write the batch to the tuple buffer
-      writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
-  }
-  // Case 2. The number of remaining records in the currentRecordBatch are greater than generatedTuplesThisPass.
-  // simply copy the desired number of tuples from the recordBatch to the tuple buffer
-  else {
-      // get the slice of the record batch with desired number of tuples
-      auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, generatedTuplesThisPass);
-      // write the batch to the tuple buffer
-      writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
-  }
+        // get the slice of the record batch with remaining tuples to generate
+        recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch,
+                                                     generatedTuplesThisPass - tuplesRemainingInCurrentBatch);
+        indexWithinCurrentRecordBatch += generatedTuplesThisPass - tuplesRemainingInCurrentBatch;
+        // write the batch to the tuple buffer
+        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+    }
+    // Case 2. The number of remaining records in the currentRecordBatch are greater than generatedTuplesThisPass.
+    // simply copy the desired number of tuples from the recordBatch to the tuple buffer
+    else {
+        // get the slice of the record batch with desired number of tuples
+        auto recordBatchSlice = currentRecordBatch->Slice(indexWithinCurrentRecordBatch, generatedTuplesThisPass);
+        // write the batch to the tuple buffer
+        writeRecordBatchToTupleBuffer(buffer, recordBatchSlice);
+    }
 
-  buffer.setNumberOfTuples(tupleCount);
-  generatedTuples += tupleCount;
-  generatedBuffers++;
-  NES_TRACE2("ArrowSource::fillBuffer: reading finished read {} tuples",
-             tupleCount);
-  NES_TRACE2("ArrowSource::fillBuffer: read produced buffer=  {}",
-             Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    buffer.setNumberOfTuples(tupleCount);
+    generatedTuples += tupleCount;
+    generatedBuffers++;
+    NES_TRACE2("ArrowSource::fillBuffer: reading finished read {} tuples",
+               tupleCount);
+    NES_TRACE2("ArrowSource::fillBuffer: read produced buffer=  {}",
+               Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType ArrowSource::getType() const { return SourceType::ARROW_SOURCE; }
@@ -211,7 +197,16 @@ arrow::Status ArrowSource::openFile() {
 arrow::Status ArrowSource::readNextBatch() {
     //set the index to 0 and read the new batch
     indexWithinCurrentRecordBatch = 0;
-    return recordBatchStreamReader->ReadNext(&currentRecordBatch);
+    auto readStatus = recordBatchStreamReader->ReadNext(&currentRecordBatch);
+
+    // file ended
+    if(currentRecordBatch == nullptr) this->fileEnded = true;
+
+    NES_TRACE2("ArrowSource::readNextBatch: read the following record batch {}",
+               currentRecordBatch->ToString());
+    std::cout << "ArrowSource::readNextBatch: read the following record batch {}:" << currentRecordBatch->ToString() << std::endl;
+
+    return arrow::Status::OK();
 }
 
 // TODO move all logic below to Parser / Format?
@@ -241,6 +236,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
     auto arrayLength = arrowArray->length();
 
+    std::cout << "Accessing field num: " << schemaFieldIndex << std::endl;
+
     // nothing to be done if the array is empty
     if (arrayLength == 0) {
         return;
@@ -250,10 +247,13 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
         if (physicalType->isBasicType()) {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
 
+            std::cout << "Native type is : " << basicPhysicalType->toString() << std::endl;
+
             switch (basicPhysicalType->nativeType) {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT8,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT8 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT8 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int8_t type
                     auto values = std::static_pointer_cast<arrow::Int8Array>(arrowArray);
@@ -267,7 +267,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_16: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT16,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT16 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT16 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int16_t type
                     auto values = std::static_pointer_cast<arrow::Int16Array>(arrowArray);
@@ -281,7 +282,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_32: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT32,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT32 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT32 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int8_t type
                     auto values = std::static_pointer_cast<arrow::Int32Array>(arrowArray);
@@ -295,7 +297,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_64: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT64,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT64 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT64 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int64_t type
                     auto values = std::static_pointer_cast<arrow::Int64Array>(arrowArray);
@@ -309,7 +312,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_8: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT8,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT8 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT8 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint8_t type
                     auto values = std::static_pointer_cast<arrow::UInt8Array>(arrowArray);
@@ -323,7 +327,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT16,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT16 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT16 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint16_t type
                     auto values = std::static_pointer_cast<arrow::UInt16Array>(arrowArray);
@@ -337,7 +342,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_32: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT32,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT32 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT32 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint32_t type
                     auto values = std::static_pointer_cast<arrow::UInt32Array>(arrowArray);
@@ -351,7 +357,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_64: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT64,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT64 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT64 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint64_t type
                     auto values = std::static_pointer_cast<arrow::UInt64Array>(arrowArray);
@@ -365,7 +372,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::FLOAT: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::FLOAT,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint8_t type
                     auto values = std::static_pointer_cast<arrow::FloatArray>(arrowArray);
@@ -379,7 +387,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::DOUBLE: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::DOUBLE,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT64 data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT64 data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the float64 type
                     auto values = std::static_pointer_cast<arrow::FloatArray>(arrowArray);
@@ -398,7 +407,8 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::STRING,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types.");
+                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types. Type found"
+                       " in IPC file: " + arrowArray->type()->ToString());
 
                     // cast the arrow array to the string type
                     auto values = std::static_pointer_cast<arrow::StringArray>(arrowArray);
@@ -429,10 +439,12 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
 
                         break;
                     }
+                    break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::BOOL,
-                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent BOOL data types.");
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent BOOL data types. Type found"
+                                    " in file : " + arrowArray->type()->ToString() + ", and type id: " + std::to_string(arrowArray->type()->id()));
 
                     // cast the arrow array to the boolean type
                     auto values = std::static_pointer_cast<arrow::BooleanArray>(arrowArray);
