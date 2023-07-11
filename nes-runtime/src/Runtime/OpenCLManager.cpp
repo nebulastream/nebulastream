@@ -165,7 +165,7 @@ OpenCLManager::OpenCLManager() {
                 auto deviceType = retrieveOpenCLDeviceType(device);
                 NES_INFO(
                     "Found OpenCL device: [platformVendor={}, platformName={}, deviceName={}, doubleFPSupport={}, "
-                    "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, availableProcessors={}",
+                    "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, availableProcessors={}]",
                     platformVendor,
                     platformName,
                     deviceName,
@@ -177,17 +177,17 @@ OpenCLManager::OpenCLManager() {
                     deviceType,
                     deviceExtensions,
                     availableProcessors);
-                OpenCLDeviceInfo deviceInfo(platform,
-                                            device,
-                                            platformVendor,
-                                            platformName,
-                                            deviceName,
-                                            doubleFPSupport,
-                                            maxWorkItems,
-                                            deviceAddressBits,
-                                            deviceType,
-                                            deviceExtensions,
-                                            availableProcessors);
+                this->devices.emplace_back(platform,
+                                           device,
+                                           platformVendor,
+                                           platformName,
+                                           deviceName,
+                                           doubleFPSupport,
+                                           maxWorkItems,
+                                           deviceAddressBits,
+                                           deviceType,
+                                           deviceExtensions,
+                                           availableProcessors);
             }
         }
     } catch (OpenCLInitializationException e) {
