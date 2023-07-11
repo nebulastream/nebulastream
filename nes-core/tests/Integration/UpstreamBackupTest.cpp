@@ -378,15 +378,15 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     //    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
     //    workerConfig1->physicalSources.add(physicalSource1);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+//
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     workerConfig3->lambdaSource = 1;
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
@@ -400,10 +400,10 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
-    crd->getTopologyManagerService()->removeParent(4, 1);
-    crd->getTopologyManagerService()->removeParent(3, 1);
-    crd->getTopologyManagerService()->addParent(3, 2);
-    crd->getTopologyManagerService()->addParent(4, 3);
+//    crd->getTopologyManagerService()->removeParent(4, 1);
+//    crd->getTopologyManagerService()->removeParent(3, 1);
+//    crd->getTopologyManagerService()->addParent(3, 2);
+//    crd->getTopologyManagerService()->addParent(4, 3);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
@@ -418,21 +418,21 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_MOST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::NONE);
+                                                                    FaultTolerancePlacement::NAIVE);
 
 
 
-//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-//                                                                    "BottomUp",
-//                                                                    FaultToleranceType::AT_LEAST_ONCE,
-//                                                                    LineageType::IN_MEMORY,
-//                                                                    FaultTolerancePlacement::MFTP);
-//
-//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-//                                                            "BottomUp",
-//                                                            FaultToleranceType::AT_LEAST_ONCE,
-//                                                            LineageType::IN_MEMORY,
-//                                                            FaultTolerancePlacement::MFTP);
+    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+                                                                    "BottomUp",
+                                                                    FaultToleranceType::AT_LEAST_ONCE,
+                                                                    LineageType::IN_MEMORY,
+                                                                    FaultTolerancePlacement::NAIVE);
+
+    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+                                                            "BottomUp",
+                                                            FaultToleranceType::AT_LEAST_ONCE,
+                                                            LineageType::IN_MEMORY,
+                                                            FaultTolerancePlacement::NAIVE);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
