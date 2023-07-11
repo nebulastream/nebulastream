@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.139](https://github.com/nebulastream/nebulastream/tree/v0.5.139) (2023-07-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.138...v0.5.139)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor StreamJoinUtil and UtilityFunctions [\#3933](https://github.com/nebulastream/nebulastream/issues/3933)
+
 ## [v0.5.138](https://github.com/nebulastream/nebulastream/tree/v0.5.138) (2023-07-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.137...v0.5.138)
