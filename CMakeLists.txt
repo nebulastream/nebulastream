@@ -14,7 +14,8 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v29)
+set(VCPKG_BINARY_VERSION v29-arrow-integration)
+#set(VCPKG_BINARY_VERSION v29)
 set(LLVM_BINARY_VERSION v2)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -58,6 +59,7 @@ option(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING OFF)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
+option(NES_USE_ARROW "Build with Apache Arrow support" ON)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
@@ -465,6 +467,19 @@ if (NES_USE_MQTT)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
+# Library containing Apache Arrow
+if (NES_USE_ARROW)
+    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    find_package(Arrow REQUIRED CONFIG)
+    if(Arrow_FOUND)
+        message(STATUS "Arrow version ${ARROW_VERSION}")
+    else ()
+        message(FATAL_ERROR "Unable to find Arrow library")
+    endif ()
+    set(LIBRARIES ${LIBRARIES} arrow_static)
+    add_compile_definitions(ENABLE_ARROW_BUILD)
+endif (NES_USE_ARROW)
+
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
@@ -541,6 +556,7 @@ if (CMAKE_USE_PAPI_PROFILER)
     add_compile_definitions(ENABLE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
+
 # LLVM
 find_package(LLVM ${LLVM_VERSION} CONFIG REQUIRED)
 if (LLVM_FOUND)
