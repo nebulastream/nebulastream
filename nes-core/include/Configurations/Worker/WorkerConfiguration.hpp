@@ -189,7 +189,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::GeoLocationFactory>
+    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation,
+               Configurations::Spatial::Index::Experimental::GeoLocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
