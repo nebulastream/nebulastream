@@ -40,117 +40,126 @@ using ArrowParserPtr = std::shared_ptr<ArrowParser>;
  * @see https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc
  */
 class ArrowSource : public DataSource {
- public:
-  /**
- * @brief constructor of Arrow source
- * @param schema of the source
- * @param bufferManager the buffer manager
- * @param queryManager the query manager
- * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
- * @param operatorId current operator id
- * @param numSourceLocalBuffers
- * @param gatheringMode
- * @param successors
- */
-  explicit ArrowSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       ArrowSourceTypePtr arrowSourceType,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
-
-  /**
-   * @brief override the receiveData method for the arrow source
-   * @return returns a buffer if available
+public:
+    /**
+   * @brief constructor of Arrow source
+   * @param schema of the source
+   * @param bufferManager the buffer manager
+   * @param queryManager the query manager
+   * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
+   * @param operatorId current operator id
+   * @param numSourceLocalBuffers
+   * @param gatheringMode
+   * @param successors
    */
-  std::optional<Runtime::TupleBuffer> receiveData() override;
+    explicit ArrowSource(SchemaPtr schema,
+                         Runtime::BufferManagerPtr bufferManager,
+                         Runtime::QueryManagerPtr queryManager,
+                         ArrowSourceTypePtr arrowSourceType,
+                         OperatorId operatorId,
+                         OriginId originId,
+                         size_t numSourceLocalBuffers,
+                         GatheringMode gatheringMode,
+                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
-  /**
-   *  @brief method to fill the buffer with tuples
-   *  @param buffer to be filled
-   */
-  void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &);
+    /**
+     * @brief override the receiveData method for the arrow source
+     * @return returns a buffer if available
+     */
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
-  /**
-   * @brief override the toString method for the Arrow source
-   * @return returns string describing the Arrow source
-   */
-  std::string toString() const override;
+    /**
+     *  @brief method to fill the buffer with tuples
+     *  @param buffer to be filled
+     */
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &);
 
-  /**
-   * @brief Get source type
-   * @return source type
-   */
-  SourceType getType() const override;
+    /**
+     * @brief override the toString method for the Arrow source
+     * @return returns string describing the Arrow source
+     */
+    std::string toString() const override;
 
-  /**
-   * @brief Get file path for the Arrow file
-   */
-  std::string getFilePath() const;
+    /**
+     * @brief Get source type
+     * @return source type
+     */
+    SourceType getType() const override;
 
-  /**
-   * @brief getter for source config
-   * @return arrowSourceType1
-   */
-  const ArrowSourceTypePtr &getSourceConfig() const;
+    /**
+     * @brief Get file path for the Arrow file
+     */
+    std::string getFilePath() const;
 
- protected:
-  bool fileEnded;
+    /**
+     * @brief getter for source config
+     * @return arrowSourceType1
+     */
+    const ArrowSourceTypePtr &getSourceConfig() const;
 
- private:
-  ArrowSourceTypePtr arrowSourceType;
-  std::string filePath;
-  uint64_t tupleSize;
-  //uint64_t numberOfSchemaFields;
-  uint64_t numberOfTuplesToProducePerBuffer;
-  std::vector<PhysicalTypePtr> physicalTypes;
-  size_t fileSize;
-  ArrowParserPtr inputParser;
+protected:
+    bool fileEnded;
 
-  // arrow related data structures and helper functions
-  // TODO: these should move to an ArrowWrapper when we support other formats from Arrow
-  // Arrow status returns at every operation also do not play well currently
-  std::shared_ptr<arrow::io::ReadableFile> inputFile;
-  // A record batch in Arrow is two-dimensional data structure that is semantically a sequence
-  // of fields, each a contiguous Arrow array
-  // See: https://arrow.apache.org/docs/cpp/api/table.html#_CPPv4N5arrow11RecordBatchE
-  // At any point in time that we read a record batch from the RecordBatchStreamReader, we maintain
-  // it in currentRecordBatch and subsequently transfer the records from it to the DynamicTupleBuffer
-  std::shared_ptr<arrow::RecordBatch> currentRecordBatch;
-  // this keep track of the last record read from the currentRecordBatch
-  uint64_t indexWithinCurrentRecordBatch{0};
-  std::shared_ptr<arrow::ipc::RecordBatchStreamReader> recordBatchStreamReader;
+private:
+    ArrowSourceTypePtr arrowSourceType;
+    std::string filePath;
+    uint64_t tupleSize;
+    //uint64_t numberOfSchemaFields;
+    uint64_t numberOfTuplesToProducePerBuffer;
+    std::vector<PhysicalTypePtr> physicalTypes;
+    size_t fileSize;
+    ArrowParserPtr inputParser;
 
-  // arrow related utility functions
-  /**
-   * @brief opens the Arrow inputSource, and initializes the recordBatchStreamReader
-   * @return returns an arrow status
-   */
-  arrow::Status openFile();
+    // arrow related data structures and helper functions
+    // TODO: these should move to an ArrowWrapper when we support other formats from Arrow
+    // Arrow status returns at every operation also do not play well currently
+    std::shared_ptr<arrow::io::ReadableFile> inputFile;
+    // A record batch in Arrow is two-dimensional data structure that is semantically a sequence
+    // of fields, each a contiguous Arrow array
+    // See: https://arrow.apache.org/docs/cpp/api/table.html#_CPPv4N5arrow11RecordBatchE
+    // At any point in time that we read a record batch from the RecordBatchStreamReader, we maintain
+    // it in currentRecordBatch and subsequently transfer the records from it to the DynamicTupleBuffer
+    std::shared_ptr<arrow::RecordBatch> currentRecordBatch;
+    // this keep track of the last record read from the currentRecordBatch
+    uint64_t indexWithinCurrentRecordBatch{0};
+    std::shared_ptr<arrow::ipc::RecordBatchStreamReader> recordBatchStreamReader;
 
-  /**
-   * @brief reads the next record batch in the recordBatchStreamReader
-   * @return returns an arrow status
-   */
-  arrow::Status readNextBatch();
+    // arrow related utility functions
+    /**
+     * @brief opens the Arrow inputSource, and initializes the recordBatchStreamReader
+     * @return returns an arrow status
+     */
+    arrow::Status openFile();
 
-  /**
-   * @brief this function writes the data from the record batches to DynamicTupleBuffer
-   * @return returns true if success
-   */
-  void writeRecordBatchToTupleBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
-                                     std::shared_ptr<arrow::RecordBatch> recordBatch);
+    /**
+     * @brief reads the next record batch in the recordBatchStreamReader
+     * @return returns an arrow status
+     */
+    arrow::Status readNextBatch();
 
-  /**
-   * @brief this function writes the data from the record batches to DynamicTupleBuffer
-   * @return returns true if success
-   */
-  void writeArrowArrayToTupleBuffer(uint64_t schemaFieldIndex,
-                                    Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                    const std::shared_ptr<arrow::Array> arrowArray);
+    /**
+     * @brief this function writes the data from the record batches to DynamicTupleBuffer
+     * @param tupleCountInBuffer is the count of total filled buffers in tupleBuffer
+     * @param tupleBuffer the tuple buffer to be written
+     * @param recordBatch the arrow record batch to be written to tupleBuffer
+     * @return returns true if success
+     */
+    void writeRecordBatchToTupleBuffer(uint64_t tupleCount,
+                                       Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
+                                       std::shared_ptr<arrow::RecordBatch> recordBatch);
+
+    /**
+     * @brief this function writes the data from the record batches to DynamicTupleBuffer
+     * @param tupleCountInBuffer is the count of total filled buffers in tupleBuffer
+     * @param schemaFieldIndex the column to be written
+     * @param tupleBuffer the tuple buffer to be written
+     * @param arrowArray the arrow array to write to the tupleBuffer
+     * @return returns true if success
+     */
+    void writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
+                                      uint64_t schemaFieldIndex,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer &tupleBuffer,
+                                      const std::shared_ptr<arrow::Array> arrowArray);
 };
 
 using ArrowSourcePtr = std::shared_ptr<ArrowSource>;
