@@ -63,12 +63,12 @@ class BottomUpStrategy : public BasePlacementStrategy {
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
      * @param queryId :  the query id
-     * @param operatorNode : the input operator to place
+     * @param logicalOperator : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
     void identifyPinningLocation(QueryId queryId,
-                                 const LogicalOperatorNodePtr& operatorNode,
+                                 const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 };

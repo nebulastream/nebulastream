@@ -77,7 +77,6 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 const std::string SOURCE_CODE = "SOURCE_CODE";
-const std::string PLACED = "PLACED";
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -200,8 +199,9 @@ class BasePlacementStrategy {
      * @param executionNode : the execution node where operator is to be placed
      * @return the query plan to which the input operator is to be appended
      */
-    static QueryPlanPtr
-    getCandidateQueryPlanForOperator(QueryId queryId, const LogicalOperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+    static QueryPlanPtr getCandidateQueryPlanForOperator(QueryId queryId,
+                                                         const LogicalOperatorNodePtr& operatorNode,
+                                                         const ExecutionNodePtr& executionNode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -230,9 +230,9 @@ class BasePlacementStrategy {
      * @return the instance of network source operator
      */
     static LogicalOperatorNodePtr createNetworkSourceOperator(QueryId queryId,
-                                                       SchemaPtr inputSchema,
-                                                       uint64_t operatorId,
-                                                       const TopologyNodePtr& sinkTopologyNode);
+                                                              SchemaPtr inputSchema,
+                                                              uint64_t operatorId,
+                                                              const TopologyNodePtr& sinkTopologyNode);
 
     /**
      * @brief Attach network source or sink operator to the given operator
@@ -266,7 +266,8 @@ class BasePlacementStrategy {
      * @param downStreamOperator : The down stream operator
      * @return true if operators connected otherwise false
      */
-    bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator, const LogicalOperatorNodePtr& downStreamOperator);
+    bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator,
+                                         const LogicalOperatorNodePtr& downStreamOperator);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

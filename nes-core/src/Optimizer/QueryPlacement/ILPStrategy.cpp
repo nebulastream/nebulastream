@@ -111,7 +111,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 }
 
                 // Only include unplaced operators in the path
-                if (!downstreamOperator->as_if<LogicalOperatorNode>()->hasProperty(PLACED)) {
+                if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
                     operatorPath.push_back(downstreamOperator);
                     unplacedDownStreamOperatorCount++;
                 }

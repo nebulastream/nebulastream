@@ -51,11 +51,11 @@ class TopDownStrategy : public BasePlacementStrategy {
     /**
      * @brief Try to place input operator on the input topology node
      * @param pinnedUpStreamOperator :  the query id
-     * @param operatorNode : the input operator to place
+     * @param logicalOperator : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
     void identifyPinningLocation(QueryId pinnedUpStreamOperator,
-                                 const LogicalOperatorNodePtr& operatorNode,
+                                 const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators);
 
