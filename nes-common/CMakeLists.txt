@@ -32,7 +32,7 @@ set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-common PRIVATE <PrecompiledHeaders.hpp>)
+    target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()
 
 if (NES_ENABLES_TESTS)
