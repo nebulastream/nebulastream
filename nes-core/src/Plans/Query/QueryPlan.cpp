@@ -304,35 +304,43 @@ std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<Oper
         }
     }
 
+    if (!operatorsBetween.empty()) {
+
+        for (const auto& item : upstreamOperators) {
+            erase_if(operatorsBetween, [item](const auto& operatorToErase) {
+                return operatorToErase->getId() == item->getId();
+            });
+        }
+    }
+
     return operatorsBetween;
 }
 
-std::set<OperatorNodePtr> QueryPlan::reachedUpstreamOperator(const OperatorNodePtr& downstreamOperator,
+std::set<OperatorNodePtr> QueryPlan::reachedUpstreamOperator(OperatorNodePtr downstreamOperator,
                                                              const std::set<OperatorNodePtr>& upstreamOperators) {
-
-    std::set<OperatorNodePtr> operatorsBetween;
 
     auto found = std::find_if(upstreamOperators.begin(), upstreamOperators.end(), [&](const auto& upstreamOperator) {
         return upstreamOperator->getId() == downstreamOperator->getId();
     });
 
-    if (found == upstreamOperators.end()) {
-        bool foundTargetUpstreamOperator = false;
-        for (const auto& nextUpstreamOperatorToCheck : downstreamOperator->getChildren()) {
-            auto operatorsBetweenChildAndTargetUpstream =
-                reachedUpstreamOperator(nextUpstreamOperatorToCheck->as_if<OperatorNode>(), upstreamOperators);
-
-            if (!operatorsBetweenChildAndTargetUpstream.empty()) {
-                foundTargetUpstreamOperator = true;
-                operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(),
-                                        operatorsBetweenChildAndTargetUpstream.end());
-            }
-        }
-        if (foundTargetUpstreamOperator) {
-            operatorsBetween.insert(downstreamOperator);
-        }
+    if (found != upstreamOperators.end()) {
+        return {downstreamOperator};
     }
 
+    std::set<OperatorNodePtr> operatorsBetween;
+    bool foundTargetUpstreamOperator = false;
+    for (const auto& nextUpstreamOperatorToCheck : downstreamOperator->getChildren()) {
+        auto operatorsBetweenChildAndTargetUpstream =
+            reachedUpstreamOperator(nextUpstreamOperatorToCheck->as_if<OperatorNode>(), upstreamOperators);
+
+        if (!operatorsBetweenChildAndTargetUpstream.empty()) {
+            foundTargetUpstreamOperator = true;
+            operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
+        }
+    }
+    if (foundTargetUpstreamOperator) {
+        operatorsBetween.insert(downstreamOperator);
+    }
     return operatorsBetween;
 }
 
