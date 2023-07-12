@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJPROBE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJPROBE_HPP_
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -21,10 +21,10 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class is the second and final phase for a nested loop join. We join the tuples via two nested loops and
  * calling the child with the newly created joined records.
  */
-class NLJSink : public Operator {
+class NLJProbe : public Operator {
   public:
     /**
-     * @brief Constructor for a NLJSink
+     * @brief Constructor for a NLJProbe
      * @param operatorHandlerIndex
      * @param leftSchema
      * @param rightSchema
@@ -32,14 +32,14 @@ class NLJSink : public Operator {
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      */
-    explicit NLJSink(const uint64_t operatorHandlerIndex,
-                     const SchemaPtr& leftSchema,
-                     const SchemaPtr& rightSchema,
-                     const SchemaPtr& joinSchema,
-                     const uint64_t leftEntrySize,
-                     const uint64_t rightEntrySize,
-                     const std::string& joinFieldNameLeft,
-                     const std::string& joinFieldNameRight);
+    explicit NLJProbe(const uint64_t operatorHandlerIndex,
+                      const SchemaPtr& leftSchema,
+                      const SchemaPtr& rightSchema,
+                      const SchemaPtr& joinSchema,
+                      const uint64_t leftEntrySize,
+                      const uint64_t rightEntrySize,
+                      const std::string& joinFieldNameLeft,
+                      const std::string& joinFieldNameRight);
 
     /**
      * @brief Receives a record buffer containing a window identifier for a window that is ready to be joined
@@ -61,4 +61,4 @@ class NLJSink : public Operator {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJPROBE_HPP_

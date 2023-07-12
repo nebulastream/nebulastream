@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
- * @brief This class is the parent class of the PhysicalNestedLoopJoinBuild and PhysicalNestedLoopJoinSink operators.
+ * @brief This class is the parent class of the PhysicalNestedLoopJoinBuild and PhysicalNestedLoopJoinProbeOperator operators.
  */
 class PhysicalNestedLoopJoinOperator {
   public:

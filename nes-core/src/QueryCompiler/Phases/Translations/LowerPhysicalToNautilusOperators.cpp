@@ -47,7 +47,7 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -64,7 +64,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
@@ -286,8 +286,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinSinkOperator>()) {
-        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinSinkOperator>();
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>()) {
+        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>();
 
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
@@ -295,7 +295,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto rightInputSchema = sinkOperator->getRightInputSchema();
 
         auto joinSinkNautilus =
-            std::make_shared<Runtime::Execution::Operators::NLJSink>(handlerIndex,
+            std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
                                                                      leftInputSchema,
                                                                      rightInputSchema,
                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),

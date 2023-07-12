@@ -12,12 +12,12 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalNestedLoopJoinSinkOperator::PhysicalNestedLoopJoinSinkOperator(
+PhysicalNestedLoopJoinProbeOperator::PhysicalNestedLoopJoinProbeOperator(
     OperatorId id,
     SchemaPtr leftSchema,
     SchemaPtr rightSchema,
@@ -29,19 +29,19 @@ PhysicalNestedLoopJoinSinkOperator::PhysicalNestedLoopJoinSinkOperator(
       PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)),
       joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
 
-std::string PhysicalNestedLoopJoinSinkOperator::toString() const { return "PhysicalNestedLoopJoinSinkOperator"; }
+std::string PhysicalNestedLoopJoinProbeOperator::toString() const { return "PhysicalNestedLoopJoinProbeOperator"; }
 
-OperatorNodePtr PhysicalNestedLoopJoinSinkOperator::copy() {
+OperatorNodePtr PhysicalNestedLoopJoinProbeOperator::copy() {
     return create(id, leftInputSchema, rightInputSchema, outputSchema, joinFieldNameLeft, joinFieldNameRight, operatorHandler);
 }
 
 PhysicalOperatorPtr
-PhysicalNestedLoopJoinSinkOperator::create(const SchemaPtr& leftSchema,
-                                           const SchemaPtr& rightSchema,
-                                           const SchemaPtr& outputSchema,
-                                           const std::string joinFieldNameLeft,
-                                           const std::string joinFieldNameRight,
-                                           const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
+PhysicalNestedLoopJoinProbeOperator::create(const SchemaPtr& leftSchema,
+                                            const SchemaPtr& rightSchema,
+                                            const SchemaPtr& outputSchema,
+                                            const std::string joinFieldNameLeft,
+                                            const std::string joinFieldNameRight,
+                                            const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
     return create(Util::getNextOperatorId(),
                   leftSchema,
                   rightSchema,
@@ -52,14 +52,14 @@ PhysicalNestedLoopJoinSinkOperator::create(const SchemaPtr& leftSchema,
 }
 
 PhysicalOperatorPtr
-PhysicalNestedLoopJoinSinkOperator::create(OperatorId id,
-                                           const SchemaPtr& leftSchema,
-                                           const SchemaPtr& rightSchema,
-                                           const SchemaPtr& outputSchema,
-                                           const std::string joinFieldNameLeft,
-                                           const std::string joinFieldNameRight,
-                                           const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
-    return std::make_shared<PhysicalNestedLoopJoinSinkOperator>(id,
+PhysicalNestedLoopJoinProbeOperator::create(OperatorId id,
+                                            const SchemaPtr& leftSchema,
+                                            const SchemaPtr& rightSchema,
+                                            const SchemaPtr& outputSchema,
+                                            const std::string joinFieldNameLeft,
+                                            const std::string joinFieldNameRight,
+                                            const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
+    return std::make_shared<PhysicalNestedLoopJoinProbeOperator>(id,
                                                                 leftSchema,
                                                                 rightSchema,
                                                                 outputSchema,
@@ -68,7 +68,7 @@ PhysicalNestedLoopJoinSinkOperator::create(OperatorId id,
                                                                 operatorHandler);
 }
 
-const std::string& PhysicalNestedLoopJoinSinkOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
-const std::string& PhysicalNestedLoopJoinSinkOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
+const std::string& PhysicalNestedLoopJoinProbeOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
+const std::string& PhysicalNestedLoopJoinProbeOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -17,7 +17,7 @@
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -65,7 +65,7 @@ uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
     return opHandler->getOperatorId();
 }
 
-void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     child->open(ctx, recordBuffer);
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -144,7 +144,7 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                            windowIdentifierMemRef);
 }
 
-NLJSink::NLJSink(const uint64_t operatorHandlerIndex,
+NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                  const SchemaPtr& leftSchema,
                  const SchemaPtr& rightSchema,
                  const SchemaPtr& joinSchema,

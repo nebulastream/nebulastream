@@ -26,7 +26,7 @@
 namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This operator handler stores multiple windows (NLJWindow) with each window containing the left and right stream tuples.
- * This class provides the two join phases (NLJBuild and NLJSink) with methods for performing a nested loop join.
+ * This class provides the two join phases (NLJBuild and NLJProbe) with methods for performing a nested loop join.
  */
 class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
