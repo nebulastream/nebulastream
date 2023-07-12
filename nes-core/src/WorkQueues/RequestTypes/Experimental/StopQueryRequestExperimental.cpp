@@ -35,7 +35,8 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId reque
                                                            const QueryId queryId,
                                                            const size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
-                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
+                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                           std::promise<StopQueryResponse> responsePromise)
     : AbstractRequest(requestId,
                       {
                           ResourceType::QueryCatalogService,
@@ -45,7 +46,8 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId reque
                           ResourceType::UdfCatalog,
                           ResourceType::SourceCatalog,
                       },
-                      maxRetries),
+                      maxRetries,
+                      std::move(responsePromise)),
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
@@ -53,12 +55,14 @@ StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId request
                                                          const QueryId queryId,
                                                          const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
-                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(requestId,
-                                                                                       queryId,
-                                                                                       maxRetries,
-                                                                                       std::move(workerRpcClient),
-                                                                                       std::move(coordinatorConfiguration)));
+                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                         std::promise<StopQueryResponse> responsePromise) {
+    return std::make_shared<StopQueryRequestExperimental>(requestId,
+                                                          queryId,
+                                                          maxRetries,
+                                                          std::move(workerRpcClient),
+                                                          std::move(coordinatorConfiguration),
+                                                          std::move(responsePromise));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
