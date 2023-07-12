@@ -304,13 +304,13 @@ class QueryPlan {
     QueryPlan();
 
     /**
-     * @brief
-     * @param downstreamOperators
-     * @param upstreamOperators
-     * @return
+     * @brief Find operators between source and target operators
+     * @param sourceOperator: the source operator
+     * @param targetOperators: the target operator
+     * @return empty or operators between source and target operators
      */
-    std::set<OperatorNodePtr> reachedUpstreamOperator(OperatorNodePtr downstreamOperators,
-                                                      const std::set<OperatorNodePtr>& upstreamOperators);
+    std::set<OperatorNodePtr> findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
+                                                                  const std::set<OperatorNodePtr>& targetOperators);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
