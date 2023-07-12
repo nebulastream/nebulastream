@@ -407,6 +407,9 @@ void TopologyManagerService::splitTopologyIntoZones() {
     auto zone2Leader = electLeaderInZone(workersInZone2);
     NES_DEBUG("Elected leader in zone 2 with workerId {}", zone2Leader->getId());
     healthCheckService->addWorkerAsZoneLeader(zone2Leader->getId());
+
+    // start coordinator health check
+    healthCheckService->startHealthCheck();
 }
 
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
