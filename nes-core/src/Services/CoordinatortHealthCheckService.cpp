@@ -41,6 +41,16 @@ void CoordinatorHealthCheckService::startHealthCheck() {
         while (isRunning) {
             for (auto leader : zoneLeaders) {
                 NES_DEBUG("CoordinatorHealthCheck will ping the leader with workerId {}", leader);
+                auto leaderWorker = nodeIdToTopologyNodeMap.find(leader);
+                auto leaderIpAddress = leaderWorker->getIpAddress();
+                auto leaderGrpcPort = leaderWorker->getGrpcPort();
+                std::string destAddress = leaderIpAddress + ":" + std::to_string(leaderGrpcPort);
+
+                auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
+                if (res) {
+                    NES_DEBUG("NesCoordinator::healthCheck: leader with workerId={} is alive", leader);
+                }
+
             }
 //            for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
 //                auto nodeIp = node.second->getIpAddress();
