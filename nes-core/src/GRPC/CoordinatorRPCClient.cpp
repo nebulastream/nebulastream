@@ -710,11 +710,11 @@ std::vector<std::string> CoordinatorRPCClient::getGeoNeighborsData(TopologyNodeI
     request.set_workerid(workerId);
 
     coordinatorStub->GetGeoNeighborsData(&context, request, &reply);
-    std::vector<std::string> childrenData;
-    for (auto childData : reply.geoneighborsdata()) {
-        childrenData.push_back(childData);
+    std::vector<std::string> geoNeightborsData;
+    for (auto geoNeighborData : reply.geoneighborsdata()) {
+        geoNeightborsData.push_back(geoNeighborData);
     }
-    return childrenData;
+    return geoNeightborsData;
 }
 
 }// namespace NES
