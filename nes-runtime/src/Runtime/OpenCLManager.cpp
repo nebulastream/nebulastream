@@ -22,6 +22,10 @@
 namespace NES::Runtime {
 
 #ifdef ENABLE_OPENCL
+// Shut up -Wweak-vtables warning. This exception type is only used internally during the construction of the OpenCLManager,
+// so we don't want to put it into a separate translation unit and header file.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wweak-vtables"
 class OpenCLInitializationException : public std::runtime_error {
   public:
     OpenCLInitializationException(const std::string& message, cl_int statusCode)
@@ -31,6 +35,7 @@ class OpenCLInitializationException : public std::runtime_error {
   private:
     cl_int statusCode;
 };
+#pragma clang diagnostic pop
 
 #define ASSERT_OPENCL_SUCCESS(status, message)                                                                                   \
     do {                                                                                                                         \
@@ -229,5 +234,9 @@ OpenCLManager::OpenCLManager() {
 // This will leave OpenCLManager::devices as an empty vector, indicating that there are no installed OpenCL devices.
 OpenCLManager::OpenCLManager() { NES_DEBUG("OpenCL support was disabled at build time"); }
 #endif// ENABLE_OPENCL
+
+const std::vector<OpenCLDeviceInfo>& OpenCLManager::getDevices() const {
+    return devices;
+}
 
 }// namespace NES::Runtime

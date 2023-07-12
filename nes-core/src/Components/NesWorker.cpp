@@ -32,6 +32,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryStatistics.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
@@ -302,6 +303,23 @@ bool NesWorker::stop(bool) {
     return true;
 }
 
+void serializeOpenCLDeviceInfo(const NES::Runtime::OpenCLDeviceInfo& deviceInfo,
+                               unsigned deviceIndex,
+                               ::OpenCLDeviceInfo* serializedDeviceInfo) {
+    serializedDeviceInfo->set_deviceid(deviceIndex);
+    serializedDeviceInfo->set_platformvendor(deviceInfo.platformVendor);
+    serializedDeviceInfo->set_platformname(deviceInfo.platformName);
+    serializedDeviceInfo->set_devicename(deviceInfo.deviceName);
+    serializedDeviceInfo->set_doublefpsupport(deviceInfo.doubleFPSupport);
+    serializedDeviceInfo->add_maxworkitems(deviceInfo.maxWorkItems[0]);
+    serializedDeviceInfo->add_maxworkitems(deviceInfo.maxWorkItems[1]);
+    serializedDeviceInfo->add_maxworkitems(deviceInfo.maxWorkItems[2]);
+    serializedDeviceInfo->set_deviceaddressbits(deviceInfo.deviceAddressBits);
+    serializedDeviceInfo->set_devicetype(deviceInfo.deviceType);
+    serializedDeviceInfo->set_deviceextensions(deviceInfo.deviceExtensions);
+    serializedDeviceInfo->set_availableprocessors(deviceInfo.availableProcessors);
+}
+
 bool NesWorker::connect() {
 
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
@@ -319,6 +337,9 @@ bool NesWorker::connect() {
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
+    for (auto i = 0u; i < nodeEngine->getOpenCLManager()->getDevices().size(); ++i) {
+        serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i], i, registrationRequest.add_opencldevices());
+    }
 
     if (locationProvider) {
         auto waypoint = registrationRequest.mutable_waypoint();
