@@ -71,46 +71,46 @@ void WorkerHealthCheckService::startHealthCheck() {
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
 
         setThreadName("nesHealth");
-        NES_DEBUG("NesWorker: start health checking on topological neighbors");
+        NES_DEBUG("NesWorker: start health checking on geographical neighbors");
         auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
         while (isRunning) {
-            NES_DEBUG("NesWorker::topological neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
+            NES_DEBUG("NesWorker::geographical neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
-            // get children data
-            auto childrenData = coordinatorRpcClient->getChildrenData(id);
-            for (auto data : childrenData) {
-                NES_DEBUG("child data: {}", data);
-                // Find the position of the first colon ':'
-                size_t colonPos = data.find(':');
-
-                // Extract the integer part before the colon
-                TopologyNodeId childWorkerId = std::stoi(data.substr(0, colonPos));
-                std::string destAddress = data.substr(colonPos + 1);
-
-                children.insert(childWorkerId, destAddress);
-            }
-
-            //usleep(1000000);
-
-            for (auto child : children.lock_table()) {
-                bool isChildAlive = workerRpcClient->checkHealth(child.second, healthServiceName);
-                if (isChildAlive) {
-                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is alive", child.first);
-                } else {
-                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is down", child.first);
-                    failedChildrenWorkers.insert(child.first);
-                }
-            }
-            if (!failedChildrenWorkers.empty()) {
-                NES_DEBUG("NesWorker::healthCheck: announcing failed children workers to coordinator");
-                bool success = coordinatorRpcClient->announceFailedWorkers(id, failedChildrenWorkers);
-                if (success) {
-                    for (auto failedChildrenWorkerId : failedChildrenWorkers) {
-                        children.erase(failedChildrenWorkerId);
-                    }
-                    failedChildrenWorkers.clear();
-                }
-            }
+//            // get children data
+//            auto childrenData = coordinatorRpcClient->getChildrenData(id);
+//            for (auto data : childrenData) {
+//                NES_DEBUG("child data: {}", data);
+//                // Find the position of the first colon ':'
+//                size_t colonPos = data.find(':');
+//
+//                // Extract the integer part before the colon
+//                TopologyNodeId childWorkerId = std::stoi(data.substr(0, colonPos));
+//                std::string destAddress = data.substr(colonPos + 1);
+//
+//                children.insert(childWorkerId, destAddress);
+//            }
+//
+//            //usleep(1000000);
+//
+//            for (auto child : children.lock_table()) {
+//                bool isChildAlive = workerRpcClient->checkHealth(child.second, healthServiceName);
+//                if (isChildAlive) {
+//                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is alive", child.first);
+//                } else {
+//                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is down", child.first);
+//                    failedChildrenWorkers.insert(child.first);
+//                }
+//            }
+//            if (!failedChildrenWorkers.empty()) {
+//                NES_DEBUG("NesWorker::healthCheck: announcing failed children workers to coordinator");
+//                bool success = coordinatorRpcClient->announceFailedWorkers(id, failedChildrenWorkers);
+//                if (success) {
+//                    for (auto failedChildrenWorkerId : failedChildrenWorkers) {
+//                        children.erase(failedChildrenWorkerId);
+//                    }
+//                    failedChildrenWorkers.clear();
+//                }
+//            }
 
             {
                 std::unique_lock<std::mutex> lk(cvMutex2);
