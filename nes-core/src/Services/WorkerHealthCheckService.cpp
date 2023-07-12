@@ -77,6 +77,7 @@ void WorkerHealthCheckService::startHealthCheck() {
             NES_DEBUG("NesWorker::geographical neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
             // get geo neighbors data
+            //coordinatorRpcClient->getNodeIdsInRange()
             auto geoNeighborsData = coordinatorRpcClient->getGeoNeighborsData(id);
             for (auto data : geoNeighborsData) {
                 NES_DEBUG("geo neighbor data: {}", data);

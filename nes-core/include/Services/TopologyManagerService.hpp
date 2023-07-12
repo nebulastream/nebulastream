@@ -23,6 +23,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <vector>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
@@ -189,6 +190,11 @@ class TopologyManagerService {
 
     bool isZoneLeader(TopologyNodeId workerId);
 
+    void addEntryInLeaderToZoneMap(TopologyNodeId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation centerZone);
+
+    NES::Spatial::DataTypes::Experimental::GeoLocation findZoneByLeader(TopologyNodeId workerId);
+
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
@@ -197,6 +203,7 @@ class TopologyManagerService {
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     std::set<TopologyNodeId> announcedFailedWorkers;
     std::set<TopologyNodeId> zoneLeaders;
+    cuckoohash_map<TopologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation> leaderToZoneMap;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id

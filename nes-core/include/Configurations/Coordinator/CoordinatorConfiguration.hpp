@@ -118,7 +118,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
+    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 10, "Number of seconds to wait between health checks"};
 
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server
