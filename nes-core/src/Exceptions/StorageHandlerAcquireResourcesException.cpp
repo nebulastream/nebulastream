@@ -19,8 +19,6 @@ namespace NES::Exceptions {
  * the resource being locked already. Trying to lock a resource which has been locked before will instead raise a ResourceLockingException
  * @param message a message indicating what went wrong
  */
-StorageHandlerAcquireResourcesException::StorageHandlerAcquireResourcesException(std::string message)
-    : message(std::move(message)) {}
-
-const char* StorageHandlerAcquireResourcesException::what() const noexcept { return message.c_str(); }
+StorageHandlerAcquireResourcesException::StorageHandlerAcquireResourcesException(const std::string& message)
+    : RequestExecutionException(message) {}
 }// namespace NES
