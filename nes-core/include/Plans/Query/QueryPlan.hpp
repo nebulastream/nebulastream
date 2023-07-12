@@ -309,7 +309,7 @@ class QueryPlan {
      * @param upstreamOperators
      * @return
      */
-    std::set<OperatorNodePtr> reachedUpstreamOperator(const OperatorNodePtr& downstreamOperators,
+    std::set<OperatorNodePtr> reachedUpstreamOperator(OperatorNodePtr downstreamOperators,
                                                       const std::set<OperatorNodePtr>& upstreamOperators);
 
     std::vector<OperatorNodePtr> rootOperators{};
