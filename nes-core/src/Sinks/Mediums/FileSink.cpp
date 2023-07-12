@@ -18,6 +18,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <utility>
 
@@ -116,13 +117,25 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
     for (auto& buffer : dataBuffers) {
-        NES_TRACE("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
+        NES_INFO("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
+        std::string str;
+        str.assign((char*) buffer.getBuffer(), buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::string repReg = std::to_string(timestamp);
+        repReg = "," + repReg + "\n";
+        str = std::regex_replace(str, std::regex(R"(\n)"), repReg);
+        auto pos = str.find_last_of("\n");
+        if ( pos != std::string::npos)
+            str = str.substr(0, pos) + "\n";
+        NES_INFO("FileSink::getData: received following content: \n" << str);
+
         if (sinkFormat->getSinkFormat() == NES_FORMAT) {
-            outputFile.write((char*) buffer.getBuffer(),
-                             buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+            //outputFile.write((char*) buffer.getBuffer(),
+            //                buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+            //outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
+        outputFile.write(str.c_str(), str.length());
     }
     outputFile.flush();
     updateWatermarkCallback(inputBuffer);
