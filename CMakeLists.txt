@@ -694,17 +694,6 @@ if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
 endif (NES_BUILD_BENCHMARKS)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
-    if (NES_USE_CCACHE)
-        # Need to set these to enable interplay between ccache and precompiled headers
-        # https://ccache.dev/manual/4.8.html#_precompiled_headers
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpch-preprocess -fno-pch-timestamp")
-        set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros")
-    else ()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpch-preprocess")
-    endif ()
-endif ()
 
 # Documentation
 add_subdirectory(cmake/docs)
