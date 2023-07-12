@@ -19,6 +19,7 @@
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <memory>
 #include <vector>
+#include <future>
 
 namespace NES {
 using Exceptions::RequestExecutionException;
@@ -27,10 +28,16 @@ namespace Configurations {
 class OptimizerConfiguration;
 }
 
+//the base class for the responses to be given to the creator of the request
+struct AbstractRequestResponse {};
+
+//constrain template parameter to be a subclass of AbastractRequestResponse
+template <typename T>
+concept ConceptResponse = std::is_base_of<AbstractRequestResponse, T>::value;
+
 class StorageHandler;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
-class AbstractRequest;
 
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
@@ -50,7 +57,7 @@ class AbstractRequest;
  *      }
  * }
  */
-
+template<ConceptResponse ResponseType>
 class AbstractRequest {
   public:
     /**
@@ -58,8 +65,9 @@ class AbstractRequest {
      * @param requestId: the id of this request
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
+     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
-    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
+    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::promise<ResponseType> responsePromise);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -131,11 +139,54 @@ class AbstractRequest {
 
   protected:
     RequestId requestId;
+    std::promise<ResponseType> responsePromise;
 
   private:
     uint8_t maxRetries;
     uint8_t actualRetries;
     std::vector<ResourceType> requiredResources;
 };
+
+template<ConceptResponse ResponseType>
+AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
+                                               const std::vector<ResourceType>& requiredResources,
+                                               const uint8_t maxRetries,
+                                               std::promise<ResponseType> responsePromise)
+    : requestId(requestId), responsePromise(std::move(responsePromise)),
+      maxRetries(maxRetries),
+      actualRetries(0),
+      requiredResources(requiredResources) {}
+
+template<ConceptResponse ResponseType>
+void AbstractRequest<ResponseType>::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
+    //error handling to be performed before rolling back
+    preRollbackHandle(ex, storageHandle);
+
+    //roll back the changes made by the failed request
+    rollBack(ex, storageHandle);
+
+    //error handling to be performed after rolling back
+    postRollbackHandle(ex, storageHandle);
+}
+
+template<ConceptResponse ResponseType>
+bool AbstractRequest<ResponseType>::retry() { return actualRetries++ < maxRetries; }
+
+template<ConceptResponse ResponseType>
+void AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
+    //acquire locks and perform other tasks to prepare for execution
+    preExecution(storageHandle);
+
+    //execute the request logic
+    executeRequestLogic(storageHandle);
+
+    //release locks
+    postExecution(storageHandle);
+}
+
+template<ConceptResponse ResponseType>
+void AbstractRequest<ResponseType>::preExecution(StorageHandler& storageHandle) {
+    storageHandle.acquireResources(requestId, requiredResources);
+}
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_

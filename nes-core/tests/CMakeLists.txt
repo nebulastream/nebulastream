@@ -510,6 +510,9 @@ add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageHandles/UnlockDeleterTe
 ### Fail Query Request Test ###
 add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/FailQueryRequestTests.cpp")
 
+### Abstract Request Test ###
+add_nes_unit_test(abstract-request-test "UnitTests/WorkQueues/AbstractRequestTest.cpp")
+
 ### Stop Query Request Test ###
 add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTest.cpp")
 
