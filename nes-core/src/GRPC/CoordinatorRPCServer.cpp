@@ -473,22 +473,28 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
 Status CoordinatorRPCServer::GetGeoNeighborsData(ServerContext*,
                                              const GetGeoNeighborsDataRequest* request,
                                              GetGeoNeighborsDataReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
+    NES_DEBUG("CoordinatorRPCServer::GetGeoNeighborData: request ={}", request->DebugString());
     auto workerId = request->workerid();
-    auto worker = topologyManagerService->findNodeWithId(workerId);
-    if (worker) {
-        auto children = worker->getChildren();
-        for (auto child : children) {
-            int i = 0;
-            uint64_t childWorkerId = child->as<TopologyNode>()->getId();
-            std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
-            auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
-            std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
-            reply->add_childrendata(childData);
-            //reply->set_childrendata(i, childData);
-            i++;
+    if (topologyManagerService->isZoneLeader(workerId)) {
+        NES_DEBUG("CoordinatorRPCServer::GetGeoNeighborData: worker with workerId={} is leader, will send geo neighbors data", workerId);
+        auto worker = topologyManagerService->findNodeWithId(workerId);
+        if (worker) {
+            auto children = worker->getChildren();
+            for (auto child : children) {
+                int i = 0;
+                uint64_t childWorkerId = child->as<TopologyNode>()->getId();
+                std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
+                auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
+                std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
+                reply->add_childrendata(childData);
+                //reply->set_childrendata(i, childData);
+                i++;
+            }
+            return Status::OK;
         }
-        return Status::OK;
+    } else {
+        NES_DEBUG("CoordinatorRPCServer::GetGeoNeighborData: worker with workerId={} is not leader, will not send geo neighbors data", workerId);
     }
+
     return Status::CANCELLED;
 }

@@ -185,6 +185,10 @@ class TopologyManagerService {
 
     TopologyNodePtr electLeaderInZone(std::vector<TopologyNodePtr> workersInZone);
 
+    void addZoneLeader(TopologyNodeId zoneLeaderWorkerId);
+
+    bool isZoneLeader(TopologyNodeId workerId);
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
@@ -192,6 +196,7 @@ class TopologyManagerService {
     HealthCheckServicePtr healthCheckService;
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     std::set<TopologyNodeId> announcedFailedWorkers;
+    std::set<TopologyNodeId> zoneLeaders;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
