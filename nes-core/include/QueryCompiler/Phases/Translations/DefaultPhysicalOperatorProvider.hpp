@@ -72,7 +72,7 @@ struct StreamJoinConfigs {
                       const uint64_t windowSize,
                       const std::string& timeStampFieldNameLeft,
                       const std::string& timeStampFieldNameRight,
-                      const QueryCompilerOptions::StreamJoinStrategy& joinStrategy)
+                      const QueryCompilation::StreamJoinStrategy& joinStrategy)
         : joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowSize(windowSize),
           timeStampFieldNameLeft(timeStampFieldNameLeft), timeStampFieldNameRight(timeStampFieldNameRight),
           joinStrategy(joinStrategy) {}
@@ -82,7 +82,7 @@ struct StreamJoinConfigs {
     const uint64_t windowSize;
     const std::string& timeStampFieldNameLeft;
     const std::string& timeStampFieldNameRight;
-    const QueryCompilerOptions::StreamJoinStrategy& joinStrategy;
+    const QueryCompilation::StreamJoinStrategy& joinStrategy;
 };
 
 /**

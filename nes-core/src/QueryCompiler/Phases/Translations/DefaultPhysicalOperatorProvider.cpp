@@ -346,11 +346,11 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
                                              timeStampFieldNameRight, joinStrategy);
 
 
-    if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL
-            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
-            || joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
+            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         lowerStreamingHashJoin(streamJoinOperatorNodes, streamJoinConfig);
-    } else if (joinStrategy == QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN) {
+    } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
         lowerStreamingNestedLoopJoin(streamJoinOperatorNodes, streamJoinConfig);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -363,9 +363,11 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
     const auto joinOperatorHandler = Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
-                                                                           streamJoinConfig.windowSize,
                                                                            joinOperator->getLeftInputSchema()->getSize(),
-                                                                           joinOperator->getRightInputSchema()->getSize());
+                                                                           joinOperator->getRightInputSchema()->getSize(),
+                                                                           Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                                           Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                                           streamJoinConfig.windowSize);
 
 
     auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema, JoinBuildSideType buildSideType,
@@ -406,9 +408,9 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
 
     // TODO we should pass this not as an enum
     StreamJoinStrategy runtimeJoinStrategy;
-    if (streamJoinConfig.joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+    if (streamJoinConfig.joinStrategy == StreamJoinStrategy::HASH_JOIN_LOCAL) {
         runtimeJoinStrategy = StreamJoinStrategy::HASH_JOIN_LOCAL;
-    } else if (streamJoinConfig.joinStrategy == QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+    } else if (streamJoinConfig.joinStrategy == StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
         runtimeJoinStrategy = StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
     } else {
         runtimeJoinStrategy = StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
