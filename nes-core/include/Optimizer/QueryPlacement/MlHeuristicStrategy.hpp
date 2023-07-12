@@ -78,7 +78,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(QueryId queryId,
-                                 const LogicalOperatorNodePtr& operatorNode,
+                                 const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
