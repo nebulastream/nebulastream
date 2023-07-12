@@ -381,6 +381,17 @@ void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId
 
 void TopologyManagerService::splitTopologyIntoZones() {
     NES_DEBUG("TopologyManagerService::splitting topology into geographical zones");
+    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone1(13.001, 13.001);
+    auto nodesInZone1 = getNodesIdsInRange(centerZone1, 10);
+    for (auto nodeInZone1 : nodesInZone1) {
+        NES_DEBUG("Found node in zone1, workerId {}", nodeInZone1.first);
+    }
+
+    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone2(33.001, 33.001);
+    auto nodesInZone2 = getNodesIdsInRange(centerZone2, 10);
+    for (auto nodeInZone2 : nodesInZone2) {
+        NES_DEBUG("Found node in zone2, workerId {}", nodeInZone2.first);
+    }
 }
 
 }// namespace NES
