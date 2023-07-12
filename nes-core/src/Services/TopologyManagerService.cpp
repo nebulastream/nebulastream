@@ -432,6 +432,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     healthCheckService->startHealthCheck();
 }
 
+// TODO: implement more methods for leader election
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
     return workersInZone.at(0);
 }

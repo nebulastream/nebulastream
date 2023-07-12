@@ -49,7 +49,8 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_DEBUG("NesCoordinator::healthCheck: leader with workerId={} is alive", leader);
-                }
+                } //else
+                // TODO: implement election of a new leader
 
             }
 //            for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
