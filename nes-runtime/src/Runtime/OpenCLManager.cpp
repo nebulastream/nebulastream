@@ -18,6 +18,9 @@
 #include <string>
 #include <utility>
 
+namespace NES::Runtime {
+
+#ifdef ENABLE_OPENCL
 class OpenCLInitializationException : public std::runtime_error {
   public:
     OpenCLInitializationException(const std::string& message, cl_int statusCode)
@@ -34,8 +37,6 @@ class OpenCLInitializationException : public std::runtime_error {
             throw OpenCLInitializationException(message, status);                                                                \
         }                                                                                                                        \
     } while (false)
-
-namespace NES::Runtime {
 
 // Helper method to retrieve the installed OpenCL platforms
 std::vector<cl_platform_id> retrieveOpenCLPlatforms() {
@@ -196,5 +197,12 @@ OpenCLManager::OpenCLManager() {
         NES_ERROR("{}: {}", e.what(), e.status());
     }
 }
+#else  // ENABLE_OPENCL
+// Define an (almost) empty constructor for OpenCLManager.
+// This will leave OpenCLManager::devices as an empty vector, indicating that there are no installed OpenCL devices.
+OpenCLManager::OpenCLManager() {
+    NES_DEBUG("OpenCL support was disabled at build time");
+}
+#endif // ENABLE_OPENCL
 
 }// namespace NES::Runtime
