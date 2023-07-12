@@ -162,4 +162,3 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_
-

@@ -80,7 +80,7 @@ TEST_F(Fixed2DArrayTest, insertCustomClass) {
     for (auto row = 0_u64; row < numRows; row = row + 1) {
         for (auto col = 0_u64; col < numCols; col = col + 1) {
             auto cellCustomClass = static_cast<CustomClass*>(fixed2DArrayRef[row][col].getValue().getValue());
-            cellCustomClass->id = col + row  * numCols;
+            cellCustomClass->id = col + row * numCols;
             cellCustomClass->val1 = 42;
             cellCustomClass->val2 = 42.0 / col;
         }

@@ -138,8 +138,11 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
         joinState->windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, joinState->windowReference);
-        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}", joinState->windowStart->toString(),
-                   joinState->windowEnd->toString(), tsValue->toString(), isLeftSide);
+        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}",
+                  joinState->windowStart->toString(),
+                  joinState->windowEnd->toString(),
+                  tsValue->toString(),
+                  isLeftSide);
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

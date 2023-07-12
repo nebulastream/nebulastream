@@ -80,8 +80,6 @@ void PagedVector::appendAllPages(const PagedVector& other) {
     totalNumberOfEntries += other.totalNumberOfEntries;
 }
 
-uint64_t PagedVector::getPageSize() const {
-    return pageSize;
-}
+uint64_t PagedVector::getPageSize() const { return pageSize; }
 
 }// namespace NES::Nautilus::Interface

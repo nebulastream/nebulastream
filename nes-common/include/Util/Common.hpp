@@ -26,7 +26,7 @@ enum class StreamJoinStrategy : uint8_t {
     HASH_JOIN_GLOBAL_LOCK_FREE,
     NESTED_LOOP_JOIN
 };
-} // namespace  NES::QueryCompilation::QueryCompilerOptions
+}// namespace NES::QueryCompilation
 
 namespace NES::Util {
 namespace detail {

@@ -18,8 +18,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class TimeFunction;
@@ -38,9 +38,10 @@ class NLJBuild : public ExecutableOperator {
      */
     class LocalNestedLoopJoinState : public Operators::OperatorState {
       public:
-        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler, const Value<MemRef>& windowReference,
+        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
+                                 const Value<MemRef>& windowReference,
                                  const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
-            : joinOperatorHandler(operatorHandler),  windowReference(windowReference), pagedVectorRef(pagedVectorRef),
+            : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(pagedVectorRef),
               windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> windowReference;
@@ -48,7 +49,6 @@ class NLJBuild : public ExecutableOperator {
         Value<UInt64> windowStart;
         Value<UInt64> windowEnd;
     };
-
 
     /**
      * @brief Constructor for a NLJBuild

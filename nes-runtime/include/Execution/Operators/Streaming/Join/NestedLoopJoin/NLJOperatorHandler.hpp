@@ -15,11 +15,11 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
 
 #include <API/Schema.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <list>
 #include <optional>
 
@@ -32,7 +32,6 @@ class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 class NLJOperatorHandler : public StreamJoinOperatorHandler {
   public:
-
     /**
      * @brief Constructor for a NLJOperatorHandler
      * @param origins

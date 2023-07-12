@@ -45,8 +45,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #ifdef TFDEF
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #endif//TFDEF
@@ -778,9 +778,8 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         // initiate maxWatermark variable
         // auto maxWatermark = 0;
-        auto maxWatermarkInitStatement =
-            VarDeclStatement(maxWatermarkVariableDeclaration)
-                .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
+        auto maxWatermarkInitStatement = VarDeclStatement(maxWatermarkVariableDeclaration)
+                                             .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
         context->code->variableInitStmts.push_back(maxWatermarkInitStatement.copy());
 
         NES_ASSERT(!context->code->structDeclarationInputTuples.empty(), "invalid size of struct input tuples");
@@ -2307,8 +2306,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     }
 
     auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
-    auto debState =
-        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
+    auto debState = VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
     context->code->variableInitStmts.push_back(debState.copy());
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
@@ -3561,8 +3559,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     }
 
     auto debugDecl = VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), context->pipelineName);
-    auto debState =
-        VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
+    auto debState = VarDeclStatement(debugDecl).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(0_u64))));
     context->code->variableInitStmts.push_back(debState.copy());
 
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");

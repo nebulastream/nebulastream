@@ -32,7 +32,8 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
                                 windowSize,
                                 QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
-                                sizeOfTupleInByteRight), leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
+                                sizeOfTupleInByteRight),
+      leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -47,7 +48,6 @@ uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier
         } else {
             return nljWindow->getNumberOfTuplesRight();
         }
-
     }
 
     return -1;
@@ -61,8 +61,8 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
         auto nljWindow = getWindowByWindowIdentifier(windowIdentifier);
         if (!nljWindow.has_value()) {
-            NES_THROW_RUNTIME_ERROR("Could not find window for " << std::to_string(windowIdentifier) <<
-                                    ". Therefore, the window will not be triggered!!!");
+            NES_THROW_RUNTIME_ERROR("Could not find window for " << std::to_string(windowIdentifier)
+                                                                 << ". Therefore, the window will not be triggered!!!");
             continue;
         }
         std::dynamic_pointer_cast<NLJWindow>(nljWindow.value())->combinePagedVectors();
@@ -97,13 +97,9 @@ StreamWindow* NLJOperatorHandler::getCurrentWindowOrCreate() {
     return windows.back().get();
 }
 
-uint64_t NLJOperatorHandler::getLeftPageSize() const {
-    return leftPageSize;
-}
+uint64_t NLJOperatorHandler::getLeftPageSize() const { return leftPageSize; }
 
-uint64_t NLJOperatorHandler::getRightPageSize() const {
-    return rightPageSize;
-}
+uint64_t NLJOperatorHandler::getRightPageSize() const { return rightPageSize; }
 
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");

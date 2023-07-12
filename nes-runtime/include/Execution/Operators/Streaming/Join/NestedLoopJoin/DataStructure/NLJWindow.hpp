@@ -41,8 +41,13 @@ class NLJWindow : public StreamWindow {
      * @param leftPageSize: Size of a single page for the left paged vectors
      * @param rightPageSize: Size of a singe page for the right paged vectors
      */
-    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd, uint64_t numWorkerThreads, uint64_t leftEntrySize,
-                       uint64_t leftPageSize, uint64_t rightEntrySize, uint64_t rightPageSize);
+    explicit NLJWindow(uint64_t windowStart,
+                       uint64_t windowEnd,
+                       uint64_t numWorkerThreads,
+                       uint64_t leftEntrySize,
+                       uint64_t leftPageSize,
+                       uint64_t rightEntrySize,
+                       uint64_t rightPageSize);
 
     ~NLJWindow() = default;
 

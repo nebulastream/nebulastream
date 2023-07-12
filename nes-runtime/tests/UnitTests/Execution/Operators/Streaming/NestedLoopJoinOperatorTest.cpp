@@ -18,6 +18,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -32,7 +33,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <random>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -159,7 +159,6 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         nljBuildLeft.open(executionContext, recordBuffer);
         nljBuildRight.open(executionContext, recordBuffer);
 
-
         uint64_t maxTimestamp = 2;
         for (auto& leftRecord : allLeftRecords) {
             maxTimestamp = std::max(leftRecord.read(timestampLeft).getValue().staticCast<UInt64>().getValue(), maxTimestamp);
@@ -186,10 +185,12 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                       expectedNumberOfTuplesInWindowLeft);
             ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),
                       expectedNumberOfTuplesInWindowRight);
-            auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByWindowIdentifier(windowIdentifier).value());
+            auto nljWindow =
+                std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByWindowIdentifier(windowIdentifier).value());
             Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
 
-            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+            auto leftPagedVectorRef =
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
             auto windowStartPos = windowIdentifier - windowSize;
             auto windowEndPosLeft = windowStartPos + expectedNumberOfTuplesInWindowLeft;
@@ -207,7 +208,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
             posInWindow = 0;
             auto windowEndPosRight = windowStartPos + expectedNumberOfTuplesInWindowRight;
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+            auto rightPagedVectorRef =
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
 
             for (auto pos = windowStartPos; pos < windowEndPosRight; ++pos, ++posInWindow) {
@@ -237,10 +239,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, /*isLeftSide*/ false);
         auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
-        auto memoryProviderLeft =
-            MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
-        auto memoryProviderRight =
-            MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
+        auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
+        auto memoryProviderRight = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
 
         uint64_t maxTimestamp = 0Ul;
         Value<UInt64> zeroVal(0_u64);
@@ -249,7 +249,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
-            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
+            auto leftPagedVectorRef =
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
 
             auto memRefToRecord = leftPagedVector.allocateEntry();
@@ -261,7 +262,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByTimestampOrCreateIt(timestamp));
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
+            auto rightPagedVectorRef =
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
 
             auto memRefToRecord = rightPagedVector.allocateEntry();
@@ -350,12 +352,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
     auto numberOfRecordsRight = 1;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
 
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
@@ -401,12 +399,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     windowSize = 2000;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
 
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
@@ -451,12 +445,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     windowSize = 50;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldRight);
 
@@ -501,12 +491,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneWindow) {
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                         leftSchema,
                                                         rightSchema,
@@ -542,12 +528,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                         leftSchema,
                                                         rightSchema,

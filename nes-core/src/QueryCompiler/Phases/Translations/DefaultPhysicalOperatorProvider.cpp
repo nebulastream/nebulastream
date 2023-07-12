@@ -11,9 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Common.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
@@ -83,6 +80,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>

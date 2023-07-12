@@ -23,8 +23,8 @@
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
-#include <Util/ThreadBarrier.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/ThreadBarrier.hpp>
 #include <filesystem>
 #include <fstream>
 #include <future>
