@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/AccessNonLockedResourceException.hpp>
 #include <Exceptions/ResourceLockingException.hpp>
 #include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
-#include <Exceptions/AccessNonLockedResourceException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <utility>
 
 namespace NES {
@@ -29,7 +29,9 @@ TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(GlobalExecutionPlan
                                                              Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
-      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
+      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)), globalExecutionPlanHolder(INVALID_REQUEST_ID),
+      topologyHolder(INVALID_REQUEST_ID), queryCatalogServiceHolder(INVALID_REQUEST_ID), globalQueryPlanHolder(0),
+      sourceCatalogHolder(0), udfCatalogHolder(0) {}
 
 void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId,
                                                      const std::vector<ResourceType>& requiredResources) {
@@ -84,42 +86,48 @@ void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType
 
 GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(const RequestId requestId) {
     if (globalExecutionPlanHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::GlobalExecutionPlan);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::GlobalExecutionPlan);
     }
     return globalExecutionPlan;
 }
 
 TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(const RequestId requestId) {
     if (topologyHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::Topology);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::Topology);
     }
     return topology;
 }
 
 QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle(const RequestId requestId) {
     if (queryCatalogServiceHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::QueryCatalogService);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::QueryCatalogService);
     }
     return queryCatalogService;
 }
 
 GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(const RequestId requestId) {
     if (globalQueryPlanHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::GlobalQueryPlan);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::GlobalQueryPlan);
     }
     return globalQueryPlan;
 }
 
 SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const RequestId requestId) {
     if (sourceCatalogHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::SourceCatalog);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::SourceCatalog);
     }
     return sourceCatalog;
 }
 
 UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const RequestId requestId) {
     if (udfCatalogHolder != requestId) {
-        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked", ResourceType::UdfCatalog);
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::UdfCatalog);
     }
     return udfCatalog;
 }
