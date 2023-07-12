@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <regex>
 
 namespace NES::Runtime {
 
@@ -110,12 +111,38 @@ std::string retrieveOpenCLDeviceInfo<char[], std::string>(const cl_device_id dev
     return result;
 }
 
-// Special function to retrieve information about support for double-precision floating point.
+// Special function to retrieve information about support for double-precision floating point operations.
 bool retrieveOpenCLDoubleFPSupport(const cl_device_id device) {
+    // From https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetDeviceInfo.html
+    // Double precision is an optional feature so the mandated minimum double precision floating-point capability is 0.
+    // If double precision is supported by the device, then the minimum double precision floating-point capability for OpenCL 2.0
+    // or newer devices is:
+    //   CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN | CL_FP_DENORM.
+    // or for OpenCL 1.0, OpenCL 1.1 or OpenCL 1.2 devices:
+    //   CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM.
     auto deviceFpConfig = retrieveOpenCLDeviceInfo<cl_device_fp_config, cl_device_fp_config>(device,
                                                                                              CL_DEVICE_DOUBLE_FP_CONFIG,
                                                                                              "CL_DEVICE_DOUBLE_FP_CONFIG");
-    return deviceFpConfig > 0;// TODO How to evaluate this bitfield?
+    auto deviceVersion = retrieveOpenCLDeviceInfo<char[], std::string>(device, CL_DEVICE_VERSION, "CL_DEVICE_VERSION");
+    // From https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetDeviceInfo.html
+    // The version string has the following format:
+    //   OpenCL<space><major_version.minor_version><space><vendor-specific information>
+    cl_device_fp_config expectedBits;
+    std::smatch regexMatch;
+    if (std::regex_match(deviceVersion, regexMatch, std::regex("OpenCL (.*)\\.(.*) .*")) && regexMatch.size() == 3) {
+        auto major = std::stoi(regexMatch[1]);
+        auto minor = std::stoi(regexMatch[2]);
+        if (major == 1 && (minor == 0 || minor == 1 || minor == 2)) {
+            expectedBits = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM;
+        } else if (major >= 2) {
+            expectedBits = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN | CL_FP_DENORM;
+        } else {
+            throw OpenCLInitializationException("Unknown OpenCL device version: " + deviceVersion, 0);
+        }
+    } else {
+        throw OpenCLInitializationException("Could not parse OpenCL device version: " + deviceVersion, 0);
+    }
+    return (deviceFpConfig & expectedBits) == expectedBits;
 }
 
 // Special function to retrieve information about the maximum work group size.
@@ -125,7 +152,7 @@ std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id device) {
                                                                   CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
                                                                   "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS");
     if (dimensions != 3) {
-        throw OpenCLInitializationException("Only three work items are supported", dimensions);
+        throw OpenCLInitializationException("Only three work item dimensions are supported", dimensions);
     }
     std::array<size_t, 3> maxWorkItems;
     cl_uint status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(maxWorkItems), maxWorkItems.data(), nullptr);
@@ -134,14 +161,13 @@ std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id device) {
 }
 
 // Special function to retrieve information about the device type.
-// TODO Why not just return the bits instead of strings?
 std::string retrieveOpenCLDeviceType(const cl_device_id device) {
     auto deviceType = retrieveOpenCLDeviceInfo<cl_device_type, cl_device_type>(device, CL_DEVICE_TYPE, "CL_DEVICE_TYPE");
     switch (deviceType) {
-        case CL_DEVICE_TYPE_CPU: return "CL_DEVICE_TYPE_CPU"; break;
-        case CL_DEVICE_TYPE_GPU: return "CL_DEVICE_TYPE_GPU"; break;
-        case CL_DEVICE_TYPE_ACCELERATOR: return "CL_DEVICE_TYPE_ACCELERATOR"; break;
-        case CL_DEVICE_TYPE_CUSTOM: return "CL_DEVICE_TYPE_CUSTOM"; break;
+        case CL_DEVICE_TYPE_CPU: return "CL_DEVICE_TYPE_CPU";
+        case CL_DEVICE_TYPE_GPU: return "CL_DEVICE_TYPE_GPU";
+        case CL_DEVICE_TYPE_ACCELERATOR: return "CL_DEVICE_TYPE_ACCELERATOR";
+        case CL_DEVICE_TYPE_CUSTOM: return "CL_DEVICE_TYPE_CUSTOM";
         default: throw OpenCLInitializationException("Unknown device type", deviceType);
     }
 }
