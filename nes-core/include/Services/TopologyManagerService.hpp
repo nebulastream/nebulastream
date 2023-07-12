@@ -183,6 +183,8 @@ class TopologyManagerService {
 
     void splitTopologyIntoZones();
 
+    TopologyNodePtr electLeaderInZone(std::vector<TopologyNodePtr> workersInZone);
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
