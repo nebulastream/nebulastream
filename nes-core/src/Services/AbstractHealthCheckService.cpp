@@ -98,4 +98,9 @@ TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(TopologyNodeId w
     return nullptr;
 }
 
+void AbstractHealthCheckService::addWorkerAsZoneLeader(TopologyNodeId zoneLeaderWorkerId) {
+    NES_DEBUG("HealthCheckService: adding worker with workerId {} as zone leader", zoneLeaderWorkerId);
+    zoneLeaders.insert(zoneLeaderWorkerId);
+}
+
 }// namespace NES
