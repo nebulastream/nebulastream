@@ -30,6 +30,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   software-properties-common \
   openjdk-17-jdk \
   ccache \
+  opencl-headers \
+  ocl-icd-opencl-dev \
   && apt-get clean -qq && pip install lcov_cobertura
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
