@@ -78,10 +78,12 @@ service CoordinatorRPCService {
 
 message GetGeoNeighborsDataRequest {
 	uint64 workerId = 1;
+	NES.Spatial.Protobuf.GeoLocation geoLocation = 2;
+    double radius = 3;
 }
 
 message GetGeoNeighborsDataReply {
-	repeated string childrenData = 1;
+	repeated string geoNeighborsData = 1;
 }
 
 message AnnounceFailedWorkersRequest {

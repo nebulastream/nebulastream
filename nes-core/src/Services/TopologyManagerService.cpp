@@ -387,6 +387,14 @@ bool TopologyManagerService::isZoneLeader(TopologyNodeId workerId) {
     return zoneLeaders.find(workerId) != zoneLeaders.end();
 }
 
+void TopologyManagerService::addEntryInLeaderToZoneMap(TopologyNodeId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation centerZone) {
+    leaderToZoneMap.insert(workerId, centerZone);
+}
+
+NES::Spatial::DataTypes::Experimental::GeoLocation TopologyManagerService::findZoneByLeader(TopologyNodeId workerId){
+    return leaderToZoneMap.find(workerId);
+}
+
 void TopologyManagerService::splitTopologyIntoZones() {
     NES_DEBUG("TopologyManagerService::splitting topology into geographical zones");
 
@@ -401,6 +409,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     }
     auto zone1Leader = electLeaderInZone(workersInZone1);
     NES_DEBUG("Elected leader in zone 1 with workerId {}", zone1Leader->getId());
+    addEntryInLeaderToZoneMap(zone1Leader->getId(), centerZone1);
     healthCheckService->addWorkerAsZoneLeader(zone1Leader->getId());
     addZoneLeader(zone1Leader->getId());
 
@@ -415,6 +424,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     }
     auto zone2Leader = electLeaderInZone(workersInZone2);
     NES_DEBUG("Elected leader in zone 2 with workerId {}", zone2Leader->getId());
+    addEntryInLeaderToZoneMap(zone2Leader->getId(), centerZone2);
     healthCheckService->addWorkerAsZoneLeader(zone2Leader->getId());
     addZoneLeader(zone2Leader->getId());
 

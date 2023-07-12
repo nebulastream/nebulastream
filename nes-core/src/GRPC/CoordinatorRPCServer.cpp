@@ -475,19 +475,27 @@ Status CoordinatorRPCServer::GetGeoNeighborsData(ServerContext*,
                                              GetGeoNeighborsDataReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::GetGeoNeighborData: request ={}", request->DebugString());
     auto workerId = request->workerid();
+
     if (topologyManagerService->isZoneLeader(workerId)) {
         NES_DEBUG("CoordinatorRPCServer::GetGeoNeighborData: worker with workerId={} is leader, will send geo neighbors data", workerId);
         auto worker = topologyManagerService->findNodeWithId(workerId);
         if (worker) {
-            auto children = worker->getChildren();
-            for (auto child : children) {
+            auto zone = topologyManagerService->findZoneByLeader(worker->getId());
+
+            std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> geoNeighbors =
+                topologyManagerService->getNodesIdsInRange(zone, 10);
+
+            //auto children = worker->getChildren();
+            for (auto geoNeighborEntry : geoNeighbors) {
+
+                auto geoNeighbor = topologyManagerService->findNodeWithId(geoNeighborEntry.first);
+
                 int i = 0;
-                uint64_t childWorkerId = child->as<TopologyNode>()->getId();
-                std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
-                auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
-                std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
-                reply->add_childrendata(childData);
-                //reply->set_childrendata(i, childData);
+                uint64_t geoNeighborWorkerId = geoNeighbor->getId();
+                std::string geoNeighborIpAddress = geoNeighbor->getIpAddress();
+                auto geoNeighborGrpcPort = geoNeighbor->getGrpcPort();
+                std::string geoNeighborData = std::to_string(geoNeighborWorkerId) + ":" + geoNeighborIpAddress + ":" + std::to_string(geoNeighborGrpcPort);
+                reply->add_geoneighborsdata(geoNeighborData);
                 i++;
             }
             return Status::OK;

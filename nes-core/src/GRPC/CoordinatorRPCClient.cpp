@@ -711,7 +711,7 @@ std::vector<std::string> CoordinatorRPCClient::getGeoNeighborsData(TopologyNodeI
 
     coordinatorStub->GetGeoNeighborsData(&context, request, &reply);
     std::vector<std::string> childrenData;
-    for (auto childData : reply.childrendata()) {
+    for (auto childData : reply.geoneighborsdata()) {
         childrenData.push_back(childData);
     }
     return childrenData;
