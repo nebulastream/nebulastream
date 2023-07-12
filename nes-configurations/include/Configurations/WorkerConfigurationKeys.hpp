@@ -22,6 +22,7 @@ const std::string TENSORFLOW_SUPPORT = "TENSOR_FLOW";
 const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
 const std::string MOBILITY_SUPPORT = "MOBILITY";
 const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
+const std::string OPENCL_DEVICES = "OPENCL_DEVICES";
 }// namespace NES::Worker::Configuration
 
 #endif// NES_COMMON_INCLUDE_CONFIGURATIONS_WORKERCONFIGURATIONKEYS_HPP_

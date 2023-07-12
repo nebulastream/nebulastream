@@ -79,6 +79,8 @@ class OpenCLManager {
   public:
     OpenCLManager();
 
+    const std::vector<OpenCLDeviceInfo>& getDevices() const;
+
   private:
     std::vector<OpenCLDeviceInfo> devices;
 };

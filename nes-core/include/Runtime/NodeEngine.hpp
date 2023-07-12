@@ -330,6 +330,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
+    const OpenCLManagerPtr getOpenCLManager() const;
+
   public:
     /**
      * @brief Create a node engine and gather node information
