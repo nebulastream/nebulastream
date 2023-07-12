@@ -439,13 +439,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
 /**
  * @brief In this test we execute query merger phase on a single query plan.
  */
-TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
+TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleComplexQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
 
-    //    auto queryCatalogService = std::make_shared<Catalogs::Query::QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("example")
@@ -470,7 +469,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
 
     std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
-    for (auto& [key, value] : allQueries) {
+    for (const auto& [key, value] : allQueries) {
         auto nesRequest = AddQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
@@ -751,14 +750,23 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
-    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getLeafOperators();
-    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
-    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
-    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+
+    //Check downstream operators
     auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
     EXPECT_EQ(expectedDownstreamOperators.size(), 1);
     EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
+
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getLeafOperators();
+    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
+    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 }
 
 /**
@@ -827,14 +835,24 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
-    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
-    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
-    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
-    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+
+    //Check downstream operators of updated change log entry
     auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
     EXPECT_EQ(expectedDownstreamOperators.size(), 1);
     EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
+    for (const auto& downstreamOperator : changelogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
+
+    //Check upstream operators of updated change log entry
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
+    EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
+    EXPECT_EQ(expectedUpstreamOperators.size(), 1);
+    EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());
+    for (const auto& upstreamOperator : changelogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 }
 
 /**
@@ -903,7 +921,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
-    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getSourceOperators();
+    auto sharedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+    auto expectedUpstreamOperators = sharedQueryPlan->getSourceOperators();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 2);
     EXPECT_EQ(expectedUpstreamOperators.size(), 2);
     //Actual upstream operator should have same operator id as one of the two expected operators
@@ -913,10 +932,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     ++actualUpstreamOperatorIterator;
     EXPECT_TRUE((*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[0]->getId()
                 || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId());
+    for (const auto& upstreamOperator : changelogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 
-    auto expectedUnionOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<UnionLogicalOperatorNode>();
-    auto expectedProjectionOperators =
-        updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto expectedUnionOperators = sharedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto expectedProjectionOperators = sharedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 2);
     EXPECT_EQ(expectedUnionOperators.size(), 1);
     EXPECT_EQ(expectedProjectionOperators.size(), 1);
@@ -927,6 +948,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     ++actualDownstreamOperatorIterator;
     EXPECT_TRUE((*actualDownstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId()
                 || (*actualDownstreamOperatorIterator)->getId() == expectedUnionOperators[0]->getId());
+    for (const auto& downstreamOperator : changelogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
 }
 
 /**
@@ -976,11 +1000,31 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUnusedNodeWithFi
     auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
 
+    //Check state of the operators in the changelog entry
+    auto changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
+
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
+
+    //Check state of the operators in the changelog entry
+    changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(4);
@@ -1042,12 +1086,31 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithFilt
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
+    //Check state of the operators in the changelog entry
+    auto changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
 
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
+
+    //Check state of the operators in the changelog entry
+    changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(2);
@@ -1120,11 +1183,31 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     auto changelogs = updatedSharedQueryPlans[0]->getChangeLogEntries(nowInMicroSec);
     EXPECT_EQ(changelogs.size(), 1);
 
+    //Check state of the operators in the changelog entry
+    auto changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+    }
+
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
+
+    //Check state of the operators in the changelog entry
+    changeLogEntry = changelogs[0].second;
+    for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
+    }
+
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
+    }
 
     //Execute remove topology link request
     auto removeTopologyLinkRequest = Experimental::RemoveTopologyNodeRequest::create(2);
@@ -1140,9 +1223,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     EXPECT_EQ(changelogs.size(), 1);
     auto changelogEntry = changelogs[0].second;
 
-    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getSourceOperators();
-    auto expectedProjectionOperators =
-        updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<ProjectionLogicalOperatorNode>();
+    const QueryPlanPtr& sharedQueryPlan = updatedSharedQueryPlans[0]->getQueryPlan();
+    auto expectedUpstreamOperators = sharedQueryPlan->getSourceOperators();
+    auto expectedProjectionOperators = sharedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 2);
     EXPECT_EQ(expectedProjectionOperators.size(), 1);
     EXPECT_EQ(expectedUpstreamOperators.size(), 2);
@@ -1156,7 +1239,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
                 || (*actualUpstreamOperatorIterator)->getId() == expectedUpstreamOperators[1]->getId()
                 || (*actualUpstreamOperatorIterator)->getId() == expectedProjectionOperators[0]->getId());
 
-    auto expectedSinkOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<SinkLogicalOperatorNode>();
+    auto expectedSinkOperators = sharedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
     EXPECT_EQ(expectedSinkOperators.size(), 1);
     //Actual upstream operator should have same operator id as one of the two expected operators
@@ -1165,12 +1248,17 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
 
     //Check state of the operators in the changelog entry
     for (const auto& downstreamOperator : changelogEntry->downstreamOperators) {
-        EXPECT_EQ(OperatorState::TO_BE_PLACED, downstreamOperator->getOperatorState());
+        EXPECT_EQ(OperatorState::PLACED, downstreamOperator->getOperatorState());
     }
 
     for (const auto& upstreamOperator : changelogEntry->upstreamOperators) {
-        EXPECT_EQ(OperatorState::TO_BE_PLACED, upstreamOperator->getOperatorState());
+        EXPECT_EQ(OperatorState::PLACED, upstreamOperator->getOperatorState());
     }
+
+    //Check state of operator to be replaced
+    auto expectedOperatorsToBeReplaced = sharedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    EXPECT_EQ(expectedOperatorsToBeReplaced.size(), 1);
+    EXPECT_EQ(expectedOperatorsToBeReplaced[0]->getOperatorState(), OperatorState::TO_BE_REPLACED);
 }
 
 }// namespace NES
