@@ -96,7 +96,9 @@ class AbstractHealthCheckService {
      */
     TopologyNodePtr getWorkerByWorkerId(TopologyNodeId workerId);
 
-  protected:
+    void addWorkerAsZoneLeader(TopologyNodeId zoneLeaderWorkerId);
+
+        protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::shared_ptr<std::thread> healthCheckingOnCoordinatorThread;
     std::atomic<bool> isRunning = false;
@@ -110,6 +112,7 @@ class AbstractHealthCheckService {
     std::condition_variable cv2;
     std::mutex cvMutex2;
     std::set<TopologyNodeId> inactiveWorkers;
+    std::set<TopologyNodeId> zoneLeaders;
 };
 
 }// namespace NES

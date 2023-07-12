@@ -393,6 +393,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     }
     auto zone1Leader = electLeaderInZone(workersInZone1);
     NES_DEBUG("Elected leader in zone 1 with workerId {}", zone1Leader->getId());
+    healthCheckService->addWorkerAsZoneLeader(zone1Leader->getId());
 
     // === ZONE 2 ===
     NES::Spatial::DataTypes::Experimental::GeoLocation centerZone2(33.001, 33.001);
@@ -405,6 +406,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     }
     auto zone2Leader = electLeaderInZone(workersInZone2);
     NES_DEBUG("Elected leader in zone 2 with workerId {}", zone2Leader->getId());
+    healthCheckService->addWorkerAsZoneLeader(zone2Leader->getId());
 }
 
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
