@@ -297,18 +297,23 @@ std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<Oper
 
     //initialize the operators to visit with upstream operators of all downstream operators
     for (const auto& downStreamOperator : downstreamOperators) {
-        for (const auto& operatorToVisit : downStreamOperator->getChildren()) {
-            auto operatorsBetweenChildAndTargetUpstream =
-                reachedUpstreamOperator(operatorToVisit->as_if<OperatorNode>(), upstreamOperators);
-            operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
-        }
+        auto operatorsBetweenChildAndTargetUpstream =
+            findOperatorsBetweenSourceAndTargetOperators(downStreamOperator->as_if<OperatorNode>(), upstreamOperators);
+        operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
     }
 
     if (!operatorsBetween.empty()) {
+        //Remove upstream operators
+        for (const auto& upstreamOperator : upstreamOperators) {
+            erase_if(operatorsBetween, [upstreamOperator](const auto& operatorToErase) {
+                return operatorToErase->getId() == upstreamOperator->getId();
+            });
+        }
 
-        for (const auto& item : upstreamOperators) {
-            erase_if(operatorsBetween, [item](const auto& operatorToErase) {
-                return operatorToErase->getId() == item->getId();
+        //Remove downstream operators
+        for (const auto& downstreamOperator : downstreamOperators) {
+            erase_if(operatorsBetween, [downstreamOperator](const auto& operatorToErase) {
+                return operatorToErase->getId() == downstreamOperator->getId();
             });
         }
     }
@@ -316,30 +321,39 @@ std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<Oper
     return operatorsBetween;
 }
 
-std::set<OperatorNodePtr> QueryPlan::reachedUpstreamOperator(OperatorNodePtr downstreamOperator,
-                                                             const std::set<OperatorNodePtr>& upstreamOperators) {
+std::set<OperatorNodePtr> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
+                                                             const std::set<OperatorNodePtr>& targetOperators) {
 
-    auto found = std::find_if(upstreamOperators.begin(), upstreamOperators.end(), [&](const auto& upstreamOperator) {
-        return upstreamOperator->getId() == downstreamOperator->getId();
+    //Find if downstream operator is also in the vector of target operators
+    auto found = std::find_if(targetOperators.begin(), targetOperators.end(), [&](const auto& upstreamOperator) {
+        return upstreamOperator->getId() == sourceOperator->getId();
     });
 
-    if (found != upstreamOperators.end()) {
-        return {downstreamOperator};
+    //If downstream operator is in the list of target operators then return the operator
+    if (found != targetOperators.end()) {
+        return {sourceOperator};
     }
 
-    std::set<OperatorNodePtr> operatorsBetween;
     bool foundTargetUpstreamOperator = false;
-    for (const auto& nextUpstreamOperatorToCheck : downstreamOperator->getChildren()) {
-        auto operatorsBetweenChildAndTargetUpstream =
-            reachedUpstreamOperator(nextUpstreamOperatorToCheck->as_if<OperatorNode>(), upstreamOperators);
+    std::set<OperatorNodePtr> operatorsBetween;
+    //Check further upstream operators if they are in the target operator vector
+    for (const auto& nextUpstreamOperatorToCheck : sourceOperator->getChildren()) {
 
-        if (!operatorsBetweenChildAndTargetUpstream.empty()) {
+        //Fetch the operators between upstream and target operators
+        auto operatorsBetweenUpstreamAndTargetUpstream =
+            findOperatorsBetweenSourceAndTargetOperators(nextUpstreamOperatorToCheck->as_if<OperatorNode>(), targetOperators);
+
+        //If there are operators between upstream and target operators then mark the input down stream operator for return
+        if (!operatorsBetweenUpstreamAndTargetUpstream.empty()) {
             foundTargetUpstreamOperator = true;
-            operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
+            operatorsBetween.insert(operatorsBetweenUpstreamAndTargetUpstream.begin(),
+                                    operatorsBetweenUpstreamAndTargetUpstream.end());
         }
     }
+
+    //Add downstream operator
     if (foundTargetUpstreamOperator) {
-        operatorsBetween.insert(downstreamOperator);
+        operatorsBetween.insert(sourceOperator);
     }
     return operatorsBetween;
 }
