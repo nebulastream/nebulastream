@@ -379,4 +379,8 @@ void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId
     }
 }
 
+void TopologyManagerService::splitTopologyIntoZones() {
+    NES_DEBUG("TopologyManagerService::splitting topology into geographical zones");
+}
+
 }// namespace NES

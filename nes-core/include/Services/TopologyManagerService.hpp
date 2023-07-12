@@ -181,6 +181,8 @@ class TopologyManagerService {
      */
     void removeAnnouncedFailedWorker(TopologyNodeId workerId);
 
+    void splitTopologyIntoZones();
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
