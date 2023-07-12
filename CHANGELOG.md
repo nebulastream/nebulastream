@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.140](https://github.com/nebulastream/nebulastream/tree/v0.5.140) (2023-07-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.139...v0.5.140)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace casts with own literals [\#3919](https://github.com/nebulastream/nebulastream/issues/3919)
+- \[TASK\] Nested Loop Join Using Stack [\#3736](https://github.com/nebulastream/nebulastream/issues/3736)
+
 ## [v0.5.139](https://github.com/nebulastream/nebulastream/tree/v0.5.139) (2023-07-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.138...v0.5.139)
