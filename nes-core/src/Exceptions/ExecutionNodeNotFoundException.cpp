@@ -14,10 +14,10 @@
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 namespace NES::Exceptions {
 ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message, NodeId id)
-    : RequestExecutionException(message), id(id) {}
+    : RequestExecutionException("ExecutionNodeNotFoundException:" + message), id(id) {}
 
 ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(const std::string& message)
-    : RequestExecutionException(message), id(INVALID_TOPOLOGY_NODE_ID) {}
+    : RequestExecutionException("ExecutionNodeNotFoundException:" + message), id(INVALID_TOPOLOGY_NODE_ID) {}
 
 NodeId ExecutionNodeNotFoundException::getNodeId() const { return id; }
 }// namespace NES::Exceptions

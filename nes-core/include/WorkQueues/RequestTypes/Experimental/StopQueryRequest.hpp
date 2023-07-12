@@ -79,8 +79,8 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 namespace Experimental {
 
-class StopQueryRequestExperimental;
-using StopQueryRequestExperimentalPtr = std::shared_ptr<StopQueryRequestExperimental>;
+class StopQueryRequest;
+using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 
 struct StopQueryResponse : public AbstractRequestResponse {
     bool success;
@@ -88,7 +88,7 @@ struct StopQueryResponse : public AbstractRequestResponse {
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
+class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
 
   public:
     static StopQueryRequestPtr create(const RequestId requestId,
@@ -110,14 +110,17 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
 
     void postExecution(StorageHandler& storageHandle) override;
 
-    std::string toString();
+    std::string toString() override;
 
-    StopQueryRequestExperimental(RequestId requestId,
-                                 QueryId queryId,
-                                 size_t maxRetries,
-                                 WorkerRPCClientPtr workerRpcClient,
-                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                 std::promise<StopQueryResponse> responsePromise);
+    ~StopQueryRequest() override = default;
+
+  private:
+    StopQueryRequest(RequestId requestId,
+                     QueryId queryId,
+                     size_t maxRetries,
+                     WorkerRPCClientPtr workerRpcClient,
+                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                     std::promise<StopQueryResponse> responsePromise);
 
   private:
     WorkerRPCClientPtr workerRpcClient;

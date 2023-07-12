@@ -53,8 +53,8 @@ QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                              coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));
 }
 
-void QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
-    NES_DEBUG2("QueryDeploymentPhase: deploy the query");
+void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
+    NES_DEBUG("QueryDeploymentPhase: deploy the query");
 
     auto sharedQueryId = sharedQueryPlan->getId();
 

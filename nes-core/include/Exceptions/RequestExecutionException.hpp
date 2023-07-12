@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <memory>
 #include <string>
+#include <Common/Identifiers.hpp>
 
 namespace NES::Exceptions {
 
@@ -25,9 +26,11 @@ namespace NES::Exceptions {
  * @brief This is the base class for exceptions thrown during the execution of coordinator side requests which
  * indicate an error that possibly require a rollback or other kinds of specific error handling
  */
-class RequestExecutionException : public std::runtime_error {
+class RequestExecutionException : public std::enable_shared_from_this<RequestExecutionException>, public std::runtime_error {
   public:
     explicit RequestExecutionException(const std::string& message);
+    explicit RequestExecutionException(QueryId queryId, const std::string& message);
+
     /**
      * @brief Checks if this object is of type ExceptionType
      * @tparam ExceptionType: a subclass ob RequestExecutionException
@@ -52,7 +55,13 @@ class RequestExecutionException : public std::runtime_error {
             return std::dynamic_pointer_cast<ExceptionType>(this->shared_from_this());
         }
         throw std::logic_error("Exception:: we performed an invalid cast of exception");
+        return nullptr;
     }
+
+    QueryId getQueryId() const;
+
+  private:
+    QueryId queryId;
 };
 }// namespace NES::Exceptions
 
