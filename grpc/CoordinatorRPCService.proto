@@ -72,15 +72,15 @@ service CoordinatorRPCService {
 
   rpc AnnounceFailedWorkers(AnnounceFailedWorkersRequest) returns(AnnounceFailedWorkersReply) {}
 
-  rpc GetChildrenData(GetChildrenDataRequest) returns(GetChildrenDataReply) {}
+  rpc GetGeoNeighborsData(GetGeoNeighborsDataRequest) returns(GetGeoNeighborsDataReply) {}
 
 }
 
-message GetChildrenDataRequest {
+message GetGeoNeighborsDataRequest {
 	uint64 workerId = 1;
 }
 
-message GetChildrenDataReply {
+message GetGeoNeighborsDataReply {
 	repeated string childrenData = 1;
 }
 

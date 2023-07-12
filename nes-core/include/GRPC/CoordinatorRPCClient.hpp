@@ -236,7 +236,7 @@ class CoordinatorRPCClient {
      */
     bool announceFailedWorkers(TopologyNodeId sourceWorkerId, std::set<TopologyNodeId> failedWorkersIds);
 
-    std::vector<std::string> getChildrenData (TopologyNodeId workerId);
+    std::vector<std::string> getGeoNeighborsData (TopologyNodeId workerId);
 
 
   private:
