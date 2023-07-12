@@ -327,6 +327,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
                         NES_TRACE("Locked using reverse resource vector in thread {}", i)
                     }
                 } catch (Exceptions::ResourceLockingException& e) {
+                    twoPLAccessHandle->releaseResources(i);
                     continue;
                 }
                 break;
