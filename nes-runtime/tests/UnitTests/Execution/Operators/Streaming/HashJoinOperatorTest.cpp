@@ -95,15 +95,16 @@ struct HashJoinBuildHelper {
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
-                                                                              buildHelper.windowSize,
-                                                                              buildHelper.schema->getSchemaSizeInBytes(),
-                                                                              buildHelper.schema->getSchemaSizeInBytes(),
-                                                                              buildHelper.joinSizeInByte,
-                                                                              buildHelper.pageSize,
-                                                                              1,
-                                                                              buildHelper.numPartitions,
-                                                                              QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
+    auto hashJoinOpHandler =
+        Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
+                                                         buildHelper.windowSize,
+                                                         buildHelper.schema->getSchemaSizeInBytes(),
+                                                         buildHelper.schema->getSchemaSizeInBytes(),
+                                                         buildHelper.joinSizeInByte,
+                                                         buildHelper.pageSize,
+                                                         1,
+                                                         buildHelper.numPartitions,
+                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(

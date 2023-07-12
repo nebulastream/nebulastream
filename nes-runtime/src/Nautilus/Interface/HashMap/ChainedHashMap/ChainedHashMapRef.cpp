@@ -161,8 +161,8 @@ Value<MemRef> ChainedHashMapRef::getPage(const Value<UInt64>& pageIndex) {
 ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef,
                                                 const Value<UInt64>& entriesPerPage,
                                                 const Value<UInt64>& currentIndex)
-    : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex(0_u64),
-      currentPage(hashTableRef.getPage(0_u64)), currentPageIndex(0_u64), currentIndex(currentIndex) {}
+    : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex(0_u64), currentPage(hashTableRef.getPage(0_u64)),
+      currentPageIndex(0_u64), currentIndex(currentIndex) {}
 
 ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex)
     : hashTableRef(hashTableRef), entriesPerPage(0_u64), inPageIndex(0_u64),

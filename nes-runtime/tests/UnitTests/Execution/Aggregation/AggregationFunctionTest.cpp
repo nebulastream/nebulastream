@@ -23,8 +23,8 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Util/StdInt.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 

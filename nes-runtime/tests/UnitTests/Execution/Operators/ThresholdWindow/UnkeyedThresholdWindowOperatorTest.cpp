@@ -494,18 +494,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordFifty = Record({{"f1", +50_s64},
-                               {"f2", +2_s64},
-                               {"f3", +50_s64},
-                               {"f4", +2_s64}});
-    auto recordNinety = Record({{"f1", +90_s64},
-                                {"f2", +3_s64},
-                                {"f3", +90_s64},
-                                {"f4", +4_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64},
-                                {"f2", +4_s64},
-                                {"f3", +50_s64},
-                                {"f4", +2_s64}});// closes the window
+    auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}, {"f3", +50_s64}, {"f4", +2_s64}});
+    auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}, {"f3", +90_s64}, {"f4", +4_s64}});
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}, {"f3", +50_s64}, {"f4", +2_s64}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);

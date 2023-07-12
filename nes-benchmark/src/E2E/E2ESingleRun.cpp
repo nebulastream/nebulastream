@@ -71,23 +71,20 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
-        coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
     } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCKING") {
-        coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
     } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCK_FREE") {
-        coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
     } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
-        coordinatorConf->worker.queryCompiler.joinStrategy =
-            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     } else {
         NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
     }
 
     coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
-    NES_INFO("Using joinStrategy {}", magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
+    NES_INFO("Using joinStrategy {}",
+             magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
 
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;

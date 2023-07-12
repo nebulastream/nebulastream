@@ -102,8 +102,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty =
-        Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -162,8 +161,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty =
-        Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -224,12 +222,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 =
-        Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 =
-        Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);
@@ -309,12 +305,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 =
-        Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}});// closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 =
-        Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}});// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);

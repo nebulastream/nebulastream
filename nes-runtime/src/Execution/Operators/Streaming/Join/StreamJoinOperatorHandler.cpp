@@ -16,10 +16,10 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
@@ -38,7 +38,9 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
         NLJOperatorHandler* nljOpHandler = static_cast<NLJOperatorHandler*>(this);
         NES_DEBUG("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
-        windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd, numberOfWorkerThreads,
+        windows.emplace_back(std::make_unique<NLJWindow>(windowStart,
+                                                         windowEnd,
+                                                         numberOfWorkerThreads,
                                                          sizeOfRecordLeft,
                                                          nljOpHandler->getLeftPageSize(),
                                                          sizeOfRecordRight,
@@ -105,8 +107,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      size_t sizeOfRecordLeft,
                                                      size_t sizeOfRecordRight)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize),
-      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
-      joinStrategy(joinStrategy), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
+      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)), joinStrategy(joinStrategy), sequenceNumber(0),
+      sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -147,7 +149,6 @@ uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
-
 std::vector<uint64_t>
 StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
     std::vector<uint64_t> triggerableWindowIdentifiers;
@@ -168,13 +169,13 @@ StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t se
 
         // Checking if the window has not been emitted and both sides (left and right) have at least one tuple in their windows.
         auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
-        if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK) &&
-            window->getNumberOfTuplesLeft() > 0 &&
-            window->getNumberOfTuplesRight() > 0) {
+        if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_SINK)
+            && window->getNumberOfTuplesLeft() > 0 && window->getNumberOfTuplesRight() > 0) {
             triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
             NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
-                       window->getWindowIdentifier(), window->getNumberOfTuplesLeft(),
-                       window->getNumberOfTuplesRight());
+                      window->getWindowIdentifier(),
+                      window->getNumberOfTuplesLeft(),
+                      window->getNumberOfTuplesRight());
         }
     }
 

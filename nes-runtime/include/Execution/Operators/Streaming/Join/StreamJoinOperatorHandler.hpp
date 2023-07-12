@@ -170,7 +170,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
-protected:
+  protected:
     uint64_t numberOfWorkerThreads = 1;
     std::list<StreamWindowPtr> windows;
     SliceAssigner sliceAssigner;
