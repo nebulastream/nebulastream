@@ -35,6 +35,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -799,6 +800,7 @@ void assertKiller() {
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -845,6 +847,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -920,6 +923,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,

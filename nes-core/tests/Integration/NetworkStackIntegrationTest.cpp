@@ -43,6 +43,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -274,6 +275,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,
                          64,
@@ -450,6 +452,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,
                          64,
