@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.141](https://github.com/nebulastream/nebulastream/tree/v0.5.141) (2023-07-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.140...v0.5.141)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename NLJSink to NLJProbe [\#3901](https://github.com/nebulastream/nebulastream/issues/3901)
+
 ## [v0.5.140](https://github.com/nebulastream/nebulastream/tree/v0.5.140) (2023-07-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.139...v0.5.140)
