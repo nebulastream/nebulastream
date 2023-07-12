@@ -296,13 +296,13 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         auto joinSinkNautilus =
             std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
-                                                                     leftInputSchema,
-                                                                     rightInputSchema,
-                                                                     sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
-                                                                     leftInputSchema->getSchemaSizeInBytes(),
-                                                                     rightInputSchema->getSchemaSizeInBytes(),
-                                                                     sinkOperator->getJoinFieldNameLeft(),
-                                                                     sinkOperator->getJoinFieldNameRight());
+                                                                      leftInputSchema,
+                                                                      rightInputSchema,
+                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+                                                                      leftInputSchema->getSchemaSizeInBytes(),
+                                                                      rightInputSchema->getSchemaSizeInBytes(),
+                                                                      sinkOperator->getJoinFieldNameLeft(),
+                                                                      sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {

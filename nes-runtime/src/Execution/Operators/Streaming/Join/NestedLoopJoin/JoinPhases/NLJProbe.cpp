@@ -145,13 +145,13 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 }
 
 NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
-                 const SchemaPtr& leftSchema,
-                 const SchemaPtr& rightSchema,
-                 const SchemaPtr& joinSchema,
-                 const uint64_t leftEntrySize,
-                 const uint64_t rightEntrySize,
-                 const std::string& joinFieldNameLeft,
-                 const std::string& joinFieldNameRight)
+                   const SchemaPtr& leftSchema,
+                   const SchemaPtr& rightSchema,
+                   const SchemaPtr& joinSchema,
+                   const uint64_t leftEntrySize,
+                   const uint64_t rightEntrySize,
+                   const std::string& joinFieldNameLeft,
+                   const std::string& joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
       joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
       joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
