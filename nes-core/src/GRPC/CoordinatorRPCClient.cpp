@@ -702,14 +702,14 @@ bool CoordinatorRPCClient::announceFailedWorkers(TopologyNodeId sourceWorkerId, 
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::string> CoordinatorRPCClient::getChildrenData(TopologyNodeId workerId){
+std::vector<std::string> CoordinatorRPCClient::getGeoNeighborsData(TopologyNodeId workerId){
     ClientContext context;
-    GetChildrenDataRequest request;
-    GetChildrenDataReply reply;
+    GetGeoNeighborsDataRequest request;
+    GetGeoNeighborsDataReply reply;
 
     request.set_workerid(workerId);
 
-    coordinatorStub->GetChildrenData(&context, request, &reply);
+    coordinatorStub->GetGeoNeighborsData(&context, request, &reply);
     std::vector<std::string> childrenData;
     for (auto childData : reply.childrendata()) {
         childrenData.push_back(childData);

@@ -470,9 +470,9 @@ Status CoordinatorRPCServer::AnnounceFailedWorkers(ServerContext*,
     NES_WARNING("CoordinatorRPCServer::AnnounceFailedWorkers one or more workerIds were not removed from topology");
     return Status::OK;
 }
-Status CoordinatorRPCServer::GetChildrenData(ServerContext*,
-                                             const GetChildrenDataRequest* request,
-                                             GetChildrenDataReply* reply) {
+Status CoordinatorRPCServer::GetGeoNeighborsData(ServerContext*,
+                                             const GetGeoNeighborsDataRequest* request,
+                                             GetGeoNeighborsDataReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
     auto workerId = request->workerid();
     auto worker = topologyManagerService->findNodeWithId(workerId);
