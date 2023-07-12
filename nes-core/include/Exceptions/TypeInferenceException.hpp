@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
-#include <Common/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -24,15 +23,10 @@ namespace NES {
 /**
  * @brief This class is used for raising exceptions in the type inference phase
  */
-class TypeInferenceException : public RequestExecutionException, public std::runtime_error {
+class TypeInferenceException : public Exceptions::RequestExecutionException {
   public:
     explicit TypeInferenceException(const std::string& message);
     TypeInferenceException(QueryId queryId, const std::string& message);
-
-    QueryId getQueryId() const;
-
-  private:
-    QueryId queryId;
 };
 }// namespace NES
 

@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <Common/Identifiers.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -25,7 +25,7 @@ namespace NES {
 /**
  * @brief This exception is thrown if some error occurred while deploying the query
  */
-class QueryDeploymentException : public RequestExecutionException, public std::runtime_error {
+class QueryDeploymentException : public Exceptions::RequestExecutionException {
 
   public:
     /**
@@ -35,10 +35,6 @@ class QueryDeploymentException : public RequestExecutionException, public std::r
      */
     explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 
-    SharedQueryId getSharedQueryId() const;
-
-  private:
-    SharedQueryId sharedQueryId;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

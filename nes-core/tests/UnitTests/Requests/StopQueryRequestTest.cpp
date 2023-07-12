@@ -48,8 +48,8 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     constexpr RequestId requestId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    std::promise<StopQueryResponse> promise;
-    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId,
+    std::promise<Experimental::StopQueryResponse> promise;
+    auto stopQueryRequest = StopQueryRequest::create(requestId,
                                                                  queryId,
                                                                  0,
                                                                  workerRPCClient,
@@ -66,7 +66,7 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     std::promise<StopQueryResponse> promise;
-    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId,
+    auto stopQueryRequest = StopQueryRequest::create(requestId,
                                                                  queryId,
                                                                  0,
                                                                  workerRPCClient,

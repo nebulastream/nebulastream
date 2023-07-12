@@ -23,7 +23,7 @@ namespace NES {
 /**
  * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
  */
-class InvalidQueryException : public RequestExecutionException, public std::runtime_error {
+class InvalidQueryException : public Exceptions::RequestExecutionException {
   public:
     explicit InvalidQueryException(const std::string& message);
 };
