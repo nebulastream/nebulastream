@@ -76,19 +76,19 @@ void WorkerHealthCheckService::startHealthCheck() {
         while (isRunning) {
             NES_DEBUG("NesWorker::geographical neighbors healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
-//            // get children data
-//            auto childrenData = coordinatorRpcClient->getChildrenData(id);
-//            for (auto data : childrenData) {
-//                NES_DEBUG("child data: {}", data);
-//                // Find the position of the first colon ':'
-//                size_t colonPos = data.find(':');
-//
-//                // Extract the integer part before the colon
-//                TopologyNodeId childWorkerId = std::stoi(data.substr(0, colonPos));
-//                std::string destAddress = data.substr(colonPos + 1);
-//
-//                children.insert(childWorkerId, destAddress);
-//            }
+            // get geo neighbors data
+            auto geoNeighborsData = coordinatorRpcClient->getGeoNeighborsData(id);
+            for (auto data : geoNeighborsData) {
+                NES_DEBUG("geo neighbor data: {}", data);
+                // Find the position of the first colon ':'
+                size_t colonPos = data.find(':');
+
+                // Extract the integer part before the colon
+                TopologyNodeId childWorkerId = std::stoi(data.substr(0, colonPos));
+                std::string destAddress = data.substr(colonPos + 1);
+
+                geoNeighbors.insert(childWorkerId, destAddress);
+            }
 //
 //            //usleep(1000000);
 //

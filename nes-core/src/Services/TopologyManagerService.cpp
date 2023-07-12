@@ -379,6 +379,14 @@ void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId
     }
 }
 
+void TopologyManagerService::addZoneLeader(TopologyNodeId zoneLeaderWorkerId) {
+    zoneLeaders.insert(zoneLeaderWorkerId);
+}
+
+bool TopologyManagerService::isZoneLeader(TopologyNodeId workerId) {
+    return zoneLeaders.find(workerId) != zoneLeaders.end();
+}
+
 void TopologyManagerService::splitTopologyIntoZones() {
     NES_DEBUG("TopologyManagerService::splitting topology into geographical zones");
 
@@ -394,6 +402,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     auto zone1Leader = electLeaderInZone(workersInZone1);
     NES_DEBUG("Elected leader in zone 1 with workerId {}", zone1Leader->getId());
     healthCheckService->addWorkerAsZoneLeader(zone1Leader->getId());
+    addZoneLeader(zone1Leader->getId());
 
     // === ZONE 2 ===
     NES::Spatial::DataTypes::Experimental::GeoLocation centerZone2(33.001, 33.001);
@@ -407,6 +416,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
     auto zone2Leader = electLeaderInZone(workersInZone2);
     NES_DEBUG("Elected leader in zone 2 with workerId {}", zone2Leader->getId());
     healthCheckService->addWorkerAsZoneLeader(zone2Leader->getId());
+    addZoneLeader(zone2Leader->getId());
 
     // start coordinator health check
     healthCheckService->startHealthCheck();
