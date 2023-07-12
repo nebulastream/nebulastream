@@ -60,12 +60,12 @@ PhysicalNestedLoopJoinProbeOperator::create(OperatorId id,
                                             const std::string joinFieldNameRight,
                                             const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalNestedLoopJoinProbeOperator>(id,
-                                                                leftSchema,
-                                                                rightSchema,
-                                                                outputSchema,
-                                                                joinFieldNameLeft,
-                                                                joinFieldNameRight,
-                                                                operatorHandler);
+                                                                 leftSchema,
+                                                                 rightSchema,
+                                                                 outputSchema,
+                                                                 joinFieldNameLeft,
+                                                                 joinFieldNameRight,
+                                                                 operatorHandler);
 }
 
 const std::string& PhysicalNestedLoopJoinProbeOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }

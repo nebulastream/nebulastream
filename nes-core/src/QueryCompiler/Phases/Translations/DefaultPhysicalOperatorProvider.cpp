@@ -476,11 +476,11 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
             auto joinSinkOperator =
                 PhysicalOperators::PhysicalNestedLoopJoinProbeOperator::create(joinOperator->getLeftInputSchema(),
-                                                                              joinOperator->getRightInputSchema(),
-                                                                              joinOperator->getOutputSchema(),
-                                                                              joinFieldNameLeft,
-                                                                              joinFieldNameRight,
-                                                                              joinOperatorHandler);
+                                                                               joinOperator->getRightInputSchema(),
+                                                                               joinOperator->getOutputSchema(),
+                                                                               joinFieldNameLeft,
+                                                                               joinFieldNameRight,
+                                                                               joinOperatorHandler);
             leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
             rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
             operatorNode->replace(joinSinkOperator);

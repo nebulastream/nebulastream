@@ -492,12 +492,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,
@@ -512,14 +508,14 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
     insertRecordsIntoProbe(*nljProbe,
-                          numberOfRecordsLeft,
-                          numberOfRecordsRight,
-                          *nljOperatorHandler,
-                          timestampFieldLeft,
-                          timestampFieldRight,
-                          joinFieldNameLeft,
-                          joinFieldNameRight,
-                          executionContext);
+                           numberOfRecordsLeft,
+                           numberOfRecordsRight,
+                           *nljOperatorHandler,
+                           timestampFieldLeft,
+                           timestampFieldRight,
+                           joinFieldNameLeft,
+                           joinFieldNameRight,
+                           executionContext);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
@@ -534,12 +530,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                    leftEntrySize,
-                                                                    rightEntrySize,
-                                                                    leftPageSize,
-                                                                    rightPageSize,
-                                                                    windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,
