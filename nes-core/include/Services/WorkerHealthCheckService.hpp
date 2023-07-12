@@ -41,7 +41,7 @@ class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
     WorkerRPCClientPtr workerRpcClient;
     NesWorkerPtr worker;
     cuckoohash_map<TopologyNodeId, std::string> geoNeighbors;
-    std::set<TopologyNodeId> failedChildrenWorkers;
+    std::set<TopologyNodeId> failedGeoNeighborsWorkers;
 };
 
 using WorkerHealthCheckServicePtr = std::shared_ptr<WorkerHealthCheckService>;

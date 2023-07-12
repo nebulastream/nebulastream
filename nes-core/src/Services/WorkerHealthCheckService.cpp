@@ -93,25 +93,25 @@ void WorkerHealthCheckService::startHealthCheck() {
 //
 //            //usleep(1000000);
 //
-//            for (auto child : children.lock_table()) {
-//                bool isChildAlive = workerRpcClient->checkHealth(child.second, healthServiceName);
-//                if (isChildAlive) {
-//                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is alive", child.first);
-//                } else {
-//                    NES_DEBUG("NesWorker::healthCheck: child worker with workerId={} is down", child.first);
-//                    failedChildrenWorkers.insert(child.first);
-//                }
-//            }
-//            if (!failedChildrenWorkers.empty()) {
-//                NES_DEBUG("NesWorker::healthCheck: announcing failed children workers to coordinator");
-//                bool success = coordinatorRpcClient->announceFailedWorkers(id, failedChildrenWorkers);
-//                if (success) {
-//                    for (auto failedChildrenWorkerId : failedChildrenWorkers) {
-//                        children.erase(failedChildrenWorkerId);
-//                    }
-//                    failedChildrenWorkers.clear();
-//                }
-//            }
+            for (auto child : geoNeighbors.lock_table()) {
+                bool isGeoNeighborAlive = workerRpcClient->checkHealth(child.second, healthServiceName);
+                if (isGeoNeighborAlive) {
+                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is alive", child.first);
+                } else {
+                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is down", child.first);
+                    failedGeoNeighborsWorkers.insert(child.first);
+                }
+            }
+            if (!failedGeoNeighborsWorkers.empty()) {
+                NES_DEBUG("NesWorker::healthCheck: announcing failed geo neighbor workers to coordinator");
+                bool success = coordinatorRpcClient->announceFailedWorkers(id, failedGeoNeighborsWorkers);
+                if (success) {
+                    for (auto failedChildrenWorkerId : failedGeoNeighborsWorkers) {
+                        geoNeighbors.erase(failedChildrenWorkerId);
+                    }
+                    failedGeoNeighborsWorkers.clear();
+                }
+            }
 
             {
                 std::unique_lock<std::mutex> lk(cvMutex2);
