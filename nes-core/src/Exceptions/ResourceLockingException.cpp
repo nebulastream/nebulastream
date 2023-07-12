@@ -12,4 +12,9 @@
     limitations under the License.
 */
 #include <Exceptions/ResourceLockingException.hpp>
-const char* NES::Exceptions::ResourceLockingException::what() const noexcept { return "Failed to lock resource"; }
+namespace NES::Exceptions {
+ResourceLockingException::ResourceLockingException(const std::string& message, ResourceType resourceType)
+    : RequestExecutionException(message), resourceType(resourceType) {}
+
+NES::ResourceType ResourceLockingException::getResourceType() const { return resourceType; }
+}// namespace NES::Exceptions
