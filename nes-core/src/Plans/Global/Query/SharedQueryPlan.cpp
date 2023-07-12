@@ -322,21 +322,30 @@ void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
 void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
                                                  const std::set<OperatorId>& downstreamOperatorIds) {
 
-    std::set<LogicalOperatorNodePtr> upstreamOperators;
+    std::set<LogicalOperatorNodePtr> upstreamLogicalOperators;
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
-        upstreamOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId)->as<LogicalOperatorNode>());
+        upstreamLogicalOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId)->as<LogicalOperatorNode>());
     }
 
-    std::set<LogicalOperatorNodePtr> downstreamOperators;
+    std::set<LogicalOperatorNodePtr> downstreamLogicalOperators;
     for (const auto& downstreamOperatorId : downstreamOperatorIds) {
-        downstreamOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId)->as<LogicalOperatorNode>());
+        downstreamLogicalOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId)->as<LogicalOperatorNode>());
     }
 
-    auto operatorsToBeReplaced = queryPlan->findAllOperatorsBetween(downstreamOperators, upstreamOperators);
+    std::set<OperatorNodePtr> downstreamOperator{downstreamLogicalOperators.begin(), downstreamLogicalOperators.end()};
+    std::set<OperatorNodePtr> upstreamOperator{upstreamLogicalOperators.begin(), upstreamLogicalOperators.end()};
+
+    auto operatorsToBeRePlaced = queryPlan->findAllOperatorsBetween(downstreamOperator, upstreamOperator);
+
+    for (const auto& operatorToRePlace : operatorsToBeRePlaced) {
+        operatorToRePlace->as_if<LogicalOperatorNode>()->setOperatorState(OperatorState::TO_BE_REPLACED);
+    }
 
     //add change log entry indicating the addition
     long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
+    changeLog->addChangeLogEntry(
+        now,
+        Optimizer::Experimental::ChangeLogEntry::create(upstreamLogicalOperators, downstreamLogicalOperators));
 }
 
 void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorNodePtr>& updatedOperators) {

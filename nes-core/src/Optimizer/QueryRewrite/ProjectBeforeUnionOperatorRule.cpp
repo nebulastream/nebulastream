@@ -29,7 +29,7 @@ ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create() {
 
 QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
 
-    NES_INFO("Apply ProjectBeforeUnionOperatorRule");
+    NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
     for (auto& unionOperator : unionOperators) {
         auto rightInputSchema = unionOperator->getRightInputSchema();
@@ -49,6 +49,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
+    NES_DEBUG("After applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
     return queryPlan;
 }
 

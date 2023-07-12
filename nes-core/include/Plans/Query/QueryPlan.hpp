@@ -273,8 +273,8 @@ class QueryPlan {
      * @param upstreamOperators : the upstream operators
      * @return all operators between (excluding) downstream and upstream operators
      */
-    std::set<OperatorNodePtr> findAllOperatorsBetween(std::set<OperatorNodePtr> downstreamOperators,
-                                                      std::set<OperatorNodePtr> upstreamOperators);
+    std::set<OperatorNodePtr> findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
+                                                      const std::set<OperatorNodePtr>& upstreamOperators);
 
   private:
     /**
@@ -303,7 +303,14 @@ class QueryPlan {
      */
     QueryPlan();
 
-    bool reachedUpstreamOperator(OperatorNodePtr downstreamOperators, const std::set<OperatorNodePtr>& upstreamOperators);
+    /**
+     * @brief
+     * @param downstreamOperators
+     * @param upstreamOperators
+     * @return
+     */
+    std::set<OperatorNodePtr> reachedUpstreamOperator(const OperatorNodePtr& downstreamOperators,
+                                                      const std::set<OperatorNodePtr>& upstreamOperators);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
