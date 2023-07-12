@@ -18,11 +18,22 @@
 /**
  * @brief This exception is raised, when a request was not able to lock a resource
  */
-namespace NES::Exceptions {
+namespace NES {
+enum class ResourceType : uint8_t;
+namespace Exceptions {
 
 class ResourceLockingException : public RequestExecutionException {
-    const char * what() const noexcept override;
+  public:
+    ResourceLockingException(const std::string& message, ResourceType resourceType);
+
+    /**
+     * @brief Access the type of the resource which could not be accessed
+     * @return the resource type
+     */
+    [[nodiscard]] ResourceType getResourceType() const;
+  private:
+    ResourceType resourceType;
 };
 }
-
+}
 #endif//NES_RESOURCELOCKINGEXCEPTION_HPP

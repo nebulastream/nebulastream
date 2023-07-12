@@ -5,9 +5,8 @@
 namespace NES::Exceptions {
 class StorageHandlerAcquireResourcesException : public RequestExecutionException {
   public:
-    explicit StorageHandlerAcquireResourcesException(std::string);
+    explicit StorageHandlerAcquireResourcesException(const std::string& message);
 
-    [[nodiscard]] const char * what() const noexcept override;
   private:
     std::string message;
 };
