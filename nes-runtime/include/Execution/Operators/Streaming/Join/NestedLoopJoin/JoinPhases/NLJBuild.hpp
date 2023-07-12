@@ -27,7 +27,7 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
- * corresponding window one after the other. Afterwards, the second phase (NLJSink) will start joining the tuples
+ * corresponding window one after the other. Afterwards, the second phase (NLJProbe) will start joining the tuples
  * via two nested loops.
  */
 class NLJBuild : public ExecutableOperator {
@@ -77,7 +77,7 @@ class NLJBuild : public ExecutableOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
-     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
+     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJProbe) for further processing
      * @param ctx: The RuntimeExecutionContext
      * @param recordBuffer: RecordBuffer
      */

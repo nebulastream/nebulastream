@@ -19,7 +19,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
@@ -152,14 +152,14 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             /*isLeftSide*/ false,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
-        auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
-                                                            leftSchema,
-                                                            rightSchema,
-                                                            joinSchema,
-                                                            leftEntrySize,
-                                                            rightEntrySize,
-                                                            joinFieldNameLeft,
-                                                            joinFieldNameRight);
+        auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
+                                                              leftSchema,
+                                                              rightSchema,
+                                                              joinSchema,
+                                                              leftEntrySize,
+                                                              rightEntrySize,
+                                                              joinFieldNameLeft,
+                                                              joinFieldNameRight);
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
@@ -177,11 +177,11 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         scanOperatorLeft->setChild(nljBuildLeft);
         scanOperatorRight->setChild(nljBuildRight);
-        nljSink->setChild(emitOperator);
+        nljProbe->setChild(emitOperator);
 
         pipelineBuildLeft->setRootOperator(scanOperatorLeft);
         pipelineBuildRight->setRootOperator(scanOperatorRight);
-        pipelineSink->setRootOperator(nljSink);
+        pipelineSink->setRootOperator(nljProbe);
 
         auto curPipelineId = 0;
         auto noWorkerThreads = 1;

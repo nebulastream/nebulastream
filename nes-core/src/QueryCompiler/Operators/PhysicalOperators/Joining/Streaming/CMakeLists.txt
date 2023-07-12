@@ -17,5 +17,5 @@ add_source_files(nes-core
         PhysicalHashJoinSinkOperator.cpp
         PhysicalNestedLoopJoinOperator.cpp
         PhysicalNestedLoopJoinBuildOperator.cpp
-        PhysicalNestedLoopJoinSinkOperator.cpp
+        PhysicalNestedLoopJoinProbeOperator.cpp
 )
