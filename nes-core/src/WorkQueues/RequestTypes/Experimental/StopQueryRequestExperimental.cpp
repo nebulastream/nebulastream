@@ -53,8 +53,7 @@ StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId request
                                                          const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(requestId, queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
+    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(requestId, queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
@@ -167,5 +166,11 @@ void StopQueryRequestExperimental::postRollbackHandle(const RequestExecutionExce
 void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
+}
+
+StopQueryRequestExperimental::StopQueryRequestExperimental(StopQueryRequestExperimental&& other) noexcept
+    : AbstractRequest(std::move(other)) {
+    //todo: move members of subclass
+
 }
 }// namespace NES

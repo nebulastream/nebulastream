@@ -20,8 +20,12 @@ class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 namespace Experimental {
+class FailQueryResponse : public AbstractRequestResponse {
+  public:
+    bool success;
+};
 
-class FailQueryRequest : public AbstractRequest {
+class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
   public:
     /**
      * @brief Constructor

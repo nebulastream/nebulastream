@@ -14,6 +14,3 @@
 add_subdirectory(Experimental)
 add_subdirectory(QueryRequests)
 add_subdirectory(TopologyRequests)
-add_source_files(nes-core
-        AbstractRequest.cpp
-        )

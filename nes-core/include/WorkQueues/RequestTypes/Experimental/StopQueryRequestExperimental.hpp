@@ -77,10 +77,14 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
+class StopQueryResponse : public AbstractRequestResponse {
+  public:
+    bool success;
+};
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequestExperimental : public AbstractRequest {
+class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
 
   public:
     static StopQueryRequestPtr create(RequestId requestId, QueryId queryId,
@@ -104,6 +108,7 @@ class StopQueryRequestExperimental : public AbstractRequest {
 
     ~StopQueryRequestExperimental() = default;
 
+    StopQueryRequestExperimental(StopQueryRequestExperimental&& other) noexcept ;
   private:
     StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
                                  size_t maxRetries,
