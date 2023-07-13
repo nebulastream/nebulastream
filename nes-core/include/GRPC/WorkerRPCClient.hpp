@@ -195,8 +195,9 @@ class WorkerRPCClient {
      * @param queues
      * @param mode
      * @return true if all calls returned
+     * @throws RpcException: Creates RPC exception with failedRPCCalls and mode
      */
-    static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
+    static void checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
     /**
      * @brief method to propagate new epoch timestamp to source

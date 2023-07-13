@@ -91,26 +91,48 @@ struct StopQueryResponse : public AbstractRequestResponse {
 class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
 
   public:
-    static StopQueryRequestPtr create(const RequestId requestId,
-                                      const QueryId queryId,
-                                      const size_t maxRetries,
-                                      WorkerRPCClientPtr workerRpcClient,
-                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                      std::promise<StopQueryResponse> responsePromise);
+    /**
+     * @brief Construct a new Stop Query Request object
+     * @param queryId The id of the query that we want to stop
+     * @param maxRetries maximal number of retries to stop a query
+     * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
+     * @param coordinatorConfiguration The coordinator configuration
+     */
+    StopQueryRequest(const RequestId requestId,
+                     const QueryId queryId,
+                     const size_t maxRetries,
+                     WorkerRPCClientPtr workerRpcClient,
+                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                     std::promise<StopQueryResponse> responsePromise);
 
+  protected:
+    /**
+     * @brief Executes the request logic.
+     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * request
+     * @throws QueryNotFoundException if the query or the associated shared query plan are not found
+     * @throws InvalidQueryStatusException if the query's status is invalid for stop
+     * @throws QueryPlacementException if the query placement phase fails
+     * @throws RequestExecutionException if resource acquisition fails
+     */
     void executeRequestLogic(StorageHandler& storageHandle) override;
 
     void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
+    /**
+     * @brief Roll back any changes made by a request that did not complete due to errors.
+     * @param ex: The exception thrown during request execution.
+     * @param storageHandle: The storage access handle that was used by the request to modify the system state.
+     */
     void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     void preExecution(StorageHandler& storageHandle) override;
 
     void postExecution(StorageHandler& storageHandle) override;
 
-    std::string toString() override;
+    std::string toString();
 
     ~StopQueryRequest() override = default;
 

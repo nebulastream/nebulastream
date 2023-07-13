@@ -107,27 +107,27 @@ void StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
         //mark single query for hard stop
         auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
         if (!markedForHardStopSuccessful) {
-            throw Exceptions::InvalidQueryStatusException({QueryStatus::OPTIMIZING,
+            throw Exceptions::InvalidQueryStateException({QueryStatus::OPTIMIZING,
                                                            QueryStatus::REGISTERED,
                                                            QueryStatus::DEPLOYED,
                                                            QueryStatus::RUNNING,
                                                            QueryStatus::RESTARTING},
                                                           queryCatalogService->getEntryForQuery(queryId)->getQueryStatus());
         }
-        //remove single query from global query plan
-        globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
                                                      + std::to_string(queryId) + " in the global query plan");
         }
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-        if (sharedQueryPlan == nullptr) {
+        if (!sharedQueryPlan) {
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
                                                      + std::to_string(queryId) + " in the global query plan");
         }
         //undeploy SQP
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
+        //remove single query from global query plan
+        globalQueryPlan->removeQuery(queryId, RequestType::Stop);
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
@@ -177,50 +177,38 @@ void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex, [[
 void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
+
 void StopQueryRequest::rollBack(const RequestExecutionException& ex, StorageHandler& storageHandler) {
     try {
         NES_TRACE("Error: {}", ex.what());
-        if (ex.instanceOf<Exceptions::InvalidQueryStatusException>()) {
-            //Happens if:
-            //1. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
-            NES_ERROR("InvalidQueryStatusException: {}", ex.what());
-        } else if (ex.instanceOf<Exceptions::QueryPlacementException>()) {
-            NES_ERROR("QueryPlacementException: {}", ex.what());
-            FailQueryRequest failRequest = FailQueryRequest(ex.getQueryId(), 0, 1, workerRpcClient);
-            //todo: #3821 calling failRequest's execute method will fail due to the storage handler already having resources allocated.
-            //could either make executeRequestLogic protected or need to revise logic
+        if (ex.instanceOf<Exceptions::QueryPlacementException>()) {
+            NES_ERROR("{}", ex.what());
+            FailQueryRequest failRequest =
+                FailQueryRequest(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE, workerRpcClient);
             failRequest.execute(storageHandler);
         } else if (ex.instanceOf<QueryDeploymentException>() || ex.instanceOf<InvalidQueryException>()) {
             //Happens if:
-            //1. QueryDeploymentException: Could not obtain execution nodes by shared query id --> non-recoverable
-            //todo: #3821 create ExecutionNodeException, remove Query Deployment Exception
-            //2. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
-            //3. catching QueryNotFoundException and InvalidQueryStatusException and throwing QueryDeploymentException instead:
-            // happens if call to QueryCatalogService::updateQueryStatus with QueryStatus::DEPLOYED fails
-            //4. No query sub-plans found for current sqp id
-            //5. catching QueryNotFoundException and InvalidQueryStatusException and throwing QueryDeploymentException instead:
-            // happens if call to QueryCatalogService::updateQueryStatus with QueryStatus::RUNNING fails
-            //todo: #3821 substitute for new constructor
-            FailQueryRequest failRequest = FailQueryRequest(ex.getQueryId(), 0, 1, workerRpcClient);
-            //todo: #3821 calling failRequest's execute method will fail due to the storage handler already having resources allocated.
-            //could either make executeRequestLogic protected or need to revise logic
+            //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
+            //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
+            //2. QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
+            //3. QueryDeploymentException: Error in call to Elegant acceleration service with code
+            //4. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
+            FailQueryRequest failRequest =
+                FailQueryRequest(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE, workerRpcClient);
             failRequest.execute(storageHandler);
         } else if (ex.instanceOf<TypeInferenceException>()) {
             NES_ERROR("TypeInferenceException: {}", ex.what());
             queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryStatus::FAILED, ex.what());
         } else if (ex.instanceOf<Exceptions::QueryNotFoundException>()
                    || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                   || ex.instanceOf<Exceptions::QueryUndeploymentException>()
                    || ex.instanceOf<Exceptions::InvalidQueryStatusException>()) {
             //Happens if:
             //1. could not obtain execution nodes by shared query id --> non-recoverable
-            //4. Could not find topology node to release resources (increaseResources)
-            //5. Could not find sqp in global query plan (removeSharedQueryPlan)
-            //6. Could not remove query sub plan from execution node (removeQuerySubPlan)
+            //2. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
+            //3. Could not find topology node to release resources
+            //4. Could not find sqp in global query plan
+            //5. Could not remove query sub plan from execution node
             //--> SQP is not running on any nodes:
-            // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
-            // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
-            // we do this as long as there are retries present, otherwise, we fail the query
             //log the error to let the user know
             //no other action necessary
             NES_ERROR("{}", ex.what());
@@ -230,14 +218,10 @@ void StopQueryRequest::rollBack(const RequestExecutionException& ex, StorageHand
             //2. Called from PlacementStrategyPhase: PlacementStrategyFactory: Unknown placement strategy
             NES_ERROR("RuntimeException: {}", ex.what());
         } else {
-            //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part
-            //RPC call errors (I changed the logic there because even on error they were returning true):
-            //2. asynchronous call to worker to stop shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
-            //3. asynchronous call to worker to unregister shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR:
-            //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part
-            //RPC call errors (I changed the logic there because even on error they were returning true):
-            //6. deploy query: asynchronous call to worker to deploy shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
-            //7. start query: asynchronous call to worker to start shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
+            //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part, differentiate between deployment and undeployment phase
+            //RPC call errors:
+            //1. asynchronous call to worker to stop shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
+            //2. asynchronous call to worker to unregister shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR:
             NES_ERROR("Unknown exception: {}", ex.what());
         }
     } catch (RequestExecutionException& e) {

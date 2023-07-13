@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
@@ -60,10 +61,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     if (executionNodes.empty()) {
-        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query {}", sharedQueryId);
-        throw QueryDeploymentException(sharedQueryId,
-                                       "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query "
-                                           + std::to_string(sharedQueryId));
+        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
+        throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query "
+                                                         + std::to_string(sharedQueryId) + " is deployed");
     }
 
     //Remove the old mapping of the shared query plan
@@ -94,14 +94,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
     }
 
-    bool successDeploy = deployQuery(sharedQueryId, executionNodes);
-    if (successDeploy) {
-        NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
-    } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to deploy shared query {}", sharedQueryId);
-        throw QueryDeploymentException(sharedQueryId,
-                                       "QueryDeploymentPhase: Failed to deploy shared query " + std::to_string(sharedQueryId));
-    }
+    deployQuery(sharedQueryId, executionNodes);
+    NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -112,15 +106,16 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     startQuery(sharedQueryId, executionNodes);
 }
 
-bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}", executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
-            NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id {}", queryId);
-            return false;
+            throw QueryDeploymentException(queryId,
+                                           "QueryDeploymentPhase : unable to find query sub plan with id "
+                                               + std::to_string(queryId));
         }
 
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -220,9 +215,8 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         }
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
-    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} success={}", queryId, result);
-    return result;
+    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
+    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", queryId);
 }
 
 void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
@@ -244,8 +238,8 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         completionQueues[queueForExecutionNode] = 1;
     }
 
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
-    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId, result);
+    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
+    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {}", queryId);
 }
 
 }// namespace NES
