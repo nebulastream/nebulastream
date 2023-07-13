@@ -98,9 +98,8 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
+void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
-    bool result = true;
     std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;
     for (const auto& queue : queues) {
         //wait for all deploys to come back
@@ -143,8 +142,8 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
         throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls, mode);
     }
     NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
-    return result;
 }
+
 void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, queryId);
 

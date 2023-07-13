@@ -71,6 +71,8 @@ class GlobalQueryPlan {
      * @brief remove the operators belonging to the query with input query Id from the global query plan
      * @param queryId: the id of the query whose operators need to be removed
      * @param requestType: request type for query removal
+     * todo: #3821 create specific exception for this case
+     * @throws RuntimeException: "GlobalQueryPlan: Unable to remove query with id {queryId} from shared query plan with id {sharedQueryId}
      */
     void removeQuery(QueryId queryId, RequestType requestType);
 
