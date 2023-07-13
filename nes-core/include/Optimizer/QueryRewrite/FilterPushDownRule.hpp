@@ -58,11 +58,11 @@ class FilterPushDownRule : public BaseRewriteRule {
 
 
     /**
-     * In case we can't push the filter any further we call this method to remove the filter from its original position in the query plan
+     * In case the filter cant be pushed any further this method is called to remove the filter from its original position in the query plan
      * and insert the filter at the new position of the query plan. (only if the position of the filter changed)
      * @param filterOperator the filter operator that we want to insert into the query plan
-     * @param childOperator we want to insert the filter operator above this operator in the query plan
-     * @param parOperator  we want to insert the filter operator below this operator in the query plan
+     * @param childOperator insert the filter operator above this operator in the query plan
+     * @param parOperator  insert the filter operator below this operator in the query plan
      */
     static void insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 
@@ -104,8 +104,8 @@ class FilterPushDownRule : public BaseRewriteRule {
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
-     * If the filter only accesses one attribute and that attribute is part of the join condition, we can create a duplicate filter and push it down as well.
-     * The original filter will belong to one branch where we push it down and the duplicate filter will be pushed down the other branch.
+     * If the filter only accesses one attribute and that attribute is part of the join condition, a duplicate filter can be created and pushed down as well.
+     * The original filter will belong to one branch where it is pushed down and the duplicate filter will be pushed down the other branch.
      * The accessed attribute of the duplicate filter will be changed to attribute that is part of the joinCondition from this branch.
      * This is possible because values that are not equal to the values of the original attribute of the filter would get ignored
      * in the join anyways.
@@ -116,8 +116,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      *                  |                     |                                                         |                       |
      *    left branch(contains Src1)        right branch(Contains Src2)                   left branch(contains Src1)        right branch(Contains Src2)
      *
-     * @param filterOperator the filter operator that we try to push down
-     * @param joinOperator the join operator to which we want to push the filter down below. (it is currently the child of the filter)
+     * @param filterOperator the filter operator that is tried to be pushed
+     * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
      * @return true iff we pushed the filter two both branches of this joinOperator
      */
     bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
@@ -133,8 +133,8 @@ class FilterPushDownRule : public BaseRewriteRule {
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union.
-     * @param filterOperator the filter operator that we push down
-     * @param unionOperator the union operator to which we push the filter down below. (it is currently the child of the filter)
+     * @param filterOperator the filter operator to be pushed down
+     * @param unionOperator the union operator to which the filter should be pushed down below. (it is currently the child of the filter)
      */
     void pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator);
 
@@ -147,12 +147,12 @@ class FilterPushDownRule : public BaseRewriteRule {
      *                      |                           ====>                   |
      *               avg().groubBy(a,b,c)                               Filter(a==5, b==10)
      *
-     * @param filterOperator the filter operator that we try to push down
-     * @param windowOperator the window operator to which we want to push the filter down below. (it is currently the child of the filter)
-     * @param parOperator the parent operator of the windowOperator. In case we can not push down the filter, we insert it between
+     * @param filterOperator the filter operator to be pushed down
+     * @param windowOperator the window operator to which the filter should be pushed down below. (it is currently the child of the filter)
+     * @param parOperator the parent operator of the windowOperator. In case the filter cant be pushed down, it is inserted between
      * windowOperator and parOperator
      */
-    void pushFilterBelowWindow(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
+    void pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
