@@ -18,15 +18,15 @@
 
 namespace NES::Exceptions {
 
-InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses,
-                                                         QueryStatus actualStatus)
+InvalidQueryStateException::InvalidQueryStateException(const std::vector<QueryState>& expectedStatuses,
+                                                         QueryState actualStatus)
     : RequestExecutionException("Invalid query status") {
 
     std::stringstream expectedStatus;
     for (QueryState status : expectedStatuses) {
         expectedStatus << std::string(magic_enum::enum_name(status)) << " ";
     }
-    message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
+    message = "InvalidQueryStateException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
         + std::string(magic_enum::enum_name(actualStatus));
 }
 
