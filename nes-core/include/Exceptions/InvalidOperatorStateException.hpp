@@ -21,7 +21,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace NES {
+namespace NES::Exceptions {
 /**
  * @brief Exception is raised when the operator is in an Invalid status
  */
