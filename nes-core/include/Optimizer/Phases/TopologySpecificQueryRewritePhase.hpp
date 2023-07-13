@@ -55,12 +55,12 @@ class TopologySpecificQueryRewritePhase {
     /**
      * @brief Create the TopologySpecificQueryRewritePhase with a specific optimizer configuration
      * @param sourceCatalog the catalog of all registered sources
-     * @param configuration for the optimizer
+     * @param optimizerConfiguration configuration of the optimizer
      * @return TopologySpecificQueryRewritePhasePtr
      */
-    static TopologySpecificQueryRewritePhasePtr create(TopologyPtr topology,
-                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                       Configurations::OptimizerConfiguration configuration);
+    static TopologySpecificQueryRewritePhasePtr create(const TopologyPtr& topology,
+                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                       Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -70,13 +70,13 @@ class TopologySpecificQueryRewritePhase {
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
-    explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                               Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                               Configurations::OptimizerConfiguration configuration);
+    explicit TopologySpecificQueryRewritePhase(const TopologyPtr& topology,
+                                               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                               Configurations::OptimizerConfiguration optimizerConfiguration);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     DistributeWindowRulePtr distributedWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer
-#endif // NES_CORE_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

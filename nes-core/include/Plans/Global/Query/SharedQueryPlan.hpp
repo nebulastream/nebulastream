@@ -196,6 +196,7 @@ class SharedQueryPlan {
 
     /**
      * @brief: update the timestamp till which the changes have been processed
+     * @param timestamp: the new timestamp in micro seconds
      */
     void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 

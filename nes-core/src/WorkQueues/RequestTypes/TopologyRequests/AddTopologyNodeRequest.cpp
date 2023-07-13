@@ -20,8 +20,8 @@ namespace NES::Experimental {
 
 AddTopologyNodeRequest::AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
                                                std::string address,
-                                               int64_t grpcPort,
-                                               int64_t dataPort,
+                                               uint64_t grpcPort,
+                                               uint64_t dataPort,
                                                uint16_t numberOfSlots,
                                                NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                                const std::map<std::string, std::any>& workerProperties)
@@ -30,8 +30,8 @@ AddTopologyNodeRequest::AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
 
 AddTopologyNodeRequestPtr AddTopologyNodeRequest::create(TopologyNodeId topologyNodeId,
                                                          const std::string& address,
-                                                         int64_t grpcPort,
-                                                         int64_t dataPort,
+                                                         uint64_t grpcPort,
+                                                         uint64_t dataPort,
                                                          uint16_t numberOfSlots,
                                                          NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                                          const std::map<std::string, std::any>& workerProperties) {

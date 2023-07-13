@@ -130,24 +130,24 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
     }
 }
 
-void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const NESRequestPtr& nesRequest) {
-    auto stopQueryRequest = nesRequest->as<StopQueryRequest>();
+void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const NESRequestPtr& stopQueryRequest) {
+    auto stopQueryRequest = stopQueryRequest->as<StopQueryRequest>();
     QueryId queryId = stopQueryRequest->getQueryId();
     NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
     globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
 }
 
-void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const NESRequestPtr& nesRequest) {
-    auto failQueryRequest = nesRequest->as<FailQueryRequest>();
+void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const NESRequestPtr& failQueryRequest) {
+    auto failQueryRequest = failQueryRequest->as<FailQueryRequest>();
     QueryId queryId = failQueryRequest->getQueryId();
     NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 }
 
-void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& nesRequest) {
-    auto runQueryRequest = nesRequest->as<AddQueryRequest>();
+void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& addQueryRequest) {
+    auto runQueryRequest = addQueryRequest->as<AddQueryRequest>();
     QueryId queryId = runQueryRequest->getQueryId();
-    auto runRequest = nesRequest->as<AddQueryRequest>();
+    auto runRequest = addQueryRequest->as<AddQueryRequest>();
     auto queryPlan = runRequest->getQueryPlan();
 
     //1. Add the initial version of the query to the query catalog
@@ -213,8 +213,8 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& nes
     queryMergerPhase->execute(globalQueryPlan);
 }
 
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(const NES::NESRequestPtr& nesRequest) {
-    auto removeTopologyLinkRequest = nesRequest->as<NES::Experimental::RemoveTopologyLinkRequest>();
+void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(const NES::NESRequestPtr& removeTopologyLinkRequest) {
+    auto removeTopologyLinkRequest = removeTopologyLinkRequest->as<NES::Experimental::RemoveTopologyLinkRequest>();
     TopologyNodeId upstreamNodeId = removeTopologyLinkRequest->getUpstreamNodeId();
     TopologyNodeId downstreamNodeId = removeTopologyLinkRequest->getDownstreamNodeId();
 
@@ -254,8 +254,8 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(const NES::NES
     }
 }
 
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(const NES::NESRequestPtr& nesRequest) {
-    auto removeTopologyNodeRequest = nesRequest->as<NES::Experimental::RemoveTopologyNodeRequest>();
+void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(const NES::NESRequestPtr& removeTopologyNodeRequest) {
+    auto removeTopologyNodeRequest = removeTopologyNodeRequest->as<NES::Experimental::RemoveTopologyNodeRequest>();
     TopologyNodeId removedNodeId = removeTopologyNodeRequest->getTopologyNodeId();
 
     //1. If the removed execution nodes do not exist then remove skip rest of the operation
