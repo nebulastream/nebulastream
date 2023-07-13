@@ -42,7 +42,7 @@
 #include <Util/PlacementStrategy.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
@@ -82,7 +82,8 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
                                                                                    globalQueryPlan,
                                                                                    z3context,
                                                                                    coordinatorConfig,
-                                                                                   udfCatalog);
+                                                                                   udfCatalog,
+                                                                                   globalExecutionPlan);
         syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -123,7 +124,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
         queryPlan->setQueryId(queryId);
         queryPlan->setLineageType(lineage);
         queryCatalogService->createNewEntry(query, queryPlan, placementStratedyName);
-        const auto runRequest = RunQueryRequest::create(queryPlan, placementStrategy);
+        const auto runRequest = AddQueryRequest::create(queryPlan, placementStrategy);
 
         globalQueryPlanUpdatePhase->execute({runRequest});
 

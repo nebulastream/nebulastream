@@ -98,23 +98,23 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
             auto requestType = nesRequest->getRequestType();
             switch (requestType) {
                 case RequestType::StopQuery: {
-                    processStopQueryRequest(nesRequest);
+                    processStopQueryRequest(nesRequest->as<StopQueryRequest>());
                     break;
                 }
                 case RequestType::FailQuery: {
-                    processFailQueryRequest(nesRequest);
+                    processFailQueryRequest(nesRequest->as<FailQueryRequest>());
                     break;
                 }
                 case RequestType::AddQuery: {
-                    processAddQueryRequest(nesRequest);
+                    processAddQueryRequest(nesRequest->as<AddQueryRequest>());
                     break;
                 }
                 case RequestType::RemoveTopologyLink: {
-                    processRemoveTopologyLinkRequest(nesRequest);
+                    processRemoveTopologyLinkRequest(nesRequest->as<NES::Experimental::RemoveTopologyLinkRequest>());
                     break;
                 }
                 case RequestType::RemoveTopologyNode: {
-                    processRemoveTopologyNodeRequest(nesRequest);
+                    processRemoveTopologyNodeRequest(nesRequest->as<NES::Experimental::RemoveTopologyNodeRequest>());
                     break;
                 }
                 default:
@@ -130,23 +130,20 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
     }
 }
 
-void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const NESRequestPtr& stopQueryRequest) {
-    auto stopQueryRequest = stopQueryRequest->as<StopQueryRequest>();
+void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const StopQueryRequestPtr& stopQueryRequest) {
     QueryId queryId = stopQueryRequest->getQueryId();
     NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
     globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
 }
 
-void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const NESRequestPtr& failQueryRequest) {
-    auto failQueryRequest = failQueryRequest->as<FailQueryRequest>();
+void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const FailQueryRequestPtr& failQueryRequest) {
     QueryId queryId = failQueryRequest->getQueryId();
     NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 }
 
-void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& addQueryRequest) {
-    auto runQueryRequest = addQueryRequest->as<AddQueryRequest>();
-    QueryId queryId = runQueryRequest->getQueryId();
+void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr& addQueryRequest) {
+    QueryId queryId = addQueryRequest->getQueryId();
     auto runRequest = addQueryRequest->as<AddQueryRequest>();
     auto queryPlan = runRequest->getQueryPlan();
 
@@ -176,9 +173,9 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& add
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     //8. Generate sample code for elegant planner
-    if (runQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_BALANCED
-        || runQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_PERFORMANCE
-        || runQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_ENERGY) {
+    if (addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_BALANCED
+        || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_PERFORMANCE
+        || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_ENERGY) {
         queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
     }
 
@@ -213,8 +210,9 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const NESRequestPtr& add
     queryMergerPhase->execute(globalQueryPlan);
 }
 
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(const NES::NESRequestPtr& removeTopologyLinkRequest) {
-    auto removeTopologyLinkRequest = removeTopologyLinkRequest->as<NES::Experimental::RemoveTopologyLinkRequest>();
+void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
+    const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest) {
+
     TopologyNodeId upstreamNodeId = removeTopologyLinkRequest->getUpstreamNodeId();
     TopologyNodeId downstreamNodeId = removeTopologyLinkRequest->getDownstreamNodeId();
 
@@ -254,8 +252,9 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(const NES::NES
     }
 }
 
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(const NES::NESRequestPtr& removeTopologyNodeRequest) {
-    auto removeTopologyNodeRequest = removeTopologyNodeRequest->as<NES::Experimental::RemoveTopologyNodeRequest>();
+void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
+    const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest) {
+
     TopologyNodeId removedNodeId = removeTopologyNodeRequest->getTopologyNodeId();
 
     //1. If the removed execution nodes do not exist then remove skip rest of the operation
@@ -363,8 +362,8 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(SharedQueryId shar
                     //1.3 Identify non-system generated pinned upstream operator from the next upstream execution node
                     for (const auto& nextUpstreamExecutionNode : upstreamExecutionNode->getChildren()) {
                         getUpstreamPinnedOperatorIds(sharedQueryPlanId,
-                                                       nextUpstreamExecutionNode->as<ExecutionNode>(),
-                                                       upstreamOperatorIds);
+                                                     nextUpstreamExecutionNode->as<ExecutionNode>(),
+                                                     upstreamOperatorIds);
                     }
                 } else {
                     OperatorId upstreamOperatorId = child->as<LogicalOperatorNode>()->getId();
