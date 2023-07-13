@@ -22,7 +22,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -175,18 +175,18 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
 
         //Mark queries as deployed
         for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::DEPLOYED, "");
+            queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
         }
 
         //Mark queries as running
         for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
+            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
         }
 
         //Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
 
-        ASSERT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
+        ASSERT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryState::RUNNING);
         ASSERT_NE(globalQueryPlan->getSharedQueryId(queryId), INVALID_SHARED_QUERY_ID);
         ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
         ASSERT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
@@ -235,11 +235,11 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         ASSERT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), worker2->getId()), failedCallNodeIds.cend());
 
         //expect the query to be marked for failure and not failed, because the deployment did not succeed
-        EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::MARKED_FOR_FAILURE);
+        EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryState::MARKED_FOR_FAILURE);
         auto entry = queryCatalogService->getAllQueryCatalogEntries()[queryId];
-        EXPECT_EQ(entry->getQueryStatus(), QueryStatus::MARKED_FOR_FAILURE);
+        EXPECT_EQ(entry->getQueryStatus(), QueryState::MARKED_FOR_FAILURE);
         for (const auto& subQueryPlanMetaData : entry->getAllSubQueryPlanMetaData()) {
-            EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryStatus::MARKED_FOR_FAILURE);
+            EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryState::MARKED_FOR_FAILURE);
         }
 
         EXPECT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Failed);
@@ -274,7 +274,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     deployQuery();
 
     //set the query status to stopped, it should not be possible to fail a stopped query
-    queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryStatus::STOPPED);
+    queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(queryId, INVALID_QUERY_SUB_PLAN_ID, 1, workerRpcClient);
@@ -286,6 +286,6 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
                                                      udfCatalog);
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
-    EXPECT_THROW(failQueryRequest.execute(storageHandler), Exceptions::InvalidQueryStatusException);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), Exceptions::InvalidQueryStateException);
 }
 }// namespace NES

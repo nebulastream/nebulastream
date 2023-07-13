@@ -71,7 +71,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
     QueryState currentStatus = queryCatalogEntry->getQueryStatus();
-    //    if (currentStatus == QueryStatus::Stopped) {
+    //    if (currentStatus == QueryState::Stopped) {
     //        NES_DEBUG("Already stopped!");
     //        return true;
     //    }
@@ -81,8 +81,8 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         || currentStatus == QueryState::STOPPED || currentStatus == QueryState::FAILED) {
         NES_ERROR("QueryCatalog: Found query status already as {}. Ignoring stop query request.",
                   queryCatalogEntry->getQueryStatusAsString());
-        //        throw Exceptions::InvalidQueryStatusException(
-        //            {QueryStatus::Optimizing, QueryStatus::Registered, QueryStatus::Deployed, QueryStatus::Running},
+        //        throw Exceptions::InvalidQueryStateException(
+        //            {QueryState::Optimizing, QueryState::Registered, QueryState::Deployed, QueryState::Running},
         //            currentStatus);
         return false;
     }
@@ -111,16 +111,16 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
             || currentQueryStatus == QueryState::STOPPED) {
             NES_WARNING("QueryCatalogService: Query can not be marked for failure as query in {} status.",
                         queryCatalogEntry->getQueryStatusAsString());
-            throw Exceptions::InvalidQueryStatusException({QueryStatus::REGISTERED,
-                                                           QueryStatus::OPTIMIZING,
-                                                           QueryStatus::DEPLOYED,
-                                                           QueryStatus::RUNNING,
-                                                           QueryStatus::MARKED_FOR_HARD_STOP,
-                                                           QueryStatus::MARKED_FOR_SOFT_STOP,
-                                                           QueryStatus::SOFT_STOP_TRIGGERED,
-                                                           QueryStatus::SOFT_STOP_COMPLETED,
-                                                           QueryStatus::RESTARTING,
-                                                           QueryStatus::MIGRATING},
+            throw Exceptions::InvalidQueryStateException({QueryState::REGISTERED,
+                                                           QueryState::OPTIMIZING,
+                                                           QueryState::DEPLOYED,
+                                                           QueryState::RUNNING,
+                                                           QueryState::MARKED_FOR_HARD_STOP,
+                                                           QueryState::MARKED_FOR_SOFT_STOP,
+                                                           QueryState::SOFT_STOP_TRIGGERED,
+                                                           QueryState::SOFT_STOP_COMPLETED,
+                                                           QueryState::RESTARTING,
+                                                           QueryState::MIGRATING},
                                                           currentQueryStatus);
         }
     }
@@ -207,13 +207,13 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryState querySta
             return true;
         }
         default:
-            throw Exceptions::InvalidQueryStatusException({QueryStatus::REGISTERED,
-                                                           QueryStatus::OPTIMIZING,
-                                                           QueryStatus::RESTARTING,
-                                                           QueryStatus::MIGRATING,
-                                                           QueryStatus::STOPPED,
-                                                           QueryStatus::RUNNING,
-                                                           QueryStatus::FAILED},
+            throw Exceptions::InvalidQueryStateException({QueryState::REGISTERED,
+                                                           QueryState::OPTIMIZING,
+                                                           QueryState::RESTARTING,
+                                                           QueryState::MIGRATING,
+                                                           QueryState::STOPPED,
+                                                           QueryState::RUNNING,
+                                                           QueryState::FAILED},
                                                           queryStatus);
     }
 }
@@ -318,7 +318,7 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
         case QueryState::SOFT_STOP_TRIGGERED:
         case QueryState::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
-            throw Exceptions::InvalidQueryStatusException({QueryStatus::SOFT_STOP_TRIGGERED, QueryStatus::SOFT_STOP_COMPLETED},
+            throw Exceptions::InvalidQueryStateException({QueryState::SOFT_STOP_TRIGGERED, QueryState::SOFT_STOP_COMPLETED},
                                                           subQueryStatus);
     }
     return true;

@@ -240,9 +240,9 @@ void RequestProcessorService::start() {
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
                 auto queryId = ex.getQueryId();
-                queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
-            } catch (Exceptions::InvalidQueryStatusException& ex) {
-                NES_ERROR("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
+                queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
+            } catch (Exceptions::InvalidQueryStateException& ex) {
+                NES_ERROR("QueryRequestProcessingService: InvalidQueryStateException: {}", ex.what());
             } catch (Exceptions::QueryNotFoundException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryNotFoundException: {}", ex.what());
             } catch (Exceptions::QueryUndeploymentException& ex) {

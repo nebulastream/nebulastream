@@ -165,7 +165,7 @@ class QueryCatalogService {
      * @param sharedQueryId : id of the shared query plan
      * @param querySubPlanId : id of the sub query plan that failed
      * @throws QueryNotFoundException if no query with the supplied id exists
-     * @throws InvalidQueryStatusException if the query is in status MARKED_FOR_FAILURE, FAILED of STOPPED
+     * @throws InvalidQueryStateException if the query is in status MARKED_FOR_FAILURE, FAILED of STOPPED
      */
     void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
