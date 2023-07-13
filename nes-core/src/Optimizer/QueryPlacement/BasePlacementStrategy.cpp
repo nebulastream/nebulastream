@@ -401,7 +401,7 @@ void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlace
     auto smallestNetworkCapacity = firstNode->getAvailableNetwork();
     auto initialMemoryCapacity = firstNode->getInitialMemoryCapacity();
     auto initialNetworkCapacity = firstNode->getInitialNetworkCapacity();
-    double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) * currentEpoch;
+    double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) / 2 * currentEpoch;
     newEpoch = std::max(newEpoch, 1.0);
     std::cout << "New epoch" << newEpoch;
     while (nodeIterator != pathForPlacement.rend()) {
