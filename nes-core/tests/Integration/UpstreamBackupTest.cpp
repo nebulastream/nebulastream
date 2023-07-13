@@ -111,10 +111,10 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numWorkerThreads = 4;
         coordinatorConfig->bufferSizeInBytes = 131072;
         coordinatorConfig->numberOfSlots = 0;
-        coordinatorConfig->worker.memoryCapacity = 0;
-        coordinatorConfig->worker.networkCapacity = 0;
-        coordinatorConfig->worker.mtbfValue = 386228;
-        coordinatorConfig->worker.launchTime = 1652692028;
+        coordinatorConfig->memoryCapacity = 0;
+        coordinatorConfig->networkCapacity = 0;
+        coordinatorConfig->mtbfValue = 386228;
+        coordinatorConfig->launchTime = 1652692028;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersInSourceLocalBufferPool = 11;
@@ -418,7 +418,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_MOST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::NAIVE);
+                                                                    FaultTolerancePlacement::MFTP);
 
 
 
@@ -426,13 +426,13 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::NAIVE);
+                                                                    FaultTolerancePlacement::MFTP);
 
     queryId = queryService->validateAndQueueAddQueryRequest(query1,
                                                             "BottomUp",
                                                             FaultToleranceType::AT_LEAST_ONCE,
                                                             LineageType::IN_MEMORY,
-                                                            FaultTolerancePlacement::NAIVE);
+                                                            FaultTolerancePlacement::MFTP);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

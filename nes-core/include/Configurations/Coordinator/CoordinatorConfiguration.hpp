@@ -113,6 +113,27 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 
     /**
+     * @brief Memory capacity
+     */
+    UIntOption memoryCapacity = {MEMORY_CAPACITY, 100, "Memory capacity."};
+
+    /**
+     * @brief Network capacity
+     */
+    UIntOption networkCapacity = {NETWORK_CAPACITY, 100, "Memory capacity."};
+
+    /**
+     * @brief Mtbf value
+     */
+    UIntOption mtbfValue = {MTBF_VALUE, 386228, "Mtbf value."};
+
+    /**
+     * @brief Launch time
+     */
+    UIntOption launchTime = {LAUNCH_TIME, 1652692028, "Launch time."};
+
+
+    /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
@@ -190,6 +211,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &numberOfBuffersPerWorker,
                 &numberOfBuffersInSourceLocalBufferPool,
                 &numberOfBuffersPerEpoch,
+                &memoryCapacity,
+                &networkCapacity,
+                &launchTime,
+                &mtbfValue,
                 &bufferSizeInBytes,
                 &numWorkerThreads,
                 &enableQueryReconfiguration,
