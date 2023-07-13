@@ -244,7 +244,9 @@ BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyN
                 throw Exceptions::RuntimeException("BasePlacementStrategy::Cannot place fault tolerance. Not enough resources.");
             } else {
                 topology->reduceMemory(currentTopologyNode->getId(), memoryToReduce);
+                std::cout << "New memory:" << currentTopologyNode->getAvailableMemory();
                 topology->reduceNetwork(currentTopologyNode->getId(), networkToReduce);
+                std::cout << "New network:" << currentTopologyNode->getAvailableNetwork();
                 currentTopologyNode->addNodeProperty("isBuffering", 1);
             }
             ++topologyIterator;
