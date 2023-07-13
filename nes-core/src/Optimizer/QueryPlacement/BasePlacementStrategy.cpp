@@ -205,6 +205,7 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
     while (topologyIterator != selectedPath.end()) {
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         topology->reduceResources(currentTopologyNode->getId(), 1);
+        std::cout << "Reduce resources to:" << currentTopologyNode->getAvailableResources();
         currentTopologyNode->addNodeProperty("isBuffering", 1);
         ++topologyIterator;
     }
