@@ -188,7 +188,7 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
             auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
             uint64_t availableSlot = currentTopologyNode->getAvailableResources();
 
-            if (availableSlot != 0) {
+            if (availableSlot > 0) {
                 pathScore += distanceScore(path, currentTopologyNode);
             }
             ++topologyIterator;

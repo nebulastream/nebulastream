@@ -207,7 +207,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
             }
         }
 
-        if (!candidateTopologyNode || availableSlot == 0) {
+        if (!candidateTopologyNode || availableSlot <= 0) {
             NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
             throw Exceptions::RuntimeException("BottomUpStrategy: No node available for further placement of operators");
         }

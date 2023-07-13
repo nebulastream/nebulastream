@@ -146,19 +146,19 @@ class TopologyNode : public Node {
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
      */
-    void reduceResources(uint64_t usedCapacity);
+    void reduceResources(int usedCapacity);
 
     /**
      * @brief method to get the amount of used resources
      * @return uint64_t used resources
      */
-    uint64_t getResourcesUsed();
+    int getResourcesUsed();
 
     /**
      * @brief method to increase CPU capacity
      * @param uint64_t of the vlaue that has to be added
      */
-    void increaseResources(uint64_t freedCapacity);
+    void increaseResources(int freedCapacity);
 
     /**
      * @brief Get ip address of the node
@@ -293,14 +293,14 @@ class TopologyNode : public Node {
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
-    uint64_t resources;
+    int resources;
     uint64_t initialMemoryCapacity;
     uint64_t mtbfValue;
     uint64_t launchTime;
     uint64_t epochValue;
     uint64_t ingestionRate;
     uint64_t initialNetworkCapacity;
-    uint64_t usedResources;
+    int usedResources;
     double usedMemory;
     double usedNetwork;
 

@@ -92,7 +92,7 @@ uint64_t TopologyNode::getInitialMemoryCapacity() const { return initialMemoryCa
 
 uint64_t TopologyNode::getInitialNetworkCapacity() const { return initialNetworkCapacity; }
 
-uint64_t TopologyNode::getResourcesUsed() { return usedResources; };
+int TopologyNode::getResourcesUsed() { return usedResources; };
 
 double TopologyNode::calculateReliability() const {
     auto now = std::chrono::system_clock::now();
@@ -107,14 +107,14 @@ bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodePropert
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
-void TopologyNode::increaseResources(uint64_t freedCapacity) {
+void TopologyNode::increaseResources(int freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
     NES_ASSERT(freedCapacity <= usedResources,
                "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
     usedResources = usedResources - freedCapacity;
 }
 
-void TopologyNode::reduceResources(uint64_t usedCapacity) {
+void TopologyNode::reduceResources(int usedCapacity) {
 //    NES_DEBUG("TopologyNode: Reducing resources " << usedCapacity << " of " << resources);
     if (usedCapacity > resources) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
