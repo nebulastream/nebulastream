@@ -33,15 +33,15 @@ cd /nebulastream/build
 # build the project
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
 # fix format issues
-make format
+ninja format
 # build documentation
-make nes-doc
+ninja nes-doc
 
 # release the tag and push next snapshot version
 if [ $RELEASE_TYPE = 'Major' ]; then
-  make major_release
+  ninja major_release
 elif [ $RELEASE_TYPE = 'Minor' ]; then
-  make minor_release
+  ninja minor_release
 else
-  make release
+  ninja release
 fi

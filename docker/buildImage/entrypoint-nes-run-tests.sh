@@ -30,7 +30,7 @@ if [ $# -eq 0 ]; then
   # We don't want to rely on the github-action timeout, because
   # this would fail the job in any case.
   cd /build_dir
-  timeout 90m make test_debug
+  timeout 90m ninja test_debug
   errorCode=$?
   if [ $errorCode -ne 0 ]; then
     rm -rf /nebulastream/build
