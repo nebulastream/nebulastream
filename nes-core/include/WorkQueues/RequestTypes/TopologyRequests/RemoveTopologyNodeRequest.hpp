@@ -34,6 +34,10 @@ class RemoveTopologyNodeRequest : public Request {
      */
     static RemoveTopologyNodeRequestPtr create(TopologyNodeId topologyNodeId);
 
+    /**
+     * @brief Get the id of the topology that was removed
+     * @return : topology id
+     */
     TopologyNodeId getTopologyNodeId() const;
 
     std::string toString() override;

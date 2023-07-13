@@ -134,33 +134,33 @@ class GlobalQueryPlanUpdatePhase {
 
     /**
      * @brief Process add query request
-     * @param nesRequest:add query request
+     * @param addQueryRequest:add query request
      */
-    void processAddQueryRequest(const NESRequestPtr& nesRequest);
+    void processAddQueryRequest(const NESRequestPtr& addQueryRequest);
 
     /**
      * @brief Process fail query request
-     * @param nesRequest: fail query request
+     * @param failQueryRequest: fail query request
      */
-    void processFailQueryRequest(const NESRequestPtr& nesRequest);
+    void processFailQueryRequest(const NESRequestPtr& failQueryRequest);
 
     /**
      * @brief Process stop query request
-     * @param nesRequest: stop query request
+     * @param stopQueryRequest: stop query request
      */
-    void processStopQueryRequest(const NESRequestPtr& nesRequest);
+    void processStopQueryRequest(const NESRequestPtr& stopQueryRequest);
 
     /**
      * @brief Process Remove Topology Link request
-     * @param nesRequest: Remove Topology Link request
+     * @param removeTopologyLinkRequest: Remove Topology Link request
      */
-    void processRemoveTopologyLinkRequest(const NESRequestPtr& nesRequest);
+    void processRemoveTopologyLinkRequest(const NESRequestPtr& removeTopologyLinkRequest);
 
     /**
      * @brief Process Remove Topology Node request
-     * @param nesRequest: Remove Topology Node request
+     * @param removeTopologyNodeRequest: Remove Topology Node request
      */
-    void processRemoveTopologyNodeRequest(const NESRequestPtr& nesRequest);
+    void processRemoveTopologyNodeRequest(const NESRequestPtr& removeTopologyNodeRequest);
 
     /**
      * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.

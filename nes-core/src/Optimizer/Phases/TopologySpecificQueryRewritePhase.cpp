@@ -23,23 +23,24 @@
 namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr
-TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
-                                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                          Configurations::OptimizerConfiguration configuration) {
+TopologySpecificQueryRewritePhase::create(const NES::TopologyPtr& topology,
+                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                          Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(std::move(topology), std::move(sourceCatalog), std::move(configuration)));
+        TopologySpecificQueryRewritePhase(topology, sourceCatalog, std::move(optimizerConfiguration)));
 }
 
-TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                                                     Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                                     Configurations::OptimizerConfiguration configuration)
+TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
+    const TopologyPtr& topology,
+    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    Configurations::OptimizerConfiguration optimizerConfiguration)
     : topology(topology) {
     logicalSourceExpansionRule =
-        LogicalSourceExpansionRule::create(std::move(sourceCatalog), configuration.performOnlySourceOperatorExpansion);
-    if (configuration.enableNemoPlacement) {
-        distributedWindowRule = NemoWindowPinningRule::create(configuration, topology);
+        LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
+    if (optimizerConfiguration.enableNemoPlacement) {
+        distributedWindowRule = NemoWindowPinningRule::create(optimizerConfiguration, topology);
     } else {
-        distributedWindowRule = DistributedWindowRule::create(configuration);
+        distributedWindowRule = DistributedWindowRule::create(optimizerConfiguration);
     }
 
     distributeJoinRule = DistributeJoinRule::create();

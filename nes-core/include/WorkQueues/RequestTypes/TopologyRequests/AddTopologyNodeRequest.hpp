@@ -48,8 +48,8 @@ class AddTopologyNodeRequest : public Request {
      */
     static AddTopologyNodeRequestPtr create(TopologyNodeId topologyNodeId,
                                             const std::string& address,
-                                            int64_t grpcPort,
-                                            int64_t dataPort,
+                                            uint64_t grpcPort,
+                                            uint64_t dataPort,
                                             uint16_t numberOfSlots,
                                             NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                             const std::map<std::string, std::any>& workerProperties);
@@ -75,16 +75,16 @@ class AddTopologyNodeRequest : public Request {
   private:
     explicit AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
                                     std::string address,
-                                    int64_t grpcPort,
-                                    int64_t dataPort,
+                                    uint64_t grpcPort,
+                                    uint64_t dataPort,
                                     uint16_t numberOfSlots,
                                     NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                     const std::map<std::string, std::any>& workerProperties);
 
     TopologyNodeId topologyNodeId;
     std::string address;
-    int64_t grpcPort;
-    int64_t dataPort;
+    uint64_t grpcPort;
+    uint64_t dataPort;
     uint16_t numberOfSlots;
     NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation;
     std::map<std::string, std::any> workerProperties;

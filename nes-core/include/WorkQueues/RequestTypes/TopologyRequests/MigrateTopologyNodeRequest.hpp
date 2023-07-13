@@ -38,8 +38,16 @@ class MigrateTopologyNodeRequest : public Request {
     static MigrateTopologyNodeRequestPtr create(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
                                                 std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd);
 
+    /**
+     * @brief Get all links that were removed
+     * @return returns all links that need to be removed
+     */
     const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& getLinksToRemove() const;
 
+    /**
+     * @brief Get all links that are added
+     * @return return all new links
+     */
     const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& getLinksToAdd() const;
 
     std::string toString() override;

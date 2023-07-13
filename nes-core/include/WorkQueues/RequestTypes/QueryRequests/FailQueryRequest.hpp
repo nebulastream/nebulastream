@@ -33,7 +33,7 @@ class FailQueryRequest : public Request {
      * @param failureReason: reason for query failure
      * @return shared pointer to the instance of fail query request
      */
-    static FailQueryRequestPtr create(SharedQueryId sharedQueryId, const std::string& failureReason);
+    static FailQueryRequestPtr create(SharedQueryId sharedQueryId, std::string failureReason);
 
     std::string getFailureReason();
 
@@ -44,11 +44,11 @@ class FailQueryRequest : public Request {
     RequestType getRequestType() override;
 
   private:
-    explicit FailQueryRequest(SharedQueryId sharedQueryId, std::string  failureReason);
+    explicit FailQueryRequest(SharedQueryId sharedQueryId, std::string failureReason);
 
     SharedQueryId queryId;
     std::string failureReason;
 };
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_QUERYREQUESTS_FAILQUERYREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_QUERYREQUESTS_FAILQUERYREQUEST_HPP_

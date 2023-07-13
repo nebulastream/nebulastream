@@ -36,8 +36,16 @@ class AddTopologyLinkRequest : public Request {
      */
     static AddTopologyLinkRequestPtr create(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
 
+    /**
+     * @brief get identifier of the upstream topology node
+     * @return topology node id
+     */
     TopologyNodeId getUpstreamNodeId() const;
 
+    /**
+     * @brief get identifier of the downstream topology node
+     * @return topology node id
+     */
     TopologyNodeId getDownstreamNodeId() const;
 
     std::string toString() override;
