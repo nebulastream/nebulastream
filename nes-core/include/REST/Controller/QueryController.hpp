@@ -182,6 +182,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto placement = requestJson["placement"].get<std::string>();
             std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
             std::string lineageString = DEFAULT_LINEAGE_TYPE;
+            std::string ftPlacementString = DEFAULT_TOLERANCE_PLACEMENT_TYPE;
             if (requestJson.contains("faultTolerance")) {
                 if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
                     std::string errorMessage =
@@ -202,8 +203,19 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     lineageString = requestJson["lineage"].get<std::string>();
                 }
             }
+            if (requestJson.contains("ftPlacement")) {
+                if (!validateFtPlacement(requestJson["ftPlacement"].get<std::string>())) {
+                    NES_ERROR2("QueryController: handlePost -execute-query: Invalid ftPlacement provided: {}", ftPlacementString);
+                    std::string errorMessage = "Invalid ftPlacement Type provided: " + ftPlacementString
+                        + ". Valid Lineage Modes are: 'NAIVE', 'MFTP', 'MFTPH', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    ftPlacementString = requestJson["ftPlacement"].get<std::string>();
+                }
+            }
             auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageMode = LineageType::getFromString(lineageString);
+            auto ftPlacement = FaultTolerancePlacement::getFromString(ftPlacementString);
             NES_DEBUG2("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
                        "lineage= {}",
                        userQuery,
@@ -211,7 +223,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                        faultToleranceString,
                        lineageString);
             QueryId queryId =
-                queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode);
+                queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode, ftPlacement);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -246,6 +258,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto* context = protobufMessage->mutable_context();
             std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
             std::string lineageString = DEFAULT_TOLERANCE_TYPE;
+            std::string ftPlacementString = DEFAULT_TOLERANCE_PLACEMENT_TYPE;
             if (context->contains("faultTolerance")) {
                 if (!validateFaultToleranceType(context->at("faultTolerance").value())) {
                     std::string errorMessage = "Invalid fault tolerance Type provided: " + context->at("faultTolerance").value()
@@ -265,12 +278,23 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     lineageString = context->at("lineage").value();
                 }
             }
+            if (context->contains("ftPlacement")) {
+                if (!validateFtPlacement(ftPlacementString = context->at("ftPlacement").value())) {
+                    NES_ERROR2("QueryController: handlePost -execute-query: Invalid ftPlacement provided: {}", ftPlacementString);
+                    std::string errorMessage = "Invalid ftPlacement provided: " + ftPlacementString
+                        + ". Valid ftPlacements are: 'NAIVE', 'MFTP', 'MFTPH', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    ftPlacementString = context->at("ftPlacement").value();
+                }
+            }
             std::string* queryString = protobufMessage->mutable_querystring();
             std::string placementStrategy = context->at("placement").value();
             auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageType = LineageType::getFromString(lineageString);
+            auto ftPlacement = FaultTolerancePlacement::getFromString(ftPlacementString);
             QueryId queryId =
-                queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageType);
+                queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageType, ftPlacement);
 
             //Prepare the response
             nlohmann::json response;
@@ -378,8 +402,18 @@ class QueryController : public oatpp::web::server::api::ApiController {
         return true;
     }
 
+    bool validateFtPlacement(const std::string& ftPlacementString) {
+        try {
+            FaultTolerancePlacement::getFromString(ftPlacementString);
+        } catch (Exceptions::RuntimeException exc) {
+            return false;
+        }
+        return true;
+    }
+
     const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
     const std::string DEFAULT_LINEAGE_TYPE = "NONE";
+    const std::string DEFAULT_TOLERANCE_PLACEMENT_TYPE = "NONE";
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
