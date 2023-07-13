@@ -65,7 +65,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
     //Set the new operator state after validating the previous state
     switch (newOperatorState) {
         case OperatorState::TO_BE_PLACED:
-            throw InvalidOperatorStateException(
+            throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_REPLACED, OperatorState::PLACED},
                 this->operatorState);
@@ -74,7 +74,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::TO_BE_REMOVED;
                 break;
             }
-            throw InvalidOperatorStateException(
+            throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
                 this->operatorState);
@@ -83,7 +83,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::TO_BE_REPLACED;
                 break;
             }
-            throw InvalidOperatorStateException(
+            throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
                 this->operatorState);
@@ -93,15 +93,15 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::PLACED;
                 break;
             }
-            throw InvalidOperatorStateException(id,
-                                                {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
-                                                this->operatorState);
+            throw Exceptions::InvalidOperatorStateException(id,
+                                                            {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
+                                                            this->operatorState);
         case OperatorState::REMOVED:
             if (this->operatorState == OperatorState::TO_BE_REMOVED) {
                 this->operatorState = OperatorState::REMOVED;
                 break;
             }
-            throw InvalidOperatorStateException(id, {OperatorState::TO_BE_REMOVED}, this->operatorState);
+            throw Exceptions::InvalidOperatorStateException(id, {OperatorState::TO_BE_REMOVED}, this->operatorState);
     }
 }
 

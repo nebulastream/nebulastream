@@ -16,11 +16,12 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
-namespace NES {
+namespace NES::Exceptions {
 
 InvalidOperatorStateException::InvalidOperatorStateException(NES::OperatorId operatorId,
                                                              const std::vector<OperatorState>& expectedStatus,
-                                                             NES::OperatorState actualStatus) {
+                                                             NES::OperatorState actualStatus)
+    : RequestExecutionException("Invalid operator state") {
 
     std::stringstream expectedStatusString;
     for (OperatorState status : expectedStatus) {
@@ -33,4 +34,4 @@ InvalidOperatorStateException::InvalidOperatorStateException(NES::OperatorId ope
 
 const char* InvalidOperatorStateException::what() const noexcept { return message.c_str(); }
 
-}// namespace NES
+}// namespace NES::Exceptions
