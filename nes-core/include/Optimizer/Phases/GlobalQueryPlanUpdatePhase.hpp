@@ -27,6 +27,23 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES {
 
+namespace Experimental {
+class RemoveTopologyNodeRequest;
+using RemoveTopologyNodeRequestPtr = std::shared_ptr<RemoveTopologyNodeRequest>;
+
+class RemoveTopologyLinkRequest;
+using RemoveTopologyLinkRequestPtr = std::shared_ptr<RemoveTopologyLinkRequest>;
+}// namespace Experimental
+
+class AddQueryRequest;
+using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
+
+class StopQueryRequest;
+using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
+
+class FailQueryRequest;
+using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
+
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -136,31 +153,31 @@ class GlobalQueryPlanUpdatePhase {
      * @brief Process add query request
      * @param addQueryRequest:add query request
      */
-    void processAddQueryRequest(const NESRequestPtr& addQueryRequest);
+    void processAddQueryRequest(const AddQueryRequestPtr& addQueryRequest);
 
     /**
      * @brief Process fail query request
      * @param failQueryRequest: fail query request
      */
-    void processFailQueryRequest(const NESRequestPtr& failQueryRequest);
+    void processFailQueryRequest(const FailQueryRequestPtr& failQueryRequest);
 
     /**
      * @brief Process stop query request
      * @param stopQueryRequest: stop query request
      */
-    void processStopQueryRequest(const NESRequestPtr& stopQueryRequest);
+    void processStopQueryRequest(const StopQueryRequestPtr& stopQueryRequest);
 
     /**
      * @brief Process Remove Topology Link request
      * @param removeTopologyLinkRequest: Remove Topology Link request
      */
-    void processRemoveTopologyLinkRequest(const NESRequestPtr& removeTopologyLinkRequest);
+    void processRemoveTopologyLinkRequest(const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest);
 
     /**
      * @brief Process Remove Topology Node request
      * @param removeTopologyNodeRequest: Remove Topology Node request
      */
-    void processRemoveTopologyNodeRequest(const NESRequestPtr& removeTopologyNodeRequest);
+    void processRemoveTopologyNodeRequest(const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest);
 
     /**
      * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.
@@ -188,8 +205,8 @@ class GlobalQueryPlanUpdatePhase {
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
     void getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
-                                         const ExecutionNodePtr& downstreamExecutionNode,
-                                         std::set<OperatorId>& downstreamOperatorIds) const;
+                                        const ExecutionNodePtr& downstreamExecutionNode,
+                                        std::set<OperatorId>& downstreamOperatorIds) const;
     void getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
                                       const ExecutionNodePtr& upstreamExecutionNode,
                                       std::set<OperatorId>& upstreamOperatorIds) const;

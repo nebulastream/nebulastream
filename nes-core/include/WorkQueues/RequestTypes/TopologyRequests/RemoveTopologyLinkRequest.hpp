@@ -18,6 +18,7 @@
 #include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES::Experimental {
+
 class RemoveTopologyLinkRequest;
 using RemoveTopologyLinkRequestPtr = std::shared_ptr<RemoveTopologyLinkRequest>;
 
