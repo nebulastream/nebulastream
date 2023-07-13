@@ -118,6 +118,12 @@ class TopologyNode : public Node {
     uint64_t getEpochValue() const;
 
     /**
+     * @brief method to set the epoch value
+     * @param uint64_t epoch value
+     */
+    void setEpochValue(uint64_t newEpochValue);
+
+    /**
      * @brief method to get the ingestion rate of the node
      * @return uint64_t ingestion rate
      */

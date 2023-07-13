@@ -418,7 +418,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_MOST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTP);
+                                                                    FaultTolerancePlacement::MFTPH);
 
 
 
@@ -426,13 +426,13 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTP);
+                                                                    FaultTolerancePlacement::MFTPH);
 
     queryId = queryService->validateAndQueueAddQueryRequest(query1,
                                                             "BottomUp",
                                                             FaultToleranceType::AT_LEAST_ONCE,
                                                             LineageType::IN_MEMORY,
-                                                            FaultTolerancePlacement::MFTP);
+                                                            FaultTolerancePlacement::MFTPH);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

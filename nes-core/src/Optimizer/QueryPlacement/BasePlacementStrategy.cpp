@@ -265,6 +265,8 @@ PlacementScore BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNo
     std::vector<TopologyNodePtr> initialPlacement;
     ResourcesPerPath resourcesPerPath;
 
+    adaptEpochCallback(subPathForPlacement);
+
     std::vector<TopologyNodePtr>::reverse_iterator pathIterator = subPathForPlacement.rbegin();
     while (pathIterator != subPathForPlacement.rend()) {
         auto firstNode = (*pathIterator)->as<TopologyNode>();
@@ -401,9 +403,11 @@ void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlace
     auto initialNetworkCapacity = firstNode->getInitialNetworkCapacity();
     double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) * currentEpoch;
     newEpoch = std::max(newEpoch, 1.0);
+    std::cout << "New epoch" << newEpoch;
     while (nodeIterator != pathForPlacement.rend()) {
         auto currentNode = (*nodeIterator)->as<TopologyNode>();
         currentNode->addNodeProperty("epoch", newEpoch);
+        currentNode->setEpochValue(newEpoch);
         nodeIterator++;
     }
 }

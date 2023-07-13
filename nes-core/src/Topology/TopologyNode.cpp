@@ -86,6 +86,8 @@ uint64_t TopologyNode::getLaunchTime() const { return launchTime; }
 
 uint64_t TopologyNode::getEpochValue() const { return epochValue; }
 
+void TopologyNode::setEpochValue(uint64_t newEpochValue) { epochValue = newEpochValue; }
+
 uint64_t TopologyNode::getIngestionRate() const { return ingestionRate; }
 
 uint64_t TopologyNode::getInitialMemoryCapacity() const { return initialMemoryCapacity; }
