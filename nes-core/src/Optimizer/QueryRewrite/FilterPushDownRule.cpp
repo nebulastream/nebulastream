@@ -179,13 +179,14 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
             if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
                 const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
                 if (accessExpressionNode->getFieldName() == joinDefinition->getLeftJoinKey()->getFieldName()) {
-                    accessExpressionNode->updateFieldName(joinDefinition->getLeftJoinKey()->getFieldName());
+                    accessExpressionNode->updateFieldName(joinDefinition->getRightJoinKey()->getFieldName());
                 }
             }
         }
         copyOfFilter->setPredicate(newPredicate);
 
         pushDownFilter(filterOperator, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        pushDownFilter(copyOfFilter, curOperatorAsJoin->getRightOperators()[0], joinOperator);
         return true;
     }
     else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
@@ -198,13 +199,14 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
             if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
                 const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
                 if (accessExpressionNode->getFieldName() == joinDefinition->getRightJoinKey()->getFieldName()) {
-                    accessExpressionNode->updateFieldName(joinDefinition->getRightJoinKey()->getFieldName());
+                    accessExpressionNode->updateFieldName(joinDefinition->getLeftJoinKey()->getFieldName());
                 }
             }
         }
         copyOfFilter->setPredicate(newPredicate);
 
-        pushDownFilter(copyOfFilter, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        pushDownFilter(copyOfFilter, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
         return true;
     }
     return false;
