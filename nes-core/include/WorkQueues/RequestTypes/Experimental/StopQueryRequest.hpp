@@ -105,7 +105,10 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                      std::promise<StopQueryResponse> responsePromise);
 
+    std::string toString();
+
   protected:
+
     /**
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
@@ -116,11 +119,6 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      * @throws RequestExecutionException if resource acquisition fails
      */
     void executeRequestLogic(StorageHandler& storageHandle) override;
-
-    void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
-
-    void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
-
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
@@ -128,11 +126,26 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      */
     void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
-    void preExecution(StorageHandler& storageHandle) override;
+    /**
+     * @brief Performs request specific error handling to be done before changes to the storage are rolled back
+     * @param ex: The exception encountered
+     * @param storageHandle: The storage access handle used by the request
+     */
+    void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
-    void postExecution(StorageHandler& storageHandle) override;
+    /**
+     * @brief Performs request specific error handling to be done after changes to the storage are rolled back
+     * @param ex: The exception encountered
+     * @param storageHandle: The storage access handle used by the request
+     */
+    void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
-    std::string toString();
+    /**
+     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
+     * @param storageHandle: The storage access handle used by the request
+     * @param requiredResources: The resources required during the execution phase
+     */
+    void postExecution(StorageHandler& storageHandler) override;
 
     ~StopQueryRequest() override = default;
 
@@ -144,7 +157,6 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                      std::promise<StopQueryResponse> responsePromise);
 
-  private:
     WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
