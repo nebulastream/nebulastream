@@ -26,10 +26,17 @@ namespace NES {
 class SenseSource : public DataSource {
   public:
     /**
-   * @brief constructor of sense sou1rce
-   * @param schema of the source
-   * @param udfs to apply
-   */
+     * @brief constructor of sense source
+     * @param schema the schema of the source
+     * @param bufferManager valid pointer to the buffer manager
+     * @param queryManager valid pointer to the query manager
+     * @param udfs to apply
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param physicalSourceName
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     */
     explicit SenseSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
@@ -37,7 +44,7 @@ class SenseSource : public DataSource {
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
-                         std::string physicalSourceName,
+                         const std::string& physicalSourceName,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

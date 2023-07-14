@@ -36,10 +36,18 @@ class OPCSource : public DataSource {
     /**
      * @brief constructor for the opc source
      * @param schema schema of the elements
+     * @param bufferManager valid pointer to the buffer manager
+     * @param queryManager valid pointer to the query manager
      * @param url the url of the OPC server
      * @param nodeId the node id of the desired node
-     * @param user name if connecting with a server with authentication
      * @param password for authentication if needed
+     * @param user name if connecting with a server with authentication
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param executableSuccessors the subsequent operators in the pipeline to which the data is pushed
      */
     explicit OPCSource(const SchemaPtr& schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -52,7 +60,7 @@ class OPCSource : public DataSource {
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::string physicalSourceName,
+                       const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**

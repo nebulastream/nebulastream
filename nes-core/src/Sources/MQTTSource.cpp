@@ -52,7 +52,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::string physicalSourceName,
+                       const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  bufferManager,

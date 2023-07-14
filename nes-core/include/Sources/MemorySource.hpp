@@ -39,8 +39,16 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param memoryAreaSize the non-zero size of the memory area
      * @param bufferManager valid pointer to the buffer manager
      * @param queryManager valid pointer to the query manager
-     * @param
+     * @param numBuffersToProcess
+     * @param gatheringValue how many tuples to collect per interval
      * @param operatorId the valid id of the source
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+     * @param taskQueueId the ID of the queue to which the task is pushed
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
     explicit MemorySource(SchemaPtr schema,
                           const std::shared_ptr<uint8_t>& memoryArea,
@@ -55,7 +63,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           GatheringMode gatheringMode,
                           uint64_t sourceAffinity,
                           uint64_t taskQueueId,
-                          std::string physicalSourceName,
+                          const std::string& physicalSourceName,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.

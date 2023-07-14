@@ -51,8 +51,8 @@ class GeneratorSource : public DataSource {
                     OriginId originId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
-                    std::string physicalSourceName,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                    const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
         : DataSource(std::move(schema),
                      std::move(bufferManager),
                      std::move(queryManager),

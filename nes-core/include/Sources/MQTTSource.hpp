@@ -41,12 +41,15 @@ class MQTTSource : public DataSource {
     /**
      * @brief constructor for the MQTT data source
      * @param schema of the data
-     * @param bufferManager
-     * @param queryManager
-     * @param mqttSourceType all source Configurations
-     * @param operatorId
-     * @param inputFormat data format that broker sends
-     * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
+     * @param bufferManager valid pointer to the buffer manager
+     * @param queryManager  valid pointer to the query manager
+     * @param mqttSourceType a configuration object to set up the mqttSource
+     * @param operatorId the operator ID
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param executableSuccessors the subsequent operators in the pipeline to which the data is pushed
      */
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -56,7 +59,7 @@ class MQTTSource : public DataSource {
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::string physicalSourceName,
+                        const std::string& physicalSourceName,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**

@@ -108,6 +108,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
+                                         "defaultPhysicalStreamName",
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     SUCCEED();
@@ -132,6 +133,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
+                                         "defaultPhysicalStreamName",
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits) ), BROKER(localhost:9092), TOPIC(sourceTest). "
