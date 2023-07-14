@@ -62,4 +62,4 @@ class MigrateTopologyNodeRequest : public Request {
     std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_MIGRATETOPOLOGYNODEREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_MIGRATETOPOLOGYNODEREQUEST_HPP_

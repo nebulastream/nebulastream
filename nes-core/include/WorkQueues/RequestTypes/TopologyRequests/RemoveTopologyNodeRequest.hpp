@@ -49,5 +49,5 @@ class RemoveTopologyNodeRequest : public Request {
 
     TopologyNodeId topologyNodeId;
 };
-}// namespace Experimental
-#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYNODEREQUEST_HPP_
+}// namespace NES::Experimental
+#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYNODEREQUEST_HPP_
