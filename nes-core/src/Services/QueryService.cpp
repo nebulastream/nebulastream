@@ -29,8 +29,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
 #include <Util/magicenum/magic_enum.hpp>

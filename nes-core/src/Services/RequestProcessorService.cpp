@@ -77,7 +77,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                globalExecutionPlan);
     queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
+    queryDeploymentPhase =
+        QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
 }
 
@@ -115,17 +116,17 @@ void RequestProcessorService::start() {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is new.");
 
-                                //3.2.1. Perform placement of new shared query plan
-                                auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-                                if (!placementSuccessful) {
-                                    throw Exceptions::QueryPlacementException(
-                                        sharedQueryId,
-                                        "QueryProcessingService: Failed to perform query placement for "
-                                        "query plan with shared query id: "
-                                            + std::to_string(sharedQueryId));
-                                }
+                            //3.2.1. Perform placement of new shared query plan
+                            auto queryPlan = sharedQueryPlan->getQueryPlan();
+                            NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
+                            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                            if (!placementSuccessful) {
+                                throw Exceptions::QueryPlacementException(
+                                    sharedQueryId,
+                                    "QueryProcessingService: Failed to perform query placement for "
+                                    "query plan with shared query id: "
+                                        + std::to_string(sharedQueryId));
+                            }
 
                             //3.2.2. Perform deployment of placed shared query plan
                             bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
@@ -143,22 +144,22 @@ void RequestProcessorService::start() {
                         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is non empty and an older version is already "
-                                       "running.");
+                                      "running.");
 
                             //3.3.1. First undeploy the running shared query plan with the shared query plan id
                             queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
 
-                                //3.3.2. Perform placement of updated shared query plan
-                                auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                                bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-                                if (!placementSuccessful) {
-                                    throw Exceptions::QueryPlacementException(
-                                        sharedQueryId,
-                                        "QueryProcessingService: Failed to perform query placement for "
-                                        "query plan with shared query id: "
-                                            + std::to_string(sharedQueryId));
-                                }
+                            //3.3.2. Perform placement of updated shared query plan
+                            auto queryPlan = sharedQueryPlan->getQueryPlan();
+                            NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
+                            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                            if (!placementSuccessful) {
+                                throw Exceptions::QueryPlacementException(
+                                    sharedQueryId,
+                                    "QueryProcessingService: Failed to perform query placement for "
+                                    "query plan with shared query id: "
+                                        + std::to_string(sharedQueryId));
+                            }
 
                             //3.3.3. Perform deployment of re-placed shared query plan
                             bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
@@ -177,7 +178,7 @@ void RequestProcessorService::start() {
                                    || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
-                                       "running.");
+                                      "running.");
 
                             //3.4.1. Undeploy the running shared query plan
                             queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());

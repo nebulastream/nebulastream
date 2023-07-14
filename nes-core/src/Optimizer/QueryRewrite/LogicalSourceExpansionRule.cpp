@@ -34,7 +34,8 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr& sourceCatalog, bool expandSourceOnly)
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                       bool expandSourceOnly)
     : sourceCatalog(sourceCatalog), expandSourceOnly(expandSourceOnly) {}
 
 LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
