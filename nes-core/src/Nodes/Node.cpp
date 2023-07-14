@@ -314,6 +314,15 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     return true;
 }
 
+bool Node::swapLeftAndRightBranch(){
+    if (children.size() != 2){
+        NES_WARNING("Method is supposed to swap left and right branch, but the node had ", children.size(), " children, instead of 2");
+        return false;
+    }
+    std::reverse(children.begin(), children.end());
+    return true;
+}
+
 bool Node::remove(const NodePtr& node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
     return removeChild(node) || removeParent(node);

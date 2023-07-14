@@ -123,7 +123,7 @@ class FilterPushDownRule : public BaseRewriteRule {
     bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
 
     /**
-     * @brief tries to push the filter below a map operator
+     * @brief tries to push the filter below a map operator. This is possible as long as the map operator doesn't change any attribute that the filter uses
      * @param filterOperator the filter operator that we try to push down
      * @param mapOperator the map operator to which we want to push the filter down below. (it is currently the child of the filter)
      * @param parOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
@@ -132,7 +132,8 @@ class FilterPushDownRule : public BaseRewriteRule {
     void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator, NodePtr parOperator);
 
     /**
-     * @brief pushes the filter below a union operator to both branches of the union.
+     * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
+     * so we can always push the filter to both sides.
      * @param filterOperator the filter operator to be pushed down
      * @param unionOperator the union operator to which the filter should be pushed down below. (it is currently the child of the filter)
      */

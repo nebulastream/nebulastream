@@ -1281,3 +1281,164 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossibleMultipl
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
+TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperators) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+    //setup source 1
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("A", NES::BasicType::UINT64)
+                                ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src1", schema);
+
+    //setup source two
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("B", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src2", schema2);
+
+    //setup source three
+    NES::SchemaPtr schema3 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("C", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src3", schema3);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("src1")
+                      .map(Attribute("A") = Attribute("A") * 3)
+                      .joinWith(
+                          Query::from("src2"))
+                      .where(Attribute("id")).equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                      .joinWith(
+                          Query::from("src3").map(Attribute("ts") = Attribute("ts") * 2))
+                      .where(Attribute("id")).equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                      .filter(Attribute("src3$id") != 0) // should be pushed directly above every src with the predicate changed
+                      .filter(Attribute("A") != 1) // should be pushed above the map above src1
+                      .filter(Attribute("B") != 2) // should be pushed above id filter above src2
+                      .filter(Attribute("C") != 3) // should be pushed above id filter above src3
+                      .filter(Attribute("A") > 0 || Attribute("B") > 0) // should be pushed above join src1 & src2
+                      .filter(Attribute("A") > 0 || Attribute("C") > 0) // can not be pushed through any join
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    //type inference
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
+    typeInferencePhase->execute(queryPlan);
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorAorC = (*itr);
+    ++itr;
+    const NodePtr filterOperatorAorB = (*itr);
+    ++itr;
+    const NodePtr filterOperatorC = (*itr);
+    ++itr;
+    const NodePtr filterOperatorB = (*itr);
+    ++itr;
+    const NodePtr filterOperatorA = (*itr);
+    ++itr;
+    const NodePtr filterOperatorId = (*itr);
+    ++itr;
+    const NodePtr joinOperator1and2and3 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorTs = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc3 = (*itr);
+    ++itr;
+    const NodePtr joinOperator1and2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator3 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorA = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc1 = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorAorC->equal((*itr)));
+    //check if schema still correct
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(sinkOperator->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(joinOperator1and2and3->as<BinaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(joinOperator1and2and3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorTs->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorC->equal((*itr)));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(filterOperatorId->equal((*itr)));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorAorB->equal((*itr)));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(joinOperator1and2and3->as<BinaryOperatorNode>()->getLeftInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(joinOperator1and2->as<BinaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(joinOperator1and2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorB->equal((*itr)));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(watermarkOperator2->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    std::vector<std::string> accessedFields;
+    accessedFields.push_back("src2$id"); //a duplicate filter that accesses src2$id should be pushed down
+    EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), accessedFields));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(watermarkOperator2->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc2->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorA->equal((*itr)));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(watermarkOperator3->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(mapOperatorA->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(mapOperatorA->equal((*itr)));
+    ++itr;
+    std::vector<std::string> accessedFields2;
+    accessedFields2.push_back("src1$id"); //a duplicate filter that accesses src2$id should be pushed down
+    EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), accessedFields2));
+    //check if schema updated correctly
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(mapOperatorA->as<UnaryOperatorNode>()->getInputSchema()));
+    EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc1->as<UnaryOperatorNode>()->getOutputSchema()));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
+    ++itr;
+}
