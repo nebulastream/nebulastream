@@ -165,8 +165,9 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
             pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0],joinOperator);
         }
     }
-    // it was not pushed -> we insert the filter at this position
+
     if (!pushed){
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Filter was not pushed, we insert filter at this position");
         insertFilterIntoNewPosition(filterOperator, joinOperator, parOperator);
     }
 }
@@ -174,13 +175,15 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
 bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator){
     JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<JoinLogicalOperatorNode>();
 
-    //field names that are used by the filter
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     Join::LogicalJoinDefinitionPtr joinDefinition =  curOperatorAsJoin->getJoinDefinition();
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
     if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]){
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
         copyOfFilter->setId(Util::getNextOperatorId());
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
         DepthFirstNodeIterator depthFirstNodeIterator(newPredicate);
@@ -193,14 +196,19 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
             }
         }
         copyOfFilter->setPredicate(newPredicate);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
 
         pushDownFilter(filterOperator, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
         pushDownFilter(copyOfFilter, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     }
     else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
         copyOfFilter->setId(Util::getNextOperatorId());
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
         DepthFirstNodeIterator depthFirstNodeIterator(newPredicate);
@@ -213,9 +221,12 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
             }
         }
         copyOfFilter->setPredicate(newPredicate);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 
         pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
         pushDownFilter(copyOfFilter, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     }
     return false;
@@ -225,13 +236,14 @@ void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterO
     std::string mapFieldName = getFieldNameUsedByMapOperator(mapOperator);
     bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
 
-    //This map operator does not manipulate the same field that the filter uses, so we are able to push the filter below this operator.
     if (!predicateFieldManipulated) {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Pushing filter below map operator...")
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Map operator does not manipulate the same field that the filter uses, "
+                  "so we are able to push the filter below this operator.");
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Pushing filter below map operator...");
         pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
     } else {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Filter cant be pushed below map operator, "
-                  "inserting filter into new position...")
+                  "inserting filter into new position...");
         insertFilterIntoNewPosition(filterOperator, mapOperator, parOperator);
     }
 }
@@ -239,40 +251,44 @@ void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterO
 void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator) {
     std::vector<NodePtr> grandChildren = unionOperator->getChildren();
 
-    // create a copy of the filter operator
     auto copyOfFilterOperator = filterOperator->copy()->as<FilterLogicalOperatorNode>();
     copyOfFilterOperator->setId(Util::getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
 
-    // push original filter operator to one branch and the copy of it to the other branches
-    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...")
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...");
     pushDownFilter(filterOperator, grandChildren[0], unionOperator);
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushed original filter to one branch");
     pushDownFilter(copyOfFilterOperator, grandChildren[1], unionOperator);
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushed copy of the filter to other branch");
 }
 
 void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator,
                                                           NodePtr parOperator) {
 
-    // get the group by keys of the window operator
     auto groupByKeyNames = windowOperator->as<WindowLogicalOperatorNode>()->getGroupByKeyNames();
     std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowOperator->as<WindowLogicalOperatorNode>()
         ->getWindowDefinition()->getKeys();
     std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
-    // check if all attributes used by the filter are also used in the group by keys
     bool areAllFilterAttributesInGroupByKeys = true;
     for (const auto& filterAttribute : fieldNamesUsedByFilter) {
         if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end()) {
             areAllFilterAttributesInGroupByKeys = false;
         }
     }
-    // if all attributes used by the filter are also used in the group by keys, we can push the filter below the window operator
+    NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Checked if all attributes used by the filter are also used "
+              "in the group by keys the group by keys of the window operator");
+
     if (areAllFilterAttributesInGroupByKeys) {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Pushing filter below window operator...")
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: All attributes used by the filter are also used in the"
+                  " group by keys, we can push the filter below the window operator")
+        NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Pushing filter below window operator...");
         pushDownFilter(filterOperator, windowOperator->getChildren()[0], windowOperator);
     } else {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Attributes used by filter are not all used in "
-                  "group by keys, inserting the filter into a new position...")
+                  "group by keys, inserting the filter into a new position...");
         insertFilterIntoNewPosition(filterOperator, windowOperator, parOperator);
     }
 }
