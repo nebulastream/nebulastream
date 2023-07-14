@@ -32,7 +32,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
-                         std::string physicalSourceName,
+                         const std::string& physicalSourceName,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),

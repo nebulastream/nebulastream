@@ -33,8 +33,8 @@ class TCPSource : public DataSource {
 
   public:
     /**
-     * @brief consturctor of TCP Source
-     * @param schema of this data source
+     * @brief constructor of a TCP Source
+     * @param schema the schema of the data
      * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
      * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
      * They are also subject to reference counting.
@@ -44,6 +44,7 @@ class TCPSource : public DataSource {
      * @param originId represents an origin
      * @param numSourceLocalBuffers number of local source buffers
      * @param gatheringMode the gathering mode used
+     * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
     explicit TCPSource(SchemaPtr schema,
@@ -54,7 +55,7 @@ class TCPSource : public DataSource {
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::string physicalSourceName,
+                       const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**

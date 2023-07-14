@@ -38,8 +38,16 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
   public:
     /**
      * @brief The constructor of a StaticDataSource
-     * @param // todo
-     * @param operatorId the valid id of the source
+     * @param schema the schema of the data
+     * @param pathTableFile
+     * @param lateStart wether to start the source late
+     * @param bufferManager valid pointer to the buffer manager
+     * @param queryManager valid pointer to the query manager
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
     explicit StaticDataSource(SchemaPtr schema,
                               std::string pathTableFile,
@@ -49,7 +57,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
-                              std::string physicalSourceName,
+                              const std::string& physicalSourceName,
                               std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

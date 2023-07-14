@@ -38,7 +38,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                                    OperatorId operatorId,
                                    OriginId originId,
                                    size_t numSourceLocalBuffers,
-                                   std::string physicalSourceName,
+                                   const std::string& physicalSourceName,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(Schema::create(),
                  bufferManager,

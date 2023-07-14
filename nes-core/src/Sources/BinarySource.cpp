@@ -30,7 +30,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            OriginId originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
-                           std::string physicalSourceName,
+                           const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),

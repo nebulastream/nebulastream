@@ -324,7 +324,7 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, 0, queryId, engine->getQueryManager(), context, executable, 1, {sink});
     auto source =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, {pipeline});
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, "defaultPhysicalSourceName", {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(queryId,
                                                      queryId,
                                                      {source},
@@ -445,6 +445,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan =
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
@@ -459,6 +460,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 2,
                                                                 0,
                                                                 12,
+                                                                "defaultPhysicalSourceName",
                                                                 {pipeline2});
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
@@ -511,6 +513,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan =
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
@@ -526,6 +529,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                          2,
                                                                          1,
                                                                          12,
+                                                                         "defaultPhysicalSourceName",
                                                                          {pipeline2});
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
@@ -576,6 +580,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(1,
                                                      1,
@@ -594,6 +599,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                          2,
                                                                          3,
                                                                          12,
+                                                                         "defaultPhysicalSourceName",
                                                                          {pipeline2});
 
     auto executionPlan2 = ExecutableQueryPlan::create(2,
@@ -646,6 +652,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                                                                 1,
                                                                 4,
                                                                 12,
+                                                                "defaultPhysicalSourceName",
                                                                 {pipeline1, pipeline2});
     auto executionPlan =
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());

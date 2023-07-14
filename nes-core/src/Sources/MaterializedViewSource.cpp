@@ -26,7 +26,7 @@ MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
                                                OriginId originId,
                                                size_t numSourceLocalBuffers,
                                                GatheringMode gatheringMode,
-                                               std::string physicalSourceName,
+                                               const std::string& physicalSourceName,
                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                                MaterializedViewPtr view)
     : DataSource(std::move(schema),

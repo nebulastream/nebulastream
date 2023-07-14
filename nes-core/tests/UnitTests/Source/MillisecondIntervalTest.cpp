@@ -194,6 +194,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalStreamName",
                                       {pipeline});
 
     auto executionPlan = ExecutableQueryPlan::create(queryId,
@@ -234,7 +235,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     csvSourceType->setGatheringInterval(frequency);
 
     const DataSourcePtr source =
-        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 0, 12, {});
+        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 0, 12, "defaultPhysicalStreamName", {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();

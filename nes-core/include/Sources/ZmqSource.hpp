@@ -31,9 +31,17 @@ class ZmqSource : public DataSource {
   public:
     /**
      * @brief constructor for the zmq source
-     * @param schema of the input buffer
-     * @param host name of the source queue
-     * @param port of the source queue
+     * @param schema schema of the data
+     * @param bufferManager valid pointer to the buffer manager
+     * @param queryManager valid pointer to the query manager
+     * @param host host name of the source queue
+     * @param port port of the source queue
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
     explicit ZmqSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -44,7 +52,7 @@ class ZmqSource : public DataSource {
                        OriginId originId,
                        uint64_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
-                       std::string physicalSourceName,
+                       const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
