@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.143](https://github.com/nebulastream/nebulastream/tree/v0.5.143) (2023-07-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.142...v0.5.143)
+
+**Implemented enhancements:**
+
+- \[TASK\] filter push down below join special case [\#3948](https://github.com/nebulastream/nebulastream/issues/3948)
+
 ## [v0.5.142](https://github.com/nebulastream/nebulastream/tree/v0.5.142) (2023-07-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.141...v0.5.142)
