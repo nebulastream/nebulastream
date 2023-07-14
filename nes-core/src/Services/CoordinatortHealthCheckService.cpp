@@ -54,6 +54,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 } else {
                     NES_DEBUG("NesCoordinator::healthCheck: leader with workerId={} went down, so we remove it", leaderWorkerId);
+
                     if (topologyManagerService->getRootNode()->getId() == leaderWorkerId) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
@@ -63,6 +64,8 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                         inactiveWorkers.insert(leaderWorkerId);
                         if (ret) {
                             NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
+                            // remove node as zone leader
+                            topologyManagerService->reelectLeaderInZone(leaderWorkerId);
                         } else {
                             NES_WARNING("Node went offline but could not be removed from topology");
                         }

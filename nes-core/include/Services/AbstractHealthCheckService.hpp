@@ -98,6 +98,8 @@ class AbstractHealthCheckService {
 
     void addWorkerAsZoneLeader(TopologyNodeId zoneLeaderWorkerId);
 
+    void removeWorkerAsZoneLeader(TopologyNodeId oldLeaderWorkerId);
+
         protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::shared_ptr<std::thread> healthCheckingOnCoordinatorThread;

@@ -103,4 +103,10 @@ void AbstractHealthCheckService::addWorkerAsZoneLeader(TopologyNodeId zoneLeader
     zoneLeaders.insert(zoneLeaderWorkerId);
 }
 
+void AbstractHealthCheckService::removeWorkerAsZoneLeader(TopologyNodeId oldLeaderWorkerId) {
+    if (zoneLeaders.contains(oldLeaderWorkerId)) {
+        zoneLeaders.erase(oldLeaderWorkerId);
+    }
+}
+
 }// namespace NES
