@@ -50,15 +50,15 @@ const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
 
 // ((1934 + 1) * 15 + 1) * 5
-const uint64_t numberOfNodesPerLevel3 = 12;
-const uint64_t numberOfNodesPerLevel2 = 4;
-const uint64_t numberOfNodesPerLevel1 = 2;
-const uint64_t numberOfNodes = 95;
+//const uint64_t numberOfNodesPerLevel3 = 12;
+//const uint64_t numberOfNodesPerLevel2 = 4;
+//const uint64_t numberOfNodesPerLevel1 = 2;
+//const uint64_t numberOfNodes = 95;
 
-//const uint64_t numberOfNodesPerLevel3 = 95;
-//const uint64_t numberOfNodesPerLevel2 = 21;
-//const uint64_t numberOfNodesPerLevel1 = 8;
-//const uint64_t numberOfNodes = 16035;
+const uint64_t numberOfNodesPerLevel3 = 95;
+const uint64_t numberOfNodesPerLevel2 = 21;
+const uint64_t numberOfNodesPerLevel1 = 8;
+const uint64_t numberOfNodes = 16035;
 
 //const uint64_t numberOfNodesPerLevel3 = 176;
 //const uint64_t numberOfNodesPerLevel2 = 21;
@@ -542,7 +542,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
+//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
