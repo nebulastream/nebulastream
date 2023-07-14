@@ -488,15 +488,19 @@ Status CoordinatorRPCServer::GetGeoNeighborsData(ServerContext*,
             //auto children = worker->getChildren();
             for (auto geoNeighborEntry : geoNeighbors) {
 
-                auto geoNeighbor = topologyManagerService->findNodeWithId(geoNeighborEntry.first);
+                if (!topologyManagerService->wasAnnouncedFailedWorker(geoNeighborEntry.first)) {
+                    //topologyManagerService->wasAnnouncedFailedWorker()
+                    auto geoNeighbor = topologyManagerService->findNodeWithId(geoNeighborEntry.first);
 
-                int i = 0;
-                uint64_t geoNeighborWorkerId = geoNeighbor->getId();
-                std::string geoNeighborIpAddress = geoNeighbor->getIpAddress();
-                auto geoNeighborGrpcPort = geoNeighbor->getGrpcPort();
-                std::string geoNeighborData = std::to_string(geoNeighborWorkerId) + ":" + geoNeighborIpAddress + ":" + std::to_string(geoNeighborGrpcPort);
-                reply->add_geoneighborsdata(geoNeighborData);
-                i++;
+                    int i = 0;
+                    uint64_t geoNeighborWorkerId = geoNeighbor->getId();
+                    std::string geoNeighborIpAddress = geoNeighbor->getIpAddress();
+                    auto geoNeighborGrpcPort = geoNeighbor->getGrpcPort();
+                    std::string geoNeighborData = std::to_string(geoNeighborWorkerId) + ":" + geoNeighborIpAddress + ":" + std::to_string(geoNeighborGrpcPort);
+                    reply->add_geoneighborsdata(geoNeighborData);
+                    i++;
+                }
+
             }
             return Status::OK;
         }

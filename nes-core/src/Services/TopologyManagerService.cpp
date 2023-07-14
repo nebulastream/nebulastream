@@ -72,6 +72,7 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
             if (workerWithOldConfig) {
                 healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
             }
+            removeAnnouncedFailedWorker(workerId);
         } else {
             // there is no active worker with workerId and there is no inactive worker with workerId, therefore
             // simply assign next available workerId
@@ -387,6 +388,12 @@ bool TopologyManagerService::isZoneLeader(TopologyNodeId workerId) {
     return zoneLeaders.find(workerId) != zoneLeaders.end();
 }
 
+void TopologyManagerService::removeZoneLeader(TopologyNodeId zoneLeaderWorkerId) {
+    if (isZoneLeader(zoneLeaderWorkerId)) {
+        zoneLeaders.erase(zoneLeaderWorkerId);
+    }
+}
+
 void TopologyManagerService::addEntryInLeaderToZoneMap(TopologyNodeId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation centerZone) {
     leaderToZoneMap.insert(workerId, centerZone);
 }
@@ -435,6 +442,28 @@ void TopologyManagerService::splitTopologyIntoZones() {
 // TODO: implement more methods for leader election
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
     return workersInZone.at(0);
+}
+
+void TopologyManagerService::reelectLeaderInZone(TopologyNodeId oldLeaderWorkerId) {
+    NES_DEBUG("TopologyManagerService::electing a new leader for zone with old leader workerId {}", oldLeaderWorkerId);
+    auto zone = findZoneByLeader(oldLeaderWorkerId);
+    auto workerIds = getNodesIdsInRange(zone, 10);
+
+    std::vector<TopologyNodePtr> workers;
+    for (auto workerId : workerIds) {
+        if (workerId.first != oldLeaderWorkerId) {
+            workers.push_back(findNodeWithId(workerId.first));
+        }
+    }
+
+    removeZoneLeader(oldLeaderWorkerId);
+    addAnnouncedFailedWorker(oldLeaderWorkerId);
+
+    TopologyNodePtr newLeader = electLeaderInZone(workers);
+    healthCheckService->removeWorkerAsZoneLeader(oldLeaderWorkerId);
+    healthCheckService->addWorkerAsZoneLeader(newLeader->getId());
+    addZoneLeader(newLeader->getId());
+    addEntryInLeaderToZoneMap(newLeader->getId(), zone);
 }
 
 }// namespace NES

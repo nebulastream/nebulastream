@@ -190,7 +190,11 @@ class TopologyManagerService {
 
     bool isZoneLeader(TopologyNodeId workerId);
 
+    void removeZoneLeader(TopologyNodeId zoneLeaderWorkerId);
+
     void addEntryInLeaderToZoneMap(TopologyNodeId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation centerZone);
+
+    void reelectLeaderInZone(TopologyNodeId oldLeaderWorkerId);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation findZoneByLeader(TopologyNodeId workerId);
 
