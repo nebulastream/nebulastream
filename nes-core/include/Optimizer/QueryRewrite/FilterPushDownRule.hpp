@@ -56,7 +56,6 @@ class FilterPushDownRule : public BaseRewriteRule {
      */
     void pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator);
 
-
     /**
      * In case the filter cant be pushed any further this method is called to remove the filter from its original position in the query plan
      * and insert the filter at the new position of the query plan. (only if the position of the filter changed)
@@ -64,7 +63,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param childOperator insert the filter operator above this operator in the query plan
      * @param parOperator  insert the filter operator below this operator in the query plan
      */
-    static void insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator, NodePtr childOperator, NodePtr parOperator);
+    static void
+    insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 
     /**
      * @brief pushes a filter that is above a join, below that join if that is possible. We differentiate four cases:
@@ -153,7 +153,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parOperator the parent operator of the windowOperator. In case the filter cant be pushed down, it is inserted between
      * windowOperator and parOperator
      */
-    void pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
+    void
+    pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -169,7 +170,6 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @return true if field use in the filter predicate else false
      */
     static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
-
 };
 
 }// namespace NES::Optimizer
