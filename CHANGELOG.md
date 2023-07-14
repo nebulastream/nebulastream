@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.142](https://github.com/nebulastream/nebulastream/tree/v0.5.142) (2023-07-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.141...v0.5.142)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create change log entries when topology node and links are removed [\#3840](https://github.com/nebulastream/nebulastream/issues/3840)
+
 ## [v0.5.141](https://github.com/nebulastream/nebulastream/tree/v0.5.141) (2023-07-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.140...v0.5.141)
