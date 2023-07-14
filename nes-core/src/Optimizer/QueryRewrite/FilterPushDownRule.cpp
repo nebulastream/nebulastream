@@ -131,7 +131,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
     }
 }
 
-void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NES::NodePtr joinOperator, NES::NodePtr parOperator) {
+void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NES::NodePtr joinOperator, NES::NodePtr parentOperator) {
     // we might be able to push the filter to both branches of the join, and we check this first.
     bool pushed = pushFilterBelowJoinSpecialCase(filterOperator, joinOperator);
 
@@ -168,7 +168,7 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
 
     if (!pushed){
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Filter was not pushed, we insert filter at this position");
-        insertFilterIntoNewPosition(filterOperator, joinOperator, parOperator);
+        insertFilterIntoNewPosition(filterOperator, joinOperator, parentOperator);
     }
 }
 

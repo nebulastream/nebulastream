@@ -316,7 +316,7 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
 
 bool Node::swapLeftAndRightBranch(){
     if (children.size() != 2){
-        NES_WARNING("Method is supposed to swap left and right branch, but the node had ", children.size(), " children, instead of 2");
+        NES_WARNING("Operation failed: method is supposed to swap left and right branch, but the node had ", children.size(), " children, instead of 2");
         return false;
     }
     std::reverse(children.begin(), children.end());

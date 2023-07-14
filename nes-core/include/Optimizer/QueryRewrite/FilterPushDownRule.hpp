@@ -93,14 +93,14 @@ class FilterPushDownRule : public BaseRewriteRule {
      *  queryPlan stays the same
      *
      *  ==> case 4: All attributes that the filter accesses are part of the join condition
-     *  special case described in class method so and so
+     *  special case described in class method pushFilterBelowJoinSpecialCase()
      *
      * @param filterOperator the filter operator that we try to push down
      * @param joinOperator the join operator to which we want to push the filter down below. (it is currently the child of the filter)
-     * @param parOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
+     * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator, NodePtr parOperator);
+    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator, NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
