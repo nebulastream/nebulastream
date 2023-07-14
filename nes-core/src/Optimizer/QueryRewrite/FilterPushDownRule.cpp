@@ -79,20 +79,15 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
     if (curOperator->instanceOf<ProjectionLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for projection: https://github.com/nebulastream/nebulastream/issues/3799
-    }
-    else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
         pushFilterBelowMap(filterOperator, curOperator, parOperator);
-    }
-    else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
         pushFilterBelowJoin(filterOperator, curOperator, parOperator);
-    }
-    else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
         pushFilterBelowUnion(filterOperator, curOperator);
-    }
-    else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
         pushFilterBelowWindowAggregation(filterOperator, curOperator, parOperator);
-    }
-    else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
     }
     // if we have a source operator or some unsupported operator we are not able to push the filter below this operator.
@@ -101,7 +96,9 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     }
 }
 
-void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,NodePtr childOperator, NodePtr parOperator){
+void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,
+                                                     NodePtr childOperator,
+                                                     NodePtr parOperator) {
 
     // If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
     // so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
@@ -110,10 +107,12 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         // if we remove the first child (which is the left branch) of a binary operator and insert our filter below this binary operator,
         // it will be inserted as the second children (which is the right branch). To conserve order we will swap the branches after the insertion
         bool swapBranches = false;
-        if (parOperator->instanceOf<BinaryOperatorNode>() && parOperator->getChildren()[0]->equal(childOperator)) { swapBranches = true; }
+        if (parOperator->instanceOf<BinaryOperatorNode>() && parOperator->getChildren()[0]->equal(childOperator)) {
+            swapBranches = true;
+        }
 
         // removes filter operator from its original position and connects the parents and children of the filter operator at that position
-        if (!filterOperator->removeAndJoinParentAndChildren()){
+        if (!filterOperator->removeAndJoinParentAndChildren()) {
             //if we did not manage to remove the operator we can't insert it at the new position
             NES_WARNING("FilterPushDownRule wanted to change the position of a filter, but was not able to do so.")
             return;
@@ -121,24 +120,30 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
 
         // inserts the operator between the operator that it wasn't able to push below and the parent of this operator.
         bool success1 = childOperator->removeParent(parOperator);// also removes childOperator as a child from parOperator
-        bool success2 = childOperator->addParent(filterOperator); // also adds childOperator as a child to filterOperator
-        bool success3 = filterOperator->addParent(parOperator); // also adds filterOperator as a child to parOperator
-        if (!success1 || !success2 || !success3){
+        bool success2 = childOperator->addParent(filterOperator);// also adds childOperator as a child to filterOperator
+        bool success3 = filterOperator->addParent(parOperator);  // also adds filterOperator as a child to parOperator
+        if (!success1 || !success2 || !success3) {
             //if we did manage to remove the filter from the queryPlan but now the insertion is not successful, that means that the queryPlan is invalid now.
-            NES_ERROR("FilterPushDownRule removed a Filter from a query plan but was not able to insert it into the query plan again.")
+            NES_ERROR(
+                "FilterPushDownRule removed a Filter from a query plan but was not able to insert it into the query plan again.")
             throw std::logic_error("FilterPushDownRule: query plan not valid anymore");
         }
 
         //the input schema of the filter is going to be the same as the output schema of the node below. Its output schema is the same as its input schema.
         filterOperator->setInputSchema(filterOperator->getChildren()[0]->as<OperatorNode>()->getOutputSchema()->copy());
-        filterOperator->as<OperatorNode>()->setOutputSchema(filterOperator->getChildren()[0]->as<OperatorNode>()->getOutputSchema()->copy());
+        filterOperator->as<OperatorNode>()->setOutputSchema(
+            filterOperator->getChildren()[0]->as<OperatorNode>()->getOutputSchema()->copy());
 
         //conserve order
-        if (swapBranches){ parOperator->swapLeftAndRightBranch(); }
+        if (swapBranches) {
+            parOperator->swapLeftAndRightBranch();
+        }
     }
 }
 
-void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NES::NodePtr joinOperator, NES::NodePtr parentOperator) {
+void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
+                                             NES::NodePtr joinOperator,
+                                             NES::NodePtr parentOperator) {
     // we might be able to push the filter to both branches of the join, and we check this first.
     bool pushed = pushFilterBelowJoinSpecialCase(filterOperator, joinOperator);
 
@@ -147,7 +152,7 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
     //better readability
     JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<JoinLogicalOperatorNode>();
     // we might have pushed it already within the special condition before
-    if (!pushed){
+    if (!pushed) {
         //if any inputSchema contains all the fields that are used by the filter we can push the filter to the corresponding site
         SchemaPtr leftSchema = curOperatorAsJoin->getLeftInputSchema();
         SchemaPtr rightSchema = curOperatorAsJoin->getRightInputSchema();
@@ -156,37 +161,40 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
 
         //if any field that is used by the filter is not part of the branches schema, we can't push the filter to that branch.
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Checking if filter can be pushed below left or right branch of join");
-        for (const std::string& fieldUsedByFilter: predicateFields){
-            if (!leftSchema->contains(fieldUsedByFilter)) {leftBranchPossible = false;}
-            if (!rightSchema->contains(fieldUsedByFilter)) {rightBranchPossible = false;}
+        for (const std::string& fieldUsedByFilter : predicateFields) {
+            if (!leftSchema->contains(fieldUsedByFilter)) {
+                leftBranchPossible = false;
+            }
+            if (!rightSchema->contains(fieldUsedByFilter)) {
+                rightBranchPossible = false;
+            }
         }
 
         if (leftBranchPossible) {
             NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below left branch of join");
             pushed = true;
-            pushDownFilter(filterOperator,curOperatorAsJoin->getLeftOperators()[0],joinOperator);
-        }
-        else if (rightBranchPossible) {
+            pushDownFilter(filterOperator, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        } else if (rightBranchPossible) {
             NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Pushing filter below right branch of join");
             pushed = true;
-            pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0],joinOperator);
+            pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0], joinOperator);
         }
     }
 
-    if (!pushed){
+    if (!pushed) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Filter was not pushed, we insert filter at this position");
         insertFilterIntoNewPosition(filterOperator, joinOperator, parentOperator);
     }
 }
 
-bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator){
+bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator) {
     JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<JoinLogicalOperatorNode>();
 
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
-    Join::LogicalJoinDefinitionPtr joinDefinition =  curOperatorAsJoin->getJoinDefinition();
+    Join::LogicalJoinDefinitionPtr joinDefinition = curOperatorAsJoin->getJoinDefinition();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
-    if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]){
+    if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
         copyOfFilter->setId(Util::getNextOperatorId());
@@ -210,8 +218,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
         pushDownFilter(copyOfFilter, curOperatorAsJoin->getRightOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
-    }
-    else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
+    } else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
         copyOfFilter->setId(Util::getNextOperatorId());
@@ -239,7 +246,9 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
     return false;
 }
 
-void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator, NodePtr parOperator) {
+void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator,
+                                            NodePtr mapOperator,
+                                            NodePtr parOperator) {
     std::string mapFieldName = getFieldNameUsedByMapOperator(mapOperator);
     bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
 
@@ -270,12 +279,13 @@ void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filte
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushed copy of the filter to other branch");
 }
 
-void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator,
+void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator,
+                                                          NodePtr windowOperator,
                                                           NodePtr parOperator) {
 
     auto groupByKeyNames = windowOperator->as<WindowLogicalOperatorNode>()->getGroupByKeyNames();
-    std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowOperator->as<WindowLogicalOperatorNode>()
-        ->getWindowDefinition()->getKeys();
+    std::vector<FieldAccessExpressionNodePtr> groupByKeys =
+        windowOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
     std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
