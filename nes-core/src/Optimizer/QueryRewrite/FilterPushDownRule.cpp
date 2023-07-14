@@ -59,13 +59,20 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
               [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
                   return lhs->getId() < rhs->getId();
               });
-    NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
-    for (FilterLogicalOperatorNodePtr filterOperator : filterOperators) {
-        //method calls itself recursively until it can not push the filter further down(upstream).
-        pushDownFilter(filterOperator, filterOperator->getChildren()[0], filterOperator);
+    auto originalQueryPlan = queryPlan->copy();
+    try {
+        NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
+        for (FilterLogicalOperatorNodePtr filterOperator : filterOperators) {
+            //method calls itself recursively until it can not push the filter further down(upstream).
+            pushDownFilter(filterOperator, filterOperator->getChildren()[0], filterOperator);
+        }
+        NES_INFO("FilterPushDownRule: Return the updated query plan {}", queryPlan->toString());
+        return queryPlan;
+    } catch (std::exception& exc) {
+        NES_ERROR("FilterPushDownRule: Error while applying FilterPushDownRule: {}", exc.what());
+        NES_ERROR("FilterPushDownRule: Returning unchanged original query plan {}", originalQueryPlan->toString());
+        return originalQueryPlan;
     }
-    NES_INFO("FilterPushDownRule: Return the updated query plan {}", queryPlan->toString());
-    return queryPlan;
 }
 
 void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator) {
