@@ -146,6 +146,15 @@ class Topology {
     bool reduceMemory(uint64_t nodeId, double amountToReduce);
 
     /**
+     * @brief Set new epoch value
+     * @param nodeId : the node id
+     * @param epochValue : epoch value
+     * @return true if successful
+     */
+    bool setEpoch(uint64_t nodeId, uint64_t epochValue);
+
+
+    /**
      * @brief Reduce network on the node with given id
      * @param nodeId : the node id
      * @param amountToReduce : amount of resources to reduce

@@ -399,7 +399,18 @@ bool Topology::reduceNetwork(uint64_t nodeId, double amountToReduce) {
     return true;
 }
 
-bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
+bool Topology::setEpoch(uint64_t nodeId, uint64_t epochValue) {
+    std::unique_lock lock(topologyLock);
+    NES_INFO("Topology: Set epoch " << epochValue << " to the node with id " << nodeId);
+    if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
+        NES_WARNING("Topology: Unable to find node with id " << nodeId);
+        return false;
+    }
+    indexOnNodeIds[nodeId]->setEpochValue(epochValue);
+    return true;
+}
+
+    bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Increase " << amountToIncrease << " resources from node with id " << nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {

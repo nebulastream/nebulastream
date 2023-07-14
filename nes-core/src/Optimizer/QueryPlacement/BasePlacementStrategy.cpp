@@ -247,6 +247,7 @@ BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyN
                 std::cout << "New memory:" << currentTopologyNode->getAvailableMemory();
                 topology->reduceNetwork(currentTopologyNode->getId(), networkToReduce);
                 std::cout << "New network:" << currentTopologyNode->getAvailableNetwork();
+                topology->setEpoch(currentTopologyNode->getId(), currentTopologyNode->getEpochValue());
                 currentTopologyNode->addNodeProperty("isBuffering", 1);
             }
             ++topologyIterator;
