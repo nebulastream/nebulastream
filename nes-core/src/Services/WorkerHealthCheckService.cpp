@@ -93,13 +93,13 @@ void WorkerHealthCheckService::startHealthCheck() {
 //
 //            //usleep(1000000);
 //
-            for (auto child : geoNeighbors.lock_table()) {
-                bool isGeoNeighborAlive = workerRpcClient->checkHealth(child.second, healthServiceName);
+            for (auto geoNeighbor : geoNeighbors.lock_table()) {
+                bool isGeoNeighborAlive = workerRpcClient->checkHealth(geoNeighbor.second, healthServiceName);
                 if (isGeoNeighborAlive) {
-                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is alive", child.first);
+                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is alive", geoNeighbor.first);
                 } else {
-                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is down", child.first);
-                    failedGeoNeighborsWorkers.insert(child.first);
+                    NES_DEBUG("NesWorker::healthCheck: geo neighbor worker with workerId={} is down", geoNeighbor.first);
+                    failedGeoNeighborsWorkers.insert(geoNeighbor.first);
                 }
             }
             if (!failedGeoNeighborsWorkers.empty()) {
