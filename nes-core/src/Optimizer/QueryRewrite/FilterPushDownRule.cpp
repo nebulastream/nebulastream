@@ -99,6 +99,12 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
     // If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
     // so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
     if (filterOperator->getId() != parOperator->as<LogicalOperatorNode>()->getId()) {
+
+        // if we remove the first child (which is the left branch) of a binary operator and insert our filter below this binary operator,
+        // it will be inserted as the second children (which is the right branch). To conserve order we will swap the branches after the insertion
+        bool swapBranches = false;
+        if (parOperator->instanceOf<BinaryOperatorNode>() && parOperator->getChildren()[0]->equal(childOperator)) { swapBranches = true; }
+
         // removes filter operator from its original position and connects the parents and children of the filter operator at that position
         if (!filterOperator->removeAndJoinParentAndChildren()){
             //if we did not manage to remove the operator we can't insert it at the new position
@@ -119,6 +125,9 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
         //the input schema of the filter is going to be the same as the output schema of the node below. Its output schema is the same as its input schema.
         filterOperator->setInputSchema(filterOperator->getChildren()[0]->as<OperatorNode>()->getOutputSchema()->copy());
         filterOperator->as<OperatorNode>()->setOutputSchema(filterOperator->getChildren()[0]->as<OperatorNode>()->getOutputSchema()->copy());
+
+        //conserve order
+        if (swapBranches){ parOperator->swapLeftAndRightBranch(); }
     }
 }
 
@@ -235,7 +244,7 @@ void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filte
     copyOfFilterOperator->setId(Util::getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
 
-    // push filter operator and the copy of it to both branches
+    // push original filter operator to one branch and the copy of it to the other branches
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...")
     pushDownFilter(filterOperator, grandChildren[0], unionOperator);
     pushDownFilter(copyOfFilterOperator, grandChildren[1], unionOperator);

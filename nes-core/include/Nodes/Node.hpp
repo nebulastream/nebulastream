@@ -106,6 +106,12 @@ class Node : public std::enable_shared_from_this<Node> {
     bool swap(NodePtr const& newNode, NodePtr const& oldNode);
 
     /**
+     * @brief Swaps the left and right branch of binary nodes, by reversing the vector of children.
+     * @return bool true if successful
+     */
+    bool swapLeftAndRightBranch();
+
+    /**
      * @brief remove the given node together with its children
      * @param node the given node to remove
      * @return bool true if successful
