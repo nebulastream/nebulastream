@@ -102,10 +102,13 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             // auto generate the specifics
             MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
+                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType),
+                                             std::chrono::milliseconds(workerConfig->monitoringWaitTime.getValue()));
             std::string metricTypeString = NES::Monitoring::toString(metricType);
 
-            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph"
+                                                                          << " with wait time "
+                                                                          << workerConfig->monitoringWaitTime.getValue());
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
             workerConfig->physicalSources.add(source);
         }

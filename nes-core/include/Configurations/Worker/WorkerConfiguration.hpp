@@ -127,6 +127,12 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
 
     /**
+     * @brief Configures the buffer size of individual TupleBuffers in bytes.
+     * This property has to be the same over a whole deployment.
+     */
+    UIntOption monitoringWaitTime = {MONITORING_WAIT_TIME, 1000, "Sampling period of metrics (ms)."};
+
+    /**
      * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
      * @deprecated this value is deprecated and will be removed.
      */
@@ -264,6 +270,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfBuffersPerWorker,
                 &numberOfBuffersInSourceLocalBufferPool,
                 &bufferSizeInBytes,
+                &monitoringWaitTime,
                 &parentId,
                 &logLevel,
                 &sourcePinList,

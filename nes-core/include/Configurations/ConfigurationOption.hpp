@@ -245,6 +245,8 @@ const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
+const std::string MONITORING_WAIT_TIME = "monitoringWaitTime";
+
 //worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";
 const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";

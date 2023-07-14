@@ -114,6 +114,7 @@ class MonitoringQueriesIntegrationTest : public Testing::NESBaseTest {
                             {TestUtils::rpcPort(0),
                              TestUtils::dataPort(0),
                              TestUtils::enableMonitoring(),
+                             TestUtils::monitoringWaitTime(500),
                              TestUtils::coordinatorPort(rpcCoordinatorPort),
                              TestUtils::parentId(parent),
                              TestUtils::sourceType("CSVSource"),
@@ -186,7 +187,7 @@ class MonitoringQueriesIntegrationTest : public Testing::NESBaseTest {
     uint64_t countLines(const std::string& str) { return std::count(str.begin(), str.end(), '\n') + 1; }
 };
 
-TEST_F(MonitoringQueriesIntegrationTest, testThreeLevelsTopologyTopDownMemory) {
+TEST_F(MonitoringQueriesIntegrationTest, testThreeLevelsTopologyTopDown) {
     uint64_t childThreshold = 1000;
     uint64_t combinerThreshold = 1;
     uint64_t expectedNoBuffers = 100;
