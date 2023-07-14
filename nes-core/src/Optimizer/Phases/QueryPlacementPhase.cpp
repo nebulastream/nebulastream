@@ -17,7 +17,6 @@
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -78,71 +77,13 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-    std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
 
-    for (const auto& pinnedOperator : upStreamPinnedOperators) {
-        auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
-        if (!value.has_value()) {
-            throw Exceptions::RuntimeException(
-                "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
-                + pinnedOperator->toString());
-        }
-        auto nodeId = std::any_cast<uint64_t>(value);
-        auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
-        //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
-        // two physical sources located on same physical node)
-        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalSource);
-    }
-    std::set<TopologyNodePtr> topologyNodesWithDownStreamPinnedOperators;
-    for (const auto& pinnedOperator : downStreamPinnedOperators) {
-        auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
-        if (!value.has_value()) {
-            throw Exceptions::RuntimeException(
-                "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
-                + pinnedOperator->toString());
-        }
-        auto nodeId = std::any_cast<uint64_t>(value);
-        auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
-        topologyNodesWithDownStreamPinnedOperators.insert(nodeWithPhysicalSource);
-    }
-
-    std::vector upstreamTopologyNodes(topologyNodesWithUpStreamPinnedOperators.begin(),
-                                      topologyNodesWithUpStreamPinnedOperators.end());
-    std::vector downstreamTopologyNodes(topologyNodesWithDownStreamPinnedOperators.begin(),
-                                        topologyNodesWithDownStreamPinnedOperators.end());
-
-    std::optional<TopologyNodePtr> topologiesForPlacement;
-    std::vector<std::vector<TopologyNodePtr>> availablePaths;
-    for (auto upstreamTopologyNode : upstreamTopologyNodes) {
-        for (auto downstreamTopologyNode : downstreamTopologyNodes) {
-            topologiesForPlacement = topology->findAllPathBetween(upstreamTopologyNode, downstreamTopologyNode);
-        }
-        if (!topologiesForPlacement.has_value()) {
-            throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
-        }
-        auto rootNode = topologiesForPlacement.value()->getAllRootNodes()[0];
-        for (auto child : rootNode->getChildren()) {
-            std::vector<TopologyNodePtr> path;
-            path.emplace_back(rootNode->as<TopologyNode>());
-            auto topologyIterator = NES::DepthFirstNodeIterator(child).begin();
-            while (topologyIterator != DepthFirstNodeIterator::end()) {
-                // get the ExecutionNode for the current topology Node
-                auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-                path.emplace_back(currentTopologyNode);
-                ++topologyIterator;
-            }
-            availablePaths.emplace_back(path);
-        }
-    }
-    bool success = false;
-    for (auto i : availablePaths) {
-        success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
-                                                                       faultToleranceType,
-                                                                       lineageType,
-                                                                       ftPlacement,
-                                                                       upStreamPinnedOperators,
-                                                                       downStreamPinnedOperators);
-    }
+    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
+                                                                   faultToleranceType,
+                                                                   lineageType,
+                                                                   ftPlacement,
+                                                                   upStreamPinnedOperators,
+                                                                   downStreamPinnedOperators);
 
     now = std::chrono::system_clock::now();
     now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
