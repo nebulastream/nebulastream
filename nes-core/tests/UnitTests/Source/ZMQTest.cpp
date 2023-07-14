@@ -99,6 +99,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalStreamName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     NES_DEBUG("{}", zmq_source->toString());
     // bufferManager->resizeFixedBufferSize(testDataSize);

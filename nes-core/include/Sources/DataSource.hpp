@@ -73,7 +73,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
-                        std::string physicalSourceName,
+                        const std::string& physicalSourceName,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),

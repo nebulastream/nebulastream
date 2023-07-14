@@ -38,11 +38,15 @@
 namespace NES {
 /**
  * @brief function to create a test source which produces 10 tuples within one buffer with value one based on a schema
- * @param schema of the data source
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @return a const data source pointer
+ * @param schema schema of the data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr
 createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
@@ -51,37 +55,44 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                               OperatorId operatorId,
                                               OriginId originId,
                                               size_t numSourceLocalBuffers,
-                                              std::string physicalSourceName, 
+                                              const std::string& physicalSourceName,
                                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a test source which produces   tuples with value one in N buffers of based on a schema
- * @param schema of the data source
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @param number of buffers that should be produced
- * @param gatheringInterval when to gather the next buffer
- * @return a const data source pointer
+ * @param schema schema of the data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+ * @param gatheringInterval the interval at which new buffers are produced
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr
 createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                const Runtime::BufferManagerPtr& bufferManager,
                                                const Runtime::QueryManagerPtr& queryManager,
-                                               uint64_t numbersOfBufferToProduce,
+                                               uint64_t numberOfBuffersToProduce,
                                                uint64_t gatheringInterval,
                                                OperatorId operatorId,
                                                OriginId originId,
                                                size_t numSourceLocalBuffers,
-                                               std::string physicalSourceName,
+                                               const std::string& physicalSourceName,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @return a const data source pointer
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr
 createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bufferManager,
@@ -89,23 +100,31 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                              OperatorId operatorId,
                                              OriginId originId,
                                              size_t numSourceLocalBuffers,
+                                             const std::string& physicalSourceName,
                                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a lambda source
- * @param schema of the data source
- * @param bufferManager
- * @param queryManager
- * @param number of buffers that should be produced
- * @param frequency when to gather the next buffer
- * @param generationFunction
- * @param operatorId
- * @return a const data source pointer */
+ * @param schema schema of the data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+ * @param gatheringValue how many tuples to collect per interval
+ * @param generationFunction that creates with which the data is created
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+ * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+ * @param taskQueueId the ID of the queue to which the task is pushed
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer */
 DataSourcePtr
 createLambdaSource(const SchemaPtr& schema,
                    const Runtime::BufferManagerPtr& bufferManager,
                    const Runtime::QueryManagerPtr& queryManager,
-                   uint64_t numbersOfBufferToProduce,
+                   uint64_t numberOfBuffersToProduce,
                    uint64_t gatheringValue,
                    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                    OperatorId operatorId,
@@ -114,18 +133,22 @@ createLambdaSource(const SchemaPtr& schema,
                    GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
                    uint64_t taskQueueId,
-                   std::string physicalSourceName,
+                   const std::string& physicalSourceName,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create an empty zmq source
- * @param schema of data source
- * @param bufferManager
- * @param queryManager
- * @param host
- * @param port
- * @param operatorId
- * @return a const data source pointer
+ * @param schema schema of data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param host the name of the host
+ * @param port the port through which to connect to the ZMQSource(ZMQSource)
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createZmqSource(const SchemaPtr& schema,
                               const Runtime::BufferManagerPtr& bufferManager,
@@ -135,36 +158,44 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
-                              std::string physicalSourceName,
+                              const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a binary file source
- * @param schema of data source
- * @param bufferManager
- * @param queryManager
- * @param path to the file to reading
- * @param operatorId
- * @return a const data source pointer
+ * @param schema schema of data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param file_path path to the binary file
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      const Runtime::BufferManagerPtr& bufferManager,
                                      const Runtime::QueryManagerPtr& queryManager,
-                                     const std::string& pathToFile,
+                                     const std::string& file_path,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
-                                     std::string physicalSourceName,
+                                     const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a sense source
- * @param schema of data source
- * @param bufferManager
- * @param queryManager
+ * @param schema schema of data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
  * @param udfs of the file
- * @param operatorId
- * @return a const data source pointer
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                 const Runtime::BufferManagerPtr& bufferManager,
@@ -173,19 +204,21 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                 OperatorId operatorId,
                                 OriginId originId,
                                 size_t numSourceLocalBuffers,
-                                std::string physicalSourceName,
+                                const std::string& physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a csvfile source
- * @param schema of data source
- * @param bufferManager
- * @param queryManager
- * @param csvSourceType
- * @param numberOfTuplesToProducePerBuffer
- * @param numBuffersToProcess
- * @param operatorId
- * @return a const data source pointer
+ * @param schema schema of data source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param csvSourceType points to the current source configuration object
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   const Runtime::BufferManagerPtr& bufferManager,
@@ -194,20 +227,27 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   OperatorId operatorId,
                                   OriginId originId,
                                   size_t numSourceLocalBuffers,
-                                  std::string physicalSourceName,
+                                  const std::string& physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
- * @brief create a memory source
- * @param schema of the source
- * @param bufferManager
- * @param queryManager
+ * @brief function which creates a memory source
+ * @param schema the schema of the source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
  * @param memoryArea the memory buffer to scan and create buffers out of
  * @param memoryAreaSize the size of the memory buffer
  * @param numBuffersToProcess
- * @param frequency
- * @param operatorId
- * @return
+ * @param gatheringValue how many tuples to collect per interval
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+ * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+ * @param taskQueueId the ID of the queue to which the task is pushed
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  const Runtime::BufferManagerPtr& bufferManager,
@@ -222,18 +262,21 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  GatheringMode gatheringMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
-                                 std::string physicalSourceName,
+                                 const std::string& physicalSourceName,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief create a table source
- * @param schema of the source
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @param numBuffersToProcess
- * @param successors
- * @return
+ * @param schema the schema of the source
+ * @param pathTableFile
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 namespace Experimental {
 DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
@@ -244,27 +287,35 @@ DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
-                                     std::string physicalSourceName,
+                                     const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 }// namespace Experimental
 /**
  * @brief create a benchmark source
- * @param schema of the source
- * @param bufferManager
- * @param queryManager
+ * @param schema the schema of the source
+ * @param bufferManager valid pointer to the buffer manager
+ * @param queryManager valid pointer to the query manager
  * @param memoryArea the memory buffer to scan and create buffers out of
  * @param memoryAreaSize the size of the memory buffer
- * @param numBuffersToProcess
- * @param frequency
- * @param operatorId
- * @return
+ * @param numberOfBuffersToProcess
+ * @param gatheringValue how many tuples to collect per interval
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+ * @param sourceMode
+ * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+ * @param taskQueueId the ID of the queue to which the task is pushed
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     const Runtime::BufferManagerPtr& bufferManager,
                                     const Runtime::QueryManagerPtr& queryManager,
                                     const std::shared_ptr<uint8_t>& memoryArea,
                                     size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess,
+                                    uint64_t numberOfBuffersToProcess,
                                     uint64_t gatheringValue,
                                     OperatorId operatorId,
                                     OriginId originId,
@@ -273,17 +324,23 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     SourceMode sourceMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
-                                    std::string physicalSourceName,
+                                    const std::string& physicalSourceName,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a network source
- * @param schema
- * @param bufferManager
- * @param queryManager
- * @param networkManager
- * @param nesPartition
- * @return a const data source pointer
+ * @param schema the schema of the source
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManager a valid pointer to the query manager
+ * @param networkManager a valid pointer to the network manager
+ * @param nesPartition the unique identifier of the network source that consumes the input buffers
+ * @param sinkLocation location of the sink that writes to the network source
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param waitTime the amount of time the networkSource is supposed to wait for a reply
+ * @param retryTimes the number of times the networkSource resends a message, if it does not receive a reply within waitTime
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   const Runtime::BufferManagerPtr& bufferManager,
@@ -294,20 +351,21 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   size_t numSourceLocalBuffers,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
-                                  std::string physicalSourceName,
+                                  const std::string& physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a monitoring source
- * @param metricCollector
- * @param waitTime
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @param originId
- * @param numSourceLocalBuffers
- * @param successors
- * @return a const data source pointer
+ * @param metricCollector a valid pointer to a NES::Monitoring::MetricCollector
+ * @param waitTime the amount of time to wait
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManager a valid pointer to the query manager
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                                      std::chrono::milliseconds waitTime,
@@ -316,21 +374,23 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
-                                     std::string physicalSourceName,
+                                     const std::string& physicalSourceName,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
 namespace Experimental::MaterializedView {
 
 /**
  * @brief function to create a materialized view source
- * @param schema
- * @param bufferManager
- * @param queryManager
- * @param operatorId
- * @param numSourceLocalBuffers
- * @param successors
- * @param materialized view pointer
- * @return a const data source pointer
+ * @param schema the schema of the source
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManager a valid pointer to the query manager
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @param view a valid pointer to a materialized view
+ * @return a data source pointer
  */
 DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const Runtime::BufferManagerPtr bufferManager,
@@ -338,27 +398,37 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const OperatorId operatorId,
                                            OriginId originId,
                                            const size_t numSourceLocalBuffers,
-                                           std::string physicalSourceName,
+                                           const std::string& physicalSourceName,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
 }// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 /**
- * @brief Create kafka source
+ * @brief a function which creates a kafka source
  * @param schema schema of the elements
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManager a valid pointer to the query manager
+ * @param numberOfBuffersToProduce the number of buffers to be produced by the source
  * @param brokers list of brokers
- * @param topic kafka topic
- * @param groupId group id
+ * @param topic the kafka topic which organizes tuples of the same entity. Usually the name of a data stream
+ * @param groupId the ID of a logical group which consumes messages from one or more kafka topics
  * @param autoCommit bool indicating if offset has to be committed automatically or not
- * @param kafkaConsumerTimeout  kafka consumer timeout
- * @param operatorId: operator id
- * @return
+ * @param kafkaConsumerTimeout the timeperiod after which a timeout is issued for the consumer
+ * @param offsetMode instructs the broker from which point of a topic a consumer wants consume messages from
+ * @param kafkaSourceType
+ * @param operatorId operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,
                                       Runtime::QueryManagerPtr queryManager,
-                                      uint64_t numbersOfBufferToProduce,
+                                      uint64_t numberOfBuffersToProduce,
                                       std::string brokers,
                                       std::string topic,
                                       std::string groupId,
@@ -370,19 +440,25 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       size_t batchSize,
-                                      std::string physicalSourceName,
+                                      const std::string& physicalSourceName,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 #ifdef ENABLE_OPC_BUILD
 
 /**
- * @brief Create OPC source
+ * @brief function which creates an OPC source
  * @param schema schema of the elements
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManagera valid pointer to the query manager
  * @param url the url of the OPC server
  * @param nodeId the node id of the desired node
  * @param user name if connecting with a server with authentication
  * @param password for authentication if needed
- * @return a const data source pointer
+ * @param operatorId operator id
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     Runtime::BufferManagerPtr bufferManager,
@@ -393,18 +469,24 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     std::string password,
                                     OperatorId operatorId,
                                     size_t numSourceLocalBuffers,
-                                    std::string physicalSourceName,
+                                    const std::string& physicalSourceName,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD
 
 /**
- * @brief Create MQTT source
+ * @brief function which creates a MQTT source
  * @param schema schema of the elements
+ * @param bufferManager a valid pointer to the buffer manager
+ * @param queryManager a valid pointer to the query manager
  * @param mqttSourceType mqttSourceType for MQTT
- * @param inputFormat format of input that we expect to receive
- * @return a const data source pointer
+ * @param operatorId current operator id
+ * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param numSourceLocalBuffers the number of buffers allocated to a source
+ * @param physicalSourceName the name and unique identifier of a physical source
+ * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @return a data source pointer
  */
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const Runtime::BufferManagerPtr& bufferManager,
@@ -413,7 +495,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                OriginId originId,
                                size_t numSourceLocalBuffers,
-                               std::string physicalSourceName,
+                               const std::string& physicalSourceName,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
@@ -428,8 +510,9 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
  * @param operatorId represents a locally running query execution plan
  * @param originId represents an origin
  * @param numSourceLocalBuffers number of local source buffers
+ * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors executable operators coming after this source
- * @return
+ * @return a data source pointer
  */
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const Runtime::BufferManagerPtr& bufferManager,
@@ -438,7 +521,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
-                              std::string physicalSourceName,
+                              const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 }// namespace NES

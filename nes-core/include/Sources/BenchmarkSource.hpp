@@ -69,7 +69,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              SourceMode sourceMode,
                              uint64_t sourceAffinity,
                              uint64_t taskQueueId,
-                             std::string physicalSourceName,
+                             const std::string& physicalSourceName,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     ~BenchmarkSource();

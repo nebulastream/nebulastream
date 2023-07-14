@@ -39,7 +39,7 @@ LambdaSource::LambdaSource(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
-    std::string physicalSourceName,
+    const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -49,8 +49,8 @@ LambdaSource::LambdaSource(
                       originId,
                       numSourceLocalBuffers,
                       gatheringMode,
-                      physicalSourceName,
-                      std::move(successors)),
+                      std::move(successors),
+                      physicalSourceName),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
     if (this->gatheringMode == GatheringMode::INTERVAL_MODE || this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
