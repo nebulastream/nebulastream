@@ -481,19 +481,22 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
-    auto joinFieldNameLeft = leftSchema->get(1)->getName();
-    auto joinFieldNameRight = rightSchema->get(1)->getName();
-    auto timestampFieldLeft = leftSchema->get(2)->getName();
-    auto timestampFieldRight = leftSchema->get(2)->getName();
-    auto numberOfRecordsLeft = 200;
-    auto numberOfRecordsRight = 200;
+    const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+    const auto joinFieldNameRight = rightSchema->get(1)->getName();
+    const auto timestampFieldLeft = leftSchema->get(2)->getName();
+    const auto timestampFieldRight = leftSchema->get(2)->getName();
+    const auto numberOfRecordsLeft = 200;
+    const auto numberOfRecordsRight = 200;
     windowSize = 1000;
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
-    auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize,
+                                                                        rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,
@@ -501,7 +504,10 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
                                                           leftEntrySize,
                                                           rightEntrySize,
                                                           joinFieldNameLeft,
-                                                          joinFieldNameRight);
+                                                          joinFieldNameRight,
+                                                          windowStartFieldName,
+                                                          windowEndFieldName,
+                                                          windowKeyFieldName);
     NLJProbePiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
@@ -529,6 +535,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
 
     std::vector<OriginId> originIds{0};
     auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     auto nljOperatorHandler =
         Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
@@ -539,7 +548,10 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                           leftEntrySize,
                                                           rightEntrySize,
                                                           joinFieldNameLeft,
-                                                          joinFieldNameRight);
+                                                          joinFieldNameRight,
+                                                          windowStartFieldName,
+                                                          windowEndFieldName,
+                                                          windowKeyFieldName);
     NLJProbePiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),

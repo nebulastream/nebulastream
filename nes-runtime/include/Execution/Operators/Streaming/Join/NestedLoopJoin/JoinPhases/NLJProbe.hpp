@@ -31,6 +31,9 @@ class NLJProbe : public Operator {
      * @param joinSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     * @param windowKeyFieldName
      */
     explicit NLJProbe(const uint64_t operatorHandlerIndex,
                       const SchemaPtr& leftSchema,
@@ -39,7 +42,10 @@ class NLJProbe : public Operator {
                       const uint64_t leftEntrySize,
                       const uint64_t rightEntrySize,
                       const std::string& joinFieldNameLeft,
-                      const std::string& joinFieldNameRight);
+                      const std::string& joinFieldNameRight,
+                      const std::string& windowStartFieldName,
+                      const std::string& windowEndFieldName,
+                      const std::string& windowKeyFieldName);
 
     /**
      * @brief Receives a record buffer containing a window identifier for a window that is ready to be joined
@@ -56,8 +62,11 @@ class NLJProbe : public Operator {
     const uint64_t leftEntrySize;
     const uint64_t rightEntrySize;
 
-    std::string joinFieldNameLeft;
-    std::string joinFieldNameRight;
+    const std::string joinFieldNameLeft;
+    const std::string joinFieldNameRight;
+    const std::string windowStartFieldName;
+    const std::string windowEndFieldName;
+    const std::string windowKeyFieldName;
 };
 }// namespace NES::Runtime::Execution::Operators
 

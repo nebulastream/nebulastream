@@ -35,15 +35,21 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
      * @param outputSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     * @param windowKeyFieldName
      * @param operatorHandler
      * @return PhysicalNestedLoopJoinProbeOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id,
+    static PhysicalOperatorPtr create(const OperatorId id,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      std::string joinFieldNameLeft,
-                                      std::string joinFieldNameRight,
+                                      const std::string& joinFieldNameLeft,
+                                      const std::string& joinFieldNameRight,
+                                      const std::string& windowStartFieldName,
+                                      const std::string& windowEndFieldName,
+                                      const std::string& windowKeyFieldName,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -53,14 +59,20 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
      * @param outputSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     * @param windowKeyFieldName
      * @param operatorHandler
      * @return PhysicalNestedLoopJoinProbeOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      std::string joinFieldNameLeft,
-                                      std::string joinFieldNameRight,
+                                      const std::string& joinFieldNameLeft,
+                                      const std::string& joinFieldNameRight,
+                                      const std::string& windowStartFieldName,
+                                      const std::string& windowEndFieldName,
+                                      const std::string& windowKeyFieldName,
                                       const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
@@ -71,6 +83,9 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
      * @param outputSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     * @param windowKeyFieldName
      * @param operatorHandler
      */
     PhysicalNestedLoopJoinProbeOperator(OperatorId id,
@@ -79,6 +94,9 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
                                         SchemaPtr outputSchema,
                                         std::string joinFieldNameLeft,
                                         std::string joinFieldNameRight,
+                                        std::string windowStartFieldName,
+                                        std::string windowEndFieldName,
+                                        std::string windowKeyFieldName,
                                         Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
 
     /**
@@ -100,14 +118,35 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
     const std::string& getJoinFieldNameLeft() const;
 
     /**
-     * @brief getter for right join fiel name
+     * @brief getter for right join field name
      * @return
      */
     const std::string& getJoinFieldNameRight() const;
 
+    /**
+     * @brief Getter for the window start field name
+     * @return std::string
+     */
+    const std::string& getWindowStartFieldName() const;
+
+    /**
+     * @brief Getter for the window end field name
+     * @return std::string
+     */
+    const std::string& getWindowEndFieldName() const;
+
+    /**
+     * @brief Getter for the window key field name
+     * @return std::string
+     */
+    const std::string& getWindowKeyFieldName() const;
+
   protected:
-    std::string joinFieldNameLeft;
-    std::string joinFieldNameRight;
+    const std::string joinFieldNameLeft;
+    const std::string joinFieldNameRight;
+    const std::string windowStartFieldName;
+    const std::string windowEndFieldName;
+    const std::string windowKeyFieldName;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

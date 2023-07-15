@@ -100,7 +100,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
                          const std::string& joinFieldNameLeft,
                          const std::string& joinFieldNameRight,
                          const std::string& timeStampFieldLeft,
-                         const std::string& timeStampFieldRight) {
+                         const std::string& timeStampFieldRight,
+                         const std::string& windowStartFieldName,
+                         const std::string& windowEndFieldName,
+                         const std::string& windowKeyFieldName) {
 
         bool nljWorks = true;
 
@@ -130,11 +133,12 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderSink));
 
         // Creating the left, right and sink NLJ operator
-        auto handlerIndex = 0;
-        auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
-        auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
-        auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
-        auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
+        const auto handlerIndex = 0;
+        const auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
+        const auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
+        const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
+        const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
+
 
         auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
             handlerIndex,
@@ -159,7 +163,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
                                                               leftEntrySize,
                                                               rightEntrySize,
                                                               joinFieldNameLeft,
-                                                              joinFieldNameRight);
+                                                              joinFieldNameRight,
+                                                              windowStartFieldName,
+                                                              windowEndFieldName,
+                                                              windowKeyFieldName);
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
@@ -254,6 +261,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -271,7 +281,10 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 timeStampFieldLeft,
-                                timeStampFieldRight));
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                windowKeyFieldName));
 }
 
 TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
@@ -292,6 +305,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -309,7 +325,10 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 timeStampFieldLeft,
-                                timeStampFieldRight));
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                windowKeyFieldName));
 }
 
 TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes) {
@@ -329,6 +348,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+    const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
@@ -345,7 +367,10 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 timeStampFieldLeft,
-                                timeStampFieldRight));
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                windowKeyFieldName));
 }
 
 INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,

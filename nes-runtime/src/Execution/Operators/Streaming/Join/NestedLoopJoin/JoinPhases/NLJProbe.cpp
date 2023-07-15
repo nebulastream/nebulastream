@@ -13,7 +13,6 @@
 */
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -115,9 +114,9 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                 Record joinedRecord;
 
                 // TODO replace this with a more useful version
-                joinedRecord.write(joinSchema->get(0)->getName(), windowStart);
-                joinedRecord.write(joinSchema->get(1)->getName(), windowEnd);
-                joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
+                joinedRecord.write(windowStartFieldName, windowStart);
+                joinedRecord.write(windowEndFieldName, windowEnd);
+                joinedRecord.write(windowKeyFieldName, leftRecord.read(joinFieldNameLeft));
 
                 /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then
                      * the left schema */
@@ -151,9 +150,13 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const uint64_t leftEntrySize,
                    const uint64_t rightEntrySize,
                    const std::string& joinFieldNameLeft,
-                   const std::string& joinFieldNameRight)
+                   const std::string& joinFieldNameRight,
+                   const std::string& windowStartFieldName,
+                   const std::string& windowEndFieldName,
+                   const std::string& windowKeyFieldName)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
       joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
-      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
+      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName),
+      windowEndFieldName(windowEndFieldName), windowKeyFieldName(windowKeyFieldName){}
 
 }// namespace NES::Runtime::Execution::Operators

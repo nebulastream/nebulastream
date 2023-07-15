@@ -287,12 +287,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>()) {
-        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>();
+        const auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>();
 
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
-        auto handlerIndex = operatorHandlers.size() - 1;
-        auto leftInputSchema = sinkOperator->getLeftInputSchema();
-        auto rightInputSchema = sinkOperator->getRightInputSchema();
+        const auto handlerIndex = operatorHandlers.size() - 1;
+        const auto leftInputSchema = sinkOperator->getLeftInputSchema();
+        const auto rightInputSchema = sinkOperator->getRightInputSchema();
 
         auto joinSinkNautilus =
             std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
@@ -302,7 +302,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                       leftInputSchema->getSchemaSizeInBytes(),
                                                                       rightInputSchema->getSchemaSizeInBytes(),
                                                                       sinkOperator->getJoinFieldNameLeft(),
-                                                                      sinkOperator->getJoinFieldNameRight());
+                                                                      sinkOperator->getJoinFieldNameRight(),
+                                                                      sinkOperator->getWindowStartFieldName(),
+                                                                      sinkOperator->getWindowEndFieldName(),
+                                                                      sinkOperator->getWindowKeyFieldName());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {

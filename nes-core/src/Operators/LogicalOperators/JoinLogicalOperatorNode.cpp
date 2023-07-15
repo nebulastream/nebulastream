@@ -144,10 +144,14 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     outputSchema->clear();
     auto sourceNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
     auto sourceNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
+
     auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
-    outputSchema->addField(createField(newQualifierForSystemField + "$start", BasicType::UINT64));
-    outputSchema->addField(createField(newQualifierForSystemField + "$end", BasicType::UINT64));
-    outputSchema->addField(AttributeField::create(newQualifierForSystemField + "$key", leftJoinKey->getStamp()));
+    windowStartFieldName = newQualifierForSystemField + "$start";
+    windowEndFieldName = newQualifierForSystemField + "$end";
+    windowKeyFieldName = newQualifierForSystemField + "$key";
+    outputSchema->addField(createField(windowStartFieldName, BasicType::UINT64));
+    outputSchema->addField(createField(windowEndFieldName, BasicType::UINT64));
+    outputSchema->addField(AttributeField::create(windowKeyFieldName, leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right sources
     for (const auto& field : leftInputSchema->fields) {
@@ -208,9 +212,16 @@ void JoinLogicalOperatorNode::inferStringSignature() {
 const std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
+
 void JoinLogicalOperatorNode::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);
     joinDefinition->setOriginId(originId);
 }
+
+std::string JoinLogicalOperatorNode::getWindowStartFieldName() const { return windowStartFieldName; }
+
+std::string JoinLogicalOperatorNode::getWindowEndFieldName() const { return windowEndFieldName; }
+
+std::string JoinLogicalOperatorNode::getWindowKeyFieldName() const { return windowKeyFieldName; }
 
 }// namespace NES
