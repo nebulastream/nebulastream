@@ -403,7 +403,7 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
                                                              const StreamJoinConfigs& streamJoinConfig) {
     using namespace Runtime::Execution;
 
-    // TODO we should pass this not as an enum
+    // TODO we should pass this not as an enum #3900
     StreamJoinStrategy runtimeJoinStrategy;
     if (streamJoinConfig.joinStrategy == StreamJoinStrategy::HASH_JOIN_LOCAL) {
         runtimeJoinStrategy = StreamJoinStrategy::HASH_JOIN_LOCAL;
