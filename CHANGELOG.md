@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.144](https://github.com/nebulastream/nebulastream/tree/v0.5.144) (2023-07-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.143...v0.5.144)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor DefaultPhysicalOperatorProvider::lowerJoinOperator [\#3895](https://github.com/nebulastream/nebulastream/issues/3895)
+
 ## [v0.5.143](https://github.com/nebulastream/nebulastream/tree/v0.5.143) (2023-07-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.142...v0.5.143)
