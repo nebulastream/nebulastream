@@ -13,15 +13,21 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#include "Nautilus/IR/IRGraph.hpp"
+#include "Util/Timer.hpp"
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <future>
-
+namespace NES {
+class DumpHelper;
+}
 namespace NES::Nautilus::Backends {
 class Executable;
 }
-
+namespace NES::Nautilus::IR {
+class IRGraph;
+}
 namespace NES::Runtime::Execution {
 class PhysicalOperatorPipeline;
 
@@ -37,6 +43,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
     ExecutionResult execute(TupleBuffer& inputTupleBuffer,
                             PipelineExecutionContext& pipelineExecutionContext,
                             WorkerContext& workerContext) override;
+    std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
 
   private:
     std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();

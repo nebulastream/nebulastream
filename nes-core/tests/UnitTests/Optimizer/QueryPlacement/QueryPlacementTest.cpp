@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -203,6 +204,33 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
             }
         }
     }
+}
+
+
+/* Test query placement with top down strategy  */
+TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
+
+    setupTopologyAndSourceCatalog({4, 4, 4});
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ELEGANT_ENERGY);
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sampleCodeGenerationPhase =  Optimizer::SampleCodeGenerationPhase::create();
+    queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
 }
 
 /* Test query placement with top down strategy  */
