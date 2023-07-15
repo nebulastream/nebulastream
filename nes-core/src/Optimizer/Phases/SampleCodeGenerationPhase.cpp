@@ -12,41 +12,32 @@
     limitations under the License.
 */
 
-#include "Configurations/Worker/WorkerConfiguration.hpp"
-#include "Execution/Pipelines/CompiledExecutablePipelineStage.hpp"
-#include "Listeners/QueryStatusListener.hpp"
-#include "QueryCompiler/Operators/ExecutableOperator.hpp"
-#include "QueryCompiler/QueryCompilationRequest.hpp"
-#include "QueryCompiler/QueryCompilationResult.hpp"
-#include "Runtime/NodeEngine.hpp"
-#include "Runtime/NodeEngineBuilder.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
-#include "Util/DumpHelper.hpp"
-#include "Util/Timer.hpp"
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Listeners/QueryStatusListener.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
-#include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstddef>
 #include <memory>
 
 namespace NES::QueryCompilation {
@@ -117,7 +108,6 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                 }
             }
             return nullptr;
-            //      return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
         } catch (const QueryCompilationException& exception) {
             auto currentException = std::current_exception();
             return QueryCompilationResult::create(currentException);
