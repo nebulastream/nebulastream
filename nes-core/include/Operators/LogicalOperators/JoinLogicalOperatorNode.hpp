@@ -49,8 +49,29 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     const std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
+    /**
+     * @brief Getter for the window start field name
+     * @return std::string
+     */
+    std::string getWindowStartFieldName() const;
+
+    /**
+     * @brief Getter for the window end field name
+     * @return std::string
+     */
+    std::string getWindowEndFieldName() const;
+
+    /**
+     * @brief Getter for the window key field name
+     * @return std::string
+     */
+    std::string getWindowKeyFieldName() const;
+
   private:
-    Join::LogicalJoinDefinitionPtr joinDefinition;
+    const Join::LogicalJoinDefinitionPtr joinDefinition;
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+    std::string windowKeyFieldName;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JOINLOGICALOPERATORNODE_HPP_

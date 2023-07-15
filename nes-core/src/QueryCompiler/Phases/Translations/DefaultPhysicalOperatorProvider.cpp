@@ -395,8 +395,11 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                        joinOperator->getOutputSchema(),
                                                                        streamJoinConfig.joinFieldNameLeft,
                                                                        streamJoinConfig.joinFieldNameRight,
+                                                                       joinOperator->getWindowStartFieldName(),
+                                                                       joinOperator->getWindowEndFieldName(),
+                                                                       joinOperator->getWindowKeyFieldName(),
                                                                        joinOperatorHandler);
-
+    
     streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
     streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);

@@ -24,23 +24,31 @@ PhysicalNestedLoopJoinProbeOperator::PhysicalNestedLoopJoinProbeOperator(
     SchemaPtr outputSchema,
     std::string joinFieldNameLeft,
     std::string joinFieldNameRight,
+    std::string windowStartFieldName,
+    std::string windowEndFieldName,
+    std::string windowKeyFieldName,
     Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalNestedLoopJoinOperator(std::move(operatorHandler), id),
       PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)),
-      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
+      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
+      windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName), windowKeyFieldName(windowKeyFieldName) {}
 
 std::string PhysicalNestedLoopJoinProbeOperator::toString() const { return "PhysicalNestedLoopJoinProbeOperator"; }
 
 OperatorNodePtr PhysicalNestedLoopJoinProbeOperator::copy() {
-    return create(id, leftInputSchema, rightInputSchema, outputSchema, joinFieldNameLeft, joinFieldNameRight, operatorHandler);
+    return create(id, leftInputSchema, rightInputSchema, outputSchema, joinFieldNameLeft, joinFieldNameRight, windowStartFieldName,
+                  windowEndFieldName, windowKeyFieldName, operatorHandler);
 }
 
 PhysicalOperatorPtr
 PhysicalNestedLoopJoinProbeOperator::create(const SchemaPtr& leftSchema,
                                             const SchemaPtr& rightSchema,
                                             const SchemaPtr& outputSchema,
-                                            const std::string joinFieldNameLeft,
-                                            const std::string joinFieldNameRight,
+                                            const std::string& joinFieldNameLeft,
+                                            const std::string& joinFieldNameRight,
+                                            const std::string& windowStartFieldName,
+                                            const std::string& windowEndFieldName,
+                                            const std::string& windowKeyFieldName,
                                             const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
     return create(Util::getNextOperatorId(),
                   leftSchema,
@@ -48,16 +56,22 @@ PhysicalNestedLoopJoinProbeOperator::create(const SchemaPtr& leftSchema,
                   outputSchema,
                   joinFieldNameLeft,
                   joinFieldNameRight,
+                  windowStartFieldName,
+                  windowEndFieldName,
+                  windowKeyFieldName,
                   operatorHandler);
 }
 
 PhysicalOperatorPtr
-PhysicalNestedLoopJoinProbeOperator::create(OperatorId id,
+PhysicalNestedLoopJoinProbeOperator::create(const OperatorId id,
                                             const SchemaPtr& leftSchema,
                                             const SchemaPtr& rightSchema,
                                             const SchemaPtr& outputSchema,
-                                            const std::string joinFieldNameLeft,
-                                            const std::string joinFieldNameRight,
+                                            const std::string& joinFieldNameLeft,
+                                            const std::string& joinFieldNameRight,
+                                            const std::string& windowStartFieldName,
+                                            const std::string& windowEndFieldName,
+                                            const std::string& windowKeyFieldName,
                                             const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalNestedLoopJoinProbeOperator>(id,
                                                                  leftSchema,
@@ -65,10 +79,16 @@ PhysicalNestedLoopJoinProbeOperator::create(OperatorId id,
                                                                  outputSchema,
                                                                  joinFieldNameLeft,
                                                                  joinFieldNameRight,
+                                                                 windowStartFieldName,
+                                                                 windowEndFieldName,
+                                                                 windowKeyFieldName,
                                                                  operatorHandler);
 }
 
 const std::string& PhysicalNestedLoopJoinProbeOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
 const std::string& PhysicalNestedLoopJoinProbeOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
+const std::string& PhysicalNestedLoopJoinProbeOperator::getWindowStartFieldName() const { return windowStartFieldName; }
+const std::string& PhysicalNestedLoopJoinProbeOperator::getWindowEndFieldName() const { return windowEndFieldName; }
+const std::string& PhysicalNestedLoopJoinProbeOperator::getWindowKeyFieldName() const { return windowKeyFieldName; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators
