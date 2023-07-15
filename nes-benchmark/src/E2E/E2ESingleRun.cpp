@@ -148,8 +148,7 @@ void E2ESingleRun::runQuery() {
         auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
         submittedIds.push_back(queryId);
 
-        bool res = waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout);
-        if (!res) {
+        if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
             NES_THROW_RUNTIME_ERROR("E2EBase: Could not start query with id = " << queryId);
         }
         NES_INFO("E2EBase: Query with id = {} started", queryId);
@@ -198,8 +197,7 @@ void E2ESingleRun::stopQuery() {
         // Sending a stop request to the coordinator with a timeout of 30 seconds
         queryService->validateAndQueueStopQueryRequest(id);
 
-        bool res = waitForQueryToStop(id, queryCatalog, defaultStartQueryTimeout);
-        if (!res) {
+        if (!waitForQueryToStop(id, queryCatalog, defaultStartQueryTimeout)) {
             NES_THROW_RUNTIME_ERROR("E2EBase: Could not stop query with id = " << id);
         }
         NES_INFO("E2EBase: Query with id = {} stopped", id);
@@ -212,10 +210,9 @@ void E2ESingleRun::stopQuery() {
     NES_DEBUG("Stopped data providers!");
 
     // Starting a new thread that waits
-    std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+    auto stopPromiseCord = std::make_shared<std::promise<bool>>();
     std::thread waitThreadCoordinator([this, stopPromiseCord]() {
-        std::future<bool> stopFutureCord = stopPromiseCord->get_future();
-
+        auto stopFutureCord = stopPromiseCord->get_future();
         bool satisfied = false;
         while (!satisfied) {
             switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
@@ -321,12 +318,12 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
         return false;
     }
-    auto start_timestamp = std::chrono::system_clock::now();
+    auto startTimestamp = std::chrono::system_clock::now();
 
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryStatus();
 
         switch (status) {
             case QueryStatus::MARKED_FOR_HARD_STOP:
@@ -364,12 +361,12 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
         NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
         return false;
     }
-    auto start_timestamp = std::chrono::system_clock::now();
+    auto startTimestamp = std::chrono::system_clock::now();
 
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryStatus();
 
         if (status == QueryStatus::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: Status for query with id = {} is stopped", queryId);
@@ -490,7 +487,8 @@ void E2ESingleRun::collectMeasurements() {
 
 void E2ESingleRun::printQuerySubplanStatistics(uint64_t timestamp,
                                                const Runtime::QueryStatisticsPtr& subPlanStatistics,
-                                               size_t processedTasks) {
+                                               size_t processedTasks,
+                                               std::ostream& outStream) {
     std::stringstream ss;
     ss << "time=" << timestamp << " subplan=" << subPlanStatistics->getSubQueryId() << " procTasks=" << processedTasks;
     for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
@@ -498,7 +496,7 @@ void E2ESingleRun::printQuerySubplanStatistics(uint64_t timestamp,
             ss << " pipeNo:" << pipe.first << " worker=" << worker.first << " tasks=" << worker.second;
         }
     }
-    std::cout << ss.str() << std::endl;
+    outStream << ss.str() << std::endl;
 }
 
 const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const { return coordinatorConf; }
