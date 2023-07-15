@@ -24,6 +24,9 @@ using NodePtr = std::shared_ptr<Node>;
 
 class FilterLogicalOperatorNode;
 using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+
+class FieldAccessExpressionNode;
+using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -44,6 +47,14 @@ class FilterPushDownRule : public BaseRewriteRule {
 
     static FilterPushDownRulePtr create();
     virtual ~FilterPushDownRule() = default;
+
+    /**
+     * @brief Validate if the input field is used in the filter predicate of the operator
+     * @param filterOperator : filter operator whose predicate need to be checked
+     * @param fieldName :  name of the field to be checked
+     * @return true if field use in the filter predicate else false
+     */
+    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
 
   private:
     explicit FilterPushDownRule();
@@ -118,7 +129,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      *
      * @param filterOperator the filter operator that is tried to be pushed
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
-     * @return true iff we pushed the filter two both branches of this joinOperator
+     * @return true if we pushed the filter two both branches of this joinOperator
      */
     bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
 
@@ -164,12 +175,21 @@ class FilterPushDownRule : public BaseRewriteRule {
     static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
 
     /**
-     * @brief Validate if the input field is used in the filter predicate of the operator
-     * @param filterOperator : filter operator whose predicate need to be checked
-     * @param fieldName :  name of the field to be checked
-     * @return true if field use in the filter predicate else false
+     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
+     * @param filterOperator
+     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
-    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
+    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
+
+    /**
+     * @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
+     * @param filterOperator filter operator whose predicate need to be checked and updated
+     * @param expressionNodes expression nodes containing the attribute name and the new attribute name
+     */
+    static void renameAttributesInFilterIfChangedByExpressionNode(const FilterLogicalOperatorNodePtr& filterOperator,
+                                                                  const std::vector<ExpressionNodePtr>& expressionNodes);
+
+    static void renameFieldAccessExpressionNodes(ExpressionNodePtr predicate, std::string toReplace, std::string replacement);
 };
 
 }// namespace NES::Optimizer
