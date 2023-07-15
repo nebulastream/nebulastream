@@ -40,7 +40,6 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -80,7 +79,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
@@ -94,7 +92,6 @@
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
@@ -388,14 +385,14 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                JoinBuildSideType::Right,
                                                                streamJoinConfig.timeStampFieldNameRight,
                                                                streamJoinConfig.joinFieldNameRight);
-
     const auto joinSinkOperator =
-        PhysicalOperators::PhysicalNestedLoopJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                      joinOperator->getRightInputSchema(),
-                                                                      joinOperator->getOutputSchema(),
-                                                                      streamJoinConfig.joinFieldNameLeft,
-                                                                      streamJoinConfig.joinFieldNameRight,
-                                                                      joinOperatorHandler);
+        PhysicalOperators::PhysicalNestedLoopJoinProbeOperator::create(joinOperator->getLeftInputSchema(),
+                                                                       joinOperator->getRightInputSchema(),
+                                                                       joinOperator->getOutputSchema(),
+                                                                       streamJoinConfig.joinFieldNameLeft,
+                                                                       streamJoinConfig.joinFieldNameRight,
+                                                                       joinOperatorHandler);
+
     streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
     streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);
