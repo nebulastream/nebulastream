@@ -114,7 +114,7 @@ class E2ESingleRun {
                                                    size_t sourceCnt, uint64_t groupId, std::string& generator);
 
     /**
-     * @brief Collects the measurements for every query
+     * @brief Collects the measurements for every query. It stops after numMeasurementsToCollect iterations.
      */
     void collectMeasurements();
 
@@ -145,10 +145,12 @@ class E2ESingleRun {
      * @param timestamp
      * @param subPlanStatistics
      * @param processedTasks
+     * @param outStream
      */
     static void printQuerySubplanStatistics(uint64_t timestamp,
                                             const Runtime::QueryStatisticsPtr& subPlanStatistics,
-                                            size_t processedTasks);
+                                            size_t processedTasks,
+                                            std::ostream& outStream = std::cout);
 
     E2EBenchmarkConfigPerRun& configPerRun;
     E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
