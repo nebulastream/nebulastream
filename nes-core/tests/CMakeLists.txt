@@ -295,6 +295,10 @@ add_nes_unit_test(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/F
 add_nes_unit_test(predicate-reordering-rule-test "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp")
 
 
+# FilterSplitUpTest
+add_nes_unit_test(filter-split-up-rule-test "UnitTests/Optimizer/QueryRewrite/FilterSplitUpRuleTest.cpp")
+
+
 # DistributeWindowRuleTest
 add_nes_unit_test(distribute-window-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
 
