@@ -35,8 +35,7 @@ namespace NES::Benchmark {
  */
 class E2ESingleRun {
 
-    static constexpr auto stopQuerySleep = std::chrono::milliseconds(250);
-    static constexpr auto stopQueryTimeoutInSec = std::chrono::seconds(30);
+    static constexpr auto defaultStopQueryTimeout = std::chrono::seconds(30);
     static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
     static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
@@ -54,7 +53,7 @@ class E2ESingleRun {
                           uint16_t restPort);
 
     /**
-     * @brief destroying this object and taking care of
+     * @brief destructs this object and clears all buffer managers and data providers, as well as the coordinator
      */
     virtual ~E2ESingleRun();
 
@@ -66,7 +65,7 @@ class E2ESingleRun {
 
     /**
      * @brief Getter for the coordinator config
-     * @return Returns the coordinatorconfig
+     * @return Returns the coordinatorConfiguration
      */
     [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
 
@@ -96,21 +95,10 @@ class E2ESingleRun {
     void writeMeasurementsToCsv();
 
     /**
-     * @brief Getter for the Measurements of this run
-     * @return Reference to the Measurements
+     * @brief Getter for the measurements of this run
+     * @return Reference to the measurements
      */
     Measurements::Measurements& getMeasurements();
-
-    /**
-     * @brief This method is used for waiting till the query gets into running status or a timeout occurs
-     * @param queryId : the query id to check for
-     * @param queryCatalogService: the catalog to look into for status change
-     * @param timeoutInSec: time to wait before stop checking
-     * @return true if query gets into running status else false
-     */
-    static bool waitForQueryToStart(QueryId queryId,
-                                    const QueryCatalogServicePtr& queryCatalogService,
-                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:
     /**
@@ -124,6 +112,43 @@ class E2ESingleRun {
      */
     PhysicalSourceTypePtr createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
                                                    size_t sourceCnt, uint64_t groupId, std::string& generator);
+
+    /**
+     * @brief Collects the measurements for every query
+     */
+    void collectMeasurements();
+
+    /**
+     * @brief This method is used for waiting until the query gets into running status or a timeout occurs
+     * @param queryId: the query id to check for
+     * @param queryCatalogService: the catalog to look into for status change
+     * @param timeoutInSec: time to wait before stop checking
+     * @return true if query gets into running status else false
+     */
+    static bool waitForQueryToStart(QueryId queryId,
+                                    const QueryCatalogServicePtr& queryCatalogService,
+                                    std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
+
+    /**
+     * @brief This method is used for waiting until the query gets into stopped status or a timeout occurs
+     * @param queryId: the query id to check for
+     * @param queryCatalogService: the catalog to look into for status change
+     * @param timeoutInSec: time to wait before stop checking
+     * @return true if query gets into stopped status else false
+     */
+    static bool waitForQueryToStop(QueryId queryId,
+                                   const QueryCatalogServicePtr& queryCatalogService,
+                                   std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
+
+    /**
+     * @brief Prints query subplan statistics to std::cout
+     * @param timestamp
+     * @param subPlanStatistics
+     * @param processedTasks
+     */
+    static void printQuerySubplanStatistics(uint64_t timestamp,
+                                            const Runtime::QueryStatisticsPtr& subPlanStatistics,
+                                            size_t processedTasks);
 
     E2EBenchmarkConfigPerRun& configPerRun;
     E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
