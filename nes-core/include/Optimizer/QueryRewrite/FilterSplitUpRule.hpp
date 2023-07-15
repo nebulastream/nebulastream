@@ -32,10 +32,9 @@ class FilterSplitUpRule;
 using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
 
 /**
- * @brief This class is responsible for altering the query plan to push down the filter as much as possible.
- * Following are the exceptions:
- *  1.) The Leaf node in the query plan will always be source node. This means the filter can't be push below a source node.
- *  2.) Every operator below a filter has it's own set of rules that decide if and how the filter can be pushed below that operator
+ * @brief This class is responsible for altering the query plan to split up each filter operator into as small parts as possible.
+ *  1.) A filter with an andExpression as a predicate can be split up into two separate filters.
+ *  2.) A filter with a negated OrExpression can be reformulated deMorgans rules and can be split up afterwards.
  */
 class FilterSplitUpRule : public BaseRewriteRule {
   public:
@@ -47,6 +46,15 @@ class FilterSplitUpRule : public BaseRewriteRule {
   private:
     explicit FilterSplitUpRule();
 
+    /**
+     * If it is possible this method splits up a filterOperator into multiple filterOperators.
+     * If our query plan contains a parentOperaters->filter(expression1 && expression2)->childOperator.
+     * This plan gets rewritten to parentOperaters->filter(expression1)->filter(expression2)->childOperator. We will call splitUpFilters()
+     * on the new flters as well
+     * If our query plan contains a parentOperaters->filter(!(expression1 || expression2))->childOperator, we use deMorgan to
+     * reformulate the predicate to an andExpression and call splitUpFilter on the Filter.
+     * @param filterOperator the filter operator node that we want to split up
+     */
     void splitUpFilters(FilterLogicalOperatorNodePtr filterOperator);
 };
 
