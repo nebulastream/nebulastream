@@ -224,4 +224,12 @@ const std::string& JoinLogicalOperatorNode::getWindowEndFieldName() const { retu
 
 const std::string& JoinLogicalOperatorNode::getWindowKeyFieldName() const { return windowKeyFieldName; }
 
+void JoinLogicalOperatorNode::setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
+                                                            const std::string& windowEndFieldName,
+                                                            const std::string& windowKeyFieldName) {
+    this->windowStartFieldName = windowStartFieldName;
+    this->windowEndFieldName = windowEndFieldName;
+    this->windowKeyFieldName = windowKeyFieldName;
+}
+
 }// namespace NES

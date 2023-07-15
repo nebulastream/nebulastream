@@ -67,6 +67,15 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
      */
     const std::string& getWindowKeyFieldName() const;
 
+    /**
+     * @brief Sets the window start, end, and key field name during the serialization of the operator
+     * @param windowStartFieldName
+     * @param windowEndFieldName
+     * @param windowKeyFieldName
+     */
+    void setWindowStartEndKeyFieldName(const std::string& windowStartFieldName, const std::string& windowEndFieldName,
+                                       const std::string& windowKeyFieldName);
+
   private:
     const Join::LogicalJoinDefinitionPtr joinDefinition;
     std::string windowStartFieldName;

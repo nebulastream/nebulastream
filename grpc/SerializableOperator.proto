@@ -541,6 +541,9 @@ message SerializableOperator{
     uint64 numberOfInputEdgesLeft = 9;
     uint64 numberOfInputEdgesRight = 10;
     JoinTypeCharacteristic jointype = 11;
+    string windowStartFieldName = 12;
+    string windowEndFieldName = 13;
+    string windowKeyFieldName = 14;
   }
 
   /**
