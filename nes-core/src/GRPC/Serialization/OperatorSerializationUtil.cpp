@@ -907,6 +907,9 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
 
     joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
+    joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
+    joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
+    joinDetails.set_windowkeyfieldname(joinOperator.getWindowKeyFieldName());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::INNER_JOIN) {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
@@ -1006,7 +1009,11 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
                                                               joinDetails.numberofinputedgesleft(),
                                                               joinDetails.numberofinputedgesright(),
                                                               joinType);
-    return LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
+    auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
+    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname(),
+                                                joinDetails.windowkeyfieldname());
+
+    return joinOperator;
 
     //TODO: enable distrChar for distributed joins
     //    if (distrChar.distr() == SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Complete) {
