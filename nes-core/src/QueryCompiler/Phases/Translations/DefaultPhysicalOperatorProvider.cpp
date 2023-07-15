@@ -332,20 +332,23 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
                "Only a tumbling window is currently supported for StreamJoin");
 
     const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
-    const auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
-                                                             joinOperator->getLeftOperators());
-    const auto rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(),
-                                                              joinOperator->getRightOperators());
+    const auto leftInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    const auto rightInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     const auto joinStrategy = options->getStreamJoinStratgy();
 
     const StreamJoinOperatorNodes streamJoinOperatorNodes(operatorNode, leftInputOperator, rightInputOperator);
-    const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft, joinFieldNameRight, windowSize, timeStampFieldNameLeft,
-                                             timeStampFieldNameRight, joinStrategy);
-
+    const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft,
+                                             joinFieldNameRight,
+                                             windowSize,
+                                             timeStampFieldNameLeft,
+                                             timeStampFieldNameRight,
+                                             joinStrategy);
 
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
-            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
-            || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         lowerStreamingHashJoin(streamJoinOperatorNodes, streamJoinConfig);
     } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
         lowerStreamingNestedLoopJoin(streamJoinOperatorNodes, streamJoinConfig);
@@ -366,9 +369,10 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                            Nautilus::Interface::PagedVector::PAGE_SIZE,
                                                                            streamJoinConfig.windowSize);
 
-
-    auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema, JoinBuildSideType buildSideType,
-                                      const std::string& timeStampField, const std::string& joinFieldName) {
+    auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema,
+                                      JoinBuildSideType buildSideType,
+                                      const std::string& timeStampField,
+                                      const std::string& joinFieldName) {
         return PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(inputSchema,
                                                                               joinOperator->getOutputSchema(),
                                                                               joinOperatorHandler,
@@ -398,7 +402,6 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
     streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);
 }
 
-
 void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
                                                              const StreamJoinConfigs& streamJoinConfig) {
     using namespace Runtime::Execution;
@@ -414,18 +417,21 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
     }
 
     const auto logicalJoinOperatorNode = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
-    const auto joinOperatorHandler = Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
-                                                                                streamJoinConfig.windowSize,
-                                                                                logicalJoinOperatorNode->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                                                logicalJoinOperatorNode->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                                                options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-                                                                                options->getHashJoinOptions()->getPageSize(),
-                                                                                options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                                                options->getHashJoinOptions()->getNumberOfPartitions(),
-                                                                                runtimeJoinStrategy);
+    const auto joinOperatorHandler =
+        Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
+                                                         streamJoinConfig.windowSize,
+                                                         logicalJoinOperatorNode->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                         logicalJoinOperatorNode->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                         options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                         options->getHashJoinOptions()->getPageSize(),
+                                                         options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                         options->getHashJoinOptions()->getNumberOfPartitions(),
+                                                         runtimeJoinStrategy);
 
-    auto createHashJoinBuildOperator = [&](const SchemaPtr& inputSchema, JoinBuildSideType buildSideType,
-                                           const std::string& timeStampField, const std::string& joinFieldName) {
+    auto createHashJoinBuildOperator = [&](const SchemaPtr& inputSchema,
+                                           JoinBuildSideType buildSideType,
+                                           const std::string& timeStampField,
+                                           const std::string& joinFieldName) {
         return PhysicalOperators::PhysicalHashJoinBuildOperator::create(inputSchema,
                                                                         logicalJoinOperatorNode->getOutputSchema(),
                                                                         joinOperatorHandler,
@@ -496,15 +502,15 @@ void DefaultPhysicalOperatorProvider::lowerOldDefaultQueryCompilerJoin(const Log
     auto joinOperatorHandler =
         Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto createJoinBuildOperator = [&](const SchemaPtr& inputSchema, const std::vector<OperatorNodePtr>& inputOperators,
-                                       JoinBuildSideType buildSideType) {
-        auto joinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(inputSchema,
-                                                                                      joinOperator->getOutputSchema(),
-                                                                                      joinOperatorHandler,
-                                                                                      buildSideType);
-        auto inputOperator = getJoinBuildInputOperator(joinOperator, inputSchema, inputOperators);
-        inputOperator->insertBetweenThisAndParentNodes(joinBuildOperator);
-    };
+    auto createJoinBuildOperator =
+        [&](const SchemaPtr& inputSchema, const std::vector<OperatorNodePtr>& inputOperators, JoinBuildSideType buildSideType) {
+            auto joinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(inputSchema,
+                                                                                          joinOperator->getOutputSchema(),
+                                                                                          joinOperatorHandler,
+                                                                                          buildSideType);
+            auto inputOperator = getJoinBuildInputOperator(joinOperator, inputSchema, inputOperators);
+            inputOperator->insertBetweenThisAndParentNodes(joinBuildOperator);
+        };
 
     // Calling above lambda function for left and right side
     createJoinBuildOperator(joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators(), JoinBuildSideType::Left);
