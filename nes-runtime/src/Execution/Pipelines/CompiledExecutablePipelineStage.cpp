@@ -43,14 +43,8 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     return ExecutionResult::Ok;
 }
 
-std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline() {
-    // compile after setup
-    auto dumpHelper = DumpHelper::create(options.getIdentifier(),
-                                         options.isDumpToConsole(),
-                                         options.isDumpToFile(),
-                                         options.getDumpOutputPath());
-    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
-    timer.start();
+std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::createIR(DumpHelper& dumpHelper, Timer<>& timer) {
+
     auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) nullptr);
     pipelineExecutionContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
@@ -83,7 +77,19 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("IR Generation");
     dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
+    return ir;
+}
+
+std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline() {
+    // compile after setup
+    auto dumpHelper = DumpHelper::create(options.getIdentifier(),
+                                         options.isDumpToConsole(),
+                                         options.isDumpToFile(),
+                                         options.getDumpOutputPath());
+    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
+    timer.start();
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
+    auto ir = createIR(dumpHelper, timer);
     auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");
     std::stringstream timerAsString;

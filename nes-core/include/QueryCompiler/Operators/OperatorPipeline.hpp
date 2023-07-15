@@ -145,6 +145,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @return true if operator pipeline
      */
     bool isOperatorPipeline() const;
+    const std::vector<uint64_t>& getOperatorIds() const;
 
     /**
      * @brief Creates a string representation of this OperatorPipeline
@@ -160,6 +161,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
     QueryPlanPtr queryPlan;
+    std::vector<uint64_t> operatorIds;
     Type pipelineType;
 };
 }// namespace QueryCompilation

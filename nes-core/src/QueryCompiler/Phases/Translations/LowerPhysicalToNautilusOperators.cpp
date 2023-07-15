@@ -100,6 +100,7 @@
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <cstddef>
 #include <string_view>
 #include <utility>
 
@@ -113,8 +114,8 @@ LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators()
     : expressionProvider(std::make_unique<ExpressionProvider>()) {}
 
 PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan,
-                                                             const Runtime::NodeEnginePtr& nodeEngine) {
-    auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
+                                                             size_t bufferSize) {
+   // auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline, bufferSize);

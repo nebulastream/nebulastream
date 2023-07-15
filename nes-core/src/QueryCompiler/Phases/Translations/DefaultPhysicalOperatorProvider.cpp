@@ -176,9 +176,11 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         queryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getInputSchema(),
+        auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getId(),
+                                                                                        filterOperator->getInputSchema(),
                                                                                         filterOperator->getOutputSchema(),
                                                                                         filterOperator->getPredicate());
+        physicalFilterOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         lowerWindowOperator(queryPlan, operatorNode);
@@ -239,7 +241,8 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const QueryPlanPtr&, co
 
 void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
-    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getInputSchema(),
+    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getId(),
+                                                                                      projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
     operatorNode->replace(physicalProjectOperator);
@@ -261,7 +264,8 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, Logi
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getInputSchema(),
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getId(),
+                                                                              mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
     operatorNode->replace(physicalMapOperator);
@@ -269,17 +273,21 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
 
 void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getInputSchema(),
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getId(),
+                                                                                     mapJavaUDFOperator->getInputSchema(),
                                                                                  mapUDFOperator->getOutputSchema(),
                                                                                  mapUDFOperator->getUDFDescriptor());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getInputSchema(),
+    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getId(),
+                                                                  flatMapJavaUDFOperator->getInputSchema(),
                                                                                      flatMapUDFOperator->getOutputSchema(),
                                                                                      flatMapUDFOperator->getUDFDescriptor());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -599,6 +607,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Que
                                                                        const LogicalOperatorNodePtr& operatorNode) {
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
+        logicalWatermarkAssignment->getId(),
         logicalWatermarkAssignment->getInputSchema(),
         logicalWatermarkAssignment->getOutputSchema(),
         logicalWatermarkAssignment->getWatermarkStrategyDescriptor());

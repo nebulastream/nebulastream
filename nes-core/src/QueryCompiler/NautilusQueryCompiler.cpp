@@ -29,6 +29,9 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <utility>
@@ -80,8 +83,9 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
-
-        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
+        auto nodeEngine = request->getNodeEngine();
+        auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
+        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
         timer.snapshot("AfterToNautilusPlanPhase");
 
         pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);

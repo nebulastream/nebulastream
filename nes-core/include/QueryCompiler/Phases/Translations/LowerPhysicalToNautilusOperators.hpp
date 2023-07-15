@@ -26,6 +26,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -53,7 +54,7 @@ class LowerPhysicalToNautilusOperators {
      * @param pipelined query plan
      * @return PipelineQueryPlanPtr
      */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
 
     /**
      * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
