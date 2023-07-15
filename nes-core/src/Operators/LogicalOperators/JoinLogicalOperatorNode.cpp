@@ -218,10 +218,10 @@ void JoinLogicalOperatorNode::setOriginId(OriginId originId) {
     joinDefinition->setOriginId(originId);
 }
 
-std::string JoinLogicalOperatorNode::getWindowStartFieldName() const { return windowStartFieldName; }
+const std::string& JoinLogicalOperatorNode::getWindowStartFieldName() const { return windowStartFieldName; }
 
-std::string JoinLogicalOperatorNode::getWindowEndFieldName() const { return windowEndFieldName; }
+const std::string& JoinLogicalOperatorNode::getWindowEndFieldName() const { return windowEndFieldName; }
 
-std::string JoinLogicalOperatorNode::getWindowKeyFieldName() const { return windowKeyFieldName; }
+const std::string& JoinLogicalOperatorNode::getWindowKeyFieldName() const { return windowKeyFieldName; }
 
 }// namespace NES

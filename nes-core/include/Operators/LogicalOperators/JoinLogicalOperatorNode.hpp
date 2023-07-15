@@ -53,19 +53,19 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
      * @brief Getter for the window start field name
      * @return std::string
      */
-    std::string getWindowStartFieldName() const;
+    const std::string& getWindowStartFieldName() const;
 
     /**
      * @brief Getter for the window end field name
      * @return std::string
      */
-    std::string getWindowEndFieldName() const;
+    const std::string& getWindowEndFieldName() const;
 
     /**
      * @brief Getter for the window key field name
      * @return std::string
      */
-    std::string getWindowKeyFieldName() const;
+    const std::string& getWindowKeyFieldName() const;
 
   private:
     const Join::LogicalJoinDefinitionPtr joinDefinition;

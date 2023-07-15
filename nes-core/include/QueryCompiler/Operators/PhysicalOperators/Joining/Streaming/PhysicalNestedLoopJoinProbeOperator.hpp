@@ -92,11 +92,11 @@ class PhysicalNestedLoopJoinProbeOperator : public PhysicalNestedLoopJoinOperato
                                         SchemaPtr leftSchema,
                                         SchemaPtr rightSchema,
                                         SchemaPtr outputSchema,
-                                        std::string joinFieldNameLeft,
-                                        std::string joinFieldNameRight,
-                                        std::string windowStartFieldName,
-                                        std::string windowEndFieldName,
-                                        std::string windowKeyFieldName,
+                                        const std::string& joinFieldNameLeft,
+                                        const std::string& joinFieldNameRight,
+                                        const std::string& windowStartFieldName,
+                                        const std::string& windowEndFieldName,
+                                        const std::string& windowKeyFieldName,
                                         Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
 
     /**
