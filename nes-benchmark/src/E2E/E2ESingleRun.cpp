@@ -215,6 +215,7 @@ void E2ESingleRun::stopQuery() {
     std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
     std::thread waitThreadCoordinator([this, stopPromiseCord]() {
         std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+
         bool satisfied = false;
         while (!satisfied) {
             switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
@@ -442,7 +443,6 @@ void E2ESingleRun::collectMeasurements() {
 
         uint64_t timeStamp =
             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        //TODO: std::map<uint64_t, uint64_t> previousMap;
         measurements.addNewTimestamp(timeStamp);
 
         for (auto id : submittedIds) {
