@@ -112,8 +112,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
              * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                 Record joinedRecord;
-
-                // TODO replace this with a more useful version
+                // Writing the window start, end, and key field
                 joinedRecord.write(windowStartFieldName, windowStart);
                 joinedRecord.write(windowEndFieldName, windowEnd);
                 joinedRecord.write(windowKeyFieldName, leftRecord.read(joinFieldNameLeft));
