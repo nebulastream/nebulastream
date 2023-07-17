@@ -73,7 +73,8 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
      * @param windowEndFieldName
      * @param windowKeyFieldName
      */
-    void setWindowStartEndKeyFieldName(const std::string& windowStartFieldName, const std::string& windowEndFieldName,
+    void setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
+                                       const std::string& windowEndFieldName,
                                        const std::string& windowKeyFieldName);
 
   private:

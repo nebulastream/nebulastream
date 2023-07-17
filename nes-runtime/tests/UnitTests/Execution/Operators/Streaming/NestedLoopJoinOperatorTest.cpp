@@ -495,8 +495,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     const auto windowEndFieldName = joinSchema->get(1)->getName();
     const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
-    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize,
-                                                                        rightPageSize, windowSize);
+    auto nljOperatorHandler =
+        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,

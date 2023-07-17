@@ -139,7 +139,6 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
         const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-
         auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
             handlerIndex,
             leftSchema,

@@ -1010,7 +1010,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
                                                               joinDetails.numberofinputedgesright(),
                                                               joinType);
     auto joinOperator = LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId)->as<JoinLogicalOperatorNode>();
-    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname(),
+    joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(),
+                                                joinDetails.windowendfieldname(),
                                                 joinDetails.windowkeyfieldname());
 
     return joinOperator;
