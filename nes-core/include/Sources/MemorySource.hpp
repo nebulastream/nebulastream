@@ -37,11 +37,11 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param schema the schema of the source
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
      * @param memoryAreaSize the non-zero size of the memory area
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param numBuffersToProcess
      * @param gatheringValue how many tuples to collect per interval
-     * @param operatorId the valid id of the source
+     * @param operatorId the id of the source
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)

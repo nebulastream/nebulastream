@@ -28,8 +28,8 @@ class SenseSource : public DataSource {
     /**
      * @brief constructor of sense source
      * @param schema the schema of the source
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param udfs to apply
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream

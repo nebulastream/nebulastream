@@ -32,8 +32,8 @@ class ZmqSource : public DataSource {
     /**
      * @brief constructor for the zmq source
      * @param schema schema of the data
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param host host name of the source queue
      * @param port port of the source queue
      * @param operatorId current operator id
