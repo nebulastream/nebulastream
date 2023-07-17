@@ -185,7 +185,8 @@ TEST_F(GeographyExpressionNodeTest, testSTDWithinExpressionNode) {
     EXPECT_TRUE(stDWithinExpressionNode->getCircle()->instanceOf<CircleExpressionNode>());
     EXPECT_TRUE(stDWithinExpressionNode->getPoint()->instanceOf<GeographyFieldsAccessExpressionNode>());
     EXPECT_EQ(stDWithinExpressionNode->toString(),
-              "ST_DWITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), CIRCLE(lat: "
+              "ST_DWITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), "
+              "CIRCLE(lat: "
               "52.5153, lon: 13.3267, radius: 100))");
 
     // create a copy of the ST_DWithin Expression Node
@@ -285,7 +286,8 @@ TEST_F(GeographyExpressionNodeTest, testSTKnnExpressionNode) {
     EXPECT_TRUE(sTKnnExpressionNode->getPoint()->instanceOf<GeographyFieldsAccessExpressionNode>());
     EXPECT_TRUE(sTKnnExpressionNode->getK()->instanceOf<ConstantValueExpressionNode>());
     EXPECT_EQ(sTKnnExpressionNode->toString(),
-              "ST_KNN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), POINT(lat: 52.5153, "
+              "ST_KNN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), "
+              "POINT(lat: 52.5153, "
               "lon: 13.3267), ConstantValue(BasicValue(10)))");
 
     // create a copy of the STKnnExpression Expression Node
@@ -391,14 +393,16 @@ TEST_F(GeographyExpressionNodeTest, testSTWithinExpressionNode) {
     EXPECT_TRUE(rectangleSTWithinExpressionNode->getPoint()->instanceOf<GeographyFieldsAccessExpressionNode>());
     EXPECT_TRUE(rectangleSTWithinExpressionNode->getShape()->instanceOf<RectangleExpressionNode>());
     EXPECT_EQ(rectangleSTWithinExpressionNode->toString(),
-              "ST_WITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), RECTANGLE(lat_low: "
+              "ST_WITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), "
+              "RECTANGLE(lat_low: "
               "52.5138, lon_low: 13.3265, lat_high: 52.5157, lon_high: 13.3284))");
 
     EXPECT_FALSE(polygonSTWithinExpressionNode->getStamp()->isFloat());
     EXPECT_TRUE(polygonSTWithinExpressionNode->getPoint()->instanceOf<GeographyFieldsAccessExpressionNode>());
     EXPECT_TRUE(polygonSTWithinExpressionNode->getShape()->instanceOf<PolygonExpressionNode>());
     EXPECT_EQ(polygonSTWithinExpressionNode->toString(),
-              "ST_WITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), POLYGON(52.5155, "
+              "ST_WITHIN(Geography(FieldAccessNode(latitude[Float(64 bits)]), FieldAccessNode(longitude[Float(64 bits)])), "
+              "POLYGON(52.5155, "
               "13.3262, 52.5145, 13.3264, 52.5138, 13.3267, 52.5148, 13.3274))");
 
     // create a copy of the STWithinExpressionNode Expression Node

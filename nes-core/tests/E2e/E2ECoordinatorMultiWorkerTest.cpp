@@ -168,11 +168,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     NES_INFO("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
-    string expectedContent = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
-                             "R2000073,1543624020000,102.629631,8\n"
-                             "R2000070,1543625280000,108.166664,5\n"
-                             "R2000073,1543624020000,102.629631,8\n"
-                             "R2000070,1543625280000,108.166664,5\n";
+    string expectedContent =
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n";
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
@@ -358,13 +359,14 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n";
+    string expectedContent =
+        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+        "0,10000,1,102\n"
+        "10000,20000,1,290\n"
+        "0,10000,4,2\n"
+        "0,10000,11,10\n"
+        "0,10000,12,2\n"
+        "0,10000,16,4\n";
 
     NES_INFO("content={}", content);
     NES_INFO("expContent={}", expectedContent);
