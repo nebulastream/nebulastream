@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.145](https://github.com/nebulastream/nebulastream/tree/v0.5.145) (2023-07-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.144...v0.5.145)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Replace windowStart, windowEnd, windowKey with strings in NLJ [\#3963](https://github.com/nebulastream/nebulastream/issues/3963)
+
 ## [v0.5.144](https://github.com/nebulastream/nebulastream/tree/v0.5.144) (2023-07-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.143...v0.5.144)
