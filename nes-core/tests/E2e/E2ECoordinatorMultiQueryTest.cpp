@@ -290,19 +290,21 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
-                              "R2000073,1543624020000,102.629631,8\n"
-                              "R2000070,1543625280000,108.166664,5\n";
+    string ASSERTedContent1 =
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "R2000073,1543624020000,102.629631,8\n"
+        "R2000070,1543625280000,108.166664,5\n";
 
-    string ASSERTedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
-                              "R2000073,1543622760000,63.277779,11\n"
-                              "R2000073,1543622940000,66.222221,12\n"
-                              "R2000073,1543623000000,74.666664,11\n"
-                              "R2000073,1543623480000,62.444443,13\n"
-                              "R2000073,1543624200000,64.611115,12\n"
-                              "R2000073,1543624260000,68.407410,11\n"
-                              "R2000073,1543625040000,56.666668,11\n"
-                              "R2000073,1543625400000,62.333332,11\n";
+    string ASSERTedContent2 =
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "R2000073,1543622760000,63.277779,11\n"
+        "R2000073,1543622940000,66.222221,12\n"
+        "R2000073,1543623000000,74.666664,11\n"
+        "R2000073,1543623480000,62.444443,13\n"
+        "R2000073,1543624200000,64.611115,12\n"
+        "R2000073,1543624260000,68.407410,11\n"
+        "R2000073,1543625040000,56.666668,11\n"
+        "R2000073,1543625400000,62.333332,11\n";
 
     std::ifstream ifsQ1(Qpath1.c_str());
     ASSERT_TRUE(ifsQ1.good());

@@ -119,7 +119,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string const expectedContent =
-        "variable_length$camera_id:INTEGER(64 bits),variable_length$timestamp:INTEGER(64 bits),variable_length$rows:INTEGER(64 bits),"
+        "variable_length$camera_id:INTEGER(64 bits),variable_length$timestamp:INTEGER(64 bits),variable_length$rows:INTEGER(64 "
+        "bits),"
         "variable_length$cols:INTEGER(64 bits),variable_length$type:INTEGER(64 bits),variable_length$data:Text\n"
         "50,45,198,209,14,"
         "fa37JncCHryDsbzayy4cBWDxS22JjzhMaiRrV41mtzxlYvKWrO72tK0LK0e1zLOZ2nOXpPIhMFSv8kP07U20o0J90xA0GWXIIwo7J4ogHFZQxwQ2RQ0D"
