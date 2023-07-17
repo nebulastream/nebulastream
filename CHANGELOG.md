@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.146](https://github.com/nebulastream/nebulastream/tree/v0.5.146) (2023-07-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.145...v0.5.146)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add bits to String representation of DataTypes [\#3978](https://github.com/nebulastream/nebulastream/issues/3978)
+
 ## [v0.5.145](https://github.com/nebulastream/nebulastream/tree/v0.5.145) (2023-07-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.144...v0.5.145)
