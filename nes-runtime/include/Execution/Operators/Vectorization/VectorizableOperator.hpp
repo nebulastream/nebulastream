@@ -15,14 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_
 
-#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Base class of executable operators which work on fixed-size blocks (vectors) of tuples.
  */
-class VectorizableOperator : public Operator {
+class VectorizableOperator : public ExecutableOperator {
 public:
     /**
      * @brief This method is called by the upstream operator (parent) and passes a tuple buffer for execution.
@@ -32,6 +32,9 @@ public:
     virtual void execute(ExecutionContext& ctx, RecordBuffer& records) const = 0;
 
     virtual ~VectorizableOperator() = default;
+
+private:
+    virtual void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
 using VectorizableOperatorPtr = std::shared_ptr<const VectorizableOperator>;

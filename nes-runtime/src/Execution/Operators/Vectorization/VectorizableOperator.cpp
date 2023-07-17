@@ -16,4 +16,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+void VectorizableOperator::execute(ExecutionContext&, Record&) const {
+
+}
+
 } // namespace NES::Runtime::Execution::Operators
