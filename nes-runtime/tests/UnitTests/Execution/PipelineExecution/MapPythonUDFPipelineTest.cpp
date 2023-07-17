@@ -291,7 +291,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
 
 /**
  * @brief Test a pipeline containing a scan, a python map with strings, and a emit operator
- * TODO: integrate string into the MapUDFOperator
+ *
  */
 TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
@@ -369,12 +369,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer[i]["floatVariable"].write((float) i);
         dynamicBuffer[i]["doubleVariable"].write((double) i);
         dynamicBuffer[i]["booleanVariable"].write(true);
-        // dynamicBuffer[i]["stringVariable"].write(strIndex); TODO: enable once string works
+// dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    // TODO: once string works add string here as argument
+// TODO #3980 once string works add string here as argument
     std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
                                       "\n\tbyte_var = byte_var + 10"
                                       "\n\tshort_var = short_var + 10"
