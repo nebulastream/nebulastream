@@ -164,10 +164,10 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
     LogicalOperatorNodePtr mapOp, mapJavaUDFOp;
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
     LogicalOperatorNodePtr mapPythonUDFOp;
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
     LogicalOperatorNodePtr projectPp;
     LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
