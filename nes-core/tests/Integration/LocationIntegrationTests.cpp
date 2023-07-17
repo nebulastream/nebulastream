@@ -1041,7 +1041,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     std::string compareString;
     std::ostringstream oss;
-    oss << "seq$value:INTEGER" << std::endl;
+    oss << "seq$value:INTEGER(64 bits)" << std::endl;
     for (int i = 1; i <= 10000; ++i) {
         oss << std::to_string(i) << std::endl;
         compareString = oss.str();
@@ -1141,7 +1141,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     std::string compareString;
     std::ostringstream oss;
-    oss << "seq$value:INTEGER" << std::endl;
+    oss << "seq$value:INTEGER(64 bits)" << std::endl;
     for (int i = 1; i <= 10000; ++i) {
         oss << std::to_string(i) << std::endl;
         compareString = oss.str();
@@ -1283,7 +1283,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     std::string compareString;
     std::ostringstream oss;
-    oss << "seq$value:INTEGER" << std::endl;
+    oss << "seq$value:INTEGER(64 bits)" << std::endl;
     for (int i = 1; i <= 10000; ++i) {
         oss << std::to_string(i) << std::endl;
         compareString = oss.str();
