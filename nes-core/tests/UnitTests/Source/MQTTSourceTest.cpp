@@ -100,6 +100,7 @@ class MQTTSourceTest : public Testing::BaseIntegrationTest {
     SchemaPtr test_schema;
     uint64_t buffer_size{};
     MQTTSourceTypePtr mqttSourceType;
+    std::string defaultPhysicalSourceName = "defaultPhysicalSourceName";
 };
 
 /**
