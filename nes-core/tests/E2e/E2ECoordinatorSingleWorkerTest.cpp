@@ -108,7 +108,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -380,8 +380,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:FLOAT(64 bits),ktm$avg_value_2:"
-                             "Float(64 bits),ktm$avg_value_3:FLOAT(64 bits),ktm$count_value:INTEGER(64 bits)\n"
+    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:Float(64 bits),ktm$avg_value_2:"
+                             "Float(64 bits),ktm$avg_value_3:Float(64 bits),ktm$count_value:INTEGER(64 bits)\n"
                              "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -805,7 +805,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$ABS_Lean_Angle:Float(64 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
+    string expectedContent = "ktm$ABS_Lean_Angle:Float(32 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
                              "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -895,7 +895,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     string expectedContent =
-        "ktm$count:INTEGER(64 bits),ktm$ABS_Lean_Angle:FLOAT(64 bits),ktm$ABS_Pitch_Info:FLOAT(64 bits),ktm$ABS_Front_Wheel_Speed:FLOAT(64 bits)\n"
+        "ktm$count:INTEGER(64 bits),ktm$ABS_Lean_Angle:Float(64 bits),ktm$ABS_Pitch_Info:Float(64 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits)\n"
         "2,14.400000,0.800000,0.500000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));

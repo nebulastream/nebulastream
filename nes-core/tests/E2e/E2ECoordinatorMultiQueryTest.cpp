@@ -290,11 +290,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:FLOAT(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+    string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
                               "R2000073,1543624020000,102.629631,8\n"
                               "R2000070,1543625280000,108.166664,5\n";
 
-    string ASSERTedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:FLOAT(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+    string ASSERTedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
                               "R2000073,1543622760000,63.277779,11\n"
                               "R2000073,1543622940000,66.222221,12\n"
                               "R2000073,1543623000000,74.666664,11\n"
