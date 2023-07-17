@@ -28,15 +28,13 @@ public:
     /**
      * @brief Constructor.
      * @param operatorHandlerIndex the index of the handler of this operator in the pipeline execution context.
-     * @param child the child operator which is derived from VectorizableOperator.
      */
-    Vectorize(uint64_t operatorHandlerIndex, VectorizableOperatorPtr child);
+    explicit Vectorize(uint64_t operatorHandlerIndex);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     uint64_t operatorHandlerIndex;
-    VectorizableOperatorPtr child_;
 };
 
 } // namespace NES::Runtime::Execution::Operators

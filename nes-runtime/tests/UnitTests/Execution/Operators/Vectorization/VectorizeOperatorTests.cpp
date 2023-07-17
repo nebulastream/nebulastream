@@ -99,7 +99,8 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
     auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto collectOperator = std::make_shared<VectorizedCollectOperator>(std::move(collectMemoryProviderPtr), projections);
-    auto vectorizeOperator = Vectorize(pipelineContext.getOperatorHandlers().size() - 1, collectOperator);
+    auto vectorizeOperator = Vectorize(pipelineContext.getOperatorHandlers().size() - 1);
+    vectorizeOperator.setChild(collectOperator);
 
     auto bufferRef = Value<MemRef>((int8_t*) std::addressof(buffer));
     RecordBuffer recordBuffer = RecordBuffer(bufferRef);
