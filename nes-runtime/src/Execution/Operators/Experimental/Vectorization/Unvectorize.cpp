@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Vectorization/Unvectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>

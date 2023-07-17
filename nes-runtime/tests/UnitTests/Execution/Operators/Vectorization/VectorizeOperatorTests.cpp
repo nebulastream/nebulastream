@@ -15,9 +15,9 @@
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Vectorization/StagingHandler.hpp>
-#include <Execution/Operators/Vectorization/Vectorize.hpp>
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
+#include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
