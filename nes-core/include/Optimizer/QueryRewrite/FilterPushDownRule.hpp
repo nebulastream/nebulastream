@@ -186,10 +186,16 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param filterOperator filter operator whose predicate need to be checked and updated
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
-    static void renameAttributesInFilterIfChangedByExpressionNode(const FilterLogicalOperatorNodePtr& filterOperator,
+    static void renameFilterAttributesByExpressionNodes(const FilterLogicalOperatorNodePtr& filterOperator,
                                                                   const std::vector<ExpressionNodePtr>& expressionNodes);
 
-    static void renameFieldAccessExpressionNodes(ExpressionNodePtr predicate, std::string toReplace, std::string replacement);
+    /**
+     * @brief Rename the attribute in the field access expression node.
+     * @param expressionNode to be renamed
+     * @param toReplace attribute name to be replaced
+     * @param replacement new attribute name
+     */
+    static void renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
 };
 
 }// namespace NES::Optimizer
