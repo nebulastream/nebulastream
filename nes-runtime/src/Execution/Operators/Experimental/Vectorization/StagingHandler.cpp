@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Vectorization/StagingHandler.hpp>
+#include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
