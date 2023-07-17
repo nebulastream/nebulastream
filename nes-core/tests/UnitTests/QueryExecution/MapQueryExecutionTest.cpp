@@ -31,7 +31,7 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
-                              public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompilerOptions::QueryCompiler, std::string, std::vector<string>, std::vector<string>>> {
+                              public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompilerOptions::QueryCompiler, std::string, std::vector<string>, std::vector<string>, int>> {
                               //public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -72,31 +72,36 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "MapQueryArithmetic",
                                std::vector<string>{"test$one"},
-                               std::vector<string>{"id"});
+                               std::vector<string>{"id"},
+                               1);
     }
     static auto createLogTestData(){
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                            "MapLogarithmicFunctions",
                            std::vector<string>{"test$log10", "test$log2", "test$ln"},
-                           std::vector<string>{"log10", "log2", "ln"});
+                           std::vector<string>{"log10", "log2", "ln"},
+                           1);
     }
     static auto createTwoMapQueryTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "TwoMapQuery",
                                std::vector<string>{"test$new1", "test$new2"},
-                               std::vector<string>{"test$new1", "test$new2"});
+                               std::vector<string>{"test$new1", "test$new2"},
+                               1);
     }
     static auto createAbsTestData(){
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                            "MapAbsFunction",
                            std::vector<string>{"test$abs"},
-                           std::vector<string>{"abs"});
+                           std::vector<string>{"abs"},
+                           -1);
     }
     static auto createTrigTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "MapTrigonometricFunctions",
                                std::vector<string>{"test$sin", "test$cos", "test$radians"},
-                               std::vector<string>{"sin", "cos", "radians"});
+                               std::vector<string>{"sin", "cos", "radians"},
+                               1);
     }
 };
 
@@ -378,10 +383,15 @@ TEST_P(MapQueryExecutionTest, MapTrigonometricFunctions) {
 TEST_P(MapQueryExecutionTest, AllFunctions) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
 
+    auto resultArray = std::get<2>(GetParam());
+    if (resultArray[0] == "test$one") {
+         schema = Schema::create()
+                          ->addField("test$id", BasicType::INT64)
+                          ->addField("test$one", BasicType::INT64);
+    }
+
     auto resultSchema = Schema::create()
                             ->addField("test$id", BasicType::FLOAT64);
-
-    auto resultArray = std::get<2>(GetParam());
     if (resultArray.size() == 1) {
         resultSchema = Schema::create()
                            ->addField("test$id", BasicType::FLOAT64)
@@ -398,16 +408,15 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
                                 ->addField(resultArray[1], BasicType::FLOAT64)
                                 ->addField(resultArray[2], BasicType::FLOAT64);
     }
-    /*for(uint32_t i = 0u; i < resultLen; ++i){
-        resultSchema = Schema::create()->addField(resultArray[i], BasicType::FLOAT64);
-    }*/
 
     auto testSink = executionEngine->createDataSink(resultSchema);
+    if (resultArray[0] == "test$one") {
+        testSink = executionEngine->createDataSink(schema);
+    }
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto queryArray = std::get<3>(GetParam());
-    //auto funcArray = std::get<4>(GetParam());
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
@@ -430,10 +439,15 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer =  executionEngine->getBuffer(schema);
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        inputBuffer[recordIndex][0].write<double>((double) pow(-1, recordIndex) * recordIndex); // pow(-1, recordIndex) *
+    int sign = std::get<4>(GetParam());
+    if (resultArray[0] == "test$one") {
+        fillBuffer(inputBuffer);
+    } else {
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            inputBuffer[recordIndex][0].write<double>(sign * recordIndex);
+        }
+        inputBuffer.setNumberOfTuples(10);
     }
-    inputBuffer.setNumberOfTuples(10);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
 
@@ -444,9 +458,16 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     //auto stdFuncArray = std::get<5>(GetParam());
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        for (uint32_t index = 0; index < resultArray.size(); index++) {
-            EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(), getFunc(resultArray[index], (double) pow(-1, recordIndex) * recordIndex));
+    if (resultArray[0] == "test$one") {
+        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+            EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
+            EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
+        }
+    } else {
+        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+            for (uint32_t index = 0; index < resultArray.size(); index++) {
+                EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(), getFunc(resultArray[index],sign * recordIndex));
+            }
         }
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
@@ -455,7 +476,7 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
 
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
-                        ::testing::Values(//MapQueryExecutionTest::createMapQueryArithmeticTestData(),
+                        ::testing::Values(MapQueryExecutionTest::createMapQueryArithmeticTestData(),
                                           MapQueryExecutionTest::createLogTestData(),
                                           MapQueryExecutionTest::createTwoMapQueryTestData(),
                                           MapQueryExecutionTest::createAbsTestData(),
