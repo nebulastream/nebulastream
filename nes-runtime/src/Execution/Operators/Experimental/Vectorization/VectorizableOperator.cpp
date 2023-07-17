@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

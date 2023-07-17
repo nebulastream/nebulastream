@@ -16,7 +16,7 @@
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Vectorization/Unvectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>

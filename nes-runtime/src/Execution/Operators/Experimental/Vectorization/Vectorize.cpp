@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Vectorization/Vectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
 
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
-#include <Execution/Operators/Vectorization/StagingHandler.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
+#include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
