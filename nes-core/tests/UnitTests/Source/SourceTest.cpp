@@ -1666,7 +1666,7 @@ TEST_F(SourceTest, TCPSourcePrint) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
         "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
@@ -1702,7 +1702,7 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
         "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
@@ -1904,7 +1904,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     auto start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    string expectedContent = "input1$id:INTEGER,input1$value:INTEGER,input1$timestamp:INTEGER\n"
+    string expectedContent = "input1$id:INTEGER(64 bits),input1$value:INTEGER(64 bits),input1$timestamp:INTEGER(64 bits)\n"
                              "1,1,0\n"
                              "1,1,0\n"
                              "1,1,0\n"

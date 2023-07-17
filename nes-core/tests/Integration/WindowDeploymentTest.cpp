@@ -1319,8 +1319,8 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
-                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
+    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:Float(64 bits),ktm$avg_value_2:"
+                             "Float(64 bits),ktm$avg_value_3:Float(64 bits),ktm$count_value:INTEGER(64 bits)\n"
                              "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

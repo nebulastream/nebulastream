@@ -243,7 +243,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$NewName:INTEGER(64 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -318,7 +318,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$newId:INTEGER(64 bits),window$newValue:INTEGER(64 bits)\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
                              "1000,2000,4,1\n"
@@ -415,8 +415,8 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1New:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2New:INTEGER,window2$timestamp:INTEGER\n"
+        "_$start:INTEGER(64 bits),_$end:INTEGER(64 bits),_$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1New:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),"
+        "window2$win2:INTEGER(64 bits),window2$id2New:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1,4,1002,3,4,1102\n"
         "1000,2000,4,1,4,1002,3,4,1112\n"
         "1000,2000,12,1,12,1001,5,12,1011\n"

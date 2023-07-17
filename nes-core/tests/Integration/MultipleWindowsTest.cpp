@@ -95,7 +95,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,1,1\n"
                              "0,2000,4,1\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
@@ -181,7 +181,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,1,2\n"
                              "0,2000,4,2\n";
 
@@ -263,7 +263,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,10000,1,51\n"
                              "5000,15000,1,95\n"
                              "0,10000,4,1\n"
@@ -357,7 +357,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,10000,1,32\n"
                              "5000,15000,1,102\n"
                              "10000,20000,1,190\n"
@@ -442,7 +442,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "16000,17000,1,33\n"
                              "15500,16500,1,33\n"
                              "14000,15000,1,29\n"
@@ -544,7 +544,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,1,8\n"
                              "0,2000,4,4\n"
                              "0,2000,11,4\n"
@@ -633,7 +633,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,6\n"
                              "2000,4000,24\n"
                              "4000,6000,20\n"
@@ -779,10 +779,10 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+        "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+        "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+        "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
