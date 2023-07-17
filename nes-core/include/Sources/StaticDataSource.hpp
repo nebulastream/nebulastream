@@ -41,8 +41,8 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @param schema the schema of the data
      * @param pathTableFile
      * @param lateStart wether to start the source late
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers the number of buffers allocated to a source

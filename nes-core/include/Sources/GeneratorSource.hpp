@@ -33,8 +33,8 @@ class GeneratorSource : public DataSource {
     /**
    * @brief constructor to create a generator source
    * @param schema of the data that this source produces
-   * @param bufferManager valid pointer to the buffer manager
-   * @param queryManager valid pointer to the query manager
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
    * @param numberOfBuffersToProduce the number of buffers to be produced by the source
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream

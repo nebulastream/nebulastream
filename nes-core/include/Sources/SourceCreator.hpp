@@ -39,8 +39,8 @@ namespace NES {
 /**
  * @brief function to create a test source which produces 10 tuples within one buffer with value one based on a schema
  * @param schema schema of the data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -61,8 +61,8 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
 /**
  * @brief function to create a test source which produces   tuples with value one in N buffers of based on a schema
  * @param schema schema of the data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param numberOfBuffersToProduce the number of buffers to be produced by the source
  * @param gatheringInterval the interval at which new buffers are produced
  * @param operatorId current operator id
@@ -86,8 +86,8 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -106,8 +106,8 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
 /**
  * @brief function to create a lambda source
  * @param schema schema of the data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param numberOfBuffersToProduce the number of buffers to be produced by the source
  * @param gatheringValue how many tuples to collect per interval
  * @param generationFunction that creates with which the data is created
@@ -119,7 +119,8 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
  * @param taskQueueId the ID of the queue to which the task is pushed
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @return a data source pointer */
+ * @return a data source pointer
+ */
 DataSourcePtr
 createLambdaSource(const SchemaPtr& schema,
                    const Runtime::BufferManagerPtr& bufferManager,
@@ -139,8 +140,8 @@ createLambdaSource(const SchemaPtr& schema,
 /**
  * @brief function to create an empty zmq source
  * @param schema schema of data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param host the name of the host
  * @param port the port through which to connect to the ZMQSource(ZMQSource)
  * @param operatorId current operator id
@@ -164,9 +165,9 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
 /**
  * @brief function to create a binary file source
  * @param schema schema of data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
- * @param file_path path to the binary file
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
+ * @param pathToFile path to the binary file
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -177,7 +178,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
 DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      const Runtime::BufferManagerPtr& bufferManager,
                                      const Runtime::QueryManagerPtr& queryManager,
-                                     const std::string& file_path,
+                                     const std::string& pathToFile,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
@@ -187,8 +188,8 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
 /**
  * @brief function to create a sense source
  * @param schema schema of data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param udfs of the file
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
@@ -210,8 +211,8 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
 /**
  * @brief function to create a csvfile source
  * @param schema schema of data source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param csvSourceType points to the current source configuration object
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
@@ -233,8 +234,8 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
 /**
  * @brief function which creates a memory source
  * @param schema the schema of the source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param memoryArea the memory buffer to scan and create buffers out of
  * @param memoryAreaSize the size of the memory buffer
  * @param numBuffersToProcess
@@ -269,8 +270,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @brief create a table source
  * @param schema the schema of the source
  * @param pathTableFile
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -293,8 +294,8 @@ DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
 /**
  * @brief create a benchmark source
  * @param schema the schema of the source
- * @param bufferManager valid pointer to the buffer manager
- * @param queryManager valid pointer to the query manager
+ * @param bufferManager pointer to the buffer manager
+ * @param queryManager pointer to the query manager
  * @param memoryArea the memory buffer to scan and create buffers out of
  * @param memoryAreaSize the size of the memory buffer
  * @param numberOfBuffersToProcess
@@ -330,9 +331,9 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
 /**
  * @brief function to create a network source
  * @param schema the schema of the source
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManager a valid pointer to the query manager
- * @param networkManager a valid pointer to the network manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
+ * @param networkManager a pointer to the network manager
  * @param nesPartition the unique identifier of the network source that consumes the input buffers
  * @param sinkLocation location of the sink that writes to the network source
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -356,10 +357,10 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
 
 /**
  * @brief function to create a monitoring source
- * @param metricCollector a valid pointer to a NES::Monitoring::MetricCollector
+ * @param metricCollector a pointer to a NES::Monitoring::MetricCollector
  * @param waitTime the amount of time to wait
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManager a valid pointer to the query manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -382,14 +383,14 @@ namespace Experimental::MaterializedView {
 /**
  * @brief function to create a materialized view source
  * @param schema the schema of the source
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManager a valid pointer to the query manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @param view a valid pointer to a materialized view
+ * @param view a pointer to a materialized view
  * @return a data source pointer
  */
 DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
@@ -407,8 +408,8 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
 /**
  * @brief a function which creates a kafka source
  * @param schema schema of the elements
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManager a valid pointer to the query manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
  * @param numberOfBuffersToProduce the number of buffers to be produced by the source
  * @param brokers list of brokers
  * @param topic the kafka topic which organizes tuples of the same entity. Usually the name of a data stream
@@ -448,8 +449,8 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
 /**
  * @brief function which creates an OPC source
  * @param schema schema of the elements
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManagera valid pointer to the query manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
  * @param url the url of the OPC server
  * @param nodeId the node id of the desired node
  * @param user name if connecting with a server with authentication
@@ -478,8 +479,8 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 /**
  * @brief function which creates a MQTT source
  * @param schema schema of the elements
- * @param bufferManager a valid pointer to the buffer manager
- * @param queryManager a valid pointer to the query manager
+ * @param bufferManager a pointer to the buffer manager
+ * @param queryManager a pointer to the query manager
  * @param mqttSourceType mqttSourceType for MQTT
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream

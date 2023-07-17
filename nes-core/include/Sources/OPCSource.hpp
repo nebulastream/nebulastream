@@ -36,8 +36,8 @@ class OPCSource : public DataSource {
     /**
      * @brief constructor for the opc source
      * @param schema schema of the elements
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param url the url of the OPC server
      * @param nodeId the node id of the desired node
      * @param password for authentication if needed

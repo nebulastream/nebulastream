@@ -31,8 +31,8 @@ class MonitoringSource : public DataSource {
      * @brief Constructor for the monitoring source
      * @param metricCollector the metric collector
      * @param waitTime wait time during fill buffer until a new metric is read
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers the number of buffers allocated to a source

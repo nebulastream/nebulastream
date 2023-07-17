@@ -625,7 +625,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->operatorId,
                                                       this->originId,
                                                       this->numSourceLocalBuffersDefault,
-                                                      std::string("defaultPhysicalSourceName"),
+                                                      "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
@@ -638,7 +638,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
                                                                                    this->operatorId,
                                                                                    this->originId,
                                                                                    this->numSourceLocalBuffersDefault,
-                                                                                   std::string("defaultPhysicalSourceName"),
+                                                                                   "defaultPhysicalSourceName",
                                                                                    {});
     } catch (Exceptions::RuntimeException const& ex) {
         SUCCEED();
@@ -655,7 +655,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->operatorId,
                                                       this->originId,
                                                       this->numSourceLocalBuffersDefault,
-                                                      std::string("defaultPhysicalSourceName"),
+                                                      "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getSchema(), this->schema);
 }

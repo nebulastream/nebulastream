@@ -29,12 +29,12 @@ class LambdaSource : public GeneratorSource {
     /**
      * @brief The constructor of a Lambda Source
      * @param schema the schema of the source
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param numbersOfBufferToProduce the number of buffers to be produced by the source
      * @param gatheringValue how many tuples to collect per interval
      * @param generationFunction function with which the data is created
-     * @param operatorId the valid id of the source
+     * @param operatorId the id of the source
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
