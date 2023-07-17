@@ -34,8 +34,8 @@ class KafkaSource : public DataSource {
   /**
    * @brief constructor for a kafka source
    * @param schema schema of the elements
-   * @param bufferManager valid pointer to the buffer manager
-   * @param queryManager valid pointer to the query manager
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
    * @param numberOfBuffersToProduce the number of buffers to be produced by the source
    * @param brokers list of brokers
    * @param topic the kafka topic which organizes tuples of the same entity. Usually the name of a data stream

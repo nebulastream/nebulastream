@@ -41,8 +41,8 @@ class MQTTSource : public DataSource {
     /**
      * @brief constructor for the MQTT data source
      * @param schema of the data
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager  valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param mqttSourceType a configuration object to set up the mqttSource
      * @param operatorId the operator ID
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream

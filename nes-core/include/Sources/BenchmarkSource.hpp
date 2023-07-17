@@ -40,8 +40,8 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param schema the schema of the source
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
      * @param memoryAreaSize the non-zero size of the memory area
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param numberOfBuffersToProcess the number of buffers to be produced by the source
      * @param gatheringValue how many tuples to collect per interval
      * @param operatorId current operator id

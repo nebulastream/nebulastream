@@ -28,9 +28,9 @@ class BinarySource : public DataSource {
     /**
      * @brief the constructor for a binary source
      * @param schema of the data source
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
-     * @param file_path path to the binary file
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param pathToFile path to the binary file
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers the number of buffers allocated to a source
@@ -42,7 +42,7 @@ class BinarySource : public DataSource {
     explicit BinarySource(const SchemaPtr& schema,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
-                          const std::string& file_path,
+                          const std::string& pathToFile,
                           OperatorId operatorId,
                           OriginId originId,
                           size_t numSourceLocalBuffers,

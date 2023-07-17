@@ -55,8 +55,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers number of local source buffers
@@ -298,7 +298,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
     bool sourceSharing = false;
-    std::string physicalSourceName;
+    const std::string physicalSourceName;
 
     //this counter is used to count the number of queries that use this source
     std::atomic<uint64_t> refCounter = 0;
