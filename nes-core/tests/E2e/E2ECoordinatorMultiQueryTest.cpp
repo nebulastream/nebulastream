@@ -95,7 +95,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string ASSERTedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -183,7 +183,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string ASSERTedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -290,11 +290,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+    string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:FLOAT(32 bits),QnV$quantity:INTEGER(64 bits)\n"
                               "R2000073,1543624020000,102.629631,8\n"
                               "R2000070,1543625280000,108.166664,5\n";
 
-    string ASSERTedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
+    string ASSERTedContent2 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:FLOAT(32 bits),QnV$quantity:INTEGER(64 bits)\n"
                               "R2000073,1543622760000,63.277779,11\n"
                               "R2000073,1543622940000,66.222221,12\n"
                               "R2000073,1543623000000,74.666664,11\n"
@@ -394,7 +394,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string ASSERTedContent1 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
+                              "window$value:INTEGER(64 bits)\n"
                               "0,10000,1,51\n"
                               "10000,20000,1,145\n"
                               "0,10000,4,1\n"
@@ -402,7 +403,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                               "0,10000,12,1\n"
                               "0,10000,16,2\n";
 
-    string ASSERTedContent2 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string ASSERTedContent2 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
+                              "window$value:INTEGER(64 bits)\n"
                               "0,20000,1,196\n"
                               "0,20000,4,1\n"
                               "0,20000,11,5\n"
@@ -500,7 +502,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string ASSERTedContent1 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
+                              "window$value:INTEGER(64 bits)\n"
                               "0,10000,1,51\n"
                               "0,10000,4,1\n"
                               "0,10000,11,5\n"
@@ -509,7 +512,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "5000,15000,1,95\n"
                               "10000,20000,1,145\n";
 
-    string ASSERTedContent2 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string ASSERTedContent2 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
+                              "window$value:INTEGER(64 bits)\n"
                               "0,20000,1,196\n"
                               "0,20000,4,1\n"
                               "0,20000,11,5\n"

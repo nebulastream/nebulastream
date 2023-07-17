@@ -135,10 +135,10 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+        "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+        "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+        "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
@@ -275,12 +275,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,"
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:"
-        "INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:"
-        "INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:"
-        "INTEGER\n"
+        "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 bits),window1window2window3window4$key:"
+        "INTEGER(64 bits),window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),"
+        "window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:"
+        "INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:"
+        "INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:"
+        "INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
@@ -426,11 +426,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
-        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
-        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
-        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
+        "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 bits),window1window2window3window4$key:"
+        "INTEGER(64 bits),window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$"
+        "id1:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3window4$"
+        "start:INTEGER(64 bits),window3window4$end:INTEGER(64 bits),window3window4$key:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$"
+        "timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n";
@@ -557,10 +557,10 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+        "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+        "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+        "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
@@ -706,12 +706,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,"
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:"
-        "INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:"
-        "INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:"
-        "INTEGER\n"
+        "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 bits),window1window2window3window4$key:"
+        "INTEGER(64 bits),window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),"
+        "window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:"
+        "INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:"
+        "INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:"
+        "INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
@@ -873,11 +873,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
-        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
-        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
-        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
+        "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 bits),window1window2window3window4$key:"
+        "INTEGER(64 bits),window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$"
+        "id1:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3window4$"
+        "start:INTEGER(64 bits),window3window4$end:INTEGER(64 bits),window3window4$key:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$"
+        "timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"

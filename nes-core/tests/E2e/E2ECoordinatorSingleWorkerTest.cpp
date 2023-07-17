@@ -222,7 +222,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file={}", outputFilePath);
@@ -230,7 +229,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(outFile.good());
     std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
     NES_INFO("content={}", content);
-    std::string expected = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    std::string expected = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                            "1,1\n"
                            "1,1\n"
                            "1,1\n"
@@ -288,7 +287,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    std::string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -381,8 +380,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
-                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
+    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:FLOAT(64 bits),ktm$avg_value_2:"
+                             "Float(64 bits),ktm$avg_value_3:FLOAT(64 bits),ktm$count_value:INTEGER(64 bits)\n"
                              "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -446,7 +445,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,10000,1,51\n"
                              "10000,20000,1,145\n"
                              "0,10000,4,1\n"
@@ -511,7 +510,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,10000,1,51\n"
                              "0,10000,4,1\n"
                              "0,10000,11,5\n"
@@ -806,7 +805,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$ABS_Lean_Angle:(Float),ktm$ABS_Front_Wheel_Speed:(Float),ktm$count:INTEGER\n"
+    string expectedContent = "ktm$ABS_Lean_Angle:Float(64 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
                              "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -896,7 +895,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     string expectedContent =
-        "ktm$count:INTEGER,ktm$ABS_Lean_Angle:(Float),ktm$ABS_Pitch_Info:(Float),ktm$ABS_Front_Wheel_Speed:(Float)\n"
+        "ktm$count:INTEGER(64 bits),ktm$ABS_Lean_Angle:FLOAT(64 bits),ktm$ABS_Pitch_Info:FLOAT(64 bits),ktm$ABS_Front_Wheel_Speed:FLOAT(64 bits)\n"
         "2,14.400000,0.800000,0.500000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));

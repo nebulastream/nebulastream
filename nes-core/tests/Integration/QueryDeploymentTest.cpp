@@ -106,7 +106,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "car$id:INTEGER,car$value:INTEGER\n"
+    string expectedContent = "car$id:INTEGER(64 bits)(32 bits),car$value:INTEGER(64 bits)(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -243,7 +243,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "car$id:INTEGER,car$value:INTEGER\n"
+    string expectedContent = "car$id:INTEGER(64 bits)(32 bits),car$value:INTEGER(64 bits)(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -524,7 +524,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     start.set_value(true);
 
-    string expectedContent1 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+    string expectedContent1 = "window1$id:INTEGER(64 bits)(64 bits),window1$value:INTEGER(64 bits)(64 bits),window1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "0,0,0\n"
                               "1,1,0\n"
                               "2,2,0\n"
@@ -706,7 +706,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     start.set_value(true);
 
-    string expectedContent1 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+    string expectedContent1 = "window1$id:INTEGER(64 bits)(64 bits),window1$value:INTEGER(64 bits)(64 bits),window1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "0,0,0\n"
                               "1,1,0\n"
                               "2,2,0\n"
@@ -718,7 +718,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                               "3,3,0\n"
                               "4,4,0\n";
 
-    string expectedContent2 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+    string expectedContent2 = "window1$id:INTEGER(64 bits)(64 bits),window1$value:INTEGER(64 bits)(64 bits),window1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "6,6,0\n"
                               "7,7,0\n"
                               "8,8,0\n"
@@ -1192,7 +1192,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER(64 bits)(64 bits),default_logical$value:INTEGER(64 bits)(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -1307,10 +1307,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    string expectedContent1 = "stream1$value:INTEGER,stream1$id:INTEGER,stream1$timestamp:INTEGER\n"
+    string expectedContent1 = "stream1$value:INTEGER(64 bits)(64 bits),stream1$id:INTEGER(64 bits)(64 bits),stream1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER,stream2$id:INTEGER,stream2$timestamp:INTEGER\n"
+    string expectedContent2 = "stream2$value:INTEGER(64 bits)(64 bits),stream2$id:INTEGER(64 bits)(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
@@ -1402,10 +1402,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
-    string expectedContent1 = "stream1$value:INTEGER,stream1$id:INTEGER,stream1$timestamp:INTEGER\n"
+    string expectedContent1 = "stream1$value:INTEGER(64 bits)(64 bits),stream1$id:INTEGER(64 bits)(64 bits),stream1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER,stream2$id:INTEGER,stream2$timestamp:INTEGER\n"
+    string expectedContent2 = "stream2$value:INTEGER(64 bits)(64 bits),stream2$id:INTEGER(64 bits)(64 bits),stream2$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
@@ -1477,7 +1477,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER(64 bits)(64 bits),default_logical$value:INTEGER(64 bits)(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -1663,10 +1663,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
-    string expectedContent1 = "stream1$value:INTEGER,stream1$id:INTEGER,stream1$timestamp:INTEGER\n"
+    string expectedContent1 = "stream1$value:INTEGER(64 bits)(64 bits),stream1$id:INTEGER(64 bits)(64 bits),stream1$timestamp:INTEGER(64 bits)(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER,stream2$id:INTEGER,stream2$timestamp:INTEGER\n"
+    string expectedContent2 = "stream2$value:INTEGER(64 bits)(64 bits),stream2$id:INTEGER(64 bits)(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
@@ -2124,10 +2124,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+        "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+        "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+        "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
@@ -2270,10 +2270,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
+        "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+        "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+        "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+        "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"

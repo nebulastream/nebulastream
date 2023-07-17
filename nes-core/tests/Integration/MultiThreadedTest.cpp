@@ -100,7 +100,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "stream$value:INTEGER,stream$id:INTEGER,stream$timestamp:INTEGER\n"
+    string expectedContent = "stream$value:INTEGER(64 bits),stream$id:INTEGER(64 bits),stream$timestamp:INTEGER(64 bits)\n"
                              "1,1,1000\n"
                              "1,12,1001\n"
                              "1,4,1002\n";
@@ -176,7 +176,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent = "stream$id:INTEGER\n"
+    string expectedContent = "stream$id:INTEGER(64 bits)\n"
                              "1\n"
                              "12\n"
                              "4\n";
@@ -251,7 +251,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
                              "1000,2000,4,1\n"
@@ -334,7 +334,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,1,1\n"
                              "0,2000,4,1\n";
 
