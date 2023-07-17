@@ -47,15 +47,14 @@ void* getStageBuffer(void* state) {
     return bufferRef->getValue();
 }
 
-Vectorize::Vectorize(uint64_t operatorHandlerIndex, VectorizableOperatorPtr child)
+Vectorize::Vectorize(uint64_t operatorHandlerIndex)
     : operatorHandlerIndex(operatorHandlerIndex)
-    , child_(child)
 {
 
 }
 
 void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
-    if (child_ != nullptr) {
+    if (hasChild()) {
         auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto recordRef = Value<MemRef>((int8_t*)&record);
         Nautilus::FunctionCall("addRecordToStageBuffer", addRecordToStageBuffer, globalOperatorHandler, recordRef);
@@ -63,7 +62,8 @@ void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
         if (stageBufferFull) {
             auto tupleBufferRef = Nautilus::FunctionCall("getStageBuffer", getStageBuffer, globalOperatorHandler);
             auto recordBuffer = RecordBuffer(tupleBufferRef);
-            child_->execute(ctx, recordBuffer);
+            auto vectorizedChild = std::dynamic_pointer_cast<VectorizableOperator>(child);
+            vectorizedChild->execute(ctx, recordBuffer);
             Nautilus::FunctionCall("resetStageBuffer", resetStageBuffer, globalOperatorHandler);
         }
     }
