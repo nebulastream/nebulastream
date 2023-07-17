@@ -243,7 +243,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    string expectedContent = "default_logical$NewName:INTEGER(64 bits),default_logical$value:INTEGER(64 bits)\n"
+    string expectedContent = "default_logical$NewName:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
