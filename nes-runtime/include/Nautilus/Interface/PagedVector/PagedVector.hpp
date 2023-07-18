@@ -25,7 +25,7 @@ class PagedVectorRef;
  * All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size.
  * Each page can contain page_size/entry_size entries.
- * TODO check if we should use FixedPage.cpp or introduce specific page class
+ * TODO check if we should use FixedPage.cpp or introduce specific page class #3968
  */
 class PagedVector {
   public:
@@ -41,9 +41,9 @@ class PagedVector {
 
     /**
      * @brief Return the number of pages in the sequential data
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfPages();
+    uint64_t getNumberOfPages();
 
     /**
      * @brief Returns the set of pages
@@ -58,25 +58,25 @@ class PagedVector {
 
     /**
      * @brief Return the total number of entries across all pages.
-     * @return size_t
+     * @return uint64_t
      */
     uint64_t getNumberOfEntries() const;
 
     /**
      * @brief Sets the number of entries across all pages.
-     * @param size_t
+     * @param entries
      */
-    void setNumberOfEntries(size_t entries);
+    void setNumberOfEntries(uint64_t entries);
 
     /**
      * @brief Returns the capacity per page
-     * @return size_t
+     * @return uint64_t
      */
     uint64_t getCapacityPerPage() const;
 
     /**
      * @brief Returns the number of entries on the current page
-     * @return size_t
+     * @return uint64_t
      */
     uint64_t getNumberOfEntriesOnCurrentPage() const;
 
