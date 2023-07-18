@@ -333,8 +333,8 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     numSourceLocalBuffers,
                                                     waitTime,
                                                     retryTimes,
-                                                    physicalSourceName,
-                                                    successors);
+                                                    successors,
+                                                    physicalSourceName);
 }
 
 DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
