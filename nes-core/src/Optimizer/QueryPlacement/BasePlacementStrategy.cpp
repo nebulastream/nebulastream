@@ -58,7 +58,7 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
         for (uint64_t j = 0; j < operators.size(); j++) {
             if (currentRow[j]) {
                 // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
-                operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
+                operators[j]->as<OperatorNode>()->addProperty(PINNED_NODE_ID, topologyNodes[i]->getId());
             }
         }
     }
@@ -122,7 +122,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
         throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
 
-
+    std::vector<TopologyNodePtr> selectedTopology = selectedTopologyForPlacement;
     if (ftPlacement != FaultTolerancePlacement::NONE) {
         std::optional<TopologyNodePtr> topologiesForPlacement;
         std::vector<std::vector<TopologyNodePtr>> availablePaths;
@@ -148,32 +148,47 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
             }
         }
         if (ftPlacement == FaultTolerancePlacement::NAIVE) {
-            selectedTopologyForPlacement = placeFaultToleranceNaive(availablePaths);
+            selectedTopology = placeFaultToleranceNaive(availablePaths);
         } else {
-            selectedTopologyForPlacement = placeFaultToleranceMFTP(availablePaths);
+            selectedTopology = placeFaultToleranceMFTP(availablePaths);
         }
     }
     //4. Map nodes in the selected topology by their ids.
 
-    bool isALO = faultToleranceType == FaultToleranceType::AT_LEAST_ONCE;
     bool noFtp = ftPlacement == FaultTolerancePlacement::NONE;
     topologyMap.clear();
     // fetch root node from the identified path
-    auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
-    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
 
+    auto rootNode = selectedTopology[0]->getAllRootNodes()[0];
+    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+    auto depth = 0;
     TopologyNodePtr currentTopologyNode;
+    if (noFtp) {
+        while (topologyIterator != DepthFirstNodeIterator::end()) {
+            // get the ExecutionNode for the current topology Node
+            currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+                currentTopologyNode->addNodeProperty("isBuffering", 1);
+            }
+            depth++;
+            ++topologyIterator;
+        }
+        if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+            currentTopologyNode->addNodeProperty("isBuffering", 1);
+        }
+    }
+    rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
+    topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+    auto i = 0;
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
         currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        if (isALO && noFtp) {
+        if (faultToleranceType == FaultToleranceType::EXACTLY_ONCE && i >= floor(depth / 2)) {
             currentTopologyNode->addNodeProperty("isBuffering", 1);
         }
         topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
+        i++;
         ++topologyIterator;
-    }
-    if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
-        currentTopologyNode->addNodeProperty("isBuffering", 1);
     }
 }
 
@@ -404,7 +419,7 @@ void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlace
     auto initialNetworkCapacity = firstNode->getInitialNetworkCapacity();
     double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) / 2 * currentEpoch;
     newEpoch = std::max(newEpoch, 1.0);
-    std::cout << "New epoch" << newEpoch;
+//    std::cout << "New epoch" << newEpoch;
     while (nodeIterator != pathForPlacement.rend()) {
         auto currentNode = (*nodeIterator)->as<TopologyNode>();
         currentNode->addNodeProperty("epoch", newEpoch);

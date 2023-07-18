@@ -55,20 +55,20 @@ const uint64_t numberOfTupleBuffers = 4;
 //const uint64_t numberOfNodesPerLevel1 = 2;
 //const uint64_t numberOfNodes = 95;
 
-const uint64_t numberOfNodesPerLevel3 = 95;
-const uint64_t numberOfNodesPerLevel2 = 21;
-const uint64_t numberOfNodesPerLevel1 = 8;
-const uint64_t numberOfNodes = 16035;
+//const uint64_t numberOfNodesPerLevel3 = 95;
+//const uint64_t numberOfNodesPerLevel2 = 21;
+//const uint64_t numberOfNodesPerLevel1 = 8;
+//const uint64_t numberOfNodes = 16035;
 
 //const uint64_t numberOfNodesPerLevel3 = 176;
 //const uint64_t numberOfNodesPerLevel2 = 21;
 //const uint64_t numberOfNodesPerLevel1 = 8;
 //const uint64_t numberOfNodes = 29743;
 
-//const uint64_t numberOfNodesPerLevel3 = 140;
-//const uint64_t numberOfNodesPerLevel2 = 25;
-//const uint64_t numberOfNodesPerLevel1 = 12;
-//const uint64_t numberOfNodes = 42311;
+const uint64_t numberOfNodesPerLevel3 = 140;
+const uint64_t numberOfNodesPerLevel2 = 25;
+const uint64_t numberOfNodesPerLevel1 = 12;
+const uint64_t numberOfNodes = 42311;
 
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
@@ -416,23 +416,23 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp",
-                                                                    FaultToleranceType::AT_MOST_ONCE,
+                                                                    FaultToleranceType::EXACTLY_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTPH);
+                                                                    FaultTolerancePlacement::NONE);
 
 
 
-    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-                                                                    "BottomUp",
-                                                                    FaultToleranceType::AT_LEAST_ONCE,
-                                                                    LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTPH);
-
-    queryId = queryService->validateAndQueueAddQueryRequest(query1,
-                                                            "BottomUp",
-                                                            FaultToleranceType::AT_LEAST_ONCE,
-                                                            LineageType::IN_MEMORY,
-                                                            FaultTolerancePlacement::MFTPH);
+//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+//                                                                    "BottomUp",
+//                                                                    FaultToleranceType::AT_LEAST_ONCE,
+//                                                                    LineageType::IN_MEMORY,
+//                                                                    FaultTolerancePlacement::MFTPH);
+//
+//    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+//                                                            "BottomUp",
+//                                                            FaultToleranceType::AT_LEAST_ONCE,
+//                                                            LineageType::IN_MEMORY,
+//                                                            FaultTolerancePlacement::MFTPH);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -542,7 +542,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
+    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::MFTPH);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());

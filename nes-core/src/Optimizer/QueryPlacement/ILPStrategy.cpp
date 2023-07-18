@@ -61,8 +61,20 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType, ftPlacement);
+
+    now = std::chrono::system_clock::now();
+    now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    epoch = now_ms.time_since_epoch();
+    auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+    std::cout << "ftPl: The Decision time was: " << valueAfter.count() - value.count();
 
     z3::optimize opt(*z3Context);
     std::map<std::string, z3::expr> placementVariables;
@@ -150,7 +162,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
-    auto reliability_level = z3Context->int_val(0);
+//    auto reliability_level = z3Context->int_val(0);
 
     for (auto const& [operatorID, position] : operatorPositionMap) {
         OperatorNodePtr operatorNode = operatorMap[operatorID]->as<OperatorNode>();
@@ -168,20 +180,20 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 NES_DEBUG("distance: " << operatorID << " " << distance);
 
                 double output;
-                double reliability = 0;
+//                double reliability = 0;
                 if (!operatorNode->hasProperty("output")) {
                     output = getDefaultOperatorOutput(operatorNode);
                 } else {
                     std::any prop = operatorNode->getProperty("output");
                     output = std::any_cast<double>(prop);
                 }
-                if (operatorNode->hasProperty("output")) {
-                    std::any prop = operatorNode->getProperty("reliability");
-                    reliability = std::any_cast<double>(prop);
-                }
+//                if (operatorNode->hasProperty("output")) {
+//                    std::any prop = operatorNode->getProperty("reliability");
+//                    reliability = std::any_cast<double>(prop);
+//                }
 
                 cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
-                reliability_level = reliability_level + z3Context->real_val(std::to_string(reliability).c_str());
+//                reliability_level = reliability_level + z3Context->real_val(std::to_string(reliability).c_str());
             }
         }
     }
@@ -209,8 +221,8 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     auto weightNetwork = z3Context->real_val(std::to_string(this->networkCostWeight).c_str());
 
     // 5. Optimize ILP problem and print solution.
-    opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationCost - reliability_level);// where the actual optimization happen
-
+//    opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationCost - reliability_level);// where the actual optimization happen
+    opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationCost);
     // 6. Check if we have solution, return false if that is not the case
     if (z3::sat != opt.check()) {
         NES_ERROR("ILPStrategy: Solver failed.");
