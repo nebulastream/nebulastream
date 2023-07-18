@@ -79,6 +79,38 @@ class PagedVectorTest : public Testing::NESBaseTest {
 
         ASSERT_EQ(itemPos, allItems.size());
     }
+
+    template<typename Item>
+    void insertAndAppendAllPages(const uint64_t entrySize, const uint64_t pageSize,
+                                 const std::vector<std::vector<Item>>& allItemsAndVectors,
+                                 const std::vector<Item>& expectedItemsAfterAppendAll) {
+
+        // Inserting data into each PagedVector and checking for correctness
+        std::vector<std::unique_ptr<PagedVector>> allPagedVectors;
+        for (auto& allItems : allItemsAndVectors) {
+            allPagedVectors.emplace_back(std::make_unique<PagedVector>(std::make_unique<Runtime::NesDefaultMemoryAllocator>(), entrySize, pageSize));
+            runStoreTest<Item>(*allPagedVectors.back(), entrySize, pageSize, allItems, allItems.size());
+            runRetrieveTest<Item>(*allPagedVectors.back(), entrySize, allItems);
+        }
+
+        // Now appending and deleting all PagedVectors except the first one
+        auto& firstPagedVec = allPagedVectors[0];
+        if (allItemsAndVectors.size() > 1) {
+            for (uint64_t i = 1; i < allPagedVectors.size(); ++i) {
+                auto& otherPagedVec = allPagedVectors[i];
+                firstPagedVec->appendAllPages(*otherPagedVec);
+                EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
+                EXPECT_EQ(otherPagedVec->getNumberOfEntries(), 0);
+                EXPECT_EQ(otherPagedVec->getNumberOfEntriesOnCurrentPage(), 0);
+            }
+
+            allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
+        }
+
+        // After we have appended all paged and everything except the first one, we expect the size to be one
+        EXPECT_EQ(allPagedVectors.size(), 1);
+        runRetrieveTest<Item>(*firstPagedVec, entrySize, expectedItemsAfterAppendAll);
+    }
 };
 
 TEST_F(PagedVectorTest, storeAndRetrieveValues) {
@@ -150,87 +182,31 @@ TEST_F(PagedVectorTest, appendAllPagesTwoVectors) {
     const auto entrySize = sizeof(uint64_t);
     const auto pageSize = entrySize * 5;
     const auto numItems = 1230_u64;
-    std::vector<uint64_t> allItemsVec1;
+    std::vector<uint64_t> allItemsVec1, allItemsVec2, allItemsAfterAppend;
     std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable { return n++; });
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec1.begin(), allItemsVec1.end());
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec2.begin(), allItemsVec2.end());
 
-    // Inserting data into the first PagedVector
-    PagedVector pagedVector1(std::move(allocator), entrySize, pageSize);
-    runStoreTest<uint64_t>(pagedVector1, entrySize, pageSize, allItemsVec1, allItemsVec1.size());
-    runRetrieveTest<uint64_t>(pagedVector1, entrySize, allItemsVec1);
-
-    // Inserting the data into the second PagedVector
-    auto allocator2 = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    std::vector<uint64_t> allItemsVec2;
-    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = 1000 * 1000]() mutable { return n++; });
-    PagedVector pagedVector2(std::move(allocator2), entrySize, pageSize);
-    runStoreTest<uint64_t>(pagedVector2, entrySize, pageSize, allItemsVec2, allItemsVec2.size());
-    runRetrieveTest<uint64_t>(pagedVector2, entrySize, allItemsVec2);
-
-    // Duplicating allItems, as we have inserted it into pagedVector1 and pagedVector2
-    std::vector<uint64_t> duplicatedItems;
-    duplicatedItems.insert(duplicatedItems.end(), allItemsVec1.begin(), allItemsVec1.end());
-    duplicatedItems.insert(duplicatedItems.end(), allItemsVec2.begin(), allItemsVec2.end());
-
-    // Appending all pages and checking for correctness
-    pagedVector1.appendAllPages(pagedVector2);
-    ASSERT_EQ(pagedVector2.getNumberOfPages(), 0);
-    runRetrieveTest<uint64_t>(pagedVector1, entrySize, duplicatedItems);
-
-    // Now we check, if we can insert again and can retrieve all (already + new) items
-    std::vector<uint64_t> allItemsAfterAppendingPages;
-    std::generate_n(std::back_inserter(allItemsAfterAppendingPages), numItems, [n = 0]() mutable { return n++; });
-    runStoreTest<uint64_t>(pagedVector1, entrySize, pageSize, allItemsAfterAppendingPages, duplicatedItems.size() + allItemsAfterAppendingPages.size());
-    duplicatedItems.insert(duplicatedItems.end(), allItemsAfterAppendingPages.begin(), allItemsAfterAppendingPages.end());
-    runRetrieveTest<uint64_t>(pagedVector1, entrySize, duplicatedItems);
+    insertAndAppendAllPages<uint64_t>(entrySize, pageSize, {allItemsVec1, allItemsVec2}, allItemsAfterAppend);
 }
 
 TEST_F(PagedVectorTest, appendAllPagesMultipleVectors) {
-    const uint64_t numberOfPagedVectors = 4;
-    const uint64_t numItemsPerPagedVector = 1232;
-    const uint64_t entrySize = 32;
+    const auto entrySize = sizeof(uint64_t);
     const uint64_t pageSize = (10 * entrySize) + 2;
-    const uint64_t capacityPerPage = pageSize / entrySize;
-    const uint64_t numberOfPages = std::ceil((double) numItemsPerPagedVector / capacityPerPage);
-    std::vector<std::unique_ptr<PagedVector>> allPagedVectors;
+    const auto numItems = 12304_u64;
+    std::vector<uint64_t> allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4, allItemsAfterAppend;
+    std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec3), numItems, [n = allItemsVec2.size()]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec4), numItems, [n = allItemsVec3.size()]() mutable { return n++; });
 
-    for (auto cntPagedVector = 0_u64; cntPagedVector < numberOfPagedVectors; ++cntPagedVector) {
-        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-        auto pagedVector = std::make_unique<PagedVector>(std::move(allocator), entrySize, pageSize);
-        auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) pagedVector.get()), (uint64_t) entrySize);
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec1.begin(), allItemsVec1.end());
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec2.begin(), allItemsVec2.end());
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec3.begin(), allItemsVec3.end());
+    allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec4.begin(), allItemsVec4.end());
 
-        for (auto i = 0UL; i < numItemsPerPagedVector; i++) {
-            Value<UInt64> val((uint64_t) i);
-            auto ref = pagedVectorRef.allocateEntry();
-            ref.store(val);
-        }
-
-        ASSERT_EQ(pagedVector->getNumberOfEntries(), numItemsPerPagedVector);
-        ASSERT_EQ(pagedVector->getPageSize(), pageSize);
-        ASSERT_EQ(pagedVector->getNumberOfPages(), numberOfPages);
-
-        allPagedVectors.emplace_back(std::move(pagedVector));
-    }
-    ASSERT_EQ(allPagedVectors.size(), numberOfPagedVectors);
-
-    // Now we appendAllPages to the first pagedVector
-    for (uint64_t i = 1; i < allPagedVectors.size(); ++i) {
-        allPagedVectors[0]->appendAllPages(*allPagedVectors[i]);
-    }
-    allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
-
-    // Checking for correctness
-    ASSERT_EQ(allPagedVectors.size(), 1);
-    ASSERT_EQ(allPagedVectors[0]->getNumberOfEntries(), numItemsPerPagedVector * numberOfPagedVectors);
-    ASSERT_EQ(allPagedVectors[0]->getPageSize(), pageSize);
-    ASSERT_EQ(allPagedVectors[0]->getNumberOfPages(), numberOfPages * numberOfPagedVectors);
-
-    uint64_t i = 0;
-    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) allPagedVectors[0].get()), (uint64_t) entrySize);
-    for (auto it : pagedVectorRef) {
-        Value<UInt64> expectedVal(i);
-        auto resultVal = it.load<UInt64>();
-        ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());
-        i = (i + 1) % numItemsPerPagedVector;
-    }
+    insertAndAppendAllPages<uint64_t>(entrySize, pageSize, {allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4},
+                                      allItemsAfterAppend);
 }
 }// namespace NES::Nautilus::Interface
