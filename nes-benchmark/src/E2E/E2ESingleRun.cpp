@@ -386,6 +386,7 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
 PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
                                                              size_t sourceCnt, uint64_t groupId, std::string& generator) {
     if (generator == "YSBKafka") {
+    	((void) groupId); // We have to do this, as on the macs, we have disabled Kafka
 #ifdef ENABLE_KAFKA_BUILD
         //Kafka is not using a data provider as Kafka itself is the provider
         auto connectionStringVec =
