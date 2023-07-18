@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.147](https://github.com/nebulastream/nebulastream/tree/v0.5.147) (2023-07-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.146...v0.5.147)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Ninja Build System & LLD Linker for CI to Reduce Compile Time [\#3931](https://github.com/nebulastream/nebulastream/issues/3931)
+
+### Bug Fixes 🐛
+
+- \[BUG\] OOM on arm64 linux CI [\#3988](https://github.com/nebulastream/nebulastream/issues/3988)
+
 ## [v0.5.146](https://github.com/nebulastream/nebulastream/tree/v0.5.146) (2023-07-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.145...v0.5.146)
