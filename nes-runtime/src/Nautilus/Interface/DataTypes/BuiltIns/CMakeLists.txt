@@ -11,19 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-nautilus
-        Any.cpp
-        Value.cpp
-        Boolean.cpp
-        InvocationPlugin.cpp
-        BooleanInvocationPlugin.cpp
-        MemRefInvocationPlugin.cpp
-        MemRefUtils.cpp
-        )
 
-add_subdirectory(Text)
-add_subdirectory(List)
-add_subdirectory(Integer)
-add_subdirectory(Float)
-add_subdirectory(TimeStamp)
-add_subdirectory(BuiltIns)
+add_source_files(
+    nes-runtime
+    BuiltInVariable.cpp
+)

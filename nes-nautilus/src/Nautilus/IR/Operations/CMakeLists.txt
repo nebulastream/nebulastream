@@ -30,4 +30,5 @@ add_source_files(nes-nautilus
         BranchOperation.cpp
         ConstBooleanOperation.cpp
         ConstAddressOperation.cpp
+        BuiltInVariableOperation.cpp
         )

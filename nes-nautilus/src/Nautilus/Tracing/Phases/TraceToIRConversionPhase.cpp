@@ -16,6 +16,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
+#include <Nautilus/IR/Operations/BuiltInVariableOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstAddressOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
@@ -35,6 +36,7 @@
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/BuiltIns/BuiltInVariable.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -597,6 +599,8 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
     } else if (auto* memref = cast_if<MemRef>(valueRef.value.get())) {
         constOperation =
             std::make_shared<NES::Nautilus::IR::Operations::ConstAddressOperation>(resultIdentifier, memref->getValue());
+    } else if (auto builtInVar = std::dynamic_pointer_cast<BuiltInVariable>(valueRef.value)) {
+        constOperation = std::make_shared<NES::Nautilus::IR::Operations::BuiltInVariableOperation>(resultIdentifier, builtInVar);
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }
