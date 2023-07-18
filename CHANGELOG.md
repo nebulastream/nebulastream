@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.148](https://github.com/nebulastream/nebulastream/tree/v0.5.148) (2023-07-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.147...v0.5.148)
+
+**Implemented enhancements:**
+
+- \[BUG\] Fix PagedVector appendAllPages [\#3990](https://github.com/nebulastream/nebulastream/issues/3990)
+- \[TASK\] Refactor E2ESingleRun [\#3894](https://github.com/nebulastream/nebulastream/issues/3894)
+
 ## [v0.5.147](https://github.com/nebulastream/nebulastream/tree/v0.5.147) (2023-07-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.146...v0.5.147)
