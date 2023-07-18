@@ -115,7 +115,8 @@ void E2ESingleRun::createSources() {
         allBufferManagers.emplace_back(bufferManager);
 
         NES_INFO("Creating {} physical sources for logical source {}",
-                 numberOfPhysicalSrc, logicalSource->getLogicalSourceName());
+                 numberOfPhysicalSrc,
+                 logicalSource->getLogicalSourceName());
 
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
             auto generatorName = dataGenerator->getName();
@@ -173,7 +174,8 @@ void E2ESingleRun::runQuery() {
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
                     NES_DEBUG("Query with id = {} not ready with no. tuples = {}. Sleeping for a second now...",
-                              id, iter->getProcessedTuple());
+                              id,
+                              iter->getProcessedTuple());
                     sleep(1);
                 }
                 NES_INFO("Query with id = {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
@@ -322,7 +324,8 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
 
     while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
-                  queryId, queryCatalogEntry->getQueryStatusAsString());
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
         auto status = queryCatalogEntry->getQueryStatus();
 
         switch (status) {
@@ -365,7 +368,8 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
 
     while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
-                  queryId, queryCatalogEntry->getQueryStatusAsString());
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
         auto status = queryCatalogEntry->getQueryStatus();
 
         if (status == QueryStatus::STOPPED) {
@@ -374,7 +378,8 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
         }
 
         NES_DEBUG("checkStoppedOrTimeout: Query with id = {} not stopped as status is {}",
-                  queryId, queryCatalogEntry->getQueryStatusAsString());
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
 
         std::this_thread::sleep_for(sleepDuration);
     }
@@ -384,9 +389,11 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
 }
 
 PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
-                                                             size_t sourceCnt, uint64_t groupId, std::string& generator) {
+                                                             size_t sourceCnt,
+                                                             uint64_t groupId,
+                                                             std::string& generator) {
     if (generator == "YSBKafka") {
-    	((void) groupId); // We have to do this, as on the macs, we have disabled Kafka
+        ((void) groupId);// We have to do this, as on the macs, we have disabled Kafka
 #ifdef ENABLE_KAFKA_BUILD
         //Kafka is not using a data provider as Kafka itself is the provider
         auto connectionStringVec =

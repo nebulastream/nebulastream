@@ -22,8 +22,8 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <algorithm>
+#include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus::Interface {
 
@@ -31,7 +31,6 @@ class PagedVectorTest : public Testing::NESBaseTest {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -43,10 +42,12 @@ class PagedVectorTest : public Testing::NESBaseTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down PagedVectorTest test class."); }
 
-
     template<typename Item>
-    void runStoreTest(PagedVector& pagedVector, const uint64_t entrySize, const uint64_t pageSize,
-                      const std::vector<Item>& allItems, uint64_t expectedNumberOfEntries) {
+    void runStoreTest(PagedVector& pagedVector,
+                      const uint64_t entrySize,
+                      const uint64_t pageSize,
+                      const std::vector<Item>& allItems,
+                      uint64_t expectedNumberOfEntries) {
         const uint64_t capacityPerPage = pageSize / entrySize;
         const uint64_t numberOfPages = std::ceil((double) expectedNumberOfEntries / capacityPerPage);
         auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
@@ -62,7 +63,8 @@ class PagedVectorTest : public Testing::NESBaseTest {
 
         // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
-        const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
+        const uint64_t numTuplesLastPage =
+            lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
         ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
     }
 
@@ -81,14 +83,16 @@ class PagedVectorTest : public Testing::NESBaseTest {
     }
 
     template<typename Item>
-    void insertAndAppendAllPages(const uint64_t entrySize, const uint64_t pageSize,
+    void insertAndAppendAllPages(const uint64_t entrySize,
+                                 const uint64_t pageSize,
                                  const std::vector<std::vector<Item>>& allItemsAndVectors,
                                  const std::vector<Item>& expectedItemsAfterAppendAll) {
 
         // Inserting data into each PagedVector and checking for correctness
         std::vector<std::unique_ptr<PagedVector>> allPagedVectors;
         for (auto& allItems : allItemsAndVectors) {
-            allPagedVectors.emplace_back(std::make_unique<PagedVector>(std::make_unique<Runtime::NesDefaultMemoryAllocator>(), entrySize, pageSize));
+            allPagedVectors.emplace_back(
+                std::make_unique<PagedVector>(std::make_unique<Runtime::NesDefaultMemoryAllocator>(), entrySize, pageSize));
             runStoreTest<Item>(*allPagedVectors.back(), entrySize, pageSize, allItems, allItems.size());
             runRetrieveTest<Item>(*allPagedVectors.back(), entrySize, allItems);
         }
@@ -118,8 +122,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveValues) {
     const auto pageSize = PagedVector::PAGE_SIZE;
     const auto numItems = 1234_u64;
     std::vector<uint64_t> allItems;
-    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable { return n++; });
-
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        return n++;
+    });
 
     PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
     runStoreTest<uint64_t>(pagedVector, entrySize, pageSize, allItems, allItems.size());
@@ -131,8 +136,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesNonDefaultPageSize) {
     const auto pageSize = (10 * entrySize) + 2;
     const auto numItems = 12340_u64;
     std::vector<uint64_t> allItems;
-    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable { return n++; });
-
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        return n++;
+    });
 
     PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
     runStoreTest<uint64_t>(pagedVector, entrySize, pageSize, allItems, allItems.size());
@@ -149,8 +155,10 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesWithCustomItems) {
     const auto pageSize = PagedVector::PAGE_SIZE;
     const auto numItems = 12349_u64;
     std::vector<CustomClass> allItems;
-    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable { n++; return CustomClass(n, n, n / 7); });
-
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        n++;
+        return CustomClass(n, n, n / 7);
+    });
 
     PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
     runStoreTest<CustomClass>(pagedVector, entrySize, pageSize, allItems, allItems.size());
@@ -162,8 +170,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesAfterMoveFromTo) {
     const auto pageSize = PagedVector::PAGE_SIZE;
     const auto numItems = 1234_u64;
     std::vector<uint64_t> allItems;
-    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable { return n++; });
-
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        return n++;
+    });
 
     PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
     runStoreTest<uint64_t>(pagedVector, entrySize, pageSize, allItems, allItems.size());
@@ -183,8 +192,12 @@ TEST_F(PagedVectorTest, appendAllPagesTwoVectors) {
     const auto pageSize = entrySize * 5;
     const auto numItems = 1230_u64;
     std::vector<uint64_t> allItemsVec1, allItemsVec2, allItemsAfterAppend;
-    std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable { return n++; });
-    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable {
+        return n++;
+    });
+    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable {
+        return n++;
+    });
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec1.begin(), allItemsVec1.end());
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec2.begin(), allItemsVec2.end());
 
@@ -196,17 +209,27 @@ TEST_F(PagedVectorTest, appendAllPagesMultipleVectors) {
     const uint64_t pageSize = (10 * entrySize) + 2;
     const auto numItems = 12304_u64;
     std::vector<uint64_t> allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4, allItemsAfterAppend;
-    std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable { return n++; });
-    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable { return n++; });
-    std::generate_n(std::back_inserter(allItemsVec3), numItems, [n = allItemsVec2.size()]() mutable { return n++; });
-    std::generate_n(std::back_inserter(allItemsVec4), numItems, [n = allItemsVec3.size()]() mutable { return n++; });
+    std::generate_n(std::back_inserter(allItemsVec1), numItems, [n = 0]() mutable {
+        return n++;
+    });
+    std::generate_n(std::back_inserter(allItemsVec2), numItems, [n = allItemsVec1.size()]() mutable {
+        return n++;
+    });
+    std::generate_n(std::back_inserter(allItemsVec3), numItems, [n = allItemsVec2.size()]() mutable {
+        return n++;
+    });
+    std::generate_n(std::back_inserter(allItemsVec4), numItems, [n = allItemsVec3.size()]() mutable {
+        return n++;
+    });
 
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec1.begin(), allItemsVec1.end());
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec2.begin(), allItemsVec2.end());
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec3.begin(), allItemsVec3.end());
     allItemsAfterAppend.insert(allItemsAfterAppend.end(), allItemsVec4.begin(), allItemsVec4.end());
 
-    insertAndAppendAllPages<uint64_t>(entrySize, pageSize, {allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4},
+    insertAndAppendAllPages<uint64_t>(entrySize,
+                                      pageSize,
+                                      {allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4},
                                       allItemsAfterAppend);
 }
 }// namespace NES::Nautilus::Interface

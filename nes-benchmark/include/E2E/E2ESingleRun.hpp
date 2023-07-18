@@ -111,7 +111,9 @@ class E2ESingleRun {
      * @return KafkaSourceType or LambdaSourceType
      */
     PhysicalSourceTypePtr createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
-                                                   size_t sourceCnt, uint64_t groupId, std::string& generator);
+                                                   size_t sourceCnt,
+                                                   uint64_t groupId,
+                                                   std::string& generator);
 
     /**
      * @brief Collects the measurements for every query. It stops after numMeasurementsToCollect iterations.
