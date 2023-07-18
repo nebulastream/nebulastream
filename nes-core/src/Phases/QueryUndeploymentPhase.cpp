@@ -45,48 +45,48 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
         QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
-void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
-    NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", queryId);
+void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
+    NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", sharedQueryId);
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
+        NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
         throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query "
-                                                         + std::to_string(queryId) + " is deployed");
+                                                         + std::to_string(sharedQueryId) + " is deployed");
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
-    bool successStop = stopQuery(queryId, executionNodes, sharedQueryPlanStatus);
+    bool successStop = stopQuery(sharedQueryId, executionNodes, sharedQueryPlanStatus);
     //todo 3916: this query returns always true if there is no exception, so the following block is astually obsolete
     if (successStop) {
-        NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for  {}", queryId);
+        NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for  {}", sharedQueryId);
     } else {
-        NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for {}", queryId);
+        NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for {}", sharedQueryId);
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw Exceptions::QueryUndeploymentException(queryId, "Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(sharedQueryId, "Failed to stop the query " + std::to_string(sharedQueryId) + '.');
     }
 
-    NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", queryId);
-    bool successUndeploy = undeployQuery(queryId, executionNodes);
+    NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", sharedQueryId);
+    bool successUndeploy = undeployQuery(sharedQueryId, executionNodes);
     if (successUndeploy) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query successful");
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw Exceptions::QueryUndeploymentException(queryId, "Failed to stop the query " + std::to_string(queryId) + '.');
+        throw Exceptions::QueryUndeploymentException(sharedQueryId, "Failed to stop the query " + std::to_string(sharedQueryId) + '.');
     }
 
-    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
+    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(sharedQueryId);
 
     for (auto entry : resourceMap) {
         NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", entry.second, entry.first);
         topology->increaseResources(entry.first, entry.second);
     }
 
-    if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
-        throw Exceptions::QueryUndeploymentException(queryId,
-                                                     "Failed to remove query subplans for the query " + std::to_string(queryId)
+    if (!globalExecutionPlan->removeQuerySubPlans(sharedQueryId)) {
+        throw Exceptions::QueryUndeploymentException(sharedQueryId,
+                                                     "Failed to remove query subplans for the query " + std::to_string(sharedQueryId)
                                                          + '.');
     }
 }

@@ -68,7 +68,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     //undeploy queries
     try {
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-        queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
+        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
                                                      "failed to undeploy query with id " + std::to_string(queryId));

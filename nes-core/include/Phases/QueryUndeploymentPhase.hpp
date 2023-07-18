@@ -54,11 +54,11 @@ class QueryUndeploymentPhase {
     create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
 
     /**
-     * @brief method for stopping and undeploying the query with the given id
-     * @param queryId : id of the query
+     * @brief method for stopping and undeploying the shared query with the given id
+     * @param sharedQueryId : the id of the shared query plan
      * @return true if successful
      */
-    void execute(QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus);
+    void execute(SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus);
 
   private:
     explicit QueryUndeploymentPhase(TopologyPtr topology,
