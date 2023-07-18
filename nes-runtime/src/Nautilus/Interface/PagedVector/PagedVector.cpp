@@ -91,6 +91,8 @@ void PagedVector::appendAllPages(PagedVector& other) {
 
     // As a last step, we clear other to make sure that the pages belong to this
     other.clear();
+    other.numberOfEntries = 0;
+    other.totalNumberOfEntries = 0;
 }
 
 uint64_t PagedVector::getPageSize() const { return pageSize; }
