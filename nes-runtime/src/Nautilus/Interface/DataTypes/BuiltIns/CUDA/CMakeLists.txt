@@ -14,7 +14,8 @@
 
 add_source_files(
     nes-runtime
-    BuiltInVariable.cpp
+    BlockDim.cpp
+    BlockIdx.cpp
+    FieldAccess.cpp
+    ThreadIdx.cpp
 )
-
-add_subdirectory(CUDA)
