@@ -30,4 +30,5 @@ add_source_files(nes-runtime
         BranchOperation.cpp
         ConstBooleanOperation.cpp
         ConstAddressOperation.cpp
+        BuiltInVariableOperation.cpp
         )
