@@ -13,6 +13,7 @@
 */
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <cstring>
 
 namespace NES::Nautilus::Interface {
@@ -33,7 +34,7 @@ int8_t* PagedVector::appendPage() {
     return page;
 }
 
-int8_t* PagedVector::getEntry(uint64_t pos) {
+int8_t* PagedVector::getEntry(uint64_t pos) const {
     auto pagePos = pos / capacityPerPage;
     auto positionOnPage = pos % capacityPerPage;
 
@@ -46,17 +47,17 @@ PagedVector::~PagedVector() {
     }
 }
 
-size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }
+uint64_t PagedVector::getNumberOfEntries() const { return totalNumberOfEntries; }
 
-void PagedVector::setNumberOfEntries(size_t entries) { totalNumberOfEntries = entries; }
+void PagedVector::setNumberOfEntries(uint64_t entries) { totalNumberOfEntries = entries; }
 
-size_t PagedVector::getNumberOfPages() { return pages.size(); }
+uint64_t PagedVector::getNumberOfPages() { return pages.size(); }
 
-size_t PagedVector::getCapacityPerPage() { return capacityPerPage; }
+uint64_t PagedVector::getCapacityPerPage() const { return capacityPerPage; }
 
 const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
-void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
+void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) const {
     auto oldPosEntry = getEntry(oldPos);
     auto newPosEntry = getEntry(newPos);
     std::memcpy(newPosEntry, oldPosEntry, entrySize);
@@ -65,19 +66,31 @@ void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
 
 void PagedVector::clear() { pages.clear(); }
 
-size_t PagedVector::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
+uint64_t PagedVector::getNumberOfEntriesOnCurrentPage() const { return numberOfEntries; }
 
-void PagedVector::appendAllPages(const PagedVector& other) {
-    NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes");
+void PagedVector::appendAllPages(PagedVector& other) {
+    NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes for now!");
+    NES_ASSERT2_FMT(entrySize == other.entrySize, "Can not combine PagedVector of different entrySize for now!");
 
-    pages.reserve(pages.size() + other.pages.size());
-    for (auto& page : other.pages) {
-        pages.emplace_back(page);
+    for (auto otherPos = 0_u64; otherPos < other.totalNumberOfEntries; ++otherPos) {
+        // Checking, if we require a new page
+        if (numberOfEntries >= capacityPerPage) {
+            NES_INFO("appending new page");
+            appendPage();
+        }
+
+        // Copy from the other to this
+        auto* ptrThis = this->getEntry(this->getNumberOfEntries());
+        auto* ptrOther = other.getEntry(otherPos);
+        std::memcpy(ptrThis, ptrOther, entrySize);
+
+        // Increment the numberOfEntries and totalNumberOfEntries
+        this->numberOfEntries += 1;
+        this->totalNumberOfEntries += 1;
     }
 
-    currentPage = pages[pages.size() - 1];
-    numberOfEntries = other.numberOfEntries;
-    totalNumberOfEntries += other.totalNumberOfEntries;
+    // As a last step, we clear other to make sure that the pages belong to this
+    other.clear();
 }
 
 uint64_t PagedVector::getPageSize() const { return pageSize; }

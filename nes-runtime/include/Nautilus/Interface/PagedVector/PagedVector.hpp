@@ -60,7 +60,7 @@ class PagedVector {
      * @brief Return the total number of entries across all pages.
      * @return size_t
      */
-    size_t getNumberOfEntries();
+    uint64_t getNumberOfEntries() const;
 
     /**
      * @brief Sets the number of entries across all pages.
@@ -72,13 +72,13 @@ class PagedVector {
      * @brief Returns the capacity per page
      * @return size_t
      */
-    size_t getCapacityPerPage();
+    uint64_t getCapacityPerPage() const;
 
     /**
      * @brief Returns the number of entries on the current page
      * @return size_t
      */
-    size_t getNumberOfEntriesOnCurrentPage();
+    uint64_t getNumberOfEntriesOnCurrentPage() const;
 
     /**
      * @brief Appends a new page and updates the current page and number of entries.
@@ -91,20 +91,20 @@ class PagedVector {
      * @param oldPos
      * @param newPos
      */
-    void moveFromTo(uint64_t oldPos, uint64_t newPos);
+    void moveFromTo(uint64_t oldPos, uint64_t newPos) const;
 
     /**
      * @brief Returns the pointer to the first field of the record at pos
      * @param pos
      * @return Pointer to start of record
      */
-    int8_t* getEntry(uint64_t pos);
+    int8_t* getEntry(uint64_t pos) const;
 
     /**
      * @brief Combines this PagedVector with another one by adding the other.pages to these pages
      * @param other: PagedVector that contains pages, which should be added to this one
      */
-    void appendAllPages(const PagedVector& other);
+    void appendAllPages(PagedVector& other);
 
     /**
      * @brief Getter for the page size
