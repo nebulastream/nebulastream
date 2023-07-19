@@ -11,14 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
 
 namespace NES::Catalogs::UDF {
 
-PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, std::string& functionString, const SchemaPtr inputSchema,  const SchemaPtr outputSchema)
-    : UDFDescriptor(functionName), functionString(functionString), inputSchema(inputSchema), outputSchema(outputSchema) {
+PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, const std::string& functionString, const SchemaPtr& inputSchema,  const SchemaPtr& outputSchema)
+    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
 
     if (functionName.empty()) {
         throw UDFException("The function name of a Python UDF must not be empty");
@@ -29,17 +28,9 @@ PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, std::s
     if (inputSchema->empty()) {
         throw UDFException("The input schema of a Python UDF must not be empty");
     }
-    if (inputSchema->empty()) {
-        throw UDFException("The output schema of a Python UDF must not be empty");
-    }
 }
 bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
     return functionString == other.functionString && getMethodName() == other.getMethodName()
-        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true);
+        && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
 }
-
-void PythonUDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { PythonUDFDescriptor::inputSchema = inputSchema; }
-
-
 }// namespace NES::Catalogs::UDF
-#endif// NAUTILUS_PYTHON_UDF_ENABLED

@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <memory>
@@ -29,12 +28,12 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 class PythonUDFDescriptor : public UDFDescriptor {
   public:
     PythonUDFDescriptor(const std::string& functionName,
-                        std::string& functionString,
-                        const SchemaPtr inputSchema,
-                        const SchemaPtr outputSchema);
+                        const std::string& functionString,
+                        const SchemaPtr& inputSchema,
+                        const SchemaPtr& outputSchema);
 
     static PythonUDFDescriptorPtr create(const std::string& functionName,
-                                         std::string& functionString,
+                                         const std::string& functionString,
                                          const SchemaPtr inputSchema,
                                          const SchemaPtr outputSchema) {
         return std::make_shared<PythonUDFDescriptor>(functionName, functionString, inputSchema, outputSchema);
@@ -47,33 +46,6 @@ class PythonUDFDescriptor : public UDFDescriptor {
     const std::string& getFunctionString() const { return functionString; }
 
     /**
-     * @brief Return the output schema of the map UDF operation.
-     *
-     * The output schema must correspond to the return type of the UDF method.
-     *
-     * @return A SchemaPtr instance describing the output schema of the UDF method.
-     */
-    const SchemaPtr& getOutputSchema() const { return outputSchema; }
-
-    /**
-     * @brief Return the input schema of the map UDF operation.
-     *
-     * The input schema must correspond to the input type of the UDF method.
-     *
-     * @return A SchemaPtr instance describing the input schema of the UDF method.
-     */
-    const SchemaPtr& getInputSchema() const { return inputSchema; }
-
-    /**
-     * @brief Set the input schema of the map UDF operation.
-     *
-     * The input schema must correspond to the input type of the UDF method.
-     *
-     * @param inputSchema A SchemaPtr instance describing the input schema of the UDF method.
-     */
-    void setInputSchema(const SchemaPtr& inputSchema);
-
-    /**
      * Compare to Python UDF descriptors.
      *
      * @param other The other PythonUDFDescriptor in the comparison.
@@ -84,10 +56,7 @@ class PythonUDFDescriptor : public UDFDescriptor {
 
 
   private:
-    const std::string functionName;
     const std::string functionString;
-    SchemaPtr inputSchema;
-    const SchemaPtr outputSchema;
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
