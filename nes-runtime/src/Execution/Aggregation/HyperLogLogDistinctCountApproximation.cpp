@@ -42,7 +42,7 @@ void HyperLogLogDistinctCountApproximation::lift(Nautilus::Value<Nautilus::MemRe
     FunctionCall<>("hlladd", hlladd, memref, hashValueNautilus);
 }
 
-void merge(void* memref1Ptr, void* memref2Ptr) {
+void mergeHLL(void* memref1Ptr, void* memref2Ptr) {
     HyperLogLogDistinctCountApproximationValue* obj1 = static_cast<HyperLogLogDistinctCountApproximationValue*>(memref1Ptr);
     HyperLogLogDistinctCountApproximationValue* obj2 = static_cast<HyperLogLogDistinctCountApproximationValue*>(memref2Ptr);
     obj1->hyperLogLog.merge(obj2->hyperLogLog);
@@ -50,28 +50,28 @@ void merge(void* memref1Ptr, void* memref2Ptr) {
 
 void HyperLogLogDistinctCountApproximation::combine(Nautilus::Value<Nautilus::MemRef> memref1,
                                                     Nautilus::Value<Nautilus::MemRef> memref2) {
-    FunctionCall<>("merge", merge, memref1, memref2);
+    FunctionCall<>("mergeHLL", mergeHLL, memref1, memref2);
 }
 
-double estimate(void* memrefPtr) {
+double estimateHLL(void* memrefPtr) {
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
     return obj->hyperLogLog.estimate();
 }
 
 void HyperLogLogDistinctCountApproximation::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) {
-    auto result = Nautilus::FunctionCall<>("estimate", estimate, memref);
+    auto result = Nautilus::FunctionCall<>("estimateHLL", estimateHLL, memref);
     resultRecord.write(resultFieldIdentifier, result);
 }
 
 uint64_t HyperLogLogDistinctCountApproximation::getSize() { return inputType->size(); }
 
-void clear(void* memrefPtr) {
+void clearHLL(void* memrefPtr) {
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
     obj->hyperLogLog.clear();
 }
 
 void HyperLogLogDistinctCountApproximation::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    Nautilus::FunctionCall<>("clear", clear, memref);
+    Nautilus::FunctionCall<>("clearHLL", clearHLL, memref);
 }
 
 }// namespace NES::Runtime::Execution::Aggregation

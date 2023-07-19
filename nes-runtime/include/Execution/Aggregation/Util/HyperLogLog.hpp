@@ -2,7 +2,6 @@
 #define HYPERLOGLOG_HPP
 
 /**
- * @file hyperloglog.hpp
  * @brief HyperLogLog cardinality estimator
  * @date Created 2013/3/20
  * @author Hideaki Ohno
