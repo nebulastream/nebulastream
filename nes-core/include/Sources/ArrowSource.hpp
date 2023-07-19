@@ -105,7 +105,6 @@ class ArrowSource : public DataSource {
     ArrowSourceTypePtr arrowSourceType;
     std::string filePath;
     uint64_t tupleSize;
-    //uint64_t numberOfSchemaFields;
     uint64_t numberOfTuplesToProducePerBuffer;
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;

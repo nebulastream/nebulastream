@@ -17,9 +17,14 @@
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <string>
+
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
 
 namespace NES {
 
@@ -91,6 +96,33 @@ class FileSink : public SinkMedium {
   protected:
     std::string filePath;
     std::ofstream outputFile;
+
+  private:
+    /**
+     * @brief method to write a TupleBuffer to a local file system file
+     * @param a tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
+
+    /**
+     * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
+     * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
+     * @param a tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    bool writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer);
+
+    /**
+     * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
+     * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
+     * @param a tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    arrow::Status openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+                                std::shared_ptr<arrow::Schema> arrowSchema,
+                                std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
+
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

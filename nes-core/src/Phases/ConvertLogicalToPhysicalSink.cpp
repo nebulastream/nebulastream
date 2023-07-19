@@ -186,7 +186,21 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       fileSinkDescriptor->getAppend(),
                                       fileSinkDescriptor->getFaultToleranceType(),
                                       fileSinkDescriptor->getNumberOfOrigins());
-        } else {
+        }
+#ifdef ENABLE_ARROW_BUILD
+        else if (fileSinkDescriptor->getSinkFormatAsString() == "ARROW_FORMAT") {
+            return createArrowIPCFileSink(schema,
+                                          querySubPlan->getQueryId(),
+                                          querySubPlan->getQuerySubPlanId(),
+                                          nodeEngine,
+                                          numOfProducers,
+                                          fileSinkDescriptor->getFileName(),
+                                          fileSinkDescriptor->getAppend(),
+                                          fileSinkDescriptor->getFaultToleranceType(),
+                                          fileSinkDescriptor->getNumberOfOrigins());
+        }
+#endif
+        else {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");
         }

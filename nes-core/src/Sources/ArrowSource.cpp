@@ -74,8 +74,8 @@ ArrowSource::ArrowSource(SchemaPtr schema,
         NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource file error: " << openFileStatus.ToString());
     }
 
-    NES_DEBUG2("ArrowSource: Opened Arrow IPC file {}", path.get());
-    NES_DEBUG2("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+    NES_DEBUG("ArrowSource: Opened Arrow IPC file {}", path.get());
+    NES_DEBUG("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
                this->tupleSize,
                this->gatheringInterval.count(),
                this->numberOfBuffersToProduce,
@@ -89,10 +89,10 @@ ArrowSource::ArrowSource(SchemaPtr schema,
 }
 
 std::optional<Runtime::TupleBuffer> ArrowSource::receiveData() {
-    NES_TRACE2("ArrowSource::receiveData called on  {}", operatorId);
+    NES_TRACE("ArrowSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
-    NES_TRACE2("ArrowSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
+    NES_TRACE("ArrowSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
@@ -117,11 +117,11 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
 
     // check if file has not ended
     if (this->fileEnded) {
-        NES_WARNING2("ArrowSource::fillBuffer: but file has already ended");
+        NES_WARNING("ArrowSource::fillBuffer: but file has already ended");
         return;
     }
 
-    NES_TRACE2("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
+    NES_TRACE("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
                fileSize);
 
     uint64_t generatedTuplesThisPass = 0;
@@ -134,7 +134,7 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(),
                         "ArrowSource::fillBuffer: not enough space in tuple buffer to fill tuples in this pass.");
     }
-    NES_TRACE2("ArrowSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
+    NES_TRACE("ArrowSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
     uint64_t tupleCount = 0;
 
@@ -187,9 +187,9 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
     buffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    NES_TRACE2("ArrowSource::fillBuffer: reading finished read {} tuples",
+    NES_TRACE("ArrowSource::fillBuffer: reading finished read {} tuples",
                tupleCount);
-    NES_TRACE2("ArrowSource::fillBuffer: read produced buffer=  {}",
+    NES_TRACE("ArrowSource::fillBuffer: read produced buffer=  {}",
                Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
@@ -209,22 +209,23 @@ arrow::Status ArrowSource::openFile() {
 }
 
 void ArrowSource::readNextBatch() {
-    //set the internal index to 0 and read the new batch
+    // set the internal index to 0 and read the new batch
     indexWithinCurrentRecordBatch = 0;
     auto readStatus = recordBatchStreamReader->ReadNext(&currentRecordBatch);
 
-    // file ended
+    // check if file has ended
     if(currentRecordBatch == nullptr) {
         this->fileEnded = true;
-        NES_TRACE2("ArrowSource::readNextBatch: file ended.");
+        NES_TRACE("ArrowSource::readNextBatch: file has ended.");
+        return;
     }
 
-    // error reading batch
+    // check if there was some error reading the batch
     if(!readStatus.ok()) {
         NES_THROW_RUNTIME_ERROR("ArrowSource::fillBuffer: error reading recordBatch: " << readStatus.ToString());
     }
 
-    NES_TRACE2("ArrowSource::readNextBatch: read the following record batch {}",
+    NES_TRACE("ArrowSource::readNextBatch: read the following record batch {}",
                currentRecordBatch->ToString());
 }
 
@@ -431,7 +432,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
-                    NES_FATAL_ERROR2("ArrowSource::writeArrowArrayToTupleBuffer: type CHAR not supported by Arrow.");
+                    NES_FATAL_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: type CHAR not supported by Arrow.");
                     throw std::invalid_argument("Arrow does not support CHAR");
                     break;
                 }
@@ -486,7 +487,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
-                    NES_FATAL_ERROR2("ArrowSource::writeArrowArrayToTupleBuffer: Field Type UNDEFINED");
+                    NES_FATAL_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: Field Type UNDEFINED");
             }
         } else {
             // We do not support any other ARROW types (such as Lists, Maps, Tensors) yet. We could however later store
@@ -495,7 +496,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
             NES_NOT_IMPLEMENTED();
         }
     } catch (const std::exception& e) {
-        NES_ERROR2("Failed to convert the arrowArray to desired NES data type. Error: {}", e.what());
+        NES_ERROR("Failed to convert the arrowArray to desired NES data type. Error: {}", e.what());
     }
 }
 
