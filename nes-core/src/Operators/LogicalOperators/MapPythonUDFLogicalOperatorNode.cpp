@@ -19,9 +19,9 @@
 
 namespace NES {
 
-MapPythonUDFLogicalOperatorNode::MapPythonUDFLogicalOperatorNode(const Catalogs::UDF::PythonUDFDescriptorPtr descriptor,
+MapPythonUDFLogicalOperatorNode::MapPythonUDFLogicalOperatorNode(const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor,
                                                                          OperatorId id)
-                : OperatorNode(id), PythonUDFLogicalOperator(descriptor, id) {}
+                : OperatorNode(id), PythonUDFLogicalOperator(pythonUDFDescriptor, id) {}
 
 std::string MapPythonUDFLogicalOperatorNode::toString() const {
     std::stringstream ss;

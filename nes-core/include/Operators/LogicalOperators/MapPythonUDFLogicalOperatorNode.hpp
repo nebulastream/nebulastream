@@ -32,7 +32,7 @@ class MapPythonUDFLogicalOperatorNode : public PythonUDFLogicalOperator {
      * @param descriptor The descriptor of the Python UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    MapPythonUDFLogicalOperatorNode(const Catalogs::UDF::PythonUDFDescriptorPtr descriptor, OperatorId id);
+    MapPythonUDFLogicalOperatorNode(const Catalogs::UDF::PythonUdfDescriptorPtr& pythonUDFDescriptor, OperatorId id);
 
     /**
      * @see Node#toString

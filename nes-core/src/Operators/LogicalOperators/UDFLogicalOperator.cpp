@@ -14,72 +14,25 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/JavaUDFLogicalOperator.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <numeric>
 
 namespace NES {
 
-JavaUDFLogicalOperator::JavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUDFDescriptor(javaUDFDescriptor) {}
+UDFLogicalOperator::UDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), udfDescriptor(udfDescriptor) {}
 
-void JavaUDFLogicalOperator::inferStringSignature() {
-    NES_ASSERT(children.size() == 1, "JavaUDFLogicalOperator should have exactly 1 child.");
-    // Infer query signatures for child operator.
-    auto child = children[0]->as<LogicalOperatorNode>();
-    child->inferStringSignature();
-
-    // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
-    // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
-    auto elementHash = std::hash<Catalogs::UDF::JavaSerializedInstance::value_type>{};
-
-    // Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
-    // based on the hashes of the individual elements.
-    auto charArrayHashHelper = [&elementHash](std::size_t h, char v) {
-        return h = h * 31 + elementHash(v);
-    };
-
-    // Compute hashed value of the UDF instance.
-    auto& instance = javaUDFDescriptor->getSerializedInstance();
-    auto instanceHash = std::accumulate(instance.begin(), instance.end(), instance.size(), charArrayHashHelper);
-
-    // Compute hashed value of the UDF byte code list.
-    auto stringHash = std::hash<std::string>{};
-    auto& byteCodeList = javaUDFDescriptor->getByteCodeList();
-    auto byteCodeListHash =
-        std::accumulate(byteCodeList.begin(),
-                        byteCodeList.end(),
-                        byteCodeList.size(),
-                        [&stringHash, &charArrayHashHelper](std::size_t h, Catalogs::UDF::JavaUDFByteCodeList::value_type v) {
-                            /* It is not possible to hash unordered_map directly in C++, this will be
-                                     * investigated in issue #3584
-                                     */
-
-                            auto& className = v.first;
-                            h = h * 31 + stringHash(className);
-                            auto& byteCode = v.second;
-                            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
-                            return h;
-                        });
-
-    auto signatureStream = std::stringstream{};
-    signatureStream << "MAP_JAVA_UDF(" << javaUDFDescriptor->getClassName() << "." << javaUDFDescriptor->getMethodName()
-                    << ", instance=" << instanceHash << ", byteCode=" << byteCodeListHash << ")"
-                    << "." << *child->getHashBasedSignature().begin()->second.begin();
-    auto signature = signatureStream.str();
-    hashBasedSignature[stringHash(signature)] = {signature};
-}
-
-bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+bool UDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
     // Set the input schema.
     if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
     }
-    // The output schema of this operation is determined by the Java UDF.
+    // The output schema of this operation is determined by the  UDF.
     outputSchema->clear();
-    outputSchema->copyFields(javaUDFDescriptor->getOutputSchema());
+    outputSchema->copyFields(udfDescriptor->getOutputSchema());
     // Update output schema by changing the qualifier and corresponding attribute names
     const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
@@ -88,19 +41,13 @@ bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
         //Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
-
     // TODO #3481 Check if the UDF input schema corresponds to the operator input schema of the parent operator
     return true;
 }
 
-Catalogs::UDF::JavaUDFDescriptorPtr JavaUDFLogicalOperator::getJavaUDFDescriptor() const { return javaUDFDescriptor; }
+Catalogs::UDF::UDFDescriptorPtr UDFLogicalOperator::getUDFDescriptor() const { return udfDescriptor; }
 
-bool JavaUDFLogicalOperator::equal(const NodePtr& other) const {
-    return other->instanceOf<JavaUDFLogicalOperator>()
-        && *javaUDFDescriptor == *other->as<JavaUDFLogicalOperator>()->javaUDFDescriptor;
-}
-
-bool JavaUDFLogicalOperator::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<JavaUDFLogicalOperator>()->id;
+bool UDFLogicalOperator::isIdentical(const NodePtr& other) const {
+    return equal(other) && id == other->as<UDFLogicalOperator>()->id;
 }
 }// namespace NES

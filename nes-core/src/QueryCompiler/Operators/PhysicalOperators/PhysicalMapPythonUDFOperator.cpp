@@ -12,33 +12,16 @@
     limitations under the License.
 */
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
-#include "Operators/LogicalOperators/PythonUDFLogicalOperator.hpp"
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapPythonUDFOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalMapPythonUDFOperator::PhysicalMapPythonUDFOperator(OperatorId id,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), pythonUDFDescriptor(std::move(pythonUDFDescriptor)) {}
-
-PhysicalOperatorPtr PhysicalMapPythonUDFOperator::create(SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       Catalogs::UDF::PythonUdfDescriptorPtr pythonUDFDescriptor) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, pythonUDFDescriptor);
-}
-
-PhysicalOperatorPtr PhysicalMapPythonUDFOperator::create(OperatorId id,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
-                                                       const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor) {
-    return std::make_shared<PhysicalMapPythonUDFOperator>(id, inputSchema, outputSchema, pythonUDFDescriptor);
-}
+                                                       const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor)
+    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(pythonUDFDescriptor)) {}
 
 std::string PhysicalMapPythonUDFOperator::toString() const { return "PhysicalMapPythonUDFOperator"; }
-
-OperatorNodePtr PhysicalMapPythonUDFOperator::copy() { return create(id, inputSchema, outputSchema, pythonUDFDescriptor); }
-
-Catalogs::UDF::PythonUDFDescriptorPtr PhysicalMapPythonUDFOperator::getPythonUDFDescriptor() { return pythonUDFDescriptor; }
 }// namespace NES::QueryCompilation::PhysicalOperators
 #endif// NAUTILUS_PYTHON_UDF_ENABLED

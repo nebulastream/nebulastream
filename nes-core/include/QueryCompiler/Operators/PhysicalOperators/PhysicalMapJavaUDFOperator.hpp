@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUDFOperator.hpp>
 
 namespace NES {
 namespace Catalogs::UDF {
@@ -29,7 +29,7 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Map Java Udf operator.
  */
-class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
+class PhysicalMapJavaUDFOperator : public PhysicalUDFOperator {
   public:
     /**
      * @brief Constructor for PhysicalMapJavaUDFOperator
@@ -39,52 +39,14 @@ class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
      */
     PhysicalMapJavaUDFOperator(OperatorId id,
-                               SchemaPtr inputSchema,
-                               SchemaPtr outputSchema,
-                               Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
-    /**
-     * @brief Creates a new instance of PhysicalMapJavaUDFOperator
-     * @param id The identifier of this operator
-     * @param inputSchema The schema of the input data
-     * @param outputSchema The schema of the output data
-     * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
-     * @return A new instance of PhysicalMapJavaUDFOperator
-     */
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor);
-
-    /**
-     * @brief Creates a new instance of PhysicalMapJavaUDFOperator with no specified operator ID
-     * @param inputSchema The schema of the input data
-     * @param outputSchema The schema of the output data
-     * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
-     * @return A new instance of PhysicalMapJavaUDFOperator
-     */
-    static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
-
+                               const SchemaPtr& inputSchema,
+                               const SchemaPtr& outputSchema,
+                               const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor);
     /**
      * @brief Returns a string representation of this operator
      * @return A string representation of this operator
      */
     std::string toString() const override;
-
-    /**
-     * @brief Creates a copy of this operator node
-     * @return A copy of this operator node
-     */
-    OperatorNodePtr copy() override;
-
-    /**
-     * @brief Returns the java udf descriptor of this map operator
-     * @return FieldAssignmentExpressionNodePtr
-     */
-    Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor();
-
-  protected:
-    const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

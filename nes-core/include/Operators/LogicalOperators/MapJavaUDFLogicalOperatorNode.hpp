@@ -32,7 +32,7 @@ class MapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor, OperatorId id);
+    MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor, OperatorId id);
 
     /**
      * @see Node#toString

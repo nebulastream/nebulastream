@@ -98,13 +98,12 @@
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <string_view>
 #include <utility>
-
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+#include <QueryCompiler/Operators/PhysicalOperators//PhysicalUDFOperator.hpp>
 #include "Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp"
 #include "Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp"
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapPythonUDFOperator.hpp>
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+
 
 namespace NES::QueryCompilation {
 
@@ -173,88 +172,77 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
-#ifdef ENABLE_JNI
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUDFOperator>()) {
-        const auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUDFOperator>();
-        // We can't copy the descriptor because it is in nes-core and the MapJavaUdfOperatorHandler is in nes-runtime
-        // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
-        const auto mapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
-        const auto className = mapJavaUDFDescriptor->getClassName();
-        const auto methodName = mapJavaUDFDescriptor->getMethodName();
-        const auto byteCodeList = mapJavaUDFDescriptor->getByteCodeList();
-        const auto inputClassName = mapJavaUDFDescriptor->getInputClassName();
-        const auto outputClassName = mapJavaUDFDescriptor->getOutputClassName();
-        const auto udfInputSchema = mapJavaUDFDescriptor->getInputSchema();
-        const auto udfOutputSchema = mapJavaUDFDescriptor->getOutputSchema();
-        const auto serializedInstance = mapJavaUDFDescriptor->getSerializedInstance();
-        const auto returnType = mapJavaUDFDescriptor->getReturnType();
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalUDFOperator>()) {
+        // for creating the handler that the nautilus udf operator needs to execute the udf
+        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalUDFOperator>();
+        const auto udfDescriptor = udfOperator->getUDFDescriptor();
+        const auto methodName = udfDescriptor->getMethodName();
+        const auto udfInputSchema = udfDescriptor->getInputSchema();
+        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
 
-        const auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
-                                                                                                     methodName,
-                                                                                                     inputClassName,
-                                                                                                     outputClassName,
-                                                                                                     byteCodeList,
-                                                                                                     serializedInstance,
-                                                                                                     udfInputSchema,
-                                                                                                     udfOutputSchema,
-                                                                                                     std::nullopt);
-        operatorHandlers.push_back(handler);
-        const auto indexForThisHandler = operatorHandlers.size() - 1;
+        // for converting the Physical UDF Operator to the Nautilus Operator
+        const auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalUDFOperator>();
+        const auto operatorInputSchema = mapOperator->getInputSchema();
+        const auto operatorOutputSchema = mapOperator->getOutputSchema();
 
-        auto mapJavaUDF = lowerMapJavaUDF(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(mapJavaUDF);
-        return mapJavaUDF;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>()) {
-        const auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
-        // We can't copy the descriptor because it is in nes-core and the PhysicalFlatMapJavaUDFOperator is in nes-runtime
-        // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
-        const auto flatMapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
-        const auto className = flatMapJavaUDFDescriptor->getClassName();
-        const auto methodName = flatMapJavaUDFDescriptor->getMethodName();
-        const auto byteCodeList = flatMapJavaUDFDescriptor->getByteCodeList();
-        const auto inputClassName = flatMapJavaUDFDescriptor->getInputClassName();
-        const auto outputClassName = flatMapJavaUDFDescriptor->getOutputClassName();
-        const auto udfInputSchema = flatMapJavaUDFDescriptor->getInputSchema();
-        const auto udfOutputSchema = flatMapJavaUDFDescriptor->getOutputSchema();
-        const auto serializedInstance = flatMapJavaUDFDescriptor->getSerializedInstance();
-        const auto returnType = flatMapJavaUDFDescriptor->getReturnType();
+        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
+            #ifdef ENABLE_JNI
+            // creating the java udf handler
+            const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+            const auto className = javaUDFDescriptor->getClassName();
+            const auto byteCodeList = javaUDFDescriptor->getByteCodeList();
+            const auto inputClassName = javaUDFDescriptor->getInputClassName();
+            const auto outputClassName = javaUDFDescriptor->getOutputClassName();
+            const auto serializedInstance = javaUDFDescriptor->getSerializedInstance();
+            const auto returnType = javaUDFDescriptor->getReturnType();
 
-        const auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
-                                                                                                     methodName,
-                                                                                                     inputClassName,
-                                                                                                     outputClassName,
-                                                                                                     byteCodeList,
-                                                                                                     serializedInstance,
-                                                                                                     udfInputSchema,
-                                                                                                     udfOutputSchema,
-                                                                                                     std::nullopt);
-        operatorHandlers.push_back(handler);
-        const auto indexForThisHandler = operatorHandlers.size() - 1;
+            const auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
+                                                                                                         methodName,
+                                                                                                         inputClassName,
+                                                                                                         outputClassName,
+                                                                                                         byteCodeList,
+                                                                                                         serializedInstance,
+                                                                                                         udfInputSchema,
+                                                                                                         udfOutputSchema,
+                                                                                                         std::nullopt);
 
-        auto flatMapJavaUDF = lowerFlatMapJavaUDF(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(flatMapJavaUDF);
-        return flatMapJavaUDF;
-#endif// ENABLE_JNI
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapPythonUDFOperator>()) {
-        const auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapPythonUDFOperator>();
-        const auto mapPythonUDFDescriptor = mapOperator->getPythonUDFDescriptor();
-        const auto functionName = mapPythonUDFDescriptor->getMethodName();
-        const auto functionString = mapPythonUDFDescriptor->getFunctionString();
-        const auto inputSchema = mapPythonUDFDescriptor->getInputSchema();
-        const auto outputSchema = mapPythonUDFDescriptor->getOutputSchema();
+            operatorHandlers.push_back(handler);
+            const auto indexForThisHandler = operatorHandlers.size() - 1;
 
-        const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
-                                                                                                       functionName,
-                                                                                                       inputSchema,
-                                                                                                       outputSchema);
-        operatorHandlers.push_back(handler);
-        const auto indexForThisHandler = operatorHandlers.size() - 1;
+            if(operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUDFOperator>()) {
+                auto mapJavaUDF = std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(indexForThisHandler,
+                                                                                              operatorInputSchema,
+                                                                                              operatorOutputSchema);
+                parentOperator->setChild(mapJavaUDF);
+                return mapJavaUDF;
+            } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>()) {
+                auto flatMapJavaUDF = std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(indexForThisHandler,
+                                                                                                      operatorInputSchema,
+                                                                                                      operatorOutputSchema);
+                parentOperator->setChild(flatMapJavaUDF);
+                return flatMapJavaUDF;
+            }
+            #endif// ENABLE_JNI
+            NES_NOT_IMPLEMENTED();
+        #ifdef NAUTILUS_PYTHON_UDF_ENABLED
+        } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>()) {
+            // creating the python udf handler
+            const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
+            const auto functionString = pythonUDFDescriptor->getFunctionString();
 
-        auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(mapPythonUDF);
-        return mapPythonUDF;
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+            const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
+                                                                                                           methodName,
+                                                                                                           udfInputSchema,
+                                                                                                           udfOutputSchema);
+            operatorHandlers.push_back(handler);
+            const auto indexForThisHandler = operatorHandlers.size() - 1;
+
+            // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
+            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(indexForThisHandler, operatorInputSchema, operatorOutputSchema);
+            parentOperator->setChild(mapPythonUDF);
+            return mapPythonUDF;
+        }
+        #endif// NAUTILUS_PYTHON_UDF_ENABLED
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
                         ->getOperatorHandler()
@@ -655,44 +643,6 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                                                     aggregationFunctions,
                                                                                     handlerIndex);
 }
-
-#ifdef ENABLE_JNI
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                                  uint64_t handlerIndex) {
-    const auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUDFOperator>();
-    const auto operatorInputSchema = mapOperator->getInputSchema();
-    const auto operatorOutputSchema = mapOperator->getOutputSchema();
-
-    return std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(handlerIndex, operatorInputSchema, operatorOutputSchema);
-}
-
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                      const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                                      uint64_t handlerIndex) {
-    const auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
-    const auto operatorInputSchema = flatMapOperator->getInputSchema();
-    const auto operatorOutputSchema = flatMapOperator->getOutputSchema();
-
-    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(handlerIndex,
-                                                                           operatorInputSchema,
-                                                                           operatorOutputSchema);
-}
-#endif// ENABLE_JNI
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerMapPythonUDF(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                                  uint64_t handlerIndex) {
-    const auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapPythonUDFOperator>();
-    const auto operatorInputSchema = mapOperator->getInputSchema();
-    const auto operatorOutputSchema = mapOperator->getOutputSchema();
-
-    return std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(handlerIndex, operatorInputSchema, operatorOutputSchema);
-}
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {

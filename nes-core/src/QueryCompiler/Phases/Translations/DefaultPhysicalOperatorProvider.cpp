@@ -279,7 +279,7 @@ void DefaultPhysicalOperatorProvider::lowerJavaUDFMapOperator(const QueryPlanPtr
     auto mapJavaUDFOperator = operatorNode->as<MapJavaUDFLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUDFOperator::create(mapJavaUDFOperator->getInputSchema(),
                                                                                      mapJavaUDFOperator->getOutputSchema(),
-                                                                                     mapJavaUDFOperator->getJavaUDFDescriptor());
+                                                                                     mapJavaUDFOperator->getUDFDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -289,17 +289,17 @@ void DefaultPhysicalOperatorProvider::lowerJavaUDFFlatMapOperator(const QueryPla
     auto physicalMapOperator =
         PhysicalOperators::PhysicalFlatMapJavaUDFOperator::create(flatMapJavaUDFOperator->getInputSchema(),
                                                                   flatMapJavaUDFOperator->getOutputSchema(),
-                                                                  flatMapJavaUDFOperator->getJavaUDFDescriptor());
+                                                                  flatMapJavaUDFOperator->getUDFDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 void DefaultPhysicalOperatorProvider::lowerPythonUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapPythonUDFOperator = operatorNode->as<MapPythonUDFLogicalOperatorNode>();
-    auto physicalPythonUDFlMapOperator = PhysicalOperators::PhysicalMapPythonUDFOperator::create(mapPythonUDFOperator->getInputSchema(),
+    auto physicalPythonUDFMapOperator = PhysicalOperators::PhysicalMapPythonUDFOperator::create(mapPythonUDFOperator->getInputSchema(),
                                                                                                 mapPythonUDFOperator->getOutputSchema(),
-                                                                                                mapPythonUDFOperator->getPythonUDFDescriptor());
-    operatorNode->replace(physicalPythonUDFlMapOperator);
+                                                                                                mapPythonUDFOperator->getUDFDescriptor());
+    operatorNode->replace(physicalPythonUDFMapOperator);
 }
 #endif// NAUTILUS_PYTHON_UDF_ENABLED
 

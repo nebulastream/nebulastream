@@ -36,8 +36,9 @@
 
 namespace NES {
 
-PythonUDFLogicalOperator::PythonUDFLogicalOperator(const Catalogs::UDF::PythonUdfDescriptorPtr pythonUDFDescriptor, OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), pythonUDFDescriptor(pythonUDFDescriptor) {}
+PythonUDFLogicalOperator::PythonUDFLogicalOperator(const Catalogs::UDF::PythonUdfDescriptorPtr& pythonUDFDescriptor,
+                                                   OperatorId id)
+    : OperatorNode(id), UDFLogicalOperator(pythonUDFDescriptor,id), pythonUDFDescriptor(pythonUDFDescriptor) {}
 
 void PythonUDFLogicalOperator::inferStringSignature() {
     NES_TRACE("PythonUDFLogicalOperator: Inferring String signature for {}", toString());
@@ -49,33 +50,15 @@ void PythonUDFLogicalOperator::inferStringSignature() {
     std::stringstream signatureStream;
     auto childSignature = child->getHashBasedSignature();
 
+    auto pythonUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::PythonUDFDescriptor>(getUDFDescriptor());
     auto& functionName = pythonUDFDescriptor->getMethodName();
     auto& functionString = pythonUDFDescriptor->getFunctionString();
-    signatureStream << "PYTHON_UDF_MAP(functionName=" + functionName + ", functionString=" + functionString + ")."
+    signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")."
                     << *childSignature.begin()->second.begin();
 
     //Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
-}
-
-bool PythonUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    // Set the input schema.
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
-        return false;
-    }
-    // The output schema of this operation is determined by the Python UDF.
-    outputSchema->clear();
-    outputSchema->copyFields(pythonUDFDescriptor->getOutputSchema());
-    // Update output schema by changing the qualifier and corresponding attribute names
-    const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema->fields) {
-        //Extract field name without qualifier
-        auto fieldName = field->getName();
-        //Add new qualifier name to the field and update the field name
-        field->setName(newQualifierName + fieldName);
-    }
-    return true;
 }
 
 Catalogs::UDF::PythonUDFDescriptorPtr PythonUDFLogicalOperator::getPythonUDFDescriptor() const { return pythonUDFDescriptor; }

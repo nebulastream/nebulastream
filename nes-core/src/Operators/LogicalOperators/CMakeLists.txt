@@ -34,6 +34,7 @@ add_source_files(nes-core
         PythonUDFLogicalOperator.cpp
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
+        UDFLogicalOperator.cpp
         )
 
 add_subdirectory(CEP)
