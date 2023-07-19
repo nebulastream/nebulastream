@@ -238,11 +238,13 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             const auto indexForThisHandler = operatorHandlers.size() - 1;
 
             // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
-            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(indexForThisHandler, operatorInputSchema, operatorOutputSchema);
+            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(indexForThisHandler,
+                                                                                              operatorInputSchema,
+                                                                                              operatorOutputSchema);
             parentOperator->setChild(mapPythonUDF);
             return mapPythonUDF;
-        }
         #endif// NAUTILUS_PYTHON_UDF_ENABLED
+        }
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
                         ->getOperatorHandler()

@@ -154,7 +154,7 @@ class LowerPhysicalToNautilusOperators {
     lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 #endif
-    
+
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;
     };
