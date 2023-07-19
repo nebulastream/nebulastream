@@ -22,9 +22,11 @@
 #include <memory>
 #include <string>
 
+#ifdef ENABLE_ARROW_BUILD
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
+#endif
 
 namespace NES {
 
@@ -105,6 +107,7 @@ class FileSink : public SinkMedium {
      */
     bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
 
+#ifdef ENABLE_ARROW_BUILD
     /**
      * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
      * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
@@ -122,6 +125,7 @@ class FileSink : public SinkMedium {
     arrow::Status openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
                                 std::shared_ptr<arrow::Schema> arrowSchema,
                                 std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
+#endif
 
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;

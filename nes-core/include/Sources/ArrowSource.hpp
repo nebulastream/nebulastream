@@ -22,8 +22,6 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 
-#include <chrono>
-#include <fstream>
 #include <string>
 
 #include <arrow/api.h>

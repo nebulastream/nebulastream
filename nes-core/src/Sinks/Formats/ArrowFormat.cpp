@@ -21,14 +21,11 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <utility>
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
 
 namespace NES {
 

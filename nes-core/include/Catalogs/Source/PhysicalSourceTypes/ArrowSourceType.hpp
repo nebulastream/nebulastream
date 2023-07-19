@@ -28,7 +28,7 @@ using ArrowSourceTypePtr = std::shared_ptr<ArrowSourceType>;
 
 /**
  * @brief Configuration object for Arrow source config
- * define configurations for a Arrow source, i.e. this source reads from data from a Arrow file
+ * define configurations for a Arrow IPC file source, i.e. this source reads from data from an Arrow IPC file
  */
 class ArrowSourceType : public PhysicalSourceType {
   public:
