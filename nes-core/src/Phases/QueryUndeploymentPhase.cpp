@@ -79,9 +79,9 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(sharedQueryId);
 
-    for (auto entry : resourceMap) {
-        NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", entry.second, entry.first);
-        topology->increaseResources(entry.first, entry.second);
+    for (const auto [id, resourceAmount] : resourceMap) {
+        NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);
+        topology->increaseResources(id, resourceAmount);
     }
 
     if (!globalExecutionPlan->removeQuerySubPlans(sharedQueryId)) {
@@ -91,10 +91,10 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     }
 }
 
-bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
+bool QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
                                        const std::vector<ExecutionNodePtr>& executionNodes,
                                        SharedQueryPlanStatus sharedQueryPlanStatus) {
-    NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", queryId);
+    NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", sharedQueryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
@@ -121,11 +121,11 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
         }
 
         //todo 3916: this function als oalways returns true if there is no exception thrown
-        bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queryTerminationType, queueForExecutionNode);
+        bool success = workerRPCClient->stopQueryAsync(rpcAddress, sharedQueryId, queryTerminationType, queueForExecutionNode);
         if (success) {
-            NES_DEBUG("QueryUndeploymentPhase::markQueryForStop {} to {} successful", queryId, rpcAddress);
+            NES_DEBUG("QueryUndeploymentPhase::markQueryForStop {} to {} successful", sharedQueryId, rpcAddress);
         } else {
-            NES_ERROR("QueryUndeploymentPhase::markQueryForStop  {} to {} failed", queryId, rpcAddress);
+            NES_ERROR("QueryUndeploymentPhase::markQueryForStop  {} to {} failed", sharedQueryId, rpcAddress);
             return false;
         }
         completionQueues[queueForExecutionNode] = 1;
@@ -136,7 +136,8 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
     try {
         //todo 3916: this function returns always true: change that
         bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
-        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
+        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}",
+                  sharedQueryId, result);
     } catch (Exceptions::RpcException& e) {
         std::vector<uint64_t> failedRpcsExecutionNodeIds;
         for (const auto& failedRpcInfo : e.getFailedCalls()) {
@@ -148,8 +149,8 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
     return true;
 }
 
-bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", queryId);
+bool QueryUndeploymentPhase::undeployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+    NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", sharedQueryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
@@ -164,11 +165,11 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
                   executionNode->getId(),
                   rpcAddress);
-        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, queueForExecutionNode);
+        bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, sharedQueryId, queueForExecutionNode);
         if (success) {
-            NES_DEBUG("QueryUndeploymentPhase::undeployQuery query {} to {} successful", queryId, rpcAddress);
+            NES_DEBUG("QueryUndeploymentPhase::undeployQuery query {} to {} successful", sharedQueryId, rpcAddress);
         } else {
-            NES_ERROR("QueryUndeploymentPhase::undeployQuery {} to {} failed", queryId, rpcAddress);
+            NES_ERROR("QueryUndeploymentPhase::undeployQuery {} to {} failed", sharedQueryId, rpcAddress);
             return false;
         }
 
@@ -177,7 +178,8 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
     }
     try {
         bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
-        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
+        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}",
+                  sharedQueryId, result);
         return result;
     } catch (Exceptions::RpcException& e) {
         std::vector<uint64_t> failedRpcsExecutionNodeIds;
