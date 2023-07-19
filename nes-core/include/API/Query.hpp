@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
-#include "Catalogs/UDF/PythonUDFDescriptor.hpp"
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #endif// NAUTILUS_PYTHON_UDF_ENABLED
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>

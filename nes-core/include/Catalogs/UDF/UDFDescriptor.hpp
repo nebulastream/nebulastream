@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <string>
@@ -27,7 +28,9 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
 class UDFDescriptor {
   public:
-    explicit UDFDescriptor(const std::string& methodName) : methodName(methodName){};
+    explicit UDFDescriptor(const std::string& methodName,
+                           const SchemaPtr& inputSchema,
+                           const SchemaPtr& outputSchema);
 
     virtual ~UDFDescriptor() = default;
 
@@ -43,6 +46,33 @@ class UDFDescriptor {
     */
     [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
 
+    /**
+     * @brief Return the output schema of the map UDF operation.
+     *
+     * The output schema must correspond to the return type of the UDF method.
+     *
+     * @return A SchemaPtr instance describing the output schema of the UDF method.
+     */
+    const SchemaPtr& getOutputSchema() const { return outputSchema; }
+
+    /**
+     * @brief Return the input schema of the map UDF operation.
+     *
+     * The input schema must correspond to the input type of the UDF method.
+     *
+     * @return A SchemaPtr instance describing the input schema of the UDF method.
+     */
+    const SchemaPtr& getInputSchema() const { return inputSchema; }
+
+    /**
+     * @brief Set the input schema of the map UDF operation.
+     *
+     * The input schema must correspond to the input type of the UDF method.
+     *
+     * @param inputSchema A SchemaPtr instance describing the input schema of the UDF method.
+     */
+    void setInputSchema(const SchemaPtr& inputSchema);
+
     template<class UDFDescriptor>
     static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr) {
         return std::dynamic_pointer_cast<UDFDescriptor>(ptr);
@@ -51,6 +81,8 @@ class UDFDescriptor {
   private:
     const std::string methodName;
     const DataTypePtr returnType;
+    SchemaPtr inputSchema;
+    const SchemaPtr outputSchema;
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_

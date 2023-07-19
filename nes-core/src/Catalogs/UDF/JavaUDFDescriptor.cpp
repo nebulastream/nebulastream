@@ -26,13 +26,11 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
                                      const SchemaPtr outputSchema,
                                      const std::string& inputClassName,
                                      const std::string& outputClassName)
-    : UDFDescriptor(methodName), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
-      inputSchema(inputSchema), outputSchema(outputSchema), inputClassName(inputClassName), outputClassName(outputClassName) {
+    : UDFDescriptor(methodName, inputSchema, outputSchema), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
+      inputClassName(inputClassName), outputClassName(outputClassName) {
+
     if (className.empty()) {
         throw UDFException("The class name of a Java UDF must not be empty");
-    }
-    if (methodName.empty()) {
-        throw UDFException("The method name of a Java UDF must not be empty");
     }
     if (inputClassName.empty()) {
         throw UDFException("The class name of the UDF method input type must not be empty.");
@@ -60,20 +58,12 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
             throw UDFException("The bytecode of a class must not not be empty");
         }
     }
-    if (outputSchema->empty()) {
-        throw UDFException("The output schema of a Java UDF must not be empty");
-    }
-    // We allow the input schema to be empty for now so that we don't have to serialize it in the Java client. A possible
-    // improvement would be to serialize it in the Java client and compare it to the output schema of the parent operator.
 }
 
 bool JavaUDFDescriptor::operator==(const JavaUDFDescriptor& other) const {
     return className == other.className && getMethodName() == other.getMethodName()
-        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true)
+        && getInputSchema()->equals(other.getInputSchema(), true) && getOutputSchema()->equals(other.getOutputSchema(), true)
         && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList
         && inputClassName == other.inputClassName && outputClassName == other.outputClassName;
 }
-
-void JavaUDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { JavaUDFDescriptor::inputSchema = inputSchema; }
-
 }// namespace NES::Catalogs::UDF

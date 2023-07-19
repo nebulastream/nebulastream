@@ -15,4 +15,5 @@ add_source_files(nes-core
         UDFCatalog.cpp
         JavaUDFDescriptor.cpp
         PythonUDFDescriptor.cpp
+        UDFDescriptor.cpp
 )
