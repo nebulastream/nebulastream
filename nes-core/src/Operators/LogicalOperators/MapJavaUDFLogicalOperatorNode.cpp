@@ -20,9 +20,9 @@
 
 namespace NES {
 
-MapJavaUDFLogicalOperatorNode::MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor,
+MapJavaUDFLogicalOperatorNode::MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor,
                                                              OperatorId id)
-    : OperatorNode(id), JavaUDFLogicalOperator(javaUdfDescriptor, id) {}
+    : OperatorNode(id), JavaUDFLogicalOperator(javaUDFDescriptor, id) {}
 
 std::string MapJavaUDFLogicalOperatorNode::toString() const {
     std::stringstream ss;

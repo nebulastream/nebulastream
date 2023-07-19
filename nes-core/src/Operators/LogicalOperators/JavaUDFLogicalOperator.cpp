@@ -22,8 +22,8 @@
 
 namespace NES {
 
-JavaUDFLogicalOperator::JavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUDFDescriptor(javaUDFDescriptor) {}
+JavaUDFLogicalOperator::JavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUDFDescriptor, OperatorId id)
+    : OperatorNode(id), UDFLogicalOperator(javaUDFDescriptor, id), javaUDFDescriptor(javaUDFDescriptor) {}
 
 void JavaUDFLogicalOperator::inferStringSignature() {
     NES_ASSERT(children.size() == 1, "JavaUDFLogicalOperator should have exactly 1 child.");
@@ -70,27 +70,6 @@ void JavaUDFLogicalOperator::inferStringSignature() {
                     << "." << *child->getHashBasedSignature().begin()->second.begin();
     auto signature = signatureStream.str();
     hashBasedSignature[stringHash(signature)] = {signature};
-}
-
-bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    // Set the input schema.
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
-        return false;
-    }
-    // The output schema of this operation is determined by the Java UDF.
-    outputSchema->clear();
-    outputSchema->copyFields(javaUDFDescriptor->getOutputSchema());
-    // Update output schema by changing the qualifier and corresponding attribute names
-    const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema->fields) {
-        //Extract field name without qualifier
-        auto fieldName = field->getName();
-        //Add new qualifier name to the field and update the field name
-        field->setName(newQualifierName + fieldName);
-    }
-
-    // TODO #3481 Check if the UDF input schema corresponds to the operator input schema of the parent operator
-    return true;
 }
 
 Catalogs::UDF::JavaUDFDescriptorPtr JavaUDFLogicalOperator::getJavaUDFDescriptor() const { return javaUDFDescriptor; }

@@ -78,6 +78,19 @@ class UDFDescriptor {
         return std::dynamic_pointer_cast<UDFDescriptor>(ptr);
     }
 
+    /**
+     * @brief Checks if the current udf descriptor is of type UDFDescriptor
+     * @tparam NodeType
+     * @return bool true if node is of NodeType
+     */
+    template<class UDFDescriptor>
+    bool instanceOf() {
+        if (dynamic_cast<UDFDescriptor*>(this)) {
+            return true;
+        };
+        return false;
+    };
+
   private:
     const std::string methodName;
     const DataTypePtr returnType;

@@ -17,28 +17,11 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalMapJavaUDFOperator::PhysicalMapJavaUDFOperator(OperatorId id,
-                                                       SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      javaUDFDescriptor(std::move(javaUDFDescriptor)) {}
-
-PhysicalOperatorPtr PhysicalMapJavaUDFOperator::create(SchemaPtr inputSchema,
-                                                       SchemaPtr outputSchema,
-                                                       Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, javaUDFDescriptor);
-}
-
-PhysicalOperatorPtr PhysicalMapJavaUDFOperator::create(OperatorId id,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
-                                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor) {
-    return std::make_shared<PhysicalMapJavaUDFOperator>(id, inputSchema, outputSchema, javaUDFDescriptor);
-}
+                                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor)
+    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(javaUDFDescriptor)) {}
 
 std::string PhysicalMapJavaUDFOperator::toString() const { return "PhysicalMapJavaUDFOperator"; }
 
-OperatorNodePtr PhysicalMapJavaUDFOperator::copy() { return create(id, inputSchema, outputSchema, javaUDFDescriptor); }
-
-Catalogs::UDF::JavaUDFDescriptorPtr PhysicalMapJavaUDFOperator::getJavaUDFDescriptor() { return javaUDFDescriptor; }
 }// namespace NES::QueryCompilation::PhysicalOperators

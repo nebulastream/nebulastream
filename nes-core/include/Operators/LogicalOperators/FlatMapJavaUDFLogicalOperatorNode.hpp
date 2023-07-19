@@ -32,7 +32,7 @@ class FlatMapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
+    FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUDFDescriptor, OperatorId id);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JAVAUDFLOGICALOPERATOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JAVAUDFLOGICALOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -27,7 +27,7 @@ using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 /**
  * Logical operator node for a java udf. This class acts as a parent class for any java udf logical operator node
  */
-class JavaUDFLogicalOperator : public LogicalUnaryOperatorNode {
+class JavaUDFLogicalOperator : public UDFLogicalOperator {
 
   public:
     /**
@@ -35,7 +35,7 @@ class JavaUDFLogicalOperator : public LogicalUnaryOperatorNode {
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    JavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
+    JavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor, OperatorId id);
 
     /**
      * @see LogicalOperatorNode#inferStringSignature
@@ -47,13 +47,6 @@ class JavaUDFLogicalOperator : public LogicalUnaryOperatorNode {
      * @return The descriptor of the Java UDF used in the map operation.
      */
     Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor() const;
-
-    /**
-     * @see LogicalUnaryOperatorNode#inferSchema
-     *
-     * Sets the output schema contained in the JavaUDFDescriptor as the output schema of the operator.
-     */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
 
     /**
      * @see OperatorNode#copy

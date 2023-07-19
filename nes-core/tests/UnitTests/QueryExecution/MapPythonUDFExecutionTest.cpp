@@ -27,7 +27,7 @@ using namespace NES;
     // Dump IR
     constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-    class MapPythonUDFQueryExecutionTest : public Testing::NESBaseTest {
+    class MapPythonUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
       public:
         static void SetUpTestCase() {
             NES::Logger::setupLogging("MapPythonUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -35,7 +35,7 @@ using namespace NES;
         }
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::TestWithErrorHandling::SetUp();
             NES_DEBUG("Setting up Nautilus Compiler");
             executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
                 QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
@@ -44,7 +44,7 @@ using namespace NES;
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            Testing::NESBaseTest::TearDown();
+            Testing::TestWithErrorHandling::TearDown();
             NES_DEBUG("QueryExecutionTest: Tear down MapPythonUDFQueryExecutionTest test case.");
             ASSERT_TRUE(executionEngine->stop());
         }

@@ -20,7 +20,7 @@
 
 namespace NES {
 
-FlatMapJavaUDFLogicalOperatorNode::FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
+FlatMapJavaUDFLogicalOperatorNode::FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor,
                                                                      OperatorId id)
     : OperatorNode(id), JavaUDFLogicalOperator(javaUDFDescriptor, id) {}
 
