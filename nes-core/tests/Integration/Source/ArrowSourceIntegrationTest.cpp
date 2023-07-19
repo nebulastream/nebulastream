@@ -34,7 +34,7 @@ class ArrowSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ArrowSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup ArrowSourceIntegrationTest test class.");
+        NES_INFO("Setup ArrowSourceIntegrationTest test class.");
     }
 };
 
@@ -66,14 +66,14 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_INFO2("ArrowIntegrationTest: Start coordinator");
+    NES_INFO("ArrowIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     crd->getSourceCatalogService()->registerLogicalSource("arrow_data", testSchema);
 
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("ArrowIntegrationTest: Coordinator started successfully");
-    NES_DEBUG2("ArrowIntegrationTest: Start worker 1");
+    NES_DEBUG("ArrowIntegrationTest: Coordinator started successfully");
+    NES_DEBUG("ArrowIntegrationTest: Start worker 1");
 
 
     // setup Arrow source
@@ -91,7 +91,7 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
 
     ASSERT_TRUE(retStart1);
-    NES_INFO2("ArrowIntegrationTest: Worker1 started successfully");
+    NES_INFO("ArrowIntegrationTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -108,7 +108,7 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("ArrowSourceIntegrationTest: Remove query");
+    NES_INFO("ArrowSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::string const expectedContent =
@@ -179,8 +179,8 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO2("ArrowSourceIntegrationTest: content={}", content);
-    NES_INFO2("ArrowSourceIntegrationTest: expContent={}", expectedContent);
+    NES_INFO("ArrowSourceIntegrationTest: content={}", content);
+    NES_INFO("ArrowSourceIntegrationTest: expContent={}", expectedContent);
 
     EXPECT_EQ(content, expectedContent);
 

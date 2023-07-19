@@ -19,4 +19,10 @@ add_source_files(nes-core
         TextFormat.cpp
 )
 
+if (NES_USE_ARROW)
+    add_source_files(nes-core
+            ArrowFormat.cpp
+            )
+endif ()
+
 add_subdirectory(FormatIterators)

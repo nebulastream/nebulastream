@@ -16,6 +16,7 @@
 #include <Network/NetworkSink.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Sinks/Formats/ArrowFormat.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -119,6 +120,29 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
+
+#ifdef ENABLE_ARROW_BUILD
+DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
+                                   QueryId queryId,
+                                   QuerySubPlanId querySubPlanId,
+                                   const Runtime::NodeEnginePtr &nodeEngine,
+                                   uint32_t activeProducers,
+                                   const std::string &filePath,
+                                   bool append,
+                                   FaultToleranceType faultToleranceType,
+                                   uint64_t numberOfOrigins) {
+    SinkFormatPtr format = std::make_shared<ArrowFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<FileSink>(format,
+                                      nodeEngine,
+                                      activeProducers,
+                                      filePath,
+                                      append,
+                                      queryId,
+                                      querySubPlanId,
+                                      faultToleranceType,
+                                      numberOfOrigins);
+}
+#endif
 
 DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               QueryId queryId,

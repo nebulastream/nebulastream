@@ -97,9 +97,9 @@ class TupleBuffer {
      * @brief Creates a TupleBuffer of length bytes starting at ptr address.
      *
      * @param ptr    resource's address.
-     * @param lenght the size of the allocated memory.
+     * @param length the size of the allocated memory.
      * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
-     *               which is the caller's responsability.
+     *               which is the caller's responsibility.
      *
      */
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);

@@ -50,11 +50,11 @@ ArrowSourceType::ArrowSourceType()
       gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
                                                                                GatheringMode::INTERVAL_MODE,
                                                                                "Gathering mode of the source.")) {
-  NES_INFO2("ArrowSourceTypeConfig: Init source config object with default values.");
+  NES_INFO("ArrowSourceTypeConfig: Init source config object with default values.");
 }
 
 ArrowSourceType::ArrowSourceType(std::map<std::string, std::string> sourceConfigMap) : ArrowSourceType() {
-    NES_INFO2("ArrowSourceType: Init default Arrow source config object with values from command line.");
+    NES_INFO("ArrowSourceType: Init default Arrow source config object with values from command line.");
     if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
     } else {
@@ -82,7 +82,7 @@ ArrowSourceType::ArrowSourceType(std::map<std::string, std::string> sourceConfig
 }
 
 ArrowSourceType::ArrowSourceType(Yaml::Node yamlConfig) : ArrowSourceType() {
-    NES_INFO2("ArrowSourceType: Init default Arrow source config object with values from YAML file.");
+    NES_INFO("ArrowSourceType: Init default Arrow source config object with values from YAML file.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
         filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>());

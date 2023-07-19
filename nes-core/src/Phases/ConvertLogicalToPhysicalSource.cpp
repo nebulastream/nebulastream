@@ -177,7 +177,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
 #endif
 #ifdef ENABLE_ARROW_BUILD
     } else if (sourceDescriptor->instanceOf<ArrowSourceDescriptor>()) {
-        NES_INFO2("ConvertLogicalToPhysicalSource: Creating CSV file source");
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating Arrow file source");
         const ArrowSourceDescriptorPtr arrowSourceDescriptor = sourceDescriptor->as<ArrowSourceDescriptor>();
         return createArrowSource(arrowSourceDescriptor->getSchema(),
                                  bufferManager,
