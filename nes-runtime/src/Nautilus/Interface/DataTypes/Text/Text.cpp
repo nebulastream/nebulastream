@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/Common.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
@@ -373,26 +374,24 @@ const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
     return FunctionCall<>("textSimilarTo", textSimilarTo, rawReference, pattern.value->rawReference);
 }
 
-bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
-    std::stringstream patternAsString;
-    patternAsString << pattern;
-    NES_DEBUG("Checking in textLike if {} and {} are a match.", text->c_str(), patternAsString.str());
-    auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
-    auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
-    auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
-    auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
+bool textLike(const TextValue* text, TextValue* inputPattern, Boolean caseSensitive) {
+    auto pattern = std::string(inputPattern->c_str(), inputPattern->length());
+    NES_DEBUG("Checking in textLike if {} and {} are a match.", text->c_str(), pattern);
+
+    Util::findAndReplaceAll(pattern, "_", ".");
+    Util::findAndReplaceAll(pattern, "%", ".*?");
+    pattern = "^" + pattern + "$";
 
     std::string target = std::string(text->c_str(), text->length());
     NES_DEBUG("Received the following source string {}", target);
-    std::string strPattern = std::string(likeRegex->c_str(), likeRegex->length());
-    NES_DEBUG("Received the following source string {}", strPattern);
+    NES_DEBUG("Received the following source string {}", pattern);
     // LIKE and GLOB adoption requires syntax conversion functions
-    // would make regex case in sensitive for ILIKE
+    // would make regex case in sensitive for LIKE
     if (caseSensitive.getValue()) {
-        std::regex regexPattern(strPattern, std::regex::icase);
+        std::regex regexPattern(pattern, std::regex::icase);
         return std::regex_match(target, regexPattern);
     } else {
-        std::regex regexPattern(strPattern);
+        std::regex regexPattern(pattern);
         return std::regex_match(target, regexPattern);
     }
 }

@@ -209,24 +209,22 @@ TEST_F(TextTypeTest, similarToTestFail) {
     EXPECT_TRUE(similarToResult->getTypeIdentifier()->isType<Boolean>());
 }
 
-TEST_F(TextTypeTest, DISABLED_likeTest) {
+TEST_F(TextTypeTest, likeTest) {
     auto likeTest1 = Value<Text>("abcde");
     auto likeTest2 = Value<Text>("%bcd%");
     auto caseSensitiveFlag = Value<Boolean>(false);
     auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) true);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
-    //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
 }
 
-TEST_F(TextTypeTest, DISABLED_likeTestFalse) {
+TEST_F(TextTypeTest, likeTestFalse) {
     auto likeTest1 = Value<Text>("abcde");
     auto likeTest2 = Value<Text>("_bc_");
     auto caseSensitiveFlag = Value<Boolean>(false);
     auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) false);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
-    //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
 }
 
 }// namespace NES::Nautilus
