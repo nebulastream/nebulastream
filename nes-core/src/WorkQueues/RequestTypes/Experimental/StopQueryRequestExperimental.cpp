@@ -31,29 +31,38 @@
 
 namespace NES {
 
-StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId, const QueryId queryId,
+StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId,
+                                                           const QueryId queryId,
                                                            const size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
-                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : AbstractRequest(
-        requestId,
-        {
-            ResourceType::QueryCatalogService,
-            ResourceType::GlobalExecutionPlan,
-            ResourceType::Topology,
-            ResourceType::GlobalQueryPlan,
-            ResourceType::UdfCatalog,
-            ResourceType::SourceCatalog,
-        },
-        maxRetries),
+                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                           std::promise<StopQueryResponse> responsePromise)
+    : AbstractRequest(requestId,
+                      {
+                          ResourceType::QueryCatalogService,
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                      },
+                      maxRetries,
+                      std::move(responsePromise)),
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
-StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId, const QueryId queryId,
+StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId,
+                                                         const QueryId queryId,
                                                          const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
-                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(requestId, queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
+                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                         std::promise<StopQueryResponse> responsePromise) {
+    return std::make_shared<StopQueryRequestExperimental>(requestId,
+                                                          queryId,
+                                                          maxRetries,
+                                                          std::move(workerRpcClient),
+                                                          std::move(coordinatorConfiguration),
+                                                          std::move(responsePromise));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
@@ -166,11 +175,5 @@ void StopQueryRequestExperimental::postRollbackHandle(const RequestExecutionExce
 void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
-}
-
-StopQueryRequestExperimental::StopQueryRequestExperimental(StopQueryRequestExperimental&& other) noexcept
-    : AbstractRequest(std::move(other)) {
-    //todo: move members of subclass
-
 }
 }// namespace NES

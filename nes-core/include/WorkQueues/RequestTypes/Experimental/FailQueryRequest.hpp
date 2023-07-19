@@ -20,9 +20,10 @@ class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 namespace Experimental {
-class FailQueryResponse : public AbstractRequestResponse {
-  public:
-    bool success;
+
+//a response to the creator of the request
+struct FailQueryResponse : public AbstractRequestResponse {
+    SharedQueryId sharedQueryId;
 };
 
 class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
@@ -34,11 +35,27 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
+     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
     FailQueryRequest(RequestId requestId, NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
                      uint8_t maxRetries,
-                     NES::WorkerRPCClientPtr workerRpcClient);
+                     NES::WorkerRPCClientPtr workerRpcClient, std::promise<FailQueryResponse> responsePromise);
+
+    /**
+    * @brief creates a new FailQueryRequest object
+    * @param requestId: the id assigned to this request
+    * @param queryId: The id of the query that failed
+    * @param failedSubPlanId: The id of the subplan that caused the failure
+    * @param maxRetries: Maximum number of retry attempts for the request
+    * @param workerRpcClient: The worker rpc client to be used during undeployment
+    * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
+    * @return a smart pointer to the newly created object
+    */
+    static std::shared_ptr<FailQueryRequest> create(RequestId requestId, NES::QueryId queryId,
+                     NES::QuerySubPlanId failedSubPlanId,
+                     uint8_t maxRetries,
+                     NES::WorkerRPCClientPtr workerRpcClient, std::promise<FailQueryResponse> responsePromise);
 
   protected:
     /**

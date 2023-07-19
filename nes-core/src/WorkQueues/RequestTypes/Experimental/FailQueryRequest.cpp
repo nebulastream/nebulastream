@@ -26,16 +26,34 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(const RequestId requestId, const NES::QueryId queryId,
+FailQueryRequest::FailQueryRequest(const RequestId requestId,
+                                   const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries,
-                                   NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest(requestId, {ResourceType::GlobalQueryPlan,
+                                   NES::WorkerRPCClientPtr workerRpcClient,
+                                   std::promise<FailQueryResponse> responsePromise)
+    : AbstractRequest(requestId,
+                      {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
-                      maxRetries),
+                      maxRetries,
+                      std::move(responsePromise)),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
+
+std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
+                                                           NES::QueryId queryId,
+                                                           NES::QuerySubPlanId failedSubPlanId,
+                                                           uint8_t maxRetries,
+                                                           NES::WorkerRPCClientPtr workerRpcClient,
+                                                           std::promise<FailQueryResponse> responsePromise) {
+    return std::make_shared<FailQueryRequest>(requestId,
+                                              queryId,
+                                              failedSubPlanId,
+                                              maxRetries,
+                                              std::move(workerRpcClient),
+                                              std::move(responsePromise));
+}
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
@@ -46,9 +64,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES:
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) {
-    storageHandler.releaseResources(queryId);
-}
+void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
@@ -60,6 +76,11 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
                                                  + " in the global query plan");
     }
+
+    //respond to the calling service which is the shared query id o the query being undeployed
+    FailQueryResponse response{};
+    response.sharedQueryId = sharedQueryId;
+    responsePromise.set_value(response);
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 

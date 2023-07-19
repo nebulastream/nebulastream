@@ -77,8 +77,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
-class StopQueryResponse : public AbstractRequestResponse {
-  public:
+struct StopQueryResponse : public AbstractRequestResponse {
     bool success;
 };
 /**
@@ -90,7 +89,7 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
     static StopQueryRequestPtr create(RequestId requestId, QueryId queryId,
                                       size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
-                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration, std::promise<StopQueryResponse> responsePromise);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
 
@@ -106,14 +105,11 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
 
     std::string toString();
 
-    ~StopQueryRequestExperimental() = default;
-
-    StopQueryRequestExperimental(StopQueryRequestExperimental&& other) noexcept ;
-  private:
     StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
                                  size_t maxRetries,
                                  WorkerRPCClientPtr workerRpcClient,
-                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration, std::promise<StopQueryResponse> responsePromise);
+  private:
 
     WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;

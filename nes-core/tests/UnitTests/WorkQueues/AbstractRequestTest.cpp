@@ -17,7 +17,6 @@ class DummyRequest : public AbstractRequest<DummyResponse> {
                  uint8_t maxRetries,
                  std::promise<DummyResponse> responsePromise, uint32_t responseValue)
         : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue){};
-    DummyRequest(DummyRequest&& other) noexcept : AbstractRequest(std::move(other)), responseValue(other.responseValue) {};
 
     void executeRequestLogic(NES::StorageHandler&) override {
         responsePromise.set_value(DummyResponse(responseValue));
@@ -69,5 +68,4 @@ TEST_F(AbstractRequestTest, testPromise) {
     thread->join();
     ASSERT_EQ(future.get().number, responseValue);
 }
-
 }// namespace NES

@@ -28,8 +28,10 @@ namespace Configurations {
 class OptimizerConfiguration;
 }
 
-class AbstractRequestResponse {};
+//the base class for the responses to be given to the creator of the request
+struct AbstractRequestResponse {};
 
+//constrain template parameter to be a subclass of AbastractRequestResponse
 template <typename T>
 concept ConceptResponse = std::is_base_of<AbstractRequestResponse, T>::value;
 
@@ -63,13 +65,9 @@ class AbstractRequest {
      * @param requestId: the id of this request
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
+     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
     explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::promise<ResponseType> responsePromise);
-
-    //todo: do we want to keep this constructor?
-    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
-
-    AbstractRequest(AbstractRequest&& other) noexcept ;
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -160,12 +158,6 @@ AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
       requiredResources(requiredResources) {}
 
 template<ConceptResponse ResponseType>
-AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
-                                               const std::vector<ResourceType>& requiredResources,
-                                               const uint8_t maxRetries)
-    : requestId(requestId), responsePromise({}), maxRetries(maxRetries), actualRetries(0), requiredResources(requiredResources) {}
-
-template<ConceptResponse ResponseType>
 void AbstractRequest<ResponseType>::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
@@ -195,15 +187,6 @@ void AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
 template<ConceptResponse ResponseType>
 void AbstractRequest<ResponseType>::preExecution(StorageHandler& storageHandle) {
     storageHandle.acquireResources(requestId, requiredResources);
-}
-
-template<ConceptResponse ResponseType>
-AbstractRequest<ResponseType>::AbstractRequest(AbstractRequest&& other) noexcept {
-    requestId = other.requestId;
-    maxRetries = other.maxRetries;
-    actualRetries = other.actualRetries;
-    requiredResources = std::move(other.requiredResources);
-    responsePromise = std::move(other.responsePromise);
 }
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
