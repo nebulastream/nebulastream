@@ -66,18 +66,18 @@ class QueryUndeploymentPhase {
                                     WorkerRPCClientPtr workerRpcClient);
     /**
      * @brief method remove query from nodes
-     * @param queryId
+     * @param sharedQueryId : the id of the shared query plan
      * @return bool indicating success
      */
-    bool undeployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    bool undeployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to stop a query
-     * @param queryId
+     * @param sharedQueryId : the id of the shared query plan
      * @return bool indicating success
      */
     bool
-    stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus sharedQueryPlanStatus);
+    stopQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus sharedQueryPlanStatus);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
