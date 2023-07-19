@@ -134,7 +134,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
+    auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
@@ -233,7 +233,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
+    auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 

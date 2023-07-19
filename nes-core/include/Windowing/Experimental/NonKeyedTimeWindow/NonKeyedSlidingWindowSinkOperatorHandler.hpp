@@ -28,18 +28,18 @@ class LockFreeMultiOriginWatermarkProcessor;
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
 class WindowTriggerTask;
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
-using GlobalSliceSharedPtr = std::shared_ptr<GlobalSlice>;
+class NonKeyedSlice;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
+using NonKeyedSliceSharedPtr = std::shared_ptr<NonKeyedSlice>;
 
 /**
  * @brief Operator handler for the final window sink of global (non-keyed) sliding windows.
  * This window handler maintains the global slice store and allows the window operator to trigger individual windows.
  */
-class GlobalSlidingWindowSinkOperatorHandler
+class NonKeyedSlidingWindowSinkOperatorHandler
     : public Runtime::Execution::OperatorHandler,
-      public detail::virtual_enable_shared_from_this<GlobalSlidingWindowSinkOperatorHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<GlobalSlidingWindowSinkOperatorHandler, false>;
+      public detail::virtual_enable_shared_from_this<NonKeyedSlidingWindowSinkOperatorHandler, false> {
+    using inherited0 = detail::virtual_enable_shared_from_this<NonKeyedSlidingWindowSinkOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
@@ -48,8 +48,8 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowDefinition
      * @param globalSliceStore
      */
-    GlobalSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                           std::shared_ptr<GlobalSliceStore<GlobalSlice>>& globalSliceStore);
+    NonKeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                           std::shared_ptr<GlobalSliceStore<NonKeyedSlice>>& globalSliceStore);
 
     /**
      * @brief Initializes the operator handler.
@@ -77,7 +77,7 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowTriggerTask WindowTriggerTask to identify the start and end ts of the window
      * @return GlobalSlicePtr
      */
-    GlobalSlicePtr createGlobalSlice(WindowTriggerTask* windowTriggerTask);
+    NonKeyedSlicePtr createGlobalSlice(WindowTriggerTask* windowTriggerTask);
 
     /**
      * @brief This function accesses the global slice store and returns a list of slices,
@@ -85,22 +85,22 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowTriggerTask identifies the window, which we want to trigger.
      * @return std::vector<GlobalSliceSharedPtr> list of global slices.
      */
-    std::vector<GlobalSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
+    std::vector<NonKeyedSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
 
     /**
      * @brief Returns a reference to the global slice store. This should only be used by the generated code,
      * to access functions on the global slice sotre.
      * @return GlobalSliceStore<GlobalSlice>&
      */
-    GlobalSliceStore<GlobalSlice>& getGlobalSliceStore();
+    GlobalSliceStore<NonKeyedSlice>& getGlobalSliceStore();
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
-    ~GlobalSlidingWindowSinkOperatorHandler();
+    ~NonKeyedSlidingWindowSinkOperatorHandler();
 
   private:
     uint64_t entrySize;
-    std::shared_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore;
+    std::shared_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };

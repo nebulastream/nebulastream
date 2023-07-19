@@ -12,12 +12,12 @@
     limitations under the License.
 */
 #include <Exceptions/WindowProcessingException.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 
 namespace NES::Windowing::Experimental {
 
-std::tuple<uint64_t, uint64_t> GlobalSliceStaging::addToSlice(uint64_t sliceEndTs, std::unique_ptr<State> state) {
+std::tuple<uint64_t, uint64_t> NonKeyedSliceStaging::addToSlice(uint64_t sliceEndTs, std::unique_ptr<State> state) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     if (!slicePartitionMap.contains(sliceEndTs)) {
         slicePartitionMap[sliceEndTs] = std::make_unique<Partition>(++sliceIndex);
@@ -29,7 +29,7 @@ std::tuple<uint64_t, uint64_t> GlobalSliceStaging::addToSlice(uint64_t sliceEndT
     return {partition->addedSlices, partition->partialStates.size()};
 }
 
-std::unique_ptr<GlobalSliceStaging::Partition> GlobalSliceStaging::erasePartition(uint64_t sliceEndTs) {
+std::unique_ptr<NonKeyedSliceStaging::Partition> NonKeyedSliceStaging::erasePartition(uint64_t sliceEndTs) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     if (!slicePartitionMap.contains(sliceEndTs)) {
         throw WindowProcessingException("Slice Index " + std::to_string(sliceEndTs) + "not available");
@@ -40,7 +40,7 @@ std::unique_ptr<GlobalSliceStaging::Partition> GlobalSliceStaging::erasePartitio
     return value;
 }
 
-void GlobalSliceStaging::clear() {
+void NonKeyedSliceStaging::clear() {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     slicePartitionMap.clear();
 }

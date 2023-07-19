@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
-class GlobalSliceStaging;
+class NonKeyedSliceStaging;
 class GlobalThreadLocalSliceStore;
 class State;
 /**
@@ -44,7 +44,7 @@ class GlobalSlicePreAggregationHandler
     GlobalSlicePreAggregationHandler(uint64_t windowSize,
                                      uint64_t windowSlide,
                                      const std::vector<OriginId>& origins,
-                                     std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr);
+                                     std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator
@@ -96,7 +96,7 @@ class GlobalSlicePreAggregationHandler
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<GlobalSliceStaging> weakSliceStaging;
+    std::weak_ptr<NonKeyedSliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<GlobalThreadLocalSliceStore>> threadLocalSliceStores;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::unique_ptr<State> defaultState;

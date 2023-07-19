@@ -18,9 +18,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES::Windowing::Experimental {
 
-GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationOperatorHandler(
+NonKeyedThreadLocalPreAggregationOperatorHandler::NonKeyedThreadLocalPreAggregationOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     const std::vector<OriginId> origins,
     std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
@@ -41,22 +41,22 @@ GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationO
     windowSlide = windowType->getSlide().getTime();
 }
 
-GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
+NonKeyedSliceThreadLocalSliceStore& NonKeyedThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
     if (threadLocalSliceStores.size() <= workerId) {
         throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
     }
     return *threadLocalSliceStores[workerId];
 }
 
-void GlobalThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
+void NonKeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                                            uint64_t entrySize) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<GlobalThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
+        auto threadLocal = std::make_unique<NonKeyedSliceThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
         threadLocalSliceStores.push_back(std::move(threadLocal));
     }
 }
 
-void GlobalThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
+void NonKeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                                                              Runtime::Execution::PipelineExecutionContext& ctx,
                                                                              uint64_t workerId,
                                                                              OriginId originId,
@@ -102,13 +102,13 @@ void GlobalThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Run
     }
 }
 
-void GlobalThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void NonKeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                            Runtime::StateManagerPtr,
                                                            uint32_t) {
     NES_DEBUG("start GlobalThreadLocalPreAggregationOperatorHandler");
 }
 
-void GlobalThreadLocalPreAggregationOperatorHandler::stop(
+void NonKeyedThreadLocalPreAggregationOperatorHandler::stop(
     Runtime::QueryTerminationType queryTerminationType,
     Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("shutdown GlobalThreadLocalPreAggregationOperatorHandler: {}", queryTerminationType);
@@ -141,14 +141,14 @@ void GlobalThreadLocalPreAggregationOperatorHandler::stop(
         }
     }
 }
-GlobalThreadLocalPreAggregationOperatorHandler::~GlobalThreadLocalPreAggregationOperatorHandler() {
+NonKeyedThreadLocalPreAggregationOperatorHandler::~NonKeyedThreadLocalPreAggregationOperatorHandler() {
     NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
 }
-Windowing::LogicalWindowDefinitionPtr GlobalThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
+Windowing::LogicalWindowDefinitionPtr NonKeyedThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }
 
-void GlobalThreadLocalPreAggregationOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+void NonKeyedThreadLocalPreAggregationOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
     this->threadLocalSliceStores.clear();
 }
 

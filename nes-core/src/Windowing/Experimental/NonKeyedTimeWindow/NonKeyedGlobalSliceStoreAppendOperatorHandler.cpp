@@ -19,33 +19,33 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalWindowGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-GlobalWindowGlobalSliceStoreAppendOperatorHandler::GlobalWindowGlobalSliceStoreAppendOperatorHandler(
+NonKeyedGlobalSliceStoreAppendOperatorHandler::NonKeyedGlobalSliceStoreAppendOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-    std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore)
+    std::weak_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = timeBasedWindowType->getSize().getTime();
     windowSlide = timeBasedWindowType->getSlide().getTime();
 }
 
-void GlobalWindowGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void NonKeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                               Runtime::StateManagerPtr,
                                                               uint32_t) {
     NES_DEBUG("start GlobalWindowGlobalSliceStoreAppendOperatorHandler");
 }
 
-void GlobalWindowGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
+void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
                                                                             Runtime::Execution::PipelineExecutionContext& ctx,
                                                                             uint64_t sequenceNumber,
-                                                                            GlobalSlicePtr slice) {
+                                                                            NonKeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
     if (!global) {
         NES_FATAL_ERROR("GlobalSliceStore is invalid, this should only happen after a hard stop. Drop all in flight data.");
@@ -67,7 +67,7 @@ void GlobalWindowGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runt
     }
 }
 
-void GlobalWindowGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+void NonKeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                              Runtime::Execution::PipelineExecutionContextPtr ctx) {
     NES_DEBUG("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
@@ -87,10 +87,10 @@ void GlobalWindowGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTermi
         }
     }
 }
-GlobalWindowGlobalSliceStoreAppendOperatorHandler::~GlobalWindowGlobalSliceStoreAppendOperatorHandler() {
+NonKeyedGlobalSliceStoreAppendOperatorHandler::~NonKeyedGlobalSliceStoreAppendOperatorHandler() {
     NES_DEBUG("Destruct GlobalWindowGlobalSliceStoreAppendOperatorHandler");
 }
-Windowing::LogicalWindowDefinitionPtr GlobalWindowGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
+Windowing::LogicalWindowDefinitionPtr NonKeyedGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }
 

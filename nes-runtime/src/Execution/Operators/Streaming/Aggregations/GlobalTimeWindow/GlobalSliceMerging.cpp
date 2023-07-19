@@ -46,17 +46,17 @@ void* erasePartition(void* op, uint64_t ts) {
 }
 
 uint64_t getSizeOfPartition(void* p) {
-    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    auto partition = static_cast<NonKeyedSliceStaging::Partition*>(p);
     return partition->partialStates.size();
 }
 
 void* getPartitionState(void* p, uint64_t index) {
-    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    auto partition = static_cast<NonKeyedSliceStaging::Partition*>(p);
     return partition->partialStates[index].get()->ptr;
 }
 
 void deletePartition(void* p) {
-    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    auto partition = static_cast<NonKeyedSliceStaging::Partition*>(p);
     delete partition;
 }
 

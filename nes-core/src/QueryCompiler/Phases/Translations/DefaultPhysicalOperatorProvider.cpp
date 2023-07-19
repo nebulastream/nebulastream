@@ -640,17 +640,17 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
     GlobalOperatorHandlers globalOperatorHandlers;
 
     if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
-        auto smOperatorHandler = std::make_shared<Windowing::Experimental::GlobalSliceMergingOperatorHandler>(windowDefinition);
+        auto smOperatorHandler = std::make_shared<Windowing::Experimental::NonKeyedSliceMergingOperatorHandler>(windowDefinition);
 
         globalOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>(
+            std::make_shared<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandler>(
                 windowDefinition,
                 windowOperator->getInputOriginIds(),
                 smOperatorHandler->getSliceStagingPtr());
 
         globalOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::GlobalSliceStaging>();
+        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceStaging>();
         globalOperatorHandlers.sliceMergingOperatorHandler =
             std::make_shared<Runtime::Execution::Operators::GlobalSliceMergingHandler>(sliceStaging);
 
@@ -723,14 +723,14 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(Window
         auto globalSliceStore =
             std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
         auto globalSliceStoreAppendOperator =
-            std::make_shared<Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
+            std::make_shared<Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
                                                                                                          globalSliceStore);
         auto globalSliceStoreAppend =
             PhysicalOperators::PhysicalGlobalWindowSliceStoreAppendOperator::create(windowInputSchema,
                                                                                     windowOutputSchema,
                                                                                     globalSliceStoreAppendOperator);
         auto slidingWindowSinkOperator =
-            std::make_shared<Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandler>(windowDefinition, globalSliceStore);
+            std::make_shared<Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandler>(windowDefinition, globalSliceStore);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalGlobalSlidingWindowSink::create(windowInputSchema,

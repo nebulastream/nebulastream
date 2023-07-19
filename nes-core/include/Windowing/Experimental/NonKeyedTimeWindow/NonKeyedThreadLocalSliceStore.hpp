@@ -19,8 +19,8 @@
 
 namespace NES::Windowing::Experimental {
 
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+class NonKeyedSlice;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**
  * @brief A thread local slice store for global (non-keyed) tumbling and sliding windows,
@@ -28,13 +28,13 @@ using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
  * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
  * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
  */
-class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
+class NonKeyedThreadLocalSliceStore : public ThreadLocalSliceStore<NonKeyedSlice> {
   public:
-    explicit GlobalThreadLocalSliceStore(uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide);
-    ~GlobalThreadLocalSliceStore() = default;
+    explicit NonKeyedThreadLocalSliceStore(uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide);
+    ~NonKeyedThreadLocalSliceStore() = default;
 
   private:
-    GlobalSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
+    NonKeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t entrySize;
 };
 }// namespace NES::Windowing::Experimental

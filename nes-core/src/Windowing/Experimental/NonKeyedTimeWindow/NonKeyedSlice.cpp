@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Runtime/TupleBuffer.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 
 namespace NES::Windowing::Experimental {
 
@@ -23,17 +23,17 @@ State::State(uint64_t stateSize)
 
 State::~State() { std::free(ptr); }
 
-GlobalSlice::GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end)
+NonKeyedSlice::NonKeyedSlice(uint64_t entrySize, uint64_t start, uint64_t end)
     : start(start), end(end), state(std::make_unique<State>(entrySize)) {}
 
-GlobalSlice::GlobalSlice(uint64_t entrySize) : start(0), end(0), state(std::make_unique<State>(entrySize)) {}
+NonKeyedSlice::NonKeyedSlice(uint64_t entrySize) : start(0), end(0), state(std::make_unique<State>(entrySize)) {}
 
-void GlobalSlice::reset(uint64_t start, uint64_t end) {
+void NonKeyedSlice::reset(uint64_t start, uint64_t end) {
     this->start = start;
     this->end = end;
     this->state->reset();
 }
 
-GlobalSlice::GlobalSlice(GlobalSlice& entrySize) : start(0), end(0), state(std::make_unique<State>(entrySize.state->stateSize)) {}
+NonKeyedSlice::NonKeyedSlice(NonKeyedSlice& entrySize) : start(0), end(0), state(std::make_unique<State>(entrySize.state->stateSize)) {}
 
 }// namespace NES::Windowing::Experimental

@@ -19,49 +19,49 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-GlobalSlidingWindowSinkOperatorHandler::GlobalSlidingWindowSinkOperatorHandler(
+NonKeyedSlidingWindowSinkOperatorHandler::NonKeyedSlidingWindowSinkOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-    std::shared_ptr<GlobalSliceStore<GlobalSlice>>& globalSliceStore)
+    std::shared_ptr<GlobalSliceStore<NonKeyedSlice>>& globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {}
 
-void GlobalSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
+void NonKeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
 }
 
-void GlobalSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void NonKeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                    Runtime::StateManagerPtr,
                                                    uint32_t) {
     NES_DEBUG("start GlobalSlidingWindowSinkOperatorHandler");
 }
 
-void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+void NonKeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                   Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
-GlobalSlicePtr GlobalSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {
-    return std::make_unique<GlobalSlice>(entrySize, windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
+NonKeyedSlicePtr NonKeyedSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {
+    return std::make_unique<NonKeyedSlice>(entrySize, windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
-std::vector<GlobalSliceSharedPtr>
-GlobalSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
+std::vector<NonKeyedSliceSharedPtr>
+NonKeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
     NES_DEBUG("getSlicesForWindow {} - {}", windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
-Windowing::LogicalWindowDefinitionPtr GlobalSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
-GlobalSliceStore<GlobalSlice>& GlobalSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
-GlobalSlidingWindowSinkOperatorHandler::~GlobalSlidingWindowSinkOperatorHandler() {
+Windowing::LogicalWindowDefinitionPtr NonKeyedSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
+GlobalSliceStore<NonKeyedSlice>& NonKeyedSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
+NonKeyedSlidingWindowSinkOperatorHandler::~NonKeyedSlidingWindowSinkOperatorHandler() {
     NES_DEBUG("Destruct GlobalSlidingWindowSinkOperatorHandler");
 }
 
-void GlobalSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+void NonKeyedSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
     globalSliceStore.reset();
 }
 
