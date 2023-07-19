@@ -31,7 +31,7 @@ class State;
  * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular watermark to the staging area.
  * As multiple threads can concurrently append slices, we synchronize accesses.
  */
-class GlobalSliceStaging {
+class NonKeyedSliceStaging {
   public:
     /**
      * @brief Stores the partitions for a specific slice. For global windows,

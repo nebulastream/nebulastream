@@ -20,7 +20,7 @@ struct SliceMergeTask;
 class State;
 class GlobalSlice;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
-class GlobalSliceStaging;
+class NonKeyedSliceStaging;
 
 /**
  * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
@@ -33,7 +33,7 @@ class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
      * @brief Constructor for the GlobalSliceMergingHandler
      * @param windowDefinition
      */
-    GlobalSliceMergingHandler(std::shared_ptr<GlobalSliceStaging> globalSliceStaging);
+    GlobalSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -49,13 +49,13 @@ class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
      * @note This should be only called from the generated code.
      * @return KeyedSliceStaging
      */
-    inline GlobalSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
+    inline NonKeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
      * @brief Gets a weak pointer to the slice staging
      * @return std::weak_ptr<KeyedSliceStaging>
      */
-    std::weak_ptr<GlobalSliceStaging> getSliceStagingPtr();
+    std::weak_ptr<NonKeyedSliceStaging> getSliceStagingPtr();
 
     /**
      * @brief Creates a new global slice for a specific slice merge task
@@ -69,7 +69,7 @@ class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
 
   private:
     uint64_t entrySize;
-    std::shared_ptr<GlobalSliceStaging> sliceStaging;
+    std::shared_ptr<NonKeyedSliceStaging> sliceStaging;
     std::unique_ptr<State> defaultState;
 };
 

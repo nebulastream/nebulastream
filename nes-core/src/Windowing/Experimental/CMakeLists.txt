@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_subdirectory(KeyedTimeWindow)
-add_subdirectory(GlobalTimeWindow)
+add_subdirectory(NonKeyedTimeWindow)
 
 add_source_files(nes-core
         LockFreeMultiOriginWatermarkProcessor.cpp

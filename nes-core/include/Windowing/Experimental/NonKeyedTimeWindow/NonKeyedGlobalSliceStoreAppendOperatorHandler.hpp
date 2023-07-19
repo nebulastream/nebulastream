@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALWINDOWGLOBALSLICESTOREAPPENDOPERATORHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <memory>
 
 namespace NES::Experimental {
@@ -31,17 +31,17 @@ using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 }// namespace NES::Windowing
 
 namespace NES::Windowing::Experimental {
-class GlobalThreadLocalSliceStore;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+class NonKeyedThreadLocalSliceStore;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**
  * @brief Operator handler, which appends merged slices to the global slice store.
  * This operator is only used for sliding windows, as we can skip the global slice store for tumbling windows.s
  */
-class GlobalWindowGlobalSliceStoreAppendOperatorHandler
+class NonKeyedGlobalSliceStoreAppendOperatorHandler
     : public Runtime::Execution::OperatorHandler,
-      public detail::virtual_enable_shared_from_this<GlobalWindowGlobalSliceStoreAppendOperatorHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<GlobalWindowGlobalSliceStoreAppendOperatorHandler, false>;
+      public detail::virtual_enable_shared_from_this<NonKeyedGlobalSliceStoreAppendOperatorHandler, false> {
+    using inherited0 = detail::virtual_enable_shared_from_this<NonKeyedGlobalSliceStoreAppendOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
@@ -50,10 +50,10 @@ class GlobalWindowGlobalSliceStoreAppendOperatorHandler
      * @param windowDefinition logical window definition
      * @param globalSliceStore reference to the global slice store
      */
-    GlobalWindowGlobalSliceStoreAppendOperatorHandler(const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                      std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore);
+    NonKeyedGlobalSliceStoreAppendOperatorHandler(const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                                      std::weak_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore);
 
-    ~GlobalWindowGlobalSliceStoreAppendOperatorHandler();
+    ~NonKeyedGlobalSliceStoreAppendOperatorHandler();
 
     /**
      * @brief Returns the logical window definition
@@ -83,12 +83,12 @@ class GlobalWindowGlobalSliceStoreAppendOperatorHandler
     void triggerSliceMerging(Runtime::WorkerContext& wctx,
                              Runtime::Execution::PipelineExecutionContext& ctx,
                              uint64_t sequenceNumber,
-                             GlobalSlicePtr mergedSlice);
+                             NonKeyedSlicePtr mergedSlice);
 
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore;
+    std::weak_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };

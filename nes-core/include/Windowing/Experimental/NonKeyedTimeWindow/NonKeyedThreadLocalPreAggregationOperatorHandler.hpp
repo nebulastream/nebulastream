@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALPREAGGREGATIONOPERATORHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 namespace NES::Experimental {
 class HashMapFactory;
 using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
@@ -37,10 +37,10 @@ class GlobalSliceStaging;
  * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  */
-class GlobalThreadLocalPreAggregationOperatorHandler
+class NonKeyedThreadLocalPreAggregationOperatorHandler
     : public Runtime::Execution::OperatorHandler,
-      public detail::virtual_enable_shared_from_this<GlobalThreadLocalPreAggregationOperatorHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<GlobalThreadLocalPreAggregationOperatorHandler, false>;
+      public detail::virtual_enable_shared_from_this<NonKeyedThreadLocalPreAggregationOperatorHandler, false> {
+    using inherited0 = detail::virtual_enable_shared_from_this<NonKeyedThreadLocalPreAggregationOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
@@ -50,7 +50,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
      * @param origins the set of origins, which can produce data for the window operator
      * @param weakSliceStagingPtr access to the slice staging.
      */
-    GlobalThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+    NonKeyedThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                    const std::vector<OriginId> origins,
                                                    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr);
 
@@ -94,7 +94,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
      * @param workerId
      * @return GlobalThreadLocalSliceStore
      */
-    GlobalThreadLocalSliceStore& getThreadLocalSliceStore(uint64_t workerId);
+    NonKeyedThreadLocalSliceStore& getThreadLocalSliceStore(uint64_t workerId);
 
     /**
      * @brief Returns the window definition.
@@ -102,7 +102,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
-    ~GlobalThreadLocalPreAggregationOperatorHandler();
+    ~NonKeyedThreadLocalPreAggregationOperatorHandler();
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
@@ -110,7 +110,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
     uint64_t windowSize;
     uint64_t windowSlide;
     std::weak_ptr<GlobalSliceStaging> weakSliceStaging;
-    std::vector<std::unique_ptr<GlobalThreadLocalSliceStore>> threadLocalSliceStores;
+    std::vector<std::unique_ptr<NonKeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;

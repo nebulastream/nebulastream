@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators {
 GlobalSlicePreAggregationHandler::GlobalSlicePreAggregationHandler(uint64_t windowSize,
                                                                    uint64_t windowSlide,
                                                                    const std::vector<OriginId>& origins,
-                                                                   std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
+                                                                   std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
     : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(weakSliceStagingPtr),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
 

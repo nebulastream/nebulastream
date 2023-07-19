@@ -18,18 +18,18 @@
 
 namespace NES::Windowing::Experimental {
 class SliceMergeTask;
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
-class GlobalSliceStaging;
+class NonKeyedSlice;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
+class NonKeyedSliceStaging;
 
 /**
  * @brief The GlobalSliceMergingOperatorHandler merges thread local pre-aggregated slices for global
  * tumbling and sliding window aggregations.
  */
-class GlobalSliceMergingOperatorHandler
+class NonKeyedSliceMergingOperatorHandler
     : public Runtime::Execution::OperatorHandler,
-      public detail::virtual_enable_shared_from_this<GlobalSliceMergingOperatorHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<GlobalSliceMergingOperatorHandler, false>;
+      public detail::virtual_enable_shared_from_this<NonKeyedSliceMergingOperatorHandler, false> {
+    using inherited0 = detail::virtual_enable_shared_from_this<NonKeyedSliceMergingOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
@@ -37,7 +37,7 @@ class GlobalSliceMergingOperatorHandler
      * @brief Constructor for the GlobalSliceMergingOperatorHandler
      * @param windowDefinition
      */
-    GlobalSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
+    NonKeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -53,20 +53,20 @@ class GlobalSliceMergingOperatorHandler
      * @note This should be only called from the generated code.
      * @return KeyedSliceStaging
      */
-    inline GlobalSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
+    inline NonKeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
      * @brief Gets a weak pointer to the slice staging
      * @return std::weak_ptr<KeyedSliceStaging>
      */
-    std::weak_ptr<GlobalSliceStaging> getSliceStagingPtr();
+    std::weak_ptr<NonKeyedSliceStaging> getSliceStagingPtr();
 
     /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr
      */
-    GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
+    NonKeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
 
     /**
      * @brief Gets the window definition
@@ -74,11 +74,11 @@ class GlobalSliceMergingOperatorHandler
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
-    ~GlobalSliceMergingOperatorHandler();
+    ~NonKeyedSliceMergingOperatorHandler();
 
   private:
     uint64_t entrySize;
-    std::shared_ptr<GlobalSliceStaging> sliceStaging;
+    std::shared_ptr<NonKeyedSliceStaging> sliceStaging;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 

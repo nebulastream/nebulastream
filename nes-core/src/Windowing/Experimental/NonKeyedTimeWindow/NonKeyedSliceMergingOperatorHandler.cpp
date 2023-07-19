@@ -17,40 +17,40 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-GlobalSliceMergingOperatorHandler::GlobalSliceMergingOperatorHandler(
+NonKeyedSliceMergingOperatorHandler::NonKeyedSliceMergingOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
-    : sliceStaging(std::make_shared<GlobalSliceStaging>()), windowDefinition(windowDefinition) {}
+    : sliceStaging(std::make_shared<NonKeyedSliceStaging>()), windowDefinition(windowDefinition) {}
 
-void GlobalSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
+void NonKeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
 }
 
-void GlobalSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void NonKeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                               Runtime::StateManagerPtr,
                                               uint32_t) {
     NES_DEBUG("start GlobalSliceMergingOperatorHandler");
 }
 
-void GlobalSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+void NonKeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                              Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop GlobalSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
-GlobalSlicePtr GlobalSliceMergingOperatorHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
-    return std::make_unique<GlobalSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
+NonKeyedSlicePtr NonKeyedSliceMergingOperatorHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
+    return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-GlobalSliceMergingOperatorHandler::~GlobalSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
-Windowing::LogicalWindowDefinitionPtr GlobalSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
-std::weak_ptr<GlobalSliceStaging> GlobalSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
+NonKeyedSliceMergingOperatorHandler::~NonKeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+Windowing::LogicalWindowDefinitionPtr NonKeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
+std::weak_ptr<NonKeyedSliceStaging> NonKeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Windowing::Experimental

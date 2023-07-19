@@ -13,11 +13,11 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        GlobalSlice.cpp
-        GlobalSliceStaging.cpp
-        GlobalThreadLocalSliceStore.cpp
-        GlobalWindowGlobalSliceStoreAppendOperatorHandler.cpp
-        GlobalThreadLocalPreAggregationOperatorHandler.cpp
-        GlobalSliceMergingOperatorHandler.cpp
-        GlobalSlidingWindowSinkOperatorHandler.cpp
+        NonKeyedSlice.cpp
+        NonKeyedSliceStaging.cpp
+        NonKeyedThreadLocalSliceStore.cpp
+        NonKeyedGlobalSliceStoreAppendOperatorHandler.cpp
+        NonKeyedThreadLocalPreAggregationOperatorHandler.cpp
+        NonKeyedSliceMergingOperatorHandler.cpp
+        NonKeyedSlidingWindowSinkOperatorHandler.cpp
         )
