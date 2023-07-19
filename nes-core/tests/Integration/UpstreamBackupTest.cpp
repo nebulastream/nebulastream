@@ -542,7 +542,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::MFTPH);
+//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::MFTPH);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -553,6 +553,6 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
 }
 }// namespace NES
