@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
 
@@ -34,3 +35,4 @@ bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
         && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
 }
 }// namespace NES::Catalogs::UDF
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
