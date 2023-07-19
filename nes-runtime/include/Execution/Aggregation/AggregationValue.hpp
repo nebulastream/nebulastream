@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 
 #include <Execution/Aggregation/Util/HyperLogLog.hpp>
+#include <Execution/Aggregation/Util/digestible.h>
 #include <cstdint>
 #include <numeric>
 namespace NES::Runtime::Execution::Aggregation {
@@ -77,8 +78,9 @@ struct HyperLogLogDistinctCountApproximationValue : AggregationValue {
 /**
  * Class for quantile aggregation Value, maintains the quantile value of all occurred tuples
  */
-struct QuantileAggregationValue : AggregationValue {
-    int64_t count = 0;
+struct QuantileEstimationValue : AggregationValue {
+    //TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
+    digestible::tdigest<float,unsigned> digest = digestible::tdigest(10);
 };
 
 }// namespace NES::Runtime::Execution::Aggregation

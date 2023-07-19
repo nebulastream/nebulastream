@@ -12,25 +12,27 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
-#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_QUANTILEESTIMATIONAGGREGATIONFUNCTION_HPP
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_QUANTILEESTIMATIONAGGREGATIONFUNCTION_HPP
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
 /**
- * This class uses the Nautilus Aggregation Interface for the distinct count aggregation algorithm HyperLogLog.
- * It creates an instance of a Hyperloglog adds continuously new input tuples (lift).
- * In contrast to standard aggregation function, we once create the instance of the HyperLogLog and update it with every new tuple
+ * This class uses the Nautilus Aggregation Interface for the Tdigest algorithms.
+ * The current implementation derives the median, by fixing issue #3889 this class will be able to estimate any quantile value (0-100).
+ * The class creates an instance of the tdigest and adds continuously new input tuples (lift).
+ * In contrast to standard aggregation function, we once create the instance of the tdigest and update it with every new tuple
  * instead of deriving a new value. The class also allows to combine multiple
- * instances of hyperloglog with combine and to derive the final distinct count estimation with lower.
- * For the algorithm itself we utilize the implementation Hideaki Ohno (@link: https://github.com/hideo55/cpp-HyperLogLog)
- * and the Nautilus MurMurHash implementation.
+ * instances of the tdigest with combine and to derive the final quantile value estimation with lower.
+ * For the algorithm itself we utilize the implementation @link: https://github.com/SpirentOrion/digestible.
  */
 namespace NES::Runtime::Execution::Aggregation {
-class HyperLogLogDistinctCountApproximation : public AggregationFunction {
+class QuantileEstimationAggregation : public AggregationFunction {
 
   public:
-    HyperLogLogDistinctCountApproximation(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType, const Expressions::ExpressionPtr& inputExpression,
+    QuantileEstimationAggregation(const PhysicalTypePtr& inputType,
+                                          const PhysicalTypePtr& finalType,
+                                          const Expressions::ExpressionPtr& inputExpression,
                                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
@@ -38,8 +40,7 @@ class HyperLogLogDistinctCountApproximation : public AggregationFunction {
     void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
     uint64_t getSize() override;
-
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_QUANTILEESTIMATIONAGGREGATIONFUNCTION_HPP_
