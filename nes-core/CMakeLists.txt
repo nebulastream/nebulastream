@@ -53,9 +53,6 @@ target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
 target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-grpc REUSE_FROM nes-common)
-endif ()
 
 install(TARGETS nes-grpc
         EXPORT NebulaStreamTargets
