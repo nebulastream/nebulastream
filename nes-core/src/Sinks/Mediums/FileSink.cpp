@@ -92,10 +92,12 @@ void FileSink::setup() {}
 void FileSink::shutdown() {}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+#ifdef ENABLE_ARROW_BUILD
     // handle the case if we write to an arrow file
     if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
         return writeDataToArrowFile(inputBuffer);
     }
+#endif
     // otherwise call the regular function
     return writeDataToFile(inputBuffer);
 }
@@ -157,6 +159,7 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer &inputBuffer) {
     return true;
 }
 
+#ifdef ENABLE_ARROW_BUILD
 bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer &inputBuffer) {
     std::unique_lock lock(writeMutex);
 
@@ -209,5 +212,6 @@ arrow::Status FileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStrea
     ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
     return arrow::Status::OK();
 }
+#endif
 
 }// namespace NES

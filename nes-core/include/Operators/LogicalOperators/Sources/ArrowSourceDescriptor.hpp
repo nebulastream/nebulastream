@@ -18,12 +18,10 @@
 #include <Catalogs/Source/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-#include <chrono>
-
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical Arrow source
+ * @brief Descriptor defining properties used for creating physical Arrow IPC file source
  */
 class ArrowSourceDescriptor : public SourceDescriptor {
   public:

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_ARROW_BUILD
+
 #ifndef NES_CORE_INCLUDE_SINKS_FORMATS_ARROWFORMAT_HPP_
 #define NES_CORE_INCLUDE_SINKS_FORMATS_ARROWFORMAT_HPP_
 
@@ -81,4 +83,5 @@ class ArrowFormat : public SinkFormat {
     std::vector<std::shared_ptr<arrow::Array>> buildArrowArrays();
 };
 }// namespace NES
+#endif// ENABLE_ARROW_BUILD
 #endif// NES_CORE_INCLUDE_SINKS_FORMATS_ARROWFORMAT_HPP_
