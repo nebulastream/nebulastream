@@ -112,10 +112,10 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::string const expectedContent =
-            "arrow_data$field_boolean:Boolean,arrow_data$field_int8:INTEGER,arrow_data$field_int16:INTEGER,"
-            "arrow_data$field_int32:INTEGER,arrow_data$field_int64:INTEGER,arrow_data$field_uint8:INTEGER,"
-            "arrow_data$field_uint16:INTEGER,arrow_data$field_uint32:INTEGER,arrow_data$field_uint64:INTEGER,"
-            "arrow_data$field_float:(Float),arrow_data$field_double:(Float),arrow_data$field_string:Text\n"
+            "arrow_data$field_boolean:Boolean,arrow_data$field_int8:INTEGER(8 bits),arrow_data$field_int16:INTEGER(16 bits),"
+            "arrow_data$field_int32:INTEGER(32 bits),arrow_data$field_int64:INTEGER(64 bits),arrow_data$field_uint8:INTEGER(8 bits),"
+            "arrow_data$field_uint16:INTEGER(16 bits),arrow_data$field_uint32:INTEGER(32 bits),arrow_data$field_uint64:INTEGER(64 bits),"
+            "arrow_data$field_float:Float(32 bits),arrow_data$field_double:Float(64 bits),arrow_data$field_string:Text\n"
             "1,50,-27811,-323626163,-1122580231,252,8365,2025898209,416703305,896356.125000,293428.052303,"
             "HpPsbQhWyDtd57iLLasBW0YpnMIEvKXO76GqQE7A0BD2PcvtdtSE7ZzZTdgbRxNpkkxYA5Y5frEVKoRi5a8QNXx0kwcq8iGBtZAI8Ye05rRoDmaTsK5yaWANt9\n"
             "1,114,-24130,-465012861,2068161396,209,36688,1185091338,253862470,-962888.500000,-1038564.601238,"
