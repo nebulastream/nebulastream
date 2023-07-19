@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.149](https://github.com/nebulastream/nebulastream/tree/v0.5.149) (2023-07-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.148...v0.5.149)
+
+**Implemented enhancements:**
+
+- \[TASK\] Use Precompiled Header to Reduce Compile Time [\#3932](https://github.com/nebulastream/nebulastream/issues/3932)
+
 ## [v0.5.148](https://github.com/nebulastream/nebulastream/tree/v0.5.148) (2023-07-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.147...v0.5.148)
