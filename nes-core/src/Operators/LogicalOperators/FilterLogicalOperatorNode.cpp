@@ -14,6 +14,7 @@
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -112,4 +113,21 @@ std::vector<std::string> FilterLogicalOperatorNode::getFieldNamesUsedByFilterPre
 
     return fieldsInPredicate;
 }
+
+std::vector<FilterLogicalOperatorNodePtr> FilterLogicalOperatorNode::splitUp() {
+    std::vector<FilterLogicalOperatorNodePtr> splitFilters = {};
+    auto filterPredicate = this->getPredicate();
+    if (filterPredicate->instanceOf<AndExpressionNode>()){
+        auto conjunctions = filterPredicate->getChildren();
+        for (const auto& conjunctionPredicate : conjunctions){
+            OperatorNodePtr splitFilter = LogicalOperatorFactory::createFilterOperator(conjunctionPredicate->as<ExpressionNode>());
+            splitFilters.push_back(splitFilter->as<FilterLogicalOperatorNode>());
+        }
+    }
+    else{
+        splitFilters.push_back(this->as<FilterLogicalOperatorNode>());
+    }
+    return splitFilters;
+}
+
 }// namespace NES

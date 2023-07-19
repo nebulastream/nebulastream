@@ -65,6 +65,13 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
      */
     std::vector<std::string> getFieldNamesUsedByFilterPredicate();
 
+    /**
+     * @brief return predicate conjunctions converted into consecutive FilterOperators. If the split up is
+     * not possible, return the filter itself
+     * @return a vector containing the split FilterOperators
+     */
+    std::vector<FilterLogicalOperatorNodePtr> splitUp();
+
   private:
     ExpressionNodePtr predicate;
     float selectivity;
