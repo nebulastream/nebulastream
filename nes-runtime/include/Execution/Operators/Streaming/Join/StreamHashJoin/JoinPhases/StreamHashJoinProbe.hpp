@@ -42,11 +42,11 @@ class StreamHashJoinProbe : public Operator {
      */
 
     explicit StreamHashJoinProbe(uint64_t handlerIndex,
-                                SchemaPtr joinSchemaLeft,
-                                SchemaPtr joinSchemaRight,
-                                SchemaPtr joinSchemaOutput,
-                                std::string joinFieldNameLeft,
-                                std::string joinFieldNameRight);
+                                 SchemaPtr joinSchemaLeft,
+                                 SchemaPtr joinSchemaRight,
+                                 SchemaPtr joinSchemaOutput,
+                                 std::string joinFieldNameLeft,
+                                 std::string joinFieldNameRight);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently,

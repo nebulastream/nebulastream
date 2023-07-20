@@ -189,18 +189,18 @@ struct HashJoinProbeHelper {
     HashJoinOperatorTest* hashJoinOperatorTest;
 
     HashJoinProbeHelper(const std::string& joinFieldNameLeft,
-                       const std::string& joinFieldNameRight,
-                       BufferManagerPtr bufferManager,
-                       SchemaPtr leftSchema,
-                       SchemaPtr rightSchema,
-                       const std::string& timeStampFieldLeft,
-                       const std::string& timeStampFieldRight,
-                       HashJoinOperatorTest* hashJoinOperatorTest)
+                        const std::string& joinFieldNameRight,
+                        BufferManagerPtr bufferManager,
+                        SchemaPtr leftSchema,
+                        SchemaPtr rightSchema,
+                        const std::string& timeStampFieldLeft,
+                        const std::string& timeStampFieldRight,
+                        HashJoinOperatorTest* hashJoinOperatorTest)
         : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128), noWorkerThreads(1),
           joinSizeInByte(1 * 1024 * 1024), windowSize(1000), joinFieldNameLeft(joinFieldNameLeft),
-          joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager),
-          leftSchema(leftSchema), rightSchema(rightSchema), timeStampFieldLeft(timeStampFieldLeft),
-          timeStampFieldRight(timeStampFieldRight), hashJoinOperatorTest(hashJoinOperatorTest) {}
+          joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager), leftSchema(leftSchema), rightSchema(rightSchema),
+          timeStampFieldLeft(timeStampFieldLeft), timeStampFieldRight(timeStampFieldRight),
+          hashJoinOperatorTest(hashJoinOperatorTest) {}
 };
 
 bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffers,
@@ -307,11 +307,11 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                              hashJoinProbeHelper.joinFieldNameLeft);
 
     auto hashJoinProbe = std::make_shared<Operators::StreamHashJoinProbe>(handlerIndex,
-                                                                         hashJoinProbeHelper.leftSchema,
-                                                                         hashJoinProbeHelper.rightSchema,
-                                                                        joinSchema,
-                                                                         hashJoinProbeHelper.joinFieldNameLeft,
-                                                                         hashJoinProbeHelper.joinFieldNameRight);
+                                                                          hashJoinProbeHelper.leftSchema,
+                                                                          hashJoinProbeHelper.rightSchema,
+                                                                          joinSchema,
+                                                                          hashJoinProbeHelper.joinFieldNameLeft,
+                                                                          hashJoinProbeHelper.joinFieldNameRight);
     auto collector = std::make_shared<Operators::CollectOperator>();
     hashJoinProbe->setChild(collector);
     hashJoinProbe->setDeletion(false);
