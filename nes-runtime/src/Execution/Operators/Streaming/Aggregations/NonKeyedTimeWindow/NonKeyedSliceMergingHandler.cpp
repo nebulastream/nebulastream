@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -26,30 +26,30 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-GlobalSliceMergingHandler::GlobalSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging)
+NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging)
     : sliceStaging(globalSliceStaging) {}
 
-void GlobalSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
+void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
     defaultState = std::make_unique<State>(entrySize);
     defaultState = std::make_unique<State>(entrySize);
 }
 
-void GlobalSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
     NES_DEBUG("start GlobalSliceMergingHandler");
 }
 
-void GlobalSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                      Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop GlobalSliceMergingHandler: {}", queryTerminationType);
 }
 
-GlobalSlicePtr GlobalSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
-    return std::make_unique<GlobalSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
+GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
+    return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
 }
-const State* GlobalSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
+const State* NonKeyedSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
 
-GlobalSliceMergingHandler::~GlobalSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
-std::weak_ptr<NonKeyedSliceStaging> GlobalSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
+NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+std::weak_ptr<NonKeyedSliceStaging> NonKeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Runtime::Execution::Operators

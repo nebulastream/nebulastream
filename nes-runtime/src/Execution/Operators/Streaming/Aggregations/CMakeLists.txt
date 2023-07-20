@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(GlobalTimeWindow)
+add_subdirectory(NonKeyedTimeWindow)
 add_subdirectory(KeyedTimeWindow)
 
 add_source_files(nes-runtime

@@ -44,12 +44,12 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTest {
+class SingleNodeThreadLocalNonKeyedTumblingWindowTests : public Testing::NESBaseTest{
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SingleNodeThreadLocalGlobalTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalGlobalTumblingWindowTests test class.");
+        NES::Logger::setupLogging("SingleNodeThreadLocalNonKeyedTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup SingleNodeThreadLocalNonKeyedTumblingWindowTests test class.");
     }
 
     void SetUp() override {
@@ -254,7 +254,7 @@ class DataGenerator {
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -283,7 +283,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -309,7 +309,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -351,7 +351,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblin
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -378,7 +378,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowM
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -420,7 +420,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) 
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMin) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -462,7 +462,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMax) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -504,7 +504,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowAVG) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -546,7 +546,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAggregate) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -593,7 +593,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
     ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
-
+w
 /**
  * @brief: This test replicates the angle-turning query from KTM in Elegant.
  * The average of 3 readings on top of a motorcycle are used to determine
@@ -603,7 +603,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
  * In this case, we emulate that by using multi-averages on top of one value
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -659,7 +659,7 @@ TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
  * In this case, we emulate that by using multiple values
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
+TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value3", DataTypeFactory::createUInt64())
                           ->addField("value2", DataTypeFactory::createUInt64())

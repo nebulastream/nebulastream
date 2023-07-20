@@ -25,11 +25,11 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -92,13 +92,13 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
     auto slicePreAggregation =
-        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+        std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
                                                                std::make_unique<Operators::EventTimeFunction>(readTsField),
                                                                aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
+    auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
                                                                         "start",
                                                                         "end",
@@ -136,13 +136,13 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
-    auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
+    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
     sliceMergingExecutablePipeline->setup(pipeline2Context);
@@ -187,13 +187,13 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
         std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName3),
         std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName4)};
     auto slicePreAggregation =
-        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+        std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
                                                                std::make_unique<Operators::EventTimeFunction>(readTsField),
                                                                aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
+    auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
 
                                                                         "start",
@@ -235,13 +235,13 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
 
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
-    auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
+    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
     sliceMergingExecutablePipeline->setup(pipeline2Context);

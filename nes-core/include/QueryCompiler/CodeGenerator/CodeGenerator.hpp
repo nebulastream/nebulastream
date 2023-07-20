@@ -193,7 +193,7 @@ class CodeGenerator {
     * @param aggregationFunctions the aggregation functions
     * @return
     */
-    virtual uint64_t generateGlobalSliceMergingOperatorSetup(
+    virtual uint64_t generateNonKeyedSliceMergingOperatorSetup(
         Windowing::LogicalWindowDefinitionPtr window,
         PipelineContextPtr context,
         uint64_t id,
@@ -210,7 +210,7 @@ class CodeGenerator {
      * @param aggregationFunctions the aggregation functions
      * @return
      */
-    virtual uint64_t generateGlobalThreadLocalPreAggregationSetup(
+    virtual uint64_t generateNonKeyedThreadLocalPreAggregationSetup(
         Windowing::LogicalWindowDefinitionPtr window,
         SchemaPtr windowOutputSchema,
         PipelineContextPtr context,
@@ -226,9 +226,9 @@ class CodeGenerator {
      * @param windowOperatorIndex index of the window handler
      * @return
      */
-    virtual bool generateCodeForGlobalThreadLocalPreAggregationOperator(
+    virtual bool generateCodeForNonKeyedThreadLocalPreAggregationOperator(
         Windowing::LogicalWindowDefinitionPtr window,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
@@ -268,7 +268,7 @@ class CodeGenerator {
      * @param windowOperatorIndex index of the window handler
      * @return
      */
-    virtual bool generateCodeForGlobalSliceMergingOperator(
+    virtual bool generateCodeForNonKeyedSliceMergingOperator(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
@@ -288,7 +288,7 @@ class CodeGenerator {
      * @param windowOperatorIndex index of the window handler
      * @return
      */
-    virtual bool generateCodeForGlobalSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
+    virtual bool generateCodeForNonKeyedSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
 
     /**
      * @brief Code generation for the emitting of keyed tumbling windows.
@@ -312,7 +312,7 @@ class CodeGenerator {
      * @param schema Schema
      * @return
      */
-    virtual bool generateCodeForGlobalTumblingWindowSink(
+    virtual bool generateCodeForNonKeyedTumblingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
@@ -343,7 +343,7 @@ class CodeGenerator {
      * @param Schema
      * @return
      */
-    virtual bool generateCodeForGlobalSlidingWindowSink(
+    virtual bool generateCodeForNonKeyedSlidingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
@@ -411,7 +411,7 @@ class CodeGenerator {
     * @return
     */
     virtual uint64_t
-    generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+    generateNonKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                              PipelineContextPtr context,
                                              uint64_t id,
                                              uint64_t windowOperatorIndex,

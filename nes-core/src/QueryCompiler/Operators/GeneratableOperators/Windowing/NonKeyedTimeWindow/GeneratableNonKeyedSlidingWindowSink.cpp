@@ -56,17 +56,17 @@ GeneratableNonKeyedSlidingWindowSink::GeneratableNonKeyedSlidingWindowSink(
 
 void GeneratableNonKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
-    codegen->generateGlobalSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
-                                                      context,
-                                                      id,
-                                                      windowOperatorIndex,
-                                                      windowAggregation);
+    codegen->generateNonKeyedSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
+                                                        context,
+                                                        id,
+                                                        windowOperatorIndex,
+                                                        windowAggregation);
 }
 
 void GeneratableNonKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForGlobalSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
+    codegen->generateCodeForNonKeyedSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
     windowHandler = nullptr;
 }
 

@@ -58,18 +58,18 @@ GeneratableNonKeyedThreadLocalPreAggregationOperator::GeneratableNonKeyedThreadL
 void GeneratableNonKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowDefinition = windowHandler->getWindowDefinition();
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
-    codegen->generateGlobalThreadLocalPreAggregationSetup(windowDefinition,
-                                                          outputSchema,
-                                                          context,
-                                                          id,
-                                                          windowOperatorIndex,
-                                                          windowAggregation);
+    codegen->generateNonKeyedThreadLocalPreAggregationSetup(windowDefinition,
+                                                            outputSchema,
+                                                            context,
+                                                            id,
+                                                            windowOperatorIndex,
+                                                            windowAggregation);
 }
 
 void GeneratableNonKeyedThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForGlobalThreadLocalPreAggregationOperator(windowDefinition, windowAggregation, context, handler);
+    codegen->generateCodeForNonKeyedThreadLocalPreAggregationOperator(windowDefinition, windowAggregation, context, handler);
     windowHandler = nullptr;
 }
 

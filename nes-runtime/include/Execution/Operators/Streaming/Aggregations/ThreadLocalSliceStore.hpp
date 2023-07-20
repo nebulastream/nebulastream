@@ -22,8 +22,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+class NonKeyedSlice;
+using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**
  * @brief A Slice store for tumbling and sliding windows,

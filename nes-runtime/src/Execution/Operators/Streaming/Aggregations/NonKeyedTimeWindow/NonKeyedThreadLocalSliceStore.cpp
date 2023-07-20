@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {
 
-GlobalThreadLocalSliceStore::GlobalThreadLocalSliceStore(uint64_t entrySize,
+NonKeyedThreadLocalSliceStore::NonKeyedThreadLocalSliceStore(uint64_t entrySize,
                                                          uint64_t windowSize,
                                                          uint64_t windowSlide,
                                                          const std::unique_ptr<State>& defaultState)
     : ThreadLocalSliceStore(windowSize, windowSlide), entrySize(entrySize), defaultState(defaultState) {}
 
-GlobalSlicePtr GlobalThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
-    return std::make_unique<GlobalSlice>(entrySize, startTs, endTs, defaultState);
+GlobalSlicePtr NonKeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
+    return std::make_unique<NonKeyedSlice>(entrySize, startTs, endTs, defaultState);
 }
 
 }// namespace NES::Runtime::Execution::Operators
