@@ -23,14 +23,14 @@ namespace NES::Runtime::Execution::Operators {
  * @brief GlobalSliceMerging operator that performs the merges pre-aggregated slices from the GlobalSlicePreAggregation operator
  * The slice merging operator is always the first element in a pipeline. Thus it acts like a scan and emits window to downstream operators.
  */
-class GlobalSliceMerging : public Operator {
+class NonKeyedSliceMerging : public Operator {
   public:
     /**
      * @brief Creates a GlobalSliceMerging operator
      * @param operatorHandlerIndex the index of the GlobalSliceMerging operator handler
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
-    GlobalSliceMerging(uint64_t operatorHandlerIndex,
+    NonKeyedSliceMerging(uint64_t operatorHandlerIndex,
                        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                        const std::string& startTsFieldName,
                        const std::string& endTsFieldName,

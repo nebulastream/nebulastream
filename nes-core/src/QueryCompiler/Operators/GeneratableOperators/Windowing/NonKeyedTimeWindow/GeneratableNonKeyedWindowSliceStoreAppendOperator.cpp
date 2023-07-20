@@ -60,7 +60,7 @@ void GeneratableNonKeyedWindowSliceStoreAppendOperator::generateOpen(CodeGenerat
 void GeneratableNonKeyedWindowSliceStoreAppendOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForGlobalSliceStoreAppend(context, handler);
+    codegen->generateCodeForNonKeyedSliceStoreAppend(context, handler);
     windowHandler = nullptr;
 }
 

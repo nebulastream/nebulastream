@@ -58,17 +58,17 @@ GeneratableNonKeyedSliceMergingOperator::GeneratableNonKeyedSliceMergingOperator
 
 void GeneratableNonKeyedSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
-    codegen->generateGlobalSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
-                                                     pipeline,
-                                                     id,
-                                                     windowOperatorIndex,
-                                                     windowAggregation);
+    codegen->generateNonKeyedSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
+                                                       pipeline,
+                                                       id,
+                                                       windowOperatorIndex,
+                                                       windowAggregation);
 }
 
 void GeneratableNonKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForGlobalSliceMergingOperator(windowDefinition, windowAggregation, context, handler);
+    codegen->generateCodeForNonKeyedSliceMergingOperator(windowDefinition, windowAggregation, context, handler);
     windowHandler = nullptr;
 }
 

@@ -31,7 +31,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class GlobalTumblingWindowQueryExecutionTest
+class NonKeyedTumblingWindowQueryExecutionTest
     : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
@@ -72,7 +72,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
-TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
+TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -105,7 +105,7 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProjection) {
+TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProjection) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -143,8 +143,8 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProject
 }
 
 INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
-                        GlobalTumblingWindowQueryExecutionTest,
+                        NonKeyedTumblingWindowQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<GlobalTumblingWindowQueryExecutionTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<NonKeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
 class NonKeyedSliceStaging;
-class GlobalThreadLocalSliceStore;
+class NonKeyedThreadLocalSliceStore;
 class State;
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
@@ -31,9 +31,9 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class GlobalSlicePreAggregationHandler
+class NonKeyedSlicePreAggregationHandler
     : public Runtime::Execution::OperatorHandler,
-      public ::NES::detail::virtual_enable_shared_from_this<GlobalSlicePreAggregationHandler, false> {
+      public ::NES::detail::virtual_enable_shared_from_this<NonKeyedSlicePreAggregationHandler, false> {
   public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
@@ -41,7 +41,7 @@ class GlobalSlicePreAggregationHandler
      * @param origins the set of origins, which can produce data for the window operator
      * @param weakSliceStagingPtr access to the slice staging.
      */
-    GlobalSlicePreAggregationHandler(uint64_t windowSize,
+    NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
                                      uint64_t windowSlide,
                                      const std::vector<OriginId>& origins,
                                      std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
@@ -86,9 +86,9 @@ class GlobalSlicePreAggregationHandler
      * @param workerId
      * @return GlobalThreadLocalSliceStore
      */
-    GlobalThreadLocalSliceStore* getThreadLocalSliceStore(uint64_t workerId);
+    NonKeyedThreadLocalSliceStore* getThreadLocalSliceStore(uint64_t workerId);
 
-    ~GlobalSlicePreAggregationHandler();
+    ~NonKeyedSlicePreAggregationHandler();
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
     const State* getDefaultState() const;
@@ -97,7 +97,7 @@ class GlobalSlicePreAggregationHandler
     uint64_t windowSize;
     uint64_t windowSlide;
     std::weak_ptr<NonKeyedSliceStaging> weakSliceStaging;
-    std::vector<std::unique_ptr<GlobalThreadLocalSliceStore>> threadLocalSliceStores;
+    std::vector<std::unique_ptr<NonKeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::unique_ptr<State> defaultState;
 };

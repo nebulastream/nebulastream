@@ -18,7 +18,7 @@
 #include <variant>
 
 namespace NES::Runtime::Execution::Operators {
-class GlobalSliceMergingHandler;
+class NonKeyedSliceMergingHandler;
 }
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -31,7 +31,7 @@ class PhysicalNonKeyedSliceMergingOperator : public PhysicalUnaryOperator, publi
 
   public:
     using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr,
-                                           std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>;
+                                           std::shared_ptr<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>>;
     PhysicalNonKeyedSliceMergingOperator(OperatorId id,
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,

@@ -24,12 +24,12 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
 * @brief GlobalSlicePreAggregation operator that performs the pre-aggregation step for a global window aggregation.
 */
-class GlobalSlicePreAggregation : public ExecutableOperator {
+class NonKeyedSlicePreAggregation : public ExecutableOperator {
   public:
     /**
     * @brief Creates a GlobalSlicePreAggregation operator
     */
-    GlobalSlicePreAggregation(uint64_t operatorHandlerIndex,
+    NonKeyedSlicePreAggregation(uint64_t operatorHandlerIndex,
                               TimeFunctionPtr timeFunction,
                               const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;

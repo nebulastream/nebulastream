@@ -11,11 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        GlobalSlicePreAggregation.cpp
-        GlobalSlicePreAggregationHandler.cpp
-        GlobalSlice.cpp
-        GlobalSliceStaging.cpp
-        GlobalThreadLocalSliceStore.cpp
-        GlobalSliceMerging.cpp
-        GlobalSliceMergingHandler.cpp
+        NonKeyedSlicePreAggregation.cpp
+        NonKeyedSlicePreAggregationHandler.cpp
+        NonKeyedSlice.cpp
+        NonKeyedSliceStaging.cpp
+        NonKeyedThreadLocalSliceStore.cpp
+        NonKeyedSliceMerging.cpp
+        NonKeyedSliceMergingHandler.cpp
         )

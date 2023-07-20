@@ -89,7 +89,7 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForMap(AttributeFieldPtr field, LegacyExpressionPtr pred, PipelineContextPtr context) override;
     bool generateCodeForKeyedSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
-    bool generateCodeForGlobalSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
+    bool generateCodeForNonKeyedSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
     std::shared_ptr<ForLoopStatement>
     keyedSliceMergeLoop(VariableDeclaration& buffers,
                         FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
@@ -152,20 +152,20 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorIndex,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
 
-    uint64_t generateGlobalSliceMergingOperatorSetup(
+    uint64_t
+    generateNonKeyedSliceMergingOperatorSetup(
         Windowing::LogicalWindowDefinitionPtr window,
         PipelineContextPtr context,
         uint64_t id,
         uint64_t windowOperatorIndex,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) override;
 
-    uint64_t
-    generateGlobalThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                 SchemaPtr windowOutputSchema,
+    uint64_t generateNonKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                 SchemaPtr,
                                                  PipelineContextPtr context,
                                                  uint64_t id,
                                                  uint64_t windowOperatorIndex,
-                                                 std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ptr) override;
+                                                 std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
 
     uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                                      PipelineContextPtr context,
@@ -174,7 +174,7 @@ class CCodeGenerator : public CodeGenerator {
                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) override;
 
     uint64_t
-    generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+    generateNonKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                              PipelineContextPtr context,
                                              uint64_t id,
                                              uint64_t windowOperatorIndex,
@@ -194,9 +194,9 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
-    bool generateCodeForGlobalThreadLocalPreAggregationOperator(
+    bool generateCodeForNonKeyedThreadLocalPreAggregationOperator(
         Windowing::LogicalWindowDefinitionPtr window,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
@@ -212,9 +212,9 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
-    bool generateCodeForGlobalSliceMergingOperator(
+    bool generateCodeForNonKeyedSliceMergingOperator(
         Windowing::LogicalWindowDefinitionPtr window,
-        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
@@ -224,11 +224,11 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         SchemaPtr ptr) override;
 
-    bool generateCodeForGlobalTumblingWindowSink(
+    bool generateCodeForNonKeyedTumblingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
         PipelineContextPtr context,
-        SchemaPtr ptr) override;
+        SchemaPtr resultSchema) override;
 
     bool generateCodeForKeyedSlidingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
@@ -237,12 +237,12 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorIndex,
         SchemaPtr ptr) override;
 
-    bool generateCodeForGlobalSlidingWindowSink(
+    bool generateCodeForNonKeyedSlidingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex,
-        SchemaPtr ptr) override;
+        SchemaPtr resultSchema) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.

@@ -22,10 +22,10 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -66,7 +66,7 @@ class GlobalSlicePreAggregationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down GlobalSlicePreAggregationTest test class." << std::endl; }
 
-    void emitWatermark(GlobalSlicePreAggregation& slicePreAggregation,
+    void emitWatermark(NonKeyedSlicePreAggregation& slicePreAggregation,
                        ExecutionContext& ctx,
                        uint64_t wts,
                        uint64_t originId,
@@ -81,7 +81,7 @@ class GlobalSlicePreAggregationTest : public testing::Test {
         slicePreAggregation.close(ctx, rb);
     }
 
-    void emitRecord(GlobalSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record) {
+    void emitRecord(NonKeyedSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record) {
         slicePreAggregation.execute(ctx, record);
     }
 };
@@ -92,14 +92,14 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-    auto slicePreAggregation = GlobalSlicePreAggregation(
+    auto slicePreAggregation = NonKeyedSlicePreAggregation(
         0 /*handler index*/,
         std::make_unique<EventTimeFunction>(readTs),
         {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
     auto sliceStaging = std::make_shared<NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto handler = std::make_shared<GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
@@ -143,14 +143,14 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
     PhysicalTypePtr ui64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
     auto slicePreAggregation =
-        GlobalSlicePreAggregation(0 /*handler index*/,
+        NonKeyedSlicePreAggregation(0 /*handler index*/,
                                   std::make_unique<EventTimeFunction>(readTs),
                                   {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
                                    std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
     auto sliceStaging = std::make_shared<NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto handler = std::make_shared<GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));

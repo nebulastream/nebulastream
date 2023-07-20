@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -25,27 +25,27 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-GlobalSlicePreAggregationHandler::GlobalSlicePreAggregationHandler(uint64_t windowSize,
+NonKeyedSlicePreAggregationHandler::NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                    uint64_t windowSlide,
                                                                    const std::vector<OriginId>& origins,
                                                                    std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
     : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(weakSliceStagingPtr),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
 
-GlobalThreadLocalSliceStore* GlobalSlicePreAggregationHandler::getThreadLocalSliceStore(uint64_t workerId) {
+NonKeyedThreadLocalSliceStore* NonKeyedSlicePreAggregationHandler::getThreadLocalSliceStore(uint64_t workerId) {
     auto index = workerId % threadLocalSliceStores.size();
     return threadLocalSliceStores[index].get();
 }
 
-void GlobalSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
+void NonKeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
     defaultState = std::make_unique<State>(entrySize);
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<GlobalThreadLocalSliceStore>(entrySize, windowSize, windowSlide, defaultState);
+        auto threadLocal = std::make_unique<NonKeyedThreadLocalSliceStore>(entrySize, windowSize, windowSlide, defaultState);
         threadLocalSliceStores.emplace_back(std::move(threadLocal));
     }
 }
 
-void GlobalSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
+void NonKeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                                                Runtime::Execution::PipelineExecutionContext& ctx,
                                                                uint64_t workerId,
                                                                OriginId originId,
@@ -90,13 +90,13 @@ void GlobalSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerCo
     }
 }
 
-void GlobalSlicePreAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void NonKeyedSlicePreAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                              Runtime::StateManagerPtr,
                                              uint32_t) {
     NES_DEBUG("start GlobalSlicePreAggregationHandler");
 }
 
-void GlobalSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+void NonKeyedSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                             Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
 
@@ -128,11 +128,11 @@ void GlobalSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryT
         }
     }
 }
-GlobalSlicePreAggregationHandler::~GlobalSlicePreAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
+NonKeyedSlicePreAggregationHandler::~NonKeyedSlicePreAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
 
-void GlobalSlicePreAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+void NonKeyedSlicePreAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
     // this->threadLocalSliceStores.clear();
 }
-const State* GlobalSlicePreAggregationHandler::getDefaultState() const { return defaultState.get(); }
+const State* NonKeyedSlicePreAggregationHandler::getDefaultState() const { return defaultState.get(); }
 
 }// namespace NES::Runtime::Execution::Operators

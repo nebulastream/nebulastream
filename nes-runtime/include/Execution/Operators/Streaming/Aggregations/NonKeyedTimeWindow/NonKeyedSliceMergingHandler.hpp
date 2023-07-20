@@ -18,22 +18,22 @@
 namespace NES::Runtime::Execution::Operators {
 struct SliceMergeTask;
 class State;
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+class NonKeyedSlice;
+using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class NonKeyedSliceStaging;
 
 /**
  * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
  * tumbling and sliding window aggregations.
  */
-class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                  public ::NES::detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false> {
+class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
+                                  public ::NES::detail::virtual_enable_shared_from_this<NonKeyedSliceMergingHandler, false> {
   public:
     /**
      * @brief Constructor for the GlobalSliceMergingHandler
      * @param windowDefinition
      */
-    GlobalSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
+    NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -65,7 +65,7 @@ class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
     const State* getDefaultState() const;
 
-    ~GlobalSliceMergingHandler();
+    ~NonKeyedSliceMergingHandler();
 
   private:
     uint64_t entrySize;

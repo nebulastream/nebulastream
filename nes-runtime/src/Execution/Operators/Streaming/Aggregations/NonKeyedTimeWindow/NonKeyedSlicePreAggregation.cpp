@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -25,12 +25,12 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getSliceStoreProxy(void* op, uint64_t workerId) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(op);
+    auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
     return handler->getThreadLocalSliceStore(workerId);
 }
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
-    auto sliceStore = static_cast<GlobalThreadLocalSliceStore*>(ss);
+    auto sliceStore = static_cast<NonKeyedThreadLocalSliceStore*>(ss);
     return sliceStore->findSliceByTs(ts)->getState()->ptr;
 }
 
@@ -41,19 +41,19 @@ void triggerThreadLocalStateProxy(void* op,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t watermarkTs) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(op);
+    auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
 }
 
 void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(ss);
+    auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size);
 }
 void* getDefaultState(void* ss) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(ss);
+    auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(ss);
     return handler->getDefaultState()->ptr;
 }
 
@@ -63,14 +63,14 @@ class LocalGlobalPreAggregationState : public Operators::OperatorState {
     const Value<MemRef> sliceStoreState;
 };
 
-GlobalSlicePreAggregation::GlobalSlicePreAggregation(
+NonKeyedSlicePreAggregation::NonKeyedSlicePreAggregation(
     uint64_t operatorHandlerIndex,
     TimeFunctionPtr timeFunction,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction)),
       aggregationFunctions(aggregationFunctions) {}
 
-void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
+void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<UInt64> entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
@@ -88,7 +88,7 @@ void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     }
 }
 
-void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+void NonKeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
@@ -102,7 +102,7 @@ void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) co
     timeFunction->open(ctx, rb);
 }
 
-void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
+void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     // For each input record, we derive its timestamp, we derive the correct slice from the slice store, and we manipulate the thread local aggregate.
     // 1. derive the current ts for the record.
     auto timestampValue = timeFunction->getTs(ctx, record);
@@ -118,7 +118,7 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
         aggregationFunction->lift(state.as<MemRef>(), record);
     }
 }
-void GlobalSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
+void NonKeyedSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerThreadLocalStateProxy

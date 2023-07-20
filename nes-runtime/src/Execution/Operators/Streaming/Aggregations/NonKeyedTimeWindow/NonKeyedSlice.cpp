@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <cstring>
 namespace NES::Runtime::Execution::Operators {
 
@@ -28,7 +28,7 @@ State::State(uint64_t stateSize)
 
 State::~State() { free(ptr); }
 
-GlobalSlice::GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState)
+NonKeyedSlice::NonKeyedSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState)
     : start(start), end(end), state(std::make_unique<State>(entrySize)) {
     std::memcpy(state->ptr, defaultState->ptr, entrySize);
 }

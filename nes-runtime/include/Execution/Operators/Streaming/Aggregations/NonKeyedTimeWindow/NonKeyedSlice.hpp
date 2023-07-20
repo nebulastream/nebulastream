@@ -47,7 +47,7 @@ class State {
  * @brief A global slice that contains key value pairs for a specific interval of [start, end).
  * The aggregate value is stored in the State object.
  */
-class GlobalSlice {
+class NonKeyedSlice {
   public:
     /**
      * @brief Constructor to create a new slice that covers a specific range between stat and end.
@@ -56,7 +56,7 @@ class GlobalSlice {
      * @param end of the slice
      * @param index of the slice (currently we assume that we can calculate a slice index, to which a specific stream event is assigned).
      */
-    GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState);
+    NonKeyedSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState);
 
     /**
      * @brief Start of the slice.
