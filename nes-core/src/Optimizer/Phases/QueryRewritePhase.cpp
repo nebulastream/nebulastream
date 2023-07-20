@@ -23,6 +23,7 @@
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
+#include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
@@ -51,6 +52,7 @@ QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool apply
       applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
     filterPushDownRule = FilterPushDownRule::create();
     predicateReorderingRule = PredicateReorderingRule::create();
+    redundancyEliminationRule = RedundancyEliminationRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     attributeSortRule = AttributeSortRule::create();
