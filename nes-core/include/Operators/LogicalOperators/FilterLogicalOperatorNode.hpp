@@ -72,9 +72,17 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
      */
     std::vector<FilterLogicalOperatorNodePtr> splitUp();
 
+    /**
+     * @brief return predicates that make up a conjunction in the filter predicate. Take into account De Morgan's law for
+     * simplifying possible negations. If the split up is not possible, return the predicate itself
+     * @return a vector containing the split predicates
+     */
+    std::vector<ExpressionNodePtr> splitUpPredicates();
+
   private:
     ExpressionNodePtr predicate;
     float selectivity;
+    std::vector<ExpressionNodePtr> _splitUpPredicates(ExpressionNodePtr expressionNode);
 };
 
 }// namespace NES

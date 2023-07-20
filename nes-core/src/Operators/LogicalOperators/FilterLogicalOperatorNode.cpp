@@ -13,8 +13,10 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -114,20 +116,50 @@ std::vector<std::string> FilterLogicalOperatorNode::getFieldNamesUsedByFilterPre
     return fieldsInPredicate;
 }
 
-std::vector<FilterLogicalOperatorNodePtr> FilterLogicalOperatorNode::splitUp() {
-    std::vector<FilterLogicalOperatorNodePtr> splitFilters = {};
-    auto filterPredicate = this->getPredicate();
-    if (filterPredicate->instanceOf<AndExpressionNode>()){
-        auto conjunctions = filterPredicate->getChildren();
-        for (const auto& conjunctionPredicate : conjunctions){
-            OperatorNodePtr splitFilter = LogicalOperatorFactory::createFilterOperator(conjunctionPredicate->as<ExpressionNode>());
-            splitFilters.push_back(splitFilter->as<FilterLogicalOperatorNode>());
+std::vector<ExpressionNodePtr> FilterLogicalOperatorNode::splitUpPredicates() {
+    return _splitUpPredicates(predicate);
+}
+
+std::vector<ExpressionNodePtr> FilterLogicalOperatorNode::_splitUpPredicates(ExpressionNodePtr expressionNode) {
+    NES_TRACE("FilterLogicalOperatorNode: Split up filter predicate conjunction into predicates");
+    if (expressionNode->instanceOf<AndExpressionNode>()){
+        NES_TRACE("FilterLogicalOperatorNode: The filter predicate is a conjunction");
+        auto conjunctionPredicates = expressionNode->getChildren();
+        NES_TRACE("FilterLogicalOperatorNode: Looping over the two children and applying split up recursively");
+        for (auto& conjunctionPredicate : conjunctionPredicates){
+            auto subFilterPredicate = this->copy()->as<FilterLogicalOperatorNode>();
+            conjunctionPredicate.spl->setPredicate(conjunctionPredicate->as<ExpressionNode>());
+            auto subPredicates = subFilterPredicate->splitUpPredicates();
+            splitPredicates.insert(splitPredicates.end(), subPredicates.begin(), subPredicates.end());
+        }
+    }
+    else if (expressionNode->instanceOf<NegateExpressionNode>()) {
+        if (expressionNode->getChildren()[0]->instanceOf<OrExpressionNode>()){
+            NES_TRACE("FilterLogicalOperatorNode: The predicate is of the form !( expression1 || expression2 )");
+            NES_TRACE("FilterLogicalOperatorNode: It can be reformulated to ( !expression1 && !expression2 )");
+            auto orExpression = expressionNode->getChildren()[0];
+            auto negatedChild1 = NegateExpressionNode::create(orExpression->getChildren()[0]->as<ExpressionNode>());
+            auto negatedChild2 = NegateExpressionNode::create(orExpression->getChildren()[1]->as<ExpressionNode>());
+            auto equivalentAndExpression = AndExpressionNode::create(negatedChild1, negatedChild2);
+            NES_TRACE("FilterLogicalOperatorNode: Changing predicate to equivalent AndExpression");
+            this->setPredicate(equivalentAndExpression);
+            return this->splitUpPredicates();
+        }
+        else if (expressionNode->getChildren()[0]->instanceOf<NegateExpressionNode>()){
+            NES_TRACE("FilterLogicalOperatorNode: The predicate is of the form (!!expression)");
+            NES_TRACE("FilterLogicalOperatorNode: It can be reformulated to (expression)");
+            // getPredicate() is the first NegateExpression; first getChildren()[0] is the second NegateExpression;
+            // second getChildren()[0] is the expressionNode that was negated twice. copy() only copies children of this expressionNode. (probably not mandatory but no reference to the negations needs to be kept)
+            this->setPredicate(expressionNode->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->copy());
+            return this->splitUpPredicates();
         }
     }
     else{
-        splitFilters.push_back(this->as<FilterLogicalOperatorNode>());
+        NES_TRACE("FilterLogicalOperatorNode: The filter predicate cannot be split, returning original predicate");
+        std::vector<ExpressionNodePtr> splitPredicates;
+        splitPredicates.push_back(this->as<FilterLogicalOperatorNode>()->getPredicate());
+        return splitPredicates;
     }
-    return splitFilters;
 }
 
 }// namespace NES
