@@ -42,11 +42,39 @@ class PhysicalMapJavaUDFOperator : public PhysicalUDFOperator {
                                const SchemaPtr& inputSchema,
                                const SchemaPtr& outputSchema,
                                const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor);
+
+    /**
+     * @brief Creates a new instance of PhysicalMapJavaUDFOperator
+     * @param id The identifier of this operator
+     * @param inputSchema The schema of the input data
+     * @param outputSchema The schema of the output data
+     * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
+     * @return A new instance of PhysicalMapJavaUDFOperator
+     */
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor);
+
+    /**
+     * @brief Creates a new instance of PhysicalMapJavaUDFOperator with no specified operator ID
+     * @param inputSchema The schema of the input data
+     * @param outputSchema The schema of the output data
+     * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
+     * @return A new instance of PhysicalMapJavaUDFOperator
+     */
+    static PhysicalOperatorPtr
+    create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
+
     /**
      * @brief Returns a string representation of this operator
      * @return A string representation of this operator
      */
     std::string toString() const override;
+    OperatorNodePtr copy() override;
+
+  protected:
+    const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

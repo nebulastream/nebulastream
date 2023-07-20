@@ -23,28 +23,55 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-        /**
+/**
 * @brief Physical Map Python Udf operator.
 */
-        class PhysicalMapPythonUDFOperator : public PhysicalUDFOperator {
-          public:
-            /**
- * @brief Constructor for PhysicalMapPythonUDFOperator
- * @param id The identifier of this operator
- * @param inputSchema The schema of the input data
- * @param outputSchema The schema of the output data
- * @param UDFDescriptor The UDF descriptor for the Python-based UDF
- */
-            PhysicalMapPythonUDFOperator(OperatorId id,
-                                       const SchemaPtr& inputSchema,
-                                       const SchemaPtr& outputSchema,
-                                       const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor);
-            /**
- * @brief Returns a string representation of this operator
- * @return A string representation of this operator
- */
-            std::string toString() const override;
+class PhysicalMapPythonUDFOperator : public PhysicalUDFOperator {
+  public:
+    /**
+* @brief Constructor for PhysicalMapPythonUDFOperator
+* @param id The identifier of this operator
+* @param inputSchema The schema of the input data
+* @param outputSchema The schema of the output data
+* @param UDFDescriptor The UDF descriptor for the Python-based UDF
+*/
+    PhysicalMapPythonUDFOperator(OperatorId id,
+                               const SchemaPtr& inputSchema,
+                               const SchemaPtr& outputSchema,
+                               const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor);
 
+    /**
+    * @brief Creates a new instance of PhysicalMapPythonUDFOperator
+    * @param id The identifier of this operator
+    * @param inputSchema The schema of the input data
+    * @param outputSchema The schema of the output data
+    * @param pythonUDFDescriptor The UDF descriptor for the Python-based UDF
+    * @return A new instance of PhysicalMapPythonUDFOperator
+    */
+    static PhysicalOperatorPtr create(OperatorId id,
+                                  const SchemaPtr& inputSchema,
+                                  const SchemaPtr& outputSchema,
+                                  const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor);
+
+    /**
+    * @brief Creates a new instance of PhysicalMapPythonUDFOperator with no specified operator ID
+    * @param inputSchema The schema of the input data
+    * @param outputSchema The schema of the output data
+    * @param pythonUDFDescriptor The UDF descriptor for the Python-based UDF
+    * @return A new instance of PhysicalMapPythonUDFOperator
+    */
+    static PhysicalOperatorPtr
+    create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor);
+
+    /**
+    * @brief Returns a string representation of this operator
+    * @return A string representation of this operator
+    */
+    std::string toString() const override;
+    OperatorNodePtr copy() override;
+
+  protected:
+    const Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

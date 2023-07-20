@@ -40,29 +40,6 @@ class PhysicalUDFOperator : public PhysicalUnaryOperator {
                         const SchemaPtr& inputSchema,
                         const SchemaPtr& outputSchema,
                         const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
-    /**
-     * @brief Creates a new instance of PhysicalUDFOperator
-     * @param id The identifier of this operator
-     * @param inputSchema The schema of the input data
-     * @param outputSchema The schema of the output data
-     * @param UdfDescriptor The UDF descriptor for the -based UDF
-     * @return A new instance of PhysicalUDFOperator
-     */
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
-
-    /**
-     * @brief Creates a new instance of PhysicalUDFOperator with no specified operator ID
-     * @param inputSchema The schema of the input data
-     * @param outputSchema The schema of the output data
-     * @param UdfDescriptor The UDF descriptor for the -based UDF
-     * @return A new instance of PhysicalUDFOperator
-     */
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
 
     /**
      * @brief Returns the  udf descriptor of this map operator
@@ -71,7 +48,6 @@ class PhysicalUDFOperator : public PhysicalUnaryOperator {
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor();
 
     std::string toString() const override;
-    OperatorNodePtr copy() override;
 
   protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;

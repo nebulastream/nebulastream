@@ -20,7 +20,22 @@ PhysicalMapPythonUDFOperator::PhysicalMapPythonUDFOperator(OperatorId id,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor)
-    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(pythonUDFDescriptor)) {}
+    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(pythonUDFDescriptor)), pythonUDFDescriptor(std::move(pythonUDFDescriptor)) {}
+
+PhysicalOperatorPtr PhysicalMapPythonUDFOperator::create(const SchemaPtr& inputSchema,
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor) {
+    return create(Util::getNextOperatorId(), inputSchema, outputSchema, pythonUDFDescriptor);
+}
+
+PhysicalOperatorPtr PhysicalMapPythonUDFOperator::create(OperatorId id,
+                                                       const SchemaPtr& inputSchema,
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor) {
+    return std::make_shared<PhysicalMapPythonUDFOperator>(id, inputSchema, outputSchema, pythonUDFDescriptor);
+}
+
+OperatorNodePtr PhysicalMapPythonUDFOperator::copy() { return create(id, inputSchema, outputSchema, pythonUDFDescriptor);}
 
 std::string PhysicalMapPythonUDFOperator::toString() const { return "PhysicalMapPythonUDFOperator"; }
 }// namespace NES::QueryCompilation::PhysicalOperators
