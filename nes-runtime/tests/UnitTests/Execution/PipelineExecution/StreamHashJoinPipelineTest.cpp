@@ -18,7 +18,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -303,7 +303,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         timeStampFieldRight,
         rightSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
-    auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex,
+    auto joinSink = std::make_shared<Operators::StreamHashJoinProbe>(handlerIndex,
                                                                     leftSchema,
                                                                     rightSchema,
                                                                     joinSchema,

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINSINK_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINSINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINPROBE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINPROBE_HPP_
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES {
@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators {
  * through both buckets and check via the BloomFilter if a given key is in the bucket. If this is the case, the corresponding
  * tuples will be joined together and emitted.
  */
-class StreamHashJoinSink : public Operator {
+class StreamHashJoinProbe : public Operator {
 
   public:
     /**
@@ -41,7 +41,7 @@ class StreamHashJoinSink : public Operator {
      * @param joinFieldNameOutput
      */
 
-    explicit StreamHashJoinSink(uint64_t handlerIndex,
+    explicit StreamHashJoinProbe(uint64_t handlerIndex,
                                 SchemaPtr joinSchemaLeft,
                                 SchemaPtr joinSchemaRight,
                                 SchemaPtr joinSchemaOutput,
@@ -71,4 +71,4 @@ class StreamHashJoinSink : public Operator {
 };
 
 }//namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINPROBE_HPP_

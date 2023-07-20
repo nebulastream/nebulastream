@@ -19,7 +19,7 @@
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-StreamHashJoinSink::StreamHashJoinSink(uint64_t handlerIndex,
+StreamHashJoinProbe::StreamHashJoinProbe(uint64_t handlerIndex,
                                        SchemaPtr joinSchemaLeft,
                                        SchemaPtr joinSchemaRight,
                                        SchemaPtr joinSchemaOutput,
@@ -154,7 +154,7 @@ void markPartitionFinishProxyForHashJoin(void* hashWindowPtr, void* ptrOpHandler
     }
 }
 
-void StreamHashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     child->open(ctx, recordBuffer);
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);

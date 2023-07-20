@@ -49,7 +49,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindow.hpp>
@@ -62,7 +62,7 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -271,13 +271,13 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         // As the projection is part of the emit, we can ignore this operator for now.
         return parentOperator;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
-        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinProbeOperator>()) {
+        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinProbeOperator>();
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(
+        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinProbe>(
             handlerIndex,
             sinkOperator->getLeftInputSchema(),
             sinkOperator->getRightInputSchema(),

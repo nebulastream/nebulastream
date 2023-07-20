@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINPROBEOPERATOR_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINPROBEOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
@@ -21,13 +21,13 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 /**
- * @brief This class represents the physical hash stream join sink operator and gets translated to a HashJoinSink operator
+ * @brief This class represents the physical hash stream join probe operator and gets translated to a HashJoinProbe operator
  */
-class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
+class PhysicalHashJoinProbeOperator : public PhysicalHashJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
 
   public:
     /**
-     * @brief creates a PhysicalHashJoinSinkOperator with a provided operatorId
+     * @brief creates a PhysicalHashJoinProbeOperator with a provided operatorId
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -35,7 +35,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      * @param operatorHandler
-     * @return PhysicalHashJoinSinkOperator
+     * @return PhysicalHashJoinProbeOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& leftSchema,
@@ -46,14 +46,14 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief creates a PhysicalHashJoinSinkOperator that retrieves a new operatorId by calling method
+     * @brief creates a PhysicalHashJoinProbeOperator that retrieves a new operatorId by calling method
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      * @param operatorHandler
-     * @return PhysicalHashJoinSinkOperator
+     * @return PhysicalHashJoinProbeOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
@@ -63,7 +63,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief Constructor for a PhysicalHashJoinSinkOperator
+     * @brief Constructor for a PhysicalHashJoinProbeOperator
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -72,7 +72,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param joinFieldNameRight
      * @param operatorHandler
      */
-    PhysicalHashJoinSinkOperator(OperatorId id,
+    PhysicalHashJoinProbeOperator(OperatorId id,
                                  const SchemaPtr& leftSchema,
                                  const SchemaPtr& rightSchema,
                                  const SchemaPtr& outputSchema,
@@ -111,4 +111,4 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINPROBEOPERATOR_HPP_

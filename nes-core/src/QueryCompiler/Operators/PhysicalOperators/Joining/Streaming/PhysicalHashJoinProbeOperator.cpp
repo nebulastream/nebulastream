@@ -12,12 +12,12 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalHashJoinSinkOperator::PhysicalHashJoinSinkOperator(
+PhysicalHashJoinProbeOperator::PhysicalHashJoinProbeOperator(
     OperatorId id,
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
@@ -29,14 +29,14 @@ PhysicalHashJoinSinkOperator::PhysicalHashJoinSinkOperator(
       PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight) {}
 
-std::string PhysicalHashJoinSinkOperator::toString() const { return "PhysicalHashJoinSinkOperator"; }
+std::string PhysicalHashJoinProbeOperator::toString() const { return "PhysicalHashJoinProbeOperator"; }
 
-OperatorNodePtr PhysicalHashJoinSinkOperator::copy() {
+OperatorNodePtr PhysicalHashJoinProbeOperator::copy() {
     return create(id, leftInputSchema, rightInputSchema, outputSchema, joinFieldNameLeft, joinFieldNameRight, operatorHandler);
 }
 
 PhysicalOperatorPtr
-PhysicalHashJoinSinkOperator::create(const SchemaPtr& leftSchema,
+PhysicalHashJoinProbeOperator::create(const SchemaPtr& leftSchema,
                                      const SchemaPtr& rightSchema,
                                      const SchemaPtr& outputSchema,
                                      const std::string& joinFieldNameLeft,
@@ -52,14 +52,14 @@ PhysicalHashJoinSinkOperator::create(const SchemaPtr& leftSchema,
 }
 
 PhysicalOperatorPtr
-PhysicalHashJoinSinkOperator::create(OperatorId id,
+PhysicalHashJoinProbeOperator::create(OperatorId id,
                                      const SchemaPtr& leftSchema,
                                      const SchemaPtr& rightSchema,
                                      const SchemaPtr& outputSchema,
                                      const std::string& joinFieldNameLeft,
                                      const std::string& joinFieldNameRight,
                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
-    return std::make_shared<PhysicalHashJoinSinkOperator>(id,
+    return std::make_shared<PhysicalHashJoinProbeOperator>(id,
                                                           leftSchema,
                                                           rightSchema,
                                                           outputSchema,
@@ -68,7 +68,7 @@ PhysicalHashJoinSinkOperator::create(OperatorId id,
                                                           operatorHandler);
 }
 
-const std::string& PhysicalHashJoinSinkOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
-const std::string& PhysicalHashJoinSinkOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
+const std::string& PhysicalHashJoinProbeOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
+const std::string& PhysicalHashJoinProbeOperator::getJoinFieldNameRight() const { return joinFieldNameRight; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators
