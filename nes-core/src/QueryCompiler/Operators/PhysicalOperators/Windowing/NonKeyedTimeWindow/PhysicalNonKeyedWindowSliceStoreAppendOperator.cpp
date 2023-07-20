@@ -12,34 +12,34 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalWindowSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalGlobalWindowSliceStoreAppendOperator::PhysicalGlobalWindowSliceStoreAppendOperator(
+PhysicalNonKeyedWindowSliceStoreAppendOperator::PhysicalNonKeyedWindowSliceStoreAppendOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler)
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(),
       windowHandler(keyedEventTimeWindowHandler) {}
 
-std::shared_ptr<PhysicalGlobalWindowSliceStoreAppendOperator> PhysicalGlobalWindowSliceStoreAppendOperator::create(
+std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyedWindowSliceStoreAppendOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
-    return std::make_shared<PhysicalGlobalWindowSliceStoreAppendOperator>(Util::getNextOperatorId(),
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalNonKeyedWindowSliceStoreAppendOperator>(Util::getNextOperatorId(),
                                                                           inputSchema,
                                                                           outputSchema,
                                                                           keyedEventTimeWindowHandler);
 }
 
-std::string PhysicalGlobalWindowSliceStoreAppendOperator::toString() const {
+std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
     return "PhysicalGlobalWindowSliceStoreAppendOperator";
 }
 
-OperatorNodePtr PhysicalGlobalWindowSliceStoreAppendOperator::copy() { return create(inputSchema, outputSchema, windowHandler); }
+OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() { return create(inputSchema, outputSchema, windowHandler); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

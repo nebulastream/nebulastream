@@ -23,25 +23,25 @@ namespace PhysicalOperators {
 /**
  * @brief Appends the final slices to the global slice store.
  */
-class PhysicalGlobalWindowSliceStoreAppendOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
+class PhysicalNonKeyedWindowSliceStoreAppendOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
-    PhysicalGlobalWindowSliceStoreAppendOperator(
+    PhysicalNonKeyedWindowSliceStoreAppendOperator(
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
+        Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
 
-    static std::shared_ptr<PhysicalGlobalWindowSliceStoreAppendOperator>
+    static std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
+           Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr getWindowHandler() { return windowHandler; }
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr getWindowHandler() { return windowHandler; }
 
   private:
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr windowHandler;
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler;
 };
 
 }// namespace PhysicalOperators

@@ -63,11 +63,11 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSlidingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalTumblingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalWindowSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
@@ -82,14 +82,14 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalWindowGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -715,25 +715,25 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(Window
 
     if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
         // Handle tumbling window
-        return PhysicalOperators::PhysicalGlobalTumblingWindowSink::create(windowInputSchema,
+        return PhysicalOperators::PhysicalNonKeyedTumblingWindowSink::create(windowInputSchema,
                                                                            windowOutputSchema,
                                                                            windowDefinition);
     } else {
         // Handle sliding window
         auto globalSliceStore =
-            std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
+            std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::NonKeyedSlice>>();
         auto globalSliceStoreAppendOperator =
             std::make_shared<Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
                                                                                                          globalSliceStore);
         auto globalSliceStoreAppend =
-            PhysicalOperators::PhysicalGlobalWindowSliceStoreAppendOperator::create(windowInputSchema,
+            PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator::create(windowInputSchema,
                                                                                     windowOutputSchema,
                                                                                     globalSliceStoreAppendOperator);
         auto slidingWindowSinkOperator =
             std::make_shared<Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandler>(windowDefinition, globalSliceStore);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
-        return PhysicalOperators::PhysicalGlobalSlidingWindowSink::create(windowInputSchema,
+        return PhysicalOperators::PhysicalNonKeyedSlidingWindowSink::create(windowInputSchema,
                                                                           windowOutputSchema,
                                                                           slidingWindowSinkOperator);
     }
@@ -785,7 +785,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         GlobalOperatorHandlers operatorHandlers = createGlobalOperatorHandlers(windowOperatorProperties);
 
         // Translates a central window operator to ThreadLocalPreAggregationOperator and SliceMergingOperator
-        auto preAggregationOperator = PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::create(
+        auto preAggregationOperator = PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator::create(
             windowInputSchema,
             windowOutputSchema,
             operatorHandlers.preAggregationWindowHandler,
@@ -793,7 +793,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
         auto mergingOperator =
-            PhysicalOperators::PhysicalGlobalSliceMergingOperator::create(windowInputSchema,
+            PhysicalOperators::PhysicalNonKeyedSliceMergingOperator::create(windowInputSchema,
                                                                           windowOutputSchema,
                                                                           operatorHandlers.sliceMergingOperatorHandler,
                                                                           windowDefinition);

@@ -13,28 +13,28 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/NonKeyedTimeWindow/GeneratableNonKeyedTumblingWindowSink.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Core.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableGlobalTumblingWindowSink::create(
+GeneratableOperatorPtr GeneratableNonKeyedTumblingWindowSink::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalTumblingWindowSink>(
-        GeneratableGlobalTumblingWindowSink(id,
+    return std::make_shared<GeneratableNonKeyedTumblingWindowSink>(
+        GeneratableNonKeyedTumblingWindowSink(id,
                                             std::move(inputSchema),
                                             std::move(outputSchema),
                                             windowDefinition,
                                             std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableGlobalTumblingWindowSink::create(
+GeneratableOperatorPtr GeneratableNonKeyedTumblingWindowSink::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::LogicalWindowDefinitionPtr windowDefinition,
@@ -46,7 +46,7 @@ GeneratableOperatorPtr GeneratableGlobalTumblingWindowSink::create(
                   std::move(windowAggregation));
 }
 
-GeneratableGlobalTumblingWindowSink::GeneratableGlobalTumblingWindowSink(
+GeneratableNonKeyedTumblingWindowSink::GeneratableNonKeyedTumblingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
@@ -55,15 +55,15 @@ GeneratableGlobalTumblingWindowSink::GeneratableGlobalTumblingWindowSink(
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowDefinition(windowDefinition) {}
 
-void GeneratableGlobalTumblingWindowSink::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
+void GeneratableNonKeyedTumblingWindowSink::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
-void GeneratableGlobalTumblingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedTumblingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForGlobalTumblingWindowSink(windowDefinition, windowAggregation, context, outputSchema);
 }
 
-std::string GeneratableGlobalTumblingWindowSink::toString() const { return "GeneratableKeyedSliceMergingOperator"; }
+std::string GeneratableNonKeyedTumblingWindowSink::toString() const { return "GeneratableKeyedSliceMergingOperator"; }
 
-OperatorNodePtr GeneratableGlobalTumblingWindowSink::copy() {
+OperatorNodePtr GeneratableNonKeyedTumblingWindowSink::copy() {
     return create(id, inputSchema, outputSchema, windowDefinition, windowAggregation);
 }
 

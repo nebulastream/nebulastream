@@ -13,10 +13,9 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        PhysicalGlobalSlidingWindowSink.cpp
-        PhysicalGlobalThreadLocalPreAggregationOperator.cpp
-        PhysicalGlobalTumblingWindowSink.cpp
-        PhysicalGlobalWindowSliceStoreAppendOperator.cpp
-        PhysicalGlobalSliceMergingOperator.cpp
+        GeneratableNonKeyedSliceMergingOperator.cpp
+        GeneratableNonKeyedSlidingWindowSink.cpp
+        GeneratableNonKeyedThreadLocalPreAggregationOperator.cpp
+        GeneratableNonKeyedTumblingWindowSink.cpp
+        GeneratableNonKeyedWindowSliceStoreAppendOperator.cpp
 )
-

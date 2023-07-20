@@ -117,16 +117,16 @@ using KeyedSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<KeyedSlidingWin
 
 // global window handlers
 class NonKeyedSliceMergingOperatorHandler;
-using GlobalSliceMergingOperatorHandlerPtr = std::shared_ptr<NonKeyedSliceMergingOperatorHandler>;
+using NonKeyedSliceMergingOperatorHandlerPtr = std::shared_ptr<NonKeyedSliceMergingOperatorHandler>;
 
 class NonKeyedSlidingWindowSinkOperatorHandler;
-using GlobalSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<NonKeyedSlidingWindowSinkOperatorHandler>;
+using NonKeyedSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<NonKeyedSlidingWindowSinkOperatorHandler>;
 
 class NonKeyedThreadLocalPreAggregationOperatorHandler;
-using GlobalThreadLocalPreAggregationOperatorHandlerPtr = std::shared_ptr<NonKeyedThreadLocalPreAggregationOperatorHandler>;
+using NonKeyedThreadLocalPreAggregationOperatorHandlerPtr = std::shared_ptr<NonKeyedThreadLocalPreAggregationOperatorHandler>;
 
 class NonKeyedGlobalSliceStoreAppendOperatorHandler;
-using GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr = std::shared_ptr<NonKeyedGlobalSliceStoreAppendOperatorHandler>;
+using NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr = std::shared_ptr<NonKeyedGlobalSliceStoreAppendOperatorHandler>;
 }// namespace Experimental
 
 }// namespace Windowing

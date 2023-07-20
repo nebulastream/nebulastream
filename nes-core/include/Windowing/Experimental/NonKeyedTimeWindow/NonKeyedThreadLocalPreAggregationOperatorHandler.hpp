@@ -28,8 +28,7 @@ using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 }// namespace NES::Windowing
 
 namespace NES::Windowing::Experimental {
-class KeyedThreadLocalSliceStore;
-class GlobalSliceStaging;
+class NonKeyedSliceStaging;
 
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
@@ -52,7 +51,7 @@ class NonKeyedThreadLocalPreAggregationOperatorHandler
      */
     NonKeyedThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                    const std::vector<OriginId> origins,
-                                                   std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr);
+                                                   std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator
@@ -109,7 +108,7 @@ class NonKeyedThreadLocalPreAggregationOperatorHandler
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<GlobalSliceStaging> weakSliceStaging;
+    std::weak_ptr<NonKeyedSliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<NonKeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;

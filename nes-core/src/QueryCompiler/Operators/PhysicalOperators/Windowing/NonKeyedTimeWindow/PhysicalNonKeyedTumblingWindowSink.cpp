@@ -12,32 +12,32 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalGlobalTumblingWindowSink::PhysicalGlobalTumblingWindowSink(OperatorId id,
+PhysicalNonKeyedTumblingWindowSink::PhysicalNonKeyedTumblingWindowSink(OperatorId id,
                                                                    SchemaPtr inputSchema,
                                                                    SchemaPtr outputSchema,
                                                                    Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowDefinition(windowDefinition) {}
 
-std::shared_ptr<PhysicalGlobalTumblingWindowSink>
-PhysicalGlobalTumblingWindowSink::create(SchemaPtr inputSchema,
+std::shared_ptr<PhysicalNonKeyedTumblingWindowSink>
+PhysicalNonKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalGlobalTumblingWindowSink>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedTumblingWindowSink>(Util::getNextOperatorId(),
                                                               inputSchema,
                                                               outputSchema,
                                                               windowDefinition);
 }
 
-Windowing::LogicalWindowDefinitionPtr PhysicalGlobalTumblingWindowSink::getWindowDefinition() { return windowDefinition; }
+Windowing::LogicalWindowDefinitionPtr PhysicalNonKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }
 
-std::string PhysicalGlobalTumblingWindowSink::toString() const { return "PhysicalGlobalTumblingWindowSink"; }
+std::string PhysicalNonKeyedTumblingWindowSink::toString() const { return "PhysicalGlobalTumblingWindowSink"; }
 
-OperatorNodePtr PhysicalGlobalTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
+OperatorNodePtr PhysicalNonKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

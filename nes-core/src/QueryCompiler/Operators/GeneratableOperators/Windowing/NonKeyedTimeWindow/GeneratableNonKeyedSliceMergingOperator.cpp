@@ -13,32 +13,32 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/NonKeyedTimeWindow/GeneratableNonKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Core.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableGlobalSliceMergingOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedSliceMergingOperator::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalSliceMergingOperator>(
-        GeneratableGlobalSliceMergingOperator(id,
+    return std::make_shared<GeneratableNonKeyedSliceMergingOperator>(
+        GeneratableNonKeyedSliceMergingOperator(id,
                                               std::move(inputSchema),
                                               std::move(outputSchema),
                                               std::move(operatorHandler),
                                               std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableGlobalSliceMergingOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedSliceMergingOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -47,16 +47,16 @@ GeneratableOperatorPtr GeneratableGlobalSliceMergingOperator::create(
                   std::move(windowAggregation));
 }
 
-GeneratableGlobalSliceMergingOperator::GeneratableGlobalSliceMergingOperator(
+GeneratableNonKeyedSliceMergingOperator::GeneratableNonKeyedSliceMergingOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableGlobalSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
+void GeneratableNonKeyedSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
     codegen->generateGlobalSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
                                                      pipeline,
@@ -65,16 +65,16 @@ void GeneratableGlobalSliceMergingOperator::generateOpen(CodeGeneratorPtr codege
                                                      windowAggregation);
 }
 
-void GeneratableGlobalSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForGlobalSliceMergingOperator(windowDefinition, windowAggregation, context, handler);
     windowHandler = nullptr;
 }
 
-std::string GeneratableGlobalSliceMergingOperator::toString() const { return "GeneratableGlobalSliceMergingOperator"; }
+std::string GeneratableNonKeyedSliceMergingOperator::toString() const { return "GeneratableGlobalSliceMergingOperator"; }
 
-OperatorNodePtr GeneratableGlobalSliceMergingOperator::copy() {
+OperatorNodePtr GeneratableNonKeyedSliceMergingOperator::copy() {
     return create(id, inputSchema, outputSchema, windowHandler, windowAggregation);
 }
 

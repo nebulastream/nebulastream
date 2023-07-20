@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTHREADLOCALPREAGGREGATIONOPERATOR_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTHREADLOCALPREAGGREGATIONOPERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTUMBLINGWINDOWSINK_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTUMBLINGWINDOWSINK_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 
@@ -20,7 +20,7 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-class GeneratableGlobalThreadLocalPreAggregationOperator : public GeneratableOperator {
+class GeneratableNonKeyedTumblingWindowSink : public GeneratableOperator {
   public:
     /**
      * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
@@ -29,11 +29,10 @@ class GeneratableGlobalThreadLocalPreAggregationOperator : public GeneratableOpe
      * @param operatorHandler handler of the operator state
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
-           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     /**
      * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
@@ -43,34 +42,27 @@ class GeneratableGlobalThreadLocalPreAggregationOperator : public GeneratableOpe
      * @param operatorHandler handler of the operator state
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr
-    create(OperatorId id,
-           SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
-           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
-
+    static GeneratableOperatorPtr create(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-
     [[nodiscard]] std::string toString() const override;
-
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableGlobalThreadLocalPreAggregationOperator(
-        OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
-
+    GeneratableNonKeyedTumblingWindowSink(OperatorId id,
+                                        SchemaPtr inputSchema,
+                                        SchemaPtr outputSchema,
+                                        Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
-    Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr windowHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTHREADLOCALPREAGGREGATIONOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GLOBALTIMEWINDOW_GENERATABLEGLOBALTUMBLINGWINDOWSINK_HPP_

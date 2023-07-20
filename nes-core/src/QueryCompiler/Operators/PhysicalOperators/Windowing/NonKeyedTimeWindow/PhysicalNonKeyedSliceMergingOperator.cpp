@@ -12,40 +12,40 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalGlobalSliceMergingOperator::PhysicalGlobalSliceMergingOperator(OperatorId id,
+PhysicalNonKeyedSliceMergingOperator::PhysicalNonKeyedSliceMergingOperator(OperatorId id,
                                                                        SchemaPtr inputSchema,
                                                                        SchemaPtr outputSchema,
                                                                        WindowHandlerType operatorHandler,
                                                                        Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       operatorHandler(operatorHandler), windowDefinition(windowDefinition) {}
-std::string PhysicalGlobalSliceMergingOperator::toString() const { return "PhysicalGlobalSliceMergingOperator"; }
+std::string PhysicalNonKeyedSliceMergingOperator::toString() const { return "PhysicalGlobalSliceMergingOperator"; }
 
-std::shared_ptr<PhysicalGlobalSliceMergingOperator>
-PhysicalGlobalSliceMergingOperator::create(SchemaPtr inputSchema,
+std::shared_ptr<PhysicalNonKeyedSliceMergingOperator>
+PhysicalNonKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            WindowHandlerType keyedEventTimeWindowHandler,
                                            Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalGlobalSliceMergingOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedSliceMergingOperator>(Util::getNextOperatorId(),
                                                                 inputSchema,
                                                                 outputSchema,
                                                                 keyedEventTimeWindowHandler,
                                                                 windowDefinition);
 }
 
-PhysicalGlobalSliceMergingOperator::WindowHandlerType PhysicalGlobalSliceMergingOperator::getWindowHandler() {
+PhysicalNonKeyedSliceMergingOperator::WindowHandlerType PhysicalNonKeyedSliceMergingOperator::getWindowHandler() {
     return operatorHandler;
 }
 
-OperatorNodePtr PhysicalGlobalSliceMergingOperator::copy() {
+OperatorNodePtr PhysicalNonKeyedSliceMergingOperator::copy() {
     return create(inputSchema, outputSchema, operatorHandler, windowDefinition);
 }
-const Windowing::LogicalWindowDefinitionPtr& PhysicalGlobalSliceMergingOperator::getWindowDefinition() const {
+const Windowing::LogicalWindowDefinitionPtr& PhysicalNonKeyedSliceMergingOperator::getWindowDefinition() const {
     return windowDefinition;
 }
 

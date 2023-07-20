@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <cinttypes>
 #include <map>
 #include <memory>
