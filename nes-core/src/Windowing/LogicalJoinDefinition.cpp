@@ -11,9 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 namespace NES::Join {
 
@@ -25,11 +30,13 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
                                              BaseJoinActionDescriptorPtr triggerAction,
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight,
-                                             JoinType joinType)
+                                             JoinType joinType,
+                                             OriginId originId)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
+      leftSourceType(Schema::create()), rightSourceType(Schema::create()), outputSchema(Schema::create()),
       triggerPolicy(std::move(triggerPolicy)), triggerAction(std::move(triggerAction)), windowType(std::move(windowType)),
       distributionType(std::move(distributionType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType) {
+      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
 
     NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
@@ -85,21 +92,47 @@ uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() const { return numbe
 uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() const { return numberOfInputEdgesRight; }
 
 void LogicalJoinDefinition::updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType) {
-    this->leftSourceType = std::move(leftSourceType);
-    this->rightSourceType = std::move(rightSourceType);
+    if (leftSourceType) {
+        this->leftSourceType = std::move(leftSourceType);
+    }
+    if (rightSourceType) {
+        this->rightSourceType = std::move(rightSourceType);
+    }
 }
 
-void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
+void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) {
+    if (outputSchema) {
+        this->outputSchema = std::move(outputSchema);
+    }
+}
 
 SchemaPtr LogicalJoinDefinition::getOutputSchema() const { return outputSchema; }
+
 void LogicalJoinDefinition::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft) {
     LogicalJoinDefinition::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
 }
+
 void LogicalJoinDefinition::setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight) {
     LogicalJoinDefinition::numberOfInputEdgesRight = numberOfInputEdgesRight;
 }
 
 uint64_t LogicalJoinDefinition::getOriginId() const { return originId; }
 void LogicalJoinDefinition::setOriginId(OriginId originId) { this->originId = originId; }
+
+bool LogicalJoinDefinition::equals(const LogicalJoinDefinition& other) const {
+    return leftJoinKeyType->equal(other.leftJoinKeyType) &&
+        rightJoinKeyType->equal(other.rightJoinKeyType) &&
+        leftSourceType->equals(other.leftSourceType) &&
+        rightSourceType->equals(other.rightSourceType) &&
+        outputSchema->equals(other.outputSchema) &&
+        triggerPolicy->equals(*other.triggerPolicy) &&
+        triggerAction->equals(*other.triggerAction) &&
+        windowType->equal(other.windowType) &&
+        distributionType->equals(*other.distributionType) &&
+        numberOfInputEdgesLeft == other.numberOfInputEdgesLeft &&
+        numberOfInputEdgesRight == other.numberOfInputEdgesRight &&
+        joinType == other.joinType &&
+        originId == other.originId;
+}
 
 };// namespace NES::Join

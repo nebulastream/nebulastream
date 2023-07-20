@@ -61,7 +61,8 @@ class LogicalJoinDefinition {
                                    BaseJoinActionDescriptorPtr triggerAction,
                                    uint64_t numberOfInputEdgesLeft,
                                    uint64_t numberOfInputEdgesRight,
-                                   JoinType joinType);
+                                   JoinType joinType,
+                                   OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief getter/setter for on left join key
@@ -158,12 +159,19 @@ class LogicalJoinDefinition {
      */
     void setOriginId(OriginId originId);
 
+    /**
+     * @brief Checks if these two are equal
+     * @param other: LogicalJoinDefinition that we want to check if they are equal
+     * @return Boolean
+     */
+    bool equals(const LogicalJoinDefinition& other) const;
+
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
-    SchemaPtr leftSourceType{nullptr};
-    SchemaPtr rightSourceType{nullptr};
-    SchemaPtr outputSchema{nullptr};
+    SchemaPtr leftSourceType;
+    SchemaPtr rightSourceType;
+    SchemaPtr outputSchema;
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;

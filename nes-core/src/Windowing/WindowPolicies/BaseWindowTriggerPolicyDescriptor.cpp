@@ -33,4 +33,8 @@ std::string BaseWindowTriggerPolicyDescriptor::getTypeAsString() {
     }
 }
 
+bool BaseWindowTriggerPolicyDescriptor::equals(const BaseWindowTriggerPolicyDescriptor& other) const {
+    return policy == other.policy;
+}
+
 }// namespace NES::Windowing

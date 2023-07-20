@@ -33,6 +33,13 @@ class TimeUnit : public WindowMeasure {
 
     std::string toString() override;
 
+    /**
+     * @brief Compares for equality
+     * @param other
+     * @return Boolean
+     */
+    bool equals(const TimeUnit& other) const;
+
   private:
     const uint64_t multiplier;
 };

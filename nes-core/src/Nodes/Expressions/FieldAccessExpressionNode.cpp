@@ -56,7 +56,7 @@ void FieldAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCo
         stamp = existingField->getDataType();
         return;
     }
-    throw std::logic_error("FieldAccessExpression: the field " + fieldName + " is not defined in the  schema "
+    throw std::logic_error("FieldAccessExpression: the field " + fieldName + " is not defined in the schema "
                            + schema->toString());
 }
 

@@ -69,4 +69,13 @@ std::string TimeCharacteristic::getTypeAsString() {
 
 void TimeCharacteristic::setField(AttributeFieldPtr field) { this->field = std::move(field); }
 
+bool TimeCharacteristic::equals(const TimeCharacteristic& other) const {
+    const bool equalField = (this->field == nullptr && other.field == nullptr) ||
+        (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
+
+    return this->type == other.type &&
+        equalField &&
+        this->unit.equals(other.unit);
+}
+
 }// namespace NES::Windowing

@@ -64,17 +64,12 @@ std::string SlidingWindow::toString() {
 }
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(otherWindowType);
-        return this->getTimeBasedSubWindowType() == SLIDINGWINDOW
-            && timeBasedWindowType->getTimeBasedSubWindowType() == SLIDINGWINDOW
-            && this->timeCharacteristic->getField()->getName()
-            == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
-            && this->size.getTime() == timeBasedWindowType->getSize().getTime()
-            && this->slide.getTime() == timeBasedWindowType->getSlide().getTime();
-    } else {
-        return false;
+    if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType)) {
+        return this->size.equals(otherSlidingWindow->size) &&
+                this->slide.equals(otherSlidingWindow->slide) &&
+                this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
     }
+    return false;
 }
 
 }// namespace NES::Windowing

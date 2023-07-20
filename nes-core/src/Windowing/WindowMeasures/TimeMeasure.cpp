@@ -22,4 +22,8 @@ uint64_t TimeMeasure::getTime() const { return ms; }
 
 std::string TimeMeasure::toString() { return "TimeMeasure: ms)" + std::to_string(ms); }
 
+bool TimeMeasure::equals(const TimeMeasure& other) const {
+    return this->ms == other.ms;
+}
+
 }// namespace NES::Windowing

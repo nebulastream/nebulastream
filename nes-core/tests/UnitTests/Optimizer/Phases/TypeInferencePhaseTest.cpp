@@ -102,7 +102,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     auto mappedSchema = Schema::create();
     mappedSchema->addField("default_logical$f1", BasicType::INT32);
     mappedSchema->addField("default_logical$f2", BasicType::INT8);
-    mappedSchema->addField("default_logical$f3", BasicType::INT8);
+    mappedSchema->addField("default_logical$f3", BasicType::INT32);
 
     NES_DEBUG("first={} second={}", map->getOutputSchema()->toString(), mappedSchema->toString());
     EXPECT_TRUE(map->getOutputSchema()->equals(mappedSchema));

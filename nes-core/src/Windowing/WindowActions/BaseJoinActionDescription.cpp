@@ -18,4 +18,8 @@ namespace NES::Join {
 
 BaseJoinActionDescriptor::BaseJoinActionDescriptor(JoinActionType action) : action(action) {}
 
+bool BaseJoinActionDescriptor::equals(const BaseJoinActionDescriptor& other) const {
+    return action == other.action;
+}
+
 }// namespace NES::Join

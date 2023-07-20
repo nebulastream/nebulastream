@@ -749,7 +749,8 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         auto serializedThresholdWindow = SerializableOperator_ThresholdWindow();
         serializedWindowType.UnpackTo(&serializedThresholdWindow);
         auto thresholdExpression = ExpressionSerializationUtil::deserializeExpression(serializedThresholdWindow.predicate());
-        window = Windowing::ThresholdWindow::of(thresholdExpression);
+        auto thresholdMinimumCount = serializedThresholdWindow.minimumcount();
+        window = Windowing::ThresholdWindow::of(thresholdExpression, thresholdMinimumCount);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
