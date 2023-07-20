@@ -73,7 +73,6 @@ class DistributionCharacteristic {
      */
     bool equals(const DistributionCharacteristic& other) const;
 
-
   private:
     Type type;
 };

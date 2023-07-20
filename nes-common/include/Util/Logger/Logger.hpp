@@ -184,7 +184,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         }                                                                                                                        \
     } while (0)
 
-
 #define NES_ASSERT2_FMT(CONDITION, ...)                                                                                          \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \

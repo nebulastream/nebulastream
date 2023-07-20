@@ -65,9 +65,8 @@ std::string SlidingWindow::toString() {
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
     if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType)) {
-        return this->size.equals(otherSlidingWindow->size) &&
-                this->slide.equals(otherSlidingWindow->slide) &&
-                this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
+        return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
+            && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
     }
     return false;
 }
