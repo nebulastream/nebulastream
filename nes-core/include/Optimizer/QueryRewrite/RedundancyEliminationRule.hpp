@@ -17,6 +17,7 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressionNode.hpp>
 
 namespace NES {
 
@@ -33,11 +34,12 @@ class RedundancyEliminationRule;
 using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 
 /**
- * @brief This class is responsible for reducing redundancies present in the predicates. Namely, four strategies are applied:
+ * @note The rule is not currently used - since the compiler already does most of these optimizations -
+ *       but can applied and expanded in the future
+ * @brief This class is responsible for reducing redundancies present in the predicates. Namely, four strategies can applied:
  *  1) Constant_moving/folding
  *  2) Arithmetic_simplification
  *  3) Conjunction/Disjunction simplification
- *  4) Drop filter: if the entire evaluation leads to TRUE, we can remove the filter from the plan.
  */
 class RedundancyEliminationRule : public BaseRewriteRule {
 
@@ -51,14 +53,31 @@ class RedundancyEliminationRule : public BaseRewriteRule {
     explicit RedundancyEliminationRule();
 
     /**
+     * @brief Remove all possible redundancies by using constant folding, arithmetic simplification and conjunction/disjunction
+     * simplification
+     * @param predicate
+     * @return updated predicate
+     */
+    static NES::ExpressionNodePtr eliminateRedundancy(const ExpressionNodePtr& predicate);
+
+    /**
+     * @note Currently not implemented
+     * @brief Move all constants to the same side of the expression (e.g. a-100 >= 300 becomes a >= 400)
+     * @param predicate
+     * @return updated predicate
+     */
+    static NES::ExpressionNodePtr constantMoving(const ExpressionNodePtr& predicate);
+
+    /**
+     * @note Already done by the compiler
      * @brief Expressions involving only constants are folded into a single constant (e.g. 2 + 2 becomes 4, 2 = 2 becomes True)
-     * The rule tries to move all constants to the same side of the expression (e.g. a-100 >= 300 becomes a >= 400)
      * @param predicate
      * @return updated predicate
      */
     static NES::ExpressionNodePtr constantFolding(const ExpressionNodePtr& predicate);
 
     /**
+     * @note Already done by the compiler
      * @brief This rule applies arithmetic expressions to which the answer is known (e.g. a * 0 becomes 0, a + 0 becomes a)
      * @param predicate
      * @return updated predicate
@@ -66,6 +85,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
     static NES::ExpressionNodePtr arithmeticSimplification(const ExpressionNodePtr& predicate);
 
     /**
+     * @note Currently not implemented, since boolean values in the queries are not supported
      * @brief FALSE in AND operation, the result of the expression is FALSE
      *        TRUE in AND operation, expression can be omitted
      *        FALSE in OR operation, expression can be omitted
