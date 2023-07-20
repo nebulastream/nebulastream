@@ -90,9 +90,10 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
         splitUpFilters(child2);
 
     }
-    // In the case that we have a predicate !( expression1 || expression2 ) we can reformulate it to ( !expression1 && !expression2 ).
-    // We can use the reformulated predicate to split up the filter.
+    //it might be possible to reformulate negated expressions
     else if (filterOperator->getPredicate()->instanceOf<NegateExpressionNode>()) {
+        // In the case that the predicate is of the form !( expression1 || expression2 ) it can be reformulated to ( !expression1 && !expression2 ).
+        // The reformulated predicate can be used to apply the split up filter rule again.
         if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<OrExpressionNode>()){
             auto orExpression = filterOperator->getPredicate()->getChildren()[0];
             auto negatedChild1 = NegateExpressionNode::create(orExpression->getChildren()[0]->as<ExpressionNode>());
@@ -102,6 +103,14 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
             filterOperator->setPredicate(equivalentAndExpression); //changing predicate to equivalent AndExpression
 
             splitUpFilters(filterOperator); //splitting up the filter
+        }
+        // Reformulates predicates in the form (!!expression) to (expression)
+        else if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<NegateExpressionNode>()){
+            // getPredicate() is the first NegateExpression; first getChildren()[0] is the second NegateExpression;
+            // second getChildren()[0] is the expressionNode that was negated twice. copy() only copies children of this expressionNode. (probably not mandatory but no reference to the negations needs to be kept)
+            filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->copy());
+
+            splitUpFilters(filterOperator);
         }
     }
 }

@@ -26,6 +26,7 @@ limitations under the License.
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
@@ -511,3 +512,83 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .filter(!!(Attribute("id") == 1))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterSplitUpRule = Optimizer::FilterSplitUpRule::create();
+    const QueryPlanPtr updatedPlan = filterSplitUpRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    EXPECT_TRUE(!(*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+//filter(!(!e1) || (!e2)) translates temporarily to filter( !(!(e1)) && !(!(e2)) ) which translates to filter(e1)->filter(e2)
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .filter(!(!(Attribute("id") == 1) || !(Attribute("id2") == 2)))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterSplitUpRule = Optimizer::FilterSplitUpRule::create();
+    const QueryPlanPtr updatedPlan = filterSplitUpRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    std::vector<std::string> id;
+    id.emplace_back("id");
+    EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id));
+    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<EqualsExpressionNode>());
+    ++itr;
+    std::vector<std::string> id2;
+    id2.emplace_back("id2");
+    EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id2));
+    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<EqualsExpressionNode>());
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+
+}
