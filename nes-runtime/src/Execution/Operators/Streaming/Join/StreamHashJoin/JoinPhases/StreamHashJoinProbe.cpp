@@ -31,11 +31,11 @@
 namespace NES::Runtime::Execution::Operators {
 
 StreamHashJoinProbe::StreamHashJoinProbe(uint64_t handlerIndex,
-                                       SchemaPtr joinSchemaLeft,
-                                       SchemaPtr joinSchemaRight,
-                                       SchemaPtr joinSchemaOutput,
-                                       std::string joinFieldNameLeft,
-                                       std::string joinFieldNameRight)
+                                         SchemaPtr joinSchemaLeft,
+                                         SchemaPtr joinSchemaRight,
+                                         SchemaPtr joinSchemaOutput,
+                                         std::string joinFieldNameLeft,
+                                         std::string joinFieldNameRight)
     : handlerIndex(handlerIndex), joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
       joinSchemaOutput(joinSchemaOutput), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
 

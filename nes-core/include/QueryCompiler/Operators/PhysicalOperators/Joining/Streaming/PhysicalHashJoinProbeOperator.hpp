@@ -23,7 +23,9 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical hash stream join probe operator and gets translated to a HashJoinProbe operator
  */
-class PhysicalHashJoinProbeOperator : public PhysicalHashJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
+class PhysicalHashJoinProbeOperator : public PhysicalHashJoinOperator,
+                                      public PhysicalBinaryOperator,
+                                      public AbstractScanOperator {
 
   public:
     /**
@@ -73,12 +75,12 @@ class PhysicalHashJoinProbeOperator : public PhysicalHashJoinOperator, public Ph
      * @param operatorHandler
      */
     PhysicalHashJoinProbeOperator(OperatorId id,
-                                 const SchemaPtr& leftSchema,
-                                 const SchemaPtr& rightSchema,
-                                 const SchemaPtr& outputSchema,
-                                 const std::string& joinFieldNameLeft,
-                                 const std::string& joinFieldNameRight,
-                                 const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
+                                  const SchemaPtr& leftSchema,
+                                  const SchemaPtr& rightSchema,
+                                  const SchemaPtr& outputSchema,
+                                  const std::string& joinFieldNameLeft,
+                                  const std::string& joinFieldNameRight,
+                                  const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
      * @brief Creates a string containing the name of this physical operator

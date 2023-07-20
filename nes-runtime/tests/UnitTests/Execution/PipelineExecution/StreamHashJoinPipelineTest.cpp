@@ -304,11 +304,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         rightSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
     auto joinSink = std::make_shared<Operators::StreamHashJoinProbe>(handlerIndex,
-                                                                    leftSchema,
-                                                                    rightSchema,
-                                                                    joinSchema,
-                                                                    joinFieldNameLeft,
-                                                                    joinFieldNameRight);
+                                                                     leftSchema,
+                                                                     rightSchema,
+                                                                     joinSchema,
+                                                                     joinFieldNameLeft,
+                                                                     joinFieldNameRight);
     auto hashJoinOpHandler =
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                          windowSize,

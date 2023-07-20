@@ -37,11 +37,11 @@ OperatorNodePtr PhysicalHashJoinProbeOperator::copy() {
 
 PhysicalOperatorPtr
 PhysicalHashJoinProbeOperator::create(const SchemaPtr& leftSchema,
-                                     const SchemaPtr& rightSchema,
-                                     const SchemaPtr& outputSchema,
-                                     const std::string& joinFieldNameLeft,
-                                     const std::string& joinFieldNameRight,
-                                     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
+                                      const SchemaPtr& rightSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const std::string& joinFieldNameLeft,
+                                      const std::string& joinFieldNameRight,
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
     return create(Util::getNextOperatorId(),
                   leftSchema,
                   rightSchema,
@@ -53,19 +53,19 @@ PhysicalHashJoinProbeOperator::create(const SchemaPtr& leftSchema,
 
 PhysicalOperatorPtr
 PhysicalHashJoinProbeOperator::create(OperatorId id,
-                                     const SchemaPtr& leftSchema,
-                                     const SchemaPtr& rightSchema,
-                                     const SchemaPtr& outputSchema,
-                                     const std::string& joinFieldNameLeft,
-                                     const std::string& joinFieldNameRight,
-                                     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
+                                      const SchemaPtr& leftSchema,
+                                      const SchemaPtr& rightSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const std::string& joinFieldNameLeft,
+                                      const std::string& joinFieldNameRight,
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalHashJoinProbeOperator>(id,
-                                                          leftSchema,
-                                                          rightSchema,
-                                                          outputSchema,
-                                                          joinFieldNameLeft,
-                                                          joinFieldNameRight,
-                                                          operatorHandler);
+                                                           leftSchema,
+                                                           rightSchema,
+                                                           outputSchema,
+                                                           joinFieldNameLeft,
+                                                           joinFieldNameRight,
+                                                           operatorHandler);
 }
 
 const std::string& PhysicalHashJoinProbeOperator::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
