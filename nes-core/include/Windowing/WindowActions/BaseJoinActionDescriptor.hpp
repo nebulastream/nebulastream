@@ -29,6 +29,13 @@ class BaseJoinActionDescriptor {
      */
     virtual JoinActionType getActionType() = 0;
 
+    /**
+     * @brief Checks if the two are equal
+     * @param other: BaseJoinActionDescriptor that we want to compare this to
+     * @return Boolean
+     */
+    virtual bool equals(const BaseJoinActionDescriptor& other) const;
+
   protected:
     explicit BaseJoinActionDescriptor(JoinActionType action);
     JoinActionType action;

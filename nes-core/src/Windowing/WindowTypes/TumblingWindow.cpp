@@ -65,15 +65,10 @@ std::string TumblingWindow::toString() {
 }
 
 bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(otherWindowType);
-        return this->timeCharacteristic->getField()->getName()
-            == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
-            && this->size.getTime() == timeBasedWindowType->getSize().getTime()
-            && timeBasedWindowType->getTimeBasedSubWindowType() == TUMBLINGWINDOW
-            && this->getTimeBasedSubWindowType() == TUMBLINGWINDOW;
-    } else {
-        return false;
+    if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType)) {
+        return this->size.equals(otherTumblingWindow->size) &&
+            this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
     }
+    return false;
 }
 }// namespace NES::Windowing

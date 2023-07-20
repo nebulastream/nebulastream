@@ -167,6 +167,24 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         }                                                                                                                        \
     } while (0)
 
+#define NES_ASSERT_THROW_EXCEPTION(CONDITION, EXCEPTION_TYPE, ...)                                                               \
+    do {                                                                                                                         \
+        if (!(CONDITION)) {                                                                                                      \
+            std::stringstream args;                                                                                              \
+            args << __VA_ARGS__;                                                                                                 \
+            NES_ERROR("NES Fatal Error on {} message: {}", #CONDITION, args.str());                                              \
+            {                                                                                                                    \
+                auto __stacktrace = NES::collectAndPrintStacktrace();                                                            \
+                std::stringbuf __buffer;                                                                                         \
+                std::ostream __os(&__buffer);                                                                                    \
+                __os << "Failed assertion on " #CONDITION;                                                                       \
+                __os << " error message: " << __VA_ARGS__;                                                                       \
+                throw EXCEPTION_TYPE(__buffer.str());                                                                            \
+            }                                                                                                                    \
+        }                                                                                                                        \
+    } while (0)
+
+
 #define NES_ASSERT2_FMT(CONDITION, ...)                                                                                          \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \

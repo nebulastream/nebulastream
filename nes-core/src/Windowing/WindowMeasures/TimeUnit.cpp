@@ -22,4 +22,8 @@ uint64_t TimeUnit::getMultiplier() const { return multiplier; }
 
 std::string TimeUnit::toString() { return "TimeUnit: multiplier=" + std::to_string(multiplier); }
 
+bool TimeUnit::equals(const TimeUnit& other) const {
+    return this->multiplier == other.multiplier;
+}
+
 }// namespace NES::Windowing

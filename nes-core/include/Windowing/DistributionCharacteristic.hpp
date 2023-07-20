@@ -66,6 +66,14 @@ class DistributionCharacteristic {
    */
     std::string toString();
 
+    /**
+     * @brief Checks if the two are equal
+     * @param other: DistributionCharacteristic that we want to check if they are equal
+     * @return Boolean
+     */
+    bool equals(const DistributionCharacteristic& other) const;
+
+
   private:
     Type type;
 };

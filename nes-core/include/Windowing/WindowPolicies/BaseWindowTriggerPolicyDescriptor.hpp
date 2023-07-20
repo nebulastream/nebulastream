@@ -34,6 +34,13 @@ class BaseWindowTriggerPolicyDescriptor {
 
     std::string getTypeAsString();
 
+    /**
+     * @brief Checks if the two are equal
+     * @param other: Object that we want to compare this to
+     * @return Boolean
+     */
+    bool equals(const BaseWindowTriggerPolicyDescriptor& other) const;
+
   protected:
     explicit BaseWindowTriggerPolicyDescriptor(TriggerType policy);
     TriggerType policy;
