@@ -66,8 +66,8 @@ std::string TumblingWindow::toString() {
 
 bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
     if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType)) {
-        return this->size.equals(otherTumblingWindow->size) &&
-            this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
+        return this->size.equals(otherTumblingWindow->size)
+            && this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
     }
     return false;
 }

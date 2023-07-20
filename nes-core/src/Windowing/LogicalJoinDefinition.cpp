@@ -120,19 +120,12 @@ uint64_t LogicalJoinDefinition::getOriginId() const { return originId; }
 void LogicalJoinDefinition::setOriginId(OriginId originId) { this->originId = originId; }
 
 bool LogicalJoinDefinition::equals(const LogicalJoinDefinition& other) const {
-    return leftJoinKeyType->equal(other.leftJoinKeyType) &&
-        rightJoinKeyType->equal(other.rightJoinKeyType) &&
-        leftSourceType->equals(other.leftSourceType) &&
-        rightSourceType->equals(other.rightSourceType) &&
-        outputSchema->equals(other.outputSchema) &&
-        triggerPolicy->equals(*other.triggerPolicy) &&
-        triggerAction->equals(*other.triggerAction) &&
-        windowType->equal(other.windowType) &&
-        distributionType->equals(*other.distributionType) &&
-        numberOfInputEdgesLeft == other.numberOfInputEdgesLeft &&
-        numberOfInputEdgesRight == other.numberOfInputEdgesRight &&
-        joinType == other.joinType &&
-        originId == other.originId;
+    return leftJoinKeyType->equal(other.leftJoinKeyType) && rightJoinKeyType->equal(other.rightJoinKeyType)
+        && leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
+        && outputSchema->equals(other.outputSchema) && triggerPolicy->equals(*other.triggerPolicy)
+        && triggerAction->equals(*other.triggerAction) && windowType->equal(other.windowType)
+        && distributionType->equals(*other.distributionType) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
+        && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;
 }
 
 };// namespace NES::Join

@@ -34,8 +34,8 @@ WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate, uint64_t minimumC
 
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
     if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType)) {
-        return this->minimumCount == otherThresholdWindow->minimumCount &&
-            this->predicate->equal(otherThresholdWindow->predicate);
+        return this->minimumCount == otherThresholdWindow->minimumCount
+            && this->predicate->equal(otherThresholdWindow->predicate);
     }
     return false;
 }

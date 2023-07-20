@@ -51,8 +51,6 @@ std::string DistributionCharacteristic::toString() {
     }
 }
 
-bool DistributionCharacteristic::equals(const DistributionCharacteristic& other) const {
-    return type == other.type;
-}
+bool DistributionCharacteristic::equals(const DistributionCharacteristic& other) const { return type == other.type; }
 
 }// namespace NES::Windowing

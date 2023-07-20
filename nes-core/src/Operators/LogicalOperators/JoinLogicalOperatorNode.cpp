@@ -59,8 +59,8 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     rightInputSchema->clear();
 
     // Finds the join schema that contains the joinKey and returns an iterator to the schema
-    auto findSchemaInDinstinctSchemas = [&] (FieldAccessExpressionNode& joinKey, SchemaPtr& inputSchema) {
-        for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end(); ) {
+    auto findSchemaInDinstinctSchemas = [&](FieldAccessExpressionNode& joinKey, SchemaPtr& inputSchema) {
+        for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
             bool fieldExistsInSchema;
             const auto joinKeyName = joinKey.getFieldName();
             // If field name contains qualifier
@@ -85,31 +85,40 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     const auto leftJoinKey = joinDefinition->getLeftJoinKey();
     const auto leftJoinKeyName = leftJoinKey->getFieldName();
     const auto foundLeftKey = findSchemaInDinstinctSchemas(*leftJoinKey, leftInputSchema);
-    NES_ASSERT_THROW_EXCEPTION(foundLeftKey, TypeInferenceException,
+    NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
+                               TypeInferenceException,
                                "JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
 
     //Find the schema for right join key
     const auto rightJoinKey = joinDefinition->getRightJoinKey();
     const auto rightJoinKeyName = rightJoinKey->getFieldName();
     const auto foundRightKey = findSchemaInDinstinctSchemas(*rightJoinKey, rightInputSchema);
-    NES_ASSERT_THROW_EXCEPTION(foundRightKey, TypeInferenceException,
+    NES_ASSERT_THROW_EXCEPTION(foundRightKey,
+                               TypeInferenceException,
                                "JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName + " in schemas.");
 
     // Clearing now the distinct schemas
     distinctSchemas.clear();
 
     //Check if left and right input schema were correctly identified
-    NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema, TypeInferenceException,
-                               "JoinLogicalOperatorNode: Left input schema is not initialized for left join key " + leftJoinKeyName);
-    NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema, TypeInferenceException,
-                               "JoinLogicalOperatorNode: Right input schema is not initialized for right join key " + rightJoinKeyName);
+    NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Left input schema is not initialized for left join key "
+                                   + leftJoinKeyName);
+    NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Right input schema is not initialized for right join key "
+                                   + rightJoinKeyName);
 
     // Checking if left and right input schema are not empty and are not equal
-    NES_ASSERT_THROW_EXCEPTION(leftInputSchema->getSchemaSizeInBytes() > 0, TypeInferenceException,
+    NES_ASSERT_THROW_EXCEPTION(leftInputSchema->getSchemaSizeInBytes() > 0,
+                               TypeInferenceException,
                                "JoinLogicalOperatorNode: left schema is emtpy");
-    NES_ASSERT_THROW_EXCEPTION(rightInputSchema->getSchemaSizeInBytes() > 0, TypeInferenceException,
+    NES_ASSERT_THROW_EXCEPTION(rightInputSchema->getSchemaSizeInBytes() > 0,
+                               TypeInferenceException,
                                "JoinLogicalOperatorNode: right schema is emtpy");
-    NES_ASSERT_THROW_EXCEPTION(!rightInputSchema->equals(leftInputSchema, false), TypeInferenceException,
+    NES_ASSERT_THROW_EXCEPTION(!rightInputSchema->equals(leftInputSchema, false),
+                               TypeInferenceException,
                                "JoinLogicalOperatorNode: Found both left and right input schema to be same.");
 
     //Infer stamp of window definition
