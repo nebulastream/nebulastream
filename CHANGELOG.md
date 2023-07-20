@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.150](https://github.com/nebulastream/nebulastream/tree/v0.5.150) (2023-07-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.149...v0.5.150)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor JoinLogicalOperatorNode::inferSchema [\#3971](https://github.com/nebulastream/nebulastream/issues/3971)
+
 ## [v0.5.149](https://github.com/nebulastream/nebulastream/tree/v0.5.149) (2023-07-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.148...v0.5.149)
