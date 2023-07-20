@@ -48,7 +48,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -389,7 +389,7 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                                                JoinBuildSideType::Right,
                                                                streamJoinConfig.timeStampFieldNameRight,
                                                                streamJoinConfig.joinFieldNameRight);
-    const auto joinSinkOperator =
+    const auto joinProbeOperator =
         PhysicalOperators::PhysicalNestedLoopJoinProbeOperator::create(joinOperator->getLeftInputSchema(),
                                                                        joinOperator->getRightInputSchema(),
                                                                        joinOperator->getOutputSchema(),
@@ -402,7 +402,7 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
 
     streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-    streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);
+    streamJoinOperatorNodes.operatorNode->replace(joinProbeOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
@@ -452,16 +452,16 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
                                                                     streamJoinConfig.timeStampFieldNameRight,
                                                                     streamJoinConfig.joinFieldNameRight);
 
-    const auto joinSinkOperator =
-        PhysicalOperators::PhysicalHashJoinSinkOperator::create(logicalJoinOperatorNode->getLeftInputSchema(),
-                                                                logicalJoinOperatorNode->getRightInputSchema(),
-                                                                logicalJoinOperatorNode->getOutputSchema(),
-                                                                streamJoinConfig.joinFieldNameLeft,
-                                                                streamJoinConfig.joinFieldNameRight,
-                                                                joinOperatorHandler);
+    const auto joinProbeOperator =
+        PhysicalOperators::PhysicalHashJoinProbeOperator::create(logicalJoinOperatorNode->getLeftInputSchema(),
+                                                                 logicalJoinOperatorNode->getRightInputSchema(),
+                                                                 logicalJoinOperatorNode->getOutputSchema(),
+                                                                 streamJoinConfig.joinFieldNameLeft,
+                                                                 streamJoinConfig.joinFieldNameRight,
+                                                                 joinOperatorHandler);
     streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-    streamJoinOperatorNodes.operatorNode->replace(joinSinkOperator);
+    streamJoinOperatorNodes.operatorNode->replace(joinProbeOperator);
 }
 
 std::tuple<std::string, std::string>

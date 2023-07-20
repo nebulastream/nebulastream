@@ -12,4 +12,4 @@
 
 add_source_files(nes-runtime
         StreamHashJoinBuild.cpp
-        StreamHashJoinSink.cpp)
+        StreamHashJoinProbe.cpp)
