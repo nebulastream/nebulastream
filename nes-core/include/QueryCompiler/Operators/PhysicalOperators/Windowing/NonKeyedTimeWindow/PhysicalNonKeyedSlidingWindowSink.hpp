@@ -24,25 +24,25 @@ namespace PhysicalOperators {
 /**
  * @brief The keyed slicing window sink uses the global slice store to compute the final aggregate for a sliding window.
  */
-class PhysicalGlobalSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator {
+class PhysicalNonKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
-    PhysicalGlobalSlidingWindowSink(OperatorId id,
+    PhysicalNonKeyedSlidingWindowSink(OperatorId id,
                                     SchemaPtr inputSchema,
                                     SchemaPtr outputSchema,
-                                    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
+                                    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
 
-    static std::shared_ptr<PhysicalGlobalSlidingWindowSink>
+    static std::shared_ptr<PhysicalNonKeyedSlidingWindowSink>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
+           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr getWindowHandler() { return keyedEventTimeWindowHandler; }
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr getWindowHandler() { return keyedEventTimeWindowHandler; }
 
   private:
-    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;
 };
 
 }// namespace PhysicalOperators

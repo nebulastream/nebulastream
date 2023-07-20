@@ -12,32 +12,32 @@
     limitations under the License.
 */
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalWindowSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/NonKeyedTimeWindow/GeneratableNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Core.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalWindowGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableGlobalWindowSliceStoreAppendOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedWindowSliceStoreAppendOperator::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalWindowSliceStoreAppendOperator>(
-        GeneratableGlobalWindowSliceStoreAppendOperator(id,
+    return std::make_shared<GeneratableNonKeyedWindowSliceStoreAppendOperator>(
+        GeneratableNonKeyedWindowSliceStoreAppendOperator(id,
                                                         std::move(inputSchema),
                                                         std::move(outputSchema),
                                                         std::move(operatorHandler),
                                                         std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableGlobalWindowSliceStoreAppendOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedWindowSliceStoreAppendOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -46,29 +46,29 @@ GeneratableOperatorPtr GeneratableGlobalWindowSliceStoreAppendOperator::create(
                   std::move(windowAggregation));
 }
 
-GeneratableGlobalWindowSliceStoreAppendOperator::GeneratableGlobalWindowSliceStoreAppendOperator(
+GeneratableNonKeyedWindowSliceStoreAppendOperator::GeneratableNonKeyedWindowSliceStoreAppendOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableGlobalWindowSliceStoreAppendOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
+void GeneratableNonKeyedWindowSliceStoreAppendOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
-void GeneratableGlobalWindowSliceStoreAppendOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedWindowSliceStoreAppendOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForGlobalSliceStoreAppend(context, handler);
     windowHandler = nullptr;
 }
 
-std::string GeneratableGlobalWindowSliceStoreAppendOperator::toString() const {
+std::string GeneratableNonKeyedWindowSliceStoreAppendOperator::toString() const {
     return "GeneratableGlobalWindowSliceStoreAppendOperator";
 }
 
-OperatorNodePtr GeneratableGlobalWindowSliceStoreAppendOperator::copy() {
+OperatorNodePtr GeneratableNonKeyedWindowSliceStoreAppendOperator::copy() {
     return create(id, inputSchema, outputSchema, windowHandler, windowAggregation);
 }
 

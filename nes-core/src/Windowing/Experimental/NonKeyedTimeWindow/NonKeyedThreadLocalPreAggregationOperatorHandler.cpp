@@ -33,7 +33,7 @@ namespace NES::Windowing::Experimental {
 NonKeyedThreadLocalPreAggregationOperatorHandler::NonKeyedThreadLocalPreAggregationOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     const std::vector<OriginId> origins,
-    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
+    std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
     watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
     auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -41,7 +41,7 @@ NonKeyedThreadLocalPreAggregationOperatorHandler::NonKeyedThreadLocalPreAggregat
     windowSlide = windowType->getSlide().getTime();
 }
 
-NonKeyedSliceThreadLocalSliceStore& NonKeyedThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
+NonKeyedThreadLocalSliceStore& NonKeyedThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
     if (threadLocalSliceStores.size() <= workerId) {
         throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
     }
@@ -51,7 +51,7 @@ NonKeyedSliceThreadLocalSliceStore& NonKeyedThreadLocalPreAggregationOperatorHan
 void NonKeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                                            uint64_t entrySize) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<NonKeyedSliceThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
+        auto threadLocal = std::make_unique<NonKeyedThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
         threadLocalSliceStores.push_back(std::move(threadLocal));
     }
 }

@@ -27,11 +27,11 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief The global thread local pre aggregation operator, receives an input source and creates on each processing thread an local pre aggregate.
  * If it receives a watermark the thread local slice is merges by the slice merging operator.
  */
-class PhysicalGlobalThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
+class PhysicalNonKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
-    using WindowHandlerType = std::variant<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr,
+    using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr,
                                            std::shared_ptr<Runtime::Execution::Operators::GlobalSlicePreAggregationHandler>>;
-    PhysicalGlobalThreadLocalPreAggregationOperator(OperatorId id,
+    PhysicalNonKeyedThreadLocalPreAggregationOperator(OperatorId id,
                                                     SchemaPtr inputSchema,
                                                     SchemaPtr outputSchema,
                                                     WindowHandlerType windowHandler,

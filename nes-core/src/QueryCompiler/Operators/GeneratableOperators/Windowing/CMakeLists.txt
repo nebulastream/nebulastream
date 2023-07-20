@@ -19,4 +19,4 @@ add_source_files(nes-core
 
 add_subdirectory(WindowAggregations)
 add_subdirectory(KeyedTimeWindow)
-add_subdirectory(GlobalTimeWindow)
+add_subdirectory(NonKeyedTimeWindow)

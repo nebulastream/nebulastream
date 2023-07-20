@@ -23,14 +23,14 @@ namespace PhysicalOperators {
 /**
  * @brief The global tumbling window sink directly emits the final aggregates for a merged slice.
  */
-class PhysicalGlobalTumblingWindowSink : public PhysicalUnaryOperator {
+class PhysicalNonKeyedTumblingWindowSink : public PhysicalUnaryOperator {
   public:
-    PhysicalGlobalTumblingWindowSink(OperatorId id,
+    PhysicalNonKeyedTumblingWindowSink(OperatorId id,
                                      SchemaPtr inputSchema,
                                      SchemaPtr outputSchema,
                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalGlobalTumblingWindowSink>
+    static std::shared_ptr<PhysicalNonKeyedTumblingWindowSink>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();

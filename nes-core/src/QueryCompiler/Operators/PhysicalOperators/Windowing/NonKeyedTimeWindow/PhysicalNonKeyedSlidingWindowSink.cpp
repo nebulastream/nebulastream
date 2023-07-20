@@ -12,32 +12,32 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalGlobalSlidingWindowSink::PhysicalGlobalSlidingWindowSink(
+PhysicalNonKeyedSlidingWindowSink::PhysicalNonKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler)
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 
-std::shared_ptr<PhysicalGlobalSlidingWindowSink> PhysicalGlobalSlidingWindowSink::create(
+std::shared_ptr<PhysicalNonKeyedSlidingWindowSink> PhysicalNonKeyedSlidingWindowSink::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
-    return std::make_shared<PhysicalGlobalSlidingWindowSink>(Util::getNextOperatorId(),
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalNonKeyedSlidingWindowSink>(Util::getNextOperatorId(),
                                                              inputSchema,
                                                              outputSchema,
                                                              keyedEventTimeWindowHandler);
 }
 
-std::string PhysicalGlobalSlidingWindowSink::toString() const { return "PhysicalGlobalSlidingWindowSink"; }
+std::string PhysicalNonKeyedSlidingWindowSink::toString() const { return "PhysicalGlobalSlidingWindowSink"; }
 
-OperatorNodePtr PhysicalGlobalSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
+OperatorNodePtr PhysicalNonKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

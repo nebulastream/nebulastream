@@ -12,32 +12,32 @@
     limitations under the License.
 */
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalThreadLocalPreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/NonKeyedTimeWindow/GeneratableNonKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Core.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableGlobalThreadLocalPreAggregationOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedThreadLocalPreAggregationOperator::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalThreadLocalPreAggregationOperator>(
-        GeneratableGlobalThreadLocalPreAggregationOperator(id,
+    return std::make_shared<GeneratableNonKeyedThreadLocalPreAggregationOperator>(
+        GeneratableNonKeyedThreadLocalPreAggregationOperator(id,
                                                            std::move(inputSchema),
                                                            std::move(outputSchema),
                                                            std::move(operatorHandler),
                                                            std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableGlobalThreadLocalPreAggregationOperator::create(
+GeneratableOperatorPtr GeneratableNonKeyedThreadLocalPreAggregationOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -46,16 +46,16 @@ GeneratableOperatorPtr GeneratableGlobalThreadLocalPreAggregationOperator::creat
                   std::move(windowAggregation));
 }
 
-GeneratableGlobalThreadLocalPreAggregationOperator::GeneratableGlobalThreadLocalPreAggregationOperator(
+GeneratableNonKeyedThreadLocalPreAggregationOperator::GeneratableNonKeyedThreadLocalPreAggregationOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableGlobalThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowDefinition = windowHandler->getWindowDefinition();
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateGlobalThreadLocalPreAggregationSetup(windowDefinition,
@@ -66,18 +66,18 @@ void GeneratableGlobalThreadLocalPreAggregationOperator::generateOpen(CodeGenera
                                                           windowAggregation);
 }
 
-void GeneratableGlobalThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForGlobalThreadLocalPreAggregationOperator(windowDefinition, windowAggregation, context, handler);
     windowHandler = nullptr;
 }
 
-std::string GeneratableGlobalThreadLocalPreAggregationOperator::toString() const {
+std::string GeneratableNonKeyedThreadLocalPreAggregationOperator::toString() const {
     return "GeneratableSlicePreAggregationOperator";
 }
 
-OperatorNodePtr GeneratableGlobalThreadLocalPreAggregationOperator::copy() {
+OperatorNodePtr GeneratableNonKeyedThreadLocalPreAggregationOperator::copy() {
     return create(id, inputSchema, outputSchema, windowHandler, windowAggregation);
 }
 

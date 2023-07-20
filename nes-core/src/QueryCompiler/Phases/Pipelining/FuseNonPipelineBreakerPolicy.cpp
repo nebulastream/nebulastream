@@ -18,9 +18,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalTumblingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalWindowSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
@@ -44,8 +44,8 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedTumblingWindowSink>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalGlobalTumblingWindowSink>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalGlobalWindowSliceStoreAppendOperator>());
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>());
 }
 }// namespace NES::QueryCompilation

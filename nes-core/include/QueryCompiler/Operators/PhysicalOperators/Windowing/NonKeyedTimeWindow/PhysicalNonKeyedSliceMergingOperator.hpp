@@ -27,18 +27,18 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief The slice merging operator receives pre aggregated keyed slices and merges them together.
  * Finally, it appends them to the global slice store.
  */
-class PhysicalGlobalSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
+class PhysicalNonKeyedSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
 
   public:
-    using WindowHandlerType = std::variant<Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr,
+    using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr,
                                            std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>;
-    PhysicalGlobalSliceMergingOperator(OperatorId id,
+    PhysicalNonKeyedSliceMergingOperator(OperatorId id,
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,
                                        WindowHandlerType operatorHandler,
                                        Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalGlobalSliceMergingOperator> create(SchemaPtr inputSchema,
+    static std::shared_ptr<PhysicalNonKeyedSliceMergingOperator> create(SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
                                                                       WindowHandlerType operatorHandler,
                                                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);

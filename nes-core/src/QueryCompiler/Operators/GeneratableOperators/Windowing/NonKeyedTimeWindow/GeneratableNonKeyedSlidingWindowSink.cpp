@@ -13,31 +13,30 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/NonKeyedTimeWindow/GeneratableNonKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Core.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>
+#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr
-GeneratableGlobalSlidingWindowSink::create(OperatorId id,
+GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
-                                           Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+                                           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalSlidingWindowSink>(GeneratableGlobalSlidingWindowSink(id,
+    return std::make_shared<GeneratableNonKeyedSlidingWindowSink>(
+        GeneratableNonKeyedSlidingWindowSink(id,
                                                                                                    std::move(inputSchema),
                                                                                                    std::move(outputSchema),
                                                                                                    std::move(operatorHandler),
                                                                                                    std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr
-GeneratableGlobalSlidingWindowSink::create(SchemaPtr inputSchema,
+GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
-                                           Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+                                           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -46,16 +45,16 @@ GeneratableGlobalSlidingWindowSink::create(SchemaPtr inputSchema,
                   std::move(windowAggregation));
 }
 
-GeneratableGlobalSlidingWindowSink::GeneratableGlobalSlidingWindowSink(
+GeneratableNonKeyedSlidingWindowSink::GeneratableNonKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableGlobalSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateGlobalSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
                                                       context,
@@ -64,16 +63,16 @@ void GeneratableGlobalSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, 
                                                       windowAggregation);
 }
 
-void GeneratableGlobalSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableNonKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForGlobalSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
     windowHandler = nullptr;
 }
 
-std::string GeneratableGlobalSlidingWindowSink::toString() const { return "GeneratableGlobalSlidingWindowSink"; }
+std::string GeneratableNonKeyedSlidingWindowSink::toString() const { return "GeneratableGlobalSlidingWindowSink"; }
 
-OperatorNodePtr GeneratableGlobalSlidingWindowSink::copy() {
+OperatorNodePtr GeneratableNonKeyedSlidingWindowSink::copy() {
     return create(id, inputSchema, outputSchema, windowHandler, windowAggregation);
 }
 
