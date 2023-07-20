@@ -23,21 +23,6 @@ PhysicalUDFOperator::PhysicalUDFOperator(OperatorId id,
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       udfDescriptor(std::move(udfDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalUDFOperator::create(const SchemaPtr& inputSchema,
-                                                const SchemaPtr& outputSchema,
-                                                const Catalogs::UDF::UDFDescriptorPtr& javaUDFDescriptor) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, javaUDFDescriptor);
-}
-
-PhysicalOperatorPtr PhysicalUDFOperator::create(OperatorId id,
-                                                const SchemaPtr& inputSchema,
-                                                const SchemaPtr& outputSchema,
-                                                const Catalogs::UDF::UDFDescriptorPtr& javaUDFDescriptor) {
-    return std::make_shared<PhysicalUDFOperator>(id, inputSchema, outputSchema, javaUDFDescriptor);
-}
-
-OperatorNodePtr PhysicalUDFOperator::copy() { return create(id, inputSchema, outputSchema, udfDescriptor); }
-
 Catalogs::UDF::UDFDescriptorPtr PhysicalUDFOperator::getUDFDescriptor() { return udfDescriptor; }
 
 std::string PhysicalUDFOperator::toString() const { return "PhysicalUDFOperator"; }

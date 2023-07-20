@@ -20,7 +20,22 @@ PhysicalFlatMapJavaUDFOperator::PhysicalFlatMapJavaUDFOperator(OperatorId id,
                                                                const SchemaPtr& inputSchema,
                                                                const SchemaPtr& outputSchema,
                                                                const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor)
-    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(javaUDFDescriptor)) {}
+    : OperatorNode(id), PhysicalUDFOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(javaUDFDescriptor)), javaUDFDescriptor(std::move(javaUDFDescriptor)) {}
+
+PhysicalOperatorPtr PhysicalFlatMapJavaUDFOperator::create(const SchemaPtr& inputSchema,
+                                                           const SchemaPtr& outputSchema,
+                                                           const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor) {
+    return create(Util::getNextOperatorId(), inputSchema, outputSchema, javaUDFDescriptor);
+}
+
+PhysicalOperatorPtr PhysicalFlatMapJavaUDFOperator::create(OperatorId id,
+                                                           const SchemaPtr& inputSchema,
+                                                           const SchemaPtr& outputSchema,
+                                                           const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor) {
+    return std::make_shared<PhysicalFlatMapJavaUDFOperator>(id, inputSchema, outputSchema, javaUDFDescriptor);
+}
+
+OperatorNodePtr PhysicalFlatMapJavaUDFOperator::copy() { return create(id, inputSchema, outputSchema, javaUDFDescriptor);}
 
 std::string PhysicalFlatMapJavaUDFOperator::toString() const { return "PhysicalMapJavaUDFOperator"; }
 

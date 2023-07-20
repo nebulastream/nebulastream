@@ -86,9 +86,6 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#endif
 
 class PhysicalCEPIterationOperator;
 namespace NES::QueryCompilation {
@@ -158,11 +155,6 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         return;
     }
-#ifdef PYTHON_UDF_ENABLED
-    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>()) {
-        return;
-    }
-#endif
     else {
         throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
     }
