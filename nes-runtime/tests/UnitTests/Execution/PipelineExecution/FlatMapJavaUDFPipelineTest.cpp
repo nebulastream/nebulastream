@@ -54,8 +54,6 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
-
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "JavaUDFTestData/JavaUDFTest.jar";
 };
 
 /**
@@ -114,8 +112,7 @@ auto initMapHandler(std::string className,
                     std::string methodName,
                     std::string inputProxyName,
                     std::string outputProxyName,
-                    SchemaPtr schema,
-                    std::string testDataPath) {
+                    SchemaPtr schema) {
     jni::JavaUDFByteCodeList byteCodeList;
     jni::JavaSerializedInstance serializedInstance;
     return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
@@ -126,7 +123,7 @@ auto initMapHandler(std::string className,
                                                                serializedInstance,
                                                                schema,
                                                                schema,
-                                                               testDataPath);
+                                                               std::nullopt);
 }
 
 /**
@@ -173,12 +170,11 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("stream/nebula/StringFlatMapFunction",
+    auto handler = initMapHandler("stream.nebula.StringFlatMapFunction",
                                   "flatMap",
-                                  "java/lang/String",
-                                  "java/util/Collection",
-                                  schema,
-                                  testDataPath);
+                                  "java.lang.String",
+                                  "java.util.Collection",
+                                  schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -242,12 +238,11 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("stream/nebula/ComplexPojoFlatMapFunction",
+    auto handler = initMapHandler("stream.nebula.ComplexPojoFlatMapFunction",
                                   "flatMap",
-                                  "stream/nebula/ComplexPojo",
-                                  "java/util/Collection",
-                                  schema,
-                                  testDataPath);
+                                  "stream.nebula.ComplexPojo",
+                                  "java.util.Collection",
+                                  schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
