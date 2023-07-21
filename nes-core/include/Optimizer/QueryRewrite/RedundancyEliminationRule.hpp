@@ -36,10 +36,14 @@ using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 /**
  * @note The rule is not currently used - since the compiler already does most of these optimizations -
  *       but can applied and expanded in the future
- * @brief This class is responsible for reducing redundancies present in the predicates. Namely, four strategies can applied:
+ * @brief This class is responsible for reducing redundancies present in the predicates. Namely, three strategies can applied:
  *  1) Constant_moving/folding
+ *  Example (folding): filter(Attribute("id") > 5+5) -> filter(Attribute("id") > 5+5)
+ *  Example (moving): filter(Attribute("id") + 10 > 10) -> filter(Attribute("id") > 0)
  *  2) Arithmetic_simplification
+ *  Example: filter(Attribute("id") > Attribute("value") * 0) -> filter(Attribute("id") > 0)
  *  3) Conjunction/Disjunction simplification
+ *  Example: filter(Attribute("id") > 0 && TRUE) -> filter(Attribute("id") > 0)
  */
 class RedundancyEliminationRule : public BaseRewriteRule {
 
