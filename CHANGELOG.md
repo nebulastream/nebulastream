@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.152](https://github.com/nebulastream/nebulastream/tree/v0.5.152) (2023-07-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.151...v0.5.152)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Nautilus in ThreadLocalGlobalTumblingWindowTests and ThreadLocalTumblingWindowTests [\#4004](https://github.com/nebulastream/nebulastream/issues/4004)
+
 ## [v0.5.151](https://github.com/nebulastream/nebulastream/tree/v0.5.151) (2023-07-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.150...v0.5.151)
