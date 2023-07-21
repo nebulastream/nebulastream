@@ -258,6 +258,12 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
+    if (useNautilus) {
+        coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
+            QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+    }
     crdConfigFunctor(coordinatorConfiguration);
 
     nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
@@ -272,6 +278,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         if (useNautilus) {
             workerConfiguration->queryCompiler.queryCompilerType =
                 QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
         }
 
         //Set ports at runtime

@@ -242,9 +242,9 @@ class TestHarness {
      */
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect,
-                             std::string placementStrategyName,
-                             std::string faultTolerance,
-                             std::string lineage,
+                             std::string placementStrategyName = "BottomUp",
+                             std::string faultTolerance = "NONE",
+                             std::string lineage = "IN_MEMORY",
                              uint64_t testTimeout = 60) {
 
         if (!topologySetupDone || !validationDone) {
