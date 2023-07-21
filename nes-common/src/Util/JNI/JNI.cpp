@@ -161,10 +161,8 @@ JVM& JVM::addClasspath(const std::string& path) {
         throw InitializationException(
             "ClassPath can't be changed to running jvm. All classpaths have been provided before JVM init is called.");
     }
-    if(classPath.empty()){
-       classPath = "-Djava.class.path=";
-    }
-    classPath = classPath + path;
+    std::string prefix = classPath.empty() ? "-Djava.class.path=" : ":";
+    classPath = classPath + prefix + path;
     return *this;
 }
 
