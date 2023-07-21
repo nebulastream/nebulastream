@@ -152,7 +152,7 @@ jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedIn
     jni::jniErrorCheck();
 
     // Deserialize the instance using a Java helper method.
-    const auto clazz = env->FindClass("MapJavaUdfUtils");
+    const auto clazz = env->FindClass("stream/nebula/MapJavaUdfUtils");
     jni::jniErrorCheck();
     // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
     const auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
