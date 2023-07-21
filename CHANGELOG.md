@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.153](https://github.com/nebulastream/nebulastream/tree/v0.5.153) (2023-07-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.152...v0.5.153)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Nautilus in QueryDeployment [\#3984](https://github.com/nebulastream/nebulastream/issues/3984)
+
 ## [v0.5.152](https://github.com/nebulastream/nebulastream/tree/v0.5.152) (2023-07-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.151...v0.5.152)
