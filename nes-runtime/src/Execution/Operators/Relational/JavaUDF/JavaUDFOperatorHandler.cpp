@@ -50,13 +50,13 @@ void JavaUDFOperatorHandler::setup() {
     auto env = jni::getEnv();
     // load bytecodes
     jni::loadClassesFromByteList(getByteCodeList());
-    auto c1 = jni::findClass(getClassJNIName());
+    auto clazz = jni::findClass(getClassJNIName());
 
     // Build function signature of map function
     std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
 
     // Find udf function
-    this->udfMethodId = env->GetMethodID(c1, getMethodName().c_str(), sig.c_str());
+    this->udfMethodId = env->GetMethodID(clazz, getMethodName().c_str(), sig.c_str());
     jni::jniErrorCheck();
 
     jni::jobject instance;
@@ -65,11 +65,7 @@ void JavaUDFOperatorHandler::setup() {
         // Load instance if defined
         instance = jni::deserializeInstance(serializedInstance);
     } else {
-        // Create instance object using class information
-        jclass clazz = jni::findClass(getClassJNIName());
-        jni::jniErrorCheck();
-
-        // Here we assume the default constructor is available
+        // Create instance using default constructor
         auto constr = env->GetMethodID(clazz, "<init>", "()V");
         instance = env->NewObject(clazz, constr);
         jni::jniErrorCheck();
