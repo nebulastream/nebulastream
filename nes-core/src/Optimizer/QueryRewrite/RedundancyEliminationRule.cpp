@@ -32,6 +32,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -48,9 +49,10 @@ RedundancyEliminationRulePtr RedundancyEliminationRule::create() { return std::m
 RedundancyEliminationRule::RedundancyEliminationRule() = default;
 
 QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO("Applying FilterPushDownRule to query {}", queryPlan->toString());
-    auto filters = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
-    for (auto& filter : filters){
+    NES_INFO("Applying RedundancyEliminationRule to query {}", queryPlan->toString());
+    NES_DEBUG("Applying rule to filter operators");
+    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    for (auto& filter : filterOperators){
         const ExpressionNodePtr filterPredicate = filter->getPredicate();
         ExpressionNodePtr updatedPredicate;
         while (updatedPredicate != filterPredicate){
@@ -58,6 +60,17 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
         }
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         filter->replace(updatedFilter);
+    }
+    NES_DEBUG("Applying rule to map operators");
+    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
+    for (auto& map : mapOperators){
+        const ExpressionNodePtr mapExpression = map->getMapExpression();
+        ExpressionNodePtr updatedMapExpression;
+        while (updatedMapExpression != mapExpression){
+            updatedMapExpression = eliminateRedundancy(mapExpression);
+        }
+        auto updatedMap = LogicalOperatorFactory::createFilterOperator(updatedMapExpression);
+        mapExpression->replace(updatedMap);
     }
     return queryPlan;
 }
@@ -159,7 +172,7 @@ NES::ExpressionNodePtr RedundancyEliminationRule::arithmeticSimplification(const
                 NES_DEBUG("The operands contains of a field access and a constant");
                 auto constantOperandValue = constantOperand->as<ConstantValueExpressionNode>()->getConstantValue();
                 auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantOperandValue);
-                int constantValue = stoi(basicValueType->value);
+                auto constantValue = stoi(basicValueType->value);
                 NES_DEBUG("Extracted the constant value from the constant operand");
                 if (constantValue == 0 && predicate->instanceOf<AddExpressionNode>()){
                     NES_DEBUG("Case 1: Sum with 0: return the FieldAccessExpressionNode");
