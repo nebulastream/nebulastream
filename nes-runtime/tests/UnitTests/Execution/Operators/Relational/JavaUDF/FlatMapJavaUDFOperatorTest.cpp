@@ -38,7 +38,6 @@ class FlatMapJavaUDFOperatorTest : public Testing::NESBaseTest {
     }
 };
 
-const std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/JavaUDFTest.jar";
 const std::string method = "flatMap";
 jni::JavaUDFByteCodeList byteCodeList;
 jni::JavaSerializedInstance serializedInstance;
@@ -55,8 +54,8 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
     input = Schema::create()->addField("id", BasicType::TEXT);
     output = Schema::create()->addField("id", BasicType::TEXT);
     clazz = "stream/nebula/StringFlatMapFunction";
-    inputClass = "java/lang/String";
-    outputClass = "java/util/Collection";
+    inputClass = "java.lang.String";
+    outputClass = "java.util.Collection";
 
     auto handler = std::make_shared<JavaUDFOperatorHandler>(clazz,
                                                             method,
@@ -66,7 +65,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
                                                             serializedInstance,
                                                             input,
                                                             output,
-                                                            path);
+                                                            std::nullopt);
     auto map = FlatMapJavaUDF(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -110,7 +109,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                  ->addField("booleanVariable", BasicType::BOOLEAN);
     clazz = "stream/nebula/ComplexPojoFlatMapFunction";
     inputClass = "stream/nebula/ComplexPojo";
-    outputClass = "java/util/Collection";
+    outputClass = "java.util.Collection";
 
     int8_t initialByte = 10;
     int16_t initialShort = 10;
@@ -127,7 +126,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                                                             serializedInstance,
                                                             input,
                                                             output,
-                                                            path);
+                                                            std::nullopt);
     auto map = FlatMapJavaUDF(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
