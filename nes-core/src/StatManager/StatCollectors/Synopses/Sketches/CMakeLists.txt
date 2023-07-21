@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,16 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        Core.cpp
-        TimeMeasurement.cpp
-        BufferSequenceNumber.cpp
-        KalmanFilter.cpp
-        SpatialUtils.cpp
-        hashing.cpp
-        )
-if (NES_USE_MQTT)
-    add_source_files(nes-core
-            MQTTClientWrapper.cpp
-            )
-endif ()
-add_subdirectory(Experimental)
+        Sketches.cpp
+)
+add_subdirectory(CountMin)
