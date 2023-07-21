@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(runtime-global-slice-pre-aggregation-test "GlobalSlicePreAggregationTest.cpp")
+add_nes_runtime_test(runtime-global-slice-pre-aggregation-test "NonKeyedSlicePreAggregationTest.cpp")
 add_nes_runtime_test(runtime-keyed-slice-pre-aggregation-test "KeyedSlicePreAggregationTest.cpp")
 add_nes_runtime_test(runtime-multi-origin-watermark-processor-test "MultiOriginWatermarkProcessorTest.cpp")
 add_nes_runtime_test(runtime-slice-assigner-test "SliceAssignerTest.cpp")

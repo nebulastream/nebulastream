@@ -252,7 +252,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(preAggregationOperator);
         return preAggregationOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedSliceMergingOperator>()) {
-        return lowerGlobalSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
+        return lowerNonKeyedSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedSliceMergingOperator>()) {
         return lowerKeyedSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()) {
@@ -381,7 +381,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     NES_NOT_IMPLEMENTED();
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerGlobalSliceMergingOperator(
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerNonKeyedSliceMergingOperator(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
@@ -395,14 +395,14 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
-    auto sliceMergingOperator =
+    auto nonKeyedSliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
                                                                             aggregationFunctions,
                                                                             startTs,
                                                                             endTs,
                                                                             physicalGSMO->getWindowDefinition()->getOriginId());
-    pipeline.setRootOperator(sliceMergingOperator);
-    return sliceMergingOperator;
+    pipeline.setRootOperator(nonKeyedSliceMergingOperator);
+    return nonKeyedSliceMergingOperator;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedSliceMergingOperator(

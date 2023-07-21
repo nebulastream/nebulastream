@@ -72,7 +72,7 @@ void GeneratableNonKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr c
     windowHandler = nullptr;
 }
 
-std::string GeneratableNonKeyedSliceMergingOperator::toString() const { return "GeneratableGlobalSliceMergingOperator"; }
+std::string GeneratableNonKeyedSliceMergingOperator::toString() const { return "GeneratableNonKeyedSliceMergingOperator"; }
 
 OperatorNodePtr GeneratableNonKeyedSliceMergingOperator::copy() {
     return create(id, inputSchema, outputSchema, windowHandler, windowAggregation);

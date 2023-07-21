@@ -108,7 +108,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     }
 
     for (auto& agg : windowAggregation) {
-        NES_INFO("Add the following field to the output schema of the GlobalWindow {}",
+        NES_INFO("Add the following field to the output schema of the NonKeyedWindow {}",
                  agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));

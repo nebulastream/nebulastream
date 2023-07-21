@@ -97,7 +97,7 @@ class LowerPhysicalToNautilusOperators {
     lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeBasedWindowType);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    lowerNonKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 

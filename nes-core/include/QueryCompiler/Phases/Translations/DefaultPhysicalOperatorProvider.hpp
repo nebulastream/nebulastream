@@ -255,7 +255,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param windowOperatorProperties
      * @param operatorNode
      */
-    std::shared_ptr<Node> replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
+    std::shared_ptr<Node> replaceOperatorNodeTimeBasedNonKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
                                                                    const LogicalOperatorNodePtr& operatorNode);
 
     /**

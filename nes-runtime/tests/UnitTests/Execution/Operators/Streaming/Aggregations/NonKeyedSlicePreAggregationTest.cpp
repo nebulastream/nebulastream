@@ -43,28 +43,28 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class GlobalSlicePreAggregationTest : public testing::Test {
+class NonKeyedSlicePreAggregationTest : public testing::Test {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup GlobalSlicePreAggregationTest test class." << std::endl;
+        NES::Logger::setupLogging("NonKeyedSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup NonKeyedSlicePreAggregationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup GlobalSlicePreAggregationTest test case." << std::endl;
+        std::cout << "Setup NonKeyedSlicePreAggregationTest test case." << std::endl;
         bm = std::make_shared<BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down GlobalSlicePreAggregationTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down NonKeyedSlicePreAggregationTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down GlobalSlicePreAggregationTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down NonKeyedSlicePreAggregationTest test class." << std::endl; }
 
     void emitWatermark(NonKeyedSlicePreAggregation& slicePreAggregation,
                        ExecutionContext& ctx,
@@ -86,7 +86,7 @@ class GlobalSlicePreAggregationTest : public testing::Test {
     }
 };
 
-TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
+TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -134,7 +134,7 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
-TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
+TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
 
