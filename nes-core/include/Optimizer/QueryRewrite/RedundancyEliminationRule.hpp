@@ -38,7 +38,7 @@ using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
  *       but can applied and expanded in the future
  * @brief This class is responsible for reducing redundancies present in the predicates. Namely, three strategies can applied:
  *  1) Constant_moving/folding
- *  Example (folding): filter(Attribute("id") > 5+5) -> filter(Attribute("id") > 5+5)
+ *  Example (folding): filter(Attribute("id") > 5+5) -> filter(Attribute("id") > 10)
  *  Example (moving): filter(Attribute("id") + 10 > 10) -> filter(Attribute("id") > 0)
  *  2) Arithmetic_simplification
  *  Example: filter(Attribute("id") > Attribute("value") * 0) -> filter(Attribute("id") > 0)
