@@ -704,7 +704,7 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
 }
 
 std::shared_ptr<Node>
-DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
+DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
                                                                           const LogicalOperatorNodePtr& operatorNode) {
 
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
@@ -800,7 +800,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         operatorNode->insertBetweenThisAndChildNodes(mergingOperator);
 
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
-            auto windowSink = replaceOperatorNodeTimeBasedGlobalWindow(windowOperatorProperties, operatorNode);
+            auto windowSink = replaceOperatorNodeTimeBasedNonKeyedWindow(windowOperatorProperties, operatorNode);
             operatorNode->replace(windowSink);
         }
     }

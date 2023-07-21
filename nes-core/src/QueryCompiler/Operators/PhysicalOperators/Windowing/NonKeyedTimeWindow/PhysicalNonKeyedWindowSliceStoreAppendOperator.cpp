@@ -37,7 +37,7 @@ std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyed
 }
 
 std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
-    return "PhysicalGlobalWindowSliceStoreAppendOperator";
+    return "PhysicalNonKeyedWindowSliceStoreAppendOperator";
 }
 
 OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() { return create(inputSchema, outputSchema, windowHandler); }

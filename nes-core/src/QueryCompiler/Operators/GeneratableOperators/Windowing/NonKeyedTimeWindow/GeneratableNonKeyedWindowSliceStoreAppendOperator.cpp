@@ -65,7 +65,7 @@ void GeneratableNonKeyedWindowSliceStoreAppendOperator::generateExecute(CodeGene
 }
 
 std::string GeneratableNonKeyedWindowSliceStoreAppendOperator::toString() const {
-    return "GeneratableGlobalWindowSliceStoreAppendOperator";
+    return "GeneratableNonKeyedWindowSliceStoreAppendOperator";
 }
 
 OperatorNodePtr GeneratableNonKeyedWindowSliceStoreAppendOperator::copy() {

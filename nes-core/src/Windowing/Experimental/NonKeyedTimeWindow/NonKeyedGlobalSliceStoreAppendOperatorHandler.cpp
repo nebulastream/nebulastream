@@ -39,7 +39,7 @@ NonKeyedGlobalSliceStoreAppendOperatorHandler::NonKeyedGlobalSliceStoreAppendOpe
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                               Runtime::StateManagerPtr,
                                                               uint32_t) {
-    NES_DEBUG("start GlobalWindowGlobalSliceStoreAppendOperatorHandler");
+    NES_DEBUG("start NonKeyedWindowGlobalSliceStoreAppendOperatorHandler");
 }
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
@@ -69,7 +69,7 @@ void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime:
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                              Runtime::Execution::PipelineExecutionContextPtr ctx) {
-    NES_DEBUG("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
+    NES_DEBUG("stop NonKeyedGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto global = globalSliceStore.lock();
         NES_ASSERT(global, "Global slice store is invalid. This should not happen in a graceful stop.");
@@ -88,7 +88,7 @@ void NonKeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminati
     }
 }
 NonKeyedGlobalSliceStoreAppendOperatorHandler::~NonKeyedGlobalSliceStoreAppendOperatorHandler() {
-    NES_DEBUG("Destruct GlobalWindowGlobalSliceStoreAppendOperatorHandler");
+    NES_DEBUG("Destruct NonKeyedGlobalSliceStoreAppendOperatorHandler");
 }
 Windowing::LogicalWindowDefinitionPtr NonKeyedGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
     return windowDefinition;

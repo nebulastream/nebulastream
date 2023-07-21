@@ -141,15 +141,15 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()) {
         return lowerKeyedGlobalSliceStoreAppendOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>()) {
-        return lowerGlobalThreadLocalSlicePreAggregation(queryPlan, operatorNode);
+        return lowerNonKeyedThreadLocalSlicePreAggregation(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedSliceMergingOperator>()) {
-        return lowerGlobalSliceMergingOperator(queryPlan, operatorNode);
+        return lowerNonKeyedSliceMergingOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()) {
-        return lowerGlobalTumblingWindowSink(queryPlan, operatorNode);
+        return lowerNonKeyedTumblingWindowSink(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedSlidingWindowSink>()) {
-        return lowerGlobalSlidingWindowSink(queryPlan, operatorNode);
+        return lowerNonKeyedSlidingWindowSink(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>()) {
-        return lowerGlobalWindowSliceStoreAppendOperator(queryPlan, operatorNode);
+        return lowerNonKeyedWindowSliceStoreAppendOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
         lowerBatchJoinBuild(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>()) {
@@ -460,7 +460,7 @@ void DefaultGeneratableOperatorProvider::lowerKeyedGlobalSliceStoreAppendOperato
     queryPlan->replaceOperator(sink, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerGlobalThreadLocalSlicePreAggregation(
+void DefaultGeneratableOperatorProvider::lowerNonKeyedThreadLocalSlicePreAggregation(
     const QueryPlanPtr& queryPlan,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
 
@@ -479,7 +479,7 @@ void DefaultGeneratableOperatorProvider::lowerGlobalThreadLocalSlicePreAggregati
         generatableAggregations);
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
-void DefaultGeneratableOperatorProvider::lowerGlobalSliceMergingOperator(
+void DefaultGeneratableOperatorProvider::lowerNonKeyedSliceMergingOperator(
     const QueryPlanPtr& queryPlan,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalNonKeyedSliceMergingOperator>();
@@ -498,7 +498,7 @@ void DefaultGeneratableOperatorProvider::lowerGlobalSliceMergingOperator(
     queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerGlobalTumblingWindowSink(
+void DefaultGeneratableOperatorProvider::lowerNonKeyedTumblingWindowSink(
     const QueryPlanPtr& queryPlan,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sink = operatorNode->as<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>();
@@ -514,7 +514,7 @@ void DefaultGeneratableOperatorProvider::lowerGlobalTumblingWindowSink(
                                                                                                  generatableAggregations);
     queryPlan->replaceOperator(sink, generatableOperator);
 }
-void DefaultGeneratableOperatorProvider::lowerGlobalSlidingWindowSink(
+void DefaultGeneratableOperatorProvider::lowerNonKeyedSlidingWindowSink(
     const QueryPlanPtr& queryPlan,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sink = operatorNode->as<PhysicalOperators::PhysicalNonKeyedSlidingWindowSink>();
@@ -531,7 +531,7 @@ void DefaultGeneratableOperatorProvider::lowerGlobalSlidingWindowSink(
     queryPlan->replaceOperator(sink, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerGlobalWindowSliceStoreAppendOperator(
+void DefaultGeneratableOperatorProvider::lowerNonKeyedWindowSliceStoreAppendOperator(
     const QueryPlanPtr& queryPlan,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sink = operatorNode->as<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>();
