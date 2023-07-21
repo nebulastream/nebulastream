@@ -66,7 +66,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     auto query = R"(Query::from("truck").unionWith(Query::from("car")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-//                                  .enableNautilus() Enabled once #4009 is fixed
+                                  //                                  .enableNautilus() Enabled once #4009 is fixed
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("truck")
@@ -81,16 +81,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         // Pushing them into the expected output and the testHarness
         expectedOutput.emplace_back(elementCarStream);
         expectedOutput.emplace_back(elementTruckStream);
-        testHarness = testHarness
-                          .pushElement<ResultRecord>(elementCarStream, 2)
-                          .pushElement<ResultRecord>(elementTruckStream, 3);
+        testHarness = testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
     }
 
     // Validating, setting up the topology, and then running the query
-    std::vector<ResultRecord> actualOutput = testHarness
-                                                 .validate()
-                                                 .setupTopology()
-                                                 .getOutput<ResultRecord>(expectedOutput.size(), "BottomUp");
+    std::vector<ResultRecord> actualOutput =
+        testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -113,7 +109,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     auto query = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-//                                  .enableNautilus() Enabled once #4009 is fixed
+                                  //                                  .enableNautilus() Enabled once #4009 is fixed
                                   .addLogicalSource("car", testSchema)
                                   .addLogicalSource("truck", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -128,16 +124,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         // Pushing them into the expected output and the testHarness
         expectedOutput.emplace_back(elementCarStream);
         expectedOutput.emplace_back(elementTruckStream);
-        testHarness = testHarness
-                          .pushElement<ResultRecord>(elementCarStream, 2)
-                          .pushElement<ResultRecord>(elementTruckStream, 3);
+        testHarness = testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
     }
 
     // Validating, setting up the topology, and then running the query
-    std::vector<ResultRecord> actualOutput = testHarness
-                                                 .validate()
-                                                 .setupTopology()
-                                                 .getOutput<ResultRecord>(expectedOutput.size(), "TopDown");
+    std::vector<ResultRecord> actualOutput =
+        testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedOutput.size(), "TopDown");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
