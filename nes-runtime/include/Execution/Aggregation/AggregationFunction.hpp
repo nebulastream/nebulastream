@@ -80,6 +80,10 @@ class AggregationFunction {
     static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const PhysicalTypePtr& physicalType);
 
     static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
+
+    static Nautilus::Value<> createMinValue(const PhysicalTypePtr& physicalTypePtr);
+
+    static Nautilus::Value<> createMaxValue(const PhysicalTypePtr& physicalTypePtr);
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;

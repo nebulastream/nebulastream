@@ -66,7 +66,7 @@ void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
     auto inputValue = inputExpression->execute(inputRecord);
-    auto result = callMax(oldValue, inputValue);
+    auto result = callMax(inputValue, oldValue);
     // store
     state.store(result);
 }
@@ -85,8 +85,7 @@ void MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Naut
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 void MaxAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto maxVal = createConstValue(std::numeric_limits<int64_t>::min(), inputType);
-
+    auto maxVal = createMinValue(inputType);
     memref.store(maxVal);
 }
 uint64_t MaxAggregationFunction::getSize() { return inputType->size(); }

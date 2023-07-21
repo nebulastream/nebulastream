@@ -26,7 +26,7 @@ class MinAggregationFunction : public AggregationFunction {
                            const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::Value<Nautilus::MemRef> sate, Nautilus::Record& record) override;
+    void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) override;
     void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
     void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
     void reset(Nautilus::Value<Nautilus::MemRef> state) override;

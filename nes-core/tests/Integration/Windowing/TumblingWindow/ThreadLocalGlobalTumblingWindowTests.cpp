@@ -44,7 +44,7 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTest, public ::testing::WithParamInterface<int> {
+class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTest {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
@@ -254,7 +254,7 @@ class DataGenerator {
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -263,10 +263,10 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value"))))";
-    // R"(Query::from("window"))";
 
     auto lambdaSource = createSimpleInputStream(1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
@@ -283,7 +283,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -296,6 +296,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
             .apply(Sum(Attribute("value"))))";
     auto lambdaSource = createSimpleInputStream(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
@@ -308,7 +309,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleGlobalTumblingW
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -321,6 +322,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblin
             .apply(Sum(Attribute("value"))))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -349,7 +351,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testMultipleGlobalTumblin
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -362,6 +364,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowM
             .apply(Sum(Attribute("value"))))";
     auto lambdaSource = createSimpleInputStream(100, 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
@@ -375,7 +378,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testSingleTumblingWindowM
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -388,6 +391,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) 
             .apply(Count()))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -416,7 +420,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowCount) 
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -429,6 +433,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
             .apply(Min(Attribute("value"))))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -457,7 +462,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMin) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -470,6 +475,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
             .apply(Max(Attribute("value"))))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -498,7 +504,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMax) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -511,6 +517,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
             .apply(Avg(Attribute("value"))))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -539,7 +546,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowAVG) {
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAggregate) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAggregate) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -558,6 +565,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
                 ))";
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -595,7 +603,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAg
  * In this case, we emulate that by using multi-averages on top of one value
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -613,6 +621,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
                 ))";
     auto dg = DataGenerator(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -650,7 +659,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiAv
  * In this case, we emulate that by using multiple values
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
+TEST_F(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value3", DataTypeFactory::createUInt64())
                           ->addField("value2", DataTypeFactory::createUInt64())
@@ -682,6 +691,7 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultipl
                                                                      {12000, 13000, 1, 1, 1, 800}};
     auto dg = DataGeneratorMultiValue(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -692,13 +702,5 @@ TEST_P(SingleNodeThreadLocalGlobalTumblingWindowTests, testTumblingWindowMultipl
     ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
-
-INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentGlobalTumblingWindowTest,
-                        SingleNodeThreadLocalGlobalTumblingWindowTests,
-                        ::testing::Values(1, 2, 4),
-                        [](const testing::TestParamInfo<SingleNodeThreadLocalGlobalTumblingWindowTests::ParamType>& info) {
-                            std::string name = std::to_string(info.param) + "Worker";
-                            return name;
-                        });
 
 }// namespace NES
