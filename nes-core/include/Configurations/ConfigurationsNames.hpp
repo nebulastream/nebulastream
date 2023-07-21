@@ -61,6 +61,10 @@ const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
 const std::string STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
 const std::string STREAM_HASH_JOIN_PAGE_SIZE_CONFIG = "pageSize";
 const std::string STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
+const std::string STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
+
+//Configuration for joins
+const std::string JOIN_STRATEGY = "joinStrategy";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
@@ -74,7 +78,14 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributed
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
+//Elegant Configurations
+const std::string ELEGANT = "elegant";                                // elegant configurations are initialize with this constant
+const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";        // accelerate java udfs supplied in Map UDF operator
+const std::string PLANNER_SERVICE_URL = "plannerServiceURL";          // URL for ELEGANT planner
+const std::string ACCELERATION_SERVICE_URL = "accelerationServiceURL";// URL for acceleration service
+
 //Worker Configuration Names
+const std::string WORKER_ID = "workerId";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
@@ -89,6 +100,9 @@ const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
+
+// CUDA config names
+const std::string CUDA_SDK_PATH = "cudaSdkPath";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";

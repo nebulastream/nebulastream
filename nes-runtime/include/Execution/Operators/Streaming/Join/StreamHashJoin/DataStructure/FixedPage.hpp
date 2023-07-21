@@ -19,6 +19,11 @@
 #include <cstddef>
 #include <memory>
 
+namespace NES {
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}// namespace NES
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -62,6 +67,13 @@ class FixedPage {
     uint8_t* operator[](size_t index) const;
 
     /**
+     * @brief returns a pointer to the record at the given index
+     * @param index
+     * @return pointer to the record
+     */
+    uint8_t* getRecord(size_t index) const;
+
+    /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
      * @return null pointer if there is no more space left on the page, otherwise the pointer
@@ -81,6 +93,18 @@ class FixedPage {
      */
     size_t size() const;
 
+    /**
+     * @brief this methods tests if requiredSpace is left on page
+     * @return bool
+     */
+    bool isSizeLeft(uint64_t requiredSpace) const;
+
+    /**
+     * @brief this methods returnds the content of the page as a string
+     * @return string
+     */
+    std::string getContentAsString(SchemaPtr schema) const;
+
   private:
     /**
      * @brief Swapping lhs FixedPage with rhs FixedPage
@@ -92,7 +116,7 @@ class FixedPage {
   private:
     size_t sizeOfRecord;
     uint8_t* data;
-    size_t currentPos;
+    std::atomic<size_t> currentPos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };

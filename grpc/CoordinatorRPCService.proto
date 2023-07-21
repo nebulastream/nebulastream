@@ -81,6 +81,7 @@ message RegisterWorkerRequest {
   NES.Spatial.Protobuf.SpatialType spatialType = 7;
   bool tfSupported = 8;
   bool javaUDFSupported = 9;
+  uint64 workerId = 10;
 }
 
 message RegisterWorkerReply {

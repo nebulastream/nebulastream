@@ -34,7 +34,7 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     }
     // construct clang-format command argument
     auto formatCommand = "clang-format --assume-filename=" + language + " -i " + file->getPath();
-    NES_DEBUG("Format with " << formatCommand);
+    NES_DEBUG("Format with {}", formatCommand);
     auto* res = popen(formatCommand.c_str(), "r");
     if (res == nullptr) {
         throw CompilerException("ClangFormat: popen() failed!");

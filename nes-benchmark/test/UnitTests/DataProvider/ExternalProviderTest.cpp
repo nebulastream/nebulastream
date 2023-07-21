@@ -103,7 +103,7 @@ namespace NES::Benchmark::DataProvision {
 
         // we expect queueSize to not exactly match the theoretical value of 50000 as we cannot ensure that exactly 1 second has
         // passed between starting the provider and getting the queue size
-        NES_INFO(queueSize);
+        NES_INFO("{}", queueSize);
         ASSERT_TRUE(50000 <= queueSize && queueSize <= 50500);
     }
 

@@ -33,17 +33,17 @@ class LambdaSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LambdaSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup LambdaSourceIntegrationTest test class.");
+        NES_INFO("Setup LambdaSourceIntegrationTest test class.");
     }
 };
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
-    NES_DEBUG2("E2EBase: Start coordinator");
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
@@ -51,7 +51,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
-    NES_DEBUG2("E2EBase: Start worker 1");
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerHealthCheckWaitTime = 1;
@@ -111,23 +111,23 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
-        NES_ERROR2("query was not stopped within 30 sec");
+        NES_ERROR("query was not stopped within 30 sec");
     }
 
-    NES_DEBUG2("E2EBase: Stop worker 1");
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("E2EBase: Stop Coordinator");
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    NES_DEBUG2("E2EBase: Test finished");
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
-    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::createDefault();
 
-    NES_DEBUG2("E2EBase: Start coordinator");
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
@@ -135,7 +135,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
-    NES_DEBUG2("E2EBase: Start worker 1");
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
 
@@ -197,25 +197,25 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
-        NES_ERROR2("query 1 was not stopped within 30 sec");
+        NES_ERROR("query 1 was not stopped within 30 sec");
     }
     bool ret2 = NES::TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog);
     if (!ret2) {
-        NES_ERROR2("query 2 was not stopped within 30 sec");
+        NES_ERROR("query 2 was not stopped within 30 sec");
     }
 
-    NES_DEBUG2("E2EBase: Stop worker 1");
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     NES_ASSERT(retStopWrk1, "retStopWrk1");
 
-    NES_DEBUG2("E2EBase: Stop Coordinator");
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     NES_ASSERT(retStopCord, "retStopCord");
-    NES_DEBUG2("E2EBase: Test finished");
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     //    coordinatorConfig->worker.setNumberOfBuffersInGlobalBufferManager(3000);
@@ -224,7 +224,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     //    coordinatorConfig->worker.bufferSizeInBytes=(524288);
     coordinatorConfig->worker.numWorkerThreads = 4;
 
-    NES_DEBUG2("E2EBase: Start coordinator");
+    NES_DEBUG("E2EBase: Start coordinator");
 
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
@@ -262,7 +262,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("MillisecondIntervalTest: Worker1 started successfully");
+    NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
 
     string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";
 
@@ -273,13 +273,13 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
-        NES_ERROR2("query was not stopped within 30 sec");
+        NES_ERROR("query was not stopped within 30 sec");
     }
 
-    NES_DEBUG2("E2EBase: Stop Coordinator");
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    NES_DEBUG2("E2EBase: Test finished");
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 }// namespace NES

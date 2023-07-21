@@ -42,6 +42,7 @@ namespace NES::ASP::Parsing {
 
             Yaml::Node aggregationNode;
             aggregationNode["type"] = std::string(magic_enum::enum_name(type));
+            aggregationNode["fieldNameKey"] = fieldNameKey;
             aggregationNode["fieldNameAgg"] = fieldNameAggregation;
             aggregationNode["fieldNameApprox"] = fieldNameApprox;
             aggregationNode["inputFile"] = inputFile;
@@ -51,12 +52,13 @@ namespace NES::ASP::Parsing {
             synopsisAggregationConfig = synopsisConfig.first;
         }
 
-        Aggregation_Type type = Aggregation_Type::MAX;
-        std::string fieldNameAggregation = "value";
-        std::string fieldNameApprox = "aggregation";
-        std::string inputFile = "uniform_key_value_timestamp.csv";
-        std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
-        std::string timeStampFieldName = "ts";
+        const Aggregation_Type type = Aggregation_Type::MAX;
+        const std::string fieldNameKey = "id";
+        const std::string fieldNameAggregation = "value";
+        const std::string fieldNameApprox = "aggregation";
+        const std::string inputFile = "uniform_key_value_timestamp.csv";
+        const std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
+        const std::string timeStampFieldName = "ts";
         Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
     };
 
@@ -66,11 +68,14 @@ namespace NES::ASP::Parsing {
         auto type = magic_enum::enum_cast<Aggregation_Type>(rand() % numberOfTypes).value();
 
         auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
-        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema,
+                                                                                fieldNameKey, fieldNameAggregation,
+                                                                                fieldNameKey, fieldNameApprox);
 
 
         Yaml::Node aggregationNode;
         aggregationNode["type"] = std::string(magic_enum::enum_name(type));
+        aggregationNode["fieldNameKey"] = fieldNameKey;
         aggregationNode["fieldNameAgg"] = fieldNameAggregation;
         aggregationNode["fieldNameApprox"] = fieldNameApprox;
         aggregationNode["inputFile"] = inputFile;
@@ -78,6 +83,7 @@ namespace NES::ASP::Parsing {
 
         auto synopsisAggregation = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
         EXPECT_EQ(synopsisAggregation.first.type, type);
+        EXPECT_EQ(synopsisAggregation.first.fieldNameKey, fieldNameKey);
         EXPECT_EQ(synopsisAggregation.first.fieldNameAggregation, fieldNameAggregation);
         EXPECT_EQ(synopsisAggregation.first.fieldNameApproximate, fieldNameApprox);
         EXPECT_EQ(synopsisAggregation.first.timeStampFieldName, timeStampFieldName);
@@ -89,18 +95,20 @@ namespace NES::ASP::Parsing {
     TEST_F(SynopsisAggregationConfigTest, testgetHeaderCsvAndValuesCsvAndToString) {
         auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
         auto inputSchemaStr = Benchmarking::inputFileSchemas[inputFile]->toString();
-        auto outputSchemaStr = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation)->toString();
+        auto outputSchemaStr = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema,
+                                                                                   fieldNameKey, fieldNameAggregation,
+                                                                                   fieldNameKey, fieldNameApprox)->toString();
 
         auto headerCsv = synopsisAggregationConfig.getHeaderAsCsv();
         auto valuesCsv = synopsisAggregationConfig.getValuesAsCsv();
         auto toString = synopsisAggregationConfig.toString();
 
-        EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
-                             "aggregation_timeStampFieldName,aggregation_inputSchema,aggregation_outputSchema");
-        EXPECT_EQ(valuesCsv, "MAX,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
-        EXPECT_EQ(toString, "type (MAX) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "
-                            "timeStampFieldName (ts) inputSchema (" +
-                            inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
+        EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameKey,aggregation_fieldNameAggregation,"
+                             "aggregation_fieldNameApproximate,aggregation_timeStampFieldName,aggregation_inputSchema,"
+                             "aggregation_outputSchema");
+        EXPECT_EQ(valuesCsv, "MAX,id,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
+        EXPECT_EQ(toString, "type (MAX) fieldNameKey (id) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "
+                            "timeStampFieldName (ts) inputSchema (" + inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
     }
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFunction) {
@@ -131,48 +139,6 @@ namespace NES::ASP::Parsing {
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction), nullptr);
                     break;
                 case Aggregation_Type::NONE: ASSERT_TRUE(false);
-            }
-        }
-    }
-
-    TEST_F(SynopsisAggregationConfigTest, testCreateAggregationValue) {
-        for (auto& type : magic_enum::enum_values<Aggregation_Type>()) {
-            switch (type) {
-                case Aggregation_Type::MIN: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::MAX: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::SUM: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::AVERAGE: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::AvgAggregationValue<double>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::COUNT: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::NONE: {
-                    synopsisAggregationConfig.type = type;
-                    EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue());
-                    break;
-                }
             }
         }
     }

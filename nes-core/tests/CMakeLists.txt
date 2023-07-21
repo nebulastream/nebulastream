@@ -128,9 +128,6 @@ add_nes_integration_test(query-controller-integration-tests "Integration/REST/Co
 ### NES Source Catalog Controller Test ###
 add_nes_integration_test(source-catalog-controller-integration-tests "Integration/REST/Controller/SourceCatalogControllerTest.cpp")
 
-### NES Maintenance Controller Tests ###
-add_nes_integration_test(maintenance-controller-integration-test "Integration/REST/Controller/MaintenanceControllerTest.cpp")
-
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerIntegrationTest.cpp")
 
@@ -294,6 +291,10 @@ add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInference
 add_nes_unit_test(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
 
 
+# PredicateReorderingTest
+add_nes_unit_test(predicate-reordering-rule-test "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp")
+
+
 # DistributeWindowRuleTest
 add_nes_unit_test(distribute-window-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
 
@@ -312,11 +313,6 @@ add_nes_unit_test(source-catalog-service-tests "UnitTests/Services/SourceCatalog
 
 ### TopologyManagerService Tests ###
 add_nes_unit_test(topology-manager-service-tests "UnitTests/Services/TopologyManagerServiceTest.cpp")
-
-
-### MaintenanceService Tests ###
-add_nes_unit_test(maintenance-service-tests "UnitTests/Services/MaintenanceServiceTest.cpp")
-
 
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
@@ -355,10 +351,6 @@ add_nes_integration_test(seq-operator-test "Integration/SEQOperatorTest.cpp")
 #
 #
 
-### Global Query Node Tests ###
-add_nes_unit_test(global-query-node-tests "UnitTests/Plans/Global/Query/GlobalQueryNodeTest.cpp")
-
-
 ### Global Query Plan Tests ###
 add_nes_unit_test(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQueryPlanTest.cpp")
 
@@ -374,6 +366,8 @@ add_nes_unit_test(global-query-plan-update-phase-tests "UnitTests/Optimizer/Phas
 ### Logical Source Expansion Rule Tests ###
 add_nes_unit_test(logical-source-expansion-rule-test "UnitTests/Optimizer/QueryRewrite/LogicalSourceExpansionRuleTest.cpp")
 
+### Map UDFs Open CL Operators Rule Tests ###
+add_nes_unit_test(map-udf-to-opencl-rule-test "UnitTests/Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRuleTest.cpp")
 
 ### Syntax Based Equal Query Merger Rule Test ###
 add_nes_unit_test(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp")

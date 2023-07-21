@@ -66,7 +66,7 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
         }
 
         if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO("DefaultDataGenerator: currently at " << (((double) curBuffer / numberOfBuffers) * 100) << "%");
+            NES_INFO("DefaultDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());

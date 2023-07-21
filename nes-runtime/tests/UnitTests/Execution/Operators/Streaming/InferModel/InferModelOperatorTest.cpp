@@ -19,7 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>

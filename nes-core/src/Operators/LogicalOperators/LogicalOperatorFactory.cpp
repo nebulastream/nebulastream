@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -142,6 +143,11 @@ LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                             OperatorId id) {
     return std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
+}
+
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id) {
+    return std::make_shared<OpenCLLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 
 }// namespace NES

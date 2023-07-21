@@ -46,28 +46,40 @@ class LocationService {
      * @return a json in the format:
         {
             "id": <node id>,
-            "location": [
-                <latitude>,
-                <longitude>
-            ]
+            "location":
+                  {
+                      "latitude": <latitude>,
+                      "longitude": <longitude>
+                  }
         }
      */
     nlohmann::json requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
-     * @brief get a list of all mobile nodes in the system and their current positions
+     * @brief get a list of all mobile nodes in the system with known locations and their current positions as well as their parent nodes. Mobile nodes without known locations will not appear in the list
      * @return a json list in the format:
-     * [
-            {
-                "id": <node id>,
-                "location": [
-                    <latitude>,
-                    <longitude>
-                ]
-            }
-        ]
+     * {
+     *      "edges":
+     *          [
+     *              {
+     *                  "source": <node id>,
+     *                  "target": <node id>
+     *              }
+     *          ],
+     *      "nodes":
+     *          [
+     *              {
+     *                  "id": <node id>,
+     *                  "location":
+     *                      {
+     *                          "latitude": <latitude>,
+     *                          "longitude": <longitude>
+     *                      }
+     *              }
+     *          ]
+     *  }
      */
-    nlohmann::json requestLocationDataFromAllMobileNodesAsJson();
+    nlohmann::json requestLocationAndParentDataFromAllMobileNodes();
 
     /**
      * @brief get information about a mobile workers predicted trajectory the last update position of the devices local

@@ -58,15 +58,15 @@ void TestHarness::checkAndAddLogicalSources() {
         // Check if logical source already exists
         auto sourceCatalog = nesCoordinator->getSourceCatalog();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-            NES_TRACE2("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
-                       logicalSourceName);
+            NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
+                      logicalSourceName);
             sourceCatalog->addLogicalSource(logicalSourceName, schema);
         } else {
             // Check if it has the same schema
             if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
-                NES_TRACE2("TestHarness: logical source {} exists in the source catalog with different schema, replacing it "
-                           "with a new schema",
-                           logicalSourceName);
+                NES_TRACE("TestHarness: logical source {} exists in the source catalog with different schema, replacing it "
+                          "with a new schema",
+                          logicalSourceName);
                 sourceCatalog->removeLogicalSource(logicalSourceName);
                 sourceCatalog->addLogicalSource(logicalSourceName, schema);
             }
@@ -230,8 +230,8 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
     }
 
     auto tupleSize = schema->getSchemaSizeInBytes();
-    NES_DEBUG2("Tuple Size: {}", tupleSize);
-    NES_DEBUG2("currentSourceNumOfRecords: {}", currentSourceNumOfRecords);
+    NES_DEBUG("Tuple Size: {}", tupleSize);
+    NES_DEBUG("currentSourceNumOfRecords: {}", currentSourceNumOfRecords);
     auto memAreaSize = currentSourceNumOfRecords * tupleSize;
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
@@ -254,7 +254,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     }
 
     //Start Coordinator
-    auto coordinatorConfiguration = CoordinatorConfiguration::create();
+    auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;

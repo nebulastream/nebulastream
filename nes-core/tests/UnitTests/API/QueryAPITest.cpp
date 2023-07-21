@@ -61,7 +61,7 @@ class QueryAPITest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup QueryTest test class.");
+        NES_INFO("Setup QueryTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -280,7 +280,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
 
     // get the output schema of the sink
     const auto outputSchemaString = query.getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString();
-    NES_DEBUG2("QueryExecutionTest:: WindowAggWithAs outputSchema: {}", outputSchemaString);
+    NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: {}", outputSchemaString);
 
     EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
 }

@@ -36,20 +36,20 @@ TEST_F(CosExpressionTest, evaluateCosExpressionInteger) {
     auto expression = UnaryExpressionWrapper<CosExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 0));
+        auto resultValue = expression.eval(Value<Int8>(0_s8));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 0));
+        auto resultValue = expression.eval(Value<Int32>(0_s32));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 0));
+        auto resultValue = expression.eval(Value<Int64>(0_s64));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

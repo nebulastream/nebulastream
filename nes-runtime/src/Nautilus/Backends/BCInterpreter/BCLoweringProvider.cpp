@@ -52,7 +52,7 @@ std::tuple<Code, RegisterFile> BCLoweringProvider::LoweringContext::process() {
         program.arguments.emplace_back(argumentRegister);
     }
     this->process(functionBasicBlock, rootFrame);
-    NES_INFO("Allocated Registers: " << this->registerProvider.allocRegister());
+    NES_INFO("Allocated Registers: {}", this->registerProvider.allocRegister());
     return std::make_tuple(program, defaultRegisterFile);
 }
 
@@ -597,7 +597,7 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(const std::shared_p
                                                              short block,
                                                              RegisterFrame& frame) {
     auto& code = program.blocks[block].code;
-    NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
+    NES_DEBUG("CREATE {}: {}", opt->toString(), opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
 
     // 1. reset dyncall stack
@@ -661,7 +661,7 @@ bool BCLoweringProvider::LoweringContext::processNativeCall(const std::shared_pt
                                                             RegisterFrame& frame) {
 
     // TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
-    NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
+    NES_DEBUG("CREATE {}: {}", opt->toString(), opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
     ByteCode bc;
     if (opt->getStamp()->isVoid()) {

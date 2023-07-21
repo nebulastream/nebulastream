@@ -45,14 +45,14 @@ class SourceCatalogServiceTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup NES SourceCatalogService test class.");
+        NES_DEBUG("Setup NES SourceCatalogService test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG2("Setup NES SourceCatalogService test case.");
-        NES_DEBUG2("FINISHED ADDING 5 Serialization to topology");
+        NES_DEBUG("Setup NES SourceCatalogService test case.");
+        NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -111,7 +111,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    uint64_t nodeId = topologyManagerService->registerWorker(address, 4000, 5000, 6, properties);
+    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, address, 4000, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

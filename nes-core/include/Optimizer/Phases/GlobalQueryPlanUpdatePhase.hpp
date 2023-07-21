@@ -27,9 +27,27 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES {
 
+namespace Experimental {
+class RemoveTopologyNodeRequest;
+using RemoveTopologyNodeRequestPtr = std::shared_ptr<RemoveTopologyNodeRequest>;
+
+class RemoveTopologyLinkRequest;
+using RemoveTopologyLinkRequestPtr = std::shared_ptr<RemoveTopologyLinkRequest>;
+}// namespace Experimental
+
+class AddQueryRequest;
+using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
+
+class StopQueryRequest;
+using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
+
+class FailQueryRequest;
+using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
+
 namespace Configurations {
-class OptimizerConfiguration;
-}
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
 
 namespace Catalogs {
 
@@ -57,9 +75,13 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-}// namespace NES
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-namespace NES::Optimizer {
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
+
+namespace Optimizer {
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
@@ -69,6 +91,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
+
+class SampleCodeGenerationPhase;
+using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
 
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
@@ -95,7 +120,7 @@ class GlobalQueryPlanUpdatePhase {
      * @param queryCatalogService: the catalog of queryIdAndCatalogEntryMapping
      * @param sourceCatalog: the catalog of sources
      * @param globalQueryPlan: the input global query plan
-     * @param optimizerConfiguration: configuration for the optimizer
+     * @param coordinatorConfiguration: configuration of the coordinator
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
@@ -103,8 +128,9 @@ class GlobalQueryPlanUpdatePhase {
                                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                                                const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
+                                                Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                                GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -116,13 +142,57 @@ class GlobalQueryPlanUpdatePhase {
   private:
     explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                         QueryCatalogServicePtr queryCatalogService,
-                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
+                                        const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
+                                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                                        GlobalExecutionPlanPtr globalExecutionPlan);
+
+    /**
+     * @brief Process add query request
+     * @param addQueryRequest:add query request
+     */
+    void processAddQueryRequest(const AddQueryRequestPtr& addQueryRequest);
+
+    /**
+     * @brief Process fail query request
+     * @param failQueryRequest: fail query request
+     */
+    void processFailQueryRequest(const FailQueryRequestPtr& failQueryRequest);
+
+    /**
+     * @brief Process stop query request
+     * @param stopQueryRequest: stop query request
+     */
+    void processStopQueryRequest(const StopQueryRequestPtr& stopQueryRequest);
+
+    /**
+     * @brief Process Remove Topology Link request
+     * @param removeTopologyLinkRequest: Remove Topology Link request
+     */
+    void processRemoveTopologyLinkRequest(const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest);
+
+    /**
+     * @brief Process Remove Topology Node request
+     * @param removeTopologyNodeRequest: Remove Topology Node request
+     */
+    void processRemoveTopologyNodeRequest(const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest);
+
+    /**
+     * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.
+     * Note: If the upstream or downstream execution node consists only of system generated operators then successive execution
+     * nodes are explored till a logical operator is found.
+     * @param sharedQueryId: id of the shared query plan
+     * @param upstreamExecutionNode: the upstream execution node
+     * @param downstreamExecutionNode: the downstream execution node
+     */
+    void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryId,
+                                             const ExecutionNodePtr& upstreamExecutionNode,
+                                             const ExecutionNodePtr& downstreamExecutionNode);
 
     TopologyPtr topology;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
@@ -132,7 +202,15 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     OriginIdInferencePhasePtr originIdInferencePhase;
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
+    SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
+    void getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                        const ExecutionNodePtr& downstreamExecutionNode,
+                                        std::set<OperatorId>& downstreamOperatorIds) const;
+    void getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
+                                      const ExecutionNodePtr& upstreamExecutionNode,
+                                      std::set<OperatorId>& upstreamOperatorIds) const;
 };
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_

@@ -60,7 +60,7 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace) {
 }
 
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
-    NES_TRACE("invokeErrorHandlers with buffer=" << buffer << " trace=" << stacktrace);
+    NES_TRACE("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
     auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
     invokeErrorHandlers(exception, std::move(stacktrace));
 }

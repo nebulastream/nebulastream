@@ -13,9 +13,77 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <vector>
 namespace NES::QueryCompilation {
+
+/**
+ * @brief Stores a window operator and window definition, as well as in- and output schema
+ */
+struct WindowOperatorProperties {
+    WindowOperatorNodePtr windowOperator;
+    SchemaPtr windowInputSchema;
+    SchemaPtr windowOutputSchema;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
+};
+
+/**
+ * @brief Stores SliceMergingOperatorHandler and preAggregationOperator for keyed windows
+ */
+struct KeyedOperatorHandlers {
+    PhysicalOperators::PhysicalKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
+    PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
+};
+
+/**
+ * @brief Stores SliceMergingOperatorHandler and preAggregationOperator for global windows
+ */
+struct GlobalOperatorHandlers {
+    PhysicalOperators::PhysicalGlobalSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
+    PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
+};
+
+/**
+ * @brief Stores all operator nodes for lowering the stream joins
+ */
+struct StreamJoinOperatorNodes {
+    StreamJoinOperatorNodes(const LogicalOperatorNodePtr& operatorNode,
+                            const OperatorNodePtr& leftInputOperator,
+                            const OperatorNodePtr& rightInputOperator)
+        : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator) {}
+    const LogicalOperatorNodePtr& operatorNode;
+    const OperatorNodePtr& leftInputOperator;
+    const OperatorNodePtr& rightInputOperator;
+};
+
+/**
+ * @brief Stores all join configuration, e.g., window size, timestamp field name, join strategy, ...
+ */
+struct StreamJoinConfigs {
+    StreamJoinConfigs(const std::string& joinFieldNameLeft,
+                      const std::string& joinFieldNameRight,
+                      const uint64_t windowSize,
+                      const std::string& timeStampFieldNameLeft,
+                      const std::string& timeStampFieldNameRight,
+                      const QueryCompilation::StreamJoinStrategy& joinStrategy)
+        : joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowSize(windowSize),
+          timeStampFieldNameLeft(timeStampFieldNameLeft), timeStampFieldNameRight(timeStampFieldNameRight),
+          joinStrategy(joinStrategy) {}
+
+    const std::string& joinFieldNameLeft;
+    const std::string& joinFieldNameRight;
+    const uint64_t windowSize;
+    const std::string& timeStampFieldNameLeft;
+    const std::string& timeStampFieldNameRight;
+    const QueryCompilation::StreamJoinStrategy& joinStrategy;
+};
 
 /**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
@@ -158,6 +226,75 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @param operatorNode current operator
     */
     void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
+
+  private:
+    /**
+     * @brief creates preAggregationWindowHandler and sliceMergingOperatorHandler for keyed windows depending on the query compiler
+     * @param windowOperatorProperties
+     * @return GlobalOperatorHandlers
+     */
+    KeyedOperatorHandlers createKeyedOperatorHandlers(WindowOperatorProperties& windowOperatorProperties);
+
+    /**
+     * @brief creates preAggregationWindowHandler and sliceMergingOperatorHandler for global windows depending on the query compiler
+     * @param windowOperatorProperties
+     * @return GlobalOperatorHandlers
+     */
+    GlobalOperatorHandlers createGlobalOperatorHandlers(WindowOperatorProperties& windowOperatorProperties);
+
+    /**
+     * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
+     * @param windowOperatorProperties
+     * @param operatorNode
+     */
+    std::shared_ptr<Node> replaceOperatorNodeTimeBasedKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
+                                                                  const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for global windows
+     * @param windowOperatorProperties
+     * @param operatorNode
+     */
+    std::shared_ptr<Node> replaceOperatorNodeTimeBasedGlobalWindow(WindowOperatorProperties& windowOperatorProperties,
+                                                                   const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Lowers a join operator for the old default query compiler
+     * @param operatorNode
+     */
+    void lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Lowers a join operator for the nautilus query compiler
+     * @param operatorNode
+     */
+    void lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Returns the left and right timestamp
+     * @param joinOperator
+     * @param windowType
+     * @return {
+     */
+    [[nodiscard]] std::tuple<std::string, std::string>
+    getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+                             const Windowing::TimeBasedWindowTypePtr& windowType) const;
+
+    /**
+     * @brief Lowers the stream hash join
+     * @param streamJoinOperatorNodes
+     * @param streamJoinConfig
+     */
+    void lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+                                const StreamJoinConfigs& streamJoinConfig);
+
+    /**
+     * @brief Lowers the stream nested loop join
+     * @param streamJoinOperatorNodes
+     * @param streamJoinConfig
+     */
+    void lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+                                      const StreamJoinConfigs& streamJoinConfig);
 };
 
 }// namespace NES::QueryCompilation

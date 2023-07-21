@@ -46,48 +46,53 @@ class AbstractSynopsis {
 
     /**
      * @brief This is the first step of performing an approximation. This method adds the record to the underlying synopsis
-     * @param handlerIndex
-     * @param ctx
-     * @param record
-     * @param pState
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: Record that should be added to the
+     * @param pState: State that contains some saved memRef or other object
      */
-    virtual void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
-                               Nautilus::Record record, Runtime::Execution::Operators::OperatorState* pState) = 0;
+    virtual void addToSynopsis(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                               Nautilus::Record record, const Runtime::Execution::Operators::OperatorState* pState) = 0;
 
     /**
      * @brief Once all records have been inserted, we can ask for an approximation
-     * @param ctx
-     * @param bufferManager
+     * @param ctx: The RuntimeExecutionContext
+     * @param bufferManager: Buffermanager to allocate return buffers
+     * @param keys: The keys to provide an approximation for
+     * @param handlerIndex: Index for the operator handler
      * @return Record that stores the approximation
      */
-    virtual std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
-                                                             Runtime::Execution::ExecutionContext& ctx,
-                                                             Runtime::BufferManagerPtr bufferManager) = 0;
+    std::vector<Runtime::TupleBuffer> getApproximateForKeys(const uint64_t handlerIndex,
+                                                            Runtime::Execution::ExecutionContext& ctx,
+                                                            const std::vector<Nautilus::Value<>>& keys,
+                                                            Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
      * can be done. Couple examples are:
      *  - removing all drawn samples for a sampling algorithm
      *  - resetting and writing zeros to the 2D array for a Count-min sketch
+     *  @param handlerIndex: Index for the operator handler
+     *  @param ctx: The RuntimeExecutionContext
      */
-    virtual void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) = 0;
+    virtual void setup(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief This method gets called in open() of the synopses operator class and gives the synopses a possibility
      * to store a local state, for example a reference to a data structure
-     * @param handlerIndex
-     * @param op
-     * @param ctx
-     * @param buffer
+     * @param handlerIndex: Index for the operator handler
+     * @param op: Operator for which to store the local state
+     * @param ctx: The RuntimeExecutionContext
+     * @param buffer: RecordBuffer for this state
+     * @return True if a state has been added
      */
-    virtual void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
-                                         Runtime::Execution::ExecutionContext &ctx,
-                                         Runtime::Execution::RecordBuffer buffer) = 0;
+    virtual bool storeLocalOperatorState(const uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+                                         Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments
-     * @param arguments
-     * @param aggregationConfig
+     * @param arguments: Configuration related to the synopsis, for example the type
+     * @param aggregationConfig: Configuration related to the aggregation
      * @return AbstractSynopsesPtr
      */
     static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration& arguments,
@@ -99,13 +104,24 @@ class AbstractSynopsis {
     virtual ~AbstractSynopsis() = default;
 
   protected:
+    /**
+     * @brief Provides an approximation for the given key and returns a record containing the approximation
+     * @param ctx: The RuntimeExecutionContext
+     * @param key: The key to provide an approximation for
+     * @param handlerIndex: Index for the operator handler
+     * @param outputRecord: Record that should store the approximation
+     */
+    virtual void getApproximateRecord(const uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                      const Nautilus::Value<>& key, Nautilus::Record& outputRecord) = 0;
+
+    Runtime::Execution::Expressions::ReadFieldExpressionPtr readKeyExpression;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    Parsing::AggregationValuePtr aggregationValue;
     Parsing::Aggregation_Type aggregationType;
-    std::string fieldNameAggregation;
-    std::string fieldNameApproximate;
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
+    const std::string fieldNameKey;
+    const std::string fieldNameAggregation;
+    const std::string fieldNameApproximate;
+    const SchemaPtr inputSchema;
+    const SchemaPtr outputSchema;
 
 };
 } // namespace NES::ASP

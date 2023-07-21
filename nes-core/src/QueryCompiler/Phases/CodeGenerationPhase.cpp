@@ -43,7 +43,7 @@ CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerato
 }
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
-    NES_DEBUG2("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
+    NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
     for (const auto& pipeline : queryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
@@ -53,7 +53,7 @@ PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) 
 }
 
 OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
-    NES_DEBUG2("Generate code for pipeline  {}", pipeline->getPipelineId());
+    NES_DEBUG("Generate code for pipeline  {}", pipeline->getPipelineId());
     auto context = PipelineContext::create();
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");

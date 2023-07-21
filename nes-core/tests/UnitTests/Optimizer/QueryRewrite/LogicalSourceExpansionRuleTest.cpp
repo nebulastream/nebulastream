@@ -49,7 +49,7 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
+        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -60,7 +60,7 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling {
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
+    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;

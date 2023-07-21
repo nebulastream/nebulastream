@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -37,53 +38,53 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
     auto expression = UnaryExpressionWrapper<ExpExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 5));
+        auto resultValue = expression.eval(Value<Int8>(5_s8));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     //Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 5));
+        auto resultValue = expression.eval(Value<Int16>(5_s16));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 5));
+        auto resultValue = expression.eval(Value<Int32>(5_s32));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 5));
+        auto resultValue = expression.eval(Value<Int64>(5_s64));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 5));
+        auto resultValue = expression.eval(Value<UInt8>(5_u8));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 5));
+        auto resultValue = expression.eval(Value<UInt16>(5_u16));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 5));
+        auto resultValue = expression.eval(Value<UInt32>(5_u32));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 5));
+        auto resultValue = expression.eval(Value<UInt64>(5_u64));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

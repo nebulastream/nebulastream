@@ -78,7 +78,7 @@ bool PartitionManager::registerSubpartitionConsumer(NesPartition partition,
                                                  partition,
                                                  PartitionConsumerEntry(std::move(senderLocation), std::move(emitterPtr)));
     }
-    NES_DEBUG("PartitionManager: Registering Subpartition Consumer " << partition.toString() << "=" << (*it).second.count());
+    NES_DEBUG("PartitionManager: Registering Subpartition Consumer {}={}", partition.toString(), (*it).second.count());
     return (*it).second.count() == 1;
 }
 
@@ -91,14 +91,14 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
 
     // safeguard
     if (it->second.count() == 0) {
-        NES_DEBUG("PartitionManager: Partition " << partition.toString() << ", counter is at 0.");
+        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
         return true;
     }
 
     it->second.unpin();
-    NES_INFO("PartitionManager: Unregistering Consumer " << partition.toString() << "; newCnt(" << it->second.count() << ")");
+    NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());
     if (it->second.count() == 1) {
-        NES_DEBUG("PartitionManager: Consumer " << partition.toString() << ", counter is at 1.");
+        NES_DEBUG("PartitionManager: Consumer {}, counter is at 1.", partition.toString());
         return true;
     }
     return false;
@@ -172,7 +172,7 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
     } else {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
     }
-    NES_DEBUG("PartitionManager: Registering Subpartition Producer " << partition.toString() << "=" << (*it).second.count());
+    NES_DEBUG("PartitionManager: Registering Subpartition Producer {}={}", partition.toString(), (*it).second.count());
     return (*it).second.count() == 1;// first time
 }
 
@@ -184,11 +184,10 @@ bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
     if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
         it->second.registerEventListener(eventListener);
-        NES_DEBUG("PartitionManager: Registering Subpartition Event Consumer " << partition.toString() << "="
-                                                                               << (*it).second.count());
+        NES_DEBUG("PartitionManager: Registering Subpartition Event Consumer {}={}", partition.toString(), (*it).second.count());
         return true;
     }
-    NES_DEBUG("PartitionManager: Cannot register " << partition.toString());
+    NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
     return false;
 }
 
@@ -201,15 +200,14 @@ bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition) {
 
     // safeguard
     if (it->second.count() == 0) {
-        NES_DEBUG("PartitionManager: Partition " << partition.toString() << ", counter is at 0.");
+        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
         return true;
     }
 
     it->second.unpin();
-    NES_INFO("PartitionManager: Unregistering Subpartition Producer " << partition.toString() << "; newCnt(" << it->second.count()
-                                                                      << ")");
+    NES_INFO("PartitionManager: Unregistering Subpartition Producer {}; newCnt({})", partition.toString(), it->second.count());
     if (it->second.count() == 0) {
-        NES_DEBUG("PartitionManager: Producer Partition " << partition.toString() << ", counter is at 0.");
+        NES_DEBUG("PartitionManager: Producer Partition {}, counter is at 0.", partition.toString());
         return true;
     }
     return false;

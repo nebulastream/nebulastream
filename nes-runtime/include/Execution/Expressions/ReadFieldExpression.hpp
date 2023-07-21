@@ -35,6 +35,7 @@ class ReadFieldExpression : public Expression {
   private:
     const Nautilus::Record::RecordFieldIdentifier field;
 };
+using ReadFieldExpressionPtr = std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>;
 
 }// namespace NES::Runtime::Execution::Expressions
 

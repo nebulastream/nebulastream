@@ -104,8 +104,8 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
-                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field "
-                                        << inputString.c_str());
+                        NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
+                                        inputString);
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -113,8 +113,9 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: "
-                              << inputString << "to tuple buffer");
+                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                              "to tuple buffer",
+                              inputString);
 
                     auto sizeOfInputField = inputString.size();
                     auto totalSize = sizeOfInputField + sizeof(uint32_t);
@@ -142,7 +143,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
                     if (!value) {
                         if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
-                            NES_FATAL_ERROR2(
+                            NES_FATAL_ERROR(
                                 "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
                                 inputString.c_str());
                             throw std::invalid_argument("Value " + inputString + " is not a boolean");
@@ -162,7 +163,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
             strcpy(value, inputString.c_str());
         }
     } catch (const std::exception& e) {
-        NES_ERROR2("Failed to convert inputString to desired NES data type. Error: {}", e.what());
+        NES_ERROR("Failed to convert inputString to desired NES data type. Error: {}", e.what());
     }
 }
 

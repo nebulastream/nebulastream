@@ -553,11 +553,11 @@ class SourceTest : public Testing::NESBaseTest {
         this->sourceAffinity = std::numeric_limits<uint64_t>::max();
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down SourceTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO2("Setup SourceTest test class.");
+        NES_INFO("Setup SourceTest test class.");
     }
 
     void TearDown() override {
@@ -1489,7 +1489,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
-    NES_DEBUG2("{}", int_schema->toString());
+    NES_DEBUG("{}", int_schema->toString());
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1666,7 +1666,8 @@ TEST_F(SourceTest, TCPSourcePrint) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
+        "5000\nsocketDomain: "
         "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
@@ -1702,7 +1703,8 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
+        "5000\nsocketDomain: "
         "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
@@ -1850,18 +1852,18 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_DEBUG2("E2EBase: Start coordinator");
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
-    NES_DEBUG2("E2EBase: Start worker 1");
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->bufferSizeInBytes = (72);
@@ -1904,7 +1906,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     auto start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    string expectedContent = "input1$id:INTEGER,input1$value:INTEGER,input1$timestamp:INTEGER\n"
+    string expectedContent = "input1$id:INTEGER(64 bits),input1$value:INTEGER(64 bits),input1$timestamp:INTEGER(64 bits)\n"
                              "1,1,0\n"
                              "1,1,0\n"
                              "1,1,0\n"
@@ -1974,20 +1976,20 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 60));
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_DEBUG2("start={} stop={}", start, stop);
+    NES_DEBUG("start={} stop={}", start, stop);
 
-    NES_INFO2("SourceTest: Remove query");
+    NES_INFO("SourceTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG2("E2EBase: Stop worker 1");
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("E2EBase: Stop Coordinator");
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    NES_DEBUG2("E2EBase: Test finished");
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {

@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Common.hpp>
 #include <cstdint>
 #include <string>
 namespace NES::QueryCompilation {
@@ -108,9 +109,6 @@ class QueryCompilerOptions {
 
     class StreamHashJoinOptions {
       public:
-        StreamHashJoinOptions()
-            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024) {}
-
         /**
          * @brief getter for max hash table size
          * @return
@@ -187,6 +185,7 @@ class QueryCompilerOptions {
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
+
     [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy getFilterProcessingStrategy() const;
 
     /**
@@ -214,6 +213,18 @@ class QueryCompilerOptions {
     WindowingStrategy getWindowingStrategy() const;
 
     /**
+     * @brief Sets the strategy for the stream join
+     * @param strategy
+     */
+    void setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy strategy);
+
+    /**
+     * @brief gets the stream join strategy.
+     * @return
+     */
+    [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStratgy() const;
+
+    /**
      * @brief Return hash join options
      * @return
      */
@@ -229,8 +240,20 @@ class QueryCompilerOptions {
 
     [[nodiscard]] NautilusBackend getNautilusBackend() const;
     void setNautilusBackend(const NautilusBackend nautilusBackend);
+
     [[nodiscard]] const DumpMode& getDumpMode() const;
     void setDumpMode(DumpMode dumpMode);
+
+    /**
+     * @brief Set the path to the CUDA SDK
+     * @param cudaSdkPath the CUDA SDK path
+     */
+    void setCUDASdkPath(const std::string& cudaSdkPath);
+
+    /**
+     * @brief Get the path to the CUDA SDK
+     */
+    const std::string getCUDASdkPath() const;
 
   protected:
     uint64_t numSourceLocalBuffers;
@@ -243,6 +266,8 @@ class QueryCompilerOptions {
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
+    std::string cudaSdkPath;
+    StreamJoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation
 

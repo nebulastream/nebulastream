@@ -105,9 +105,9 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             }
             return createResponse(Status::CODE_200, response.dump());
         } catch (const std::exception& exc) {
-            NES_ERROR2("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
-                       "query plan for user request: {}",
-                       exc.what());
+            NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
+                      "query plan for user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400,
                                              "Exception occurred while building query plans for user request"
                                                  + std::string(exc.what()));
@@ -140,7 +140,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
-            NES_DEBUG2("Get current status of the query");
+            NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
             nlohmann::json response;
             response["queryId"] = queryId.getValue(0);
@@ -149,7 +149,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
             response["queryMetaData"] = catalogEntry->getMetaInformation();
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -158,7 +158,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/getNumberOfProducedBuffers", getNumberOfProducedBuffers, QUERY(UInt64, queryId, "queryId")) {
         try {
-            NES_DEBUG2("getNumberOfProducedBuffers called");
+            NES_DEBUG("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
             SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
             if (sharedQueryId == INVALID_SHARED_QUERY_ID) {

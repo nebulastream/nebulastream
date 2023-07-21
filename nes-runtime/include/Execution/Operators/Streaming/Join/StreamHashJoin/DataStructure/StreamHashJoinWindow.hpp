@@ -15,11 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMHASHJOINWINDOW_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMHASHJOINWINDOW_HPP_
 
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLockFree.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/MergingHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <vector>
 
 namespace NES::Runtime::Execution {
@@ -45,33 +48,37 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param numPartitions
      */
     explicit StreamHashJoinWindow(size_t numberOfWorkerThreads,
-                                  size_t sizeOfRecordLeft,
-                                  size_t sizeOfRecordRight,
                                   uint64_t windowStart,
                                   uint64_t windowEnd,
+                                  size_t sizeOfRecordLeft,
+                                  size_t sizeOfRecordRight,
                                   size_t maxHashTableSize,
                                   size_t pageSize,
                                   size_t preAllocPageSizeCnt,
-                                  size_t numPartitions);
+                                  size_t numPartitions,
+                                  QueryCompilation::StreamJoinStrategy joinStrategy);
 
     ~StreamHashJoinWindow() = default;
 
     /**
-     * @brief Returns the tuple
-     * @param sizeOfTupleInByte
-     * @param tuplePos
-     * @param leftSide
-     * @return Pointer to the start of the memory for the
+     * @brief Returns the number of tuples in this window for the left side
+     * @return uint64_t
      */
-    uint8_t* getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide);
+    uint64_t getNumberOfTuplesLeft() override;
+
+    /**
+     * @brief Returns the number of tuples in this window for the right side
+     * @return uint64_t
+     */
+    uint64_t getNumberOfTuplesRight() override;
 
     /**
      * @brief Returns the number of tuples in this window
-     * @param sizeOfTupleInByte
-     * @param leftSide
-     * @return size_t
+     * @param workerIdx
+     * @param isLeftSide
+     * @return uint64_t
      */
-    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) override;
+    uint64_t getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx);
 
     /**
      * @brief Creates a string representation of this window
@@ -85,29 +92,29 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::LocalHashTable* getLocalHashTable(size_t index, bool leftSide);
+    Operators::StreamJoinHashTable* getHashTable(bool isLeftSide, uint64_t index);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
      * @param isLeftSide
      * @return Reference to the shared hash table
      */
-    Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
+    Operators::MergingHashTable& getMergingHashTable(bool isLeftSide);
 
     /**
      * @brief this method marks that one partition of this window was finally processed by the sink
      * @param bool indicating if all partitions are done
      */
-    bool markPartionAsFinished();
+    bool markPartitionAsFinished();
 
-  private:
-    uint64_t numberOfWorker;
-    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
-    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableRightSide;
-    Operators::SharedJoinHashTable leftSideHashTable;
-    Operators::SharedJoinHashTable rightSideHashTable;
+  protected:
+    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
+    std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
+    Operators::MergingHashTable mergingHashTableLeftSide;
+    Operators::MergingHashTable mergingHashTableRightSide;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
     std::atomic<uint64_t> partitionFinishedCounter;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
 };
 
 }// namespace NES::Runtime::Execution

@@ -66,16 +66,16 @@ ZmqServer::ZmqServer(std::string hostname,
     : hostname(std::move(hostname)), requestedPort(requestedPort), currentPort(requestedPort),
       numNetworkThreads(std::max(DEFAULT_NUM_SERVER_THREADS, numNetworkThreads)), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(std::move(bufferManager)) {
-    NES_DEBUG2("ZmqServer({}:{}) Creating ZmqServer()", this->hostname, this->currentPort);
+    NES_DEBUG("ZmqServer({}:{}) Creating ZmqServer()", this->hostname, this->currentPort);
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
-        NES_WARNING2("ZmqServer({}:{}) numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS",
-                     this->hostname,
-                     this->currentPort);
+        NES_WARNING("ZmqServer({}:{}) numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS",
+                    this->hostname,
+                    this->currentPort);
     }
 }
 
 bool ZmqServer::start() {
-    NES_DEBUG2("ZmqServer({}:{}): Starting server..", this->hostname, this->currentPort);
+    NES_DEBUG("ZmqServer({}:{}): Starting server..", this->hostname, this->currentPort);
     std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
@@ -96,7 +96,7 @@ bool ZmqServer::stop() {
     if (!isRunning.compare_exchange_strong(expected, false)) {
         return false;
     }
-    NES_INFO2("ZmqServer({}:{}): Initiating shutdown", this->hostname, this->currentPort);
+    NES_INFO("ZmqServer({}:{}): Initiating shutdown", this->hostname, this->currentPort);
     if (!zmqContext) {
         return false;// start() not called
     }
@@ -115,28 +115,28 @@ bool ZmqServer::stop() {
         try {
             bool gracefullyClosed = future.get();
             if (gracefullyClosed) {
-                NES_DEBUG2("ZmqServer({}:{}): gracefully closed on: {}",
-                           this->hostname,
-                           this->currentPort,
-                           hostname,
-                           this->currentPort);
+                NES_DEBUG("ZmqServer({}:{}): gracefully closed on: {}",
+                          this->hostname,
+                          this->currentPort,
+                          hostname,
+                          this->currentPort);
             } else {
-                NES_WARNING2("ZmqServer({}:{}): non gracefully closed on: {}",
-                             this->hostname,
-                             this->currentPort,
-                             hostname,
-                             this->currentPort);
+                NES_WARNING("ZmqServer({}:{}): non gracefully closed on: {}",
+                            this->hostname,
+                            this->currentPort,
+                            hostname,
+                            this->currentPort);
             }
         } catch (std::exception& e) {
-            NES_ERROR2("ZmqServer({}:{}):  Server failed to start due to {}", this->hostname, this->currentPort, e.what());
+            NES_ERROR("ZmqServer({}:{}):  Server failed to start due to {}", this->hostname, this->currentPort, e.what());
             zmqContext->close();
             zmqContext.reset();
             throw e;
         }
     }
-    NES_INFO2("ZmqServer({}:{}): Going to close zmq context...", this->hostname, this->currentPort);
+    NES_INFO("ZmqServer({}:{}): Going to close zmq context...", this->hostname, this->currentPort);
     zmqContext->close();
-    NES_INFO2("ZmqServer({}:{}): Zmq context is now closed", this->hostname, this->currentPort);
+    NES_INFO("ZmqServer({}:{}): Zmq context is now closed", this->hostname, this->currentPort);
     zmqContext.reset();
     return true;
 }
@@ -153,14 +153,14 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
 
     try {
         auto address = "tcp://" + hostname + ":" + std::to_string(requestedPort);
-        NES_DEBUG2("ZmqServer({}:{}):  Trying to bind on {}", this->hostname, requestedPort, address);
+        NES_DEBUG("ZmqServer({}:{}):  Trying to bind on {}", this->hostname, requestedPort, address);
         //< option of linger time until port is closed
         frontendSocket.set(zmq::sockopt::linger, -1);
         frontendSocket.bind(address);
         dispatcherSocket.bind(dispatcherPipe);
-        NES_DEBUG2("ZmqServer({}:{}):  Created socket on {}: {}", this->hostname, this->currentPort, hostname, currentPort);
+        NES_DEBUG("ZmqServer({}:{}):  Created socket on {}: {}", this->hostname, this->currentPort, hostname, currentPort);
     } catch (std::exception& ex) {
-        NES_ERROR2("ZmqServer({}:{}):   Error in routerLoop() {}", this->hostname, this->currentPort, ex.what());
+        NES_ERROR("ZmqServer({}:{}):   Error in routerLoop() {}", this->hostname, this->currentPort, ex.what());
         startPromise->set_value(false);
         errorPromise.set_exception(std::make_exception_ptr(ex));
         return;
@@ -173,7 +173,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
     sscanf(currentSocketAddress.c_str(), "tcp://%hhu.%hhu.%hhu.%hhu:%d", &host[0], &host[1], &host[2], &host[3], &actualPort);
     NES_ASSERT2_FMT(actualPort > 0, "Wrong port on zmq server " << this->hostname);
     currentPort = actualPort;
-    NES_DEBUG2("ZmqServer: Created socket on {}: {}", hostname, actualPort);
+    NES_DEBUG("ZmqServer: Created socket on {}: {}", hostname, actualPort);
 
     for (int i = 0; i < numHandlerThreads; ++i) {
         handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
@@ -205,18 +205,18 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
                 shutdownComplete = true;
                 //                dispatcherSocket.close();
                 //                frontendSocket.close();
-                NES_INFO2("ZmqServer({}:{}): Frontend: Shutdown completed! address: tcp://{}:{}",
-                          this->hostname,
-                          this->currentPort,
-                          hostname,
-                          std::to_string(actualPort));
+                NES_INFO("ZmqServer({}:{}): Frontend: Shutdown completed! address: tcp://{}:{}",
+                         this->hostname,
+                         this->currentPort,
+                         hostname,
+                         std::to_string(actualPort));
 
             } else {
-                NES_ERROR2("ZmqServer({}:{}):{}", this->hostname, this->currentPort, zmqError.what());
+                NES_ERROR("ZmqServer({}:{}):{}", this->hostname, this->currentPort, zmqError.what());
                 errorPromise.set_exception(eptr);
             }
         } catch (std::exception& error) {
-            NES_ERROR2("ZmqServer({}:{}):{}", this->hostname, this->currentPort, error.what());
+            NES_ERROR("ZmqServer({}:{}):{}", this->hostname, this->currentPort, error.what());
             errorPromise.set_exception(eptr);
         }
     }
@@ -251,7 +251,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
     try {
         dispatcherSocket.connect(dispatcherPipe);
         barrier->wait();
-        NES_DEBUG2("Created Zmq Handler Thread #{} on {}: {}", index, hostname, this->currentPort);
+        NES_DEBUG("Created Zmq Handler Thread #{} on {}: {}", index, hostname, this->currentPort);
         while (keepRunning) {
             zmq::message_t identityEnvelope;
             zmq::message_t headerEnvelope;
@@ -273,10 +273,10 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
                     outIdentityEnvelope.copy(identityEnvelope);
                     auto receivedMsg = *clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>();
-                    NES_DEBUG2("ZmqServer({}:{}): ClientAnnouncement received for channel {}",
-                               this->hostname,
-                               this->currentPort,
-                               receivedMsg.getChannelId());
+                    NES_DEBUG("ZmqServer({}:{}): ClientAnnouncement received for channel {}",
+                              this->hostname,
+                              this->currentPort,
+                              receivedMsg.getChannelId());
 
                     // react after announcement is received
                     auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
@@ -304,14 +304,14 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto* bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = identityEnvelope.data<NesPartition>();
 
-                    NES_TRACE2("ZmqServer({}:{}):  DataBuffer received from origin={} and NesPartition={} with payload size {} "
-                               "with num children buffer {}",
-                               this->hostname,
-                               this->currentPort,
-                               bufferHeader->originId,
-                               nesPartition->toString(),
-                               bufferHeader->payloadSize,
-                               bufferHeader->numOfChildren);
+                    NES_TRACE("ZmqServer({}:{}):  DataBuffer received from origin={} and NesPartition={} with payload size {} "
+                              "with num children buffer {}",
+                              this->hostname,
+                              this->currentPort,
+                              bufferHeader->originId,
+                              nesPartition->toString(),
+                              bufferHeader->payloadSize,
+                              bufferHeader->numOfChildren);
                     // get children if necessary
                     std::vector<Runtime::TupleBuffer> children;
                     for (uint32_t i = 0u, numOfChildren = bufferHeader->numOfChildren; i < numOfChildren; ++i) {
@@ -389,7 +389,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 }
                 case MessageType::ErrorMessage: {
                     // if server receives a message that an error occured
-                    NES_FATAL_ERROR2("ZmqServer({}:{}):  ErrorMessage not supported yet", this->hostname, this->currentPort);
+                    NES_FATAL_ERROR("ZmqServer({}:{}):  ErrorMessage not supported yet", this->hostname, this->currentPort);
                     break;
                 }
                 case MessageType::EndOfStream: {
@@ -398,15 +398,15 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
-                    NES_DEBUG2("ZmqServer({}:{}): EndOfStream received for channel ",
-                               this->hostname,
-                               this->currentPort,
-                               eosMsg.getChannelId());
+                    NES_DEBUG("ZmqServer({}:{}): EndOfStream received for channel ",
+                              this->hostname,
+                              this->currentPort,
+                              eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
                 default: {
-                    NES_ERROR2("ZmqServer({}:{}): received unknown message type", this->hostname, this->currentPort);
+                    NES_ERROR("ZmqServer({}:{}): received unknown message type", this->hostname, this->currentPort);
                     break;
                 }
             }
@@ -414,15 +414,15 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
             //            dispatcherSocket.close();
-            NES_DEBUG2("ZmqServer({}:{}):  Handler #{}  closed on server{}: {}",
-                       this->hostname,
-                       this->currentPort,
-                       index,
-                       hostname,
-                       this->currentPort);
+            NES_DEBUG("ZmqServer({}:{}):  Handler #{}  closed on server{}: {}",
+                      this->hostname,
+                      this->currentPort,
+                      index,
+                      hostname,
+                      this->currentPort);
         } else {
             errorPromise.set_exception(std::current_exception());
-            NES_ERROR2("ZmqServer({}:{}): event loop {} got {}", this->hostname, this->currentPort, index, err.what());
+            NES_ERROR("ZmqServer({}:{}): event loop {} got {}", this->hostname, this->currentPort, index, err.what());
             std::rethrow_exception(std::current_exception());
         }
     }

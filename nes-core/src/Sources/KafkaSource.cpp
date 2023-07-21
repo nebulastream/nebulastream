@@ -90,17 +90,17 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 }
 
 KafkaSource::~KafkaSource() {
-    NES_INFO2("Kafka source {} partition/group={} produced={} batchSize={} successFullPollCnt={} failedFullPollCnt={}",
-              topic,
-              groupId,
-              bufferProducedCnt,
-              batchSize,
-              successFullPollCnt,
-              failedFullPollCnt);
+    NES_INFO("Kafka source {} partition/group={} produced={} batchSize={} successFullPollCnt={} failedFullPollCnt={}",
+             topic,
+             groupId,
+             bufferProducedCnt,
+             batchSize,
+             successFullPollCnt,
+             failedFullPollCnt);
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
-    NES_DEBUG2("Kafka Source receiveData.");
+    NES_DEBUG("Kafka Source receiveData.");
     if (!connect()) {
         return std::nullopt;
     }
@@ -113,7 +113,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR2("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
+        NES_ERROR("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();
@@ -129,7 +129,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
     bool flushIntervalPassed = false;
 
     while (tupleCount < tupleBufferCapacity && !flushIntervalPassed) {
-        NES_DEBUG2("KafkaSource tries to receive data...");
+        NES_DEBUG("KafkaSource tries to receive data...");
         //poll a batch of messages and put it into a vector
         messages = consumer->poll_batch(batchSize);
         consumer->async_commit();
@@ -137,17 +137,17 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
         //iterate over the polled message buffer
         if (!messages.empty()) {
 
-            NES_TRACE2("KafkaSource poll {} ", messages.size());
+            NES_TRACE("KafkaSource poll {} ", messages.size());
 
             for (auto& message : messages) {
                 if (tupleCount < tupleBufferCapacity) {
 
                     if (message.get_error()) {
                         if (!message.is_eof()) {
-                            NES_ERROR2("KafkaSource received error notification: {}", message.get_error().to_string());
+                            NES_ERROR("KafkaSource received error notification: {}", message.get_error().to_string());
                             throw message.get_error();
                         }
-                        NES_WARNING2("KafkaSource reached end of topic");
+                        NES_WARNING("KafkaSource reached end of topic");
                         tupleBuffer.setNumberOfTuples(tupleCount);
                         return true;
                     }
@@ -160,7 +160,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
                 } else {
                     // FIXME: how to handle messages that are of size > tupleBufferCapacity
                     // NOTE: this will lead to missing tuples as we drop messages that do not fit in the buffer
-                    NES_ERROR2("KafkaSource polled messages do not fit into a single buffer");
+                    NES_ERROR("KafkaSource polled messages do not fit into a single buffer");
                     tupleBuffer.setNumberOfTuples(tupleCount);
                     return true;
                 }
@@ -173,7 +173,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            NES_DEBUG2("KafkaSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("KafkaSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -205,7 +205,7 @@ bool KafkaSource::connect() {
             std::stringstream s;
             s << partitions;
             std::string partitionsAsString = s.str();
-            NES_DEBUG2("KafkaSource Got assigned {}", partitionsAsString);
+            NES_DEBUG("KafkaSource Got assigned {}", partitionsAsString);
         });
 
         // Print the revoked partitions on revocation
@@ -214,7 +214,7 @@ bool KafkaSource::connect() {
             std::stringstream s;
             s << partitions;
             std::string partitionsAsString = s.str();
-            NES_DEBUG2("KafkaSource Got revoked {}", partitionsAsString);
+            NES_DEBUG("KafkaSource Got revoked {}", partitionsAsString);
         });
 
         // Subscribe to the topic
@@ -222,9 +222,9 @@ bool KafkaSource::connect() {
         cppkafka::TopicPartition assignment(topic, std::atoi(groupId.c_str()));
         vec.push_back(assignment);
         consumer->assign(vec);
-        NES_DEBUG2("kafka source={} connect to topic={} partition={}", this->operatorId, topic, std::atoi(groupId.c_str()));
+        NES_DEBUG("kafka source={} connect to topic={} partition={}", this->operatorId, topic, std::atoi(groupId.c_str()));
 
-        NES_DEBUG2("kafka source starts producing");
+        NES_DEBUG("kafka source starts producing");
 
         connected = true;
     }

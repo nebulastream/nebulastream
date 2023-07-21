@@ -12,85 +12,128 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution {
 
-Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
+Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(bool leftSide, uint64_t workerId) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        workerId = 0;
+    }
+
     if (leftSide) {
-        index = index % localHashTableLeftSide.size();
-        return localHashTableLeftSide[index].get();
+        workerId = workerId % hashTableLeftSide.size();
+        return hashTableLeftSide.at(workerId).get();
     } else {
-        index = index % localHashTableRightSide.size();
-        return localHashTableRightSide[index].get();
+        workerId = workerId % hashTableRightSide.size();
+        return hashTableRightSide.at(workerId).get();
     }
 }
 
-size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) {
-    //TODO: implement this function
-    size_t cnt = 0;
-    for (auto& leftBucket : localHashTableLeftSide) {
-        cnt += leftBucket->getNumberOfTuples();
-    }
-    for (auto& rightBucket : localHashTableRightSide) {
-        cnt += rightBucket->getNumberOfTuples();
-    }
-
-    return cnt;
+uint64_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx) {
+    return getHashTable(isLeftSide, workerIdx)->getNumberOfTuples();
 }
 
-Operators::SharedJoinHashTable& StreamHashJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
+Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLeftSide) {
     if (isLeftSide) {
-        return leftSideHashTable;
+        return mergingHashTableLeftSide;
     } else {
-        return rightSideHashTable;
+        return mergingHashTableRightSide;
     }
 }
 
 StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
-                                           size_t sizeOfRecordLeft,
-                                           size_t sizeOfRecordRight,
                                            uint64_t windowStart,
                                            uint64_t windowEnd,
+                                           size_t sizeOfRecordLeft,
+                                           size_t sizeOfRecordRight,
                                            size_t maxHashTableSize,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
-                                           size_t numPartitions)
-    : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
-      leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
-      partitionFinishedCounter(numPartitions) {
+                                           size_t numPartitions,
+                                           QueryCompilation::StreamJoinStrategy joinStrategy)
+    : StreamWindow(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+      mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
+      partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 
-    for (auto i = 0UL; i < numberOfWorker; ++i) {
-        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+        //TODO they all take the same allocator
+        for (auto i = 0UL; i < numberOfWorker; ++i) {
+            hashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+                                                                                       numPartitions,
+                                                                                       fixedPagesAllocator,
+                                                                                       pageSize,
+                                                                                       preAllocPageSizeCnt));
+        }
+
+        for (auto i = 0UL; i < numberOfWorker; ++i) {
+            hashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
                                                                                         numPartitions,
                                                                                         fixedPagesAllocator,
                                                                                         pageSize,
                                                                                         preAllocPageSizeCnt));
+        }
+    } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING) {
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordLeft,
+                                                                                           numPartitions,
+                                                                                           fixedPagesAllocator,
+                                                                                           pageSize,
+                                                                                           preAllocPageSizeCnt));
+
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLocking>(sizeOfRecordRight,
+                                                                                            numPartitions,
+                                                                                            fixedPagesAllocator,
+                                                                                            pageSize,
+                                                                                            preAllocPageSizeCnt));
+    } else if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
+        hashTableLeftSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordLeft,
+                                                                                            numPartitions,
+                                                                                            fixedPagesAllocator,
+                                                                                            pageSize,
+                                                                                            preAllocPageSizeCnt));
+
+        hashTableRightSide.emplace_back(std::make_unique<Operators::GlobalHashTableLockFree>(sizeOfRecordRight,
+                                                                                             numPartitions,
+                                                                                             fixedPagesAllocator,
+                                                                                             pageSize,
+                                                                                             preAllocPageSizeCnt));
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 
-    for (auto i = 0UL; i < numberOfWorker; ++i) {
-        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
-                                                                                         numPartitions,
-                                                                                         fixedPagesAllocator,
-                                                                                         pageSize,
-                                                                                         preAllocPageSizeCnt));
-    }
-    NES_DEBUG2("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
-               "sizeOfRecordLeft={} sizeOfRecordRight={}",
-               numberOfWorker,
-               numPartitions,
-               pageSize,
-               sizeOfRecordLeft,
-               sizeOfRecordRight);
+    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
+              "sizeOfRecordLeft={} sizeOfRecordRight={}",
+              numberOfWorker,
+              numPartitions,
+              pageSize,
+              sizeOfRecordLeft,
+              sizeOfRecordRight);
 }
 
-bool StreamHashJoinWindow::markPartionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
+bool StreamHashJoinWindow::markPartitionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
 
 std::string StreamHashJoinWindow::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "StreamHashJoinWindow(windowState: "
                        << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
+}
+
+uint64_t StreamHashJoinWindow::getNumberOfTuplesLeft() {
+    uint64_t sum = 0;
+    for (auto& hashTable : hashTableLeftSide) {
+        sum += hashTable->getNumberOfTuples();
+    }
+    return sum;
+}
+
+uint64_t StreamHashJoinWindow::getNumberOfTuplesRight() {
+    uint64_t sum = 0;
+    for (auto& hashTable : hashTableRightSide) {
+        sum += hashTable->getNumberOfTuples();
+    }
+    return sum;
 }
 
 }// namespace NES::Runtime::Execution

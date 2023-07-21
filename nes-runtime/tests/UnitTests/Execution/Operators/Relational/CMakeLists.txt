@@ -16,3 +16,4 @@ add_subdirectory(Sort)
 
 add_nes_runtime_test(runtime-map-operator-test "MapOperatorTest.cpp")
 add_nes_runtime_test(runtime-selection-operator-test "SelectionOperatorTest.cpp")
+add_nes_runtime_test(runtime-python-udf-test "MapPythonUDFOperatorTest.cpp")

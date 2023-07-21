@@ -17,6 +17,7 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -24,7 +25,7 @@ class EmitState : public OperatorState {
   public:
     explicit EmitState(const RecordBuffer& resultBuffer)
         : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
-    Value<UInt64> outputIndex = (uint64_t) 0;
+    Value<UInt64> outputIndex = 0_u64;
     RecordBuffer resultBuffer;
     Value<MemRef> bufferReference;
 };
@@ -36,11 +37,11 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
+void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto outputIndex = emitState->outputIndex;
-    memoryProvider->write(outputIndex, emitState->bufferReference, recordBuffer);
-    emitState->outputIndex = outputIndex + (uint64_t) 1;
+    memoryProvider->write(outputIndex, emitState->bufferReference, record);
+    emitState->outputIndex = outputIndex + 1_u64;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
@@ -51,7 +52,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferReference = emitState->resultBuffer.getBuffer();
-        emitState->outputIndex = (uint64_t) 0;
+        emitState->outputIndex = 0_u64;
     }
 }
 

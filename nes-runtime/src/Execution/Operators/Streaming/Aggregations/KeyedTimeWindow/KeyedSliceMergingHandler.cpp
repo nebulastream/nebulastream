@@ -40,7 +40,7 @@ void KeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContex
 
 void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                     Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop GlobalSliceMergingHandler: " << queryTerminationType);
+    NES_DEBUG("stop GlobalSliceMergingHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys) {

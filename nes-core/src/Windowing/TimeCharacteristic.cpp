@@ -30,7 +30,7 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeU
 TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, const TimeUnit& unit) {
     auto keyExpression = fieldValue.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
@@ -68,5 +68,12 @@ std::string TimeCharacteristic::getTypeAsString() {
 }
 
 void TimeCharacteristic::setField(AttributeFieldPtr field) { this->field = std::move(field); }
+
+bool TimeCharacteristic::equals(const TimeCharacteristic& other) const {
+    const bool equalField = (this->field == nullptr && other.field == nullptr)
+        || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
+
+    return this->type == other.type && equalField && this->unit.equals(other.unit);
+}
 
 }// namespace NES::Windowing

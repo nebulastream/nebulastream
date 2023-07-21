@@ -44,10 +44,10 @@ SenseSource::SenseSource(SchemaPtr schema,
       udfs(std::move(udfs)) {}
 
 std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
-    NES_DEBUG2("SenseSource::receiveData called");
+    NES_DEBUG("SenseSource::receiveData called");
     auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
-    NES_DEBUG2("SenseSource::receiveData filled buffer with tuples={}", buf.getNumberOfTuples());
+    NES_DEBUG("SenseSource::receiveData filled buffer with tuples={}", buf.getNumberOfTuples());
     return buf;
 }
 

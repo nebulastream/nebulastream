@@ -29,16 +29,16 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMe
 }
 
 void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {
-    NES_TRACE2("SlidingWindow::triggerWindows windows before={}", windows.size());
+    NES_TRACE("SlidingWindow::triggerWindows windows before={}", windows.size());
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
-    NES_TRACE2("SlidingWindow::triggerWindows= lastStart={} size.getTime()={} lastWatermark={}",
-               lastStart,
-               size.getTime(),
-               lastWatermark);
+    NES_TRACE("SlidingWindow::triggerWindows= lastStart={} size.getTime()={} lastWatermark={}",
+              lastStart,
+              size.getTime(),
+              lastWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark && windowStart >= 0;
          windowStart -= slide.getTime()) {
         if (windowStart >= 0 && ((windowStart + size.getTime()) <= currentWatermark)) {
-            NES_TRACE2("SlidingWindow::triggerWindows add window to be triggered = windowStart={}", windowStart);
+            NES_TRACE("SlidingWindow::triggerWindows add window to be triggered = windowStart={}", windowStart);
             windows.emplace_back(windowStart, windowStart + size.getTime());
         }
     }
@@ -64,17 +64,11 @@ std::string SlidingWindow::toString() {
 }
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(otherWindowType);
-        return this->getTimeBasedSubWindowType() == SLIDINGWINDOW
-            && timeBasedWindowType->getTimeBasedSubWindowType() == SLIDINGWINDOW
-            && this->timeCharacteristic->getField()->getName()
-            == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
-            && this->size.getTime() == timeBasedWindowType->getSize().getTime()
-            && this->slide.getTime() == timeBasedWindowType->getSlide().getTime();
-    } else {
-        return false;
+    if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType)) {
+        return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
+            && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
     }
+    return false;
 }
 
 }// namespace NES::Windowing

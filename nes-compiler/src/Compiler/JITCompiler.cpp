@@ -24,7 +24,7 @@
 
 namespace NES::Compiler {
 
-JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers,
+JITCompiler::JITCompiler(std::map<const Language, std::shared_ptr<const LanguageCompiler>> languageCompilers,
                          bool useCompilationCache)
     : languageCompilers(std::move(languageCompilers)), useCompilationCache(useCompilationCache),
       compilationCache(std::make_shared<CompilationCache>()) {}
@@ -37,7 +37,7 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     auto languageCompiler = languageCompilers.find(language);
 
     if (languageCompiler == languageCompilers.end()) {
-        throw CompilerException("No language compiler found for language: " + language);
+        throw CompilerException("No language compiler found for language: " + getLanguageAsString(language));
     }
 
     auto compiler = languageCompiler->second;

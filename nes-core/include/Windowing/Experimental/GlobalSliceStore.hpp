@@ -40,7 +40,7 @@ class GlobalSliceStore {
     using SliceTypeSharedPtr = std::shared_ptr<SliceType>;
     ~GlobalSliceStore() {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        NES_DEBUG2("~GlobalSliceStore")
+        NES_DEBUG("~GlobalSliceStore")
         slices.clear();
     }
 

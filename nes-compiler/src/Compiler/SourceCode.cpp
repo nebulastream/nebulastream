@@ -17,12 +17,11 @@
 
 namespace NES::Compiler {
 
-SourceCode::SourceCode(std::string language, std::string code) : code(std::move(code)), language(std::move(language)) {
-    NES_ASSERT(language.empty(), "Language should not be empty");
+SourceCode::SourceCode(Language language, std::string code) : code(std::move(code)), language(std::move(language)) {
     NES_ASSERT(code.empty(), "Code should not be empty");
 }
 
-const std::string& SourceCode::getLanguage() const { return language; }
+const Language& SourceCode::getLanguage() const { return language; }
 
 const std::string& SourceCode::getCode() const { return code; }
 bool SourceCode::operator==(const SourceCode& rhs) const { return code == rhs.code && language == rhs.language; }

@@ -29,7 +29,7 @@ class TwoPhaseLockingStorageHandlerTest : public Testing::TestWithErrorHandling 
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TwoPhaseLockingStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup TwoPhaseLockingAccessHandle test class.")
+        NES_INFO("Setup TwoPhaseLockingAccessHandle test class.")
     }
 };
 
@@ -265,14 +265,14 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
         threads.emplace_back([i, &lockHolder, &resourceVector, &reverseResourceVector, twoPLAccessHandle]() {
             if (i % 2 == 0) {
                 ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(resourceVector));
-                NES_DEBUG2("Previous lock holder {}", lockHolder)
+                NES_DEBUG("Previous lock holder {}", lockHolder)
                 lockHolder = i;
-                NES_DEBUG2("Locked using resource vector in thread {}", i)
+                NES_DEBUG("Locked using resource vector in thread {}", i)
             } else {
                 ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(reverseResourceVector));
-                NES_DEBUG2("Previous lock holder {}", lockHolder)
+                NES_DEBUG("Previous lock holder {}", lockHolder)
                 lockHolder = i;
-                NES_DEBUG2("Locked using reverse resource vector in thread {}", i)
+                NES_DEBUG("Locked using reverse resource vector in thread {}", i)
             }
             ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle().get());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle().get());

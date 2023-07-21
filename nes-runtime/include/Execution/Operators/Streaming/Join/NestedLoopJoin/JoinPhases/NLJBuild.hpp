@@ -18,6 +18,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class TimeFunction;
@@ -25,12 +27,29 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
- * corresponding window one after the other. Afterwards, the second phase (NLJSink) will start joining the tuples
+ * corresponding window one after the other. Afterwards, the second phase (NLJProbe) will start joining the tuples
  * via two nested loops.
  */
 class NLJBuild : public ExecutableOperator {
 
   public:
+    /**
+     * @brief Local state, which stores the window start, window end, joinOpHandlerReference, windowReference, and pagedVectorRef
+     */
+    class LocalNestedLoopJoinState : public Operators::OperatorState {
+      public:
+        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
+                                 const Value<MemRef>& windowReference,
+                                 const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
+            : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(pagedVectorRef),
+              windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+        Value<MemRef> joinOperatorHandler;
+        Value<MemRef> windowReference;
+        Nautilus::Interface::PagedVectorRef pagedVectorRef;
+        Value<UInt64> windowStart;
+        Value<UInt64> windowEnd;
+    };
+
     /**
      * @brief Constructor for a NLJBuild
      * @param operatorHandlerIndex
@@ -46,27 +65,44 @@ class NLJBuild : public ExecutableOperator {
              bool isLeftSide,
              TimeFunctionPtr timeFunction);
 
+    void setup(ExecutionContext& executionCtx) const override;
+
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
     /**
      * @brief Stores the record in the corresponding window
-     * @param ctx
-     * @param record
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: Record that should be processed
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
-     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
-     * @param ctx
-     * @param recordBuffer
+     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJProbe) for further processing
+     * @param ctx: The RuntimeExecutionContext
+     * @param recordBuffer: RecordBuffer
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
+    /**
+     * @brief Updates the localJoinState by getting the values via Nautilus::FunctionCalls()
+     * @param localJoinState: The pointer to the joinstate that we want to update
+     * @param operatorHandlerMemRef: Memref to the operator handler
+     * @param timestamp: Timestamp, for which to get the windowRef, windowStart, and windowEnd
+     * @param workerId: WorkerId necessary for getting the correct pagedVectorRef
+     */
+    void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
+                              Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
+                              Nautilus::Value<Nautilus::UInt64>& timestamp,
+                              Nautilus::Value<Nautilus::UInt64>& workerId) const;
+
   private:
     const uint64_t operatorHandlerIndex;
-    SchemaPtr schema;
-    std::string joinFieldName;
-    std::string timeStampField;
+    const SchemaPtr schema;
+    const std::string joinFieldName;
+    const std::string timeStampField;
     const bool isLeftSide;
-    TimeFunctionPtr timeFunction;
+    const uint64_t entrySize;
+    const TimeFunctionPtr timeFunction;
 };
 }// namespace NES::Runtime::Execution::Operators
 

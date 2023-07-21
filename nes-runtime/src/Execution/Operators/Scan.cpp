@@ -18,6 +18,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -30,13 +31,12 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setOrigin(recordBuffer.getOriginId());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
-
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
-    for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
         auto record = memoryProvider->read(projections, bufferAddress, i);
         child->execute(ctx, record);
     }

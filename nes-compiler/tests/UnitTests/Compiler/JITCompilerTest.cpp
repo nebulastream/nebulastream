@@ -69,7 +69,7 @@ class JITCompilerTest : public Testing::TestWithErrorHandling {
  * @brief This test compiles a test CPP File
  */
 TEST_F(JITCompilerTest, compileCppCode) {
-    auto sourceCode = std::make_unique<SourceCode>("cpp", TEST_FILE_BODY);
+    auto sourceCode = std::make_unique<SourceCode>(Language::CPP, TEST_FILE_BODY);
     auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
     auto result = compiler->compile(std::move(request));
@@ -79,7 +79,7 @@ TEST_F(JITCompilerTest, compileCppCode) {
     auto mulFunction = compilationResult.getDynamicObject()->getInvocableMember<int (*)(int, int)>("_Z3mulii");
     auto mulRes = mulFunction(10, 10);
     ASSERT_EQ(mulRes, 100);
-    NES_DEBUG("CompilationTime:" << compilationResult.getCompilationTime());
+    NES_DEBUG("CompilationTime:{}", compilationResult.getCompilationTime());
 }
 
 }// namespace NES::Compiler

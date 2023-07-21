@@ -26,7 +26,7 @@ class CircleTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CircleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup CircleTest test class.");
+        NES_INFO("Setup CircleTest test class.");
     }
 };
 

@@ -81,26 +81,40 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
     NES_NOT_IMPLEMENTED();
 }
 
-nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
+nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes() {
     auto nodeVector = locationIndex->getAllNodeLocations();
-    auto locMapJson = nlohmann::json::array();
-    size_t count = 0;
-    for (auto& [nodeId, location] : nodeVector) {
+    auto locationMapJson = nlohmann::json::array();
+    auto mobileEdgesJson = nlohmann::json::array();
+    uint32_t count = 0;
+    uint32_t edgeCount = 0;
+    for (const auto& [nodeId, location] : nodeVector) {
         auto topologyNode = topology->findNodeWithId(nodeId);
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
-            locMapJson[count] = nodeInfo;
+            locationMapJson[count] = nodeInfo;
+            for (const auto& parent : topologyNode->getParents()) {
+                const nlohmann::json edge{{"source", nodeId}, {"target", parent->as<TopologyNode>()->getId()}};
+                /*
+                edge["source"] = nodeId;
+                edge["target"] = parent->as<TopologyNode>()->getId();
+                 */
+                mobileEdgesJson[edgeCount] = edge;
+                ++edgeCount;
+            }
             ++count;
         }
     }
-    return locMapJson;
+    nlohmann::json response;
+    response["nodes"] = locationMapJson;
+    response["edges"] = mobileEdgesJson;
+    return response;
 }
 
 nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json locJson;
     if (geoLocation.isValid()) {
-        locJson[0] = geoLocation.getLatitude();
-        locJson[1] = geoLocation.getLongitude();
+        locJson["latitude"] = geoLocation.getLatitude();
+        locJson["longitude"] = geoLocation.getLongitude();
     }
     return locJson;
 }

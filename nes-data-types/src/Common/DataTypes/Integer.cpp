@@ -49,6 +49,6 @@ DataTypePtr Integer::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
-std::string Integer::toString() { return "INTEGER"; }
+std::string Integer::toString() { return "INTEGER(" + std::to_string(bits) + " bits)"; }
 
 }// namespace NES

@@ -96,9 +96,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
-            NES_DEBUG2("QueryController:: execution-plan: {}", executionPlanJson.dump());
+            NES_DEBUG("QueryController:: execution-plan: {}", executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -110,10 +110,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_TRACE2("UtilityFunctions: Getting the json representation of the query plan");
+            NES_TRACE("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
             return createResponse(Status::CODE_200, basePlan.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -125,7 +125,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64, queryId, "queryId")) {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_DEBUG2("UtilityFunctions: Getting the json representation of the query plan");
+            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
             nlohmann::json response;
             for (auto const& [phaseName, queryPlan] : optimizationPhases) {
@@ -133,7 +133,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 response[phaseName] = queryPlanJson;
             }
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -146,7 +146,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         //NOTE: QueryController has "query-status" endpoint. QueryCatalogController has "status" endpoint with same functionality.
         //Functionality has been duplicated for compatibility.
         try {
-            NES_DEBUG2("Get current status of the query");
+            NES_DEBUG("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
             nlohmann::json response;
             response["queryId"] = queryId.getValue(0);
@@ -155,7 +155,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
             response["queryMetaData"] = catalogEntry->getMetaInformation();
             return createResponse(Status::CODE_200, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "Internal Error");
@@ -193,7 +193,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             if (requestJson.contains("lineage")) {
                 if (!validateLineageMode(requestJson["lineage"].get<std::string>())) {
-                    NES_ERROR2("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
+                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
                     std::string errorMessage = "Invalid Lineage Mode Type provided: " + lineageString
                         + ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
                     return errorHandler->handleError(Status::CODE_400, errorMessage);
@@ -203,12 +203,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
             auto lineageMode = magic_enum::enum_cast<LineageType>(lineageString).value();
-            NES_DEBUG2("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
-                       "lineage= {}",
-                       userQuery,
-                       placement,
-                       faultToleranceString,
-                       lineageString);
+            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
+                      "lineage= {}",
+                      userQuery,
+                      placement,
+                      faultToleranceString,
+                      lineageString);
             QueryId queryId =
                 queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode);
             //Prepare the response
@@ -216,14 +216,14 @@ class QueryController : public oatpp::web::server::api::ApiController {
             response["queryId"] = queryId;
             return createResponse(Status::CODE_202, response.dump());
         } catch (const InvalidQueryException& exc) {
-            NES_ERROR2("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
-                       "user request: {}",
-                       exc.what());
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (const MapEntryNotFoundException& exc) {
-            NES_ERROR2("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
-                       "user request: {}",
-                       exc.what());
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -255,7 +255,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             if (context->contains("lineage")) {
                 if (!validateLineageMode(lineageString = context->at("lineage").value())) {
-                    NES_ERROR2("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
+                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
                     std::string errorMessage = "Invalid Lineage Mode Type provided: " + lineageString
                         + ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
                     return errorHandler->handleError(Status::CODE_400, errorMessage);
@@ -277,12 +277,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
-            NES_ERROR2("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
-                       "user request: {}",
-                       exc.what());
+            NES_ERROR("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
+                      "user request: {}",
+                      exc.what());
             return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (...) {
-            NES_ERROR2("RestServer: unknown exception.");
+            NES_ERROR("RestServer: unknown exception.");
             return errorHandler->handleError(Status::CODE_500, "unknown exception");
         }
     }
@@ -297,10 +297,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
             nlohmann::json response;
             response["success"] = success;
             return createResponse(status, response.dump());
-        } catch (QueryNotFoundException e) {
+        } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (...) {
-            NES_ERROR2("RestServer: unknown exception.");
+            NES_ERROR("RestServer: unknown exception.");
             return errorHandler->handleError(Status::CODE_500, "unknown exception");
         }
     }
@@ -309,15 +309,14 @@ class QueryController : public oatpp::web::server::api::ApiController {
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
     validateUserRequest(nlohmann::json userRequest) {
         if (!userRequest.contains("userQuery")) {
-            NES_ERROR2("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
+            NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
             std::string errorMessage = "Incorrect or missing key word for user query, use 'userQuery'. For more info check "
                                        "https://docs.nebula.stream/docs/clients/rest-api/";
             return errorHandler->handleError(Status::CODE_400, errorMessage);
         }
         if (!userRequest.contains("placement")) {
-            NES_ERROR2(
-                "QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                "using 'placement'.");
+            NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
+                      "using 'placement'.");
             std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placement'. For "
                                        "more info check https://docs.nebula.stream/docs/clients/rest-api/";
             return errorHandler->handleError(Status::CODE_400, errorMessage);
@@ -326,7 +325,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validatePlacementStrategy(const std::string& placementStrategy) {
-        return magic_enum::enum_cast<PlacementStrategy>(placementStrategy).has_value();
+        return magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).has_value();
     }
 
     bool validateFaultToleranceType(const std::string& faultToleranceString) {
@@ -340,9 +339,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
         auto* context = protobufMessage->mutable_context();
         if (!context->contains("placement")) {
-            NES_ERROR2(
-                "QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
-                "using 'placementStrategy'.");
+            NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy "
+                      "using 'placementStrategy'.");
             std::string errorMessage = "No placement strategy specified. Specify a placement strategy using 'placementStrategy'."
                                        "More info at: https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html";
             return errorHandler->handleError(Status::CODE_400, errorMessage);

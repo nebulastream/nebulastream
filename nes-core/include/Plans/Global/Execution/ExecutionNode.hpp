@@ -20,6 +20,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 
 namespace NES {
 
@@ -42,17 +43,16 @@ using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 class ExecutionNode : public Node {
 
   public:
-    static ExecutionNodePtr createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
     static ExecutionNodePtr createExecutionNode(TopologyNodePtr physicalNode);
 
     virtual ~ExecutionNode() = default;
 
     /**
      * Check if a query sub plan with given Id exists or not
-     * @param queryId : Id of the sub plan
+     * @param sharedQueryId : Id of the sub plan
      * @return true if the plan exists else false
      */
-    bool hasQuerySubPlans(QueryId queryId);
+    bool hasQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
      * Get execution node id
@@ -68,45 +68,45 @@ class ExecutionNode : public Node {
 
     /**
      * Create a new entry for query sub plan
-     * @param queryId : the query ID
+     * @param sharedQueryId : the query ID
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool addNewQuerySubPlan(QueryId queryId, const QueryPlanPtr& querySubPlan);
+    bool addNewQuerySubPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan);
 
     /**
      * Update an existing query sub plan
-     * @param queryId : query id
+     * @param sharedQueryId : query id
      * @param querySubPlans : the new query sub plan
      * @return true if successful
      */
-    bool updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPtr> querySubPlans);
+    bool updateQuerySubPlans(SharedQueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans);
 
     /**
      * Get Query subPlan for the given Id
-     * @param queryId
+     * @param sharedQueryId
      * @return Query sub plan
      */
-    std::vector<QueryPlanPtr> getQuerySubPlans(QueryId queryId);
+    std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
      * Remove existing subPlan
-     * @param queryId
+     * @param sharedQueryId
      * @return true if operation succeeds
      */
-    bool removeQuerySubPlans(QueryId queryId);
+    bool removeQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
      * Get the map of all query sub plans
      * @return
      */
-    std::map<QueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
+    std::map<SharedQueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
 
     /**
      * Get the resources occupied by the query sub plans for the input query id.
-     * @param queryId : the input query id
+     * @param sharedQueryId : the input shared query plan id
      */
-    uint32_t getOccupiedResources(QueryId queryId);
+    uint32_t getOccupiedResources(SharedQueryId sharedQueryId);
 
     bool equal(NodePtr const& rhs) const override;
 
@@ -114,9 +114,13 @@ class ExecutionNode : public Node {
 
     std::vector<std::string> toMultilineString() override;
 
-  private:
-    explicit ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
+    /**
+     * @brief Get identifier of all shared query plans placed on the execution node
+     * @return set of shared query plan ids
+     */
+    std::set<SharedQueryId> getPlacedSharedQueryPlanIds();
 
+  private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode);
 
     /**
@@ -133,8 +137,7 @@ class ExecutionNode : public Node {
     /**
      * map of queryPlans
      */
-    std::map<QueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
-    const std::vector<std::string> toMultilineString() const;
+    std::map<SharedQueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
 };
 }// namespace NES
 

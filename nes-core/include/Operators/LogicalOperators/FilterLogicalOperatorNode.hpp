@@ -32,6 +32,11 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
    * @return PredicatePtr
    */
     ExpressionNodePtr getPredicate() const;
+    /**
+     * @brief exchanges the predicate of a filter with a new predicate
+     * @param newPredicate the predicate which will be the new predicate of the filter
+     */
+    void setPredicate(ExpressionNodePtr newPredicate);
     float getSelectivity();
     void setSelectivity(float newSelectivity);
 
@@ -53,6 +58,12 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
+
+    /**
+     * @brief returns the names of every attribute that is accessed in the predicate of this filter
+     * @return a vector containing every attribute name that is accessed by the predicate
+     */
+    std::vector<std::string> getFieldNamesUsedByFilterPredicate();
 
   private:
     ExpressionNodePtr predicate;

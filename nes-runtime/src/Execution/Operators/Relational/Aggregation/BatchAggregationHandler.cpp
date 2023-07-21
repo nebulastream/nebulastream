@@ -38,7 +38,7 @@ void BatchAggregationHandler::start(Runtime::Execution::PipelineExecutionContext
 
 void BatchAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                    Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("shutdown BatchAggregationHandler: " << queryTerminationType);
+    NES_DEBUG("shutdown BatchAggregationHandler: {}", queryTerminationType);
 }
 BatchAggregationHandler::~BatchAggregationHandler() {
     NES_DEBUG("~BatchAggregationHandler");

@@ -40,7 +40,7 @@ MonitoringAgent::MonitoringAgent(bool enabled)
 
 MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
     : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
-    NES_DEBUG2("MonitoringAgent: Init with monitoring plan {} and enabled={}", monitoringPlan->toString(), enabled);
+    NES_DEBUG("MonitoringAgent: Init with monitoring plan {} and enabled={}", monitoringPlan->toString(), enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
@@ -54,7 +54,7 @@ MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, Mon
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
     std::vector<MetricPtr> output;
     if (enabled) {
-        NES_DEBUG2("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
+        NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
             collector->setNodeId(nodeId);
@@ -62,7 +62,7 @@ const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
             output.emplace_back(metric);
         }
     } else {
-        NES_WARNING2("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
+        NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
     }
     return output;
 }
@@ -77,14 +77,14 @@ nlohmann::json MonitoringAgent::getMetricsAsJson() {
     nlohmann::json metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
-            NES_INFO2("MonitoringAgent: Collecting metrics of type {}", std::string(magic_enum::enum_name(type)));
+            NES_INFO("MonitoringAgent: Collecting metrics of type {}", std::string(magic_enum::enum_name(type)));
             auto collector = catalog->getMetricCollector(type);
             collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
             metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
         }
     }
-    NES_INFO2("MonitoringAgent: Metrics collected {}", metricsJson);
+    NES_INFO("MonitoringAgent: Metrics collected {}", metricsJson);
 
     return metricsJson;
 }
@@ -93,7 +93,7 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
     if (enabled) {
         return SystemResourcesReaderFactory::getSystemResourcesReader()->readRegistrationMetrics();
     }
-    NES_WARNING2("MonitoringAgent: Metrics disabled. Return empty metric object for registration.");
+    NES_WARNING("MonitoringAgent: Metrics disabled. Return empty metric object for registration.");
     return RegistrationMetrics{};
 }
 
@@ -105,13 +105,13 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
                 MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
             std::string metricTypeString = std::string(magic_enum::enum_name(metricType));
 
-            NES_INFO2("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);
+            NES_INFO("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
             workerConfig->physicalSources.add(source);
         }
         return true;
     }
-    NES_WARNING2("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
+    NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
 

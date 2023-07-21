@@ -84,7 +84,9 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
     auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");
-    NES_INFO(timer);
+    std::stringstream timerAsString;
+    timerAsString << timer;
+    NES_INFO("{}", timerAsString.str());
     return executable;
 }
 

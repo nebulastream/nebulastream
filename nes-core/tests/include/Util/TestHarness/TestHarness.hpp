@@ -283,12 +283,12 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG2("TestHarness: outputSchema: {}",
-                   queryCatalogService->getEntryForQuery(queryId)
-                       ->getInputQueryPlan()
-                       ->getSinkOperators()[0]
-                       ->getOutputSchema()
-                       ->toString());
+        NES_DEBUG("TestHarness: outputSchema: {}",
+                  queryCatalogService->getEntryForQuery(queryId)
+                      ->getInputQueryPlan()
+                      ->getSinkOperators()[0]
+                      ->getOutputSchema()
+                      ->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
@@ -310,7 +310,7 @@ class TestHarness {
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING2("TestHarness:ifs.good() returns false for query with id {} file path= {}", queryId, filePath);
+            NES_WARNING("TestHarness:ifs.good() returns false for query with id {} file path= {}", queryId, filePath);
         }
 
         // check the length of the output file
@@ -324,8 +324,8 @@ class TestHarness {
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
-        NES_DEBUG2("TestHarness: ExecutedQueryPlan: {}",
-                   queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+        NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
+                  queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
         queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
 
         for (const auto& worker : testHarnessWorkerConfigurations) {

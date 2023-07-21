@@ -345,7 +345,7 @@ std::optional<TupleBuffer> getBufferNoBlocking(Runtime::BufferManager& bufferMan
         }
         usleep(100 * 1000);
         if (++retries == 1'000'000'000) {
-            NES_WARNING2("Too many retries");
+            NES_WARNING("Too many retries");
             return std::nullopt;
         }
     }

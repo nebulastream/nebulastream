@@ -91,9 +91,9 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     */
     void setProbePipelineID(uint64_t probePipelineID) {
         if (this->probePipelineID != 0) {
-            NES_WARNING2("BatchJoinOperatorHandler::setProbePipelineID called a second time. Previous id: {} New id: {}",
-                         this->probePipelineID,
-                         probePipelineID);
+            NES_WARNING("BatchJoinOperatorHandler::setProbePipelineID called a second time. Previous id: {} New id: {}",
+                        this->probePipelineID,
+                        probePipelineID);
         }
         this->probePipelineID = probePipelineID;
     }
@@ -103,9 +103,9 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     */
     void setBuildPipelineID(uint64_t buildPipelineID) {
         if (this->probePipelineID != 0) {
-            NES_WARNING2("BatchJoinOperatorHandler::setBuildPipelineID called a second time. Previous id: {} New id: {} ",
-                         this->buildPipelineID,
-                         buildPipelineID);
+            NES_WARNING("BatchJoinOperatorHandler::setBuildPipelineID called a second time. Previous id: {} New id: {} ",
+                        this->buildPipelineID,
+                        buildPipelineID);
         }
         this->buildPipelineID = buildPipelineID;
     }

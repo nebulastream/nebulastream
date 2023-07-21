@@ -17,7 +17,6 @@
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/LocationController.hpp>
-#include <REST/Controller/MaintenanceController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -49,7 +48,6 @@ RestServer::RestServer(std::string host,
                        GlobalExecutionPlanPtr globalExecutionPlan,
                        QueryServicePtr queryService,
                        MonitoringServicePtr monitoringService,
-                       NES::Experimental::MaintenanceServicePtr maintenanceService,
                        GlobalQueryPlanPtr globalQueryPlan,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
@@ -59,12 +57,11 @@ RestServer::RestServer(std::string host,
       globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
-      locationService(std::move(locationService)), maintenanceService(std::move(maintenanceService)),
-      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)),
-      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      locationService(std::move(locationService)), monitoringService(std::move(monitoringService)),
+      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
-    NES_INFO2("Starting Oatpp Server on {}:{}", host, std::to_string(port));
+    NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     try {
         // Initialize Oatpp Environment
@@ -74,10 +71,10 @@ bool RestServer::start() {
         // Destroy Oatpp Environment
         oatpp::base::Environment::destroy();
     } catch (const std::exception& e) {
-        NES_ERROR2("RestServer: Unable to start REST server [{}:{}] {}", host, std::to_string(port), e.what());
+        NES_ERROR("RestServer: Unable to start REST server [{}:{}] {}", host, std::to_string(port), e.what());
         return false;
     } catch (...) {
-        NES_FATAL_ERROR2("RestServer: Unable to start REST server unknown exception.");
+        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
         return false;
     }
     return true;
@@ -127,8 +124,6 @@ void RestServer::run() {
         REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController =
         REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalogService, errorHandler, "/sourceCatalog");
-    auto maintenanceController =
-        REST::Controller::MaintenanceController::create(objectMapper, maintenanceService, errorHandler, "/maintenance");
     auto locationController =
         REST::Controller::LocationController::create(objectMapper, locationService, "/location", errorHandler);
     auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,
@@ -143,7 +138,6 @@ void RestServer::run() {
     router->addController(topologyController);
     router->addController(sourceCatalogController);
     router->addController(udfCatalogController);
-    router->addController(maintenanceController);
     router->addController(locationController);
     router->addController(connectivityController);
     router->addController(queryCatalogController);
@@ -169,11 +163,11 @@ void RestServer::run() {
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     /* Print info about server port */
-    NES_INFO2("NebulaStream REST Server listening on port {}", port);
+    NES_INFO("NebulaStream REST Server listening on port {}", port);
 
     /* Run server */
     server.run([this]() -> bool {
-        NES_DEBUG2("checking if stop request has arrived for rest server listening on port {}.", port);
+        NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
         std::unique_lock lock(mutex);
         return !stopRequested;
     });

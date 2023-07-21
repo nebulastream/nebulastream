@@ -43,7 +43,7 @@ void WhenExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     //set stamp to right stamp, as only the left expression will be returned
     stamp = right->getStamp();
-    NES_TRACE2("WhenExpressionNode: we assigned the following stamp: {}", stamp->toString())
+    NES_TRACE("WhenExpressionNode: we assigned the following stamp: {}", stamp->toString())
 }
 
 bool WhenExpressionNode::equal(NodePtr const& rhs) const {
@@ -60,6 +60,9 @@ std::string WhenExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr WhenExpressionNode::copy() { return std::make_shared<WhenExpressionNode>(WhenExpressionNode(this)); }
+ExpressionNodePtr WhenExpressionNode::copy() {
+
+    return WhenExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

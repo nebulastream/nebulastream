@@ -38,6 +38,11 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -58,13 +63,14 @@ class PlacementStrategyFactory {
      * @param topology : topology information
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance
-     * @param z3Context : context from the z3 library used for optimization
+     * @param coordinatorConfiguration : coordinator configuration
      * @return instance of type BaseOptimizer
      */
     static BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy,
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
-                                                const TypeInferencePhasePtr& typeInferencePhase);
+                                                const TypeInferencePhasePtr& typeInferencePhase,
+                                                const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

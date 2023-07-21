@@ -47,7 +47,7 @@ class SourceCatalogTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SourceCatalogTest test class.");
+        NES_INFO("Setup SourceCatalogTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -69,7 +69,7 @@ TEST_F(SourceCatalogTest, testAddGetLogSource) {
     EXPECT_NE(sPtr, nullptr);
 
     map<std::string, SchemaPtr> allLogicalSource = sourceCatalog->getAllLogicalSource();
-    string exp = "id:INTEGER value:INTEGER ";
+    string exp = "id:INTEGER(32 bits) value:INTEGER(64 bits) ";
     EXPECT_EQ(allLogicalSource.size(), 2U);
 
     SchemaPtr testSchema = allLogicalSource["test_stream"];
@@ -143,7 +143,7 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
     EXPECT_TRUE(sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
                                                     physicalSource->getPhysicalSourceName(),
                                                     physicalNode->getId()));
-    NES_INFO2("{}", sourceCatalog->getPhysicalSourceAndSchemaAsString());
+    NES_INFO("{}", sourceCatalog->getPhysicalSourceAndSchemaAsString());
 }
 
 TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {

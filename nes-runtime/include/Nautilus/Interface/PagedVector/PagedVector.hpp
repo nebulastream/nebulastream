@@ -25,11 +25,11 @@ class PagedVectorRef;
  * All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size.
  * Each page can contain page_size/entry_size entries.
- * TODO check if we should use FixedPage.cpp or introduce specific page class
+ * TODO check if we should use FixedPage.cpp or introduce specific page class #3968
  */
 class PagedVector {
   public:
-    static const uint64_t PAGE_SIZE = 4096;
+    static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
      * @brief Creates a new paged vector with a specific entry size
@@ -41,9 +41,9 @@ class PagedVector {
 
     /**
      * @brief Return the number of pages in the sequential data
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfPages();
+    uint64_t getNumberOfPages();
 
     /**
      * @brief Returns the set of pages
@@ -58,25 +58,31 @@ class PagedVector {
 
     /**
      * @brief Return the total number of entries across all pages.
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfEntries();
+    uint64_t getNumberOfEntries() const;
+
+    /**
+     * @brief Sets the number of entries across all pages.
+     * @param entries
+     */
+    void setNumberOfEntries(uint64_t entries);
 
     /**
      * @brief Returns the capacity per page
-     * @return size_t
+     * @return uint64_t
      */
-    size_t capacityPerPage();
+    uint64_t getCapacityPerPage() const;
 
     /**
      * @brief Returns the number of entries on the current page
-     * @return size_t
+     * @return uint64_t
      */
-    size_t getNumberOfEntriesOnCurrentPage();
+    uint64_t getNumberOfEntriesOnCurrentPage() const;
 
     /**
-     * @brief Appends a new page and updates the current page and number of enties.
-     * @return int8_t* page
+     * @brief Appends a new page and updates the current page and number of entries.
+     * @return int8_t* page address
      */
     int8_t* appendPage();
 
@@ -85,14 +91,26 @@ class PagedVector {
      * @param oldPos
      * @param newPos
      */
-    void moveFromTo(uint64_t oldPos, uint64_t newPos);
+    void moveFromTo(uint64_t oldPos, uint64_t newPos) const;
 
     /**
      * @brief Returns the pointer to the first field of the record at pos
      * @param pos
      * @return Pointer to start of record
      */
-    int8_t* getEntry(uint64_t pos);
+    int8_t* getEntry(uint64_t pos) const;
+
+    /**
+     * @brief Combines this PagedVector with another one by adding the other.pages to these pages
+     * @param other: PagedVector that contains pages, which should be added to this one
+     */
+    void appendAllPages(PagedVector& other);
+
+    /**
+     * @brief Getter for the page size
+     * @return uint64_t
+     */
+    uint64_t getPageSize() const;
 
     /**
      * @brief Deconstructor
@@ -104,6 +122,7 @@ class PagedVector {
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     uint64_t pageSize;
+    uint64_t capacityPerPage;
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;

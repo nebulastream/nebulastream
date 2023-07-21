@@ -18,12 +18,14 @@
 namespace NES::Compiler {
 
 class SourceCode;
+enum class Language;
 class DynamicObject;
 class LanguageCompiler;
 class CompilationResult;
 class CompilationRequest;
 class LanguageCompiler;
 class JITCompiler;
+class ExternalAPI;
 
 }// namespace NES::Compiler
 

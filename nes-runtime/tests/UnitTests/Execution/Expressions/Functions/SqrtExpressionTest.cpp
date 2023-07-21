@@ -37,20 +37,20 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger) {
     auto expression = UnaryExpressionWrapper<SqrtExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 9));
+        auto resultValue = expression.eval(Value<Int8>(9_s8));
         ASSERT_EQ(resultValue, (float) 3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 9));
+        auto resultValue = expression.eval(Value<Int32>(9_s32));
         ASSERT_EQ(resultValue, (float) 3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 9));
+        auto resultValue = expression.eval(Value<Int64>(9_s64));
         ASSERT_EQ(resultValue, (float) 3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

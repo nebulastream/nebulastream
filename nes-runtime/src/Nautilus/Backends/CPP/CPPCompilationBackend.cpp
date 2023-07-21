@@ -13,6 +13,7 @@
 */
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/CPPCompiler/CUDAPlatform.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Nautilus/Backends/CPP/CPPCompilationBackend.hpp>
@@ -36,14 +37,20 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     timer.snapshot("CPPCodeGeneration");
 
     auto compiler = Compiler::CPPCompiler::create();
-    auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code);
+    auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, code);
+
+    std::vector<std::shared_ptr<Compiler::ExternalAPI>> externalApis;
+    if (options.usingCUDA()) {
+        externalApis.push_back(std::make_shared<Compiler::CUDAPlatform>(options.getCUDASdkPath()));
+    }
 
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "cppQuery",
                                                         options.isDebug(),
                                                         false,
                                                         options.isOptimize(),
-                                                        options.isDebug());
+                                                        options.isDebug(),
+                                                        externalApis);
     auto res = compiler->compile(request);
     timer.snapshot("CCPCompilation");
     return std::make_unique<CPPExecutable>(res.getDynamicObject());

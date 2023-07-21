@@ -62,7 +62,7 @@ void JoinProbe::execute(RuntimeExecutionContext& ctx, Record& record) const {
             Value<> leftValue = valuePtr.load<Int64>();
             auto fieldName = resultFields[joinResult.numberOfFields()];
             joinResult.write(fieldName, leftValue);
-            valuePtr = valuePtr + (uint64_t) 8;
+            valuePtr = valuePtr + 8_u64;
         }
 
         // add right values to the result

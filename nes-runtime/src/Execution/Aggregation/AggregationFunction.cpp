@@ -60,13 +60,17 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
                 return memref.load<Nautilus::Double>();
             };
             default: {
-                NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is currently not supported");
+                std::stringstream type;
+                type << physicalType;
+                NES_ERROR("Aggregation Function::load: Physical Type: {} is currently not supported", type.str());
                 NES_NOT_IMPLEMENTED();
             };
         }
     } else {
-        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType
-                                                                << " is not a basic type and is currently not supported");
+        std::stringstream typeAsString;
+        typeAsString << physicalType;
+        NES_ERROR("Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported",
+                  typeAsString.str());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -105,13 +109,17 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
                 return Nautilus::Value<Nautilus::Double>((double) (value));
             };
             default: {
-                NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is currently not supported");
+                std::stringstream type;
+                type << physicalType;
+                NES_ERROR("Aggregation Function::load: Physical Type: {} is currently not supported", type.str());
                 NES_NOT_IMPLEMENTED();
             };
         }
     } else {
-        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType
-                                                                << " is not a basic type and is currently not supported");
+        std::stringstream typeString;
+        typeString << physicalType;
+        NES_ERROR("Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported",
+                  typeString.str());
         NES_NOT_IMPLEMENTED();
     }
 }

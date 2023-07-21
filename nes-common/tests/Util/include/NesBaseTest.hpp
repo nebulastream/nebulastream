@@ -18,6 +18,7 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <TestWithErrorHandling.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <filesystem>
 
 #define ASSERT_INSTANCE_OF(node, instance)                                                                                       \

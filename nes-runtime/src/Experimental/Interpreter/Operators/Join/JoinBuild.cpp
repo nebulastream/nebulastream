@@ -55,7 +55,7 @@ void JoinBuild::execute(RuntimeExecutionContext& executionCtx, Record& record) c
     for (auto& valueExpression : valueExpressions) {
         auto value = valueExpression->execute(record);
         valuePtr.store(value);
-        valuePtr = valuePtr + (uint8_t) 8;
+        valuePtr = valuePtr + 8_u8;
     }
 }
 

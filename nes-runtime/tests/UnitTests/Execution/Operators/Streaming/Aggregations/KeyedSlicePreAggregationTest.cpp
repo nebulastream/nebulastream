@@ -40,6 +40,7 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <vector>
@@ -109,9 +110,9 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     slicePreAggregation.open(ctx, rb);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 11)}, {"k1", Value<>(11)}, {"v1", Value<>(2)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(12)}, {"v1", Value<>(42)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(11)}, {"v1", Value<>(3)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", 11_u64}, {"k1", +11_s64}, {"v1", +2_s64}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", 12_u64}, {"k1", +12_s64}, {"v1", +42_s64}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", 12_u64}, {"k1", +11_s64}, {"v1", +3_s64}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);

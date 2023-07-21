@@ -59,8 +59,12 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class StopQueryRequestExperimental;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequestExperimental>;
 
-namespace Catalogs {
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
 
+namespace Catalogs {
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -76,28 +80,37 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequestExperimental : public Request, public AbstractRequest {
+class StopQueryRequestExperimental : public AbstractRequest {
 
   public:
-    static StopQueryRequestPtr
-    create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
+    static StopQueryRequestPtr create(QueryId queryId,
+                                      size_t maxRetries,
+                                      WorkerRPCClientPtr workerRpcClient,
+                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
-    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
-    void preExecution(StorageHandler& storageHandle) override;
-    void postExecution(StorageHandler& storageHandle) override;
-    std::string toString() override;
 
-    ~StopQueryRequestExperimental() override = default;
+    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+
+    void preExecution(StorageHandler& storageHandle) override;
+
+    void postExecution(StorageHandler& storageHandle) override;
+
+    std::string toString();
+
+    ~StopQueryRequestExperimental() = default;
 
   private:
     StopQueryRequestExperimental(QueryId queryId,
                                  size_t maxRetries,
-                                 const WorkerRPCClientPtr& workerRpcClient,
-                                 bool queryReconfiguration);
-    const WorkerRPCClientPtr& workerRpcClient;
+                                 WorkerRPCClientPtr workerRpcClient,
+                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+
+    WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -109,7 +122,7 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
-    bool queryReconfiguration;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES
 

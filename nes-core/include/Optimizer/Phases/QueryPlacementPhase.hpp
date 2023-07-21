@@ -18,6 +18,7 @@
 #include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace z3 {
@@ -42,6 +43,11 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -65,13 +71,13 @@ class QueryPlacementPhase {
      * @param globalExecutionPlan : an instance of global execution plan
      * @param topology : topology in which the placement is to be performed
      * @param typeInferencePhase  : a type inference phase instance
-     * @param queryReconfiguration: should place only updates in the query plan
+     * @param coordinatorConfiguration: coordinator configuration
      * @return pointer to query placement phase
      */
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         bool queryReconfiguration);
+                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
@@ -86,35 +92,26 @@ class QueryPlacementPhase {
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 bool queryReconfiguration);
+                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
-     * This method extracts the upstream pinned operators from the shared query plan. IF the reconfiguration is enabled then the
-     * method brows through the change log to extract the upstream operators
-     * @param sharedQueryPlan : shared query plan to investigate
-     * @return collection of upstream operators
+     * @brief: analyze the set and pin all unpinned sink operators
+     * @param operators: set of operators to check
      */
-    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan);
+    void pinAllSinkOperators(const std::set<OperatorNodePtr>& operators);
 
     /**
-     * This method extracts the downstream pinned operators connected to the collection of upstream operators.
-     * @param upStreamPinnedOperators : collection of upstream pinned operators
-     * @return collection of downstream operators
-     */
-    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);
-
-    /**
-     * This method checks if the operators in the list are pinned or not
+     * This method checks if the operators in the set are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
+    bool checkIfAllArePinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
-    bool queryReconfiguration;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

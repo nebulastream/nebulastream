@@ -34,16 +34,17 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(Catalogs::Source::SourceCatalogPtr sourceCatalog, bool expandSourceOnly)
-    : sourceCatalog(std::move(sourceCatalog)), expandSourceOnly(expandSourceOnly) {}
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                       bool expandSourceOnly)
+    : sourceCatalog(sourceCatalog), expandSourceOnly(expandSourceOnly) {}
 
-LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
+LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                                  bool expandSourceOnly) {
-    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(sourceCatalog), expandSourceOnly));
+    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(sourceCatalog, expandSourceOnly));
 }
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO2("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
+    NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
@@ -51,16 +52,16 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     std::unordered_map<uint64_t, OperatorNodePtr> blockingOperators;
     if (expandSourceOnly) {
         //Add downstream operators of the source operators as blocking operator
-        for (auto& sourceOperator : sourceOperators) {
+        for (const auto& sourceOperator : sourceOperators) {
             for (auto& downStreamOp : sourceOperator->getParents()) {
                 blockingOperators[downStreamOp->as<OperatorNode>()->getId()] = downStreamOp->as<OperatorNode>();
             }
         }
     } else {
-        for (auto rootOperator : queryPlan->getRootOperators()) {
+        for (const auto& rootOperator : queryPlan->getRootOperators()) {
             DepthFirstNodeIterator depthFirstNodeIterator(rootOperator);
             for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-                NES_TRACE2("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
+                NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
                 auto operatorToIterate = (*itr)->as<OperatorNode>();
                 if (isBlockingOperator(operatorToIterate)) {
                     blockingOperators[operatorToIterate->getId()] = operatorToIterate;
@@ -70,14 +71,13 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     }
 
     //Iterate over all source operators
-    for (auto& sourceOperator : sourceOperators) {
+    for (const auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-        NES_TRACE2("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
+        NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries =
             sourceCatalog->getPhysicalSources(logicalSourceName);
-        NES_TRACE2("LogicalSourceExpansionRule: Found {} physical source locations in the topology.",
-                   sourceCatalogEntries.size());
+        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty()) {
             throw Exceptions::RuntimeException(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
@@ -88,7 +88,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             removeConnectedBlockingOperators(sourceOperator);
         } else {
             //disconnect all parent operators of the source operator
-            for (auto& downStreamOperator : sourceOperator->getParents()) {
+            for (const auto& downStreamOperator : sourceOperator->getParents()) {
                 //If downStreamOperator is blocking then remove source operator as its upstream operator.
                 if (!downStreamOperator->removeChild(sourceOperator)) {
                     throw Exceptions::RuntimeException(
@@ -99,11 +99,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 addBlockingDownStreamOperator(sourceOperator, downStreamOperator->as<OperatorNode>()->getId());
             }
         }
-        NES_TRACE2("LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph",
-                   sourceCatalogEntries.size());
+        NES_TRACE("LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph",
+                  sourceCatalogEntries.size());
         //Create one duplicate operator for each physical source
-        for (auto& sourceCatalogEntry : sourceCatalogEntries) {
-            NES_TRACE2("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
+        for (const auto& sourceCatalogEntry : sourceCatalogEntries) {
+            NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
             //Add to the source operator the id of the physical node where we have to pin the operator
             //NOTE: This is required at the time of placement to know where the source operator is pinned
@@ -116,7 +116,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
             const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
-            for (auto& node : allOperators) {
+            for (const auto& node : allOperators) {
                 auto operatorNode = node->as<OperatorNode>();
 
                 //Check if the operator has the property containing list of connected blocking downstream operator ids.
@@ -146,7 +146,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_DEBUG2("LogicalSourceExpansionRule: Plan after\n{}", queryPlan->toString());
+    NES_DEBUG("LogicalSourceExpansionRule: Plan after\n{}", queryPlan->toString());
     return queryPlan;
 }
 
@@ -155,7 +155,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
     //Check if downstream (parent) operator of this operator is blocking or not if not then recursively call this method for the
     // downstream operator
     auto downStreamOperators = operatorNode->getParents();
-    NES_TRACE2("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
+    NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     for (const auto& downStreamOperator : downStreamOperators) {
 
         //Check if the downStreamOperator operator is a blocking operator or not

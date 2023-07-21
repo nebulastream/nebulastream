@@ -23,6 +23,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -56,34 +57,34 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
             return factory.getPhysicalType(DataTypeFactory::createDouble());
         } else {
-            NES_ERROR("Unknown data type: " << dataTypeString);
+            NES_ERROR("Unknown data type: {}", dataTypeString);
             NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
         }
     }
 
     static Nautilus::Value<> getIncomingValue(std::string dataTypeString) {
         if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
-            return Nautilus::Value<Nautilus::Int8>((int8_t) 1);
+            return Nautilus::Value<Nautilus::Int8>(1_s8);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
-            return Nautilus::Value<Nautilus::Int16>((int16_t) 1);
+            return Nautilus::Value<Nautilus::Int16>(1_s16);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
-            return Nautilus::Value<Nautilus::Int32>((int32_t) 1);
+            return Nautilus::Value<Nautilus::Int32>(1_s32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
-            return Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+            return Nautilus::Value<Nautilus::Int64>(1_s64);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
-            return Nautilus::Value<Nautilus::UInt8>((uint8_t) 1);
+            return Nautilus::Value<Nautilus::UInt8>(1_u8);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
-            return Nautilus::Value<Nautilus::UInt16>((uint16_t) 1);
+            return Nautilus::Value<Nautilus::UInt16>(1_u16);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
-            return Nautilus::Value<Nautilus::UInt32>((uint32_t) 1);
+            return Nautilus::Value<Nautilus::UInt32>(1_u32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
-            return Nautilus::Value<Nautilus::UInt64>((uint64_t) 1);
+            return Nautilus::Value<Nautilus::UInt64>(1_u64);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
             return Nautilus::Value<Nautilus::Float>((float) 1.0);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
             return Nautilus::Value<Nautilus::Double>((double) 1.0);
         } else {
-            NES_ERROR("Unknown data type: " << dataTypeString);
+            NES_ERROR("Unknown data type: {}", dataTypeString);
             NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
         }
     }
@@ -111,7 +112,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::SumAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_ERROR("Unknown data type: {}", dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else if (std::equal(aggFnType.begin(), aggFnType.end(), "avg")) {
@@ -136,7 +137,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::AvgAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_ERROR("Unknown data type: {}", dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else if (std::equal(aggFnType.begin(), aggFnType.end(), "min")) {
@@ -161,7 +162,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::MinAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_ERROR("Unknown data type: {}", dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else if (std::equal(aggFnType.begin(), aggFnType.end(), "max")) {
@@ -186,7 +187,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::MaxAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_ERROR("Unknown data type: {}", dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else if (std::equal(aggFnType.begin(), aggFnType.end(), "count")) {
@@ -211,11 +212,11 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::CountAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_ERROR("Unknown data type: {}", dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else {
-            NES_ERROR("Unknown aggregation function type type: " << aggFnType);
+            NES_ERROR("Unknown aggregation function type type: {}", aggFnType);
             NES_THROW_RUNTIME_ERROR("Unknown aggregation function type type: " << aggFnType);
         }
     }

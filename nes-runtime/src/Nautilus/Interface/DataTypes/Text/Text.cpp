@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -31,7 +32,7 @@ Value<Text> transformReturnValues(TextValue* value) {
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
 bool textEquals(const TextValue* leftText, const TextValue* rightText) {
-    NES_DEBUG("Check if " << leftText->c_str() << "and " << rightText->c_str() << " are equal")
+    NES_DEBUG("Check if {} and {} are equal", leftText->c_str(), rightText->c_str())
     if (leftText->length() != rightText->length()) {
         return false;
     } else if (std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0) {
@@ -206,7 +207,7 @@ void Text::write(Value<UInt32> index, Value<Int8> value) {
     FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
 }
 
-uint32_t getBitLength(const TextValue* text) { return (text->length() * (uint32_t) 8); }
+uint32_t getBitLength(const TextValue* text) { return (text->length() * 8_u32); }
 
 const Value<UInt32> Text::bitLength() const { return FunctionCall<>("getBitLength", getBitLength, rawReference); }
 
@@ -299,7 +300,7 @@ TextValue* leftTrim(const TextValue* text, const TextValue* target) {
     }
     auto position = uint32_t(textPosition(text, target));
     char space = ' ';
-    auto spaceCount = (uint32_t) 0;
+    auto spaceCount = 0_u32;
     for (uint32_t i = 0; i < position; i++) {
         char temp = text->c_str()[i];
         if (temp == space) {
@@ -338,8 +339,8 @@ TextValue* lrTrim(const TextValue* text) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     char space = ' ';
-    auto spacecount = (uint32_t) 0;
-    auto count = (uint32_t) 0;
+    auto spacecount = 0_u32;
+    auto count = 0_u32;
     for (uint32_t i = 0; i < text->length(); i++) {
         char temp = text->c_str()[i];
         if (temp == space) {
@@ -361,9 +362,9 @@ TextValue* lrTrim(const TextValue* text) {
 
 bool textSimilarTo(const TextValue* text, TextValue* pattern) {
     std::string target = std::string(text->c_str(), text->length());
-    NES_DEBUG("Received the following source string " << target);
+    NES_DEBUG("Received the following source string {}", target);
     std::string strPattern = std::string(pattern->str(), pattern->length());
-    NES_DEBUG("Received the following source string " << strPattern);
+    NES_DEBUG("Received the following source string {}", strPattern);
     std::regex regexPattern(strPattern);
     return std::regex_match(target, regexPattern);
 }
@@ -373,16 +374,18 @@ const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
 }
 
 bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
-    NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match.");
+    std::stringstream patternAsString;
+    patternAsString << pattern;
+    NES_DEBUG("Checking in textLike if {} and {} are a match.", text->c_str(), patternAsString.str());
     auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
     auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
     auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
     auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
 
     std::string target = std::string(text->c_str(), text->length());
-    NES_DEBUG("Received the following source string " << target);
+    NES_DEBUG("Received the following source string {}", target);
     std::string strPattern = std::string(likeRegex->c_str(), likeRegex->length());
-    NES_DEBUG("Received the following source string " << strPattern);
+    NES_DEBUG("Received the following source string {}", strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
     // would make regex case in sensitive for ILIKE
     if (caseSensitive.getValue()) {

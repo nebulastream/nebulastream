@@ -11,20 +11,39 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
-namespace NES {
-class QueryUndeploymentException : public std::runtime_error, public RequestExecutionException {
-  public:
-    explicit QueryUndeploymentException(const std::string& message);
+namespace NES::Exceptions {
 
-    const char* what() const noexcept override;
+/**
+ * @brief this exception indicates an error during the undeployment of a query
+ */
+class QueryUndeploymentException : public RequestExecutionException {
+  public:
+    /**
+     * @brief constructor
+     * @param sharedQueryId the shared query id of the query that was being undeployed when the exception occurred
+     * @param message message containing information about the error
+     */
+    QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message);
+
+    /**
+     * @brief get the shared query id of the query that was to be undeployed, if it is known
+     * @return: the shared query id
+     */
+    SharedQueryId getSharedQueryId();
+
+    [[nodiscard]] const char* what() const noexcept override;
+
+  private:
+    SharedQueryId sharedQueryId;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -22,31 +25,42 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkerRPCService.grpc.pb.h>
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
 #include <utility>
+
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                            WorkerRPCClientPtr workerRpcClient,
-                                           QueryCatalogServicePtr catalogService)
+                                           QueryCatalogServicePtr catalogService,
+                                           bool accelerateJavaUDFs,
+                                           std::string accelerationServiceURL)
     : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      queryCatalogService(std::move(catalogService)) {}
+      queryCatalogService(std::move(catalogService)), accelerateJavaUDFs(accelerateJavaUDFs),
+      accelerationServiceURL(std::move(accelerationServiceURL)) {}
 
-QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     WorkerRPCClientPtr workerRpcClient,
-                                                     QueryCatalogServicePtr catalogService) {
+QueryDeploymentPhasePtr
+QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                             WorkerRPCClientPtr workerRpcClient,
+                             QueryCatalogServicePtr catalogService,
+                             const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
     return std::make_shared<QueryDeploymentPhase>(
-        QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient), std::move(catalogService)));
+        QueryDeploymentPhase(std::move(globalExecutionPlan),
+                             std::move(workerRpcClient),
+                             std::move(catalogService),
+                             coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs,
+                             coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));
 }
 
-bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
-    NES_DEBUG2("QueryDeploymentPhase: deploy the query");
+bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
+    NES_DEBUG("QueryDeploymentPhase: deploy the query");
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     if (executionNodes.empty()) {
-        NES_ERROR2("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query {}", sharedQueryId);
+        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query "
                                            + std::to_string(sharedQueryId));
@@ -82,9 +96,9 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
     if (successDeploy) {
-        NES_DEBUG2("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
+        NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
     } else {
-        NES_ERROR2("QueryDeploymentPhase: Failed to deploy shared query {}", sharedQueryId);
+        NES_ERROR("QueryDeploymentPhase: Failed to deploy shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Failed to deploy shared query " + std::to_string(sharedQueryId));
     }
@@ -94,12 +108,12 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
     }
 
-    NES_DEBUG2("QueryService: start query");
+    NES_DEBUG("QueryService: start query");
     bool successStart = startQuery(sharedQueryId, executionNodes);
     if (successStart) {
-        NES_DEBUG2("QueryDeploymentPhase: Successfully started deployed shared query  {}", sharedQueryId);
+        NES_DEBUG("QueryDeploymentPhase: Successfully started deployed shared query  {}", sharedQueryId);
     } else {
-        NES_ERROR2("QueryDeploymentPhase: Failed to start the deployed shared query {}", sharedQueryId);
+        NES_ERROR("QueryDeploymentPhase: Failed to start the deployed shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Failed to deploy query " + std::to_string(sharedQueryId));
     }
@@ -107,13 +121,13 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 }
 
 bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG2("QueryDeploymentPhase::deployQuery queryId= {}", queryId);
+    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
-        NES_DEBUG2("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}", executionNode->getId());
+        NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}", executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
-            NES_WARNING2("QueryDeploymentPhase : unable to find query sub plan with id {}", queryId);
+            NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id {}", queryId);
             return false;
         }
 
@@ -123,28 +137,111 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG2("QueryDeploymentPhase:deployQuery: {} to {}", queryId, rpcAddress);
+        NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", queryId, rpcAddress);
+
+        auto topologyNode = executionNode->getTopologyNode();
 
         for (auto& querySubPlan : querySubPlans) {
+
+            //If accelerate Java UDFs is enabled
+            if (accelerateJavaUDFs) {
+
+                //Elegant acceleration service call
+                //1. Fetch the OpenCL Operators
+                auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+
+                //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
+                for (const auto& openCLOperator : openCLOperators) {
+
+                    // FIXME: populate information from node with the correct property keys
+                    // FIXME: pick a naming + id scheme for deviceName
+                    //3. Fetch the topology node and compute the topology node payload
+                    nlohmann::json payload;
+                    nlohmann::json deviceInfo;
+                    deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
+                    deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] =
+                        std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
+                    nlohmann::json maxWorkItems{};
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
+                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
+                    deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
+                    deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] =
+                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
+                    deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] =
+                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
+                    deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] =
+                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
+                    payload[DEVICE_INFO_KEY] = deviceInfo;
+
+                    //4. Extract the Java UDF metadata
+                    auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
+                    payload["functionCode"] = javaDescriptor->getMethodName();
+
+                    //find the bytecode for the udf class
+                    auto className = javaDescriptor->getClassName();
+                    auto byteCodeList = javaDescriptor->getByteCodeList();
+                    auto classByteCode = std::find_if(byteCodeList.cbegin(),
+                                                      byteCodeList.cend(),
+                                                      [&](const Catalogs::UDF::JavaClassDefinition& c) {
+                                                          return c.first == className;
+                                                      });
+
+                    if (classByteCode == byteCodeList.end()) {
+                        throw QueryDeploymentException(queryId,
+                                                       "The bytecode list of classes implementing the "
+                                                       "UDF must contain the fully-qualified name of the UDF");
+                    }
+                    Catalogs::UDF::JavaByteCode javaByteCode = classByteCode->second;
+
+                    //5. Prepare the multi-part message
+                    cpr::Part part1 = {"firstPayload", to_string(payload)};
+                    cpr::Part part2 = {"secondPayload", &javaByteCode[0]};
+                    cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
+
+                    //6. Make Acceleration Service Call
+                    cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
+                                                       cpr::Header{{"Content-Type", "application/json"}},
+                                                       multipartPayload,
+                                                       cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
+                    if (response.status_code != 200) {
+                        throw QueryDeploymentException(
+                            queryId,
+                            "QueryDeploymentPhase::deployQuery: Error in call to Elegant acceleration service with code "
+                                + std::to_string(response.status_code) + " and msg " + response.reason);
+                    }
+
+                    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+                    //Fetch the acceleration Code
+                    //FIXME: use the correct key
+                    auto openCLCode = jsonResponse["AccelerationCode"];
+                    //6. Set the Open CL code
+                    openCLOperator->setOpenClCode(openCLCode);
+                }
+            }
+
             //enable this for sync calls
             //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
             bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
             if (success) {
-                NES_DEBUG2("QueryDeploymentPhase:deployQuery: {} to {} successful", queryId, rpcAddress);
+                NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {} successful", queryId, rpcAddress);
             } else {
-                NES_ERROR2("QueryDeploymentPhase:deployQuery: {} to {} failed", queryId, rpcAddress);
+                NES_ERROR("QueryDeploymentPhase:deployQuery: {} to {} failed", queryId, rpcAddress);
                 return false;
             }
         }
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
     bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
-    NES_DEBUG2("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} success={}", queryId, result);
+    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} success={}", queryId, result);
     return result;
 }
 
 bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG2("QueryDeploymentPhase::startQuery queryId= {}", queryId);
+    NES_DEBUG("QueryDeploymentPhase::startQuery queryId= {}", queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
@@ -155,21 +252,21 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG2("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
+        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
         //enable this for sync calls
         //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
         bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
-            NES_DEBUG2("QueryDeploymentPhase::startQuery {} to {} successful", queryId, rpcAddress);
+            NES_DEBUG("QueryDeploymentPhase::startQuery {} to {} successful", queryId, rpcAddress);
         } else {
-            NES_ERROR2("QueryDeploymentPhase::startQuery {} to {} failed", queryId, rpcAddress);
+            NES_ERROR("QueryDeploymentPhase::startQuery {} to {} failed", queryId, rpcAddress);
             return false;
         }
         completionQueues[queueForExecutionNode] = 1;
     }
 
     bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
-    NES_DEBUG2("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId, result);
+    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId, result);
     return result;
 }
 

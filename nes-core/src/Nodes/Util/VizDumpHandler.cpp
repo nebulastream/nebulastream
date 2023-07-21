@@ -115,11 +115,11 @@ DebugDumpHandlerPtr VizDumpHandler::create() {
 void VizDumpHandler::dump(const NodePtr) { NES_NOT_IMPLEMENTED(); }
 
 void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr queryPlan) {
-    NES_DEBUG2("Dump query plan: {} : {} for context {} and scope {}",
-               queryPlan->getQueryId(),
-               queryPlan->getQuerySubPlanId(),
-               context,
-               scope);
+    NES_DEBUG("Dump query plan: {} : {} for context {} and scope {}",
+              queryPlan->getQueryId(),
+              queryPlan->getQuerySubPlanId(),
+              context,
+              scope);
     auto graph = detail::VizGraph("graph");
     dump(queryPlan, "", graph);
     writeToFile(context, scope, graph.serialize());
@@ -142,7 +142,7 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, const std::string& parent, det
 }
 
 void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) {
-    NES_DEBUG2("Dump query plan: {} : {} for scope {}", pipelinePlan->getQueryId(), pipelinePlan->getQuerySubPlanId(), scope);
+    NES_DEBUG("Dump query plan: {} : {} for scope {}", pipelinePlan->getQueryId(), pipelinePlan->getQuerySubPlanId(), scope);
     auto graph = detail::VizGraph("graph");
     for (const auto& pipeline : pipelinePlan->getPipelines()) {
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());

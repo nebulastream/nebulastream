@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 
 namespace NES::Windowing {
@@ -51,5 +50,7 @@ std::string DistributionCharacteristic::toString() {
         return "";
     }
 }
+
+bool DistributionCharacteristic::equals(const DistributionCharacteristic& other) const { return type == other.type; }
 
 }// namespace NES::Windowing

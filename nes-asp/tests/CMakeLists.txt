@@ -36,10 +36,14 @@ target_link_libraries(micro-benchmarking-run-test PRIVATE nes-asp)
 add_nes_runtime_test(synopsis-pipeline-test "UnitTests/Experimental/Operators/SynopsisPipelineTest.cpp")
 target_link_libraries(synopsis-pipeline-test PRIVATE nes-asp)
 
-# Adding unit test for SimpleRandomSampleWithoutReplacementTest.cpp
-add_nes_runtime_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SRSWoRTest.cpp")
-target_link_libraries(simple-sampling-without-replacement-test PRIVATE nes-asp)
+# Adding unit test for RandomSampleWithoutReplacementTest.cpp
+add_nes_runtime_test(random-sampling-without-replacement-test "UnitTests/Experimental/Synopses/RandomSampleWithoutReplacementTest.cpp")
+target_link_libraries(random-sampling-without-replacement-test PRIVATE nes-asp)
 
 # Adding unit test for equi-width 1d hist
-add_nes_runtime_test(equi-width-1d-hist-test "UnitTests/Experimental/Synopses/EquiWidth1DHistTest.cpp")
+add_nes_runtime_test(equi-width-1d-hist-test "UnitTests/Experimental/Synopses/EquiWidthOneDimensionalHistogramTest.cpp")
 target_link_libraries(equi-width-1d-hist-test PRIVATE nes-asp)
+
+# Adding unit test for count-min sketch
+add_nes_runtime_test(count-min-test "UnitTests/Experimental/Synopses/CountMinTest.cpp")
+target_link_libraries(count-min-test PRIVATE nes-asp)

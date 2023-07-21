@@ -159,7 +159,7 @@ TPCHUtil::getCustomers(std::string rootPath,
 
 std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
 TPCHUtil::getFileFromCache(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
-    NES_DEBUG("Load buffer from cache " << path);
+    NES_DEBUG("Load buffer from cache {}", path);
 
     std::ifstream input(path, std::ios::binary | std::ios::ate);
     auto size = (unsigned) input.tellg();
@@ -175,12 +175,12 @@ TPCHUtil::getFileFromCache(std::string path, std::shared_ptr<Runtime::BufferMana
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, size);
     }
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
-    NES_DEBUG("Load buffer from cache done " << path);
+    NES_DEBUG("Load buffer from cache done {}", path);
     return std::make_pair(memoryLayout, dynamicBuffer);
 }
 
 void TPCHUtil::storeBuffer(std::string path, Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    NES_DEBUG("Store buffer with " << buffer.getNumberOfTuples() << " records to " << path);
+    NES_DEBUG("Store buffer with {} records to {}", buffer.getNumberOfTuples(), path);
     std::ofstream outputFile;
     outputFile.open(path, std::ios::out | std::ofstream::binary);
     outputFile.write((char*) buffer.getBuffer().getBuffer(), buffer.getBuffer().getBufferSize());
@@ -189,7 +189,7 @@ void TPCHUtil::storeBuffer(std::string path, Runtime::MemoryLayouts::DynamicTupl
 
 std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
 TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
-    NES_DEBUG("Load buffer from file" << path);
+    NES_DEBUG("Load buffer from file {}", path);
 
     std::ifstream inFile(path);
     uint64_t linecount = 0;
@@ -198,7 +198,7 @@ TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         // using printf() in all tests for consistency
         linecount++;
     }
-    NES_DEBUG("LOAD lineitem with " << linecount << " lines");
+    NES_DEBUG("LOAD lineitem with {} lines", linecount);
 
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
@@ -280,7 +280,7 @@ TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::Buffer
 
 [[maybe_unused]] std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
 TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
-    NES_DEBUG("Load buffer from file" << path);
+    NES_DEBUG("Load buffer from file {}", path);
 
     std::ifstream inFile(path);
     uint64_t linecount = 0;
@@ -289,7 +289,7 @@ TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferMan
         // using printf() in all tests for consistency
         linecount++;
     }
-    NES_DEBUG("LOAD orders with " << linecount << " lines");
+    NES_DEBUG("LOAD orders with {} lines", linecount);
 
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
@@ -362,7 +362,7 @@ TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferMan
 
 std::pair<Runtime::MemoryLayouts::MemoryLayoutPtr, Runtime::MemoryLayouts::DynamicTupleBuffer>
 TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::BufferManager> bm, SchemaPtr schema) {
-    NES_DEBUG("Load buffer from file" << path);
+    NES_DEBUG("Load buffer from file {}", path);
 
     std::ifstream inFile(path);
     uint64_t linecount = 0;
@@ -371,7 +371,7 @@ TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         // using printf() in all tests for consistency
         linecount++;
     }
-    NES_DEBUG("LOAD customers with " << linecount << " lines");
+    NES_DEBUG("LOAD customers with {} lines", linecount);
 
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
@@ -425,9 +425,9 @@ TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::Buffer
         auto c_mktsegmentString = strings[6];
         auto result = c_mktsegmentString.compare("BUILDING");
         if (result == 0) {
-            dynamicBuffer[index][6].write((int64_t) 1);
+            dynamicBuffer[index][6].write(1_s64);
         } else {
-            dynamicBuffer[index][6].write((int64_t) 0);
+            dynamicBuffer[index][6].write(0_s64);
         }
 
         // comment

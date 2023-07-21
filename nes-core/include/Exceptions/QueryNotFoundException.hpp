@@ -19,15 +19,15 @@
 #include <stdexcept>
 #include <string>
 
-namespace NES {
+namespace NES::Exceptions {
 /**
  * @brief This exception is raised when the query you are looking for is not found
  */
-class QueryNotFoundException : public std::runtime_error, public RequestExecutionException {
+class QueryNotFoundException : public RequestExecutionException {
   public:
     explicit QueryNotFoundException(const std::string& message);
 
     const char* what() const noexcept override;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_

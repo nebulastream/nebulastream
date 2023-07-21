@@ -79,6 +79,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption dataProviderMode;
     std::map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
     Configurations::StringConfigOption connectionString;
+    Configurations::StringConfigOption joinStrategy;
 };
 }// namespace NES::Benchmark
 

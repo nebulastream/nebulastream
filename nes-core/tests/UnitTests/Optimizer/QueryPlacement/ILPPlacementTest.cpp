@@ -19,6 +19,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -231,7 +232,9 @@ TEST_F(ILPPlacementTest, Z3Test) {
     while (true) {
         if (sat == opt.check()) {
             model m = opt.get_model();
-            NES_DEBUG(m);
+            std::stringstream mString;
+            mString << m;
+            NES_DEBUG("{}", mString.str());
             NES_DEBUG("-------------------------------");
             if (m.eval(P21).get_numeral_int() == 1) {
                 NES_DEBUG("Operator on Node 1");
@@ -252,12 +255,12 @@ TEST_F(ILPPlacementTest, Z3Test) {
 TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      false /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
@@ -266,16 +269,16 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -312,14 +315,13 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
 /* Test query placement with ILP strategy - simple map query */
 TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
 
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      false /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query to place
     Query query = Query::from("car")
@@ -328,20 +330,20 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
                       .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -378,14 +380,13 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
 TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      false /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     Query query = Query::from("car")
                       .filter(Attribute("id") < 45)
@@ -394,20 +395,20 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
 
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -446,6 +447,9 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added filter - sink to filter operator*/
 TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->enableQueryReconfiguration = true;
+
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
@@ -457,7 +461,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -468,7 +472,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -509,12 +513,10 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      true /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -559,9 +561,9 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-    NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -629,6 +631,9 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
 TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
 
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->enableQueryReconfiguration = true;
+
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
@@ -640,7 +645,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -651,7 +656,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -662,7 +667,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan3 = query3.getQueryPlan();
     queryPlan3->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan3->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan3->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan3->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -706,12 +711,10 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      true /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -757,12 +760,12 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-    NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO("{}", globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);
@@ -803,35 +806,31 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
             // map should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId);
             ASSERT_EQ(querySubPlans.size(), 3U);
-            //Assertion for first subquery plan
-            auto querySubPlan1 = querySubPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = querySubPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
 
-            //Assertion for second subquery plan
-            auto querySubPlan2 = querySubPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = querySubPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+            for (const auto& querySubPlan : querySubPlans) {
 
-            //Assertion for third subquery plan
-            auto querySubPlan3 = querySubPlans[2U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan3 = querySubPlan3->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan3.size(), 1U);
-            OperatorNodePtr rootOperator3 = rootOperatorsForPlan3[0];
-            ASSERT_EQ(rootOperator3->getId(), queryPlan3->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator3->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator3->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator3->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                //Assertion for all subquery plans
+                std::vector<OperatorNodePtr> rootOperatorsForPlan = querySubPlan->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan.size(), 1U);
+                OperatorNodePtr rootOperator = rootOperatorsForPlan[0];
+
+                if (rootOperator->getId() == queryPlan1->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                } else if (rootOperator->getId() == queryPlan2->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                } else if (rootOperator->getId() == queryPlan3->getRootOperators()[0]->getId()) {
+                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                } else {
+                    //Sub query plan should contain for one of the three sink operator as its root
+                    FAIL();
+                }
+            }
         }
     }
 }
@@ -839,6 +838,9 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
 //TODO: as part of issue number #2939
 /* Test query placement with ILP strategy for query: source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
 TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->enableQueryReconfiguration = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -851,7 +853,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan1->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -862,7 +864,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                        .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
-    queryPlan2->setPlacementStrategy(NES::PlacementStrategy::ILP);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
@@ -918,15 +920,13 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                      topologyForILP,
-                                                                      typeInferencePhase,
-                                                                      true /*query reconfiguration*/);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO("{}", globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);

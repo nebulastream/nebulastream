@@ -15,6 +15,8 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/StdInt.hpp>
+
 namespace NES::Runtime::Execution::Aggregation {
 
 CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputType,
@@ -27,7 +29,7 @@ void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nau
     // load memref
     auto oldValue = AggregationFunction::loadFromMemref(state, resultType);
     // add the value
-    auto newValue = oldValue + (uint64_t) 1;
+    auto newValue = oldValue + 1_u64;
     // put back to the memref
     state.store(newValue);
 }
@@ -46,7 +48,7 @@ void CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Na
 }
 
 void CountAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::UInt64>((uint64_t) 0);// count always use UInt64
+    auto zero = Nautilus::Value<Nautilus::UInt64>(0_u64);// count always use UInt64
     memref.store(zero);
 }
 uint64_t CountAggregationFunction::getSize() { return sizeof(int64_t); }

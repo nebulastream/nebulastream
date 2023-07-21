@@ -33,8 +33,8 @@ class StreamWindow {
 
     /**
      * @brief Constructor for creating a window
-     * @param windowStart
-     * @param windowEnd
+     * @param windowStart: Start timestamp of this window
+     * @param windowEnd: End timestamp of this window
      */
     explicit StreamWindow(uint64_t windowStart, uint64_t windowEnd);
 
@@ -65,12 +65,16 @@ class StreamWindow {
     uint64_t getWindowEnd() const;
 
     /**
-     * @brief Returns the number of tuples in this window
-     * @param sizeOfTupleInByte
-     * @param leftSide
-     * @return size_t
+     * @brief Returns the number of tuples in this window for the left side
+     * @return uint64_t
      */
-    virtual size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) = 0;
+    virtual uint64_t getNumberOfTuplesLeft() = 0;
+
+    /**
+     * @brief Returns the number of tuples in this window for the right side
+     * @return uint64_t
+     */
+    virtual uint64_t getNumberOfTuplesRight() = 0;
 
     /**
      * @brief Returns the identifier for this window. For now, the identifier is the windowEnd

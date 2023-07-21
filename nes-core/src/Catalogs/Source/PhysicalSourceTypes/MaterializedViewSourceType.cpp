@@ -26,7 +26,7 @@ MaterializedViewSourceTypePtr MaterializedViewSourceType::create() {
 
 MaterializedViewSourceType::MaterializedViewSourceType(std::map<std::string, std::string> sourceConfigMap)
     : MaterializedViewSourceType() {
-    NES_INFO2("MaterializedViewSourceType: Init source config object with new values.");
+    NES_INFO("MaterializedViewSourceType: Init source config object with new values.");
     if (sourceConfigMap.find(MATERIALIZED_VIEW_ID_CONFIG) != sourceConfigMap.end()) {
         id->setValue(std::stoi(sourceConfigMap.find(MATERIALIZED_VIEW_ID_CONFIG)->second));
     } else {
@@ -39,7 +39,7 @@ MaterializedViewSourceType::MaterializedViewSourceType()
       id(Configurations::ConfigurationOption<uint32_t>::create(MATERIALIZED_VIEW_ID_CONFIG,
                                                                1,
                                                                "id to identify the materialized view to read from")) {
-    NES_INFO2("MaterializedViewSourceType: Init source config object with default values.");
+    NES_INFO("MaterializedViewSourceType: Init source config object with default values.");
 }
 
 void MaterializedViewSourceType::reset() { setId(id->getDefaultValue()); }

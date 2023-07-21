@@ -38,14 +38,14 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     // equal values
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) 42));
+        auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 42), Value<Int16>((int16_t) 42));
+        auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
@@ -56,7 +56,7 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 42), Value<Int64>((int64_t) 42));
+        auto resultValue = expression.eval(Value<Int64>(42_s64), Value<Int64>(42_s64));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -64,14 +64,14 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     // positive case
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) -4));
+        auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>((int8_t) -4));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 42), Value<Int16>((int16_t) -4));
+        auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>((int16_t) -4));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
@@ -82,7 +82,7 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 42), Value<Int64>((int64_t) -4));
+        auto resultValue = expression.eval(Value<Int64>(42_s64), Value<Int64>((int64_t) -4));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -90,14 +90,14 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     // negative case
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) -2), Value<Int8>((int8_t) 4));
+        auto resultValue = expression.eval(Value<Int8>((int8_t) -2), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) -2), Value<Int16>((int16_t) 4));
+        auto resultValue = expression.eval(Value<Int16>((int16_t) -2), Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
@@ -108,7 +108,7 @@ TEST_F(GreaterEqualsExpressionTest, signedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) -2), Value<Int64>((int64_t) 4));
+        auto resultValue = expression.eval(Value<Int64>((int64_t) -2), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -120,25 +120,25 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
     // equal values
     // Int8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 42), Value<UInt8>((uint8_t) 42));
+        auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 42), Value<UInt16>((uint16_t) 42));
+        auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 42));
+        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(42_u32));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 42));
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -146,25 +146,25 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
     // positive case
     // Int8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 42), Value<UInt8>((uint8_t) 4));
+        auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 42), Value<UInt16>((uint16_t) 4));
+        auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(4_u32));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -172,25 +172,25 @@ TEST_F(GreaterEqualsExpressionTest, UnsignedIntegers) {
     // negative case
     // Int8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 2), Value<UInt8>((uint8_t) 4));
+        auto resultValue = expression.eval(Value<UInt8>(2_u8), Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // Int16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2), Value<UInt16>((uint16_t) 4));
+        auto resultValue = expression.eval(Value<UInt16>(2_u16), Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 2), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>(2_u32), Value<UInt32>(4_u32));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 2), Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(Value<UInt64>(2_u64), Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }

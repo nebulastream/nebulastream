@@ -22,6 +22,7 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus {
@@ -53,7 +54,7 @@ TEST_F(ListTypeTest, createListTest) {
     auto listRef = TypedRef<ListValue<int32_t>>(list);
     auto valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
     auto length = valueList->length();
-    ASSERT_EQ(length, (uint32_t) 10);
+    ASSERT_EQ(length, 10_u32);
     Value<> any = valueList;
     Value<List> l = any.as<List>();
     ASSERT_EQ(valueList, l);

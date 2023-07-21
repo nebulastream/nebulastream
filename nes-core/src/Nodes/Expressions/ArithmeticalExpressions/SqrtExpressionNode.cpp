@@ -38,8 +38,8 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {
-        NES_ERROR2("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at "
-                   "run-time.");
+        NES_ERROR("Log10ExpressionNode: Non-positive DataType is passed into Log10 expression. Arithmetic errors would occur at "
+                  "run-time.");
     }
 
     // if stamp is integer, convert stamp to float
@@ -47,7 +47,7 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     // increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
-    NES_TRACE2("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
+    NES_TRACE("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
 }
 
 bool SqrtExpressionNode::equal(NodePtr const& rhs) const {
@@ -64,6 +64,6 @@ std::string SqrtExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr SqrtExpressionNode::copy() { return std::make_shared<SqrtExpressionNode>(SqrtExpressionNode(this)); }
+ExpressionNodePtr SqrtExpressionNode::copy() { return SqrtExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
 
 }// namespace NES

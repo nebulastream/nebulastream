@@ -21,6 +21,7 @@
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Util/Common.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -104,6 +105,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * */
     BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
 
+    /**
+     * Config options for hash join
+     */
     UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
                                      NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
                                      "Partitions in the hash table"};
@@ -112,7 +116,22 @@ class QueryCompilerConfiguration : public BaseConfiguration {
                            "Page size of hash table"};
     UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
                                   NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                  "Page cnt of pre allocated pages in each bucket hash table"};
+                                  "Page count of pre allocated pages in each bucket hash table"};
+
+    UIntOption maxHashTableSize = {STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
+                                   NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                   "Maximum size of hash table"};
+
+    EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy = {
+        JOIN_STRATEGY,
+        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+        "Indicates the windowingStrategy"
+        "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
+
+    /**
+     * @brief Sets the path to the locally installed CUDA SDK.
+     */
+    StringOption cudaSdkPath = {CUDA_SDK_PATH, "/usr/local/cuda", "Path to CUDA SDK."};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
@@ -127,6 +146,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &numberOfPartitions,
             &pageSize,
             &preAllocPageCnt,
+            &cudaSdkPath,
+            &maxHashTableSize,
+            &joinStrategy,
         };
     }
 };

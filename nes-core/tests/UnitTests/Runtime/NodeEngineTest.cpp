@@ -179,7 +179,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         NES::Exceptions::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
-        NES_ERROR2("Cannot start node engine {}", err.what());
+        NES_ERROR("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
     return nullptr;
@@ -196,7 +196,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
         auto* tuples = inputTupleBuffer.getBuffer<uint64_t>();
 
-        NES_INFO2("Test: Start execution");
+        NES_INFO("Test: Start execution");
 
         uint64_t psum = 0;
         for (uint64_t i = 0; i < inputTupleBuffer.getNumberOfTuples(); ++i) {
@@ -205,33 +205,33 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         count += inputTupleBuffer.getNumberOfTuples();
         sum += psum;
 
-        NES_INFO2("Test: query result = Processed Block:{} count: {} psum: {} sum: {}",
-                  inputTupleBuffer.getNumberOfTuples(),
-                  count,
-                  psum,
-                  sum);
+        NES_INFO("Test: query result = Processed Block:{} count: {} psum: {} sum: {}",
+                 inputTupleBuffer.getNumberOfTuples(),
+                 count,
+                 psum,
+                 sum);
 
         if (sum == 10) {
-            NES_DEBUG2("TEST: result correct");
+            NES_DEBUG("TEST: result correct");
 
             //TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer(); WAS THIS CODE
             TupleBuffer outputBuffer = wctx.allocateTupleBuffer();
 
-            NES_DEBUG2("TEST: got buffer");
+            NES_DEBUG("TEST: got buffer");
             auto* arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
             std::stringstream thisAsString;
             thisAsString << this;
-            NES_DEBUG2("TEST: {} written {}", thisAsString.str(), arr[0]);
+            NES_DEBUG("TEST: {} written {}", thisAsString.str(), arr[0]);
             pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
             completedPromise.set_value(true);
         } else {
-            NES_DEBUG2("TEST: result wrong ");
+            NES_DEBUG("TEST: result wrong ");
             completedPromise.set_value(false);
         }
 
-        NES_DEBUG2("TEST: return");
+        NES_DEBUG("TEST: return");
         return ExecutionResult::Ok;
     }
 };
@@ -249,24 +249,24 @@ class NodeEngineTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EngineTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO2("Setup EngineTest test class.");
+        NES_INFO("Setup EngineTest test class.");
     }
 
     void SetUp() override {
-        NES_DEBUG2("Setup OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -841,7 +841,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
-            NES_ERROR2("{}", str);
+            NES_ERROR("{}", str);
             ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
             ASSERT_TRUE(stop(true));
@@ -851,7 +851,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
       public:
         virtual ~FailingTextExecutablePipeline() = default;
         ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
-            NES_DEBUG2("Going to throw exception");
+            NES_DEBUG("Going to throw exception");
             throw std::runtime_error("Catch me if you can!");// :P
         }
     };
@@ -916,7 +916,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
-            NES_ERROR2("{}", str);
+            NES_ERROR("{}", str);
             ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);
             completedPromise.set_value(true);
         }
@@ -924,7 +924,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
         ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
-            NES_DEBUG2("Going to throw exception");
+            NES_DEBUG("Going to throw exception");
             throw 1;
         }
     };

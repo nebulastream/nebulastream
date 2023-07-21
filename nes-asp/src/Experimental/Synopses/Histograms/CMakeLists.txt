@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-asp
-        EquiWidth1DHist.cpp
-        EquiWidth1DHistOperatorHandler.cpp
+        EquiWidthOneDimensionalHistogram.cpp
+        EquiWidthOneDimensionalHistogramOperatorHandler.cpp
         )

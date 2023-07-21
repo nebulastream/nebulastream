@@ -54,7 +54,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex1) {
         auto m = Value<Text>("(b|c)");
         auto r = Value<Text>("X");
         auto resultValue = expression.eval(l, m, r);
-        NES_DEBUG(resultValue.as<Text>()->toString());
+        NES_DEBUG("{}", resultValue.as<Text>()->toString());
         EXPECT_EQ(resultValue, Value<Text>("aXX"));
     }
 }

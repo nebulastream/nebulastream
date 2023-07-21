@@ -28,7 +28,7 @@ namespace NES::Optimizer {
 
 TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {
-    NES_DEBUG2("TypeInferencePhase()");
+    NES_DEBUG("TypeInferencePhase()");
 }
 
 TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
@@ -45,7 +45,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sources = queryPlan->getSourceOperators();
 
         if (!sources.empty() && !sourceCatalog) {
-            NES_WARNING2("TypeInferencePhase: No SourceCatalog specified!");
+            NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
         }
 
         for (const auto& source : sources) {
@@ -57,7 +57,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
                 SchemaPtr schema = Schema::create();
                 if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-                    NES_ERROR2("Source name: {} not registered.", logicalSourceName);
+                    NES_ERROR("Source name: {} not registered.", logicalSourceName);
                 }
                 auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
                 schema = schema->copyFields(originalSchema);
@@ -70,9 +70,9 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                     }
                 }
                 sourceDescriptor->setSchema(schema);
-                NES_DEBUG2("TypeInferencePhase: update source descriptor for source {} with schema: {}",
-                           logicalSourceName,
-                           schema->toString());
+                NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}",
+                          logicalSourceName,
+                          schema->toString());
             }
         }
 
@@ -84,10 +84,10 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 throw Exceptions::RuntimeException("TypeInferencePhase: Failed!");
             }
         }
-        NES_DEBUG2("TypeInferencePhase: we inferred all schemas");
+        NES_DEBUG("TypeInferencePhase: we inferred all schemas");
         return queryPlan;
     } catch (std::exception& e) {
-        NES_ERROR2("TypeInferencePhase: Exception occurred during type inference phase {}", e.what());
+        NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase {}", e.what());
         auto queryId = queryPlan->getQueryId();
         throw TypeInferenceException(queryId, e.what());
     }

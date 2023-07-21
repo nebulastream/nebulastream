@@ -41,8 +41,8 @@ class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractComp
 int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
-    auto x = Value<Int64>((int64_t) 2);
-    auto y = Value<Int64>((int64_t) 3);
+    auto x = Value<Int64>(2_s64);
+    auto y = Value<Int64>(3_s64);
     Value<Int64> res = FunctionCall<>("add", addInt, x, y);
     return res;
 }
@@ -96,7 +96,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 }
 
 TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
-    Value<Int64> tempPara = Value<Int64>((int64_t) 0);
+    Value<Int64> tempPara = +0_s64;
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);

@@ -22,6 +22,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -54,7 +55,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
+        NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -648,9 +649,12 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto rewriteRule = Optimizer::QueryRewritePhase::create(true);
-    queryPlan1 = rewriteRule->execute(queryPlan1);
-    queryPlan2 = rewriteRule->execute(queryPlan2);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->optimizer.queryMergerRule =
+        Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,
@@ -704,9 +708,12 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
-    auto rewriteRule = Optimizer::QueryRewritePhase::create(true);
-    queryPlan1 = rewriteRule->execute(queryPlan1);
-    queryPlan2 = rewriteRule->execute(queryPlan2);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->optimizer.queryMergerRule =
+        Optimizer::QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
 
     auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
                                                                                     sourceCatalog,

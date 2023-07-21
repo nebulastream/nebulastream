@@ -35,21 +35,21 @@ class SourceCatalogRemoteTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogRemoteTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SourceCatalogRemoteTest test class.");
+        NES_INFO("Setup SourceCatalogRemoteTest test class.");
     }
 };
 
 TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("SourceCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -61,7 +61,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("SourceCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
@@ -79,10 +79,10 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
 }
 
 TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("SourceCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -90,9 +90,9 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -104,7 +104,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("SourceCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("testSource");
@@ -122,10 +122,10 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
 }
 
 TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("SourceCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -133,9 +133,9 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -147,7 +147,7 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("SourceCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     bool success = wrk1->unregisterPhysicalSource("default_logical", "physical_test");
     EXPECT_TRUE(success);
@@ -167,10 +167,10 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
 }
 
 TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("SourceCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -178,9 +178,9 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -192,7 +192,7 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("SourceCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
     bool success = wrk1->unregisterPhysicalSource("default_logical2", "default_physical");
     EXPECT_TRUE(!success);

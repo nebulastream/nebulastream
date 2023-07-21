@@ -26,6 +26,7 @@ inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv
 benchmarkName: JoinTwoSources
+joinStrategy: NESTED_LOOP_JOIN
 query: 'Query::from("input1").joinWith(Query::from("input2"))
                                   .where(Attribute("value")).equalsTo(Attribute("value"))
                                   .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))

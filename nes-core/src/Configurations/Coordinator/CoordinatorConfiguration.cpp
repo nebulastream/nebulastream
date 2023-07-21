@@ -15,7 +15,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <map>
 #include <string>
-#include <utility>
 
 namespace NES {
 
@@ -38,7 +37,7 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
     }
 
     // Create a configuration object with default values.
-    CoordinatorConfigurationPtr config = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr config = CoordinatorConfiguration::createDefault();
 
     // Read options from the YAML file.
     auto configPath = commandLineParams.find("--" + CONFIG_PATH);

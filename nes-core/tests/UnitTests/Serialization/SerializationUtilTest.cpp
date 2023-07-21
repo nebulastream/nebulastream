@@ -90,7 +90,7 @@ class SerializationUtilTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SerializationUtilTest test class.");
+        NES_INFO("Setup SerializationUtilTest test class.");
     }
 };
 
@@ -165,7 +165,7 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     /*
    std::string json_string;
    google::protobuf::util::MessageToJsonString(type, &json_string);
-   NES_DEBUG2(json_string);
+   NES_DEBUG(json_string);
    */
 }
 
@@ -242,7 +242,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto options = google::protobuf::util::JsonOptions();
         options.add_whitespace = true;
         google::protobuf::util::MessageToJsonString(sourceDetails, &json_string, options);
-        NES_DEBUG2("{}", json_string);
+        NES_DEBUG("{}", json_string);
     }
 
     {
@@ -506,6 +506,14 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         auto javaUDFMap = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
+    }
+
+    {
+        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        auto javaUDFMap = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));

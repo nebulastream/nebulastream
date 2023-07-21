@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace NES {
+namespace NES::Exceptions {
 /**
  * @brief Exception is raised when the query is in an Invalid status
  */
@@ -32,5 +32,5 @@ class InvalidQueryStatusException : public RequestExecutionException {
   private:
     std::string message;
 };
-}// namespace NES
+}// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_

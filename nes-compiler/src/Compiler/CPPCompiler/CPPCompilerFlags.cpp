@@ -12,31 +12,37 @@
     limitations under the License.
 */
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Compiler {
 
-CPPCompilerFlags CPPCompilerFlags::create() { return CPPCompilerFlags(); }
-
-CPPCompilerFlags CPPCompilerFlags::createDefaultCompilerFlags() {
-    auto flags = create();
-    flags.addFlag(CXX_VERSION);
-    flags.addFlag(NO_TRIGRAPHS);
-    flags.addFlag(FPIC);
-    flags.addFlag(WPARENTHESES_EQUALITY);
+void CPPCompilerFlags::addDefaultCompilerFlags() {
+    addFlag(CXX_VERSION);
+    addFlag(NO_TRIGRAPHS);
+    addFlag(FPIC);
+    addFlag(WPARENTHESES_EQUALITY);
 #if defined(__SSE4_2__)
-    flags.addFlag(SSE_4_2);
+    addFlag(SSE_4_2);
 #endif
 #ifdef __APPLE__
-    flags.addFlag(std::string("-isysroot ") + std::string(NES_OSX_SYSROOT));
-    flags.addFlag(std::string("-DTARGET_OS_IPHONE=0"));
-    flags.addFlag(std::string("-DTARGET_OS_SIMULATOR=0"));
+    addFlag(std::string("-isysroot ") + std::string(NES_OSX_SYSROOT));
+    addFlag(std::string("-DTARGET_OS_IPHONE=0"));
+    addFlag(std::string("-DTARGET_OS_SIMULATOR=0"));
 #endif
-    return flags;
 }
 
-void CPPCompilerFlags::enableDebugFlags() { addFlag(DEBUGGING); }
+void CPPCompilerFlags::addSharedLibraryFlag() {
+    NES_DEBUG("Compile as shared library.");
+    addFlag(SHARED);
+}
+
+void CPPCompilerFlags::enableDebugFlags() {
+    NES_DEBUG("Compile with debugging.");
+    addFlag(GENERATE_DEBUG_SYMBOLS);
+}
 
 void CPPCompilerFlags::enableOptimizationFlags() {
+    NES_DEBUG("Compile with optimizations.");
     addFlag(ALL_OPTIMIZATIONS);
 #if !defined(__aarch64__)
     // use -mcpu=native instead of TUNE/ARCH for arm64, below
@@ -54,8 +60,9 @@ void CPPCompilerFlags::enableOptimizationFlags() {
 #endif
 }
 
-std::vector<std::string> CPPCompilerFlags::getFlags() const { return compilerFlags; }
-
-void CPPCompilerFlags::addFlag(const std::string& flag) { compilerFlags.emplace_back(flag); }
+void CPPCompilerFlags::enableProfilingFlags() {
+    NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
+    addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
+}
 
 }// namespace NES::Compiler

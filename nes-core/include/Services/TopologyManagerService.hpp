@@ -51,6 +51,7 @@ class TopologyManagerService {
 
     /**
      * @brief registers a worker.
+     * @param workerId: id of the worker as given in its configuration
      * @param address: address of the worker in ip:port format
      * @param grpcPort: grpc port used by the worker for communication
      * @param dataPort: port used by the worker for receiving or transmitting data
@@ -58,11 +59,12 @@ class TopologyManagerService {
      * @param workerProperties: Additional properties of worker
      * @return unique identifier of the worker
      */
-    uint64_t registerWorker(const std::string& address,
-                            int64_t grpcPort,
-                            int64_t dataPort,
-                            uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties);
+    TopologyNodeId registerWorker(TopologyNodeId workerId,
+                                  const std::string& address,
+                                  int64_t grpcPort,
+                                  int64_t dataPort,
+                                  uint16_t numberOfSlots,
+                                  std::map<std::string, std::any> workerProperties);
 
     /**
      * Add GeoLocation of a worker node
@@ -115,7 +117,7 @@ class TopologyManagerService {
      * @param nodeId
      * @return TopologyNodePtr (or a nullptr if there is no node with this id)
      */
-    TopologyNodePtr findNodeWithId(uint64_t nodeId);
+    TopologyNodePtr findNodeWithId(TopologyNodeId nodeId);
 
     /**
      * Experimental
@@ -171,7 +173,7 @@ class TopologyManagerService {
      * @brief method to generate the next (monotonically increasing) topology node id
      * @return next topology node id
      */
-    uint64_t getNextTopologyNodeId();
+    TopologyNodeId getNextTopologyNodeId();
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;

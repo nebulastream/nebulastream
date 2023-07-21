@@ -15,16 +15,18 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
 
 #include <API/Schema.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <list>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This operator handler stores multiple windows (NLJWindow) with each window containing the left and right stream tuples.
- * This class provides the two join phases (NLJBuild and NLJSink) with methods for performing a nested loop join.
+ * This class provides the two join phases (NLJBuild and NLJProbe) with methods for performing a nested loop join.
  */
 class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
@@ -32,19 +34,19 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
   public:
     /**
      * @brief Constructor for a NLJOperatorHandler
-     * @param windowSize
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param origins
+     * @param sizeOfTupleInByteLeft
+     * @param sizeOfTupleInByteRight
+     * @param sizePageLeft
+     * @param sizePageRight
+     * @param windowSize
      */
-    explicit NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
-                                const SchemaPtr& joinSchemaRight,
-                                const std::string& joinFieldNameLeft,
-                                const std::string& joinFieldNameRight,
-                                const std::vector<OriginId>& origins,
-                                size_t windowSize);
+    explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
+                                uint64_t sizeOfTupleInByteLeft,
+                                uint64_t sizeOfTupleInByteRight,
+                                uint64_t sizePageLeft,
+                                uint64_t sizePageRight,
+                                uint64_t windowSize);
 
     ~NLJOperatorHandler() = default;
     /**
@@ -65,12 +67,12 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief Creates an entry for a new tuple by first getting the responsible window for the timestamp. This method is thread safe.
-     * @param timestamp
+     * @brief Retrieves the number of tuples for a stream (left or right) and a window
+     * @param windowIdentifier
      * @param isLeftSide
-     * @return Pointer
+     * @return Number of tuples or -1 if no window exists for the window identifier
      */
-    uint8_t* allocateNewEntry(uint64_t timestamp, bool isLeftSide);
+    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
 
     /**
      * @brief method to trigger the finished windows
@@ -82,13 +84,57 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
-    static NLJOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
-                                        const SchemaPtr& joinSchemaRight,
-                                        const std::string& joinFieldNameLeft,
-                                        const std::string& joinFieldNameRight,
-                                        const std::vector<OriginId>& origins,
-                                        size_t windowSize);
+    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
+                                        const uint64_t sizeOfTupleInByteLeft,
+                                        const uint64_t sizeOfTupleInByteRight,
+                                        const uint64_t sizePageLeft,
+                                        const uint64_t sizePageRight,
+                                        const size_t windowSize);
+
+    /**
+     * @brief Returns the current window, by current we mean the last added window to the list. If no window exists,
+     * a window with the timestamp 0 will be created
+     * @return StreamWindow*
+     */
+    StreamWindow* getCurrentWindowOrCreate();
+
+    /**
+     * @brief Returns the page size of the left PagedVector
+     * @return uint64_t
+     */
+    uint64_t getLeftPageSize() const;
+
+    /**
+     * @brief Returns the page size of the right PagedVector
+     * @return uint64_t
+     */
+    uint64_t getRightPageSize() const;
+
+  private:
+    const uint64_t leftPageSize;
+    const uint64_t rightPageSize;
 };
+
+/**
+ * @brief Proxy function for returning the pointer to the correct PagedVector
+ * @return void*
+ */
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
+
+/**
+ * @brief Proxy function for returning the start timestamp of this window
+ * @param ptrNljWindow
+ * @return uint64_t
+ */
+uint64_t getNLJWindowStartProxy(void* ptrNljWindow);
+
+/**
+ * @brief Proxy function for returning the end timestamp of this window
+ * @param ptrNljWindow
+ * @return uint64_t
+ */
+uint64_t getNLJWindowEndProxy(void* ptrNljWindow);
+
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

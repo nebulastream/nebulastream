@@ -45,7 +45,7 @@ Value<> HashMap::compareKeys(std::vector<Value<>> keyValues, Value<MemRef> ref) 
     Value<Boolean> equals = true;
     for (auto& keyValue : keyValues) {
         equals = equals && keyValue == ref.load<Int64>();
-        ref = ref + (uint64_t) 8;
+        ref = ref + 8_u64;
     }
     return equals;
 }
@@ -75,7 +75,7 @@ HashMap::Entry HashMap::createEntry(std::vector<Value<>> keys, Value<UInt64> has
     auto keyPtr = entry.getKeyPtr();
     for (auto i = 0ull; i < keys.size(); i++) {
         keyPtr.store(keys[i]);
-        keyPtr = keyPtr + (uint64_t) 8;
+        keyPtr = keyPtr + 8_u64;
     }
     return entry;
 }

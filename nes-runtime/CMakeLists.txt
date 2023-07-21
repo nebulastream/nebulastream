@@ -31,6 +31,9 @@ target_link_libraries(nes-runtime PUBLIC nes-common nes-data-types)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-runtime REUSE_FROM nes-common)
+endif ()
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 

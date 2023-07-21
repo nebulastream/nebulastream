@@ -17,7 +17,6 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <vector>
-
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -37,11 +36,25 @@ class FixedPagesLinkedList {
                                   size_t preAllocPageSizeCnt);
 
     /**
-     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is NOT thread safe
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* append(const uint64_t hash);
+    uint8_t* appendLocal(const uint64_t hash);
+
+    /**
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
+     * @param hash
+     * @return Pointer to a free memory space where to write the data
+     */
+    uint8_t* appendConcurrentUsingLocking(const uint64_t hash);
+
+    /**
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and is lockfree
+     * @param hash
+     * @return Pointer to a free memory space where to write the data
+     */
+    uint8_t* appendConcurrentLockFree(const uint64_t hash);
 
     /**
      * @brief Returns all pages belonging to this list
@@ -52,19 +65,24 @@ class FixedPagesLinkedList {
     /**
      * @brief debug method to print the statistics of the Linked list
      */
-    void printStatistics();
+    std::string getStatistics();
 
   private:
-    size_t pos;
+    uint8_t* insertOnParticularPage(size_t position);
+
+    std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
+    std::mutex pageAddMutex;
 
     //used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
+    std::atomic<bool> insertInProgress;
+    std::atomic<FixedPage*> currentPage;
 };
 }// namespace NES::Runtime::Execution::Operators
 

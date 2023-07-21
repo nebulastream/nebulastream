@@ -68,7 +68,7 @@ bool WatermarkAssignerLogicalOperatorNode::inferSchema(Optimizer::TypeInferenceP
 
 void WatermarkAssignerLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {

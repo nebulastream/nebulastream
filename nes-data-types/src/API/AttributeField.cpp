@@ -41,7 +41,10 @@ bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
     if (!attr) {
         return false;
     }
-    return (attr->name == name) && (attr->dataType->isEquals(attr->getDataType()));
+
+    const bool equalDataType = (this->dataType == nullptr && attr->dataType == nullptr)
+        || (this->dataType != nullptr && attr->dataType != nullptr && this->dataType->isEquals(attr->dataType));
+    return (attr->name == name) && equalDataType;
 }
 
 AttributeFieldPtr AttributeField::copy() { return create(name, dataType); }

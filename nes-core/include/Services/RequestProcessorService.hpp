@@ -17,7 +17,6 @@
 
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Phases/QueryMigrationPhase.hpp>
 #include <memory>
 
 namespace z3 {
@@ -26,8 +25,9 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Configurations {
-class OptimizerConfiguration;
-}
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace NES::Configurations
 
 namespace NES::Optimizer {
 class TypeInferencePhase;
@@ -93,11 +93,10 @@ class RequestProcessorService {
                                      const QueryCatalogServicePtr& queryCatalogService,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
                                      const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                     const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
-                                     const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                     bool queryReconfiguration,
-                                     const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
+                                     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -122,7 +121,6 @@ class RequestProcessorService {
     QueryCatalogServicePtr queryCatalogService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
-    Experimental::QueryMigrationPhasePtr queryMigrationPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;

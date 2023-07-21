@@ -55,8 +55,8 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     /**
      * @brief creates an Object of this class through a static create function
@@ -74,13 +74,13 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
                                  TypeInferencePhasePtr typeInferencePhase);
 
     void performOperatorPlacement(QueryId queryId,
-                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                  const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(QueryId queryId,
                                  const OperatorNodePtr& operatorNode,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities

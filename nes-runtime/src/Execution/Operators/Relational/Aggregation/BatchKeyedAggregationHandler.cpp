@@ -47,7 +47,7 @@ void BatchKeyedAggregationHandler::start(Runtime::Execution::PipelineExecutionCo
 
 void BatchKeyedAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                         Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: " << queryTerminationType);
+    NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
 }
 BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
 

@@ -63,7 +63,7 @@ void executeFunctionWithOptions(const CompilationOptions& options, const DumpHel
     AbstractCompilationBackendTest abstractCompilationBackendTest{};
     auto result = abstractCompilationBackendTest.prepare(executionTrace, options, dumpHelper);
     auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
-    NES_DEBUG("Function result: " << function((uint8_t*) std::addressof(tupleBuffer)));
+    NES_DEBUG("Function result: {}", function((uint8_t*) std::addressof(tupleBuffer)));
 }
 
 TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {

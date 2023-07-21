@@ -3814,7 +3814,7 @@ bool NesCEPParser::sempred(RuleContext* context, size_t ruleIndex, size_t predic
 }
 
 bool NesCEPParser::expressionSempred(ExpressionContext* _localctx, size_t predicateIndex) {
-    NES_INFO2("NesCEPParser : expressionSempred {}", _localctx->getText());
+    NES_INFO("NesCEPParser : expressionSempred {}", _localctx->getText());
     switch (predicateIndex) {
         case 0: return precpred(_ctx, 3);
 
@@ -3824,7 +3824,7 @@ bool NesCEPParser::expressionSempred(ExpressionContext* _localctx, size_t predic
 }
 
 bool NesCEPParser::predicateSempred(PredicateContext* _localctx, size_t predicateIndex) {
-    NES_INFO2("NesCEPParser : predicateSempred {}", _localctx->getText());
+    NES_INFO("NesCEPParser : predicateSempred {}", _localctx->getText());
     switch (predicateIndex) {
         case 1: return precpred(_ctx, 2);
         case 2: return precpred(_ctx, 4);
@@ -3836,7 +3836,7 @@ bool NesCEPParser::predicateSempred(PredicateContext* _localctx, size_t predicat
 }
 
 bool NesCEPParser::expressionAtomSempred(ExpressionAtomContext* _localctx, size_t predicateIndex) {
-    NES_INFO2("NesCEPParser : expressionAtomSempred {}", _localctx->getText());
+    NES_INFO("NesCEPParser : expressionAtomSempred {}", _localctx->getText());
     switch (predicateIndex) {
         case 4: return precpred(_ctx, 3);
         case 5: return precpred(_ctx, 2);

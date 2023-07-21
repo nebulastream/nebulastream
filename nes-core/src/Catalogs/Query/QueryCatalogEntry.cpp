@@ -65,8 +65,8 @@ std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
 const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
 
-PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
-    return magic_enum::enum_cast<PlacementStrategy>(queryPlacementStrategy).value();
+Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
+    return magic_enum::enum_cast<Optimizer::PlacementStrategy>(queryPlacementStrategy).value();
 }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {

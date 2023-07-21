@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
 
 #include <Common/Identifiers.hpp>
+#include <Util/RequestType.hpp>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -55,7 +56,17 @@ class Request : public std::enable_shared_from_this<Request> {
         throw std::logic_error("Request:: we performed an invalid cast of request");
     }
 
+    /**
+     * @brief String representation of the query request
+     * @return string
+     */
     virtual std::string toString() = 0;
+
+    /**
+     * @brief Get the request type
+     * @return enum representing the request type
+     */
+    virtual RequestType getRequestType() = 0;
 };
 }// namespace NES
 

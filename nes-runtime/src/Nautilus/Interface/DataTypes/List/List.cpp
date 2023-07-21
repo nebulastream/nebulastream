@@ -13,6 +13,8 @@
 */
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
+
 namespace NES::Nautilus {
 
 template<typename T>
@@ -51,7 +53,7 @@ Value<> List::ListValueIterator::operator*() { return list.read(currentIndex); }
 bool List::ListValueIterator::operator==(const ListValueIterator& other) const { return currentIndex == other.currentIndex; }
 
 List::ListValueIterator& List::ListValueIterator::operator++() {
-    currentIndex = currentIndex + (uint32_t) 1;
+    currentIndex = currentIndex + 1_u32;
     return *this;
 }
 

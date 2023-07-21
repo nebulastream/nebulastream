@@ -112,6 +112,64 @@ TEST_F(TopologyTest, removeAnExistingNode) {
 }
 
 /**
+ * Remove a non-root node.
+ */
+TEST_F(TopologyTest, removeNodeWithNonRootParent) {
+    TopologyPtr topology = Topology::create();
+
+    TopologyNodePtr root = topology->getRoot();
+    EXPECT_FALSE(root);
+
+    int node1Id = 1;
+    std::string node1Address = "localhost";
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+    uint64_t resources = 4;
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
+    topology->setAsRoot(rootNode);
+
+    int node2Id = 2;
+    std::string node2Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    auto childNode2 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
+
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode2);
+    ASSERT_TRUE(success);
+
+    int node3Id = 3;
+    std::string node3Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    auto childNode3 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources, properties);
+
+    bool success2 = topology->addNewTopologyNodeAsChild(childNode2, childNode3);
+    ASSERT_TRUE(success2);
+
+    int node4Id = 4;
+    std::string node4Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    auto childNode4 = TopologyNode::create(node4Id, node4Address, grpcPort, dataPort, resources, properties);
+
+    bool success3 = topology->addNewTopologyNodeAsChild(childNode2, childNode4);
+    ASSERT_TRUE(success3);
+
+    EXPECT_TRUE(rootNode->containAsChild(childNode2));
+    EXPECT_TRUE(rootNode->containAsChild(childNode3));
+    EXPECT_TRUE(rootNode->containAsChild(childNode4));
+
+    success = topology->removePhysicalNode(childNode4);
+    EXPECT_TRUE(success);
+
+    TopologyNodePtr node = topology->findNodeWithId(4u);
+    EXPECT_TRUE(node == nullptr);
+}
+
+/**
  *  Remove a non-existing node.
  */
 TEST_F(TopologyTest, DISABLED_removeNodeFromEmptyTopology) {
@@ -294,7 +352,7 @@ TEST_F(TopologyTest, printGraph) {
         }
     }
 
-    NES_INFO2(" current plan from topo=");
+    NES_INFO(" current plan from topo=");
     topology->print();
     SUCCEED();
 }

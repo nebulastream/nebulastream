@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/QueryPlacementException.hpp"
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -21,7 +21,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -46,8 +45,8 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
     FaultToleranceType faultToleranceType /*faultToleranceType*/,
     LineageType lineageType /*lineageType*/,
-    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+    const std::set<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
+    const std::set<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
     try {
         // 1. Find the path where operators need to be placed
@@ -62,7 +61,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (std::exception& ex) {
-        throw QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
 };
 }// namespace NES::Optimizer

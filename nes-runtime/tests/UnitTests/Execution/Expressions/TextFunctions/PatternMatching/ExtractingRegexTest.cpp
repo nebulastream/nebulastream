@@ -52,7 +52,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex1) {
         auto m = Value<Text>(".b.");
         auto idx = 0;
         auto resultValue = expression.eval(l, m, idx);
-        NES_DEBUG(resultValue.as<Text>()->toString());
+        NES_DEBUG("{}", resultValue.as<Text>()->toString());
         EXPECT_EQ(resultValue, Value<Text>("abc"));
     }
 }

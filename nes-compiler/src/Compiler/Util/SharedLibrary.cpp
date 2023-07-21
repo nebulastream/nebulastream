@@ -27,7 +27,7 @@ SharedLibrary::SharedLibrary(void* shareLib, std::string soAbsolutePath)
 SharedLibrary::~SharedLibrary() {
     auto returnCode = dlclose(shareLib);
     if (returnCode != 0) {
-        NES_ERROR("SharedLibrary: error during dlclose. error code:" << returnCode);
+        NES_ERROR("SharedLibrary: error during dlclose. error code:{}", returnCode);
     }
     std::filesystem::remove(soAbsolutePath);
 }
@@ -36,11 +36,11 @@ SharedLibraryPtr SharedLibrary::load(const std::string& absoluteFilePath) {
     auto* shareLib = dlopen(absoluteFilePath.c_str(), RTLD_NOW);
     auto* error = dlerror();
     if (error) {
-        NES_ERROR("Could not load shared library: " << absoluteFilePath << " Error:" << error);
+        NES_ERROR("Could not load shared library: {} Error:{}", absoluteFilePath, error);
         throw CompilerException("Could not load shared library: " + absoluteFilePath + " Error:" + error);
     }
     if (!shareLib) {
-        NES_ERROR("Could not load shared library: " << absoluteFilePath << "Error unknown!");
+        NES_ERROR("Could not load shared library: {} Error unknown!", absoluteFilePath);
         throw CompilerException("Could not load shared library: " + absoluteFilePath);
     }
 
@@ -51,7 +51,7 @@ void* SharedLibrary::getInvocableFunctionPtr(const std::string& mangeldSymbolNam
     auto* error = dlerror();
 
     if (error) {
-        NES_ERROR("Could not load symbol: " << mangeldSymbolName << " Error:" << error);
+        NES_ERROR("Could not load symbol: {} Error:{}", mangeldSymbolName, error);
         throw CompilerException("Could not load symbol: " + mangeldSymbolName + " Error:" + error);
     }
 

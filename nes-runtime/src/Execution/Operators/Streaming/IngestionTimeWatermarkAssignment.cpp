@@ -18,13 +18,14 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
   public:
     explicit WatermarkState() {}
-    Value<> currentWatermark = Value<UInt64>((uint64_t) 0);
+    Value<> currentWatermark = Value<UInt64>(0_u64);
 };
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)

@@ -27,13 +27,13 @@ class KeyedThreadLocalSliceStoreTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KeyedThreadLocalSliceStoreTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup KeyedThreadLocalSliceStoreTest test class.");
+        NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG2("Setup KeyedThreadLocalSliceStoreTest test case.");
+        NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test case.");
         auto bufferManager = std::make_shared<Runtime::BufferManager>();
         size_t keySize = 8;
         size_t valueSize = 8;

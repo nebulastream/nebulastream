@@ -59,7 +59,7 @@ void BufferManager::destroy() {
 #endif
         localBufferPools.clear();
         if (allBuffers.size() != numOfAvailableBuffers) {
-            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << numOfAvailableBuffers);
+            NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), numOfAvailableBuffers);
             success = false;
         }
         for (auto& buffer : allBuffers) {
@@ -104,7 +104,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
     auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
 
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
-    NES_DEBUG("NES memory allocation requires " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
+    NES_DEBUG("NES memory allocation requires {} out of {} available bytes", requiredMemorySpace, memorySizeInBytes);
 
     //    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes,
@@ -128,13 +128,13 @@ void BufferManager::initialize(uint32_t withAlignment) {
     size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
-    NES_TRACE2("Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
-               allocatedAreaSize,
-               withAlignment,
-               alignedBufferSize,
-               numOfBuffers,
-               controlBlockSize,
-               alignof(detail::BufferControlBlock));
+    NES_TRACE("Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
+              allocatedAreaSize,
+              withAlignment,
+              alignedBufferSize,
+              numOfBuffers,
+              controlBlockSize,
+              alignof(detail::BufferControlBlock));
     if (basePointer == nullptr) {
         NES_THROW_RUNTIME_ERROR("memory allocation failed");
     }
@@ -157,7 +157,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
 #endif
         ptr += offsetBetweenBuffers;
     }
-    NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
+    NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
@@ -257,11 +257,11 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    NES_TRACE2("Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
-               reinterpret_cast<uintptr_t>(ptr),
-               alignedBufferSize,
-               alignedBufferSizePlusControlBlock,
-               controlBlockSize);
+    NES_TRACE("Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
+              reinterpret_cast<uintptr_t>(ptr),
+              alignedBufferSize,
+              alignedBufferSizePlusControlBlock,
+              controlBlockSize);
     auto memSegment = std::make_unique<detail::MemorySegment>(
         ptr + controlBlockSize,
         alignedBufferSize,
@@ -364,7 +364,7 @@ void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_DEBUG2("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
+    NES_DEBUG("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
     NES_ASSERT2_FMT((size_t) availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER

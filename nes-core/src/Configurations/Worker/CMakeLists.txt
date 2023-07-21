@@ -14,5 +14,5 @@
 add_source_files(nes-core
         WorkerConfiguration.cpp
         PhysicalSourceFactory.cpp
-        LocationFactory.cpp
+        GeoLocationFactory.cpp
 )

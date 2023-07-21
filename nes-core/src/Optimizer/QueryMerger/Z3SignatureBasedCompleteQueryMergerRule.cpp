@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
@@ -36,16 +37,16 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO2(
+    NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
-                     " Skipping the Signature Based Equal Query Merger Rule.");
+        NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG2("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
 
@@ -70,29 +71,21 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
-                NES_TRACE2("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
+                //Compute matched operator pairs
+                std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
+                matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
+
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
-                    //Get children of target and host sink operators
-                    auto targetSinkChildren = targetSinkOperator->getChildren();
-                    auto hostSinkChildren = hostSinkOperator->getChildren();
-                    //Iterate over target children operators and migrate their parents to the host children operators.
-                    // Once done, remove the target parent from the target children.
-                    for (auto& targetSinkChild : targetSinkChildren) {
-                        for (auto& hostChild : hostSinkChildren) {
-                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
-                            if (!addedNewParent) {
-                                NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
-                            }
-                            hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
-                        }
-                        targetSinkChild->removeParent(targetSinkOperator);
-                    }
-                    //Add target sink operator as root to the host query plan.
-                    hostQueryPlan->addRootOperator(targetSinkOperator);
+                    //add to the matched pair
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator, targetSinkOperator));
                 }
+
+                //add matched operators to the host shared query plan
+                hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
+
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
                 // exit the for loop as we found a matching address shared query meta data
@@ -102,7 +95,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
         }
 
         if (!matched) {
-            NES_DEBUG2("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

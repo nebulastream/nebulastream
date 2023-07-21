@@ -168,14 +168,20 @@ jobs:
             arch: "X64"
             require_build: "true"
             require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
             require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
           - osversion: ubuntu-22_04
             arch: "arm64"
             require_build: "true"
             require_test: "true"
+            build_parallelism: "8"
+            test_parallelism: "4"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -196,19 +202,19 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
-          cache_dir="/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "cache_dir=$cache_dir"
           mkdir -p $cache_dir
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -eNesBuildParallelism="16" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'

@@ -56,7 +56,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                                                       const OperatorNodePtr& operatorNode) {
 
     try {
-        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
+        NES_DEBUG("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->isUnaryOperator()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
@@ -75,45 +75,45 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         }
 
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for Source operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
             SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
             return createQuerySignatureForSource(context, sourceOperator);
         }
         if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for Sink operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
             NES_ASSERT(!children.empty(), "Sink operator should have at least one child.");
             return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
         } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for filter operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
             auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
             return createQuerySignatureForFilter(context, filterOperator);
         } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for Merge operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
             auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
             return createQuerySignatureForUnion(context, unionOperator);
         } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for Map operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
             auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
             return createQuerySignatureForMap(context, mapOperator);
         } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for window operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
             auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
             return createQuerySignatureForWindow(context, windowOperator);
         } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for Project operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
             auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
             return createQuerySignatureForProject(projectOperator);
         } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for watermark operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
             auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
             return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
         } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for join operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
 #ifdef TFDEF
-            NES_TRACE2("QuerySignatureUtil: Computing Signature for infer model operator");
+            NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
 #else
@@ -184,12 +184,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                 auto fieldRename = expression->as<FieldRenameExpressionNode>();
                 newFieldName = fieldRename->getNewFieldName();
                 fieldName = fieldRename->getOriginalField()->getFieldName();
-                NES_TRACE2("Renaming field {}", fieldName, " to {}", newFieldName);
+                NES_TRACE("Renaming field {}", fieldName, " to {}", newFieldName);
             } else {
                 auto fieldAccess = expression->as<FieldAccessExpressionNode>();
                 newFieldName = fieldAccess->getFieldName();
                 fieldName = newFieldName;
-                NES_TRACE2("Projecting field {}", fieldName);
+                NES_TRACE("Projecting field {}", fieldName);
             }
 
             auto found = schemaFieldToExprMap.find(fieldName);
@@ -355,8 +355,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto filterFieldMap = filterExprAndFieldMap->getFieldMap();
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
-    NES_TRACE2("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
-               "children signatures");
+    NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
+              "children signatures");
     //Fetch the signature of only children and get the column values
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
 
@@ -471,7 +471,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
                                                                    const UnionLogicalOperatorNodePtr& unionOperator) {
 
-    NES_DEBUG2("QuerySignatureUtil: Computing Signature from children signatures");
+    NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
     auto children = unionOperator->getChildren();
     auto leftSchema = unionOperator->getLeftInputSchema();
 
@@ -514,14 +514,14 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
 
     //Add condition to the array
     z3::expr_vector allConditions(*context);
-    NES_TRACE2("LeftSignature Conditions: {}", leftSignature->getConditions()->to_string());
-    NES_TRACE2("RightSignature Conditions: {}", rightSignature->getConditions()->to_string());
+    NES_TRACE("LeftSignature Conditions: {}", leftSignature->getConditions()->to_string());
+    NES_TRACE("RightSignature Conditions: {}", rightSignature->getConditions()->to_string());
     allConditions.push_back(*leftSignature->getConditions());
     allConditions.push_back(*rightSignature->getConditions());
 
     //combine union expressions
     //this is needed to prevent false containment identification
-    NES_TRACE2("LeftSignature source name qualifier: {}", unionOperator->getLeftInputSchema()->getSourceNameQualifier());
+    NES_TRACE("LeftSignature source name qualifier: {}", unionOperator->getLeftInputSchema()->getSourceNameQualifier());
     std::map<std::string, z3::ExprPtr> combinedUnionExpressions = leftSignature->getUnionExpressions();
     for (const auto& [sourceName, conditions] : rightSignature->getUnionExpressions()) {
         combinedUnionExpressions[sourceName] = conditions;
@@ -633,7 +633,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
     } else {
-        NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Type");
+        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
@@ -689,7 +689,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
 
-    NES_DEBUG2("QuerySignatureUtil: compute signature for window operator");
+    NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
 
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -710,7 +710,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
 
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     std::map<std::string, z3::ExprPtr> windowExpression;
-    NES_TRACE2("Create Window Signature");
+    NES_TRACE("Create Window Signature");
     uint64_t length = 0;
     uint64_t slide = 0;
     //Compute the expression for window time key
@@ -723,7 +723,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
         } else {
-            NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
+            NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
         }
         auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
         auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
@@ -762,7 +762,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                                     windowTimeSizeExpression};
         windowExpression.insert({"z3-window-expressions",
                                  std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)))});
-        NES_TRACE2("Time based window signature created.");
+        NES_TRACE("Time based window signature created.");
     } else {// for Threshold Window
         Z3_ast expressionArray[] = {windowKeyExpression};
         windowExpression.insert({"z3-window-expressions",
@@ -778,7 +778,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     z3::sort sort = context->int_sort();
     std::string aggregateTypes = "";
     for (auto windowAggregation : windowDefinition->getWindowAggregation()) {
-        NES_TRACE2("Current window aggregation: {}", windowAggregation->toString());
+        NES_TRACE("Current window aggregation: {}", windowAggregation->toString());
         switch (windowAggregation->getType()) {
             case Windowing::WindowAggregationDescriptor::Type::Count: {
                 aggregate = z3::function("Count", sort, sort);
@@ -805,7 +805,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                 break;
             }
             default: {
-                NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
+                NES_FATAL_ERROR("QuerySignatureUtil: could not cast aggregation type");
             }
         }
         // Get the expression for on field and update the column values
@@ -828,10 +828,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Iterate over all child schemas
     for (auto& schemaFieldToExprMap : schemaFieldToExprMaps) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
-        NES_TRACE2("Output Schema: {}", outputSchema->toString());
+        NES_TRACE("Output Schema: {}", outputSchema->toString());
         for (auto& outputField : outputSchema->fields) {
-            NES_TRACE2("Current outputField: {}", outputField->toString());
-            NES_TRACE2("Current outputField: {}", outputField->getName());
+            NES_TRACE("Current outputField: {}", outputField->toString());
+            NES_TRACE("Current outputField: {}", outputField->getName());
             auto originalAttributeName = outputField->getName();
             if (originalAttributeName.find("start") != std::string ::npos
                 || originalAttributeName.find("end") != std::string::npos
@@ -839,13 +839,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                 updatedSchemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
             } else if (Util::splitWithStringDelimiter<std::string>(originalAttributeName, "$")[1] == "count") {
-                NES_TRACE2("Count Attribute");
+                NES_TRACE("Count Attribute");
                 auto fieldAggregation =
                     allAggregates[std::distance(asFieldNames.begin(),
                                                 std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
                 auto expr = std::make_shared<z3::expr>(context->int_const(originalAttributeName.c_str()));
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, fieldAggregation(*expr)));
-                NES_TRACE2("UpdatedFieldExpr: {}", updatedFieldExpr->to_string());
+                NES_TRACE("UpdatedFieldExpr: {}", updatedFieldExpr->to_string());
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
                 auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(

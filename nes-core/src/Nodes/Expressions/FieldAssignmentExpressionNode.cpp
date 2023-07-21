@@ -88,7 +88,7 @@ void FieldAssignmentExpressionNode::inferStamp(const Optimizer::TypeInferencePha
     }
 }
 ExpressionNodePtr FieldAssignmentExpressionNode::copy() {
-    return std::make_shared<FieldAssignmentExpressionNode>(FieldAssignmentExpressionNode(this));
+    return FieldAssignmentExpressionNode::create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
 }
 
 }// namespace NES

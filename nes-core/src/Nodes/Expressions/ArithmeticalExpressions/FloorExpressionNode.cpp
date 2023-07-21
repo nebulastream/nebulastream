@@ -36,7 +36,7 @@ void FloorExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE2("FloorExpressionNode: converted stamp to float: {}", toString());
+    NES_TRACE("FloorExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool FloorExpressionNode::equal(NodePtr const& rhs) const {
@@ -53,6 +53,6 @@ std::string FloorExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr FloorExpressionNode::copy() { return std::make_shared<FloorExpressionNode>(FloorExpressionNode(this)); }
+ExpressionNodePtr FloorExpressionNode::copy() { return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
 
 }// namespace NES

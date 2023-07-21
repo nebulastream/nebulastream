@@ -64,7 +64,7 @@ void FixedSizeBufferPool::destroy() {
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
-    NES_DEBUG("buffers after=" << bufferManager->getAvailableBuffers() << " size of local buffers=" << exclusiveBuffers.size());
+    NES_DEBUG("buffers after={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 #else
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment)) {
@@ -117,7 +117,9 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
 }
 
 TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
-    NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: " << this);
+    std::stringstream buffer;
+    buffer << this;
+    NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: {}", buffer.str());
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);

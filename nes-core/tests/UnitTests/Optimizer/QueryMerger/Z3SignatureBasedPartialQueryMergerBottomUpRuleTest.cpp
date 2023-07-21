@@ -34,9 +34,9 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
+#include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
@@ -59,7 +59,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestW
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3SignatureBasedPartialQueryMergerBottomUpRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Z3SignatureBasedPartialQueryMergerBottomUpRuleTest test case.");
+        NES_INFO("Setup Z3SignatureBasedPartialQueryMergerBottomUpRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -247,7 +247,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
+    NES_INFO("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -386,8 +386,12 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    NES_INFO2("Shared Plan After Merging with Query 2\n{}", updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
+    NES_INFO("Shared Plan After Merging with Query 2\n{}", updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
     updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+
+    //Clear old change log entries by updating the processed till timestamp
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    updatedSharedQueryPlansDeploy[0]->updateProcessedChangeLogTimestamp(now);
 
     // execute merging shared query plan 1 and 3
     globalQueryPlan->addQueryPlan(queryPlan3);
@@ -400,27 +404,27 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
     auto updatedSharedQueryPlan1 = updatedSharedQueryPlansDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("Shared Plan After Merging with Query 3\n{}", updatedSharedQueryPlan1->toString());
+    NES_INFO("Shared Plan After Merging with Query 3\n{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_EQ(updatedRootOperators1.size(), 3U);
     EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 1U);
 
-    auto changeLog = updatedSharedQueryPlansDeploy[0]->getChangeLog();
-    EXPECT_EQ(changeLog->getAddition().size(), 1U);
+    now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changeLogEntries = updatedSharedQueryPlansDeploy[0]->getChangeLogEntries(now);
+    EXPECT_EQ(changeLogEntries.size(), 1U);
 
-    for (const auto& addition : changeLog->getAddition()) {
-        auto operatorNewBranchAddedTo = updatedSharedQueryPlan1->getOperatorWithId(addition.first->getId());
-        EXPECT_TRUE(operatorNewBranchAddedTo->instanceOf<FilterLogicalOperatorNode>());
+    for (const auto& upstreamOperator : changeLogEntries[0].second->upstreamOperators) {
+        EXPECT_TRUE(upstreamOperator->instanceOf<FilterLogicalOperatorNode>());
         // Three different map operators are added
-        EXPECT_TRUE(operatorNewBranchAddedTo->getParents().size() == 3U);
-        for (const auto& parent : operatorNewBranchAddedTo->getParents()) {
+        EXPECT_TRUE(upstreamOperator->getParents().size() == 3U);
+        for (const auto& parent : upstreamOperator->getParents()) {
             EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
         }
         // There are one physical sources
-        EXPECT_TRUE(operatorNewBranchAddedTo->getChildren().size() == 1U);
-        for (const auto& child : operatorNewBranchAddedTo->getChildren()) {
+        EXPECT_TRUE(upstreamOperator->getChildren().size() == 1U);
+        for (const auto& child : upstreamOperator->getChildren()) {
             EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
         }
     }
@@ -474,14 +478,14 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
+    NES_INFO("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::StopQuery);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
@@ -489,12 +493,12 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     EXPECT_TRUE(updatedSharedPlanAfterStopToDeploy.size() == 1);
 
     auto updatedSharedPlanAfterStop = updatedSharedPlanAfterStopToDeploy[0]->getQueryPlan();
-    auto changeLog = updatedSharedPlanAfterStopToDeploy[0]->getChangeLog();
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto changeLogEntries = updatedSharedPlanAfterStopToDeploy[0]->getChangeLogEntries(now);
 
     EXPECT_TRUE(updatedSharedPlanAfterStop);
-    NES_INFO2("{}", updatedSharedPlanAfterStop->toString());
 
-    ASSERT_EQ(changeLog->getRemoval().size(), 1UL);
+    ASSERT_EQ(changeLogEntries.size(), 1UL);
 
     //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
@@ -568,7 +572,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
+    NES_INFO("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
@@ -591,7 +595,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     }
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::StopQuery);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
@@ -601,7 +605,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     auto updatedSharedPlanAfterStop = updatedSharedPlanAfterStopToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
+    NES_INFO("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();

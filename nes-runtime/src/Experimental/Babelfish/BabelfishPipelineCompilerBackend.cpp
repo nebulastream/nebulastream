@@ -39,7 +39,7 @@ BabelfishPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Ru
     timer.start();
 
     auto serializedIr = IRSerialization().serialize(ir);
-    NES_DEBUG(serializedIr);
+    NES_DEBUG("{}", serializedIr);
     graal_isolatethread_t* isolate = NULL;
     NES_ASSERT(graal_create_isolate(NULL, NULL, &isolate) == 0, "Babelfish isolate could not be initialized");
 
@@ -48,7 +48,7 @@ BabelfishPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Ru
         std::make_shared<BabelfishExecutablePipeline>(executionContext, physicalOperatorPipeline, isolate, pipelineContext);
     timer.snapshot("Babelfish generation");
     timer.pause();
-    NES_INFO("BabelfishPipelineCompilerBackend TIME: " << timer);
+    NES_INFO("BabelfishPipelineCompilerBackend TIME: {}", timer);
     return exec;
 }
 }// namespace NES::ExecutionEngine::Experimental

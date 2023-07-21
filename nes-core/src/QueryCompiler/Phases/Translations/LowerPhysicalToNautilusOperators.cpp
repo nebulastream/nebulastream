@@ -46,11 +46,14 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -59,7 +62,9 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
@@ -122,7 +127,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
-        NES_INFO2("Node: {}", node->toString());
+        NES_INFO("Node: {}", node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
@@ -140,7 +145,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-    NES_INFO2("Lower node:{} to NautilusOperator.", operatorNode->toString());
+    NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -233,7 +238,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
         }
         // pass aggValues to ThresholdWindowHandler
-        auto handler = std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+        auto handler =
+            std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -265,62 +271,116 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         // As the projection is part of the emit, we can ignore this operator for now.
         return parentOperator;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
-        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
-
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinProbeOperator>()) {
+        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinProbeOperator>();
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(handlerIndex);
+        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinProbe>(
+            handlerIndex,
+            sinkOperator->getLeftInputSchema(),
+            sinkOperator->getRightInputSchema(),
+            sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+            sinkOperator->getJoinFieldNameLeft(),
+            sinkOperator->getJoinFieldNameRight());
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>()) {
+        const auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinProbeOperator>();
 
+        operatorHandlers.push_back(sinkOperator->getOperatorHandler());
+        const auto handlerIndex = operatorHandlers.size() - 1;
+        const auto leftInputSchema = sinkOperator->getLeftInputSchema();
+        const auto rightInputSchema = sinkOperator->getRightInputSchema();
+
+        auto joinSinkNautilus =
+            std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
+                                                                      leftInputSchema,
+                                                                      rightInputSchema,
+                                                                      sinkOperator->NES::BinaryOperatorNode::getOutputSchema(),
+                                                                      leftInputSchema->getSchemaSizeInBytes(),
+                                                                      rightInputSchema->getSchemaSizeInBytes(),
+                                                                      sinkOperator->getJoinFieldNameLeft(),
+                                                                      sinkOperator->getJoinFieldNameRight(),
+                                                                      sinkOperator->getWindowStartFieldName(),
+                                                                      sinkOperator->getWindowEndFieldName(),
+                                                                      sinkOperator->getWindowKeyFieldName());
+        pipeline.setRootOperator(joinSinkNautilus);
+        return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {
         auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinBuildOperator>();
 
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
-
-        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
-        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
-                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
-        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
-                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
-
+        //
         std::shared_ptr<Runtime::Execution::Operators::StreamHashJoinBuild> joinBuildNautilus;
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
-            auto timeFunction = std::make_shared<Runtime::Execution::Operators::IngestionTimeFunction>();
-            joinBuildNautilus =
-                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                                     isLeftSide,
-                                                                                     joinFieldName,
-                                                                                     buildOperator->getTimeStampFieldName(),
-                                                                                     joinSchema,
-                                                                                     timeFunction);
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
+                handlerIndex,
+                buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                buildOperator->getJoinFieldName(),
+                buildOperator->getTimeStampFieldName(),
+                buildOperator->getInputSchema(),
+                std::move(timeFunction));
         } else {
             auto timeStampFieldRecord =
                 std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
-            auto timeFunction = std::make_shared<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-            joinBuildNautilus =
-                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                                     isLeftSide,
-                                                                                     joinFieldName,
-                                                                                     buildOperator->getTimeStampFieldName(),
-                                                                                     joinSchema,
-                                                                                     timeFunction);
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
+                handlerIndex,
+                buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                buildOperator->getJoinFieldName(),
+                buildOperator->getTimeStampFieldName(),
+                buildOperator->getInputSchema(),
+                std::move(timeFunction));
         }
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()) {
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto tsField = buildOperator->getTimeStampFieldName();
+        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
+        std::shared_ptr<Runtime::Execution::Operators::NLJBuild> joinBuildNautilus;
+
+        if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
+                                                                                          buildOperator->getInputSchema(),
+                                                                                          buildOperator->getJoinFieldName(),
+                                                                                          buildOperator->getTimeStampFieldName(),
+                                                                                          isLeftSide,
+                                                                                          std::move(timeFunction));
+        } else {
+            auto timeStampFieldRecord =
+                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
+            auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
+                                                                                          buildOperator->getInputSchema(),
+                                                                                          buildOperator->getJoinFieldName(),
+                                                                                          buildOperator->getTimeStampFieldName(),
+                                                                                          isLeftSide,
+                                                                                          std::move(timeFunction));
+        }
+
+        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
+        return joinBuildNautilus;
+    }
 #ifdef TFDEF
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
+    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
         auto inferModel = lowerInferModelOperator(operatorNode, operatorHandlers);
         parentOperator->setChild(inferModel);
         return inferModel;
-#endif
     }
+#endif
     NES_NOT_IMPLEMENTED();
 }
 
@@ -529,12 +589,12 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                        uint64_t handlerIndex) {
-    NES_INFO2("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
+    NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-    NES_INFO2("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
+    NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
     auto minCount = thresholdWindowType->getMinimumCount();
 
@@ -548,11 +608,11 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                        return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
                    });
 
-    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
-                                                                            aggregationResultFieldNames,
-                                                                            minCount,
-                                                                            aggregationFunctions,
-                                                                            handlerIndex);
+    return std::make_shared<Runtime::Execution::Operators::UnkeyedThresholdWindow>(predicate,
+                                                                                   aggregationResultFieldNames,
+                                                                                   minCount,
+                                                                                   aggregationFunctions,
+                                                                                   handlerIndex);
 }
 
 #ifdef ENABLE_JNI
@@ -583,7 +643,7 @@ LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::Physic
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
-    NES_INFO2("Lower Window Aggregations to Nautilus Operator");
+    NES_INFO("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     std::transform(aggs.cbegin(),
                    aggs.cend(),

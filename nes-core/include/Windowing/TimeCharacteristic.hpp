@@ -62,6 +62,13 @@ class TimeCharacteristic final {
      */
     void setField(AttributeFieldPtr field);
 
+    /**
+     * @brief Compares for equality
+     * @param other: Object that we want to compare this to
+     * @return Boolean
+     */
+    virtual bool equals(const TimeCharacteristic& other) const;
+
     std::string toString();
     std::string getTypeAsString();
     TimeUnit getTimeUnit();

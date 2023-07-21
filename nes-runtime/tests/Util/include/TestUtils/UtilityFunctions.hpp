@@ -30,61 +30,31 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Util {
 /**
-     * @brief Creates a TupleBuffer from recordPtr
-     * @param recordPtr
-     * @param schema
-     * @param bufferManager
-     * @return Filled tupleBuffer
-     */
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager) {
-    auto buffer = bufferManager->getBufferBlocking();
-    uint8_t* bufferPtr = buffer.getBuffer();
-
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : schema->fields) {
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        std::memcpy(bufferPtr, recordPtr, fieldType->size());
-        bufferPtr += fieldType->size();
-        recordPtr += fieldType->size();
-    }
-    buffer.setNumberOfTuples(1);
-    return buffer;
-}
+ * @brief Creates a TupleBuffer from recordPtr
+ * @param recordPtr
+ * @param schema
+ * @param bufferManager
+ * @return Filled tupleBuffer
+ */
+Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager);
 
 /**
-     * @brief Writes from the nautilusRecord to the record at index recordIndex
-     * @param recordIndex
-     * @param baseBufferPtr
-     * @param nautilusRecord
-     * @param schema
-     * @param bufferManager
-     */
+ * @brief Writes from the nautilusRecord to the record at index recordIndex
+ * @param recordIndex
+ * @param baseBufferPtr
+ * @param nautilusRecord
+ * @param schema
+ * @param bufferManager
+ */
 void writeNautilusRecord(uint64_t recordIndex,
                          int8_t* baseBufferPtr,
                          Nautilus::Record nautilusRecord,
                          SchemaPtr schema,
-                         BufferManagerPtr bufferManager) {
-    Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
-    Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-        auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
-
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
-
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
-        auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
-
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
-
-    } else {
-        NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
-    }
-}
+                         BufferManagerPtr bufferManager);
 
 /**
  * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
@@ -96,29 +66,7 @@ void writeNautilusRecord(uint64_t recordIndex,
  */
 Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
                                   const SchemaPtr schema,
-                                  Runtime::BufferManagerPtr bufferManager) {
-
-    auto retBuffer = bufferManager->getBufferBlocking();
-    auto retBufferPtr = retBuffer.getBuffer();
-
-    auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
-    auto cnt = 0UL;
-    for (auto& buffer : buffersToBeMerged) {
-        cnt += buffer.getNumberOfTuples();
-        if (cnt > maxPossibleTuples) {
-            NES_WARNING("Too many tuples to fit in a single buffer.");
-            return retBuffer;
-        }
-
-        auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
-        std::memcpy(retBufferPtr, buffer.getBuffer(), bufferSize);
-
-        retBufferPtr += bufferSize;
-        retBuffer.setNumberOfTuples(cnt);
-    }
-
-    return retBuffer;
-}
+                                  Runtime::BufferManagerPtr bufferManager);
 
 /**
  * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -133,56 +81,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
                                                          SchemaPtr schema,
                                                          const std::string& timeStampFieldName,
                                                          BufferManagerPtr bufferManager,
-                                                         uint64_t windowSize) {
-    if (buffers.size() == 0) {
-        return std::vector<Runtime::TupleBuffer>();
-    }
-
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
-    }
-
-    NES_INFO("Merging buffers together!");
-
-    std::vector<Runtime::TupleBuffer> retVector;
-
-    auto curBuffer = bufferManager->getBufferBlocking();
-    auto numberOfTuplesInBuffer = 0UL;
-    auto lastTimeStamp = windowSize - 1;
-    for (auto buf : buffers) {
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
-
-        for (auto curTuple = 0UL; curTuple < dynamicTupleBuffer.getNumberOfTuples(); ++curTuple) {
-            if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp
-                || numberOfTuplesInBuffer >= memoryLayout->getCapacity()) {
-
-                if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
-                    lastTimeStamp += windowSize;
-                }
-
-                curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-                retVector.emplace_back(std::move(curBuffer));
-
-                curBuffer = bufferManager->getBufferBlocking();
-                numberOfTuplesInBuffer = 0;
-            }
-
-            memcpy(curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
-                   buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple,
-                   schema->getSchemaSizeInBytes());
-            numberOfTuplesInBuffer += 1;
-            curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-        }
-    }
-
-    if (numberOfTuplesInBuffer > 0) {
-        curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-        retVector.emplace_back(std::move(curBuffer));
-    }
-
-    return retVector;
-}
+                                                         uint64_t windowSize);
 
 /**
  * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
@@ -195,54 +94,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort,
                                                            SchemaPtr schema,
                                                            const std::string& sortFieldName,
-                                                           BufferManagerPtr bufferManager) {
-    if (buffersToSort.size() == 0) {
-        return std::vector<Runtime::TupleBuffer>();
-    }
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
-    }
-
-    std::vector<Runtime::TupleBuffer> retVector;
-    for (auto bufRead : buffersToSort) {
-        std::vector<size_t> indexAlreadyInNewBuffer;
-        auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuf = Runtime::MemoryLayouts::DynamicTupleBuffer(memLayout, bufRead);
-
-        auto bufRet = bufferManager->getBufferBlocking();
-
-        for (auto outer = 0UL; outer < bufRead.getNumberOfTuples(); ++outer) {
-            auto smallestIndex = bufRead.getNumberOfTuples() + 1;
-            for (auto inner = 0UL; inner < bufRead.getNumberOfTuples(); ++inner) {
-                if (std::find(indexAlreadyInNewBuffer.begin(), indexAlreadyInNewBuffer.end(), inner)
-                    != indexAlreadyInNewBuffer.end()) {
-                    // If we have already moved this index into the
-                    continue;
-                }
-
-                auto sortValueCur = dynamicTupleBuf[inner][sortFieldName].read<uint64_t>();
-                auto sortValueOld = dynamicTupleBuf[smallestIndex][sortFieldName].read<uint64_t>();
-
-                if (smallestIndex == bufRead.getNumberOfTuples() + 1) {
-                    smallestIndex = inner;
-                    continue;
-                } else if (sortValueCur < sortValueOld) {
-                    smallestIndex = inner;
-                }
-            }
-            indexAlreadyInNewBuffer.emplace_back(smallestIndex);
-            auto posRet = bufRet.getNumberOfTuples();
-            memcpy(bufRet.getBuffer() + posRet * schema->getSchemaSizeInBytes(),
-                   bufRead.getBuffer() + smallestIndex * schema->getSchemaSizeInBytes(),
-                   schema->getSchemaSizeInBytes());
-            bufRet.setNumberOfTuples(posRet + 1);
-        }
-        retVector.emplace_back(bufRet);
-        bufRet = bufferManager->getBufferBlocking();
-    }
-
-    return retVector;
-}
+                                                           BufferManagerPtr bufferManager);
 
 /**
  * @brief Creates a TupleBuffer from a Nautilus::Record
@@ -251,15 +103,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
  * @param bufferManager
  * @return Filled TupleBuffer
  */
-Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
-    auto buffer = bufferManager->getBufferBlocking();
-    int8_t* bufferPtr = (int8_t*) buffer.getBuffer();
-
-    writeNautilusRecord(0, bufferPtr, nautilusRecord, schema, bufferManager);
-
-    buffer.setNumberOfTuples(1);
-    return buffer;
-}
+Runtime::TupleBuffer
+getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
  * @brief create CSV lines from the tuples
@@ -267,29 +112,65 @@ Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, Schema
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
-    std::stringstream ss;
-    auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto* buffer = tbuffer.getBuffer<char>();
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t i = 0; i < numberOfTuples; i++) {
-        uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++) {
-            auto field = schema->get(j);
-            auto ptr = field->getDataType();
-            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
-            auto fieldSize = physicalType->size();
-            auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
-            ss << str.c_str();
-            if (j < schema->getSize() - 1) {
-                ss << ",";
-            }
-            offset += fieldSize;
-        }
-        ss << std::endl;
-    }
-    return ss.str();
-}
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+
+// TODO Once #3693 is done, we can use the same function in UtilityFunction
+/**
+ * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
+ * @param csvFile
+ * @param schema
+ * @param timeStampFieldName
+ * @param lastTimeStamp
+ * @param bufferManager
+ * @return Vector of TupleBuffers
+ */
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
+                                                                            const SchemaPtr& schema,
+                                                                            Runtime::BufferManagerPtr bufferManager,
+                                                                            uint64_t originId = 0,
+                                                                            const std::string& timestampFieldname = "ts");
+
+// TODO Once #3693 is done, we can use the same function in UtilityFunction
+/**
+ * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
+ * @param value: string value that is cast to the PhysicalType and written to the TupleBuffer
+ * @param schemaFieldIndex: field/attribute that is currently processed
+ * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
+ * @param json: denotes whether input comes from JSON for correct parsing
+ * @param schema: the schema the data are supposed to have
+ * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
+ * @param bufferManager: the buffer manager
+ */
+void writeFieldValueToTupleBuffer(std::string inputString,
+                                  uint64_t schemaFieldIndex,
+                                  Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                  const SchemaPtr& schema,
+                                  uint64_t tupleCount,
+                                  const Runtime::BufferManagerPtr& bufferManager);
+
+/**
+ * @brief function to replace all string occurrences
+ * @param data input string will be replaced in-place
+ * @param toSearch search string
+ * @param replaceStr replace string
+ */
+void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
+
+/**
+ * @brief Returns a vector that contains all the physical types from the schema
+ * @param schema
+ * @return std::vector<PhysicalTypePtr>
+ */
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
+
+/**
+ * @brief checks if the buffers contain the same tuples
+ * @param buffer1
+ * @param buffer2
+ * @param schema
+ * @return True if the buffers contain the same tuples
+ */
+bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
  * @brief Gets the physical type of a given type given as template parameter
@@ -315,6 +196,10 @@ PhysicalTypePtr getPhysicalTypePtr() {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
     } else if (typeid(uint8_t) == typeid(T)) {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
+    } else if (typeid(float) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+    } else if (typeid(double) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     } else {
         NES_THROW_RUNTIME_ERROR("Type not supported");
     }

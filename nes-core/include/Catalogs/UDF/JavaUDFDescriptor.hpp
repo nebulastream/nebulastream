@@ -19,7 +19,6 @@
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace NES::Catalogs::UDF {
@@ -27,7 +26,10 @@ namespace NES::Catalogs::UDF {
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
-using JavaUDFByteCodeList = std::unordered_map<std::string, JavaByteCode>;
+// We use a vector for JavaUDFByteCodeList because we need to insert the classes into the JVM in a well-defined order
+// that is provided by the Java client.
+using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
+using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
 
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;

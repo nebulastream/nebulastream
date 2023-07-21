@@ -65,7 +65,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     ~AggregationWindowHandler() override {
-        NES_DEBUG2("~AggregationWindowHandler({}, {}) finished destructor", handlerType, id);
+        NES_DEBUG("~AggregationWindowHandler({}, {}) finished destructor", handlerType, id);
         stop();
     }
 
@@ -96,14 +96,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
-        NES_DEBUG2("AggregationWindowHandler({}, {}): stop called", handlerType, id);
+        NES_DEBUG("AggregationWindowHandler({}, {}): stop called", handlerType, id);
         auto expected = true;
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
             result = executablePolicyTrigger->stop();
             stateManager->unRegisterState(windowStateVariable);
         }
-        NES_DEBUG2("AggregationWindowHandler({}, {}):  stop result = {}", handlerType, id, result);
+        NES_DEBUG("AggregationWindowHandler({}, {}):  stop result = {}", handlerType, id, result);
         return result;
     }
 
@@ -154,12 +154,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
-        NES_TRACE2("AggregationWindowHandler({},{}):  run window trigger {} distribution type={} forceFlush={}",
-                   handlerType,
-                   id,
-                   executableWindowAction->toString(),
-                   windowDefinition->getDistributionType()->toString(),
-                   forceFlush);
+        NES_TRACE("AggregationWindowHandler({},{}):  run window trigger {} distribution type={} forceFlush={}",
+                  handlerType,
+                  id,
+                  executableWindowAction->toString(),
+                  windowDefinition->getDistributionType()->toString(),
+                  forceFlush);
         uint64_t watermark = 0;
         if (!forceFlush) {
             watermark = getMinWatermark();
@@ -180,11 +180,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             }
 
             auto allowedLateness = windowManager->getAllowedLateness();
-            NES_TRACE2("For flushing maxWatermark = {} window size={} trigger ts ={} allowedLateness={}",
-                       watermark,
-                       windowSize,
-                       watermark + windowSize,
-                       allowedLateness);
+            NES_TRACE("For flushing maxWatermark = {} window size={} trigger ts ={} allowedLateness={}",
+                      watermark,
+                      windowSize,
+                      watermark + windowSize,
+                      allowedLateness);
             watermark = watermark + windowSize + allowedLateness;
         }
 
@@ -203,26 +203,26 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
             if (runningWatermark != std::numeric_limits<uint64_t>::max()) {
                 lastWatermark = runningWatermark;
-                NES_TRACE2("AggregationWindowHandler({}, {}): set lastWatermark to min value of stores={}",
-                           handlerType,
-                           id,
-                           lastWatermark);
+                NES_TRACE("AggregationWindowHandler({}, {}): set lastWatermark to min value of stores={}",
+                          handlerType,
+                          id,
+                          lastWatermark);
 
             } else {
-                NES_TRACE2("AggregationWindowHandler({}, {}): as there is no buffer yet in any store, we cannot trigger",
-                           handlerType,
-                           id);
+                NES_TRACE("AggregationWindowHandler({}, {}): as there is no buffer yet in any store, we cannot trigger",
+                          handlerType,
+                          id);
                 return;
             }
         }
 
-        NES_TRACE2("AggregationWindowHandler({}, {}): run doing with watermark={}", handlerType, id, lastWatermark);
+        NES_TRACE("AggregationWindowHandler({}, {}): run doing with watermark={}", handlerType, id, lastWatermark);
 
         executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark, workerContext);
-        NES_TRACE2("AggregationWindowHandler({}, {}):  set lastWatermark to={}",
-                   handlerType,
-                   id,
-                   std::max(watermark, lastWatermark));
+        NES_TRACE("AggregationWindowHandler({}, {}):  set lastWatermark to={}",
+                  handlerType,
+                  id,
+                  std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
 
         if (forceFlush) {

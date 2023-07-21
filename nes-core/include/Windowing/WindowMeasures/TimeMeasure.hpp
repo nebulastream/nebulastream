@@ -33,6 +33,13 @@ class TimeMeasure : public WindowMeasure {
 
     std::string toString() override;
 
+    /**
+     * @brief Compares for equality
+     * @param other: TimeMeasure
+     * @return Boolean
+     */
+    bool equals(const TimeMeasure& other) const;
+
   private:
     const uint64_t ms;
 };

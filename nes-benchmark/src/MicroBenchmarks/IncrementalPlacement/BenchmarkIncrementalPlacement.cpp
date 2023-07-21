@@ -20,6 +20,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -41,7 +42,7 @@
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -163,10 +164,10 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
     //Register root worker
-    topologyManagerService->registerWorker("1", 0, 0, UINT16_MAX, properties);
+    topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "1", 0, 0, UINT16_MAX, properties);
     //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(std::to_string(i), 0, 0, UINT16_MAX, properties);
+        topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
@@ -235,19 +236,19 @@ std::vector<std::string> split(const std::string input, char delim) {
  */
 Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
 
-    NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: " << filePath << " .");
+    NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: {} .", filePath);
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
             return config;
         } catch (std::exception& e) {
-            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file."
-                      << e.what());
+            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}",
+                      e.what());
             throw e;
         }
     }
-    NES_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at " << filePath << ".");
+    NES_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at {}.", filePath);
     NES_THROW_RUNTIME_ERROR("Unable to find benchmark run configuration.");
 }
 
@@ -369,9 +370,11 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "Parsed all queries." << std::endl;
 
+    auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
     //Set optimizer configuration
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+    coordinatorConfiguration->optimizer = optimizerConfiguration;
 
     //Perform benchmark for each run configuration
     auto runConfig = configs["RunConfig"];
@@ -379,6 +382,7 @@ int main(int argc, const char* argv[]) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
+        coordinatorConfiguration->enableQueryReconfiguration = incrementalPlacement;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
@@ -395,26 +399,30 @@ int main(int argc, const char* argv[]) {
             Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
             auto globalQueryPlan = GlobalQueryPlan::create();
+            auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                         queryCatalogService,
                                                                                         sourceCatalog,
                                                                                         globalQueryPlan,
                                                                                         z3Context,
-                                                                                        optimizerConfiguration,
-                                                                                        udfCatalog);
+                                                                                        coordinatorConfiguration,
+                                                                                        udfCatalog,
+                                                                                        globalExecutionPlan);
 
-            auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase =
-                Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, incrementalPlacement);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              coordinatorConfiguration);
 
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {
 
                 auto queryPlan = queryObjects[i];
                 queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
-                PlacementStrategy queryPlacementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategy).value();
-                auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
+                Optimizer::PlacementStrategy queryPlacementStrategy =
+                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
+                auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();

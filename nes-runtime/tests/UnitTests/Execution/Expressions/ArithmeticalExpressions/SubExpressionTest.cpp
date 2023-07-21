@@ -37,13 +37,13 @@ TEST_F(SubExpressionTest, subIntegers) {
 
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) 42));
+        auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 42), Value<Int16>((int16_t) 42));
+        auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
     }// Int32
@@ -54,7 +54,7 @@ TEST_F(SubExpressionTest, subIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 42), Value<Int64>((int64_t) 42));
+        auto resultValue = expression.eval(Value<Int64>(42_s64), Value<Int64>(42_s64));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int64>());
     }
@@ -65,29 +65,29 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 42), Value<UInt8>((uint8_t) 42));
-        ASSERT_EQ(resultValue, (uint8_t) 0);
+        auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
+        ASSERT_EQ(resultValue, 0_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 42), Value<UInt16>((uint16_t) 42));
-        ASSERT_EQ(resultValue, (uint16_t) 0);
+        auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
+        ASSERT_EQ(resultValue, 0_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
     }// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
-        ASSERT_EQ(resultValue, (uint32_t) 0);
+        ASSERT_EQ(resultValue, 0_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 42));
-        ASSERT_EQ(resultValue, (uint64_t) 0);
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
+        ASSERT_EQ(resultValue, 0_u64);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
 
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 42), Value<UInt64>((uint64_t) 43));
+        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(43_u64));
         ASSERT_EQ(resultValue, UINT64_MAX);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }

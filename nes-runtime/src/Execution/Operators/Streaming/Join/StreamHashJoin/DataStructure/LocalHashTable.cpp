@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -24,50 +23,12 @@ LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                FixedPagesAllocator& fixedPagesAllocator,
                                size_t pageSize,
                                size_t preAllocPageSizeCnt)
-    : mask(numPartitions - 1) {
-
-    for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(
-            std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize, preAllocPageSizeCnt));
-    }
-}
+    : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
-    NES_DEBUG2("into key={} bucket={}", key, getBucketPos(hashedKey));
-    return buckets[getBucketPos(hashedKey)]->append(hashedKey);
-}
-
-size_t LocalHashTable::getBucketPos(uint64_t hash) const {
-    if (mask == 0) {
-        return 0;
-    }
-    return hash % mask;
-}
-
-FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) {
-    NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
-
-    return buckets[bucketPos].get();
-}
-
-uint64_t LocalHashTable::getNumberOfTuples() {
-    size_t cnt = 0;
-    for (auto& bucket : buckets) {
-        NES_TRACE2("BUCKET ", cnt++);
-        for (auto& page : bucket->getPages()) {
-            cnt += page->size();
-        }
-    }
-    return cnt;
-}
-
-void LocalHashTable::printStatistics() {
-    size_t cnt = 0;
-    for (auto& bucket : buckets) {
-        NES_TRACE2("BUCKET ", cnt++);
-        bucket->printStatistics();
-    }
+    NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
+    return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
 }
 
 }// namespace NES::Runtime::Execution::Operators

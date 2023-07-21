@@ -19,6 +19,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
@@ -62,15 +63,16 @@ class SynopsisAggregationConfig {
 
     /**
      * @brief Creates an aggregation config for a synopsis
-     * @param type
-     * @param fieldNameAggregation
-     * @param fieldNameApproximate
-     * @param timestampFieldName
-     * @param inputSchema
-     * @param outputSchema
+     * @param type: Aggregation type of this synopsis
+     * @param fieldNameAggregation: Name of the field over which to perform the approximation
+     * @param fieldNameApproximate: Name of the field, where to store the approximation
+     * @param timestampFieldName: Name of the timestamp field
+     * @param inputSchema: Input schema
+     * @param outputSchema: Output schema
      * @return SynopsisAggregationConfig
      */
     static SynopsisAggregationConfig create(const Aggregation_Type& type,
+                                            const std::string& fieldNameKey,
                                             const std::string& fieldNameAggregation,
                                             const std::string& fieldNameApproximate,
                                             const std::string& timestampFieldName,
@@ -103,62 +105,54 @@ class SynopsisAggregationConfig {
     Runtime::Execution::Aggregation::AggregationFunctionPtr createAggregationFunction();
 
     /**
-     * @brief Creates an aggregation value from the current parameters
-     * @return AggregationValue
+     * @brief Gets the physical type of the input
+     * @return PhysicalTypePtr
      */
-    AggregationValuePtr createAggregationValue();
+    PhysicalTypePtr getInputType() const;
+
+    /**
+     * @brief Gets the physical type of the final output
+     * @return PhysicalTypePtr
+     */
+    PhysicalTypePtr getFinalType() const;
+
+    /**
+     * @brief Gets a ReadFieldExpression for reading the aggregation value
+     * @return Shared pointer of type ReadFieldExpression
+     */
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldAggregationExpression() const;
+
+    /**
+     * @brief Gets a ReadFieldExpression for reading the key value
+     * @return Shared pointer of type ReadFieldExpression
+     */
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldKeyExpression() const;
+
+
 
 
   private:
 
     /**
      * @brief Custom constructor
-     * @param type
-     * @param fieldNameAggregation
-     * @param fieldNameApproximate
-     * @param timestampFieldName
-     * @param inputSchema
-     * @param outputSchema
+     * @param type: Aggregation type of this synopsis
+     * @param fieldNameAggregation: Name of the field over which to perform the approximation
+     * @param fieldNameApproximate: Name of the field, where to store the approximation
+     * @param timestampFieldName: Name of the timestamp field
+     * @param inputSchema: Input schema
+     * @param outputSchema: Output schema
      */
     explicit SynopsisAggregationConfig(const Aggregation_Type& type,
+                                       const std::string& fieldNameKey,
                                        const std::string& fieldNameAggregation,
                                        const std::string& fieldNameApproximate,
                                        const std::string& timestampFieldName,
                                        const SchemaPtr& inputSchema,
                                        const SchemaPtr& outputSchema);
 
-    /**
-     * @brief Creates an aggregation value from the current parameters for a min aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueMin();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a max aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueMax();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a count aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueCount();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for an average aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueAverage();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a sum aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueSum();
-
   public:
     Aggregation_Type type;
+    std::string fieldNameKey;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     std::string timeStampFieldName;

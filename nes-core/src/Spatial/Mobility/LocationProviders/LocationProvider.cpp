@@ -35,7 +35,7 @@ DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
         case Spatial::Experimental::SpatialType::FIXED_LOCATION: return DataTypes::Experimental::Waypoint(workerGeoLocation);
         case Spatial::Experimental::SpatialType::NO_LOCATION:
         case Spatial::Experimental::SpatialType::INVALID:
-            NES_WARNING2("Location Provider has invalid spatial type")
+            NES_WARNING("Location Provider has invalid spatial type")
             return DataTypes::Experimental::Waypoint(DataTypes::Experimental::Waypoint::invalid());
     }
 }
@@ -48,11 +48,11 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
             locationProvider =
                 std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->nodeSpatialType,
                                                                                          workerConfig->locationCoordinates);
-            NES_INFO2("creating base location provider")
+            NES_INFO("creating base location provider")
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::CSV:
             if (workerConfig->mobilityConfiguration.locationProviderConfig.getValue().empty()) {
-                NES_FATAL_ERROR2("cannot create csv location provider if no provider config is set");
+                NES_FATAL_ERROR("cannot create csv location provider if no provider config is set");
                 exit(EXIT_FAILURE);
             }
             locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(
@@ -60,7 +60,7 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
                 workerConfig->mobilityConfiguration.locationProviderSimulatedStartTime);
             break;
         case NES::Spatial::Mobility::Experimental::LocationProviderType::INVALID:
-            NES_FATAL_ERROR2("Trying to create location provider but provider type is invalid");
+            NES_FATAL_ERROR("Trying to create location provider but provider type is invalid");
             exit(EXIT_FAILURE);
     }
 

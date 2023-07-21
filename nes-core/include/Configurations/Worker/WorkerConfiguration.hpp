@@ -17,7 +17,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/LocationFactory.hpp>
+#include <Configurations/Worker/GeoLocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
@@ -50,6 +50,12 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Factory function for a worker config
      */
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
+
+    /**
+     * @brief Id of the Worker.
+     * This is used to uniquely identify workers within the cluster.
+     */
+    UIntOption workerId = {WORKER_ID, INVALID_TOPOLOGY_NODE_ID, "Worker id."};
 
     /**
      * @brief IP of the Worker.
@@ -183,7 +189,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::LocationFactory>
+    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation,
+               Configurations::Spatial::Index::Experimental::GeoLocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
@@ -257,7 +264,8 @@ class WorkerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&localWorkerIp,
+        return {&workerId,
+                &localWorkerIp,
                 &coordinatorIp,
                 &rpcPort,
                 &dataPort,

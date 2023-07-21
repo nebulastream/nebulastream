@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -24,6 +27,8 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
 }
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() const { return predicate; }
+
+void FilterLogicalOperatorNode::setPredicate(ExpressionNodePtr newPredicate) { predicate = std::move(newPredicate); }
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;
@@ -69,7 +74,7 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
 
 void FilterLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("FilterLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("FilterLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "FilterLogicalOperatorNode: Filter should have children");
 
     //Infer query signatures for child operators
@@ -88,4 +93,23 @@ void FilterLogicalOperatorNode::inferStringSignature() {
 }
 float FilterLogicalOperatorNode::getSelectivity() { return selectivity; }
 void FilterLogicalOperatorNode::setSelectivity(float newSelectivity) { selectivity = newSelectivity; }
+
+std::vector<std::string> FilterLogicalOperatorNode::getFieldNamesUsedByFilterPredicate() {
+    NES_TRACE("FilterLogicalOperatorNode: Find all field names used in filter operator");
+
+    //vector to save the names of all the fields that are used in this predicate
+    std::vector<std::string> fieldsInPredicate;
+
+    //iterator to go over all the fields of the predicate
+    DepthFirstNodeIterator depthFirstNodeIterator(predicate);
+    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
+        //if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
+        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            fieldsInPredicate.push_back(accessExpressionNode->getFieldName());
+        }
+    }
+
+    return fieldsInPredicate;
+}
 }// namespace NES

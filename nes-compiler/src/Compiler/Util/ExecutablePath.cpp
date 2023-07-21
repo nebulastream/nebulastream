@@ -108,8 +108,9 @@ RuntimePathConfig loadRuntimePathConfig() {
             throw CompilerException("Selected lib path dose not exists. Path: " + libDir);
         }
     }
-
-    NES_INFO("RuntimePathConfig: " << runtimePathConfig);
+    std::stringstream runtimePath;
+    runtimePath << runtimePathConfig;
+    NES_INFO("RuntimePathConfig: {}", runtimePath.str());
 
     return runtimePathConfig;
 }
@@ -180,10 +181,14 @@ std::filesystem::path getLibPath(std::string libName) {
     auto libPath = detail::recursiveFindFileReverse(executablePath, libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
-        NES_DEBUG("Library " << libName << " found at: " << libPath.parent_path());
+        std::stringstream pathAsString;
+        pathAsString << libPath.parent_path();
+        NES_DEBUG("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     } else {
-        NES_DEBUG("Invalid " << libName << " file found at " << libPath << ". Searching next in DYLD_LIBRARY_PATH.");
+        std::stringstream libPathStr;
+        libPathStr << libPath.parent_path();
+        NES_DEBUG("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPathStr.str());
 
         std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
         std::string path;
@@ -194,12 +199,14 @@ std::filesystem::path getLibPath(std::string libName) {
             }
             libPath = detail::recursiveFindFileReverse(path, libName);
             if (std::filesystem::is_regular_file(libPath)) {
-                NES_DEBUG("Library " << libName << "found at: " << libPath.parent_path());
+                std::stringstream pathStr;
+                pathStr << libPath.parent_path();
+                NES_DEBUG("Library {} found at: {}", libName, pathStr.str());
                 return libPath;
             }
         }
     }
-    NES_FATAL_ERROR("No valid " << libName << " found in executable path or DYLD_LIBRARY_PATH.");
+    NES_FATAL_ERROR("No valid {} found in executable path or DYLD_LIBRARY_PATH.", libName);
     return std::filesystem::current_path();
 }
 
@@ -224,7 +231,9 @@ std::filesystem::path getLibPath(std::string libName) {
     auto libPath = detail::recursiveFindFileReverse(executablePath, "lib").append(libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
-        NES_DEBUG("Library " << libName << " found at: " << libPath.parent_path());
+        std::stringstream pathAsString;
+        pathAsString << libPath.parent_path();
+        NES_DEBUG("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     }
     throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());
@@ -236,7 +245,9 @@ std::filesystem::path getPublicIncludes() {
     auto executablePath = getExecutablePath();
     auto includePath = detail::recursiveFindFileReverse(executablePath, "include").append("nebulastream");
     if (exists(includePath)) {
-        NES_DEBUG("NebulaStream include path found at " << includePath);
+        std::stringstream path;
+        path << includePath;
+        NES_DEBUG("NebulaStream include path found at {}", path.str());
         return includePath;
     }
     throw CompilerException("NebulaStream include path found not found. Executable path is: " + executablePath.string());
@@ -249,10 +260,12 @@ std::filesystem::path getClangPath() {
     auto executablePath = getExecutablePath();
     auto nesClangPath = executablePath.parent_path().append("nes-clang");
     if (std::filesystem::exists(nesClangPath)) {
-        NES_DEBUG("Clang found at: " << nesClangPath);
+        std::stringstream path;
+        path << nesClangPath;
+        NES_DEBUG("Clang found at: {}", path.str());
         return std::filesystem::path(nesClangPath);
     } else if (std::filesystem::exists(CLANG_EXECUTABLE)) {
-        NES_DEBUG("Clang found at: " << CLANG_EXECUTABLE);
+        NES_DEBUG("Clang found at: {}", CLANG_EXECUTABLE);
         return std::filesystem::path(CLANG_EXECUTABLE);
     }
     throw CompilerException("Path to clang executable not found");

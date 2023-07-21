@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -71,7 +72,7 @@ GlobalSlicePreAggregation::GlobalSlicePreAggregation(
 
 void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = (uint64_t) 0;
+    Value<UInt64> entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }

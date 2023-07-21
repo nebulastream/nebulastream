@@ -5,18 +5,21 @@ synopsis:
 aggregation:
   - type: MIN
     inputFile: "uniform_key_value_timestamp.csv"
+    fieldNameKey: "id"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: SUM
     inputFile: "uniform_key_value_timestamp.csv"
+    fieldNameKey: "id"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: MAX
     inputFile: "uniform_key_multiple_values_timestamp.csv"
+    fieldNameKey: "id"
     fieldNameAgg: "value1"
     timestamp: "ts"
     fieldNameApprox: "aggregation"

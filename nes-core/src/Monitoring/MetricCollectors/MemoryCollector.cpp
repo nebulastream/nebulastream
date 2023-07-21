@@ -26,7 +26,7 @@ namespace NES::Monitoring {
 MemoryCollector::MemoryCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(MemoryMetrics::getSchema("")) {
-    NES_INFO2("MemoryCollector: Init MemoryCollector with schema {}", schema->toString());
+    NES_INFO("MemoryCollector: Init MemoryCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType MemoryCollector::getType() { return MetricCollectorType::MEMORY_COLLECTOR; }
@@ -37,7 +37,7 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
-        NES_ERROR2("MemoryCollector: Error while collecting metrics {}", ex.what());
+        NES_ERROR("MemoryCollector: Error while collecting metrics {}", ex.what());
         return false;
     }
     return true;

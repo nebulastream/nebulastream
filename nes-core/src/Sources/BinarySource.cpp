@@ -46,7 +46,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
     input.seekg(0, std::ifstream::end);
     fileSize = input.tellg();
     if (fileSize < 0) {
-        NES_FATAL_ERROR2("ERROR: File {} is corrupted", _file_path);
+        NES_FATAL_ERROR("ERROR: File {} is corrupted", _file_path);
     }
     input.seekg(0, std::ifstream::beg);
     tupleSize = schema->getSchemaSizeInBytes();

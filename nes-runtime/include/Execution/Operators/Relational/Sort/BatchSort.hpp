@@ -21,6 +21,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+enum class SortOrder : uint8_t { Ascending, Descending };
+
 /**
  * @brief Batch sort operator.
  * The batch sort operator, consumes input tuples and materializes them in a global state.
@@ -34,7 +36,11 @@ class BatchSort : public ExecutableOperator {
      * @param operatorHandlerIndex operator handler index
      * @param dataTypes data types of the input tuples
      */
-    BatchSort(const uint64_t operatorHandlerIndex, const std::vector<PhysicalTypePtr>& dataTypes);
+    BatchSort(uint64_t operatorHandlerIndex,
+              const std::vector<PhysicalTypePtr>& dataTypes,
+              const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+              const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers,
+              SortOrder sortOrder = SortOrder::Ascending);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx) const override;
@@ -43,6 +49,9 @@ class BatchSort : public ExecutableOperator {
     const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
     const uint64_t operatorHandlerIndex;
     const std::vector<PhysicalTypePtr> dataTypes;
+    const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
+    const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
+    const SortOrder sortOrder;
 };
 
 }// namespace NES::Runtime::Execution::Operators

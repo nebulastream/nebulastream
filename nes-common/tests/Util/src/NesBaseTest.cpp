@@ -76,7 +76,7 @@ void NESBaseTest::SetUp() {
         restPort = detail::getPortDispatcher().getNextPort();
         rpcCoordinatorPort = detail::getPortDispatcher().getNextPort();
     } else {
-        NES_ERROR2("SetUp called twice in {}", typeid(*this).name());
+        NES_ERROR("SetUp called twice in {}", typeid(*this).name());
     }
 }
 
@@ -98,17 +98,17 @@ void NESBaseTest::TearDown() {
         NES::Testing::TestWithErrorHandling::TearDown();
         completeTest();
     } else {
-        NES_ERROR2("TearDown called twice in {}", typeid(*this).name());
+        NES_ERROR("TearDown called twice in {}", typeid(*this).name());
     }
 }
 
 void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
+    NES_ERROR("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
     failTest();
 }
 
 void NESBaseTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR2("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
+    NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
     failTest();
 }
 

@@ -45,13 +45,13 @@ void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->process
 
 void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampQueryStart == 0) {
-        NES_DEBUG2("QueryStatistics::setTimestampQueryStart called with  {}", timestampQueryStart);
+        NES_DEBUG("QueryStatistics::setTimestampQueryStart called with  {}", timestampQueryStart);
         this->timestampQueryStart = timestampQueryStart;
     }
 }
 void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampFirstProcessedTask == 0) {
-        NES_DEBUG2("QueryStatistics::setTimestampFirstProcessedTask called with  {}", timestampFirstProcessedTask);
+        NES_DEBUG("QueryStatistics::setTimestampFirstProcessedTask called with  {}", timestampFirstProcessedTask);
         this->timestampFirstProcessedTask = timestampFirstProcessedTask;
     }
 }
@@ -67,7 +67,9 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
-void QueryStatistics::incTasksPerPipelineId(uint64_t pipelineId) { this->pipelineIdToTaskThroughputMap[pipelineId]++; }
+void QueryStatistics::incTasksPerPipelineId(uint64_t pipelineId, uint64_t workerId) {
+    this->pipelineIdToTaskThroughputMap[pipelineId][workerId]++;
+}
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
 void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size) { this->availableGlobalBufferSum += size; }
 void QueryStatistics::incAvailableFixedBufferSum(uint64_t size) { this->availableFixedBufferSum += size; }
@@ -76,8 +78,9 @@ void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->pro
 
 void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { tsToLatencyMap[now].push_back(latency); }
 
-std::map<uint64_t, std::atomic<uint64_t>>& QueryStatistics::getPipelineIdToTaskMap() { return pipelineIdToTaskThroughputMap; };
-
+std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>& QueryStatistics::getPipelineIdToTaskMap() {
+    return pipelineIdToTaskThroughputMap;
+};
 std::map<uint64_t, std::vector<uint64_t>> QueryStatistics::getTsToLatencyMap() { return tsToLatencyMap; }
 
 std::string QueryStatistics::getQueryStatisticsAsString() {

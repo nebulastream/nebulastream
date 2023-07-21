@@ -66,8 +66,8 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG2("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema {}",
-               inputSchema->toString());
+    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema {}",
+              inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -119,14 +119,14 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
 
-    NES_TRACE2("Outputschema for window={}", outputSchema->toString());
+    NES_TRACE("Outputschema for window={}", outputSchema->toString());
 
     return true;
 }
 
 void WindowLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {
@@ -159,4 +159,18 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signature);
     hashBasedSignature[hashCode] = {signature};
 }
+
+std::vector<std::string> WindowLogicalOperatorNode::getGroupByKeyNames() {
+    std::vector<std::string> groupByKeyNames = {};
+    auto windowDefinition = this->getWindowDefinition();
+    if (windowDefinition->isKeyed()) {
+        std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowDefinition->getKeys();
+        groupByKeyNames.reserve(groupByKeys.size());
+        for (const auto& groupByKey : groupByKeys) {
+            groupByKeyNames.push_back(groupByKey->getFieldName());
+        }
+    }
+    return groupByKeyNames;
+}
+
 }// namespace NES

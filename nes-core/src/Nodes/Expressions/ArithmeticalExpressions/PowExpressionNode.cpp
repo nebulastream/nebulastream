@@ -36,11 +36,11 @@ void PowExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
     // Extend range for POW operation:
     if (stamp->isInteger()) {
         stamp = DataTypeFactory::createInt64();
-        NES_TRACE2("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
+        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::createDouble();
-        NES_TRACE2("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: {}",
-                   toString());
+        NES_TRACE("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: {}",
+                  toString());
     }
 }
 
@@ -58,6 +58,8 @@ std::string PowExpressionNode::toString() const {
     return ss.str();
 }
 
-ExpressionNodePtr PowExpressionNode::copy() { return std::make_shared<PowExpressionNode>(PowExpressionNode(this)); }
+ExpressionNodePtr PowExpressionNode::copy() {
+    return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+}
 
 }// namespace NES

@@ -21,6 +21,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -79,7 +80,7 @@ GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = (uint64_t) 0;
+    Value<UInt64> entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
@@ -118,7 +119,7 @@ Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& global
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
-    for (Value<UInt64> i = (uint64_t) 0; i < sizeOfPartitions; i = i + (uint64_t) 1) {
+    for (Value<UInt64> i = 0_u64; i < sizeOfPartitions; i = i + 1_u64) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
         uint64_t stateOffset = 0;
         for (const auto& function : aggregationFunctions) {

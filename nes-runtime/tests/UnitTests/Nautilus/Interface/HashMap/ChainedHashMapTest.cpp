@@ -56,7 +56,7 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), keyDataTypes, 8, 8);
-    auto f1 = Value<Int8>((int8_t) 42);
+    auto f1 = Value<Int8>(42_s8);
 
     // check if entry already exists
     auto res1 = hashMapRef.findOne(hf->calculate(f1), {f1});
@@ -64,7 +64,7 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
 
     // findOrCreate entry
     auto hash = hf->calculate(f1);
-    NES_INFO("Hash: " << hash);
+    NES_INFO("Hash: {}", hash.getValue().toString());
     hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
     auto res2 = hashMapRef.findOne(hash, {f1});
@@ -88,7 +88,7 @@ TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey) {
         Value<Int64> key = (int64_t) i;
         auto hash = hf->calculate(key);
         auto entry1 = hashMapRef.findOrCreate(hash, {key});
-        Value<Int64> value = (int64_t) 42;
+        Value<Int64> value(42_s64);
         entry1.getValuePtr().store(value);
     }
     ASSERT_EQ(hashMap.getCurrentSize(), 100);
@@ -97,7 +97,7 @@ TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey) {
         auto hash = hf->calculate(key);
         auto entry1 = hashMapRef.findOne(hash, {key});
         auto value = entry1.getValuePtr().load<Int64>();
-        ASSERT_EQ(value, (int64_t) 42);
+        ASSERT_EQ(value, 42_s64);
     }
 }
 
@@ -112,7 +112,7 @@ TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey) {
         Value<Int64> key = (int64_t) i;
         auto hash = hf->calculate(key);
         auto entry1 = hashMapRef.findOrCreate(hash, {key});
-        Value<Int64> value = (int64_t) 42;
+        Value<Int64> value(42_s64);
         entry1.getValuePtr().store(value);
     }
     ASSERT_EQ(hashMap.getCurrentSize(), 10000);
@@ -121,7 +121,7 @@ TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey) {
         auto hash = hf->calculate(key);
         auto entry1 = hashMapRef.findOne(hash, {key});
         auto value = entry1.getValuePtr().load<Int64>();
-        ASSERT_EQ(value, (int64_t) 42);
+        ASSERT_EQ(value, 42_s64);
     }
 }
 
@@ -203,7 +203,7 @@ TEST_F(ChainedHashMapTest, entryIterator) {
 
     for (const auto& entry : hashMapRef) {
         auto value = entry.getValuePtr().load<Int64>();
-        entry.getValuePtr().store(value + (int64_t) 42);
+        entry.getValuePtr().store(value + 42_s64);
     }
 
     for (uint64_t i = 0; i < 1000; i++) {

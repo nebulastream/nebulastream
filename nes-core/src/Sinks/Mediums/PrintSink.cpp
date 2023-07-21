@@ -45,17 +45,17 @@ SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_S
 
 bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG2("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
+    NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
 
     if (!inputBuffer) {
         // TODO throw exception here?
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
     }
     if (!schemaWritten) {
-        NES_TRACE2("PrintSink::getData: write schema");
+        NES_TRACE("PrintSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
-            NES_TRACE2("PrintSink::getData: write schema of size  {}", schemaBuffer->getNumberOfTuples());
+            NES_TRACE("PrintSink::getData: write schema of size  {}", schemaBuffer->getNumberOfTuples());
             std::string ret;
             char* bufferAsChar = schemaBuffer->getBuffer<char>();
             for (uint64_t i = 0; i < schemaBuffer->getNumberOfTuples(); i++) {
@@ -63,24 +63,24 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
             }
             outputStream << ret << std::endl;
         } else {
-            NES_DEBUG2("PrintSink::getData: no schema buffer to write");
+            NES_DEBUG("PrintSink::getData: no schema buffer to write");
         }
-        NES_TRACE2("PrintSink::writeData: schema is = {}", sinkFormat->getSchemaPtr()->toString());
+        NES_TRACE("PrintSink::writeData: schema is = {}", sinkFormat->getSchemaPtr()->toString());
         schemaWritten = true;
     } else {
-        NES_DEBUG2("PrintSink::getData: schema already written");
+        NES_DEBUG("PrintSink::getData: schema already written");
     }
 
-    NES_TRACE2("PrintSink::getData: write data");
+    NES_TRACE("PrintSink::getData: write data");
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
-        NES_TRACE2("PrintSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
+        NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
         std::string ret;
         char* bufferAsChar = buffer.getBuffer<char>();
         for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
             ret = ret + bufferAsChar[i];
         }
-        NES_TRACE2("PrintSink::getData: write buffer str=  {}", ret);
+        NES_TRACE("PrintSink::getData: write buffer str=  {}", ret);
         outputStream << ret << std::endl;
     }
     updateWatermarkCallback(inputBuffer);

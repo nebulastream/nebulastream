@@ -73,7 +73,7 @@ TEST_P(AsyncTaskExecutorTest, submitConcatenatedTasks) {
         auto sum = future.wait();
         ASSERT_EQ(3, sum);
     } catch (std::exception const& expected) {
-        NES_DEBUG2("<< {}", expected.what());
+        NES_DEBUG("<< {}", expected.what());
         FAIL();
     }
 }

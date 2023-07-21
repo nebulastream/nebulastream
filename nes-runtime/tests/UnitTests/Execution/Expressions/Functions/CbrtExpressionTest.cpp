@@ -37,20 +37,20 @@ TEST_F(CbrtExpressionTest, evaluateCbrtExpressionInteger) {
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 8));
+        auto resultValue = expression.eval(Value<Int8>(8_s8));
         ASSERT_EQ(resultValue, (float) 2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 8));
+        auto resultValue = expression.eval(Value<Int32>(8_s32));
         ASSERT_EQ(resultValue, (float) 2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 8));
+        auto resultValue = expression.eval(Value<Int64>(8_s64));
         ASSERT_EQ(resultValue, (float) 2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

@@ -60,14 +60,14 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MQTTTSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup MQTTTSinkTest test class.");
+        NES_DEBUG("Setup MQTTTSinkTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
-        NES_DEBUG2("Setup MQTTTSinkTest test case.");
+        NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
@@ -83,7 +83,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     void TearDown() override {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG2("Setup MQTT test case.");
+        NES_DEBUG("Setup MQTT test case.");
         Testing::NESBaseTest::TearDown();
     }
 
@@ -149,18 +149,18 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
             auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
             std::stringstream dynamicTupleBufferAsString;
             dynamicTupleBufferAsString << dynamicTupleBuffer;
-            NES_DEBUG2("bufferContent before write={}", dynamicTupleBufferAsString.str());
+            NES_DEBUG("bufferContent before write={}", dynamicTupleBufferAsString.str());
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {
             return mqttSink->writeData(inputBuffer, workerContext);
         }
-        NES_ERROR2("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
+        NES_ERROR("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
         return false;
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("Tear down MQTT test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down MQTT test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -189,7 +189,7 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
                                    msgDelay,
                                    qualityOfService,
                                    asynchronousClient);
-    NES_INFO2("{}", mqttSink->toString());
+    NES_INFO("{}", mqttSink->toString());
     ASSERT_FALSE(mqttSink->toString().empty());
 }
 
@@ -245,7 +245,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
                                                MQTTSinkDescriptor::ServiceQualities::atLeastOnce,
                                                true,
                                                false);
-    NES_INFO2("testMQTTbrokerDeathToClientStopAsynchronous result: {}", bufferDataSuccessfullyWrittenToBroker);
+    NES_INFO("testMQTTbrokerDeathToClientStopAsynchronous result: {}", bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? --------------------------- */

@@ -49,7 +49,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::TestWithErro
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
+        NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */

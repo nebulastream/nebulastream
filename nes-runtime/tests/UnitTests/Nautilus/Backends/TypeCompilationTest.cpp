@@ -55,8 +55,8 @@ class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilat
 };
 
 Value<> negativeIntegerTest() {
-    Value four = Value<>(4);
-    Value five = Value<>(5);
+    Value four = 4;
+    Value five = 5;
     Value minusOne = four - five;
     return minusOne;
 }
@@ -73,8 +73,8 @@ TEST_P(TypeCompilationTest, negativeIntegerTest) {
 Value<> unsignedIntegerTest() {
     uint32_t four = 4;
     uint32_t five = 5;
-    Value unsignedFour = Value(four);
-    Value unsignedFive = Value(five);
+    Value unsignedFour = four;
+    Value unsignedFive = five;
     Value minusOne = unsignedFour - unsignedFive;
     return minusOne;
 }
@@ -90,8 +90,8 @@ TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
 }
 
 Value<> boolCompareTest() {
-    Value value = Value(1);
-    Value iw = Value(true);
+    Value value = 1;
+    Value iw = true;
     if (iw == false) {
         return value + 41;
     } else {
@@ -110,7 +110,7 @@ TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
 }
 
 Value<> floatTest() {
-    // Value iw = Value(1.3);
+    // Value iw  = 1.3;
     // return iw;
     return Value(1);
 }
@@ -126,8 +126,8 @@ TEST_P(TypeCompilationTest, DISABLED_floatTest) {
 }
 
 Value<> mixBoolAndIntTest() {
-    Value boolValue = Value(true);
-    Value intValue = Value(4);
+    Value boolValue = true;
+    Value intValue = 4;
     return boolValue + intValue;
 }
 
@@ -186,12 +186,11 @@ class CustomTypeInvocationPlugin : public InvocationPlugin {
 [[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
 
 Value<> customValueType() {
-
-    auto c1 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
-    auto c2 = Value<CustomType>(CustomType((int64_t) 32, (int64_t) 32));
+    auto c1 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
+    auto c2 = Value<CustomType>(CustomType(Value<Int64>(32_s64), Value<Int64>(32_s64)));
 
     c1 = c1 + c2;
-    c1 = c1 * (int64_t) 2;
+    c1 = c1 * 2_s64;
     return c1.getValue().x;
 }
 
@@ -235,7 +234,7 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
 Value<> textTestFunction(Value<Text>& text) {
     auto length = text->length();
     auto list2 = text->upper();
-    for (Value<UInt32> i = (uint32_t) 0; i < text->length(); i = i + (uint32_t) 1) {
+    for (Value<UInt32> i = 0_u32; i < text->length(); i = i + 1_u32) {
         text[i] = (int8_t) 'o';
     }
     return list2->length();
@@ -261,10 +260,10 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 }
 
 TEST_P(TypeCompilationTest, castInteger) {
-    Value<> i8 = Value<Int8>((int8_t) 42);
-    Value<> i16 = Value<Int16>((int16_t) 42);
-    Value<> i32 = Value<Int32>((int32_t) 42);
-    Value<> i64 = Value<Int64>((int64_t) 42);
+    Value<> i8 = +42_s8;
+    Value<> i16 = +42_s16;
+    Value<> i32 = +42_s32;
+    Value<> i64 = +42_s64;
 
     {
         auto engine = compileCast(i8, i16);
@@ -299,10 +298,10 @@ TEST_P(TypeCompilationTest, castInteger) {
 }
 
 TEST_P(TypeCompilationTest, castUInteger) {
-    Value<> ui8 = Value<UInt8>((uint8_t) 42);
-    Value<> ui16 = Value<UInt16>((uint16_t) 42);
-    Value<> ui32 = Value<UInt32>((uint32_t) 42);
-    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+    Value<> ui8 = 42_u8;
+    Value<> ui16 = 42_u16;
+    Value<> ui32 = 42_u32;
+    Value<> ui64 = 42_u64;
 
     {
         auto engine = compileCast(ui8, ui16);
@@ -337,14 +336,14 @@ TEST_P(TypeCompilationTest, castUInteger) {
 }
 
 TEST_P(TypeCompilationTest, castIntegerToUInteger) {
-    Value<> i8 = Value<Int8>((int8_t) 42);
-    Value<> i16 = Value<Int16>((int16_t) 42);
-    Value<> i32 = Value<Int32>((int32_t) 42);
-    Value<> i64 = Value<Int64>((int64_t) 42);
-    Value<> ui8 = Value<UInt8>((uint8_t) 42);
-    Value<> ui16 = Value<UInt16>((uint16_t) 42);
-    Value<> ui32 = Value<UInt32>((uint32_t) 42);
-    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+    Value<> i8 = +42_s8;
+    Value<> i16 = +42_s16;
+    Value<> i32 = +42_s32;
+    Value<> i64 = +42_s64;
+    Value<> ui8 = 42_u8;
+    Value<> ui16 = 42_u16;
+    Value<> ui32 = 42_u32;
+    Value<> ui64 = Value<UInt64>(42_u64);
     {
         auto engine = compileCast(i8, ui8);
         auto function = engine->getInvocableMember<uint8_t, int8_t, uint8_t>("execute");
@@ -403,9 +402,9 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
 }
 
 TEST_P(TypeCompilationTest, castFloat) {
-    auto i16 = Value<Int16>((int16_t) 42);
-    auto i32 = Value<Int32>((int32_t) 42);
-    auto i64 = Value<Int64>((int64_t) 42);
+    auto i16 = Value<Int16>(42_s16);
+    auto i32 = Value<Int32>(42_s32);
+    auto i64 = Value<Int64>(42_s64);
     auto floatV = Value<Float>(1.0f);
     auto doubleV = Value<Double>(1.0);
 

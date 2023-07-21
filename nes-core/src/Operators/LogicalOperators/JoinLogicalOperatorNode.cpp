@@ -58,97 +58,85 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     leftInputSchema->clear();
     rightInputSchema->clear();
 
-    //Find the schema for left join key
-    FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
-    auto leftJoinKeyName = leftJoinKey->getFieldName();
-    bool fieldExistsInSchema = false;
-    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        //If field name contains qualifier
-        if (leftJoinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
-            fieldExistsInSchema = (*itr)->contains(leftJoinKeyName);
-        } else {
-            fieldExistsInSchema = ((*itr)->hasFieldName(leftJoinKeyName) != nullptr);
-        }
-        if (fieldExistsInSchema) {
-            leftInputSchema->copyFields(*itr);
-            leftJoinKey->inferStamp(typeInferencePhaseContext, leftInputSchema);
-            //remove the schema from distinct schema list
-            distinctSchemas.erase(itr);
-            break;
-        }
-        itr++;
-    }
+    // Finds the join schema that contains the joinKey and returns an iterator to the schema
+    auto findSchemaInDinstinctSchemas = [&](FieldAccessExpressionNode& joinKey, SchemaPtr& inputSchema) {
+        for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
+            bool fieldExistsInSchema;
+            const auto joinKeyName = joinKey.getFieldName();
+            // If field name contains qualifier
+            if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+                fieldExistsInSchema = (*itr)->contains(joinKeyName);
+            } else {
+                fieldExistsInSchema = ((*itr)->hasFieldName(joinKeyName) != nullptr);
+            }
 
-    if (!fieldExistsInSchema) {
-        NES_ERROR2("JoinLogicalOperatorNode: Unable to find left join key {} in schemas.", leftJoinKeyName);
-        throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
-    }
+            if (fieldExistsInSchema) {
+                inputSchema->copyFields(*itr);
+                joinKey.inferStamp(typeInferencePhaseContext, inputSchema);
+                distinctSchemas.erase(itr);
+                return true;
+            }
+            ++itr;
+        }
+        return false;
+    };
+
+    //Find the schema for left join key
+    const auto leftJoinKey = joinDefinition->getLeftJoinKey();
+    const auto leftJoinKeyName = leftJoinKey->getFieldName();
+    const auto foundLeftKey = findSchemaInDinstinctSchemas(*leftJoinKey, leftInputSchema);
+    NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
 
     //Find the schema for right join key
-    FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
-    auto rightJoinKeyName = rightJoinKey->getFieldName();
-    //If field name contains qualifier
-    if (rightJoinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
-        fieldExistsInSchema = distinctSchemas[0]->contains(rightJoinKeyName);
-    } else {
-        fieldExistsInSchema = (distinctSchemas[0]->hasFieldName(rightJoinKeyName) != nullptr);
-    }
-    if (fieldExistsInSchema) {
-        rightInputSchema->copyFields(distinctSchemas[0]);
-        rightJoinKey->inferStamp(typeInferencePhaseContext, rightInputSchema);
-    }
+    const auto rightJoinKey = joinDefinition->getRightJoinKey();
+    const auto rightJoinKeyName = rightJoinKey->getFieldName();
+    const auto foundRightKey = findSchemaInDinstinctSchemas(*rightJoinKey, rightInputSchema);
+    NES_ASSERT_THROW_EXCEPTION(foundRightKey,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName + " in schemas.");
+
+    // Clearing now the distinct schemas
     distinctSchemas.clear();
 
-    if (!fieldExistsInSchema) {
-        NES_ERROR2("JoinLogicalOperatorNode: Unable to find right join key {} in schemas.", rightJoinKeyName);
-        throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName
-                                     + " in schemas.");
-    }
+    //Check if left and right input schema were correctly identified
+    NES_ASSERT_THROW_EXCEPTION(!!leftInputSchema,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Left input schema is not initialized for left join key "
+                                   + leftJoinKeyName);
+    NES_ASSERT_THROW_EXCEPTION(!!rightInputSchema,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Right input schema is not initialized for right join key "
+                                   + rightJoinKeyName);
 
-    //Check if left input schema was identified
-    if (!leftInputSchema) {
-        NES_ERROR2("JoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
-                   leftJoinKeyName);
-        throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
-    }
-
-    //Check if right input schema was identified
-    if (!rightInputSchema) {
-        NES_ERROR2(
-            "JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : {}",
-            rightJoinKeyName);
-        throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
-    }
-
-    NES_DEBUG2("Binary infer \nleft schema={}\nright schema={}", leftInputSchema->toString(), rightInputSchema->toString());
-    if (leftInputSchema->getSchemaSizeInBytes() == 0) {
-        NES_ERROR2("JoinLogicalOperatorNode: left schema is emtpy");
-        throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
-    }
-
-    if (rightInputSchema->getSchemaSizeInBytes() == 0) {
-        NES_ERROR2("JoinLogicalOperatorNode: right schema is emtpy");
-        throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
-    }
-
-    //Check that both left and right schema should be different
-    if (rightInputSchema->equals(leftInputSchema, false)) {
-        NES_ERROR2("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
-        throw TypeInferenceException("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
-    }
+    // Checking if left and right input schema are not empty and are not equal
+    NES_ASSERT_THROW_EXCEPTION(leftInputSchema->getSchemaSizeInBytes() > 0,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: left schema is emtpy");
+    NES_ASSERT_THROW_EXCEPTION(rightInputSchema->getSchemaSizeInBytes() > 0,
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: right schema is emtpy");
+    NES_ASSERT_THROW_EXCEPTION(!rightInputSchema->equals(leftInputSchema, false),
+                               TypeInferenceException,
+                               "JoinLogicalOperatorNode: Found both left and right input schema to be same.");
 
     //Infer stamp of window definition
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
     windowType->inferStamp(leftInputSchema, typeInferencePhaseContext);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
-    auto sourceNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
-    auto sourceNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
-    auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
-    outputSchema->addField(createField(newQualifierForSystemField + "$start", BasicType::UINT64));
-    outputSchema->addField(createField(newQualifierForSystemField + "$end", BasicType::UINT64));
-    outputSchema->addField(AttributeField::create(newQualifierForSystemField + "$key", leftJoinKey->getStamp()));
+    const auto& sourceNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
+    const auto& sourceNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
+    const auto& newQualifierForSystemField = sourceNameLeft + sourceNameRight;
+
+    windowStartFieldName = newQualifierForSystemField + "$start";
+    windowEndFieldName = newQualifierForSystemField + "$end";
+    windowKeyFieldName = newQualifierForSystemField + "$key";
+    outputSchema->addField(createField(windowStartFieldName, BasicType::UINT64));
+    outputSchema->addField(createField(windowEndFieldName, BasicType::UINT64));
+    outputSchema->addField(AttributeField::create(windowKeyFieldName, leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right sources
     for (const auto& field : leftInputSchema->fields) {
@@ -159,7 +147,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    NES_DEBUG2("Outputschema for join={}", outputSchema->toString());
+    NES_DEBUG("Outputschema for join={}", outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
@@ -180,11 +168,17 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<JoinLogicalOperatorNode>(); }// todo
+bool JoinLogicalOperatorNode::equal(NodePtr const& other) const {
+    if (other->instanceOf<JoinLogicalOperatorNode>()) {
+        auto otherJoinNode = other->as<JoinLogicalOperatorNode>();
+        return this->joinDefinition->equals(*otherJoinNode->joinDefinition);
+    }
+    return false;
+}
 
 void JoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("JoinLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("JoinLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "JoinLogicalOperatorNode: Join should have 2 children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
@@ -209,9 +203,24 @@ void JoinLogicalOperatorNode::inferStringSignature() {
 const std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
+
 void JoinLogicalOperatorNode::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);
     joinDefinition->setOriginId(originId);
+}
+
+const std::string& JoinLogicalOperatorNode::getWindowStartFieldName() const { return windowStartFieldName; }
+
+const std::string& JoinLogicalOperatorNode::getWindowEndFieldName() const { return windowEndFieldName; }
+
+const std::string& JoinLogicalOperatorNode::getWindowKeyFieldName() const { return windowKeyFieldName; }
+
+void JoinLogicalOperatorNode::setWindowStartEndKeyFieldName(const std::string& windowStartFieldName,
+                                                            const std::string& windowEndFieldName,
+                                                            const std::string& windowKeyFieldName) {
+    this->windowStartFieldName = windowStartFieldName;
+    this->windowEndFieldName = windowEndFieldName;
+    this->windowKeyFieldName = windowKeyFieldName;
 }
 
 }// namespace NES

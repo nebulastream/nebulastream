@@ -58,7 +58,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
         NES_ASSERT(!pages.empty(), "pagedVector should not be empty");
         // currently we assume that page 0 - (n-1) are full and contain capacity entries.
         for (size_t i = 0; i < pages.size() - 1; i++) {
-            auto numberOfEntries = pagedVector->capacityPerPage();
+            auto numberOfEntries = pagedVector->getCapacityPerPage();
             globalMap->insertPage(pages[i], numberOfEntries);
         }
         // insert last page
@@ -76,7 +76,7 @@ void BatchJoinHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Ru
 }
 
 void BatchJoinHandler::stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("shutdown BatchJoinHandler: " << queryTerminationType);
+    NES_DEBUG("shutdown BatchJoinHandler: {}", queryTerminationType);
 }
 BatchJoinHandler::~BatchJoinHandler() { NES_DEBUG("~BatchJoinHandler"); }
 

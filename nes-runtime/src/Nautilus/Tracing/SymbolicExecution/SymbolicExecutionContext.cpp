@@ -79,7 +79,9 @@ bool SymbolicExecutionContext::shouldContinue() {
             return true;
         } else if (element->second == SymbolicExecutionContext::TagState::SecondVisit) {
             // the target tag of this path was already visited two times, so tracing can skip it.
-            NES_DEBUG("Skip tag " << element->first);
+            std::stringstream first;
+            first << element->first;
+            NES_DEBUG("Skip tag {}", first.str());
             inflightExecutionPaths.pop_front();
         }
     };

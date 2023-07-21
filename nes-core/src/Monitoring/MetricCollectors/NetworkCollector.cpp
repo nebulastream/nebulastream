@@ -27,7 +27,7 @@ namespace NES::Monitoring {
 NetworkCollector::NetworkCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(NetworkMetrics::getSchema("")) {
-    NES_INFO2("NetworkCollector: Init NetworkCollector with schema {}", schema->toString());
+    NES_INFO("NetworkCollector: Init NetworkCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType NetworkCollector::getType() { return MetricCollectorType::NETWORK_COLLECTOR; }
@@ -37,9 +37,9 @@ bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
         measuredVal.setNodeId(getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
-        NES_TRACE2("NetworkCollector: Written metrics for {}: {}", getNodeId(), asJson(measuredVal));
+        NES_TRACE("NetworkCollector: Written metrics for {}: {}", getNodeId(), asJson(measuredVal));
     } catch (const std::exception& ex) {
-        NES_ERROR2("NetworkCollector: Error while collecting metrics {}", ex.what());
+        NES_ERROR("NetworkCollector: Error while collecting metrics {}", ex.what());
         return false;
     }
     return true;

@@ -61,6 +61,15 @@ class BaseConfiguration : public BaseOption {
     void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
 
     /**
+     * save the value for workerId in worker.yaml config file
+     * @param yamlFilePath path to the yaml config file
+     * @param workerId workerId to be persisted
+     * @param withOverwrite false if workerId is not in yaml file, true if it is and has to be changed
+     * @return true if persistence succeeded, false otherwise
+     */
+    bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, uint64_t workerId, bool withOverwrite);
+
+    /**
      * @brief clears all options and set the default values
      */
     void clear() override;

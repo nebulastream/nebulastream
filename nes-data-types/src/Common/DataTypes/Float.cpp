@@ -45,6 +45,6 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
-std::string Float::toString() { return "(Float)"; }
+std::string Float::toString() { return "Float(" + std::to_string(bits) + " bits)"; }
 
 }// namespace NES

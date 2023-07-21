@@ -146,7 +146,7 @@ class ConfigurationOption {
         } else if (inputFormat == "JSON") {
             this->value = InputFormat::JSON;
         } else {
-            NES_ERROR2("InputFormatEnum: value unknown.");
+            NES_ERROR("InputFormatEnum: value unknown.");
         }
     }
 
@@ -162,7 +162,7 @@ class ConfigurationOption {
         } else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET") {
             this->value = TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET;
         } else {
-            NES_ERROR2("TCPDecideMessageSizeEnum: value unknown.");
+            NES_ERROR("TCPDecideMessageSizeEnum: value unknown.");
         }
     }
 
@@ -186,6 +186,7 @@ class ConfigurationOption {
 };
 
 using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
+using LongConfigOption = std::shared_ptr<ConfigurationOption<uint64_t>>;
 using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;

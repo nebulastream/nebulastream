@@ -19,14 +19,17 @@
 #include <string>
 #include <unordered_map>
 
-namespace NES {
+namespace NES::Optimizer {
 enum class PlacementStrategy : uint8_t {
     TopDown = 0,
     BottomUp = 1,
     IFCOP = 2,
     ILP = 3,
     Manual = 4,
-    MlHeuristic = 5
+    MlHeuristic = 5,
+    ELEGANT_PERFORMANCE = 6,
+    ELEGANT_ENERGY = 7,
+    ELEGANT_BALANCED = 8
     // FIXME: enable them with issue #755
     // LowLatency,
     //  HighThroughput,
@@ -34,5 +37,5 @@ enum class PlacementStrategy : uint8_t {
     //  MinimumEnergyConsumption,
     // HighAvailability
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

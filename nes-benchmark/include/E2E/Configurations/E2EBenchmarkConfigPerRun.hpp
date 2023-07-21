@@ -65,6 +65,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption pageSize;
     Configurations::IntConfigOption preAllocPageCnt;
     Configurations::IntConfigOption numberOfPartitions;
+    Configurations::LongConfigOption maxHashTableSize;
 };
 }// namespace NES::Benchmark
 

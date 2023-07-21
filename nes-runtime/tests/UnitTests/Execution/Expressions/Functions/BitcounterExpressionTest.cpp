@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -37,25 +38,25 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
 
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<Int8>(31_s8));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<Int16>(31_s16));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<Int32>(31_s32));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<Int64>(31_s64));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
 }
@@ -65,25 +66,25 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
 
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<UInt8>(31_u8));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<UInt16>(31_u16));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }// UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<UInt32>(31_u32));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 31));
-        ASSERT_EQ(resultValue, (uint32_t) 5);
+        auto resultValue = expression.eval(Value<UInt64>(31_u64));
+        ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
 }

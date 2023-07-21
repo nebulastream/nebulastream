@@ -12,12 +12,8 @@
 # limitations under the License.
 
 add_subdirectory(Experimental)
+add_subdirectory(QueryRequests)
+add_subdirectory(TopologyRequests)
 add_source_files(nes-core
-        RunQueryRequest.cpp
-        StopQueryRequest.cpp
-        RestartQueryRequest.cpp
-        MaintenanceRequest.cpp
-        FailQueryRequest.cpp
-        MigrateQueryRequest.cpp
         AbstractRequest.cpp
         )

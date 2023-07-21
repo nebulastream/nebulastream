@@ -202,7 +202,7 @@ class TPCHTableGenerator {
         //                            lineitem_column_names,
         //                           ChunkOffset{order_count * 4}};
 
-        NES_DEBUG("Generate lineitem with size " << order_count * 4);
+        NES_DEBUG("Generate lineitem with size {}", order_count * 4);
 
         Runtime::TableBuilder customerBuilder(bufferManager, layouts[TPCHTable::Customer]);
         Runtime::TableBuilder lineitemBuilder(bufferManager, layouts[TPCHTable::LineItem]);
@@ -355,7 +355,7 @@ class TPCHTableGenerator {
                                                  ));
         }
 
-        NES_DEBUG("Generated line item with size " << l);
+        NES_DEBUG("Generated line item with size {}", l);
         /**
         * Clean up dbgen every time we finish table generation to avoid memory leaks in dbgen
         */
@@ -376,7 +376,7 @@ class TPCHTableGenerator {
             auto tableName = std::string(magic_enum::enum_name(name));
             auto tableDir = cache_directory + "/" + tableName;
             std::filesystem::create_directories(tableDir);
-            NES_INFO2("Store table {} at {}", tableName, tableDir);
+            NES_INFO("Store table {} at {}", tableName, tableDir);
             Runtime::Table::store(table, tableDir);
         }
         return tables;

@@ -21,15 +21,18 @@
 #include <gtest/gtest.h>
 
 namespace NES {
+using Exceptions::InvalidQueryStatusException;
+using Exceptions::QueryNotFoundException;
+using Exceptions::RequestExecutionException;
 
 class RequestExecutionExceptionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RequestExecutionException test class.");
+        NES_INFO("Setup RequestExecutionException test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down RequestExecutionException test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down RequestExecutionException test class."); }
 };
 
 /**
@@ -40,18 +43,18 @@ TEST_F(RequestExecutionExceptionTest, testInstanceOf) {
     RequestExecutionException& test1 = invalidQueryStatusException;
     ASSERT_TRUE(test1.instanceOf<InvalidQueryStatusException>());
     ASSERT_FALSE(test1.instanceOf<QueryNotFoundException>());
-    ASSERT_FALSE(test1.instanceOf<QueryUndeploymentException>());
+    ASSERT_FALSE(test1.instanceOf<Exceptions::QueryUndeploymentException>());
 
     QueryNotFoundException queryNotFoundException("not found");
     RequestExecutionException& test2 = queryNotFoundException;
     ASSERT_FALSE(test2.instanceOf<InvalidQueryStatusException>());
     ASSERT_TRUE(test2.instanceOf<QueryNotFoundException>());
-    ASSERT_FALSE(test2.instanceOf<QueryUndeploymentException>());
+    ASSERT_FALSE(test2.instanceOf<Exceptions::QueryUndeploymentException>());
 
-    QueryUndeploymentException queryUndeploymentException("could not undeploy");
+    Exceptions::QueryUndeploymentException queryUndeploymentException(1, "could not undeploy");
     RequestExecutionException& test3 = queryUndeploymentException;
     ASSERT_FALSE(test3.instanceOf<InvalidQueryStatusException>());
     ASSERT_FALSE(test3.instanceOf<QueryNotFoundException>());
-    ASSERT_TRUE(test3.instanceOf<QueryUndeploymentException>());
+    ASSERT_TRUE(test3.instanceOf<Exceptions::QueryUndeploymentException>());
 }
 }// namespace NES

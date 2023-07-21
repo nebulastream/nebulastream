@@ -46,25 +46,25 @@ TEST_F(CotExpressionTest, evaluateCotExpressionInteger) {
     auto expression = UnaryExpressionWrapper<CotExpression>();
     // Int8
     {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 90));
+        auto resultValue = expression.eval(Value<Int8>(90_s8));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 90));
+        auto resultValue = expression.eval(Value<Int16>(90_s16));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 90));
+        auto resultValue = expression.eval(Value<Int32>(90_s32));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 90));
+        auto resultValue = expression.eval(Value<Int64>(90_s64));
         ASSERT_EQ(resultValue, cot(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

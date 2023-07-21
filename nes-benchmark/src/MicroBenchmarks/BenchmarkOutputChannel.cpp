@@ -23,6 +23,7 @@
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/StdInt.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <filesystem>
 #include <fstream>
@@ -114,8 +115,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = numSenderThreads * totalNumBuffer * bufferSize;
             double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            NES_INFO("Sent " << bytes << " bytes / " << (elapsed.count() / 1e9) << " seconds = throughput " << throughput
-                             << " MiB/s");
+            NES_INFO("Sent {}bytes / {}seconds = throughput {}MiB/s", bytes, (elapsed.count() / 1e9), throughput);
             bytesSent.set_value(bytes);
             elapsedSeconds.set_value(elapsed.count() / 1e9);
             netManager->unregisterSubpartitionConsumer(nesPartition);
@@ -180,9 +180,9 @@ int main(int argc, char** argv) {
     NES::Benchmark::Util::createRangeVector<uint64_t>(allSenderThreads, 4, 8, 2);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allServerThreads, 4, 8, 2);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allDataSizesToBeSent,
-                                                      (uint64_t) 1 * 1024 * 1024 * 1024,
-                                                      (uint64_t) 4 * 1024 * 1024 * 1024,
-                                                      (uint64_t) 1 * 1024 * 1024 * 1024);
+                                                      1_u64 * 1024 * 1024 * 1024,
+                                                      4_u64 * 1024 * 1024 * 1024,
+                                                      1_u64 * 1024 * 1024 * 1024);
 
     std::string benchmarkName = "DataChannel";
     std::string benchmarkFolderName = "DataChannel";

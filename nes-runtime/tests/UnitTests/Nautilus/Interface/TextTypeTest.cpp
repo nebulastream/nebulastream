@@ -18,6 +18,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus {
@@ -47,7 +48,7 @@ class TextTypeTest : public Testing::NESBaseTest {
 TEST_F(TextTypeTest, createTextTest) {
     auto textValue = Value<Text>("test");
     auto length = textValue->length();
-    EXPECT_EQ(length, (uint32_t) 4);
+    EXPECT_EQ(length, 4_u32);
 
     auto textValue2 = Value<Text>("test");
     EXPECT_EQ(textValue, textValue2);
@@ -63,14 +64,14 @@ TEST_F(TextTypeTest, createTextTest) {
     EXPECT_EQ(character, 'o');
     EXPECT_EQ(textValue, textValue3);
 
-    for (Value<UInt32> i = (uint32_t) 0; i < textValue->length(); i = i + (uint32_t) 1) {
+    for (Value<UInt32> i = 0_u32; i < textValue->length(); i = i + 1_u32) {
         textValue[i] = (int8_t) 'z';
     }
     auto textValue4 = Value<Text>("zzzz");
     EXPECT_EQ(textValue, textValue4);
 
     auto bitLength = textValue->bitLength();
-    EXPECT_EQ(bitLength, (uint32_t) 32);
+    EXPECT_EQ(bitLength, 32_u32);
 }
 
 TEST_F(TextTypeTest, LowerUpperTest) {
@@ -86,21 +87,21 @@ TEST_F(TextTypeTest, LowerUpperTest) {
 TEST_F(TextTypeTest, LeftRightTest) {
     auto LeftRightTest1 = Value<Text>("Test");
     auto LeftRightTest2 = Value<Text>("Te");
-    auto LeftRightTest3 = LeftRightTest2->left((uint32_t) 2);
+    auto LeftRightTest3 = LeftRightTest2->left(2_u32);
     EXPECT_EQ(LeftRightTest3, LeftRightTest2);
 
     auto LeftRightTest4 = Value<Text>("st");
-    auto LeftRightTest5 = LeftRightTest1->right((uint32_t) 2);
+    auto LeftRightTest5 = LeftRightTest1->right(2_u32);
     EXPECT_EQ(LeftRightTest5, LeftRightTest4);
 }
 
 TEST_F(TextTypeTest, PadTest) {
     auto PadTest1 = Value<Text>("Test");
     auto PadTest2 = Value<Text>("Testoo");
-    auto PadTest3 = PadTest1->rpad((uint32_t) 6, (int8_t) 'o');
+    auto PadTest3 = PadTest1->rpad(6_u32, (int8_t) 'o');
     EXPECT_EQ(PadTest2, PadTest3);
     auto PadTest4 = Value<Text>("ooTest");
-    auto PadTest5 = PadTest1->lpad((uint32_t) 6, (int8_t) 'o');
+    auto PadTest5 = PadTest1->lpad(6_u32, (int8_t) 'o');
     EXPECT_EQ(PadTest4, PadTest5);
 }
 
@@ -134,10 +135,10 @@ TEST_F(TextTypeTest, prefixTest) {
 
 TEST_F(TextTypeTest, repeatTest) {
     auto repeatTest1 = Value<Text>("A");
-    auto repeatTest2 = repeatTest1->repeat((uint32_t) 5);
+    auto repeatTest2 = repeatTest1->repeat(5_u32);
     auto repeatTest3 = Value<Text>("AAAAA");
     EXPECT_EQ(repeatTest2, repeatTest3);
-    EXPECT_ANY_THROW(repeatTest1->repeat((uint32_t) 0));
+    EXPECT_ANY_THROW(repeatTest1->repeat(0_u32));
 }
 
 TEST_F(TextTypeTest, reverseTest) {
@@ -155,9 +156,9 @@ TEST_F(TextTypeTest, positionTest) {
     auto test1 = positionTest2->position(positionTest1);
     auto test2 = positionTest2->position(positionTest4);
     auto test3 = positionTest2->position(positionTest3);
-    EXPECT_EQ(test1, (uint32_t) 2);
-    EXPECT_EQ(test2, (uint32_t) 3);
-    EXPECT_EQ(test3, (uint32_t) 0);
+    EXPECT_EQ(test1, 2_u32);
+    EXPECT_EQ(test2, 3_u32);
+    EXPECT_EQ(test3, 0_u32);
     EXPECT_ANY_THROW(positionTest1->position(positionTest2));
 }
 
@@ -174,14 +175,14 @@ TEST_F(TextTypeTest, replaceTest) {
 
 TEST_F(TextTypeTest, subStringTest) {
     auto subtext1 = Value<Text>("Hello");
-    auto subtext2 = subtext1->substring((uint32_t) 2, (uint32_t) 2);
+    auto subtext2 = subtext1->substring(2_u32, 2_u32);
     auto subtext3 = Value<Text>("el");
     EXPECT_EQ(subtext2, subtext3);
 }
 
 TEST_F(TextTypeTest, subStringTestFail) {
     auto subtext1 = Value<Text>("Hello");
-    EXPECT_ANY_THROW(subtext1->substring((uint32_t) 200, (uint32_t) 200));
+    EXPECT_ANY_THROW(subtext1->substring(200_u32, 200_u32));
 }
 
 TEST_F(TextTypeTest, stringconcatTest) {

@@ -32,7 +32,7 @@ class PagedVectorRef {
      * @param pagedVectorRef memref to the list
      * @param entrySize size of entries.
      */
-    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize, uint64_t pageSize = PagedVector::PAGE_SIZE);
+    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -72,6 +72,12 @@ class PagedVectorRef {
     Value<UInt64> getTotalNumberOfEntries();
 
     /**
+     * @brief Returns the maximum number of records per page
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getCapacityPerPage() const;
+
+    /**
      * @brief Returns an iterator that points to the begin of this listRef
      * @return ListRefIter
      */
@@ -91,11 +97,9 @@ class PagedVectorRef {
     PagedVectorRefIter end();
 
   private:
-    static constexpr auto POSITION_GRANULARITY = 8;
     Value<MemRef> getCurrentPage();
     Value<MemRef> pagedVectorRef;
     uint64_t entrySize;
-    uint64_t entriesPerPage;
 };
 
 class PagedVectorRefIter {

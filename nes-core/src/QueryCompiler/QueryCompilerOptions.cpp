@@ -44,7 +44,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     hashOptions->setPageSize(NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE);
     hashOptions->setPreAllocPageCnt(NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
     hashOptions->setTotalSizeForDataStructures(NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
-
+    options.setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
     options.setHashJoinOptions(hashOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
@@ -86,6 +86,10 @@ void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBack
     QueryCompilerOptions::nautilusBackend = nautilusBackend;
 }
 
+void QueryCompilerOptions::setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy strategy) { this->joinStrategy = strategy; }
+
+QueryCompilation::StreamJoinStrategy QueryCompilerOptions::getStreamJoinStratgy() const { return joinStrategy; }
+
 QueryCompilerOptions::StreamHashJoinOptionsPtr QueryCompilerOptions::getHashJoinOptions() { return hashJoinOptions; }
 
 const QueryCompilerOptions::DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
@@ -100,5 +104,8 @@ uint64_t QueryCompilerOptions::StreamHashJoinOptions::getTotalSizeForDataStructu
 void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures) {
     this->totalSizeForDataStructures = totalSizeForDataStructures;
 }
+
+void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
+const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
 
 }// namespace NES::QueryCompilation

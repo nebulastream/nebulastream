@@ -30,7 +30,7 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
                                                              OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), model(std::move(model)), inputFields(std::move(inputFields)),
       outputFields(std::move(outputFields)) {
-    NES_DEBUG2("InferModelLogicalOperatorNode: reading from model {}", this->model);
+    NES_DEBUG("InferModelLogicalOperatorNode: reading from model {}", this->model);
 }
 
 std::string InferModelLogicalOperatorNode::toString() const {
@@ -101,12 +101,12 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         if (outputSchema->hasFieldName(fieldName)) {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
-            NES_TRACE2("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
+            NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
         } else {
             // The assigned field is not part of the current schema.
             // Thus we extend the schema by the new attribute.
-            NES_TRACE2("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
+            NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
             outputSchema->addField(fieldName, outputExpression->getStamp());
         }
     }
@@ -116,7 +116,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
 
 void InferModelLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE2("InferModelOperatorNode: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("InferModelOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "InferModelLogicalOperatorNode: InferModel should have children (?)");
     //Infer query signatures for child operators
     for (auto& child : children) {

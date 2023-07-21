@@ -33,7 +33,7 @@ class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup E2e test class.");
+        NES_INFO("Setup E2e test class.");
     }
 };
 
@@ -55,12 +55,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
     ss << R"(,"placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -68,7 +68,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -90,13 +90,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
 
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -108,7 +108,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -120,8 +120,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                              "1,1\n"
                              "1,1\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
@@ -130,7 +130,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVariableSizeWithFileOutput) {
     //TODO: This is part of issue #3146 and will be addressed there
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -152,13 +152,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
 
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -182,8 +182,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
                              "1,1\n"
                              "1,1\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
@@ -191,7 +191,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -213,24 +213,23 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO2("query string submit={}", ss.str());
+    NES_INFO("query string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
-    NES_INFO2("read file={}", outputFilePath);
+    NES_INFO("read file={}", outputFilePath);
     ifstream outFile(outputFilePath);
     EXPECT_TRUE(outFile.good());
     std::string content((std::istreambuf_iterator<char>(outFile)), (std::istreambuf_iterator<char>()));
-    NES_INFO2("content={}", content);
-    std::string expected = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+    NES_INFO("content={}", content);
+    std::string expected = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                            "1,1\n"
                            "1,1\n"
                            "1,1\n"
@@ -242,12 +241,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                            "1,1\n"
                            "1,1\n";
 
-    NES_DEBUG2("expected={}", expected);
+    NES_DEBUG("expected={}", expected);
     EXPECT_EQ(expected, content);
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhysource) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhysourceTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -270,13 +269,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
 
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -288,27 +287,27 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::ifstream ifs(outputFilePath.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+    std::string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n"
+                                  "1,1\n";
 
-    NES_INFO2("content={}", content);
-    NES_INFO2("expContent={}", expectedContent);
+    NES_INFO("content={}", content);
+    NES_INFO("expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputKTMUseCase) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string testFile = "ktm-results.csv";
     remove(testFile.c_str());
 
@@ -344,7 +343,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"Latitude\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"Altitude\\\",BasicType::FLOAT64));\"}";
     schema << endl;
-    NES_INFO2("schema submit={}", schema.str());
+    NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -370,19 +369,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
     ss << R"(;","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
-                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
+    string expectedContent = "ktm$start:INTEGER(64 bits),ktm$end:INTEGER(64 bits),ktm$avg_value_1:Float(64 bits),ktm$avg_value_2:"
+                             "Float(64 bits),ktm$avg_value_3:Float(64 bits),ktm$count_value:INTEGER(64 bits)\n"
                              "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -392,7 +391,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -408,7 +407,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
               "->addField(createField(\\\"id\\\",BasicType::UINT64))"
               "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
-    NES_INFO2("schema submit={}", schema.str());
+    NES_INFO("schema submit={}", schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -434,30 +433,31 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO2("query string submit={}", ss.str());
+    NES_INFO("query string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,51\n"
-                             "10000,20000,1,145\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n";
+    string expectedContent =
+        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+        "0,10000,1,51\n"
+        "10000,20000,1,145\n"
+        "0,10000,4,1\n"
+        "0,10000,11,5\n"
+        "0,10000,12,1\n"
+        "0,10000,16,2\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -473,7 +473,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
               "addField(createField(\\\"id\\\",BasicType::UINT64))->"
               "addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
-    NES_INFO2("schema submit={}", schema.str());
+    NES_INFO("schema submit={}", schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -500,25 +500,26 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO2("query string submit={}", ss.str());
+    NES_INFO("query string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,51\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n"
-                             "5000,15000,1,95\n"
-                             "10000,20000,1,145\n";
+    string expectedContent =
+        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+        "0,10000,1,51\n"
+        "0,10000,4,1\n"
+        "0,10000,11,5\n"
+        "0,10000,12,1\n"
+        "0,10000,16,2\n"
+        "5000,15000,1,95\n"
+        "10000,20000,1,145\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
@@ -527,7 +528,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
+    NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -537,7 +538,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG2("start worker with pid={}", worker.getPid());
+    NES_DEBUG("start worker with pid={}", worker.getPid());
     sleep(5);
     worker.kill();
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -547,7 +548,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
+    NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -557,19 +558,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG2("start worker with pid={}", worker.getPid());
+    NES_DEBUG("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
     ss << R"(,"placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -584,7 +585,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
+    NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -594,19 +595,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG2("start worker with pid={}", worker.getPid());
+    NES_DEBUG("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
     ss << R"(,"placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     sleep(5);
@@ -624,7 +625,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
+    NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -634,7 +635,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG2("start worker with pid={}", worker.getPid());
+    NES_DEBUG("start worker with pid={}", worker.getPid());
     sleep(5);
     coordinator.kill();
     sleep(5);
@@ -670,7 +671,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
+    NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -680,19 +681,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG2("start worker with pid={}", worker.getPid());
+    NES_DEBUG("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
     ss << R"(,"placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     sleep(5);
@@ -725,9 +726,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdWindowFileOutputKTMUseCase) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
-    NES_INFO2("testFile = {}", testFile);
+    NES_INFO("testFile = {}", testFile);
     remove(testFile.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
@@ -764,7 +765,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
            "addField(createField(\\\"Latitude\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"Altitude\\\",BasicType::FLOAT64));\"}";
     schema << endl;
-    NES_INFO2("schema submit={}", schema.str());
+    NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker(
@@ -795,19 +796,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
     ss << R"(;","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$ABS_Lean_Angle:(Float),ktm$ABS_Front_Wheel_Speed:(Float),ktm$count:INTEGER\n"
-                             "14.300000,0.500000,2\n";
+    string expectedContent =
+        "ktm$ABS_Lean_Angle:Float(32 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
+        "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
@@ -815,11 +817,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
-//TODO 3608 fixing bykey()
+//TODO #3801 fixing bykey()
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
-    NES_INFO2("start coordinator");
+    NES_INFO("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
-    NES_INFO2("testFile = {}", testFile);
+    NES_INFO("testFile = {}", testFile);
     remove(testFile.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
@@ -854,7 +856,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
               "addField(createField(\\\"Latitude\\\",FLOAT64))->"
               "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
     schema << endl;
-    NES_INFO2("schema submit={}", schema.str());
+    NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker(
@@ -884,20 +886,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
     ss << R"(;","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO2("string submit={}", ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
-    NES_INFO2("try to acc return");
+    NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO2("Query ID: {}", queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent =
-        "ktm$count:INTEGER,ktm$ABS_Lean_Angle:(Float),ktm$ABS_Pitch_Info:(Float),ktm$ABS_Front_Wheel_Speed:(Float)\n"
-        "2,14.400000,0.800000,0.500000\n";
+    string expectedContent = "ktm$count:INTEGER(64 bits),ktm$ABS_Lean_Angle:Float(64 bits),ktm$ABS_Pitch_Info:Float(64 "
+                             "bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits)\n"
+                             "2,14.400000,0.800000,0.500000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 

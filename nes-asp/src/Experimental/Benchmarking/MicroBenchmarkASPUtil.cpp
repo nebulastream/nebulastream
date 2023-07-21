@@ -69,8 +69,8 @@ std::vector<uint32_t> parseNumberOfBuffers(const Yaml::Node& numberOfBuffersNode
     return NES::Util::splitWithStringDelimiter<uint32_t>(numberOfBuffersNode.As<std::string>(), ",");
 }
 
-std::vector<size_t> parseWindowSizes(const Yaml::Node& windowSizesNode) {
-    return NES::Util::splitWithStringDelimiter<size_t>(windowSizesNode.As<std::string>(), ",");
+std::vector<uint64_t> parseWindowSizes(const Yaml::Node& windowSizesNode) {
+    return NES::Util::splitWithStringDelimiter<uint64_t>(windowSizesNode.As<std::string>(), ",");
 }
 
 double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,

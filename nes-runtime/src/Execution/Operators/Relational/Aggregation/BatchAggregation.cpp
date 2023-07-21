@@ -17,6 +17,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -44,7 +45,7 @@ BatchAggregation::BatchAggregation(
 
 void BatchAggregation::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = (uint64_t) 0;
+    Value<UInt64> entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }

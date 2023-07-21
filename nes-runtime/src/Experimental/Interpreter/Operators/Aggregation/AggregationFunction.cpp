@@ -26,31 +26,31 @@ std::unique_ptr<AggregationState> SumFunction::createState() {
         if (integerStamp->isUnsigned()) {
             switch (integerStamp->getBitWidth()) {
                 case Nautilus::IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<SumState>(Value<>((uint8_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_u8));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<SumState>(Value<>((uint16_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_u16));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<SumState>(Value<>((uint32_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_u32));
                 };
                 case Nautilus::IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<SumState>(Value<>((uint64_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_u64));
                 };
             }
         } else {
             switch (integerStamp->getBitWidth()) {
                 case IR::Types::IntegerStamp::I8: {
-                    return std::make_unique<SumState>(Value<>((int8_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_s8));
                 };
                 case IR::Types::IntegerStamp::I16: {
-                    return std::make_unique<SumState>(Value<>((int16_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_s16));
                 };
                 case IR::Types::IntegerStamp::I32: {
-                    return std::make_unique<SumState>(Value<>((int32_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_s32));
                 };
                 case IR::Types::IntegerStamp::I64: {
-                    return std::make_unique<SumState>(Value<>((int64_t) 0));
+                    return std::make_unique<SumState>(Value<>(0_s64));
                 };
             }
         }
@@ -139,13 +139,13 @@ uint64_t SumFunction::getStateSize() const { return 8; }
 
 std::unique_ptr<AggregationState> CountFunction::createGlobalState() { return std::make_unique<GlobalCountState>(); }
 
-std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>((int64_t) 0)); }
+std::unique_ptr<AggregationState> CountFunction::createState() { return std::make_unique<CountState>(Value<>(0_s64)); }
 
 CountFunction::CountFunction() {}
 
 void CountFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record&) {
     auto countState = (CountState*) state.get();
-    countState->count = countState->count + (int64_t) 1;
+    countState->count = countState->count + 1_s64;
 }
 
 Value<Any> CountFunction::lower(std::unique_ptr<AggregationState>& ctx) {

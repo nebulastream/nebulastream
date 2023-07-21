@@ -19,6 +19,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -56,13 +57,13 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MlHeuristicPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup MlHeuristicPlacementTest test class.");
+        NES_DEBUG("Setup MlHeuristicPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG2("Setup MlHeuristicPlacementTest test case.");
+        NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -157,9 +158,10 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(NES::PlacementStrategy::MlHeuristic);
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::MlHeuristic);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -169,14 +171,15 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
+    auto queryId = sharedQueryPlan->getId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
-    NES_DEBUG2("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
-    NES_DEBUG2("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
-    NES_DEBUG2("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
+    NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
+    NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
+    NES_DEBUG("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
 
     ASSERT_EQ(executionNodes.size(), 13U);
     // Index represents the id of the execution node

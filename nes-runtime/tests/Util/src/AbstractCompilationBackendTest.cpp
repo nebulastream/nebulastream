@@ -20,9 +20,9 @@ AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::Execu
                                         const CompilationOptions& options,
                                         const DumpHelper& dumpHelper) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_DEBUG2("{}", executionTrace.get()->toString());
+    NES_DEBUG("{}", executionTrace.get()->toString());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_DEBUG2("{}", ir->toString());
+    NES_DEBUG("{}", ir->toString());
     auto param = this->GetParam();
     auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
     return compiler->compile(ir, options, dumpHelper);

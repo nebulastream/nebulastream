@@ -20,6 +20,7 @@
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
+#include <Util/StdInt.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
@@ -36,7 +37,7 @@ void GeneratableCountAggregation::compileLift(CompoundStatementPtr currentCode,
                                               BinaryOperatorStatement partialValueRef,
                                               RecordHandlerPtr) {
 
-    auto initValue = DataTypeFactory::createBasicValue((uint64_t) 1);
+    auto initValue = DataTypeFactory::createBasicValue(1_u64);
     auto initGenValue = GeneratableTypesFactory::createValueType(initValue);
     auto updatedPartial = partialValueRef.assign(ConstantExpressionStatement(initGenValue));
     currentCode->addStatement(updatedPartial.copy());

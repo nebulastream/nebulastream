@@ -29,9 +29,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
@@ -46,7 +46,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
-    NES_DEBUG2("QueryService()");
+    NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(std::move(sourceCatalog),
                                                                          optimizerConfiguration.performAdvanceSemanticValidation,
@@ -58,11 +58,11 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
                                                       const FaultToleranceType faultTolerance,
                                                       const LineageType lineage) {
 
-    NES_INFO2("QueryService: Validating and registering the user query.");
+    NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     try {
         // Checking the syntactic validity and compiling the query string to an object
-        NES_INFO2("QueryService: check validation of a query.");
+        NES_INFO("QueryService: check validation of a query.");
         QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
         queryPlan->setQueryId(queryId);
@@ -72,23 +72,23 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy placementStrategy;
+        Optimizer::PlacementStrategy placementStrategy;
         try {
-            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
+            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
-            NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
+            NES_ERROR("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
         Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
             return queryId;
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR2("QueryService: {}", std::string(exc.what()));
+        NES_ERROR("QueryService: {}", std::string(exc.what()));
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
@@ -119,23 +119,23 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy placementStrategy;
+        Optimizer::PlacementStrategy placementStrategy;
         try {
-            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
+            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
-            NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
+            NES_ERROR("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
         Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
             queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
             return queryId;
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR2("QueryService: {}", std::string(exc.what()));
+        NES_ERROR("QueryService: {}", std::string(exc.what()));
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);

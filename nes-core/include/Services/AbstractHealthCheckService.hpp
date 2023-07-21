@@ -15,10 +15,12 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <future>
 #include <map>
 #include <memory>
+#include <set>
 #include <stdint.h>
 #include <thread>
 
@@ -80,6 +82,20 @@ class AbstractHealthCheckService {
      */
     bool getRunning();
 
+    /**
+     * Method to check if a worker is inactive
+     * @param workerId id of the worker
+     * @return true if worker is active otherwise false
+     */
+    bool isWorkerInactive(TopologyNodeId workerId);
+
+    /**
+     * Method to return a worker from healthcheck by its id
+     * @param workerId id of the worker
+     * @return worker with workerId
+     */
+    TopologyNodePtr getWorkerByWorkerId(TopologyNodeId workerId);
+
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::atomic<bool> isRunning = false;
@@ -89,6 +105,7 @@ class AbstractHealthCheckService {
     std::string healthServiceName;
     std::condition_variable cv;
     std::mutex cvMutex;
+    std::set<TopologyNodeId> inactiveWorkers;
 };
 
 }// namespace NES

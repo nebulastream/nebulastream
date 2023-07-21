@@ -23,13 +23,11 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
@@ -37,7 +35,6 @@
 #include <unistd.h>
 
 using namespace NES;
-using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 uint64_t sourceCnt;
@@ -137,7 +134,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
  */
 void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
-    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
     optimizerConfiguration.queryBatchSize = batchSize;
@@ -172,7 +169,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
-            NES_INFO("NesE2EBenchmarkConfig: Using config file with path: " << filePath << " .");
+            NES_INFO("NesE2EBenchmarkConfig: Using config file with path: {} .", filePath);
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
 
@@ -208,11 +205,11 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 
             logLevel = config["logLevel"].As<std::string>();
         } catch (std::exception& e) {
-            NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
+            NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file. {}", e.what());
         }
         return;
     }
-    NES_ERROR("NesE2EBenchmarkConfig: No file path was provided or file could not be found at " << filePath << ".");
+    NES_ERROR("NesE2EBenchmarkConfig: No file path was provided or file could not be found at {}.", filePath);
     NES_WARNING("Keeping default values for Worker Config.");
 }
 

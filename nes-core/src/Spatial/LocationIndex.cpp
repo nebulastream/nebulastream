@@ -42,12 +42,12 @@ bool LocationIndex::updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
 bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
                                             Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     if (!geoLocation.isValid()) {
-        NES_WARNING2("trying to set node coordinates to invalid value")
+        NES_WARNING("trying to set node coordinates to invalid value")
         return false;
     }
     double newLat = geoLocation.getLatitude();
     double newLng = geoLocation.getLongitude();
-    NES_DEBUG2("updating location of Node to: {}, {}", newLat, newLng);
+    NES_DEBUG("updating location of Node to: {}, {}", newLat, newLng);
     std::unique_lock lock(locationIndexMutex);
 #ifdef S2DEF
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
@@ -68,7 +68,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
             workerGeoLocationMap.erase(topologyNodeId);
             return true;
         }
-        NES_ERROR2("Failed to remove worker location.");
+        NES_ERROR("Failed to remove worker location.");
 #else
         workerGeoLocationMap.erase(topologyNodeId);
         return true;
@@ -91,7 +91,7 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::Dat
     }
     return queryResult.data();
 #else
-    NES_WARNING2("Files were compiled without s2. Nothing inserted into spatial index");
+    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
     (void) geoLocation;
     (void) radius;
     return {};
@@ -103,13 +103,13 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
     std::unique_lock lock(locationIndexMutex);
     auto workerGeoLocation = workerGeoLocationMap.find(topologyNodeId);
     if (workerGeoLocation == workerGeoLocationMap.end()) {
-        NES_ERROR2("Node with id {} does not exists", topologyNodeId);
+        NES_ERROR("Node with id {} does not exists", topologyNodeId);
         return {};
     }
 
     auto geoLocation = workerGeoLocation->second;
     if (!geoLocation.isValid()) {
-        NES_WARNING2("Trying to get the closest node to a node that does not have a location")
+        NES_WARNING("Trying to get the closest node to a node that does not have a location")
         return {};
     }
 
@@ -134,7 +134,7 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
     }
     return closestPoints[1].data();
 #else
-    NES_WARNING2("Files were compiled without s2, cannot find closest nodes");
+    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
     (void) topologyNodeId;
     (void) radius;
     return {};
@@ -160,7 +160,7 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
     }
     return closestNodeList;
 #else
-    NES_WARNING2("Files were compiled without s2, cannot find closest nodes");
+    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
     (void) center;
     (void) radius;
     return {};
@@ -191,7 +191,7 @@ size_t LocationIndex::getSizeOfPointIndex() {
     std::unique_lock lock(locationIndexMutex);
     return workerPointIndex.num_points();
 #else
-    NES_WARNING2("s2 lib not included");
+    NES_WARNING("s2 lib not included");
     return {};
 #endif
 }

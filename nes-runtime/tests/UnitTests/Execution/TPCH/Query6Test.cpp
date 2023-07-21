@@ -100,7 +100,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
 
     // process table
-    NES_INFO2("Process {} chunks", lineitems->getChunks().size());
+    NES_INFO("Process {} chunks", lineitems->getChunks().size());
     Timer timer("Q6");
     timer.start();
     auto pipeline1 = plan.getPipeline(0);
@@ -122,17 +122,19 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     emitExecutablePipeline->stop(*pipeline2.ctx);
     timer.snapshot("stop");
     timer.pause();
-    NES_INFO("Query Runtime:\n" << timer);
+    std::stringstream timerAsString;
+    timerAsString << timer;
+    NES_INFO("Query Runtime:\n{}", timerAsString.str());
     // compare results
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("revenue", BasicType::FLOAT32);
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2.ctx->buffers[0]);
     if (targetScaleFactor == TPCH_Scale_Factor::F1) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
+        NES_INFO("{:f}", resultDynamicBuffer[0][0].read<float>());
         EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
     } else if (targetScaleFactor == TPCH_Scale_Factor::F0_01) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
+        NES_INFO("{:f}", resultDynamicBuffer[0][0].read<float>());
         EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 1192973.625f, 200);
     } else {
         GTEST_FAIL();

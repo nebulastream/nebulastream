@@ -81,7 +81,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MillisecondIntervalTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MillisecondIntervalTest test class.");
+        NES_INFO("Setup MillisecondIntervalTest test class.");
     }
 
     void SetUp() override {
@@ -99,7 +99,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
 
-        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
@@ -108,12 +108,12 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
 
         path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
 
-        NES_INFO2("Setup MillisecondIntervalTest class.");
+        NES_INFO("Setup MillisecondIntervalTest class.");
     }
 
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
-        NES_INFO2("Tear down MillisecondIntervalTest test case.");
+        NES_INFO("Tear down MillisecondIntervalTest test case.");
         Testing::NESBaseTest::TearDown();
     }
 
@@ -258,16 +258,16 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
 }
 
 TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
-    NES_INFO2("MillisecondIntervalTest: Start coordinator");
+    NES_INFO("MillisecondIntervalTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0u);
     //register logical source
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_INFO2("MillisecondIntervalTest: Coordinator started successfully");
+    NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
-    NES_INFO2("MillisecondIntervalTest: Start worker 1");
+    NES_INFO("MillisecondIntervalTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
     defaultSourceType->setNumberOfBuffersToProduce(3);
@@ -276,7 +276,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MillisecondIntervalTest: Worker1 started successfully");
+    NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -293,7 +293,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    NES_INFO2("MillisecondIntervalTest: Remove query");
+    NES_INFO("MillisecondIntervalTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk = wrk1->stop(false);

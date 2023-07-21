@@ -34,20 +34,20 @@ class MemorySourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemorySourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MemorySourceIntegrationTest test class.");
+        NES_INFO("Setup MemorySourceIntegrationTest test class.");
     }
 };
 
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MemorySourceIntegrationTest: Start coordinator");
+    NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("MemorySourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -66,7 +66,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
     sourceCatalog->addLogicalSource("memory_stream", schema);
 
-    NES_INFO2("MemorySourceIntegrationTest: Start worker 1");
+    NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
 
@@ -89,7 +89,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("MemorySourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "memorySourceTestOut.csv";
@@ -105,7 +105,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO2("MemorySourceIntegrationTest: Remove query");
+    NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -114,7 +114,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    //    NES_INFO2("MemorySourceIntegrationTest: content={}", content);
+    //    NES_INFO("MemorySourceIntegrationTest: content={}", content);
     ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
@@ -139,14 +139,14 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MemorySourceIntegrationTest: Start coordinator");
+    NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("MemorySourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -165,7 +165,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
     sourceCatalog->addLogicalSource("memory_stream", schema);
 
-    NES_INFO2("MemorySourceIntegrationTest: Start worker 1");
+    NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
 
@@ -188,7 +188,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("MemorySourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "memorySourceTestOut.csv";
@@ -204,7 +204,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO2("MemorySourceIntegrationTest: Remove query");
+    NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -213,7 +213,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO2("MemorySourceIntegrationTest: content={}", content);
+    NES_INFO("MemorySourceIntegrationTest: content={}", content);
     ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
@@ -240,14 +240,14 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 /// with the invariant that the N+1-th buffer is half full
 
 TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MemorySourceIntegrationTest: Start coordinator");
+    NES_INFO("MemorySourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("MemorySourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -266,7 +266,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
 
     sourceCatalog->addLogicalSource("memory_stream", schema);
 
-    NES_INFO2("MemorySourceIntegrationTest: Start worker 1");
+    NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
 
@@ -289,7 +289,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO2("MemorySourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "memorySourceTestOut";
@@ -305,7 +305,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO2("MemorySourceIntegrationTest: Remove query");
+    NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -314,7 +314,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO2("MemorySourceIntegrationTest: content={}", content);
+    NES_INFO("MemorySourceIntegrationTest: content={}", content);
     ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
@@ -323,7 +323,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
             std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            NES_DEBUG2(" line={} expected={}", line, expectedString);
+            NES_DEBUG(" line={} expected={}", line, expectedString);
             ASSERT_EQ(line, expectedString);
         }
         lineCnt++;

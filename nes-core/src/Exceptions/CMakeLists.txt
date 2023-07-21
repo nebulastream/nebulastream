@@ -32,4 +32,9 @@ add_source_files(nes-core
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
         LocationProviderException.cpp
+        ExecutionNodeNotFoundException.cpp
+        RPCException.cpp
+        RPCQueryUndeploymentException.cpp
+        SharedQueryPlanNotFoundException.cpp
+        RequestExecutionException.cpp
 )

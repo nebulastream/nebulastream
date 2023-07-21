@@ -101,14 +101,14 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["k1"].write((int64_t) 1);
-    dynamicBuffer[0]["v1"].write((int64_t) 10);
-    dynamicBuffer[1]["k1"].write((int64_t) 1);
-    dynamicBuffer[1]["v1"].write((int64_t) 1);
-    dynamicBuffer[2]["k1"].write((int64_t) 2);
-    dynamicBuffer[2]["v1"].write((int64_t) 2);
-    dynamicBuffer[3]["k1"].write((int64_t) 3);
-    dynamicBuffer[3]["v1"].write((int64_t) 10);
+    dynamicBuffer[0]["k1"].write(+1_s64);
+    dynamicBuffer[0]["v1"].write(+10_s64);
+    dynamicBuffer[1]["k1"].write(+1_s64);
+    dynamicBuffer[1]["v1"].write(+1_s64);
+    dynamicBuffer[2]["k1"].write(+2_s64);
+    dynamicBuffer[2]["v1"].write(+2_s64);
+    dynamicBuffer[3]["k1"].write(+3_s64);
+    dynamicBuffer[3]["v1"].write(+10_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
@@ -121,7 +121,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     joinBuildExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     joinBuildExecutablePipeline->stop(pipeline1Context);
     auto entries = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    ASSERT_EQ(entries, (uint64_t) 4);
+    ASSERT_EQ(entries, 4_u64);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

@@ -28,13 +28,14 @@ class SynopsesOperator : public ExecutableOperator {
   public:
     /**
      * @brief Constructor for the nautilus operator corresponding to a synopses
-     * @param synopses
+     * @param handlerIndex: Index for the operator handler
+     * @param synopses: Synopses that belongs to this operator
      */
     explicit SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses);
 
     /**
      * @brief Sets up the synopses and the operator, e.g., initializing the underlying synopsis
-     * @param executionCtx
+     * @param executionCtx: The RuntimeExecutionContext
      */
     void setup(ExecutionContext& executionCtx) const override;
 
@@ -42,14 +43,17 @@ class SynopsesOperator : public ExecutableOperator {
 
     /**
      * @brief Passes the record to the synopsis so that it can see and act upon it
-     * @param ctx
-     * @param record
+     * @param ctx the execution context that allows accesses to local and global state.
+     * @param record the record that should be processed.
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     uint64_t handlerIndex;
     ASP::AbstractSynopsesPtr synopses;
+
+    // TODO if #3858 has been merged, then this might not be necessary anymore.
+    mutable bool hasLocalState;
 };
 
 }// namespace NES::Runtime::Execution::Operators

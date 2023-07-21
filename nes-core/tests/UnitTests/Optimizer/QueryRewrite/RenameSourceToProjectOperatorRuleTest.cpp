@@ -47,7 +47,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RenameSourceToProjectOperatorRuleTest test case.");
+        NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -58,7 +58,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     }
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
-        NES_INFO2("Setup FilterPushDownTest test case.");
+        NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;

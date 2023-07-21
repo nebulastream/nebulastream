@@ -94,18 +94,18 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::DOUBLE) {
                     buffer[recordIndex][fieldIndex].write<double>(value);
                 } else {
-                    NES_DEBUG2("This data source only generates data for numeric fields");
+                    NES_DEBUG("This data source only generates data for numeric fields");
                 }
             } else {
-                NES_DEBUG2("This data source only generates data for numeric fields");
+                NES_DEBUG("This data source only generates data for numeric fields");
             }
         }
     }
     buffer.setNumberOfTuples(tupleCnt);
-    NES_TRACE2("Source: id={} Generated buffer with {} / {}",
-               operatorId,
-               buffer.getNumberOfTuples(),
-               schema->getSchemaSizeInBytes());
+    NES_TRACE("Source: id={} Generated buffer with {} / {}",
+              operatorId,
+              buffer.getNumberOfTuples(),
+              schema->getSchemaSizeInBytes());
     return buffer.getBuffer();
 }
 

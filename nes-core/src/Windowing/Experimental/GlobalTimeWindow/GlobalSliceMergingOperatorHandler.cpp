@@ -38,18 +38,18 @@ void GlobalSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecut
 void GlobalSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                               Runtime::StateManagerPtr,
                                               uint32_t) {
-    NES_DEBUG2("start GlobalSliceMergingOperatorHandler");
+    NES_DEBUG("start GlobalSliceMergingOperatorHandler");
 }
 
 void GlobalSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                              Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop GlobalSliceMergingOperatorHandler: {}", queryTerminationType);
+    NES_DEBUG("stop GlobalSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSliceMergingOperatorHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
     return std::make_unique<GlobalSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-GlobalSliceMergingOperatorHandler::~GlobalSliceMergingOperatorHandler() { NES_DEBUG2("Destruct SliceStagingWindowHandler"); }
+GlobalSliceMergingOperatorHandler::~GlobalSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 Windowing::LogicalWindowDefinitionPtr GlobalSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
 std::weak_ptr<GlobalSliceStaging> GlobalSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
 

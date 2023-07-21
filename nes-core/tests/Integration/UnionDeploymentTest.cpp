@@ -39,7 +39,7 @@ class UnionDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnionDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup UnionDeploymentTest test class.");
+        NES_INFO("Setup UnionDeploymentTest test class.");
     }
 };
 
@@ -47,21 +47,21 @@ class UnionDeploymentTest : public Testing::NESBaseTest {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -71,9 +71,9 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
@@ -83,7 +83,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
     remove(outputFilePath.c_str());
@@ -91,7 +91,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("UnionDeploymentTest: Submit query");
+    NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId =
@@ -187,47 +187,47 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): content={}", content);
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent={}", expectedContent);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): content={}", content);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO2("UnionDeploymentTest: Remove query");
+    NES_INFO("UnionDeploymentTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 1");
+    NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 2");
+    NES_INFO("UnionDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("UnionDeploymentTest: Stop Coordinator");
+    NES_INFO("UnionDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest: Test finished");
+    NES_INFO("UnionDeploymentTest: Test finished");
 }
 
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -237,9 +237,9 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
@@ -249,7 +249,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
@@ -257,7 +257,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("UnionDeploymentTest: Submit query");
+    NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId =
@@ -353,47 +353,47 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO2("UnionDeploymentTest: Remove query");
+    NES_INFO("UnionDeploymentTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 1");
+    NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 2");
+    NES_INFO("UnionDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("UnionDeploymentTest: Stop Coordinator");
+    NES_INFO("UnionDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest: Test finished");
+    NES_INFO("UnionDeploymentTest: Test finished");
 }
 
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -403,9 +403,9 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
@@ -415,14 +415,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
-    NES_INFO2("UnionDeploymentTest: Submit query");
+    NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId =
@@ -518,47 +518,47 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
         "|1|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
-    NES_INFO2("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
+    NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO2("UnionDeploymentTest: Remove query");
+    NES_INFO("UnionDeploymentTest: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 1");
+    NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 2");
+    NES_INFO("UnionDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("UnionDeploymentTest: Stop Coordinator");
+    NES_INFO("UnionDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest: Test finished");
+    NES_INFO("UnionDeploymentTest: Test finished");
 }
 
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
@@ -568,9 +568,9 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
@@ -580,7 +580,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -588,7 +588,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("UnionDeploymentTest: Submit query");
+    NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId =
@@ -597,18 +597,18 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     cout << "queryid=" << queryId << endl;
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 1");
+    NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("UnionDeploymentTest: Stop worker 2");
+    NES_INFO("UnionDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO2("UnionDeploymentTest: Stop Coordinator");
+    NES_INFO("UnionDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest: Test finished");
+    NES_INFO("UnionDeploymentTest: Test finished");
 }
 
 /**
@@ -617,22 +617,22 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -643,9 +643,9 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
@@ -656,7 +656,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath =
         getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
@@ -665,7 +665,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Submit query");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
                    ".filter(Attribute(\"id\") < 12)"
                    ".unionWith(Query::from(\"diamond\")"
@@ -734,34 +734,34 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                          "|16|1|2|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO2(
+    NES_INFO(
         "UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): content={}",
         content);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentSubQry={}",
-              expectedContentSubQry);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentMainQry={}",
-              expectedContentMainQry);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentSubQry={}",
+             expectedContentSubQry);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentMainQry={}",
+             expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Test finished");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");
 }
 
 /**
@@ -770,22 +770,22 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -796,9 +796,9 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
@@ -809,7 +809,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testOneFilterPushDownWithMergeOfTwoDifferentSources.out";
     remove(outputFilePath.c_str());
@@ -817,7 +817,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Submit query");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
                    ".unionWith(Query::from(\"diamond\")"
                    ".map(Attribute(\"timestamp\") = 1)"
@@ -856,32 +856,32 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                                          "|3|11|2|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO2("UnionDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentSources): content={}", content);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentSubQry={}",
-              expectedContentSubQry);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentMainQry={}",
-              expectedContentMainQry);
+    NES_INFO("UnionDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentSources): content={}", content);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentSubQry={}",
+             expectedContentSubQry);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentMainQry={}",
+             expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Test finished");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");
 }
 
 /**
@@ -890,22 +890,22 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("UnionDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -917,9 +917,9 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("UnionDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("UnionDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
@@ -930,7 +930,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("UnionDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources.out";
     remove(outputFilePath.c_str());
@@ -938,7 +938,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Submit query");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
                    ".map(Attribute(\"timestamp\") = 2)"
                    ".filter(Attribute(\"value\") < 9)"
@@ -995,31 +995,31 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                                          "|5|1|1|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources): content={}", content);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentSubQry={}",
-              expectedContentSubQry);
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-              "expectedContentMainQry={}",
-              expectedContentMainQry);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources): content={}", content);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentSubQry={}",
+             expectedContentSubQry);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
+             "expectedContentMainQry={}",
+             expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("UnionDeploymentTest For Filter-Push-Down: Test finished");
+    NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");
 }
 }// namespace NES

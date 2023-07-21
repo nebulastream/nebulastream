@@ -36,6 +36,7 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <vector>
@@ -110,15 +111,15 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
 
     slicePreAggregation.open(ctx, rb);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 12_u64}, {"f2", +42_s64}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 12_u64}, {"f2", +42_s64}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
     auto value = ((uint64_t*) stateStore->getFirstSlice()->getState()->ptr);
     ASSERT_EQ(*value, 2);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 24)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 24_u64}, {"f2", +42_s64}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 2);
     ASSERT_EQ(stateStore->getLastSlice()->getStart(), 20);
     ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);
@@ -161,8 +162,8 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
 
     slicePreAggregation.open(ctx, rb);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 12_u64}, {"f2", +42_s64}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 12_u64}, {"f2", +42_s64}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
@@ -174,7 +175,7 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
     ASSERT_EQ(value[0].sum, 84);
     ASSERT_EQ(value[0].count, 2);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 24)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", 24_u64}, {"f2", +42_s64}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 2);
     ASSERT_EQ(stateStore->getLastSlice()->getStart(), 20);
     ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);

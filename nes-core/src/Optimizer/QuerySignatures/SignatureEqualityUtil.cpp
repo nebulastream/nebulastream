@@ -30,13 +30,13 @@ SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : co
 }
 
 bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2) {
-    NES_TRACE2("QuerySignature: Equating signatures");
+    NES_TRACE("QuerySignature: Equating signatures");
 
     try {
         auto otherConditions = signature2->getConditions();
         auto conditions = signature1->getConditions();
         if (!conditions || !otherConditions) {
-            NES_WARNING2("QuerySignature: Can't compare equality between null signatures");
+            NES_WARNING("QuerySignature: Can't compare equality between null signatures");
             return false;
         }
 
@@ -44,7 +44,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         auto otherColumns = signature2->getColumns();
         auto columns = signature1->getColumns();
         if (columns.size() != otherColumns.size()) {
-            NES_WARNING2("QuerySignature: Both signatures have different column entries");
+            NES_WARNING("QuerySignature: Both signatures have different column entries");
             return false;
         }
 
@@ -52,7 +52,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         auto otherWindowExpressions = signature2->getWindowsExpressions();
         auto windowsExpressions = signature1->getWindowsExpressions();
         if (windowsExpressions.size() != otherWindowExpressions.size()) {
-            NES_WARNING2("QuerySignature: Both signatures have different window expressions");
+            NES_WARNING("QuerySignature: Both signatures have different window expressions");
             return false;
         }
 
@@ -62,7 +62,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
         //Check both have same number of schema maps
         if (otherSchemaFieldToExprMaps.size() != schemaFieldToExprMaps.size()) {
-            NES_WARNING2("QuerySignature: Both signatures have different number of Schema Filed to Expr Maps");
+            NES_WARNING("QuerySignature: Both signatures have different number of Schema Filed to Expr Maps");
             return false;
         }
 
@@ -98,7 +98,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
             //If a matching schema doesn't exists in other signature then two signatures are different
             if (!schemaMatched) {
-                NES_WARNING2("QuerySignature: Both signatures have different column entries");
+                NES_WARNING("QuerySignature: Both signatures have different column entries");
                 return false;
             }
         }
@@ -113,9 +113,9 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         } else if (windowsExpressions.size() != 0) {
             for (const auto& windowExpression : windowsExpressions[0]) {
                 if (otherWindowExpressions[0].find(windowExpression.first) == otherWindowExpressions[0].end()) {
-                    NES_WARNING2("Window expression with key {}",
-                                 windowExpression.first,
-                                 " doesn't exists in window expressions of other signature");
+                    NES_WARNING("Window expression with key {}",
+                                windowExpression.first,
+                                " doesn't exists in window expressions of other signature");
                     return false;
                 }
                 //For each column expression of the column in other signature we try to create a DNF using
@@ -143,9 +143,9 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            NES_ERROR2("SignatureEqualityUtil: Exception occurred while performing equality check among "
-                       "queryIdAndCatalogEntryMapping {}",
-                       e.what());
+            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among "
+                      "queryIdAndCatalogEntryMapping {}",
+                      e.what());
         }
         return false;
     }

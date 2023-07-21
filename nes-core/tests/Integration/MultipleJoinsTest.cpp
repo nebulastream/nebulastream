@@ -36,17 +36,17 @@ class MultipleJoinsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleJoinsTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup MultipleJoinsTest test class.");
+        NES_INFO("Setup MultipleJoinsTest test class.");
     }
 
     std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -62,9 +62,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", BasicType::UINT64))->addField(createField("id3", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType1 = CSVSourceType::create();
@@ -77,9 +77,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType2 = CSVSourceType::create();
@@ -92,9 +92,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType3 = CSVSourceType::create();
@@ -107,7 +107,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -115,7 +115,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -134,42 +134,44 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
+    string expectedContent = "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 "
+                             "bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+                             "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 "
+                             "bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+                             "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 "
+                             "bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+                             "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorSequential) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -189,9 +191,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType1 = CSVSourceType::create();
@@ -203,9 +205,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType2 = CSVSourceType::create();
@@ -217,9 +219,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType3 = CSVSourceType::create();
@@ -231,9 +233,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType4 = CSVSourceType::create();
@@ -245,7 +247,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -253,7 +255,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -274,49 +276,53 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,"
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:"
-        "INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:"
-        "INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:"
-        "INTEGER\n"
-        "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
+    string expectedContent = "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 "
+                             "bits),window1window2window3window4$key:"
+                             "INTEGER(64 bits),window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 "
+                             "bits),window1window2window3$key:INTEGER(64 bits),"
+                             "window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 "
+                             "bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:"
+                             "INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 "
+                             "bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:"
+                             "INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$timestamp:INTEGER(64 "
+                             "bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:"
+                             "INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorNested) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -336,9 +342,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->workerHealthCheckWaitTime = 1;
@@ -351,9 +357,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     workerConfig2->workerHealthCheckWaitTime = 1;
@@ -366,9 +372,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     workerConfig3->workerHealthCheckWaitTime = 1;
@@ -381,9 +387,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = *rpcCoordinatorPort;
     workerConfig4->workerHealthCheckWaitTime = 1;
@@ -396,7 +402,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -404,7 +410,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     auto query =
         R"(Query::from("window1")
@@ -425,40 +431,44 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
-        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
-        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
-        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n";
+    string expectedContent = "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 "
+                             "bits),window1window2window3window4$key:"
+                             "INTEGER(64 bits),window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 "
+                             "bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$"
+                             "id1:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 "
+                             "bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3window4$"
+                             "start:INTEGER(64 bits),window3window4$end:INTEGER(64 bits),window3window4$key:INTEGER(64 "
+                             "bits),window3$win3:INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$"
+                             "timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 "
+                             "bits),window4$timestamp:INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 /**
@@ -469,10 +479,10 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
  */
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -489,7 +499,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
         R"(Schema::create()->addField(createField("win3", BasicType::UINT64))->addField(createField("id3", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -501,9 +511,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -515,9 +525,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
@@ -529,7 +539,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -537,7 +547,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -556,51 +566,53 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
-        "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n"
-        "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
-        "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n";
+    string expectedContent = "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 "
+                             "bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
+                             "start:INTEGER(64 bits),window1window2$end:INTEGER(64 bits),window1window2$key:INTEGER(64 "
+                             "bits),window1$win1:INTEGER(64 bits),window1$id1:INTEGER(64 bits),window1$"
+                             "timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 bits),window2$id2:INTEGER(64 "
+                             "bits),window2$timestamp:INTEGER(64 bits),window3$win3:INTEGER(64 bits),window3$id3:"
+                             "INTEGER(64 bits),window3$timestamp:INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
+                             "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n"
+                             "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
+                             "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorSequential) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -620,9 +632,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -634,9 +646,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -648,9 +660,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
@@ -662,9 +674,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = port;
     auto csvSourceType4 = CSVSourceType::create();
@@ -676,7 +688,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -684,7 +696,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -705,69 +717,73 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,"
-        "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:"
-        "INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:"
-        "INTEGER,window3$id3:INTEGER,window3$timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:"
-        "INTEGER\n"
-        "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "1000,2000,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "1000,2000,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "1000,2000,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "500,1500,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "500,1500,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "500,1500,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
-        "500,1500,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
+    string expectedContent = "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 "
+                             "bits),window1window2window3window4$key:"
+                             "INTEGER(64 bits),window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 "
+                             "bits),window1window2window3$key:INTEGER(64 bits),"
+                             "window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 "
+                             "bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$id1:"
+                             "INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 "
+                             "bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3$win3:"
+                             "INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$timestamp:INTEGER(64 "
+                             "bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 bits),window4$timestamp:"
+                             "INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "500,1500,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "500,1500,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "500,1500,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
+                             "500,1500,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorNested) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -787,9 +803,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -801,9 +817,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -815,9 +831,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
@@ -829,9 +845,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = port;
     auto csvSourceType4 = CSVSourceType::create();
@@ -843,7 +859,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -851,7 +867,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO("MultipleJoinsTest: Submit query");
 
     auto query =
         R"(Query::from("window1")
@@ -872,60 +888,64 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
-        "INTEGER,window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$"
-        "id1:INTEGER,window1$timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3window4$"
-        "start:INTEGER,window3window4$end:INTEGER,window3window4$key:INTEGER,window3$win3:INTEGER,window3$id3:INTEGER,window3$"
-        "timestamp:INTEGER,window4$win4:INTEGER,window4$id4:INTEGER,window4$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
-        "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
-        "500,1500,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
-        "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
-        "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
-        "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
-        "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
-        "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
-        "500,1500,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n";
+    string expectedContent = "window1window2window3window4$start:INTEGER(64 bits),window1window2window3window4$end:INTEGER(64 "
+                             "bits),window1window2window3window4$key:"
+                             "INTEGER(64 bits),window1window2$start:INTEGER(64 bits),window1window2$end:INTEGER(64 "
+                             "bits),window1window2$key:INTEGER(64 bits),window1$win1:INTEGER(64 bits),window1$"
+                             "id1:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),window2$win2:INTEGER(64 "
+                             "bits),window2$id2:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits),window3window4$"
+                             "start:INTEGER(64 bits),window3window4$end:INTEGER(64 bits),window3window4$key:INTEGER(64 "
+                             "bits),window3$win3:INTEGER(64 bits),window3$id3:INTEGER(64 bits),window3$"
+                             "timestamp:INTEGER(64 bits),window4$win4:INTEGER(64 bits),window4$id4:INTEGER(64 "
+                             "bits),window4$timestamp:INTEGER(64 bits)\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
+                             "500,1500,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001\n"
+                             "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
+                             "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
+                             "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
+                             "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
+                             "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
+                             "500,1500,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultipleJoinsTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 }// namespace NES

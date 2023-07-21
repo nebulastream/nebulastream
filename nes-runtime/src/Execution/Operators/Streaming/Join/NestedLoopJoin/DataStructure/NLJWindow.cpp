@@ -11,52 +11,76 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : StreamWindow(windowStart, windowEnd) {}
-
-uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
-    //TODO: I am not sure if this resizing is really efficient expecially if we know the tuple sizes
-    // maybe we should preallocate here too
-    if (leftSide) {
-        std::lock_guard<std::mutex> lock(leftTuplesMutex);
-        auto currentSize = leftTuples.size();
-        leftTuples.resize(currentSize + sizeOfTupleInByte);
-        return &leftTuples[currentSize];
-    } else {
-        std::lock_guard<std::mutex> lock(rightTuplesMutex);
-        auto currentSize = rightTuples.size();
-        rightTuples.resize(currentSize + sizeOfTupleInByte);
-        return &rightTuples[currentSize];
+NLJWindow::NLJWindow(uint64_t windowStart,
+                     uint64_t windowEnd,
+                     uint64_t numberOfWorker,
+                     uint64_t leftEntrySize,
+                     uint64_t leftPageSize,
+                     uint64_t rightEntrySize,
+                     uint64_t rightPageSize)
+    : StreamWindow(windowStart, windowEnd) {
+    for (uint64_t i = 0; i < numberOfWorker; ++i) {
+        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+        leftTuples.emplace_back(
+            std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), leftEntrySize, leftPageSize));
     }
+
+    for (uint64_t i = 0; i < numberOfWorker; ++i) {
+        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+        rightTuples.emplace_back(
+            std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), rightEntrySize, rightPageSize));
+    }
+    NES_DEBUG("Created NLJWindow {}", NLJWindow::toString());
 }
 
-uint8_t* NLJWindow::getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide) {
-    if (leftSide) {
-        return &leftTuples[sizeOfTupleInByte * tuplePos];
-    } else {
-        return &rightTuples[sizeOfTupleInByte * tuplePos];
+uint64_t NLJWindow::getNumberOfTuplesLeft() {
+    uint64_t sum = 0;
+    for (auto& pagedVec : leftTuples) {
+        sum += pagedVec->getNumberOfEntries();
     }
+    return sum;
 }
 
-size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
-    if (leftSide) {
-        return leftTuples.size() / sizeOfTupleInByte;
-    } else {
-        return rightTuples.size() / sizeOfTupleInByte;
+uint64_t NLJWindow::getNumberOfTuplesRight() {
+    uint64_t sum = 0;
+    for (auto& pagedVec : rightTuples) {
+        sum += pagedVec->getNumberOfEntries();
     }
+    return sum;
 }
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "NLJWindow(windowState: " << magic_enum::enum_name(windowState.load())
-                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+    basicOstringstream << "NLJWindow(windowStart: " << windowStart << " windowEnd: " << windowEnd
+                       << " windowState: " << std::string(magic_enum::enum_name<WindowState>(windowState))
+                       << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
+                       << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
     return basicOstringstream.str();
+}
+
+void* NLJWindow::getPagedVectorRefLeft(uint64_t workerId) { return leftTuples[workerId % leftTuples.size()].get(); }
+
+void* NLJWindow::getPagedVectorRefRight(uint64_t workerId) { return rightTuples[workerId % rightTuples.size()].get(); }
+
+void NLJWindow::combinePagedVectors() {
+    // Appending all PagedVectors for the left join side
+    for (uint64_t i = 1; i < leftTuples.size(); ++i) {
+        leftTuples[0]->appendAllPages(*leftTuples[i]);
+        leftTuples[i].release();
+    }
+
+    // Appending all PagedVectors for the right join side
+    for (uint64_t i = 1; i < rightTuples.size(); ++i) {
+        rightTuples[0]->appendAllPages(*rightTuples[i]);
+        rightTuples[i].release();
+    }
 }
 
 }// namespace NES::Runtime::Execution

@@ -20,6 +20,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <NesBaseTest.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -36,7 +37,7 @@ class ConfigTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup Configuration test class.");
+        NES_INFO("Setup Configuration test class.");
     }
 
     static std::vector<const char*> makePosixArgs(const std::vector<std::string>& args) {
@@ -58,7 +59,7 @@ class ConfigTest : public Testing::NESBaseTest {
         return result;
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down Configuration test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Configuration test class."); }
 };
 
 /**
@@ -200,6 +201,17 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
                     || physicalSource.getValue()->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
     }
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
+}
+
+TEST_F(ConfigTest, testWorkerYAMLFileFixedLocationNode) {
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    auto yamlPath = std::string(TEST_DATA_DIRECTORY) + "fixedLocationNode.yaml";
+    std::ofstream outFile(yamlPath);
+    outFile << "fieldNodeLocationCoordinates: \"23.88,-3.4\"" << std::endl << "nodeSpatialType: FIXED_LOCATION" << std::endl;
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(yamlPath);
+
+    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::DataTypes::Experimental::GeoLocation(23.88, -3.4));
+    EXPECT_EQ(workerConfigPtr->nodeSpatialType.getValue(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {

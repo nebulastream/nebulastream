@@ -14,8 +14,10 @@
 
 #include <Exceptions/QueryUndeploymentException.hpp>
 
-namespace NES {
-QueryUndeploymentException::QueryUndeploymentException(const std::string& message) : std::runtime_error(message) {}
-
+namespace NES::Exceptions {
 const char* QueryUndeploymentException::what() const noexcept { return RequestExecutionException::what(); }
-}// namespace NES
+QueryUndeploymentException::QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message)
+    : RequestExecutionException(message), sharedQueryId(sharedQueryId) {}
+
+SharedQueryId QueryUndeploymentException::getSharedQueryId() { return sharedQueryId; }
+}// namespace NES::Exceptions

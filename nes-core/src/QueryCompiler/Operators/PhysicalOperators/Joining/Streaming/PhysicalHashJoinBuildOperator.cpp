@@ -13,53 +13,63 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
-#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalHashJoinBuildOperator::PhysicalHashJoinBuildOperator(
-    OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-    JoinBuildSideType buildSide,
-    std::string timeStampFieldName)
-    : OperatorNode(id), PhysicalHashJoinOperator(std::move(operatorHandler), id),
-      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      timeStampFieldName(std::move(timeStampFieldName)), buildSide(buildSide) {}
+    const OperatorId id,
+    const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
+    const JoinBuildSideType buildSide,
+    const std::string& timeStampFieldName,
+    const std::string& joinFieldName)
+    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+      timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName), buildSide(buildSide) {}
 
 PhysicalOperatorPtr
 PhysicalHashJoinBuildOperator::create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName) {
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName) {
 
     return std::make_shared<PhysicalHashJoinBuildOperator>(id,
                                                            inputSchema,
                                                            outputSchema,
                                                            operatorHandler,
                                                            buildSide,
-                                                           timeStampFieldName);
+                                                           timeStampFieldName,
+                                                           joinFieldName);
 }
 
 PhysicalOperatorPtr
 PhysicalHashJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName) {
+    return create(Util::getNextOperatorId(),
+                  inputSchema,
+                  outputSchema,
+                  operatorHandler,
+                  buildSide,
+                  timeStampFieldName,
+                  joinFieldName);
 }
 
 std::string PhysicalHashJoinBuildOperator::toString() const { return "PhysicalHashJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalHashJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
+    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
 }
 
 JoinBuildSideType PhysicalHashJoinBuildOperator::getBuildSide() const { return buildSide; }
 
 const std::string& PhysicalHashJoinBuildOperator::getTimeStampFieldName() const { return timeStampFieldName; }
+
+const std::string& PhysicalHashJoinBuildOperator::getJoinFieldName() const { return joinFieldName; }
 }// namespace NES::QueryCompilation::PhysicalOperators

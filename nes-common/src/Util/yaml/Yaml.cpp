@@ -1531,9 +1531,9 @@ class ParseImp {
                     scalarValue.replace(i, 1, "\\n");
                     i += 2;
                 }
-                NES_DEBUG(scalarValue);
+                NES_DEBUG("{}", scalarValue);
             } else if (pLine->Type == Node::eType::MapType) {
-                NES_DEBUG(pLine->Data + ":");
+                NES_DEBUG("{}:", pLine->Data);
             } else if (pLine->Type == Node::eType::SequenceType) {
                 NES_DEBUG("-");
             } else {

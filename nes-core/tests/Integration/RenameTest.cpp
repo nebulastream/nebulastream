@@ -40,25 +40,25 @@ class RenameTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup RenameTest test class.");
+        NES_INFO("Setup RenameTest test class.");
     }
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO2("RenameTest: Start coordinator");
+    NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("RenameTest: Coordinator started successfully");
+    NES_INFO("RenameTest: Coordinator started successfully");
 
-    NES_INFO2("RenameTest: Start worker 1");
+    NES_INFO("RenameTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
@@ -66,12 +66,12 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("RenameTest: Worker1 started successfully");
+    NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("RenameTest: Submit query");
+    NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\").project(Attribute(\"id\").as(\"NewName\")).sink(FileSinkDescriptor::"
                    "create(\""s
         + getTestResourceFolder().c_str() + "/test.out\"));";
@@ -82,7 +82,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("RenameTest: Remove query");
+    NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(getTestResourceFolder() / "test.out");
@@ -105,35 +105,35 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
                              "|1|\n"
                              "|1|\n"
                              "+----------------------------------------------------+";
-    NES_INFO2("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
-    NES_INFO2("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO2("RenameTest: Stop worker 1");
+    NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("RenameTest: Stop Coordinator");
+    NES_INFO("RenameTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("RenameTest: Test finished");
+    NES_INFO("RenameTest: Test finished");
 }
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO2("RenameTest: Start coordinator");
+    NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("RenameTest: Coordinator started successfully");
+    NES_INFO("RenameTest: Coordinator started successfully");
 
-    NES_INFO2("RenameTest: Start worker 1");
+    NES_INFO("RenameTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
@@ -141,14 +141,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("RenameTest: Worker1 started successfully");
+    NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
 
-    NES_INFO2("RenameTest: Submit query");
+    NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\")"
                    ".project(Attribute(\"id\").as(\"NewName\"))"
                    ".map(Attribute(\"NewName\") = Attribute(\"NewName\") * 2u)"
@@ -162,7 +162,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("RenameTest: Remove query");
+    NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(outputFile);
@@ -185,35 +185,35 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
                              "|2|\n"
                              "|2|\n"
                              "+----------------------------------------------------+";
-    NES_INFO2("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
-    NES_INFO2("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
+    NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO2("RenameTest: Stop worker 1");
+    NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("RenameTest: Stop Coordinator");
+    NES_INFO("RenameTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("RenameTest: Test finished");
+    NES_INFO("RenameTest: Test finished");
 }
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO2("RenameTest: Start coordinator");
+    NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO2("RenameTest: Coordinator started successfully");
+    NES_INFO("RenameTest: Coordinator started successfully");
 
-    NES_INFO2("RenameTest: Start worker 1");
+    NES_INFO("RenameTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
@@ -221,14 +221,14 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("RenameTest: Worker1 started successfully");
+    NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
 
-    NES_INFO2("RenameTest: Submit query");
+    NES_INFO("RenameTest: Submit query");
     std::string query =
         R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create(")";
     query += outputFile;
@@ -240,10 +240,10 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_INFO2("RenameTest: Remove query");
+    NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
+    string expectedContent = "default_logical$NewName:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
@@ -257,32 +257,32 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFile));
 
-    NES_INFO2("RenameTest: Stop worker 1");
+    NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("RenameTest: Stop Coordinator");
+    NES_INFO("RenameTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("RenameTest: Test finished");
+    NES_INFO("RenameTest: Test finished");
 }
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema1);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -294,7 +294,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -302,7 +302,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("RenameTest: Submit query");
+    NES_INFO("RenameTest: Submit query");
 
     string query = "Query::from(\"window\")"
                    ".project(Attribute(\"id\").as(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").as(\"newValue\"))"
@@ -318,7 +318,8 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
+    string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$newId:INTEGER(64 "
+                             "bits),window$newValue:INTEGER(64 bits)\n"
                              "1000,2000,1,1\n"
                              "2000,3000,1,2\n"
                              "1000,2000,4,1\n"
@@ -328,31 +329,31 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("RenameTest: Remove query");
+    NES_INFO("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("RenameTest: Stop worker 1");
+    NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("RenameTest: Stop Coordinator");
+    NES_INFO("RenameTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("RenameTest: Test finished");
+    NES_INFO("RenameTest: Test finished");
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("WindowDeploymentTest: Start coordinator");
+    NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -360,9 +361,9 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     std::string testSchema2 =
         R"(Schema::create()->addField(createField("win2", BasicType::UINT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", testSchema2);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -374,9 +375,9 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    NES_INFO2("WindowDeploymentTest: Start worker 2");
+    NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
@@ -388,7 +389,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO2("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
@@ -396,7 +397,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("RenameTest: Submit query");
+    NES_INFO("RenameTest: Submit query");
     string query =
         R"(Query::from("window1")
             .project(Attribute("id1").as("id1New"), Attribute("timestamp"))
@@ -414,30 +415,30 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1New:INTEGER,window1$timestamp:INTEGER,"
-        "window2$win2:INTEGER,window2$id2New:INTEGER,window2$timestamp:INTEGER\n"
-        "1000,2000,4,1,4,1002,3,4,1102\n"
-        "1000,2000,4,1,4,1002,3,4,1112\n"
-        "1000,2000,12,1,12,1001,5,12,1011\n"
-        "2000,3000,1,2,1,2000,2,1,2010\n"
-        "2000,3000,11,2,11,2001,2,11,2301\n";
+    string expectedContent = "_$start:INTEGER(64 bits),_$end:INTEGER(64 bits),_$key:INTEGER(64 bits),window1$win1:INTEGER(64 "
+                             "bits),window1$id1New:INTEGER(64 bits),window1$timestamp:INTEGER(64 bits),"
+                             "window2$win2:INTEGER(64 bits),window2$id2New:INTEGER(64 bits),window2$timestamp:INTEGER(64 bits)\n"
+                             "1000,2000,4,1,4,1002,3,4,1102\n"
+                             "1000,2000,4,1,4,1002,3,4,1112\n"
+                             "1000,2000,12,1,12,1001,5,12,1011\n"
+                             "2000,3000,1,2,1,2000,2,1,2010\n"
+                             "2000,3000,11,2,11,2001,2,11,2301\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("RenameTest: Remove query");
+    NES_DEBUG("RenameTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("RenameTest: Stop worker 1");
+    NES_DEBUG("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("RenameTest: Stop worker 2");
+    NES_DEBUG("RenameTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("RenameTest: Stop Coordinator");
+    NES_DEBUG("RenameTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("RenameTest: Test finished");
+    NES_INFO("RenameTest: Test finished");
 }
 }// namespace NES

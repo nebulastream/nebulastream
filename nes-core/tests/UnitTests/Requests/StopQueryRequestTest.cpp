@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -39,7 +40,7 @@ class StopQueryRequestTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StopQueryRequestTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO2("Setup StopQueryRequestTest test class.");
+        NES_INFO("Setup StopQueryRequestTest test class.");
     }
 };
 /**
@@ -48,7 +49,8 @@ class StopQueryRequestTest : public Testing::NESBaseTest {
 TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     QueryId queryId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(queryId, 0, workerRPCClient, false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto stopQueryRequest = StopQueryRequestExperimental::create(queryId, 0, workerRPCClient, coordinatorConfiguration);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 /**
@@ -57,7 +59,8 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
 TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     QueryId queryId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(queryId, 0, workerRPCClient, false);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto stopQueryRequest = StopQueryRequestExperimental::create(queryId, 0, workerRPCClient, coordinatorConfiguration);
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();

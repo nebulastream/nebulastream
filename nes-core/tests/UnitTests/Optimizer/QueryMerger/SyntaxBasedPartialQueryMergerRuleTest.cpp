@@ -39,7 +39,7 @@ class SyntaxBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandl
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
+        NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -157,7 +157,7 @@ TEST_F(SyntaxBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipl
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
-    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+    EXPECT_EQ(updatedRootOperators1.size(), 2);
 
     for (const auto& sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;

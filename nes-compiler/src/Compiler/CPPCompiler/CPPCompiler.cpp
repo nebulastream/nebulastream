@@ -15,6 +15,7 @@
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
+#include <Compiler/ExternalAPI.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Compiler/Util/ExecutablePath.hpp>
@@ -43,11 +44,13 @@ CPPCompiler::CPPCompiler()
 
 CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG("~CPPCompiler"); }
 
-std::string CPPCompiler::getLanguage() const { return "cpp"; }
+Language CPPCompiler::getLanguage() const { return Language::CPP; }
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
+    // Compile and load shared library.
     Timer timer("CPPCompiler");
     timer.start();
+
     std::string fileName = (std::filesystem::temp_directory_path() / request->getName());
     auto sourceFileName = fileName + ".cpp";
     auto libraryFileName = fileName +
@@ -61,33 +64,36 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto& sourceCode = request->getSourceCode()->getCode();
     NES_ASSERT2_FMT(sourceCode.size(), "empty source code for " << sourceFileName);
     auto file = File::createFile(sourceFileName, sourceCode);
-    auto compilationFlags = CPPCompilerFlags::createDefaultCompilerFlags();
+
+    CPPCompilerFlags compilationFlags;
+    compilationFlags.addDefaultCompilerFlags();
+    compilationFlags.addSharedLibraryFlag();
+
     if (request->enableOptimizations()) {
-        NES_DEBUG("Compile with optimizations.");
         compilationFlags.enableOptimizationFlags();
     }
+
     if (request->enableDebugging()) {
-        NES_DEBUG("Compile with debugging.");
         compilationFlags.enableDebugFlags();
         format->formatFile(file);
         file->print();
     }
+
     if (request->enableCompilationProfiling()) {
-        compilationFlags.addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
-        NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
+        compilationFlags.enableProfilingFlags();
     }
-    compilationFlags.addFlag("-shared");
-    compilationFlags.addFlag("-g");
 
     // add header
     for (auto libPaths : runtimePathConfig.libPaths) {
         compilationFlags.addFlag(std::string("-L") + libPaths);
     }
+
     // add libs
     for (auto libs : runtimePathConfig.libs) {
         compilationFlags.addFlag(libs);
     }
-    // add header
+
+    // add includes
     for (auto includePath : runtimePathConfig.includePaths) {
         compilationFlags.addFlag("-I" + includePath);
     }
@@ -103,33 +109,22 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DTFDEF=1");
 #endif// TFDEF
 
-    compilationFlags.addFlag(sourceFileName);
-
-    compileSharedLib(compilationFlags, file, libraryFileName);
-
-    // load shared lib
-    auto sharedLibrary = SharedLibrary::load(libraryFileName);
-
-    timer.pause();
-    if (!request->enableDebugging()) {
-        std::filesystem::remove(sourceFileName);
-        std::filesystem::remove(libraryFileName);
+    for (auto api : request->getExternalAPIs()) {
+        compilationFlags.mergeFlags(api->getCompilerFlags());
     }
-    NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
-    std::filesystem::remove(libraryFileName);
-    return CompilationResult(sharedLibrary, std::move(timer));
-}
 
-void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const {
     // lock file, such that no one can operate on the file at the same time
-    const std::lock_guard<std::mutex> fileLock(sourceFile->getFileMutex());
+    const std::lock_guard<std::mutex> fileLock(file->getFileMutex());
 
     std::stringstream compilerCall;
     compilerCall << runtimePathConfig.clangBinaryPath << " ";
-    for (const auto& arg : flags.getFlags()) {
+    for (const auto& arg : compilationFlags.getFlags()) {
         compilerCall << arg << " ";
     }
-    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
+
+    compilerCall << file->getPath();
+
+    NES_DEBUG("Compiler: compile with: '{}'", compilerCall.str());
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];
@@ -142,7 +137,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
 
     if (fp == nullptr) {
         NES_ERROR("Compiler: failed to run command\n");
-        return;
+        throw std::runtime_error("Compiler: failed to run command");
     }
 
     // Collecting the output of the compiler to a string stream
@@ -156,9 +151,21 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
 
     // If the compilation didn't return with 0, we throw an exception containing the compiler output
     if (ret != 0) {
-        NES_ERROR("Compiler: compilation of " << libraryFileName << " failed.");
+        NES_ERROR("Compiler: compilation of {} failed.", libraryFileName);
         throw std::runtime_error(strstream.str());
     }
+
+    if (!request->enableDebugging()) {
+        std::filesystem::remove(sourceFileName);
+    }
+    auto sharedLibrary = SharedLibrary::load(libraryFileName);
+
+    std::filesystem::remove(libraryFileName);
+
+    timer.pause();
+    NES_INFO("[CPPCompiler] Compilation time: {}ms", (double) timer.getRuntime() / (double) 1000000);
+
+    return CompilationResult(sharedLibrary, std::move(timer));
 }
 
 }// namespace NES::Compiler

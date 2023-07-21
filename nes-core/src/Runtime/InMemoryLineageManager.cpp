@@ -20,9 +20,9 @@ namespace NES::Runtime {
 
 void InMemoryLineageManager::insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) {
     std::unique_lock<std::mutex> lock(mutex);
-    NES_TRACE2("Insert tuple<{},{}> into bufferAncestorMapping manager",
-               newBufferSequenceNumber.getSequenceNumber(),
-               oldBufferSequenceNumber.getOriginId());
+    NES_TRACE("Insert tuple<{},{}> into bufferAncestorMapping manager",
+              newBufferSequenceNumber.getSequenceNumber(),
+              oldBufferSequenceNumber.getOriginId());
     this->bufferAncestorMapping[newBufferSequenceNumber].push_back(oldBufferSequenceNumber);
 }
 
@@ -30,9 +30,9 @@ bool InMemoryLineageManager::trim(BufferSequenceNumber bufferSequenceNumber) {
     std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->bufferAncestorMapping.find(bufferSequenceNumber);
     if (iterator != this->bufferAncestorMapping.end()) {
-        NES_TRACE2("Trim tuple<{},{}> from bufferAncestorMapping manager",
-                   bufferSequenceNumber.getSequenceNumber(),
-                   bufferSequenceNumber.getOriginId());
+        NES_TRACE("Trim tuple<{},{}> from bufferAncestorMapping manager",
+                  bufferSequenceNumber.getSequenceNumber(),
+                  bufferSequenceNumber.getOriginId());
         this->bufferAncestorMapping.erase(iterator);
         return true;
     }

@@ -20,7 +20,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
@@ -34,8 +33,8 @@
 namespace NES::Benchmark {
 
 void E2ESingleRun::setupCoordinatorConfig() {
-    NES_INFO2("Creating coordinator and worker configuration...");
-    coordinatorConf = Configurations::CoordinatorConfiguration::create();
+    NES_INFO("Creating coordinator and worker configuration...");
+    coordinatorConf = Configurations::CoordinatorConfiguration::createDefault();
 
     // Coordinator configuration
     coordinatorConf->rpcPort = rpcPortSingleRun;
@@ -69,241 +68,141 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
     coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
+    coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
+
+    if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCKING") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCK_FREE") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
+    }
+
+    coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
+    NES_INFO("Using joinStrategy {}",
+             magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
 
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;
         coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     }
 
-    NES_INFO2("Created coordinator and worker configuration!");
+    NES_INFO("Created coordinator and worker configuration!");
 }
 
 void E2ESingleRun::createSources() {
-    size_t sourceCnt = 0;
-    NES_INFO2("Creating sources and the accommodating data generation and data providing...");
+    NES_INFO("Creating sources and the accommodating data generation and data providing...");
 
+    size_t sourceCnt = 0;
     for (const auto& item : configOverAllRuns.sourceNameToDataGenerator) {
         auto logicalSourceName = item.first;
         auto dataGenerator = item.second.get();
         auto schema = dataGenerator->getSchema();
+
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
 
         auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
         auto numberOfTotalBuffers = configOverAllRuns.numberOfPreAllocatedBuffer->getValue() * numberOfPhysicalSrc;
+
         auto bufferManager =
             std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(), numberOfTotalBuffers);
         dataGenerator->setBufferManager(bufferManager);
-
         allBufferManagers.emplace_back(bufferManager);
 
-        NES_INFO2("Creating #{}physical sources for logical source {}",
-                  numberOfPhysicalSrc,
-                  logicalSource->getLogicalSourceName());
+        NES_INFO("Creating {} physical sources for logical source {}",
+                 numberOfPhysicalSrc,
+                 logicalSource->getLogicalSourceName());
 
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
-
+            auto generatorName = dataGenerator->getName();
             auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
-
             auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                             configPerRun.bufferSizeInBytes->getValue());
 
-            size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
+            auto sourceConfig = createPhysicalSourceType(createdBuffers, sourceCnt, i, generatorName);
+            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
+            coordinatorConf->worker.physicalSources.add(physicalSource);
 
-            //TODO #3336: static query manager mode is currently not ported therefore only one queue
-            size_t taskQueueId = 0;
-            if (dataGenerator->getName() == "YSBKafka") {
-#ifdef ENABLE_KAFKA_BUILD
-                //Kafka is not using a data provider as Kafka itself is the provider
-                auto connectionStringVec =
-                    NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
-
-                std::string destinationTopic;
-
-                NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << connectionStringVec[1])
-                auto kafkaSourceType = KafkaSourceType::create();
-                kafkaSourceType->setBrokers(connectionStringVec[0]);
-                kafkaSourceType->setTopic(connectionStringVec[1]);
-                kafkaSourceType->setConnectionTimeout(1000);
-
-                //we use the group id
-                kafkaSourceType->setGroupId(std::to_string(i));
-                kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
-                kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
-
-                auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
-                coordinatorConf->worker.physicalSources.add(physicalSource);
-
-#else
-                NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
-#endif
-            } else {
-                auto dataProvider =
-                    DataProvision::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
-
-                // Adding necessary items to the corresponding vectors
-                allDataProviders.emplace_back(dataProvider);
-
-                size_t generatorQueueIndex = 0;
-                auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
-                    allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
-                };
-
-                LambdaSourceTypePtr sourceConfig =
-                    LambdaSourceType::create(dataProvidingFunc,
-                                             configOverAllRuns.numberOfBuffersToProduce->getValue(),
-                                             /* gatheringValue */ 0,
-                                             GatheringMode::INTERVAL_MODE,
-                                             sourceAffinity,
-                                             taskQueueId);
-
-                auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
-                coordinatorConf->worker.physicalSources.add(physicalSource);
-            }
-            sourceCnt += 1;
-            NES_INFO2("Created physical source #{} for {}", numberOfPhysicalSrc, logicalSource->getLogicalSourceName());
+            sourceCnt++;
+            NES_INFO("Created {} for {}", physicalStreamName, logicalSource->getLogicalSourceName());
         }
     }
-    NES_INFO2("Created sources and the accommodating data generation and data providing!");
+    NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
 void E2ESingleRun::runQuery() {
-    NES_INFO2("Starting nesCoordinator...");
+    NES_INFO("Starting nesCoordinator...");
     coordinator = std::make_shared<NesCoordinator>(coordinatorConf);
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
-    NES_INFO2("Started nesCoordinator at {}", rpcPort);
+    NES_INFO("Started nesCoordinator at {}", rpcPort);
 
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
-        QueryId queryId = 0;
-        NES_INFO2("E2EBase: Submit query = {}", configOverAllRuns.query->getValue());
-        queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-
+        NES_INFO("E2EBase: Submitting query = {}", configOverAllRuns.query->getValue());
+        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
         submittedIds.push_back(queryId);
 
-        for (auto id : submittedIds) {
-            bool res = waitForQueryToStart(id, queryCatalog, std::chrono::seconds(180));
-            if (!res) {
-                NES_THROW_RUNTIME_ERROR("run does not succeed for id=" << id);
-            }
-            NES_INFO2("E2EBase: query started with id={}", id);
+        if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
+            NES_THROW_RUNTIME_ERROR("E2EBase: Could not start query with id = " << queryId);
         }
+        NES_INFO("E2EBase: Query with id = {} started", queryId);
     }
+
     NES_DEBUG("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->start();
     }
 
     // Wait for the system to come to a steady state
-    NES_INFO2("Now waiting for {} s to let the system come to a steady state!",
-              configOverAllRuns.startupSleepIntervalInSeconds->getValue());
+    NES_INFO("Waiting for {} seconds to let the system reach a steady state!",
+             configOverAllRuns.startupSleepIntervalInSeconds->getValue());
     sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
 
     // For now, we only support one way of collecting the measurements
-    NES_INFO2("Starting to collect measurements...");
-
+    NES_INFO("Starting to collect measurements...");
     uint64_t found = 0;
     while (found != submittedIds.size()) {
         for (auto id : submittedIds) {
             auto stats = coordinator->getNodeEngine()->getQueryStatistics(id);
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
-                    NES_DEBUG("Query with id " << id << " not ready with no. tuples = " << iter->getProcessedTuple()
-                                               << ". Sleeping for a second now...");
+                    NES_DEBUG("Query with id = {} not ready with no. tuples = {}. Sleeping for a second now...",
+                              id,
+                              iter->getProcessedTuple());
                     sleep(1);
                 }
-                NES_INFO2("Query with id {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
+                NES_INFO("Query with id = {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
                 ++found;
             }
         }
     }
 
-    NES_INFO2("Starting measurements...");
-    // We have to measure once more than the required numMeasurementsToCollect as we calculate deltas later on
-    for (uint64_t cnt = 0; cnt <= configOverAllRuns.numMeasurementsToCollect->getValue(); ++cnt) {
-        int64_t nextPeriodStartTime = configOverAllRuns.experimentMeasureIntervalInSeconds->getValue() * 1000;
-        nextPeriodStartTime +=
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        uint64_t timeStamp =
-            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        std::map<uint64_t, uint64_t> previousMap;
-        measurements.addNewTimestamp(timeStamp);
-        for (auto id : submittedIds) {
-            auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(id);
-            size_t processedTasks = 0;
-            size_t processedBuffers = 0;
-            size_t processedTuples = 0;
-            size_t latencySum = 0;
-            size_t queueSizeSum = 0;
-            size_t availGlobalBufferSum = 0;
-            size_t availFixedBufferSum = 0;
-            for (auto subPlanStatistics : statisticsCoordinator) {
-                if (subPlanStatistics->getProcessedBuffers() != 0) {
-                    processedTasks += subPlanStatistics->getProcessedTasks();
-                    processedBuffers += subPlanStatistics->getProcessedBuffers();
-                    processedTuples += subPlanStatistics->getProcessedTuple();
-                    latencySum += (subPlanStatistics->getLatencySum() / subPlanStatistics->getProcessedBuffers());
-                    queueSizeSum += (subPlanStatistics->getQueueSizeSum() / subPlanStatistics->getProcessedBuffers());
-                    availGlobalBufferSum +=
-                        (subPlanStatistics->getAvailableGlobalBufferSum() / subPlanStatistics->getProcessedBuffers());
-                    availFixedBufferSum +=
-                        (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
-                }
+    collectMeasurements();
+    NES_INFO("Done measuring!");
 
-                measurements.addNewMeasurement(processedTasks,
-                                               processedBuffers,
-                                               processedTuples,
-                                               latencySum,
-                                               queueSizeSum,
-                                               availGlobalBufferSum,
-                                               availFixedBufferSum,
-                                               timeStamp);
-                std::stringstream ss;
-                size_t pipeCnt = 0;
-
-                ss << "time=" << timeStamp << " subplan=" << subPlanStatistics->getSubQueryId()
-                   << " procTasks=" << processedTasks;
-                for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
-                    ss << " pipeNo:" << pipeCnt++ << " tasks=" << pipe.second;
-                }
-                std::cout << ss.str() << std::endl;
-            }
-        }
-
-        // Calculating the time to sleep
-        auto curTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        auto sleepTime = nextPeriodStartTime - curTime;
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
-    }
-
-    NES_INFO2("Done measuring!");
-    NES_INFO2("Done with single run!");
+    NES_INFO("Done with single run!");
 }
 
 void E2ESingleRun::stopQuery() {
-    NES_INFO2("Stopping the query...");
-
+    NES_INFO("Stopping the query...");
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (auto id : submittedIds) {
         // Sending a stop request to the coordinator with a timeout of 30 seconds
         queryService->validateAndQueueStopQueryRequest(id);
-        auto start_timestamp = std::chrono::system_clock::now();
-        while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
-            NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
-            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::STOPPED) {
-                NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
-                break;
-            }
-            NES_DEBUG("checkStoppedOrTimeout: status not reached for "
-                      << id << " as status is=" << queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
-            std::this_thread::sleep_for(stopQuerySleep);
+
+        if (!waitForQueryToStop(id, queryCatalog, defaultStartQueryTimeout)) {
+            NES_THROW_RUNTIME_ERROR("E2EBase: Could not stop query with id = " << id);
         }
-        NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+        NES_INFO("E2EBase: Query with id = {} stopped", id);
     }
 
     NES_DEBUG("Stopping data providers...");
@@ -313,9 +212,9 @@ void E2ESingleRun::stopQuery() {
     NES_DEBUG("Stopped data providers!");
 
     // Starting a new thread that waits
-    std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+    auto stopPromiseCord = std::make_shared<std::promise<bool>>();
     std::thread waitThreadCoordinator([this, stopPromiseCord]() {
-        std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+        auto stopFutureCord = stopPromiseCord->get_future();
         bool satisfied = false;
         while (!satisfied) {
             switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
@@ -325,8 +224,8 @@ void E2ESingleRun::stopQuery() {
                 case std::future_status::timeout:
                 case std::future_status::deferred: {
                     if (coordinator->isCoordinatorRunning()) {
-                        NES_DEBUG("Waiting for stop wrk cause #tasks in the queue: "
-                                  << coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
+                        NES_DEBUG("Waiting for stop wrk cause #tasks in the queue: {}",
+                                  coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
                     } else {
                         NES_DEBUG("worker stopped");
                     }
@@ -336,19 +235,18 @@ void E2ESingleRun::stopQuery() {
         }
     });
 
-    NES_INFO2("Stopping coordinator...");
+    NES_INFO("Stopping coordinator...");
     bool retStoppingCoord = coordinator->stopCoordinator(true);
     stopPromiseCord->set_value(retStoppingCoord);
     NES_ASSERT(stopPromiseCord, retStoppingCoord);
-
     waitThreadCoordinator.join();
-    NES_INFO2("Coordinator stopped!");
+    NES_INFO("Coordinator stopped!");
 
-    NES_INFO2("Stopped the query!");
+    NES_INFO("Stopped the query!");
 }
 
 void E2ESingleRun::writeMeasurementsToCsv() {
-    NES_INFO2("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
+    NES_INFO("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
     std::string queryString = configOverAllRuns.query->getValue();
@@ -375,12 +273,12 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 
     std::ofstream ofs;
     ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::app);
-    NES_DEBUG("write to file=" << configOverAllRuns.outputFile->getValue());
+    NES_DEBUG("Writing to file={}", configOverAllRuns.outputFile->getValue());
     ofs << outputCsvStream.str();
     ofs.close();
 
-    NES_INFO2("Done writing the measurements to {}", configOverAllRuns.outputFile->getValue());
-    NES_INFO2("Statistics are: {}", outputCsvStream.str())
+    NES_INFO("Done writing the measurements to {}", configOverAllRuns.outputFile->getValue());
+    NES_INFO("Statistics are: {}", outputCsvStream.str())
     std::cout << "Throughput=" << measurements.getThroughputAsString() << std::endl;
 }
 
@@ -416,20 +314,21 @@ void E2ESingleRun::run() {
 bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                                        const QueryCatalogServicePtr& queryCatalogService,
                                        std::chrono::seconds timeoutInSec) {
-    NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
-    auto start_timestamp = std::chrono::system_clock::now();
+    NES_TRACE("checkCompleteOrTimeout: Wait until the query {} is running", queryId);
+    auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+    if (!queryCatalogEntry) {
+        NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
+        return false;
+    }
+    auto startTimestamp = std::chrono::system_clock::now();
 
-    NES_TRACE("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-        if (!queryCatalogEntry) {
-            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
-            return false;
-        }
-        NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus status = queryCatalogEntry->getQueryStatus();
+    while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
+        NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
+        auto status = queryCatalogEntry->getQueryStatus();
 
-        switch (queryCatalogEntry->getQueryStatus()) {
+        switch (status) {
             case QueryStatus::MARKED_FOR_HARD_STOP:
             case QueryStatus::MARKED_FOR_SOFT_STOP:
             case QueryStatus::SOFT_STOP_COMPLETED:
@@ -439,20 +338,173 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                 return true;
             }
             case QueryStatus::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found "
-                          + std::string(magic_enum::enum_name(status)));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
+                          std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found " + std::string(magic_enum::enum_name(status)));
+                NES_WARNING("Expected: Running or Scheduling but found {}", std::string(magic_enum::enum_name(status)));
                 break;
             }
         }
 
-        std::this_thread::sleep_for(E2ESingleRun::sleepDuration);
+        std::this_thread::sleep_for(sleepDuration);
     }
-    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+
+    NES_TRACE("checkCompleteOrTimeout: waitForStart expected status is not reached after timeout");
     return false;
+}
+
+bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
+                                      const QueryCatalogServicePtr& queryCatalogService,
+                                      std::chrono::seconds timeoutInSec) {
+    NES_TRACE("checkCompleteOrTimeout: Wait until the query {} is stopped", queryId);
+    auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+    if (!queryCatalogEntry) {
+        NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
+        return false;
+    }
+    auto startTimestamp = std::chrono::system_clock::now();
+
+    while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
+        NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
+        auto status = queryCatalogEntry->getQueryStatus();
+
+        if (status == QueryStatus::STOPPED) {
+            NES_TRACE("checkStoppedOrTimeout: Status for query with id = {} is stopped", queryId);
+            return true;
+        }
+
+        NES_DEBUG("checkStoppedOrTimeout: Query with id = {} not stopped as status is {}",
+                  queryId,
+                  queryCatalogEntry->getQueryStatusAsString());
+
+        std::this_thread::sleep_for(sleepDuration);
+    }
+
+    NES_TRACE("checkCompleteOrTimeout: waitForStop expected status is not reached after timeout");
+    return false;
+}
+
+PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
+                                                             size_t sourceCnt,
+                                                             uint64_t groupId,
+                                                             std::string& generator) {
+    if (generator == "YSBKafka") {
+        ((void) groupId);// We have to do this, as on the macs, we have disabled Kafka
+#ifdef ENABLE_KAFKA_BUILD
+        //Kafka is not using a data provider as Kafka itself is the provider
+        auto connectionStringVec =
+            NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
+
+        auto kafkaSourceType = KafkaSourceType::create();
+        kafkaSourceType->setBrokers(connectionStringVec[0]);
+        kafkaSourceType->setTopic(connectionStringVec[1]);
+        kafkaSourceType->setConnectionTimeout(1000);
+
+        //we use the group id
+        kafkaSourceType->setGroupId(std::to_string(groupId));
+        kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
+        kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
+
+        return kafkaSourceType;
+#else
+        NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
+#endif
+    } else {
+        auto dataProvider =
+            DataProvision::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
+        // Adding necessary items to the corresponding vectors
+        allDataProviders.emplace_back(dataProvider);
+
+        size_t generatorQueueIndex = 0;
+        auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
+            allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
+        };
+
+        size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
+        //TODO #3336: static query manager mode is currently not ported therefore only one queue
+        size_t taskQueueId = 0;
+        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
+                                                                    configOverAllRuns.numberOfBuffersToProduce->getValue(),
+                                                                    /* gatheringValue */ 0,
+                                                                    GatheringMode::INTERVAL_MODE,
+                                                                    sourceAffinity,
+                                                                    taskQueueId);
+
+        return sourceConfig;
+    }
+}
+
+void E2ESingleRun::collectMeasurements() {
+    // We have to measure once more than the required numMeasurementsToCollect as we calculate deltas later on
+    for (uint64_t cnt = 0; cnt <= configOverAllRuns.numMeasurementsToCollect->getValue(); ++cnt) {
+        // Calculate the next start time
+        int64_t nextPeriodStartTime = configOverAllRuns.experimentMeasureIntervalInSeconds->getValue() * 1000;
+        nextPeriodStartTime +=
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+        uint64_t timeStamp =
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        measurements.addNewTimestamp(timeStamp);
+
+        for (auto id : submittedIds) {
+            auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(id);
+            size_t processedTasks = 0;
+            size_t processedBuffers = 0;
+            size_t processedTuples = 0;
+            size_t latencySum = 0;
+            size_t queueSizeSum = 0;
+            size_t availGlobalBufferSum = 0;
+            size_t availFixedBufferSum = 0;
+
+            for (auto& subPlanStatistics : statisticsCoordinator) {
+                if (subPlanStatistics->getProcessedBuffers() != 0) {
+                    processedTasks += subPlanStatistics->getProcessedTasks();
+                    processedBuffers += subPlanStatistics->getProcessedBuffers();
+                    processedTuples += subPlanStatistics->getProcessedTuple();
+                    latencySum += (subPlanStatistics->getLatencySum() / subPlanStatistics->getProcessedBuffers());
+                    queueSizeSum += (subPlanStatistics->getQueueSizeSum() / subPlanStatistics->getProcessedBuffers());
+                    availGlobalBufferSum +=
+                        (subPlanStatistics->getAvailableGlobalBufferSum() / subPlanStatistics->getProcessedBuffers());
+                    availFixedBufferSum +=
+                        (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
+                }
+
+                printQuerySubplanStatistics(timeStamp, subPlanStatistics, processedTasks);
+                measurements.addNewMeasurement(processedTasks,
+                                               processedBuffers,
+                                               processedTuples,
+                                               latencySum,
+                                               queueSizeSum,
+                                               availGlobalBufferSum,
+                                               availFixedBufferSum,
+                                               timeStamp);
+            }
+        }
+
+        // Calculate the time to sleep until the next period starts
+        auto curTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto sleepTime = nextPeriodStartTime - curTime;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+    }
+}
+
+void E2ESingleRun::printQuerySubplanStatistics(uint64_t timestamp,
+                                               const Runtime::QueryStatisticsPtr& subPlanStatistics,
+                                               size_t processedTasks,
+                                               std::ostream& outStream) {
+    std::stringstream ss;
+    ss << "time=" << timestamp << " subplan=" << subPlanStatistics->getSubQueryId() << " procTasks=" << processedTasks;
+    for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
+        for (auto& worker : pipe.second) {
+            ss << " pipeNo:" << pipe.first << " worker=" << worker.first << " tasks=" << worker.second;
+        }
+    }
+    outStream << ss.str() << std::endl;
 }
 
 const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const { return coordinatorConf; }

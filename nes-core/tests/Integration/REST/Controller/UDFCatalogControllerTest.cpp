@@ -38,13 +38,13 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup TopologyControllerTest test class.");
+        NES_INFO("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO2("Tear down ConnectivityControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
-        NES_DEBUG2("{}", response.text);
+        NES_DEBUG("{}", response.text);
         nlohmann::json responseJson;
         ASSERT_NO_THROW(responseJson = nlohmann::json::parse(response.text));
         ASSERT_TRUE(responseJson == expected);
@@ -60,7 +60,9 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
                        const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
         ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
         for (const auto& classDefinition : expected) {
-            auto actualByteCode = actual.find(classDefinition.class_name());
+            auto actualByteCode = std::find_if(actual.cbegin(), actual.cend(), [&](const UDF::JavaClassDefinition& c) {
+                return c.first == classDefinition.class_name();
+            });
             ASSERT_TRUE(actualByteCode != actual.end());
             auto converted = UDF::JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
             ASSERT_EQ(actualByteCode->second, converted);
@@ -74,14 +76,14 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
     }
 
     void startCoordinator() {
-        NES_INFO2("UdfCatalogController: Start coordinator");
-        coordinatorConfig = CoordinatorConfiguration::create();
+        NES_INFO("UdfCatalogController: Start coordinator");
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO2("UDFCatalogControllerTest: Coordinator started successfully");
+        NES_INFO("UDFCatalogControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {

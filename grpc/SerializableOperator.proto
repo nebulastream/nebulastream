@@ -561,6 +561,9 @@ message SerializableOperator{
     uint64 numberOfInputEdgesLeft = 9;
     uint64 numberOfInputEdgesRight = 10;
     JoinTypeCharacteristic jointype = 11;
+    string windowStartFieldName = 12;
+    string windowEndFieldName = 13;
+    string windowKeyFieldName = 14;
   }
 
   /**
@@ -580,6 +583,22 @@ message SerializableOperator{
    */
   message MapJavaUdfDetails {
       JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+  }
+
+    /**
+      Information to serialize a Open CL operator with a Java UDF.
+     */
+    message OpenCLOperatorDetails {
+        JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+        string deviceId = 2;
+        string openCLCode = 3;
+    }
+
+  /**
+    Information to serialize a FlatMap operator with a Java UDF.
+   */
+  message FlatMapJavaUdfDetails {
+    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
   }
 
   /**

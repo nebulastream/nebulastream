@@ -23,15 +23,18 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
 #include <string>
+#include <utility>
+
 namespace NES {
 
 StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
                                                            size_t maxRetries,
-                                                           const WorkerRPCClientPtr& workerRpcClient,
-                                                           bool queryReconfiguration)
+                                                           WorkerRPCClientPtr workerRpcClient,
+                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : AbstractRequest(
         {
             ResourceType::QueryCatalogService,
@@ -42,18 +45,19 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
             ResourceType::SourceCatalog,
         },
         maxRetries),
-      workerRpcClient(std::move(workerRpcClient)), queryId(queryId), queryReconfiguration(queryReconfiguration) {}
+      workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
+      coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
 StopQueryRequestPtr StopQueryRequestExperimental::create(QueryId queryId,
                                                          size_t maxRetries,
-                                                         const WorkerRPCClientPtr& workerRpcClient,
-                                                         bool queryReconfiguration) {
+                                                         WorkerRPCClientPtr workerRpcClient,
+                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(queryId, maxRetries, workerRpcClient, queryReconfiguration));
+        StopQueryRequestExperimental(queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
-    NES_TRACE2("Acquire Resources.");
+    NES_TRACE("Acquire Resources.");
     try {
         globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
         topology = storageHandler.getTopologyHandle();
@@ -61,23 +65,24 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
         globalQueryPlan = storageHandler.getGlobalQueryPlanHandle();
         udfCatalog = storageHandler.getUDFCatalogHandle();
         sourceCatalog = storageHandler.getSourceCatalogHandle();
-        NES_TRACE2("Locks acquired. Create Phases");
+        NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, queryReconfiguration);
-        queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        queryDeploymentPhase =
+            QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-        NES_TRACE2("Phases created. Stop request initialized.");
+        NES_TRACE("Phases created. Stop request initialized.");
     } catch (std::exception& e) {
-        NES_TRACE2("Failed to acquire resources.");
+        NES_TRACE("Failed to acquire resources.");
         //todo #3611: instead of matching on std::exception, implement a storae access handle excpetion which can be passed on
-        RequestExecutionException executionException;
+        RequestExecutionException executionException("Could not acquire resources");
         handleError(executionException, storageHandler);
     }
 }
 
 void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHandler) {
-    NES_TRACE2("Start Stop Request logic.");
+    NES_TRACE("Start Stop Request logic.");
     try {
         //mark single query for hard stop
         auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
@@ -87,7 +92,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             throw e;
         }
         //remove single query from global query plan
-        globalQueryPlan->removeQuery(queryId, RequestType::Stop);
+        globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         //undeploy SQP
@@ -101,13 +106,13 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             //3.3.2. Perform placement of updated shared query plan
             auto queryPlan = sharedQueryPlan->getQueryPlan();
-            NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
+            NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
-                throw QueryPlacementException(sharedQueryId,
-                                              "QueryProcessingService: Failed to perform query placement for "
-                                              "query plan with shared query id: "
-                                                  + std::to_string(sharedQueryId));
+                throw Exceptions::QueryPlacementException(sharedQueryId,
+                                                          "QueryProcessingService: Failed to perform query placement for "
+                                                          "query plan with shared query id: "
+                                                              + std::to_string(sharedQueryId));
             }
 
             //3.3.3. Perform deployment of re-placed shared query plan
@@ -136,9 +141,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
     }
 }
 
-void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) {
-    NES_TRACE2("Release locks.");
-}
+void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE("Release locks."); }
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
@@ -148,15 +151,17 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
 */
 void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex,
                                                      [[maybe_unused]] StorageHandler& storageHandle) {
-    NES_TRACE2("Error: {}", ex.what());
+    NES_TRACE("Error: {}", ex.what());
 }
+
 void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
                                                       [[maybe_unused]] StorageHandler& storageHandle) {
-    NES_TRACE2("Error: {}", ex.what());
+    NES_TRACE("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
+
 void StopQueryRequestExperimental::rollBack(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
-    NES_TRACE2("Error: {}", ex.what());
+    NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }
 }// namespace NES

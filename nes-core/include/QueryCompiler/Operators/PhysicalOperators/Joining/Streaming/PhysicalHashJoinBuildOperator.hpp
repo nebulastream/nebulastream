@@ -23,7 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator
  */
-class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public PhysicalUnaryOperator {
+class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     /**
      * @brief creates a PhysicalHashJoinBuildOperator with a provided operatorId
@@ -34,14 +34,16 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param joinFieldName
      * @return PhysicalStreamJoinSinkOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName);
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName);
 
     /**
      * @brief creates a PhysicalHashJoinBuildOperator that retrieves a new operatorId by calling method
@@ -51,13 +53,15 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param joinFieldName
      * @return PhysicalStreamJoinBuildOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide,
-                                      const std::string& timeStampFieldName);
+                                      const JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName,
+                                      const std::string& joinFieldName);
 
     /**
      * @brief Constructor for PhysicalHashJoinBuildOperator
@@ -67,13 +71,15 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
+     * @param joinFieldName
      */
-    explicit PhysicalHashJoinBuildOperator(OperatorId id,
-                                           SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-                                           JoinBuildSideType buildSide,
-                                           std::string timeStampFieldName);
+    explicit PhysicalHashJoinBuildOperator(const OperatorId id,
+                                           const SchemaPtr& inputSchema,
+                                           const SchemaPtr& outputSchema,
+                                           const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
+                                           const JoinBuildSideType buildSide,
+                                           const std::string& timeStampFieldName,
+                                           const std::string& joinFieldName);
 
     /**
      * @brief Deconstructor
@@ -104,8 +110,15 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      */
     const std::string& getTimeStampFieldName() const;
 
+    /**
+     * @brief Getter for the timestamp join field name
+     * @return String
+     */
+    const std::string& getJoinFieldName() const;
+
   private:
     std::string timeStampFieldName;
+    std::string joinFieldName;
     JoinBuildSideType buildSide;
 };
 

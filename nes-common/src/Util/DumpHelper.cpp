@@ -40,8 +40,8 @@ DumpHelper::create(const std::string& contextIdentifier, bool dumpToConsole, boo
 
 void DumpHelper::dump(const std::string_view& name, const std::string_view& output) const {
     if (this->dumpToConsole) {
-        NES_INFO2("DUMP: {} {}", contextIdentifier, name);
-        NES_INFO2("{}", output);
+        NES_INFO("DUMP: {} {}", contextIdentifier, name);
+        NES_INFO("{}", output);
     }
     if (this->dumpToFile) {
         auto fileName = std::string{name};
@@ -53,7 +53,7 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
         outputFile << output;
         outputFile.flush();
         outputFile.close();
-        NES_INFO2("DUMP {} {} to path file://{}", contextIdentifier, name, path);
+        NES_INFO("DUMP {} {} to path file://{}", contextIdentifier, name, path);
     }
 }
 

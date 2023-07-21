@@ -37,13 +37,13 @@ void TestWithErrorHandling::TearDown() {
 }
 
 void TestWithErrorHandling::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
+    NES_ERROR("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
     failTest();
     FAIL();
 }
 
 void TestWithErrorHandling::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR2("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
+    NES_ERROR("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
     failTest();
     FAIL();
 }
@@ -79,11 +79,11 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
                 try {
                     auto res = future.get();
                     if (!res) {
-                        NES_FATAL_ERROR2("Got error in test [{}]", testName);
+                        NES_FATAL_ERROR("Got error in test [{}]", testName);
                         std::exit(-127);
                     }
                 } catch (std::exception const& exception) {
-                    NES_FATAL_ERROR2("Got exception in test [{}]: {}", testName, exception.what());
+                    NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
                     FAIL();
                     std::exit(-1);
                 }
@@ -91,7 +91,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
             }
             case std::future_status::timeout:
             case std::future_status::deferred: {
-                NES_ERROR2("Cannot terminate test [{}] within deadline", testName);
+                NES_ERROR("Cannot terminate test [{}] within deadline", testName);
                 FAIL();
                 std::exit(-127);
                 break;

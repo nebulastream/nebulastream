@@ -14,5 +14,5 @@
 add_source_files(nes-core
         CoordinatorConfiguration.cpp
         LogicalSourceFactory.cpp
-)
+        )
 

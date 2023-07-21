@@ -18,7 +18,6 @@ add_source_files(nes-core
         QueryParsingService.cpp
         SourceCatalogService.cpp
         TopologyManagerService.cpp
-        MaintenanceService.cpp
         ReplicationService.cpp
         AbstractHealthCheckService.cpp
         CoordinatortHealthCheckService.cpp

@@ -62,12 +62,12 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
-    NES_TRACE2("DataTypeSerializationUtil:: serialized {} to {}", dataType->toString(), serializedDataType->SerializeAsString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType->toString(), serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType) {
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType.DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
     }
@@ -146,13 +146,13 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const Value
         // 4. serialize basic type
         serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     }
-    NES_TRACE2("DataTypeSerializationUtil:: serialized {} as {} ", valueType->toString(), serializedDataValue->DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized {} as {} ", valueType->toString(), serializedDataValue->DebugString());
     return serializedDataValue;
 }
 
 ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableDataValue& serializedDataValue) {
     // de-serialize data value
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataValue.DebugString());
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataValue.DebugString());
     const auto& dataValue = serializedDataValue.value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();

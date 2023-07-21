@@ -43,7 +43,7 @@ class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalOperatorNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup LogicalOperatorNodeTest test class.");
+        NES_INFO("Setup LogicalOperatorNodeTest test class.");
     }
 
     void SetUp() override {
@@ -305,9 +305,9 @@ TEST_F(LogicalOperatorNodeTest, consistencyBetweenSuccessorPredecesorRelation1) 
     EXPECT_EQ(parents.size(), 1U);
 
     children = filterOp1->getChildren();
-    NES_DEBUG2("children of filterOp1");
+    NES_DEBUG("children of filterOp1");
     for (auto&& op : children) {
-        NES_DEBUG2("{}", op->toString());
+        NES_DEBUG("{}", op->toString());
     }
     std::cout << "================================================================================\n";
     EXPECT_EQ(children.size(), 0U);
@@ -1064,7 +1064,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     // EXPECT_EQ(children.size(), expected.size());
 
     for (uint64_t i = 0; i < children.size(); i++) {
-        NES_DEBUG2("{}", i);
+        NES_DEBUG("{}", i);
         // both reference to the same pointer
         EXPECT_TRUE(children[i]->isIdentical(expected[i]));
         // EXPECT_TRUE(children[i] == (expected[i]));

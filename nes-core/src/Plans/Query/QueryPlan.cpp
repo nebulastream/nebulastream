@@ -52,51 +52,51 @@ QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector
 QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
-    NES_DEBUG2("QueryPlan: Get all source operators by traversing all the root nodes.");
+    NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::set<SourceLogicalOperatorNodePtr> sourceOperatorsSet;
     for (const auto& rootOperator : rootOperators) {
         auto sourceOptrs = rootOperator->getNodesByType<SourceLogicalOperatorNode>();
-        NES_DEBUG2("QueryPlan: insert all source operators to the collection");
+        NES_DEBUG("QueryPlan: insert all source operators to the collection");
         sourceOperatorsSet.insert(sourceOptrs.begin(), sourceOptrs.end());
     }
-    NES_DEBUG2("QueryPlan: Found {} source operators.", sourceOperatorsSet.size());
+    NES_DEBUG("QueryPlan: Found {} source operators.", sourceOperatorsSet.size());
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
     return sourceOperators;
 }
 
 std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
-    NES_DEBUG2("QueryPlan: Get all sink operators by traversing all the root nodes.");
+    NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
     for (const auto& rootOperator : rootOperators) {
         auto sinkOperator = rootOperator->as<SinkLogicalOperatorNode>();
         sinkOperators.emplace_back(sinkOperator);
     }
-    NES_DEBUG2("QueryPlan: Found {} sink operators.", sinkOperators.size());
+    NES_DEBUG("QueryPlan: Found {} sink operators.", sinkOperators.size());
     return sinkOperators;
 }
 
 void QueryPlan::appendOperatorAsNewRoot(const OperatorNodePtr& operatorNode) {
-    NES_DEBUG2("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
     for (const auto& rootOperator : rootOperators) {
         if (!rootOperator->addParent(operatorNode)) {
             NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to "
                                     + rootOperator->toString());
         }
     }
-    NES_DEBUG2("QueryPlan: Clearing current root operators.");
+    NES_DEBUG("QueryPlan: Clearing current root operators.");
     rootOperators.clear();
-    NES_DEBUG2("QueryPlan: Pushing input operator node as new root.");
+    NES_DEBUG("QueryPlan: Pushing input operator node as new root.");
     rootOperators.push_back(operatorNode);
 }
 
 void QueryPlan::prependOperatorAsLeafNode(const OperatorNodePtr& operatorNode) {
-    NES_DEBUG2("QueryPlan: Prepending operator {} as new leaf of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Prepending operator {} as new leaf of the plan.", operatorNode->toString());
     auto leafOperators = getLeafOperators();
     if (leafOperators.empty()) {
-        NES_DEBUG2("QueryPlan: Found empty query plan. Adding operator as root.");
+        NES_DEBUG("QueryPlan: Found empty query plan. Adding operator as root.");
         rootOperators.push_back(operatorNode);
     } else {
-        NES_DEBUG2("QueryPlan: Adding operator as child to all the leaf nodes.");
+        NES_DEBUG("QueryPlan: Adding operator as child to all the leaf nodes.");
         for (const auto& leafOperator : leafOperators) {
             leafOperator->addChild(operatorNode);
         }
@@ -116,11 +116,11 @@ std::vector<OperatorNodePtr> QueryPlan::getRootOperators() { return rootOperator
 
 std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     // Find all the leaf nodes in the query plan
-    NES_DEBUG2("QueryPlan: Get all leaf nodes in the query plan.");
+    NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorNodePtr> leafOperators;
     // Maintain a list of visited nodes as there are multiple root nodes
     std::set<uint64_t> visitedOpIds;
-    NES_DEBUG2("QueryPlan: Iterate over all root nodes to find the operator.");
+    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
@@ -129,10 +129,10 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
                 // skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            NES_DEBUG2("QueryPlan: Inserting operator in collection of already visited node.");
+            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
             visitedOpIds.insert(visitingOp->getId());
             if (visitingOp->getChildren().empty()) {
-                NES_DEBUG2("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
+                NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(visitingOp);
             }
         }
@@ -141,10 +141,10 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
 }
 
 bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
-    NES_DEBUG2("QueryPlan: Checking if the operator exists in the query plan or not");
+    NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     for (const auto& rootOperator : rootOperators) {
         if (rootOperator->getId() == operatorId) {
-            NES_DEBUG2("QueryPlan: Found operator {} in the query plan", queryId);
+            NES_DEBUG("QueryPlan: Found operator {} in the query plan", queryId);
             return true;
         }
         for (const auto& child : rootOperator->getChildren()) {
@@ -153,26 +153,26 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
             }
         }
     }
-    NES_DEBUG2("QueryPlan: Unable to find operator with matching Id");
+    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
 }
 
 OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
-    NES_DEBUG2("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
+    NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
         if (rootOperator->getId() == operatorId) {
-            NES_DEBUG2("QueryPlan: Found operator {} in the query plan", operatorId);
+            NES_DEBUG("QueryPlan: Found operator {} in the query plan", operatorId);
             return rootOperator;
         }
         for (const auto& child : rootOperator->getChildren()) {
-            NES_TRACE2("QueryPlan: Searching for {} in the children", operatorId);
+            NES_TRACE("QueryPlan: Searching for {} in the children", operatorId);
             NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
             if (found) {
                 return found->as<OperatorNode>();
             }
         }
     }
-    NES_DEBUG2("QueryPlan: Unable to find operator with matching Id");
+    NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return nullptr;
 }
 
@@ -187,12 +187,12 @@ QuerySubPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) { this->querySubPlanId = querySubPlanId; }
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
-    NES_DEBUG2("QueryPlan: removing operator {} as root operator.", root->toString());
+    NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());
     auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& rootOperator) {
         return rootOperator->getId() == root->getId();
     });
     if (found != rootOperators.end()) {
-        NES_TRACE2(
+        NES_TRACE(
             "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan.",
             root->toString());
         rootOperators.erase(found);
@@ -217,7 +217,7 @@ bool QueryPlan::replaceOperator(const OperatorNodePtr& oldOperator, const Operat
 }
 
 QueryPlanPtr QueryPlan::copy() {
-    NES_INFO2("QueryPlan: make copy of this query plan");
+    NES_INFO("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
@@ -228,10 +228,10 @@ QueryPlanPtr QueryPlan::copy() {
         // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
         // 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
         if (operatorIdToOperatorMap[operatorId]) {
-            NES_TRACE2("QueryPlan: Operator was processed previously");
+            NES_TRACE("QueryPlan: Operator was processed previously");
             operatorNode = operatorIdToOperatorMap[operatorId];
         } else {
-            NES_TRACE2("QueryPlan: Adding the operator into map");
+            NES_TRACE("QueryPlan: Adding the operator into map");
             operatorIdToOperatorMap[operatorId] = operatorNode->copy();
         }
 
@@ -240,17 +240,17 @@ QueryPlanPtr QueryPlan::copy() {
             auto parentOperator = parentNode->as<OperatorNode>();
             uint64_t parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap[parentOperatorId]) {
-                NES_TRACE2("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
+                NES_TRACE("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
                 parentOperator = operatorIdToOperatorMap[parentOperatorId];
                 auto copyOfOperatorNode = operatorIdToOperatorMap[operatorNode->getId()];
                 copyOfOperatorNode->addParent(parentOperator);
             } else {
-                NES_ERROR2("QueryPlan: unable to find the parent operator. This should not have occurred!");
+                NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
                 return nullptr;
             }
         }
 
-        NES_TRACE2("QueryPlan: add the child global query nodes for further processing.");
+        NES_TRACE("QueryPlan: add the child global query nodes for further processing.");
         // 5. We push the children operators to the queue of operators to be processed.
         for (const auto& childrenOperator : operatorNode->getChildren()) {
             operatorsToProcess.push_back(childrenOperator);
@@ -259,7 +259,7 @@ QueryPlanPtr QueryPlan::copy() {
 
     std::vector<OperatorNodePtr> duplicateRootOperators;
     for (const auto& rootOperator : rootOperators) {
-        NES_TRACE2("QueryPlan: Finding the operator with same id in the map.");
+        NES_TRACE("QueryPlan: Finding the operator with same id in the map.");
         duplicateRootOperators.push_back(operatorIdToOperatorMap[rootOperator->getId()]);
     }
     operatorIdToOperatorMap.clear();
@@ -283,8 +283,10 @@ LineageType QueryPlan::getLineageType() const { return lineageType; }
 
 void QueryPlan::setLineageType(LineageType lineageType) { this->lineageType = lineageType; }
 
-PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
+Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
-void QueryPlan::setPlacementStrategy(PlacementStrategy placementStrategy) { this->placementStrategy = placementStrategy; }
+void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy) {
+    this->placementStrategy = placementStrategy;
+}
 
 }// namespace NES

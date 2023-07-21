@@ -49,7 +49,7 @@ class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErr
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashSignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup HashSignatureBasedPartialQueryMergerRuleTest test case.");
+        NES_INFO("Setup HashSignatureBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -65,14 +65,14 @@ class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErr
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO2("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup HashSignatureBasedCompleteQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO2("Tear down HashSignatureBasedCompleteQueryMergerRuleTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashSignatureBasedCompleteQueryMergerRuleTest test class."); }
 };
 
 /**

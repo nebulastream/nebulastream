@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
         auto workerConfigPath = commandLineParams.find("--configPath");
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
         if (workerConfigPath != commandLineParams.end()) {
+            workerConfiguration->configPath = workerConfigPath->second;
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
         }
 
@@ -68,23 +69,23 @@ int main(int argc, char** argv) {
 
         Logger::getInstance()->changeLogLevel(workerConfiguration->logLevel.getValue());
 
-        NES_INFO2("NesWorkerStarter: Start with {}", workerConfiguration->toString());
+        NES_INFO("NesWorkerStarter: Start with {}", workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
-        NES_INFO2("Starting worker");
+        NES_INFO("Starting worker");
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//This is a blocking call
-        NES_INFO2("Stopping worker");
+        NES_INFO("Stopping worker");
         nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
-        NES_ERROR2("Problem with worker: {}", exp.what());
+        NES_ERROR("Problem with worker: {}", exp.what());
         return 1;
     } catch (...) {
-        NES_ERROR2("Unknown exception was thrown");
+        NES_ERROR("Unknown exception was thrown");
         try {
             std::rethrow_exception(std::current_exception());
         } catch (std::exception& ex) {
-            NES_ERROR2("{}", ex.what());
+            NES_ERROR("{}", ex.what());
         }
         return 1;
     }

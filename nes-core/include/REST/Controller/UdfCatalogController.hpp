@@ -91,12 +91,12 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
             GetJavaUdfDescriptorResponse response;
             if (udfDescriptor == nullptr) {
                 // Signal that the UDF does not exist in the catalog.
-                NES_DEBUG2("REST client tried retrieving UDF descriptor for non-existing Java UDF: {}", udfName);
+                NES_DEBUG("REST client tried retrieving UDF descriptor for non-existing Java UDF: {}", udfName);
                 response.set_found(false);
                 return createResponse(Status::CODE_404, response.SerializeAsString());
             } else {
                 // Return the UDF descriptor to the client.
-                NES_DEBUG2("Returning UDF descriptor to REST client for Java UDF: {}", udfName);
+                NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: {}", udfName);
                 response.set_found(true);
                 UDFSerializationUtil::serializeJavaUDFDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
@@ -139,17 +139,17 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
             if (body.empty()) {
                 errorHandler->handleError(Status::CODE_400, "Protobuf message is empty");
             }
-            NES_DEBUG2("Parsing Java UDF descriptor from REST request");
+            NES_DEBUG("Parsing Java UDF descriptor from REST request");
             auto javaUdfRequest = RegisterJavaUdfRequest{};
             javaUdfRequest.ParseFromString(body);
             auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
             auto javaUdfDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(descriptorMessage);
             // Register JavaUDFDescriptor in UDF catalog and return success.
-            NES_DEBUG2("Registering Java UDF '{}'.'", javaUdfRequest.udf_name());
+            NES_DEBUG("Registering Java UDF '{}'.'", javaUdfRequest.udf_name());
             udfCatalog->registerUDF(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");
         } catch (const UDFException& e) {
-            NES_WARNING2("Exception occurred during UDF registration: {}", e.what());
+            NES_WARNING("Exception occurred during UDF registration: {}", e.what());
             // Just return the exception message to the client, not the stack trace.
             return errorHandler->handleError(Status::CODE_400, e.getMessage());
         } catch (...) {
@@ -166,7 +166,7 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("DELETE", "/removeUdf", removeUdf, QUERY(String, udf, "udfName")) {
         try {
             std::string udfName = udf.getValue("");
-            NES_DEBUG2("Removing Java UDF '{}'", udfName);
+            NES_DEBUG("Removing Java UDF '{}'", udfName);
             auto removed = udfCatalog->removeUDF(udfName);
             nlohmann::json result;
             result["removed"] = removed;

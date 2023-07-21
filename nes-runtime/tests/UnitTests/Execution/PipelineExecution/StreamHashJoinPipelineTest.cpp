@@ -15,9 +15,10 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -126,7 +127,8 @@ void buildLeftAndRightHashTable(std::vector<TupleBuffer>& allBuffersLeft,
     auto bufferCnt2 = 0;
     for (auto i = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
         if (bufferLeft.getNumberOfTuples() >= tuplePerBufferLeft) {
-            std::cout << "emit buffer left with cnt=" << bufferCnt << std::endl;
+            std::cout << "emit buffer left with cnt=" << bufferCnt
+                      << " content=" << Util::printTupleBufferAsCSV(bufferLeft, leftSchema) << std::endl;
             bufferCnt++;
             executablePipelineLeft->execute(bufferLeft, pipelineExecCtxLeft, *workerContext);
             allBuffersLeft.emplace_back(bufferLeft);
@@ -144,8 +146,10 @@ void buildLeftAndRightHashTable(std::vector<TupleBuffer>& allBuffersLeft,
         bufferLeft.setNumberOfTuples(posLeft + 1);
 
         if (bufferRight.getNumberOfTuples() >= tuplePerBufferRight) {
-            std::cout << "emit buffer right with cnt=" << bufferCnt2++ << std::endl;
+            std::cout << "emit buffer right with cnt=" << bufferCnt2++
+                      << " content=" << Util::printTupleBufferAsCSV(bufferRight, rightSchema) << std::endl;
 
+            Util::printTupleBufferAsCSV(bufferRight, rightSchema);
             executablePipelineRight->execute(bufferRight, pipelineExecCtxRight, *workerContext);
             allBuffersRight.emplace_back(bufferRight);
             bufferRight = bufferManager->getBufferBlocking();
@@ -176,7 +180,8 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
                 std::vector<TupleBuffer>& allBuffersLeft,
                 std::vector<TupleBuffer>& allBuffersRight,
                 size_t windowSize,
-                const std::string& timeStampField,
+                const std::string& timeStampFieldLeft,
+                const std::string& timeStampFieldRight,
                 Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutLeft,
                 Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutRight,
                 Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutJoined,
@@ -191,7 +196,7 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
         auto dynamicBufLeft = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutLeft, bufLeft);
         for (auto tupleLeftCnt = 0UL; tupleLeftCnt < dynamicBufLeft.getNumberOfTuples(); ++tupleLeftCnt) {
 
-            auto timeStampLeft = dynamicBufLeft[tupleLeftCnt][timeStampField].read<uint64_t>();
+            auto timeStampLeft = dynamicBufLeft[tupleLeftCnt][timeStampFieldLeft].read<uint64_t>();
             if (timeStampLeft > lastTupleTimeStampWindow) {
                 lastTupleTimeStampWindow += windowSize;
                 firstTupleTimeStampWindow += windowSize;
@@ -203,7 +208,7 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
             for (auto bufRight : allBuffersRight) {
                 auto dynamicBufRight = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutRight, bufRight);
                 for (auto tupleRightCnt = 0UL; tupleRightCnt < dynamicBufRight.getNumberOfTuples(); ++tupleRightCnt) {
-                    auto timeStampRight = dynamicBufRight[tupleRightCnt][timeStampField].read<uint64_t>();
+                    auto timeStampRight = dynamicBufRight[tupleRightCnt][timeStampFieldRight].read<uint64_t>();
                     if (timeStampRight > lastTupleTimeStampWindow || timeStampRight < firstTupleTimeStampWindow) {
                         continue;
                     }
@@ -244,11 +249,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("left$timestamp", BasicType::UINT64);
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("f1_right", BasicType::UINT64)
                                  ->addField("f2_right", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("right$timestamp", BasicType::UINT64);
     const auto joinBuildEmitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                          ->addField("partitionId", BasicType::UINT64)
                                          ->addField("lastTupleTimeStamp", BasicType::UINT64);
@@ -259,8 +264,8 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
-    EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
-    auto timeStampField = leftSchema->get(2)->getName();
+    auto timeStampFieldLeft = leftSchema->get(2)->getName();
+    auto timeStampFieldRight = rightSchema->get(2)->getName();
 
     auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
     auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
@@ -268,9 +273,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
 
     auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
     auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
+    auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutJoined);
 
     auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
     auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderSink));
 
     auto noWorkerThreads = 1;
     auto numSourcesLeft = 1, numSourcesRight = 1;
@@ -279,37 +286,43 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     auto numberOfTuplesToProduce = windowSize * 20;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
 
     auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(
         handlerIndex,
         /*isLeftSide*/ true,
         joinFieldNameLeft,
-        timeStampField,
+        timeStampFieldLeft,
         leftSchema,
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(
         handlerIndex,
         /*isLeftSide*/ false,
         joinFieldNameRight,
-        timeStampField,
+        timeStampFieldRight,
         rightSchema,
-        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
-    auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+    auto joinSink = std::make_shared<Operators::StreamHashJoinProbe>(handlerIndex,
+                                                                     leftSchema,
+                                                                     rightSchema,
+                                                                     joinSchema,
+                                                                     joinFieldNameLeft,
+                                                                     joinFieldNameRight);
     auto hashJoinOpHandler =
-        Operators::StreamHashJoinOperatorHandler::create(leftSchema,
-                                                         rightSchema,
-                                                         joinFieldNameLeft,
-                                                         joinFieldNameRight,
-                                                         std::vector<::OriginId>({1}),
+        Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                          windowSize,
+                                                         leftSchema->getSchemaSizeInBytes(),
+                                                         rightSchema->getSchemaSizeInBytes(),
                                                          NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
                                                          NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
+                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
+                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
+    joinSink->setChild(emitOperator);
 
     auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
     auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
@@ -358,11 +371,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                  ->addField("windowIdentifier", BasicType::UINT64);
 
     for (auto& buf : pipelineExecCtxLeft.emittedBuffers) {
-        NES_TRACE(" pipe left " << Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE(" pipe left {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     for (auto& buf : pipelineExecCtxRight.emittedBuffers) {
-        NES_TRACE("pipe right " << Util::printTupleBufferAsCSV(buf, buildSchema));
+        NES_TRACE("pipe right {}", Util::printTupleBufferAsCSV(buf, buildSchema));
     }
 
     // Calling join Sink
@@ -371,17 +384,21 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                pipelineExecCtxRight.emittedBuffers.begin(),
                                pipelineExecCtxRight.emittedBuffers.end());
 
-    NES_DEBUG("Calling joinSink for " << buildEmittedBuffers.size() << " buffers");
+    NES_DEBUG("Calling joinSink for {} buffers", buildEmittedBuffers.size());
     for (auto buf : buildEmittedBuffers) {
         executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
     }
+    executablePipelineSink->stop(pipelineExecCtxSink);
+
+    NES_DEBUG("Calling sink created buffers {}", pipelineExecCtxSink.emittedBuffers.size());
 
     std::vector<Runtime::TupleBuffer> nljBuffers;
     performNLJ(nljBuffers,
                allBuffersLeft,
                allBuffersRight,
                windowSize,
-               timeStampField,
+               timeStampFieldLeft,
+               timeStampFieldRight,
                memoryLayoutLeft,
                memoryLayoutRight,
                memoryLayoutJoined,
@@ -389,13 +406,16 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                joinFieldNameRight,
                bufferManager);
 
-    auto mergedEmittedBuffers =
-        Util::mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers, joinSchema, timeStampField, bufferManager, windowSize);
+    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers,
+                                                             joinSchema,
+                                                             timeStampFieldLeft,
+                                                             bufferManager,
+                                                             windowSize);
 
     // We have to sort and merge the emitted buffers as otherwise we can not simply compare versus a NLJ version
     auto sortedMergedEmittedBuffers =
-        Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, timeStampField, bufferManager);
-    auto sortNLJBuffers = Util::sortBuffersInTupleBuffer(nljBuffers, joinSchema, timeStampField, bufferManager);
+        Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, timeStampFieldLeft, bufferManager);
+    auto sortNLJBuffers = Util::sortBuffersInTupleBuffer(nljBuffers, joinSchema, timeStampFieldLeft, bufferManager);
 
     pipelineExecCtxSink.emittedBuffers.clear();
     mergedEmittedBuffers.clear();
@@ -406,9 +426,9 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         auto nljBuffer = sortNLJBuffers[i];
         auto hashJoinBuf = sortedMergedEmittedBuffers[i];
 
-        NES_DEBUG("Comparing nljBuffer\n"
-                  << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and hashJoinBuf\n"
-                  << Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
+        NES_DEBUG("Comparing nljBuffer\n{} \n and hashJoinBuf\n{}",
+                  Util::printTupleBufferAsCSV(nljBuffer, joinSchema),
+                  Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
 
         EXPECT_EQ(nljBuffer.getNumberOfTuples(), hashJoinBuf.getNumberOfTuples());
         EXPECT_EQ(nljBuffer.getBufferSize(), hashJoinBuf.getBufferSize());
@@ -425,7 +445,6 @@ INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter",
                                           "PipelineCompiler"),//CPPPipelineCompiler is currently not working
-
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

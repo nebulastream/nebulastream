@@ -23,7 +23,7 @@ E2EBenchmarkConfig parseYamlConfig(std::string configPath, std::string logPath) 
 
     try {
         e2EBenchmarkConfig = E2EBenchmarkConfig::createBenchmarks(configPath);
-        NES_INFO("E2ERunner: Created the following experiments: " << e2EBenchmarkConfig.toString());
+        NES_INFO("E2ERunner: Created the following experiments: {}", e2EBenchmarkConfig.toString());
     } catch (std::exception& e) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Error while creating benchmarks!");
     }

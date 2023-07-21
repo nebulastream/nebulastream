@@ -21,6 +21,7 @@
 #include <vector>
 
 namespace NES {
+using Exceptions::RequestExecutionException;
 
 namespace Configurations {
 class OptimizerConfiguration;
@@ -88,6 +89,11 @@ class AbstractRequest {
      * @return true if the actual retries are less than the allowed maximum
      */
     bool retry();
+
+    /**
+     * @brief destructor
+     */
+    virtual ~AbstractRequest() = default;
 
   protected:
     /**

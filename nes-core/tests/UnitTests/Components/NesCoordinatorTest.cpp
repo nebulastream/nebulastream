@@ -27,18 +27,18 @@ class NesCoordinatorTest : public Testing::NESBaseTest {
 // Test that the worker configuration from the coordinator configuration is passed to the internal worker.
 TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfiguration) {
     // given
-    auto configuration = CoordinatorConfiguration::create();
+    auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
     configuration->worker.numWorkerThreads = 3;
     // when
     auto coordinator = std::make_shared<NesCoordinator>(configuration);
-    NES_DEBUG2("Starting coordinator.")
+    NES_DEBUG("Starting coordinator.")
     coordinator->startCoordinator(false);
     // then
     ASSERT_EQ(3, coordinator->getNesWorker()->getWorkerConfiguration()->numWorkerThreads.getValue());
     // Stop coordinator.
-    NES_DEBUG2("Stopping coordinator.")
+    NES_DEBUG("Stopping coordinator.")
     EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 
@@ -46,7 +46,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
 TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     // given: Set up the coordinator IP and ports, and enable monitoring
     auto coordinatorIp = "127.0.0.1";
-    auto configuration = CoordinatorConfiguration::create();
+    auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
     configuration->restPort = *restPort;
     configuration->coordinatorIp = coordinatorIp;
@@ -58,7 +58,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     configuration->worker.enableMonitoring = false;
     // when
     auto coordinator = std::make_shared<NesCoordinator>(configuration);
-    NES_DEBUG2("Starting coordinator.")
+    NES_DEBUG("Starting coordinator.")
     coordinator->startCoordinator(false);
     // then: the IP and port in the worker configuration are overwritten, and monitoring is enabled
     auto workerConfiguration = coordinator->getNesWorker()->getWorkerConfiguration();
@@ -67,7 +67,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     EXPECT_EQ(coordinatorIp, workerConfiguration->localWorkerIp.getValue());
     EXPECT_EQ(true, workerConfiguration->enableMonitoring.getValue());
     // Stop coordinator.
-    NES_DEBUG2("Stopping coordinator.")
+    NES_DEBUG("Stopping coordinator.")
     EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 

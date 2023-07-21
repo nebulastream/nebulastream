@@ -30,16 +30,19 @@ CompilationRequest::CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
                                        bool profileCompilation,
                                        bool profileExecution,
                                        bool optimizeCompilation,
-                                       bool debug)
+                                       bool debug,
+                                       std::vector<std::shared_ptr<ExternalAPI>> externalApis)
     : sourceCode(std::move(sourceCode)), name(std::move(name)), profileCompilation(profileCompilation),
-      profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug) {}
+      profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug),
+      externalApis(std::move(externalApis)) {}
 
 std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<SourceCode> sourceCode,
                                                                std::string identifier,
                                                                bool profileCompilation,
                                                                bool profileExecution,
                                                                bool optimizeCompilation,
-                                                               bool debug) {
+                                                               bool debug,
+                                                               std::vector<std::shared_ptr<ExternalAPI>> externalApis) {
 
     // creates a unique name for a compilation request.
     auto time = std::time(nullptr);
@@ -57,7 +60,8 @@ std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<S
                                                 profileCompilation,
                                                 profileExecution,
                                                 optimizeCompilation,
-                                                debug);
+                                                debug,
+                                                externalApis);
 };
 
 bool CompilationRequest::enableOptimizations() const { return optimizeCompilation; }
@@ -69,6 +73,8 @@ bool CompilationRequest::enableCompilationProfiling() const { return profileComp
 bool CompilationRequest::enableExecutionProfiling() const { return profileExecution; }
 
 std::string CompilationRequest::getName() const { return name; }
+
+std::vector<std::shared_ptr<ExternalAPI>> CompilationRequest::getExternalAPIs() const { return externalApis; }
 
 const std::shared_ptr<SourceCode> CompilationRequest::getSourceCode() const { return sourceCode; }
 bool CompilationRequest::operator==(const CompilationRequest& rhs) const {

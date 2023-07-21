@@ -30,7 +30,7 @@ class TopologyPropertiesTest : public Testing::NESBaseTest {
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("TopologyPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("Setup TopologyPropertiesTest test class.");
+        NES_DEBUG("Setup TopologyPropertiesTest test class.");
     }
 };
 

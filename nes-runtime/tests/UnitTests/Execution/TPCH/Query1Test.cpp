@@ -91,7 +91,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     auto& lineitems = tables[TPCHTable::LineItem];
 
     // process table
-    NES_INFO2("Process {} chunks", lineitems->getChunks().size());
+    NES_INFO("Process {} chunks", lineitems->getChunks().size());
     Timer timer("Q1");
     timer.start();
     auto pipeline1 = plan.getPipeline(0);
@@ -105,7 +105,9 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     aggExecutablePipeline->stop(*pipeline1.ctx);
     timer.snapshot("stop");
     timer.pause();
-    NES_INFO("Query Runtime:\n" << timer);
+    std::stringstream timerAsString;
+    timerAsString << timer;
+    NES_INFO("Query Runtime:\n{}", timerAsString.str());
     // compare results
     auto aggregationHandler = pipeline1.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(0);
     // TODO extend for multi thread support

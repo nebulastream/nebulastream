@@ -34,7 +34,7 @@ QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
     for (const auto& node : nodes) {
         if (node->instanceOf<PhysicalOperators::PhysicalOperator>()) {
-            NES_DEBUG2("Skipped node: {} as it is already a physical operator.", node->toString());
+            NES_DEBUG("Skipped node: {} as it is already a physical operator.", node->toString());
             continue;
         }
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());

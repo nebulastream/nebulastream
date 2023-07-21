@@ -192,7 +192,9 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode) {
 
 bool TraceContext::isKnownOperation(const Tag* tag) {
     if (auto ref = checkTag(tag)) {
-        NES_TRACE(*executionTrace);
+        std::stringstream trace;
+        trace << *executionTrace;
+        NES_TRACE("{}", trace.str());
         // TODO #3500 Fix handling of repeated operations
         if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -219,11 +221,10 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
             initializeTraceIteration();
             auto result = function();
             traceReturnOperation(result);
-            //NES_DEBUG("ExecutionTrace: " << *executionTrace);
         } catch (const TraceTerminationException& ex) {
         }
     }
-    NES_DEBUG("Iterations:" << symbolicExecutionContext.getIterations());
+    NES_DEBUG("Iterations: {}", symbolicExecutionContext.getIterations());
     return executionTrace;
 }
 
