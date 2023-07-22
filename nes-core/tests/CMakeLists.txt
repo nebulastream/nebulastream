@@ -283,6 +283,10 @@ add_nes_unit_test(convert-logical-to-physical-source-tests "UnitTests/Phases/Con
 add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 
 
+# FilterMergeTest
+add_nes_unit_test(filter-merge-rule-test "UnitTests/Optimizer/QueryRewrite/FilterMergeRuleTest.cpp")
+
+
 # FilterPushDownTest
 add_nes_unit_test(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
 
