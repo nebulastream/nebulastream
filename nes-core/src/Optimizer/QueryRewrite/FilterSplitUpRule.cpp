@@ -56,22 +56,23 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
 }
 
 void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperator) {
-    std::vector<ExpressionNodePtr> splitPredicates = filterOperator->splitUpPredicates();
-    if (splitPredicates.size() < 2){
-        NES_DEBUG("The filter predicates of filter {} cannot be split", filterOperator->toString());
-    }
-    else{
-        std::vector<FilterLogicalOperatorNodePtr> filterPredicates = {};
-        for (auto& predicate : splitPredicates){
-            auto filterPredicate = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-            filterPredicate->setId(Util::getNextOperatorId());
-            filterPredicate->setPredicate(predicate);
-            NES_DEBUG("Insert new filter with one part of the conjunction, {}", filterPredicate->toString());
-            if (!filterOperator->insertBetweenThisAndChildNodes(filterPredicate)) {
+    // If the query plan contains a parentOperators->filter(expression1 && expression2)->childOperator.
+    // The plan can be rewritten to parentOperators->filter(expression1)->filter(expression2)->childOperator.
+    if (filterOperator->getPredicate()->instanceOf<AndExpressionNode>()){
+        NES_DEBUG("Found a conjunctive predicate, split up might be possible");
+        NES_DEBUG("Retrieve predicates forming the conjunction");
+        std::vector<NodePtr> conjunctivePredicates = filterOperator->getPredicate()->getChildren();
+        for (const auto& conjunctivePredicate : conjunctivePredicates){
+            NES_DEBUG("Create new filter with one side of the conjunction");
+            auto newFilterPredicate = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+            newFilterPredicate->setId(Util::getNextOperatorId());
+            newFilterPredicate->setPredicate(conjunctivePredicate->as<ExpressionNode>());
+            NES_DEBUG("Insert new filter with one part of the conjunction, {}", newFilterPredicate->toString());
+            if (!filterOperator->insertBetweenThisAndChildNodes(newFilterPredicate)) {
                 throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
                 NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
             }
-            filterPredicates.push_back(filterPredicate);
+            conjunctivePredicates.push_back(newFilterPredicate);
         }
         NES_DEBUG("Remove old filter with the conjunction");
         if (!filterOperator->removeAndJoinParentAndChildren()) {
@@ -79,8 +80,34 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
             NES_ERROR("FilterSplitUpRule: Error while trying to remove a filterOperator from the queryPlan");
         }
         NES_DEBUG("Newly created filters could also be further split up");
-        for (auto& filterPredicate : filterPredicates){
-            splitUpFilters(filterPredicate);
+        for (const auto& newFilterPredicate : conjunctivePredicates){
+            NES_DEBUG("Try to split up the new filter {} again", newFilterPredicate->toString());
+            splitUpFilters(newFilterPredicate->as<FilterLogicalOperatorNode>());
+        }
+    }
+    else if (filterOperator->getPredicate()->instanceOf<NegateExpressionNode>()) {
+        NES_DEBUG("Found negated expression, rewrite might be possible");
+        if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<OrExpressionNode>()){
+            NES_DEBUG("The predicate is of the form !( expression1 || expression2 )");
+            NES_DEBUG("It can be reformulated to ( !expression1 && !expression2 )");
+            auto orExpression = filterOperator->getPredicate()->getChildren()[0];
+            auto negatedChild1 = NegateExpressionNode::create(orExpression->getChildren()[0]->as<ExpressionNode>());
+            auto negatedChild2 = NegateExpressionNode::create(orExpression->getChildren()[1]->as<ExpressionNode>());
+            auto equivalentAndExpression = AndExpressionNode::create(negatedChild1, negatedChild2);
+            NES_DEBUG("Change predicate to equivalent AndExpression");
+            filterOperator->setPredicate(equivalentAndExpression);
+            NES_DEBUG("Try to split up the new filter again");
+            splitUpFilters(filterOperator);
+        }
+        else if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<NegateExpressionNode>()){
+            NES_DEBUG("Found double negation: reformulate predicates in the form (!!expression) to (expression)");
+            auto firstNegatedExpression = filterOperator->getPredicate();
+            auto secondNegatedExpression = firstNegatedExpression->getChildren()[0];
+            auto negatedTwiceExpression = secondNegatedExpression->getChildren()[0];
+            NES_DEBUG("Change predicate to equivalent expression without negations");
+            filterOperator->setPredicate(negatedTwiceExpression->as<ExpressionNode>()->copy());
+            NES_DEBUG("Try to split up the new filter again");
+            splitUpFilters(filterOperator);
         }
     }
 }
