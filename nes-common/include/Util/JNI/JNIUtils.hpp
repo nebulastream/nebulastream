@@ -15,12 +15,13 @@
 #define NES_NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
 #include <Util/JNI/JNI.hpp>
 #include <Util/SourceLocation.hpp>
+#include <string_view>
 #include <unordered_map>
 
 /**
  * @brief This header provides basic functions that simplify the interaction with a JVM over JNI.
  */
-namespace jni {
+namespace NES::jni {
 
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
@@ -53,6 +54,13 @@ jobject allocateObject(jclass clazz);
  * @return jclass
  */
 jclass findClass(const std::string_view& clazzName);
+
+/**
+ * @brief Finds a method with a given name
+ * @param methodName
+ * @return jmethodID
+ */
+jmethodID getMethod(jclass clazz, const std::string_view&  methodName, const std::string_view&  signature);
 
 /**
  * @brief Creates a java.lang.Boolean object for a given bool.
@@ -171,8 +179,17 @@ std::string getStringObjectValue(jstring object);
  */
 void loadClassesFromByteList(const jni::JavaUDFByteCodeList& byteCodeList);
 
+/**
+ * @brief Converts a class name into the correct jni name
+ * @param javaClassName
+ * @return std::string
+ */
 const std::string convertToJNIName(const std::string& javaClassName);
 
+/**
+ * @brief deserialize a udf instance to a jni jobject
+ * @return jobject
+ */
 jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance);
 
 }// namespace jni

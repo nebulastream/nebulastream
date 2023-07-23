@@ -25,67 +25,17 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * free a jvm object
- * @param state operator handler state
- * @param object object to free
- */
-void freeObject(void* object);
-
-/**
- * Deserializes the given instance
- * @param state operator handler state
- */
-jni::jobject deserializeInstance(void* state);
-
-/**
- * Start the java vm and load the classes given in the javaPath
- * @param state operator handler state
- */
-void startOrAttachVMWithJarFile(void* state);
-
-/**
- * Start the java vm and load the classes given in the byteCodeList
- * @param state operator handler state
- */
-void startOrAttachVMWithByteList(void* state);
-
-/**
- * Wrapper for starting or attaching to the java vm.
- * The java classes will be either loaded from the given jar file or from the given byte code list.
- * When no java path is given, the byte code list is used.
- * @param state operator handler state
- */
-void attachVM();
-
-/**
- * Detach the current thread from the JVM.
- * This is needed to avoid memory leaks.
- */
-void detachVM();
-
-/**
- * Unloads the java VM.
- * This is needed to avoid memory leaks.
- */
-void destroyVM();
-
-/**
  * Finds the input class in the JVM and returns a jclass object pointer.
  * @param state operator handler state
  * @return jclass input class object pointer
  */
 void* findInputClass(void* state);
 
-void* allocateObject(void* clazzPtr);
-
-/**
- * Finds the output class in the JVM and returns a jclass object pointer.
- * @param state operator handler state
- * @class jclass output class object pointer
- */
-void* findOutputClass(void* state);
-
 void* getObjectClass(void* object);
+
+void freeObject(void* object);
+
+void* allocateObject(void* clazzPtr);
 
 /**
  * Creates a new boolean object and sets its value in the constructor.

@@ -131,8 +131,6 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
 
     auto className = classNames[1];
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
-    auto inputClassName = "java/lang/Integer";
-    auto outputClassName = "java/util/Collection";
     NES_INFO("testDataPath:{}", testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
                                  .setClassName(className)
@@ -140,8 +138,8 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
                                  .setInstance(serializedInstance)
                                  .setByteCodeList(byteCodeList)
                                  .setOutputSchema(outputSchema)
-                                 .setInputClassName(inputClassName)
-                                 .setOutputClassName(outputClassName)
+                                 .setInputClassName("java.lang.Integer")
+                                 .setOutputClassName("java.util.Collection")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).flatMapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);

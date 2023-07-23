@@ -18,7 +18,7 @@
 #include <jni.h>
 #include <string_view>
 
-namespace jni {
+namespace NES::jni {
 
 void jniErrorCheck(const std::source_location location) {
     auto env = getEnv();
@@ -33,6 +33,12 @@ void jniErrorCheck(const std::source_location location) {
         NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
                                 << location.function_name() << " at line " << location.line() << ": " << utf);
     }
+}
+
+jmethodID getMethod(jclass clazz, const std::string_view& methodName, const std::string_view& signature) {
+    auto method = getEnv()->GetMethodID(clazz, methodName.data(), signature.data());
+    jniErrorCheck();
+    return method;
 }
 jobject allocateObject(jclass clazz) { return getEnv()->AllocObject(clazz); }
 
@@ -54,13 +60,12 @@ jclass findClass(const std::string_view& className) {
 template<typename T>
 jobject createObjectType(T value, const std::string_view& className, const std::string_view& constructorSignature) {
     auto env = getEnv();
-    auto clazz = env->FindClass(className.data());
-    jniErrorCheck();
-    auto mid = env->GetMethodID(clazz, "<init>", constructorSignature.data());
-    jniErrorCheck();
+    auto clazz = findClass(className);
+    auto mid = getMethod(clazz, "<init>", constructorSignature);
     auto object = env->NewObject(clazz, mid, value);
     jniErrorCheck();
     object = env->NewGlobalRef(object);
+    NES_ASSERT(object != NULL, "the new global reference should not be null");
     return object;
 }
 
@@ -91,10 +96,8 @@ T getObjectTypeValue(jobject object,
                      const std::string_view& getterSignature) {
     NES_ASSERT(getEnv()->GetObjectRefType(object) != JNIInvalidRefType, "object ref is invalid");
     auto env = getEnv();
-    auto clazz = env->FindClass(className.data());
-    jniErrorCheck();
-    auto mid = env->GetMethodID(clazz, getterName.data(), getterSignature.data());
-    jniErrorCheck();
+    auto clazz = findClass(className);
+    auto mid = getMethod(clazz, getterName, getterSignature);
     T value;
     if constexpr (std::is_same<T, bool>::value) {
         value = env->CallBooleanMethod((jobject) object, mid);
@@ -142,44 +145,44 @@ const std::string convertToJNIName(const std::string& javaClassName) {
     return result;
 }
 
-jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance){
+jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance) {
     auto env = getEnv();
     const auto length = serializedInstance.size();
     const auto data = reinterpret_cast<const jbyte*>(serializedInstance.data());
     const auto byteArray = env->NewByteArray(length);
-    jni::jniErrorCheck();
+    jniErrorCheck();
     env->SetByteArrayRegion(byteArray, 0, length, data);
-    jni::jniErrorCheck();
+    jniErrorCheck();
 
     // Deserialize the instance using a Java helper method.
     const auto clazz = env->FindClass("stream/nebula/MapJavaUdfUtils");
-    jni::jniErrorCheck();
+    jniErrorCheck();
     // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
     const auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
-    jni::jniErrorCheck();
+    jniErrorCheck();
     const auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
-    jni::jniErrorCheck();
+    jniErrorCheck();
     // Release the array.
     env->DeleteLocalRef(byteArray);
-    jni::jniErrorCheck();
+    jniErrorCheck();
     return obj;
 }
 
 void loadClassesFromByteList(const jni::JavaUDFByteCodeList& byteCodeList) {
     for (auto& [className, byteCode] : byteCodeList) {
-        auto env = jni::getEnv();
+        auto env = getEnv();
         jbyteArray jData = env->NewByteArray(byteCode.size());
-        jni::jniErrorCheck();
+        jniErrorCheck();
         jbyte* jCode = env->GetByteArrayElements(jData, nullptr);
-        jni::jniErrorCheck();
+        jniErrorCheck();
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
         const auto jniName = convertToJNIName(className);
         NES_DEBUG("Injecting Java class into JVM: {}", jniName);
         env->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
-        jni::jniErrorCheck();
+        jniErrorCheck();
         env->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
-        jni::jniErrorCheck();
+        jniErrorCheck();
     }
 }
 
-}// namespace jni
+}// namespace NES::jni

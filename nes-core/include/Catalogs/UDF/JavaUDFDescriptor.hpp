@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace jni {
+namespace NES::jni {
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;

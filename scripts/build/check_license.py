@@ -36,6 +36,8 @@ if __name__ == "__main__":
     exclude_files = ['backward.hpp',
                      'apex_memmove.hpp',
                      'rte_memory.h',
+                     'JNI.hpp',
+                     'JNI.cpp',
                      'apex_memmove.cpp']
     exclude = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
                    'build', 'yaml', 'jitify', 'magicenum', 'Backward', 'gen'])
