@@ -42,21 +42,24 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
     SOFTWARE.
         */
 
-namespace jni {
+namespace NES::jni {
 
 // Static Variables
 static std::atomic_bool isJVMInitialized(false);
 static JavaVM* jvmInstance = nullptr;
 
-static bool getEnv(JavaVM* vm, JNIEnv** env) { return vm->GetEnv((void**) env, JNI_VERSION_1_8) == JNI_OK; }
+static bool getEnv(JavaVM* vm, JNIEnv** env) {
+    NES_ASSERT(vm != nullptr, "java vm should not be null");
+    return vm->GetEnv((void**) env, JNI_VERSION_1_8) == JNI_OK; }
 
 static bool isAttached(JavaVM* vm) {
     JNIEnv* env = nullptr;
+    // we can assume that get env will not return JNI_EVERSION
     return getEnv(vm, &env);
 }
 
 /**
-* Maintains the lifecycle of a JNIEnv.
+* Maintains the lifecycle of a JNIEnv in a thread.
 */
 class ScopedEnv final {
   public:
@@ -67,7 +70,6 @@ class ScopedEnv final {
     JNIEnv* get() const noexcept { return env; }
 
   private:
-    // Instance Variables
     JavaVM* vm;
     JNIEnv* env;
     bool attached;///< Manually attached, as opposed to already attached.
@@ -113,7 +115,7 @@ JNIEnv* getEnv() {
     return env.get();
 }
 
-void detatchEnv() {
+void detachEnv() {
     if (jvmInstance == nullptr) {
         throw InitializationException("JNI not initialized");
     }
@@ -149,7 +151,7 @@ void JVM::init() {
         args.nOptions = std::size(jvmOptions);
 
         JNIEnv* env;
-        if (JNI_CreateJavaVM(&jvmInstance, (void**) &env, &args) != 0) {
+        if (JNI_CreateJavaVM(&jvmInstance, (void**) &env, &args) != JNI_OK) {
             isJVMInitialized.store(false);
             throw InitializationException("Java Virtual Machine failed during creation");
         }

@@ -19,60 +19,15 @@
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Util/JNI/JNI.hpp>
-#include <jni.h>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <jni.h>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
-
-jni::jobject deserializeInstanceFromData(const char* object) {
-    auto clazz = jni::findClass("MapJavaUdfUtils");
-    // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
-    auto mid = jni::getEnv()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
-    jni::jniErrorCheck();
-    auto obj = jni::getEnv()->CallStaticObjectMethod(clazz, mid, object);
-    jni::jniErrorCheck();
-    return obj;
-}
-
-jni::jobject  deserializeInstance(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-    auto env = jni::getEnv();
-
-    // Create an array from the serialized instance.
-    const auto length = handler->getSerializedInstance().size();
-    const auto data = reinterpret_cast<const jbyte*>(handler->getSerializedInstance().data());
-    const auto byteArray = env->NewByteArray(length);
-    jni::jniErrorCheck();
-    env->SetByteArrayRegion(byteArray, 0, length, data);
-    jni::jniErrorCheck();
-
-    // Deserialize the instance using a Java helper method.
-    const auto clazz = env->FindClass("MapJavaUdfUtils");
-    jni::jniErrorCheck();
-    // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
-    const auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
-    jni::jniErrorCheck();
-    const auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
-    jni::jniErrorCheck();
-
-    // Release the array.
-    env->DeleteLocalRef(byteArray);
-    jni::jniErrorCheck();
-    return obj;
-}
-
-void freeObject(void* object) { jni::freeObject((jni::jobject) object); }
-
-void startOrAttachVMWithByteList(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-}
 
 void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
@@ -80,16 +35,11 @@ void* findInputClass(void* state) {
     return jni::findClass(handler->getInputClassJNIName());
 }
 
+void freeObject(void* object) { jni::freeObject((jobject) object); }
+
 void* allocateObject(void* clazzPtr) {
     NES_ASSERT2_FMT(clazzPtr != nullptr, "clazzPtr should not be null");
     return jni::allocateObject((jclass) clazzPtr);
-}
-
-void* findOutputClass(void* state) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-    auto clazz = jni::findClass(handler->getOutputClassJNIName());
-    return jni::getEnv()->NewGlobalRef(clazz);
 }
 
 void* getObjectClass(void* object) {
@@ -218,6 +168,10 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     std::string fieldName = handler->getUdfInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = jni::getEnv()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jni::jniErrorCheck();
+
+    // TODO derive the signature from the type of value using the if constexpr
+    //  statement below? Then we would not need all the
+    //  specialized methods, e.g., setBooleanField, below.
     if constexpr (std::is_same<T, bool>::value) {
         jni::getEnv()->SetBooleanField(pojo, id, (jboolean) value);
     } else if constexpr (std::is_same<T, float>::value) {

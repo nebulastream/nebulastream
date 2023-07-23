@@ -56,13 +56,12 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     }
 
     /**
- * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
- * @param schema Schema of the input and output tuples.
- * @param memoryLayout memory layout
- * @return
- */
+     * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
+     * @param schema Schema of the input and output tuples.
+     * @param memoryLayout memory layout
+     * @return
+     */
     auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
-        bool isBabelfish = this->GetParam() == "BabelfishPipelineCompiler";
         std::shared_ptr<Operators::ExecutableOperator> mapOperator;
 
         mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
@@ -159,8 +158,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.IntegerMapFunction", "map", "java.lang.Integer", "java.lang.Integer", schema);
+    auto handler = initMapHandler("stream.nebula.IntegerMapFunction", "map", "java.lang.Integer", "java.lang.Integer", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -181,8 +179,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.ShortMapFunction", "map", "java.lang.Short", "java.lang.Short", schema);
+    auto handler = initMapHandler("stream.nebula.ShortMapFunction", "map", "java.lang.Short", "java.lang.Short", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -203,8 +200,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.ByteMapFunction", "map", "java.lang.Byte", "java.lang.Byte", schema);
+    auto handler = initMapHandler("stream.nebula.ByteMapFunction", "map", "java.lang.Byte", "java.lang.Byte", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -225,8 +221,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.LongMapFunction", "map", "java.lang.Long", "java.lang.Long", schema);
+    auto handler = initMapHandler("stream.nebula.LongMapFunction", "map", "java.lang.Long", "java.lang.Long", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -247,8 +242,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.DoubleMapFunction", "map", "java.lang.Double", "java.lang.Double", schema);
+    auto handler = initMapHandler("stream.nebula.DoubleMapFunction", "map", "java.lang.Double", "java.lang.Double", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -274,8 +268,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.BooleanMapFunction", "map", "java.lang.Boolean", "java.lang.Boolean", schema);
+    auto handler = initMapHandler("stream.nebula.BooleanMapFunction", "map", "java.lang.Boolean", "java.lang.Boolean", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -315,8 +308,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.StringMapFunction", "map", "java.lang.String", "java.lang.String", schema);
+    auto handler = initMapHandler("stream.nebula.StringMapFunction", "map", "java.lang.String", "java.lang.String", schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

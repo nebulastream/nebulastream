@@ -49,7 +49,7 @@ void AbstractJavaUDFOperator::open(ExecutionContext& ctx, RecordBuffer& recordBu
 }
 
 void AbstractJavaUDFOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    FunctionCall<>("detachJVM", jni::detatchEnv);
+    FunctionCall<>("detachJVM", jni::detachEnv);
     Operator::close(executionCtx, recordBuffer);
 }
 
@@ -175,7 +175,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
         for (int i = 0; i < (int) operatorInputSchema->fields.size(); i++) {
             auto field = operatorInputSchema->fields[i];
             auto fieldName = field->getName();
-
+            // TODO reduce code and collapsed proxy functions.
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
                 FunctionCall<>("setBooleanField",
                                setBooleanField,

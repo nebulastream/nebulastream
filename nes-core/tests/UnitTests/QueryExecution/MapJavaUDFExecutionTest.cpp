@@ -141,8 +141,8 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .setInstance({})
                                  .setByteCodeList(byteCodeList)
                                  .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
-                                 .setInputClassName("java/lang/Integer")
-                                 .setOutputClassName("java/lang/Integer")
+                                 .setInputClassName("java.lang.Integer")
+                                 .setOutputClassName("java.lang.Integer")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);

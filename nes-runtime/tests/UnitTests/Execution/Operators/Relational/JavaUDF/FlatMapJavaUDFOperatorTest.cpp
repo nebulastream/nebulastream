@@ -53,7 +53,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     input = Schema::create()->addField("id", BasicType::TEXT);
     output = Schema::create()->addField("id", BasicType::TEXT);
-    clazz = "stream/nebula/StringFlatMapFunction";
+    clazz = "stream.nebula.StringFlatMapFunction";
     inputClass = "java.lang.String";
     outputClass = "java.util.Collection";
 
@@ -107,8 +107,8 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                  ->addField("doubleVariable", BasicType::FLOAT64)
                  ->addField("stringVariable", BasicType::TEXT)
                  ->addField("booleanVariable", BasicType::BOOLEAN);
-    clazz = "stream/nebula/ComplexPojoFlatMapFunction";
-    inputClass = "stream/nebula/ComplexPojo";
+    clazz = "stream.nebula.ComplexPojoFlatMapFunction";
+    inputClass = "stream.nebula.ComplexPojo";
     outputClass = "java.util.Collection";
 
     int8_t initialByte = 10;
