@@ -310,7 +310,7 @@ class QueryPlan {
      * @return empty or operators between source and target operators
      */
     std::set<OperatorNodePtr> findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
-                                                                  const std::set<OperatorNodePtr>& targetOperators);
+                                                                           const std::set<OperatorNodePtr>& targetOperators);
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;

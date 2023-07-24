@@ -79,12 +79,12 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
             //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
             auto& operatorToProcess = operatorPath.back();
-            auto isPinnedDownStreamOperator =
-                std::find_if(pinnedDownStreamOperators.begin(),
-                             pinnedDownStreamOperators.end(),
-                             [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
-                                 return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
-                             });
+            auto isPinnedDownStreamOperator = std::find_if(
+                pinnedDownStreamOperators.begin(),
+                pinnedDownStreamOperators.end(),
+                [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
+                    return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
+                });
 
             //Skip further processing if encountered pinned downstream operator
             if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {

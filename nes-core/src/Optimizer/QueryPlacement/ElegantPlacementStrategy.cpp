@@ -109,9 +109,10 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
 }
 
-void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId,
-                                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                                 cpr::Response& response) const {
+void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
+    QueryId queryId,
+    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+    cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
     auto placementData = jsonResponse[PLACEMENT_KEY];
