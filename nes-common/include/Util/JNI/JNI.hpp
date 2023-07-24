@@ -104,7 +104,7 @@ class JVM final {
     static JVM& get();
 
     /**
-    * Initialized the Java Virtual Machine with specific options and a classpath.
+    * @brief Initialized the Java Virtual Machine with specific options and a classpath.
     */
     void init();
     /**
@@ -150,11 +150,11 @@ class InitializationException : public NES::Exceptions::RuntimeException {
   public:
     /**
      * Constructor with an error message.
-     * @aram msg Message to pass to the Exception.
+     * @param msg Message to pass to the Exception.
      */
     explicit InitializationException(const char* msg) : RuntimeException(msg) {}
 };
 
-}// namespace jni
+}// namespace NES::jni
 
 #endif//NES_NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_

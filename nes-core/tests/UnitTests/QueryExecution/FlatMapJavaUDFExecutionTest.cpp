@@ -79,7 +79,7 @@ void createJVM(JavaVM* jvm, JNIEnv** env) {
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
     }
-    args.version = JNI_VERSION_1_2;
+    args.version = JNI_VERSION_1_8;
     args.ignoreUnrecognized = false;
     args.options = options.data();
     args.nOptions = std::size(options);
