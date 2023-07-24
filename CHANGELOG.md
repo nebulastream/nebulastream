@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.154](https://github.com/nebulastream/nebulastream/tree/v0.5.154) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.153...v0.5.154)
+
+**Implemented enhancements:**
+
+- \[TASK\] Redundancy elimination rule  [\#3874](https://github.com/nebulastream/nebulastream/issues/3874)
+
+### Miscellaneous Issues ✌️
+
+- Schema getIndex is complicated [\#1537](https://github.com/nebulastream/nebulastream/issues/1537)
+
 ## [v0.5.153](https://github.com/nebulastream/nebulastream/tree/v0.5.153) (2023-07-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.152...v0.5.153)
