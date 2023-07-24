@@ -43,7 +43,8 @@ class ChangeLogEntry {
      * @param downstreamOperators: downstream operator set
      * @return shared pointer to change log entry
      */
-    static ChangeLogEntryPtr create(std::set<LogicalOperatorNodePtr> upstreamOperators, std::set<LogicalOperatorNodePtr> downstreamOperators);
+    static ChangeLogEntryPtr create(std::set<LogicalOperatorNodePtr> upstreamOperators,
+                                    std::set<LogicalOperatorNodePtr> downstreamOperators);
 
     // Impacted upstream operators
     const std::set<LogicalOperatorNodePtr> upstreamOperators;

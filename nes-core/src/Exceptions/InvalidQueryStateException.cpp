@@ -18,8 +18,7 @@
 
 namespace NES::Exceptions {
 
-InvalidQueryStateException::InvalidQueryStateException(const std::vector<QueryState>& expectedState,
-                                                         QueryState actualState)
+InvalidQueryStateException::InvalidQueryStateException(const std::vector<QueryState>& expectedState, QueryState actualState)
     : RequestExecutionException("Invalid query status") {
 
     std::stringstream expectedStatus;

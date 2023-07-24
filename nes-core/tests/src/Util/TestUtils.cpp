@@ -235,7 +235,8 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
                 return true;
             }
             case QueryState::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}", magic_enum::enum_name(queryState));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
+                          magic_enum::enum_name(queryState));
                 return false;
             }
             default: {

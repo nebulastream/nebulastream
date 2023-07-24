@@ -321,8 +321,9 @@ std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<Oper
     return operatorsBetween;
 }
 
-std::set<OperatorNodePtr> QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
-                                                             const std::set<OperatorNodePtr>& targetOperators) {
+std::set<OperatorNodePtr>
+QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
+                                                        const std::set<OperatorNodePtr>& targetOperators) {
 
     //Find if downstream operator is also in the vector of target operators
     auto found = std::find_if(targetOperators.begin(), targetOperators.end(), [&](const auto& upstreamOperator) {
