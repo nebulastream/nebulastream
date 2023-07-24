@@ -95,7 +95,6 @@ class QueryPlanBuilder {
     static NES::QueryPlanPtr addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                NES::QueryPlanPtr queryPlan);
 
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
     /**
      * @brief Adds the Python UDF to the query plan
      * @param descriptor python udf descriptor
@@ -103,7 +102,6 @@ class QueryPlanBuilder {
      * @return updated queryPlan
      */
     static NES::QueryPlanPtr addMapPythonUDF(Catalogs::UDF::PythonUDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
     /**
     * @brief UnionOperator to combine two query plans

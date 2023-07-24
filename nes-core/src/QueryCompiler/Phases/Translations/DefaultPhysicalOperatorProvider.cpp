@@ -24,12 +24,12 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -54,10 +54,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -103,10 +103,6 @@
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapPythonUDFOperator.hpp>
-#include <Operators/LogicalOperators/MapPythonUDFLogicalOperatorNode.hpp>
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 namespace NES::QueryCompilation {
 
@@ -200,20 +196,16 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
-        lowerJavaUDFMapOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<FlatMapJavaUDFLogicalOperatorNode>()) {
-        lowerJavaUDFFlatMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
+        lowerUDFMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        lowerUDFFlatMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<LimitLogicalOperatorNode>()) {
         auto limitOperator = operatorNode->as<LimitLogicalOperatorNode>();
         auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(limitOperator->getInputSchema(),
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-    } else if (operatorNode->instanceOf<MapPythonUDFLogicalOperatorNode>()){
-        lowerPythonUDFMapOperator(queryPlan, operatorNode);
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -275,36 +267,23 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJavaUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    auto mapJavaUDFOperator = operatorNode->as<MapJavaUDFLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUDFOperator::create(mapJavaUDFOperator->getInputSchema(),
-                                                                                     mapJavaUDFOperator->getOutputSchema(),
-                                                                                     mapJavaUDFOperator->getJavaUDFDescriptor());
-    if (physicalMapOperator->instanceOf<PhysicalOperators::PhysicalMapJavaUDFOperator>()) {
-        NES_DEBUG("Correct Physical Operator");
-    }
+void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getInputSchema(),
+                                                                                 mapUDFOperator->getOutputSchema(),
+                                                                                 mapUDFOperator->getUDFDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJavaUDFFlatMapOperator(const QueryPlanPtr&,
-                                                                  const LogicalOperatorNodePtr& operatorNode) {
-    auto flatMapJavaUDFOperator = operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const QueryPlanPtr&,
+                                                              const LogicalOperatorNodePtr& operatorNode) {
+    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperatorNode>();
     auto physicalMapOperator =
-        PhysicalOperators::PhysicalFlatMapJavaUDFOperator::create(flatMapJavaUDFOperator->getInputSchema(),
-                                                                  flatMapJavaUDFOperator->getOutputSchema(),
-                                                                  flatMapJavaUDFOperator->getJavaUDFDescriptor());
+        PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getInputSchema(),
+                                                              flatMapUDFOperator->getOutputSchema(),
+                                                              flatMapUDFOperator->getUDFDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
-
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-void DefaultPhysicalOperatorProvider::lowerPythonUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    auto mapPythonUDFOperator = operatorNode->as<MapPythonUDFLogicalOperatorNode>();
-    auto physicalPythonUDFMapOperator = PhysicalOperators::PhysicalMapPythonUDFOperator::create(mapPythonUDFOperator->getInputSchema(),
-                                                                                                mapPythonUDFOperator->getOutputSchema(),
-                                                                                                mapPythonUDFOperator->getPythonUDFDescriptor());
-    operatorNode->replace(physicalPythonUDFMapOperator);
-}
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();

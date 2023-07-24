@@ -158,25 +158,18 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
-    * @brief Lowers a java udf map operator
+    * @brief Lowers a udf map operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerJavaUDFMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
-    * @brief Lowers a java udf flat map operator
+    * @brief Lowers a udf flat map operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerJavaUDFFlatMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
-
-    /**
-    * @brief Lowers a python udf map operator
-    * @param queryPlan current plan
-    * @param operatorNode current operator
-    */
-    void lowerPythonUDFMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFFlatMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a window operator

@@ -23,8 +23,8 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -97,14 +97,14 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
     Query query = Query::from("src").mapJavaUDF(javaUDFDescriptor).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
+    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
     EXPECT_EQ(mapJavaUDFOperators.size(), 1);
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
     NES_INFO("{}", updatedQueryPlan->toString());
 
-    mapJavaUDFOperators = updatedQueryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
+    mapJavaUDFOperators = updatedQueryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());
 
     auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
@@ -133,14 +133,14 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
+    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
     EXPECT_EQ(mapJavaUDFOperators.size(), 2);
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
     NES_INFO("{}", updatedQueryPlan->toString());
 
-    mapJavaUDFOperators = queryPlan->getOperatorByType<MapJavaUDFLogicalOperatorNode>();
+    mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());
 
     auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();

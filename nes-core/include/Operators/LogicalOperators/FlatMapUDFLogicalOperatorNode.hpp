@@ -12,27 +12,27 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPJAVAUDFLOGICALOPERATORNODE_HPP_
-#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPJAVAUDFLOGICALOPERATORNODE_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPUDFLOGICALOPERATORNODE_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPUDFLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/JavaUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 
 namespace NES {
 
 /**
- * Logical operator node for a flat map operation which uses a Java UDF.
+ * Logical operator node for a flat map operation which uses a  UDF.
  *
- * The operation completely replaces the stream tuple based on the result of the Java UDF method. Therefore, the output schema is
+ * The operation completely replaces the stream tuple based on the result of the  UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
-class FlatMapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
+class FlatMapUDFLogicalOperatorNode : public UDFLogicalOperator {
   public:
     /**
      * @brief Construct a FlatMapUdfLogicalOperatorNode.
-     * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
+     * @param udfDescriptor The descriptor of the  UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUDFDescriptor, OperatorId id);
+    FlatMapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -40,4 +40,4 @@ class FlatMapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPJAVAUDFLOGICALOPERATORNODE_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPUDFLOGICALOPERATORNODE_HPP_

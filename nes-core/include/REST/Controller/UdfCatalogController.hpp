@@ -98,7 +98,7 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: {}", udfName);
                 response.set_found(true);
-                UDFSerializationUtil::serializeJavaUDFDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
+                UDFSerializationUtil::serializeJavaUDFDescriptor(udfDescriptor, *response.mutable_java_udf_descriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
             }
         } catch (...) {
