@@ -34,16 +34,16 @@ bool IncrementThreadSaveAndCheckLimit(void* op) {
     return value < opHandler->limit;
 }
 
-
 void Limit::execute(ExecutionContext& ctx, Record& record) const {
     // 1) get the global operator state
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2) check if the limit was reached
-    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit",IncrementThreadSaveAndCheckLimit, globalOperatorHandler)){
+    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler)){
         child->execute(ctx, record);
     } else {
-        // TODO: here we would need to send 'end of stream'
+        // TODO: we need here to somehow signal the parent that we already finished. Also unsure if returning is sufficient
+        return;
     }
 }
 
