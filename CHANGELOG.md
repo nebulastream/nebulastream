@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.156](https://github.com/nebulastream/nebulastream/tree/v0.5.156) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.155...v0.5.156)
+
+**Implemented enhancements:**
+
+- \[TASK\] Filter merge rule  [\#4014](https://github.com/nebulastream/nebulastream/issues/4014)
+- \[TASK\] Use only a single 2pl storage handler object for all requests [\#3814](https://github.com/nebulastream/nebulastream/issues/3814)
+
 ## [v0.5.155](https://github.com/nebulastream/nebulastream/tree/v0.5.155) (2023-07-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.154...v0.5.155)
