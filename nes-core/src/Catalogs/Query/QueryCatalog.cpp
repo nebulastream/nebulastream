@@ -109,7 +109,6 @@ void QueryCatalog::mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalo
     auto queryCatalogEntries = sharedQueryIdAndCatalogEntryMapping[sharedQueryId];
     queryCatalogEntries.emplace_back(queryCatalogEntry);
     sharedQueryIdAndCatalogEntryMapping[sharedQueryId] = queryCatalogEntries;
-    return;
 }
 
 std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId) {
