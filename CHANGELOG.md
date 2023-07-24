@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.155](https://github.com/nebulastream/nebulastream/tree/v0.5.155) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.154...v0.5.155)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add logic for operator state transition [\#3899](https://github.com/nebulastream/nebulastream/issues/3899)
+
+### Bug Fixes 🐛
+
+- \[BUG\]: TextFunction LIKE passes test but fails when shuting down [\#3633](https://github.com/nebulastream/nebulastream/issues/3633)
+
 ## [v0.5.154](https://github.com/nebulastream/nebulastream/tree/v0.5.154) (2023-07-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.153...v0.5.154)
