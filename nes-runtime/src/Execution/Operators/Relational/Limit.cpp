@@ -14,11 +14,37 @@
 
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
+bool IncrementThreadSaveAndCheckLimit(void* op) {
+    NES_ASSERT2_FMT(op != nullptr, "operator handler context should not be null");
+    auto* opHandler = static_cast<LimitOperatorHandler*>(op);
+
+    // Increment using compare and swap to avoid race conditions
+    auto value = opHandler->counter.load(std::memory_order_relaxed);
+    while(value < opHandler->limit) {
+        if(opHandler->counter.compare_exchange_weak(value, value + 1, std::memory_order_release, std::memory_order_relaxed))
+            break;
+    }
+    // Are we under the limit?
+    return value < opHandler->limit;
+}
+
+
 void Limit::execute(ExecutionContext& ctx, Record& record) const {
-    // call next operator
-    child->execute(ctx, record);
+    // 1) get the global operator state
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+
+    // 2) check if the limit was reached
+    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit",IncrementThreadSaveAndCheckLimit, globalOperatorHandler)){
+        child->execute(ctx, record);
+    } else {
+        // TODO: here we would need to send 'end of stream'
+    }
 }
 
 }// namespace NES::Runtime::Execution::Operators
