@@ -52,20 +52,19 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 
-//        auto now = std::chrono::system_clock::now();
-//        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-//        auto epoch = now_ms.time_since_epoch();
-//        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType, ftPlacement);
 
-//        now = std::chrono::system_clock::now();
-//        now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-//        epoch = now_ms.time_since_epoch();
-//        auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-//
-//        std::cout << "The Decision time was: " << valueAfter.count() - value.count();
-//        throw Exceptions::RuntimeException("The Decision time was: " + std::to_string(valueAfter.count() - value.count()));
+        now = std::chrono::system_clock::now();
+        now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        epoch = now_ms.time_since_epoch();
+        auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+
+        std::cout << "The Decision time was: " << valueAfter.count() - value.count();
 
         // 2. Pin all unpinned operators
         pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
