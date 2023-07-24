@@ -65,6 +65,8 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
     //Set the new operator state after validating the previous state
     switch (newOperatorState) {
         case OperatorState::TO_BE_PLACED:
+            //TO_BE_PLACED is the default operator state when it gets created. Therefore, a new set operator status to TO_BE_PLACED
+            // is not expected.
             throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_REPLACED, OperatorState::PLACED},
@@ -74,6 +76,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::TO_BE_REMOVED;
                 break;
             }
+            // an operator can be marked as TO_BE_REMOVED only if it is not in the state REMOVED.
             throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
@@ -83,6 +86,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::TO_BE_REPLACED;
                 break;
             }
+            // an operator can be marked as TO_BE_REPLACED only if it is not in the state REMOVED or TO_BE_REMOVED.
             throw Exceptions::InvalidOperatorStateException(
                 id,
                 {OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
@@ -93,6 +97,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::PLACED;
                 break;
             }
+            // an operator can be marked as PLACED only if it is not in the state REMOVED or TO_BE_REMOVED or already PLACED.
             throw Exceptions::InvalidOperatorStateException(id,
                                                             {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
                                                             this->operatorState);
@@ -101,6 +106,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 this->operatorState = OperatorState::REMOVED;
                 break;
             }
+            // an operator can be marked as REMOVED only if it is in the state TO_BE_REMOVED.
             throw Exceptions::InvalidOperatorStateException(id, {OperatorState::TO_BE_REMOVED}, this->operatorState);
     }
 }

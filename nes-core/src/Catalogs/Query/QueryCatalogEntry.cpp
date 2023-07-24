@@ -74,7 +74,10 @@ void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr
     optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
 }
 
-std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
+std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
+    std::unique_lock lock(mutex);
+    return optimizationPhases;
+}
 
 void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
     std::unique_lock lock(mutex);
