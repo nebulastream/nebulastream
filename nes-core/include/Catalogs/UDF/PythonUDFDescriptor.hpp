@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 
@@ -60,4 +60,3 @@ class PythonUDFDescriptor : public UDFDescriptor {
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
