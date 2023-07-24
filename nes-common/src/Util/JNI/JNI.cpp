@@ -145,7 +145,7 @@ void JVM::init() {
             NES_DEBUG("JVM add classPath {}", classPath);
             jvmOptions.push_back(JavaVMOption{.optionString = const_cast<char*>(classPath.c_str())});
         }
-        args.version = JNI_VERSION_1_2;
+        args.version = JNI_VERSION_1_8;
         args.ignoreUnrecognized = false;
         args.options = jvmOptions.data();
         args.nOptions = std::size(jvmOptions);

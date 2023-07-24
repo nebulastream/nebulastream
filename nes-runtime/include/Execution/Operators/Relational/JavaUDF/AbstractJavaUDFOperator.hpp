@@ -40,7 +40,7 @@ class AbstractJavaUDFOperator : public ExecutableOperator {
 
   public:
     /**
-     * @brief Creates a FlatMapJavaUDF operator
+     * @brief Creates a AbstractJavaUDFOperator operator
      * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
      * @param operatorInputSchema The input schema of the flat map operator.
      * @param operatorOutputSchema The output schema of the flat map operator.
