@@ -302,6 +302,7 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     return *this;
 }
 
+Query& Query::mapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr& descriptor) {
 Query& Query::limit(const uint64_t limit) {
     NES_DEBUG("Query: add limit operator to query");
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
@@ -314,19 +315,17 @@ Query& Query::mapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
     return *this;
 }
 
-Query& Query::flatMapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
+Query& Query::flatMapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr& descriptor) {
     NES_DEBUG("Query: add flat map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addFlatMapJavaUDF(descriptor, this->queryPlan);
     return *this;
 }
 
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-Query& Query::mapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr descriptor) {
+Query& Query::mapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr& descriptor) {
     NES_DEBUG("Query: add map python udf operator to query");
     this->queryPlan = QueryPlanBuilder::addMapPythonUDF(descriptor, this->queryPlan);
     return *this;
 }
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");

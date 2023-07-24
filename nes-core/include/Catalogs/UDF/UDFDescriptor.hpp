@@ -91,6 +91,15 @@ class UDFDescriptor {
         return false;
     };
 
+    /**
+     * Compare to Python UDF descriptors.
+     *
+     * @param other The other PythonUDFDescriptor in the comparison.
+     * @return True, if both PythonUdfDescriptors are the same, i.e., same UDF class and method name,
+     * same serialized instance (state), and same byte code list; False, otherwise.
+     */
+    bool operator==(const UDFDescriptor& other) const;
+
   private:
     const std::string methodName;
     const DataTypePtr returnType;

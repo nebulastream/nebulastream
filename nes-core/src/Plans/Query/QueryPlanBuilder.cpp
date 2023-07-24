@@ -81,7 +81,7 @@ QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, NES::QueryPlanPtr 
 NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                   NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(descriptor);
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -89,18 +89,18 @@ NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescript
 NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                       NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add flat map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(descriptor);
+    auto op = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-NES::QueryPlanPtr QueryPlanBuilder::addMapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr& descriptor, NES::QueryPlanPtr queryPlan){
-    NES_DEBUG("QueryPlanBuilder: add map python udf operator to query plan");
-    auto op = LogicalOperatorFactory::createMapPythonUDFLogicalOperator(descriptor);
+
+NES::QueryPlanPtr QueryPlanBuilder::addMapPythonUDF(Catalogs::UDF::PythonUDFDescriptorPtr const& descriptor,
+                                                  NES::QueryPlanPtr queryPlan) {
+    NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map operator to query plan");

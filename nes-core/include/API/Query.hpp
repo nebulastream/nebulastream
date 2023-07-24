@@ -458,22 +458,22 @@ class Query {
      * @param descriptor java udf descriptor
      * @return query
      */
-    Query& mapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
+    Query& mapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor);
 
     /**
      * @brief: Create flat map java udf operator.
      * @param descriptor java udf descriptor
      * @return query
      */
-    Query& flatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    Query& flatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor);
+
     /**
      * @brief Create map python udf operator
      * @param descriptor python udf descriptor
      * @return query
      */
-    Query& mapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr descriptor);
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+    Query& mapPythonUDF(Catalogs::UDF::PythonUDFDescriptorPtr const& descriptor);
+
 
     /**
      * @brief: Map records according to a map expression. An

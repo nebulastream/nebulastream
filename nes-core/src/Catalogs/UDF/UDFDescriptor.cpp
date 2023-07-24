@@ -33,4 +33,9 @@ UDFDescriptor::UDFDescriptor(const std::string& methodName,
 }
 
 void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { UDFDescriptor::inputSchema = inputSchema; }
+
+bool UDFDescriptor::operator==(const UDFDescriptor& other) const {
+    return getMethodName() == other.getMethodName()
+        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true);
+}
 }// namespace NES::Catalogs::UDF

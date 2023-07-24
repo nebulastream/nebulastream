@@ -13,25 +13,25 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 
 namespace NES {
 
-FlatMapJavaUDFLogicalOperatorNode::FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor,
+FlatMapUDFLogicalOperatorNode::FlatMapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                                                      OperatorId id)
-    : OperatorNode(id), JavaUDFLogicalOperator(javaUDFDescriptor, id) {}
+    : OperatorNode(id), UDFLogicalOperator(udfDescriptor, id) {}
 
-std::string FlatMapJavaUDFLogicalOperatorNode::toString() const {
+std::string FlatMapUDFLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "FLATMAP_JAVA_UDF(" << id << ")";
+    ss << "FLATMAP_UDF(" << id << ")";
     return ss.str();
 }
 
-OperatorNodePtr FlatMapJavaUDFLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(this->getJavaUDFDescriptor(), id);
+OperatorNodePtr FlatMapUDFLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<FlatMapUDFLogicalOperatorNode>(this->getUDFDescriptor(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -43,12 +43,12 @@ OperatorNodePtr FlatMapJavaUDFLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool FlatMapJavaUDFLogicalOperatorNode::equal(const NodePtr& other) const {
-    return other->instanceOf<FlatMapJavaUDFLogicalOperatorNode>() && JavaUDFLogicalOperator::equal(other);
+bool FlatMapUDFLogicalOperatorNode::equal(const NodePtr& other) const {
+    return other->instanceOf<FlatMapUDFLogicalOperatorNode>() && UDFLogicalOperator::equal(other);
 }
 
-bool FlatMapJavaUDFLogicalOperatorNode::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<FlatMapJavaUDFLogicalOperatorNode>()->id;
+bool FlatMapUDFLogicalOperatorNode::isIdentical(const NodePtr& other) const {
+    return equal(other) && id == other->as<FlatMapUDFLogicalOperatorNode>()->id;
 }
 
 }// namespace NES

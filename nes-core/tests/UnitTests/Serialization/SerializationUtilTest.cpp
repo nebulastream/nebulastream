@@ -506,7 +506,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        auto javaUDFMap = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto javaUDFMap = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
@@ -514,7 +514,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        auto javaUDFMap = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto javaUDFMap = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(javaUDFDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));

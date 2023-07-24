@@ -68,10 +68,11 @@ namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 class PythonUDFDescriptor;
 using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
+
+class UDFDescriptor;
+using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace InferModel {

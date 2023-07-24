@@ -25,26 +25,26 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 }// namespace Catalogs::UDF
 
 /**
- * Logical operator node for a udf. This class acts as a parent class for any udf logical operator node
+ * Logical operator node for a udf. This class acts as a parent class for any j udf logical operator node
  */
 class UDFLogicalOperator : public LogicalUnaryOperatorNode {
 
   public:
     /**
      * Construct a UDFLogicalOperator.
-     * @param udfDescriptor The descriptor of the  UDF used in the map operation.
+     * @param udfDescriptor The descriptor of the UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    UDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);
+    UDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id);
 
     /**
      * @see LogicalOperatorNode#inferStringSignature
      */
-    virtual void inferStringSignature() override = 0;
+    void inferStringSignature() override;
 
     /**
-     * Getter for the  UDF descriptor.
-     * @return The descriptor of the  UDF used in the map operation.
+     * Getter for the UDF descriptor.
+     * @return The descriptor of the UDF used in the map operation.
      */
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor() const;
 
@@ -61,9 +61,9 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
     virtual OperatorNodePtr copy() override = 0;
 
     /**
-     * Two UDFLogicalOperator are equal when the wrapped UDFDescriptor are equal.
+     * Two MapUdfLogicalOperatorNode are equal when the wrapped UDFDescriptor are equal.
      */
-    [[nodiscard]] virtual bool equal(const NodePtr& other) const override = 0;
+    [[nodiscard]] virtual bool equal(const NodePtr& other) const override;
 
     /**
      * @see Node#isIdentical

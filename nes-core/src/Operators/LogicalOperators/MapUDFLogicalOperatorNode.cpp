@@ -13,25 +13,25 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 
 namespace NES {
 
-MapJavaUDFLogicalOperatorNode::MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor,
+MapUDFLogicalOperatorNode::MapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                                              OperatorId id)
-    : OperatorNode(id), JavaUDFLogicalOperator(javaUDFDescriptor, id) {}
+    : OperatorNode(id), UDFLogicalOperator(udfDescriptor, id) {}
 
-std::string MapJavaUDFLogicalOperatorNode::toString() const {
+std::string MapUDFLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP_JAVA_UDF(" << id << ")";
+    ss << "MAP_UDF(" << id << ")";
     return ss.str();
 }
 
-OperatorNodePtr MapJavaUDFLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<MapJavaUDFLogicalOperatorNode>(this->getJavaUDFDescriptor(), id);
+OperatorNodePtr MapUDFLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<MapUDFLogicalOperatorNode>(this->getUDFDescriptor(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -43,12 +43,12 @@ OperatorNodePtr MapJavaUDFLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool MapJavaUDFLogicalOperatorNode::equal(const NodePtr& other) const {
-    return other->instanceOf<MapJavaUDFLogicalOperatorNode>() && JavaUDFLogicalOperator::equal(other);
+bool MapUDFLogicalOperatorNode::equal(const NodePtr& other) const {
+    return other->instanceOf<MapUDFLogicalOperatorNode>() && UDFLogicalOperator::equal(other);
 }
 
-bool MapJavaUDFLogicalOperatorNode::isIdentical(const NodePtr& other) const {
-    return equal(other) && id == other->as<MapJavaUDFLogicalOperatorNode>()->id;
+bool MapUDFLogicalOperatorNode::isIdentical(const NodePtr& other) const {
+    return equal(other) && id == other->as<MapUDFLogicalOperatorNode>()->id;
 }
 
 }// namespace NES

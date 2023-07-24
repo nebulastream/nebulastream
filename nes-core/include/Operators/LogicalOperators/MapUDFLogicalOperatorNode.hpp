@@ -12,27 +12,27 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_
-#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPUDFLOGICALOPERATORNODE_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPUDFLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/JavaUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 
 namespace NES {
 
 /**
- * Logical operator node for a map operation which uses a Java UDF.
+ * Logical operator node for a map operation which uses a UDF.
  *
- * The operation completely replaces the stream tuple based on the result of the Java UDF method. Therefore, the output schema is
+ * The operation completely replaces the stream tuple based on the result of the UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
-class MapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
+class MapUDFLogicalOperatorNode : public UDFLogicalOperator {
   public:
     /**
      * Construct a MapUdfLogicalOperatorNode.
-     * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
+     * @param udfDescriptor The descriptor of the  UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    MapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor, OperatorId id);
+    MapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);
 
     /**
      * @see Node#toString
@@ -47,7 +47,7 @@ class MapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
     /**
      * @see Node#equal
      *
-     * Two MapUdfLogicalOperatorNode are equal when the wrapped JavaUDFDescriptor are equal.
+     * Two MapUdfLogicalOperatorNode are equal when the wrapped UDFDescriptor are equal.
      */
     [[nodiscard]] bool equal(const NodePtr& other) const override;
 
@@ -57,4 +57,4 @@ class MapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPUDFLOGICALOPERATORNODE_HPP_

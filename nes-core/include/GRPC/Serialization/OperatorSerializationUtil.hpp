@@ -20,8 +20,8 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
