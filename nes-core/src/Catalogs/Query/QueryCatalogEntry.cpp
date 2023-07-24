@@ -26,7 +26,7 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      QueryPlanPtr inputQueryPlan,
                                      QueryState queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
-      inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
+      inputQueryPlan(std::move(inputQueryPlan)), queryState(queryStatus) {}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
@@ -41,19 +41,19 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
     this->executedQueryPlan = executedQueryPlan;
 }
 
-QueryState QueryCatalogEntry::getQueryStatus() const {
+QueryState QueryCatalogEntry::getQueryState() const {
     std::unique_lock lock(mutex);
-    return queryStatus;
+    return queryState;
 }
 
 std::string QueryCatalogEntry::getQueryStatusAsString() const {
     std::unique_lock lock(mutex);
-    return std::string(magic_enum::enum_name(queryStatus));
+    return std::string(magic_enum::enum_name(queryState));
 }
 
 void QueryCatalogEntry::setQueryStatus(QueryState queryStatus) {
     std::unique_lock lock(mutex);
-    this->queryStatus = queryStatus;
+    this->queryState = queryStatus;
 }
 
 void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {

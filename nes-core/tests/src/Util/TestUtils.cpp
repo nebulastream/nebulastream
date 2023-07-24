@@ -224,9 +224,8 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
             return false;
         }
         NES_TRACE("TestUtils: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryState status = queryCatalogEntry->getQueryStatus();
-
-        switch (queryCatalogEntry->getQueryStatus()) {
+        auto queryState = queryCatalogEntry->getQueryState();
+        switch (queryState) {
             case QueryState::MARKED_FOR_HARD_STOP:
             case QueryState::MARKED_FOR_SOFT_STOP:
             case QueryState::SOFT_STOP_COMPLETED:
@@ -236,11 +235,11 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
                 return true;
             }
             case QueryState::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}", magic_enum::enum_name(status));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}", magic_enum::enum_name(queryState));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found {}", magic_enum::enum_name(status));
+                NES_WARNING("Expected: Running or Scheduling but found {}", magic_enum::enum_name(queryState));
                 break;
             }
         }
@@ -263,7 +262,7 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryState::STOPPED) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
@@ -288,7 +287,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkFailedOrTimeout: check query status");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryState::FAILED) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::FAILED) {
             NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
         }

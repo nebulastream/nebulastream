@@ -284,7 +284,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<uint64_t, double>& nodeMileageMap) {
 
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
-        LogicalOperatorNodePtr operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
+        auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
 
         if (operatorMap.find(operatorID) != operatorMap.end()) {

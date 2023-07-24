@@ -45,7 +45,7 @@ AttributeSortRulePtr AttributeSortRule::create() { return std::make_shared<Attri
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
 
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
-    for (auto& filterOperator : filterOperators) {
+    for (auto const& filterOperator : filterOperators) {
         auto predicate = filterOperator->getPredicate();
         auto updatedPredicate = sortAttributesInExpression(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
@@ -56,7 +56,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
     }
 
     auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
-    for (auto& mapOperator : mapOperators) {
+    for (auto const& mapOperator : mapOperators) {
         auto mapExpression = mapOperator->getMapExpression();
         auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);

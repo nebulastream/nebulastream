@@ -19,17 +19,17 @@
 namespace NES::Exceptions {
 
 InvalidOperatorStateException::InvalidOperatorStateException(NES::OperatorId operatorId,
-                                                             const std::vector<OperatorState>& expectedStatus,
-                                                             NES::OperatorState actualStatus)
+                                                             const std::vector<OperatorState>& expectedState,
+                                                             NES::OperatorState actualState)
     : RequestExecutionException("Invalid operator state") {
 
     std::stringstream expectedStatusString;
-    for (OperatorState status : expectedStatus) {
-        expectedStatusString << std::string(magic_enum::enum_name(status)) << " ";
+    for (const auto& state : expectedState) {
+        expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
     }
     message = "InvalidOperatorStateException: Operator with id" + std::to_string(operatorId)
         + "Expected operator state to be in [" + expectedStatusString.str() + "] but found to be in "
-        + std::string(magic_enum::enum_name(actualStatus));
+        + std::string(magic_enum::enum_name(actualState));
 }
 
 const char* InvalidOperatorStateException::what() const noexcept { return message.c_str(); }

@@ -83,7 +83,7 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(Qu
     NES_TRACE("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping={}", printQueries());
     std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
     for (auto const& q : queryIdAndCatalogEntryMapping) {
-        if (q.second->getQueryStatus() == requestedStatus) {
+        if (q.second->getQueryState() == requestedStatus) {
             matchingQueries.insert(q);
         }
     }
@@ -93,7 +93,7 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(Qu
 std::string QueryCatalog::printQueries() {
     std::stringstream ss;
     for (const auto& q : queryIdAndCatalogEntryMapping) {
-        ss << "queryID=" << q.first << " running=" << magic_enum::enum_name(q.second->getQueryStatus()) << std::endl;
+        ss << "queryID=" << q.first << " running=" << magic_enum::enum_name(q.second->getQueryState()) << std::endl;
     }
     return ss.str();
 }
