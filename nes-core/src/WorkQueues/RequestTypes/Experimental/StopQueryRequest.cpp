@@ -107,12 +107,12 @@ void StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
         //mark single query for hard stop
         auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
         if (!markedForHardStopSuccessful) {
-            throw Exceptions::InvalidQueryStateException({QueryStatus::OPTIMIZING,
-                                                           QueryStatus::REGISTERED,
-                                                           QueryStatus::DEPLOYED,
-                                                           QueryStatus::RUNNING,
-                                                           QueryStatus::RESTARTING},
-                                                          queryCatalogService->getEntryForQuery(queryId)->getQueryStatus());
+            throw Exceptions::InvalidQueryStateException({QueryState::OPTIMIZING,
+                                                          QueryState::REGISTERED,
+                                                          QueryState::DEPLOYED,
+                                                          QueryState::RUNNING,
+                                                          QueryState::RESTARTING},
+                                                          queryCatalogService->getEntryForQuery(queryId)->getQueryState());
         }
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -196,12 +196,15 @@ void StopQueryRequest::rollBack(const RequestExecutionException& ex, StorageHand
             FailQueryRequest failRequest =
                 FailQueryRequest(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE, workerRpcClient);
             failRequest.execute(storageHandler);
-        } else if (ex.instanceOf<TypeInferenceException>()) {
-            NES_ERROR("TypeInferenceException: {}", ex.what());
-            queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryStatus::FAILED, ex.what());
+        } else if (ex.instanceOf<TypeInferenceException>() || ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
+            // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
+            // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
+            // we do this as long as there are retries present, otherwise, we fail the query
+            NES_ERROR("{}", ex.what());
+            queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
         } else if (ex.instanceOf<Exceptions::QueryNotFoundException>()
                    || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                   || ex.instanceOf<Exceptions::InvalidQueryStatusException>()) {
+                   || ex.instanceOf<Exceptions::InvalidQueryStateException>()) {
             //Happens if:
             //1. could not obtain execution nodes by shared query id --> non-recoverable
             //2. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
