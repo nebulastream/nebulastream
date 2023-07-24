@@ -17,7 +17,9 @@
 
 namespace NES {
 
-AbstractRequest::AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
+AbstractRequest::AbstractRequest(RequestId requestId,
+                                 const std::vector<ResourceType>& requiredResources,
+                                 const uint8_t maxRetries)
     : requestId(requestId), maxRetries(maxRetries), actualRetries(0), requiredResources(requiredResources) {}
 
 void AbstractRequest::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
@@ -45,5 +47,7 @@ void AbstractRequest::execute(StorageHandler& storageHandle) {
     postExecution(storageHandle);
 }
 
-void AbstractRequest::preExecution(StorageHandler& storageHandle) { storageHandle.acquireResources(requestId, requiredResources); }
+void AbstractRequest::preExecution(StorageHandler& storageHandle) {
+    storageHandle.acquireResources(requestId, requiredResources);
+}
 }// namespace NES

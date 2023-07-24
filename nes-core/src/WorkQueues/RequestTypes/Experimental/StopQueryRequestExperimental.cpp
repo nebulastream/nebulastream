@@ -31,30 +31,34 @@
 
 namespace NES {
 
-StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId, const QueryId queryId,
+StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId,
+                                                           const QueryId queryId,
                                                            const size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
                                                            Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : AbstractRequest(
-        requestId,
-        {
-            ResourceType::QueryCatalogService,
-            ResourceType::GlobalExecutionPlan,
-            ResourceType::Topology,
-            ResourceType::GlobalQueryPlan,
-            ResourceType::UdfCatalog,
-            ResourceType::SourceCatalog,
-        },
-        maxRetries),
+    : AbstractRequest(requestId,
+                      {
+                          ResourceType::QueryCatalogService,
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                      },
+                      maxRetries),
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
-StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId, const QueryId queryId,
+StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId,
+                                                         const QueryId queryId,
                                                          const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(requestId, queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
+    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(requestId,
+                                                                                       queryId,
+                                                                                       maxRetries,
+                                                                                       std::move(workerRpcClient),
+                                                                                       std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {

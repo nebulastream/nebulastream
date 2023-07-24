@@ -48,7 +48,8 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     constexpr RequestId requestId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
+    auto stopQueryRequest =
+        StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 /**
@@ -59,7 +60,8 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     constexpr RequestId requestId = 1;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
+    auto stopQueryRequest =
+        StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration);
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -68,17 +70,17 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(globalExecutionPlan,
-                                                     topology,
-                                                     queryCatalogService,
-                                                     globalQueryPlan,
-                                                     sourceCatalog,
-                                                     udfCatalog);
+                                                                   topology,
+                                                                   queryCatalogService,
+                                                                   globalQueryPlan,
+                                                                   sourceCatalog,
+                                                                   udfCatalog);
     auto twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(globalExecutionPlan,
-                                                     topology,
-                                                     queryCatalogService,
-                                                     globalQueryPlan,
-                                                     sourceCatalog,
-                                                     udfCatalog);
+                                                                    topology,
+                                                                    queryCatalogService,
+                                                                    globalQueryPlan,
+                                                                    sourceCatalog,
+                                                                    udfCatalog);
     //if thread 1 holds a handle to the topology, thread 2 should not be able to acquire a handle at the same time
 
     //constructor acquires lock

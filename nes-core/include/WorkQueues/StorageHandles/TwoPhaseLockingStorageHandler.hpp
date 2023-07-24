@@ -27,22 +27,22 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
   public:
     //todo #3956: implement one data structure which wraps these pointers
     explicit TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                         TopologyPtr topology,
-                         QueryCatalogServicePtr queryCatalogService,
-                         GlobalQueryPlanPtr globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                                           TopologyPtr topology,
+                                           QueryCatalogServicePtr queryCatalogService,
+                                           GlobalQueryPlanPtr globalQueryPlan,
+                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                           Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief factory to create a two phase locking storage manager object
      * @return shared pointer to the two phase locking storage manager
      */
     static std::shared_ptr<TwoPhaseLockingStorageHandler> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                         TopologyPtr topology,
-                         QueryCatalogServicePtr queryCatalogService,
-                         GlobalQueryPlanPtr globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                                                                 TopologyPtr topology,
+                                                                 QueryCatalogServicePtr queryCatalogService,
+                                                                 GlobalQueryPlanPtr globalQueryPlan,
+                                                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                                 Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Locks the specified resources ordered after the corresponding enum variants in ResourceType beginning

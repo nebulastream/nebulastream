@@ -85,7 +85,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     // Apply rule for filter push down optimization
     duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
     // Apply rule for filter reordering optimization
-    duplicateQueryPlan =  predicateReorderingRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = predicateReorderingRule->apply(duplicateQueryPlan);
     // Apply rule for filter merge
     return filterMergeRule->apply(duplicateQueryPlan);
 }

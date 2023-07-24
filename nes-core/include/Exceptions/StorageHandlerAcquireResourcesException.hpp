@@ -23,6 +23,6 @@ class StorageHandlerAcquireResourcesException : public RequestExecutionException
   private:
     std::string message;
 };
-}
+}// namespace NES::Exceptions
 
 #endif//NES_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP

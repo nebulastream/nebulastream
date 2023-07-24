@@ -26,11 +26,13 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(const RequestId requestId, const NES::QueryId queryId,
+FailQueryRequest::FailQueryRequest(const RequestId requestId,
+                                   const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest(requestId, {ResourceType::GlobalQueryPlan,
+    : AbstractRequest(requestId,
+                      {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
@@ -46,9 +48,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES:
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) {
-    storageHandler.releaseResources(queryId);
-}
+void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);

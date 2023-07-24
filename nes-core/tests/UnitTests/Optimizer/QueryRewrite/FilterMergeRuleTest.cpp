@@ -74,11 +74,11 @@ bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPr
         return false;
     }
 
-    auto filterPredicates  = filter->as<FilterLogicalOperatorNode>()->getPredicate()->getAndFlattenAllChildren(true);
+    auto filterPredicates = filter->as<FilterLogicalOperatorNode>()->getPredicate()->getAndFlattenAllChildren(true);
     auto expectedPredicates = expectedPredicate->getAndFlattenAllChildren(true);
 
-    for (unsigned int i=0; i < filterPredicates.size(); i++){
-        if (!filterPredicates.at(i)->equal(expectedPredicates.at(i))){
+    for (unsigned int i = 0; i < filterPredicates.size(); i++) {
+        if (!filterPredicates.at(i)->equal(expectedPredicates.at(i))) {
             return false;
         }
     }
@@ -177,7 +177,7 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups  ) {
+TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
