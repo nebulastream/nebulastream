@@ -56,7 +56,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     for (const auto& sourceOperator : this->queryPlan->getLeafOperators()) {
         upstreamOperators.insert(sourceOperator->as<LogicalOperatorNode>());
     }
-    long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
 }
 
@@ -67,9 +67,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
 void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs) {
 
     NES_DEBUG("SharedQueryPlan: Add the matched operators of query with id {} to the shared query plan.", queryId);
-
     // TODO Handling Fault-Tolerance in case of query merging [#2327]
-
     std::set<LogicalOperatorNodePtr> sinkOperators;
 
     //Iterate over matched operator pairs and
@@ -213,7 +211,7 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
         queryPlan->removeAsRootOperator(sinkOperator);
 
         //add change log entry indicating the addition
-        long now =
+        auto now =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
@@ -342,7 +340,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
     }
 
     //add change log entry indicating the addition
-    long now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     changeLog->addChangeLogEntry(
         now,
         Optimizer::Experimental::ChangeLogEntry::create(upstreamLogicalOperators, downstreamLogicalOperators));

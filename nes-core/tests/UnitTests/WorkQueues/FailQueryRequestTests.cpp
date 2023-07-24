@@ -186,7 +186,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
         //Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
 
-        ASSERT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryState::RUNNING);
+        ASSERT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::RUNNING);
         ASSERT_NE(globalQueryPlan->getSharedQueryId(queryId), INVALID_SHARED_QUERY_ID);
         ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
         ASSERT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
@@ -235,9 +235,9 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         ASSERT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), worker2->getId()), failedCallNodeIds.cend());
 
         //expect the query to be marked for failure and not failed, because the deployment did not succeed
-        EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryState::MARKED_FOR_FAILURE);
+        EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::MARKED_FOR_FAILURE);
         auto entry = queryCatalogService->getAllQueryCatalogEntries()[queryId];
-        EXPECT_EQ(entry->getQueryStatus(), QueryState::MARKED_FOR_FAILURE);
+        EXPECT_EQ(entry->getQueryState(), QueryState::MARKED_FOR_FAILURE);
         for (const auto& subQueryPlanMetaData : entry->getAllSubQueryPlanMetaData()) {
             EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryState::MARKED_FOR_FAILURE);
         }

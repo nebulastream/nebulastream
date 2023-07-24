@@ -41,9 +41,9 @@ bool QueryCatalogService::checkAndMarkForSoftStop(SharedQueryId sharedQueryId, Q
     auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
-        QueryState currentQueryStatus = queryCatalogEntry->getQueryStatus();
-        if (currentQueryStatus == QueryState::MARKED_FOR_HARD_STOP || currentQueryStatus == QueryState::FAILED
-            || currentQueryStatus == QueryState::STOPPED) {
+        auto currentQueryState = queryCatalogEntry->getQueryState();
+        if (currentQueryState == QueryState::MARKED_FOR_HARD_STOP || currentQueryState == QueryState::FAILED
+            || currentQueryState == QueryState::STOPPED) {
             NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query in {} status.",
                         queryCatalogEntry->getQueryStatusAsString());
             return false;
@@ -70,20 +70,13 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     }
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
-    QueryState currentStatus = queryCatalogEntry->getQueryStatus();
-    //    if (currentStatus == QueryState::Stopped) {
-    //        NES_DEBUG("Already stopped!");
-    //        return true;
-    //    }
+    QueryState currentStatus = queryCatalogEntry->getQueryState();
 
     if (currentStatus == QueryState::MARKED_FOR_SOFT_STOP || currentStatus == QueryState::MARKED_FOR_HARD_STOP
         || currentStatus == QueryState::MARKED_FOR_FAILURE || currentStatus == QueryState::DEPLOYED
         || currentStatus == QueryState::STOPPED || currentStatus == QueryState::FAILED) {
         NES_ERROR("QueryCatalog: Found query status already as {}. Ignoring stop query request.",
                   queryCatalogEntry->getQueryStatusAsString());
-        //        throw Exceptions::InvalidQueryStateException(
-        //            {QueryState::Optimizing, QueryState::Registered, QueryState::Deployed, QueryState::Running},
-        //            currentStatus);
         return false;
     }
     NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
@@ -106,7 +99,7 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
     // First perform a check if query can be marked for stop
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
-        QueryState currentQueryStatus = queryCatalogEntry->getQueryStatus();
+        QueryState currentQueryStatus = queryCatalogEntry->getQueryState();
         if (currentQueryStatus == QueryState::MARKED_FOR_FAILURE || currentQueryStatus == QueryState::FAILED
             || currentQueryStatus == QueryState::STOPPED) {
             NES_WARNING("QueryCatalogService: Query can not be marked for failure as query in {} status.",
@@ -246,7 +239,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         auto queryId = queryCatalogEntry->getQueryId();
         //Check if query is in correct status
-        auto currentQueryStatus = queryCatalogEntry->getQueryStatus();
+        auto currentQueryStatus = queryCatalogEntry->getQueryState();
         if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP) {
             NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
                         queryCatalogEntry->getQueryStatusAsString(),

@@ -326,7 +326,7 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId,
                   queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryState();
 
         switch (status) {
             case QueryState::MARKED_FOR_HARD_STOP:
@@ -370,7 +370,7 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId,
                   queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryState();
 
         if (status == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: Status for query with id = {} is stopped", queryId);

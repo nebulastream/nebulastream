@@ -84,7 +84,7 @@ class QueryCatalogEntry {
      * @brief method to get the status of the query
      * @return query status
      */
-    [[nodiscard]] QueryState getQueryStatus() const;
+    [[nodiscard]] QueryState getQueryState() const;
 
     /**
      * @brief method to get the status of the query as string
@@ -155,7 +155,7 @@ class QueryCatalogEntry {
     std::string queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
-    QueryState queryStatus;
+    QueryState queryState;
     std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;

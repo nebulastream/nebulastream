@@ -224,7 +224,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
-    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryState::RUNNING);
+    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryState(), QueryState::RUNNING);
 }
 
 /**

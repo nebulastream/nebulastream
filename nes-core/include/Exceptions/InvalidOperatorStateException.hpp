@@ -28,8 +28,8 @@ namespace NES::Exceptions {
 class InvalidOperatorStateException : public RequestExecutionException {
   public:
     explicit InvalidOperatorStateException(OperatorId operatorId,
-                                           const std::vector<OperatorState>& expectedStatus,
-                                           OperatorState actualStatus);
+                                           const std::vector<OperatorState>& expectedState,
+                                           OperatorState actualState);
     [[nodiscard]] const char* what() const noexcept override;
 
   private:
