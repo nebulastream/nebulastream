@@ -14,9 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -53,6 +51,9 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
+
+class PythonDFDescriptor;
+using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace WindowOperatorBuilder {
@@ -473,7 +474,6 @@ class Query {
      * @return query
      */
     Query& mapPythonUDF(Catalogs::UDF::PythonUDFDescriptorPtr const& descriptor);
-
 
     /**
      * @brief: Map records according to a map expression. An
