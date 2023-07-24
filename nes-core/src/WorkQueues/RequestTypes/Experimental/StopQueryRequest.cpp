@@ -127,7 +127,7 @@ void StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
         //undeploy SQP
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         //remove single query from global query plan
-        globalQueryPlan->removeQuery(queryId, RequestType::Stop);
+        globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
