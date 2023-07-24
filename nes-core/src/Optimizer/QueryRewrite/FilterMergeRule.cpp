@@ -57,7 +57,8 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
                 for (auto& filterChainParent : filterChainParents) {
                     combinedFilter->addParent(filterChainParent);
                 }
-                NES_DEBUG("FilterMergeRule: Fix references, the chain children have only one parent, which is the new combined filter");
+                NES_DEBUG(
+                    "FilterMergeRule: Fix references, the chain children have only one parent, which is the new combined filter");
                 for (auto& filterChainChild : filterChainChildren) {
                     filterChainChild->removeAllParent();
                     filterChainChild->addParent(combinedFilter);

@@ -83,7 +83,8 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 class StopQueryRequestExperimental : public AbstractRequest {
 
   public:
-    static StopQueryRequestPtr create(RequestId requestId, QueryId queryId,
+    static StopQueryRequestPtr create(RequestId requestId,
+                                      QueryId queryId,
                                       size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
@@ -105,7 +106,8 @@ class StopQueryRequestExperimental : public AbstractRequest {
     ~StopQueryRequestExperimental() = default;
 
   private:
-    StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
+    StopQueryRequestExperimental(RequestId requestId,
+                                 QueryId queryId,
                                  size_t maxRetries,
                                  WorkerRPCClientPtr workerRpcClient,
                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);

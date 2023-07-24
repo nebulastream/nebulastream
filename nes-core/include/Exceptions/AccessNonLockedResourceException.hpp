@@ -33,6 +33,6 @@ class AccessNonLockedResourceException : public RequestExecutionException {
   private:
     ResourceType resourceType;
 };
-}
-}
+}// namespace Exceptions
+}// namespace NES
 #endif//NES_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP

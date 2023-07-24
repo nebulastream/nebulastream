@@ -52,7 +52,9 @@ QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle(con
     return {&*queryCatalogService, UnlockDeleter()};
 }
 
-GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId) { return {&*globalQueryPlan, UnlockDeleter()}; }
+GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId) {
+    return {&*globalQueryPlan, UnlockDeleter()};
+}
 
 SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
 

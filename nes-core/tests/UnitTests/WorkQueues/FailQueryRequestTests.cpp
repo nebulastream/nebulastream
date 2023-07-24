@@ -220,11 +220,11 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(requestId, queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient);
     TwoPhaseLockingStorageHandler storageHandler(globalExecutionPlan,
-                                                     topology,
-                                                     queryCatalogService,
-                                                     globalQueryPlan,
-                                                     sourceCatalog,
-                                                     udfCatalog);
+                                                 topology,
+                                                 queryCatalogService,
+                                                 globalQueryPlan,
+                                                 sourceCatalog,
+                                                 udfCatalog);
     try {
         failQueryRequest.execute(storageHandler);
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
@@ -257,7 +257,11 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    Experimental::FailQueryRequest failQueryRequest(requestId, nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient);
+    Experimental::FailQueryRequest failQueryRequest(requestId,
+                                                    nonExistentId,
+                                                    INVALID_QUERY_SUB_PLAN_ID,
+                                                    maxRetries,
+                                                    workerRpcClient);
     TwoPhaseLockingStorageHandler storageHandler(globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,

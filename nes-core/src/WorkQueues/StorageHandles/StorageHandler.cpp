@@ -16,4 +16,4 @@ namespace NES {
 void StorageHandler::acquireResources(const RequestId, const std::vector<ResourceType>&) {}
 
 void StorageHandler::releaseResources(const RequestId) {}
-}
+}// namespace NES

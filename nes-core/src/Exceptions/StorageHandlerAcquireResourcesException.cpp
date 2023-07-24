@@ -21,4 +21,4 @@ namespace NES::Exceptions {
  */
 StorageHandlerAcquireResourcesException::StorageHandlerAcquireResourcesException(const std::string& message)
     : RequestExecutionException(message) {}
-}// namespace NES
+}// namespace NES::Exceptions

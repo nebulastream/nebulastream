@@ -31,9 +31,10 @@ class ResourceLockingException : public RequestExecutionException {
      * @return the resource type
      */
     [[nodiscard]] ResourceType getResourceType() const;
+
   private:
     ResourceType resourceType;
 };
-}
-}
+}// namespace Exceptions
+}// namespace NES
 #endif//NES_RESOURCELOCKINGEXCEPTION_HPP
