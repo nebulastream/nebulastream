@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.157](https://github.com/nebulastream/nebulastream/tree/v0.5.157) (2023-07-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.156...v0.5.157)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add PhysicalSourceName to Data Sources [\#3860](https://github.com/nebulastream/nebulastream/issues/3860)
+
+### Bug Fixes 🐛
+
+- \[BUG\]  Parameter for Query undeployment phase execute function has wrong type, fail request supplies wrong value as argument [\#3982](https://github.com/nebulastream/nebulastream/issues/3982)
+
 ## [v0.5.156](https://github.com/nebulastream/nebulastream/tree/v0.5.156) (2023-07-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.155...v0.5.156)
