@@ -48,6 +48,10 @@
 #define NUMSOURCELOCALBUFFERS 12
 #endif
 
+#ifndef PHYSICALSOURCENAME
+#define PHYSICALSOURCENAME "defaultPhysicalSourceName"
+#endif
+
 #ifndef SUCCESSORS
 #define SUCCESSORS                                                                                                               \
     {}
@@ -110,6 +114,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
+                                       PHYSICALSOURCENAME,
                                        SUCCESSORS);
 
     SUCCEED();
@@ -134,6 +139,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
+                                       PHYSICALSOURCENAME,
                                        SUCCESSORS);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER(32 bits) ), SERVERADDRESS=tcp://127.0.0.1:1883, "
@@ -161,6 +167,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
+                                       PHYSICALSOURCENAME,
                                        SUCCESSORS);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
