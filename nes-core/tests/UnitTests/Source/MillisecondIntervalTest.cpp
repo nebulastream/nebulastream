@@ -235,8 +235,15 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
     csvSourceType->setGatheringInterval(frequency);
 
-    const DataSourcePtr source =
-        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 0, 12, defaultPhysicalStreamName, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     csvSourceType,
+                                                     1,
+                                                     0,
+                                                     12,
+                                                     defaultPhysicalStreamName,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();

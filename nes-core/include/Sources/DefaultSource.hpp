@@ -22,7 +22,7 @@ namespace NES {
 
 class DefaultSource : public GeneratorSource {
   public:
-  /*
+    /*
    * @brief public constructor for the default source
    * @param schema of the data that this source produces
    * @param bufferManager pointer to the buffer manager

@@ -31,7 +31,7 @@ namespace NES {
 
 class KafkaSource : public DataSource {
   public:
-  /**
+    /**
    * @brief constructor for a kafka source
    * @param schema schema of the elements
    * @param bufferManager pointer to the buffer manager
