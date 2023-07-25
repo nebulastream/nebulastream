@@ -29,7 +29,7 @@ class LimitLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
     /**
    * @brief get the limit count.
-   * @return PredicatePtr
+   * @return limit
    */
     uint64_t getLimit() const;
 
