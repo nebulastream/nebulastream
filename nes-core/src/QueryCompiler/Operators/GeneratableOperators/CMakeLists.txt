@@ -21,7 +21,7 @@ add_source_files(nes-core
         GeneratableMapOperator.cpp
         GeneratableProjectionOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp
-)
+        )
 
 add_subdirectory(Windowing)
 add_subdirectory(Joining)

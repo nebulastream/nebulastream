@@ -438,6 +438,13 @@ class Query {
     Query& filter(ExpressionNodePtr const& filterExpression);
 
     /**
+     * @brief: Limit the number of records according to the limit count.
+     * @param limitCount
+     * @return the query
+     */
+    Query& limit(const uint64_t limit);
+
+    /**
      * @brief: Create watermark assigner operator.
      * @param watermarkStrategyDescriptor
      * @return query.

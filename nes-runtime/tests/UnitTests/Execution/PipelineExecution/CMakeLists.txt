@@ -24,6 +24,7 @@ add_nes_runtime_test(runtime-stream-hash-join-pipeline-test "StreamHashJoinPipel
 add_nes_runtime_test(runtime-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
+add_nes_runtime_test(runtime-limit-pipeline-test "LimitPipelineTest.cpp")
 
 if (NES_USE_TF)
     add_nes_runtime_test(runtime-infer-model-pipeline-test "InferModelPipelineTest.cpp")
