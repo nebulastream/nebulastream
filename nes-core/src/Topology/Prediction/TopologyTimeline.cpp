@@ -36,8 +36,8 @@ TopologyPtr TopologyTimeline::getTopologyVersion(Timestamp time) {
 void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time) { changeMap.erase(time); }
 
 void TopologyTimeline::addTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
-    auto& newChange = changeMap[predictedTime];
-    newChange.insert(delta);
+    auto& change = changeMap[predictedTime];
+    change.update(delta);
 }
 
 bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta) {
@@ -52,7 +52,7 @@ bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const Topolo
     return true;
 }
 
-TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalTopology, TopologyChangeLog changeLog) {
+TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalTopology, const TopologyChangeLog& changeLog) {
     auto copiedTopology = Topology::create();
     copiedTopology->setAsRoot(originalTopology->getRoot()->copy());
 

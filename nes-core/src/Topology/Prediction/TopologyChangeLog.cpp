@@ -13,6 +13,8 @@
 */
 #include <Topology/Prediction/TopologyChangeLog.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
+#include <Topology/Prediction/Edge.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Experimental::TopologyPrediction {
 
@@ -33,11 +35,12 @@ void TopologyChangeLog::addMap(const std::unordered_map<TopologyNodeId, std::vec
                 continue;
             }
 
+            //if compiled with debug configuration, check for duplicates
 #ifndef NDEBUG
             //if the edge to be added is also added as part of another changelog, this means our data is corrupted
             if (std::find(additionTargetChildren.begin(), additionTargetChildren.end(), childToAdd)
                 != additionTargetChildren.end()) {
-                throw std::exception();
+                NES_ERROR("Duplicate edge {}->{} found in topology changelog", childToAdd, parentToAdd);
             }
 #endif
             additionTargetChildren.push_back(childToAdd);
@@ -53,11 +56,17 @@ void TopologyChangeLog::addMap(const std::unordered_map<TopologyNodeId, std::vec
 }
 
 void TopologyChangeLog::add(const TopologyChangeLog& addedChangelog) {
+    /* add added edges from the addedChangelog to the list of added edges at this object unless they already exist in the list of
+     * removed edges at this object. In case the added edge exists in the list of removed edges at this object, remove it from the list.
+     */
     addMap(addedChangelog.changelogAdded, changelogAdded, changelogRemoved);
+    /* add removed edges from the addedChangelog to the list of removed edges at this object unless they already exist in the list of
+     * added edges at this object. In case the removed edge exists in the list of added edges at this object, remove it from the list.
+     */
     addMap(addedChangelog.changelogRemoved, changelogRemoved, changelogAdded);
 }
 
-std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId nodeId) {
+std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId nodeId) const {
     auto it = changelogAdded.find(nodeId);
     if (it != changelogAdded.end()) {
         return it->second;
@@ -65,7 +74,7 @@ std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId n
     return {};
 }
 
-std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId nodeId) {
+std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId nodeId) const {
     auto it = changelogRemoved.find(nodeId);
     if (it != changelogRemoved.end()) {
         return it->second;
@@ -73,7 +82,7 @@ std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId
     return {};
 }
 
-void TopologyChangeLog::insert(const TopologyDelta& newDelta) {
+void TopologyChangeLog::update(const TopologyDelta& newDelta) {
     for (auto addedEdge : newDelta.getAdded()) {
         changelogAdded[addedEdge.parent].push_back(addedEdge.child);
     }
@@ -92,7 +101,11 @@ void TopologyChangeLog::removeEdgesFromMap(std::unordered_map<TopologyNodeId, st
     for (auto edge : edges) {
         auto& children = map[edge.parent];
         auto iterator = std::find(children.begin(), children.end(), edge.child);
-        children.erase(iterator);
+        if (iterator != children.end()) {
+            children.erase(iterator);
+        } else if (!children.empty()) {
+            NES_THROW_RUNTIME_ERROR("Trying to remove edge " + edge.toString() + " which does not exist in the changelog");
+        }
         if (children.empty()) {
             map.erase(edge.parent);
         }

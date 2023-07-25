@@ -16,6 +16,7 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
+#include <Topology/Prediction/Edge.hpp>
 #include <Topology/Prediction/TopologyTimeline.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>

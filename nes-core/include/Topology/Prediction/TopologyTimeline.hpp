@@ -13,9 +13,9 @@
 */
 #ifndef TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
 #define TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
-#include <Topology/Prediction/TopologyChangeLog.hpp>
-#include <absl/container/btree_map.h>
 #include <memory>
+#include <absl/container/btree_map.h>
+#include <Topology/Prediction/TopologyChangeLog.hpp>
 
 namespace NES {
 class Topology;
@@ -73,7 +73,7 @@ class TopologyTimeline {
      * @param changeLog a change log containing the changes to be applied
      * @return a pointer to the new topology object onto which the changes are applied
      */
-    static TopologyPtr createTopologyVersion(const TopologyPtr& originalTopology, TopologyChangeLog changeLog);
+    static TopologyPtr createTopologyVersion(const TopologyPtr& originalTopology, const TopologyChangeLog& changeLog);
 
     /**
      * @brief remove all changes expected to happen at the specified time
