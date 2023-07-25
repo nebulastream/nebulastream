@@ -33,7 +33,7 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
-  /*
+    /*
    * @param SchemaPtr
    * @param bufferManager
    * @param queryManager

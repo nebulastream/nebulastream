@@ -323,8 +323,13 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, 0, queryId, engine->getQueryManager(), context, executable, 1, {sink});
-    auto source =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, "defaultPhysicalSourceName", {pipeline});
+    auto source = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                               engine->getQueryManager(),
+                                                               1,
+                                                               0,
+                                                               12,
+                                                               "defaultPhysicalSourceName",
+                                                               {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(queryId,
                                                      queryId,
                                                      {source},

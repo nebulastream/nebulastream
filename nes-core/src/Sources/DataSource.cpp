@@ -69,7 +69,8 @@ DataSource::DataSource(SchemaPtr pSchema,
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName), kFilter(std::make_unique<KalmanFilter>()) {
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName),
+      kFilter(std::make_unique<KalmanFilter>()) {
     this->kFilter->setDefaultValues();
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
