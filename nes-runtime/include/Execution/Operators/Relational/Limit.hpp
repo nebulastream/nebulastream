@@ -30,6 +30,13 @@ class LimitOperatorHandler : public Runtime::Execution::OperatorHandler,
      * @brief Creates the operator handler.
      */
     explicit LimitOperatorHandler(const uint64_t limit) : limit(limit) {};
+    void start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+        NES_DEBUG("start LimitOperatorHandler");
+    }
+
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
+        NES_DEBUG("shutdown LimitOperatorHandler: {}", queryTerminationType);
+    }
     const uint64_t limit;
     std::atomic<uint64_t> counter = 0;
 };
