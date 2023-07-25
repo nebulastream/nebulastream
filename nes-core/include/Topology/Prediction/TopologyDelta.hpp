@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef TOPOLOGYPREDICTION__DELTA_HPP_
-#define TOPOLOGYPREDICTION__DELTA_HPP_
-#include <Topology/Prediction/Edge.hpp>
+#ifndef TOPOLOGYPREDICTION_DELTA_HPP_
+#define TOPOLOGYPREDICTION_DELTA_HPP_
 #include <cstdint>
 #include <memory>
 #include <vector>
 
 namespace NES::Experimental::TopologyPrediction {
+class Edge;
 /**
  * @brief this class represents a set of changes to be applied to the topology
  */
@@ -63,5 +63,4 @@ class TopologyDelta {
     std::vector<Edge> removed;
 };
 }// namespace NES::Experimental::TopologyPrediction
-
-#endif//TOPOLOGYPREDICTION__DELTA_HPP_
+#endif//TOPOLOGYPREDICTION_DELTA_HPP_

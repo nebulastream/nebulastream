@@ -13,9 +13,7 @@
 */
 #ifndef TOPOLOGY_PREDICTION_EDGE_HPP_
 #define TOPOLOGY_PREDICTION_EDGE_HPP_
-#include <cstdint>
-#include <boost/functional/hash.hpp>
-#include <functional>
+#include <string>
 
 namespace NES {
 using TopologyNodeId = uint64_t;
