@@ -14,6 +14,7 @@
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -55,47 +56,50 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
                                               std::move(responsePromise));
 }
 
-FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
+FailQueryRequest::FailQueryRequest(RequestId requestId,
+                                   NES::QueryId queryId,
                                    uint8_t maxRetries,
-                                   NES::WorkerRPCClientPtr workerRpcClient)
-    : FailQueryRequest(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient) {}
-
-void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
+                                   NES::WorkerRPCClientPtr workerRpcClient,
+                                   std::promise<FailQueryResponse> responsePromise)
+    : FailQueryRequest(requestId, queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient, std::move(responsePromise)) {}
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
 void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) {}
 
-    if (ex.instanceOf<QueryUndeploymentException>()) {
-        auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
+void FailQueryRequest::postRollbackHandle(const RequestExecutionException& ex, StorageHandler&) {
+    if (ex.instanceOf<const Exceptions::QueryUndeploymentException>()) {
+        auto undeploymentException = dynamic_cast<const Exceptions::QueryUndeploymentException&>(ex);
         //todo: if non grpc exception occured during undeployment, we cannot do anything
 
         //todo: keep this as handling for failed async results and differentiate it from the other cases (by subclassing undeployment exception?)
         auto sharedQueryId = undeploymentException.getSharedQueryId();
 
-        if (sharedQueryId.has_value()) {
+        if (sharedQueryId != INVALID_SHARED_QUERY_ID) {
             //undeploy queries
-            undeployQueries(storageHandler, sharedQueryId.value());
+            undeployQueries(sharedQueryId);
 
             //update global query plan
-            postUndeployment(sharedQueryId.value());
+            postUndeployment(sharedQueryId);
         }
-    } else if (ex.instanceOf<QueryNotFoundException>()) {
-        NES_WARNING2("Exception {}", ex.as<QueryUndeploymentException>()->what());
-    } else if (ex.instanceOf<InvalidQueryStatusException>()) {
+    } else if (ex.instanceOf<const Exceptions::QueryNotFoundException>()) {
+        NES_WARNING("Exception {}", dynamic_cast<const Exceptions::QueryUndeploymentException&>(ex).what());
+    } else if (ex.instanceOf<const Exceptions::InvalidQueryStatusException>()) {
         //query is already marked for failure, failed or stopped
-        NES_WARNING2("Exception {}", ex.as<InvalidQueryStatusException>()->what());
+        NES_WARNING("Exception {}", dynamic_cast<const Exceptions::InvalidQueryStatusException&>(ex).what());
     }
     //todo: handle post undeployment exception
 }
 
-void FailQueryRequest::undeployQueries(SharedQueryId sharedQueryId) {//undeploy queries
+void FailQueryRequest::undeployQueries(SharedQueryId sharedQueryId) {
+    //undeploy queries
     try {
-    auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
         //this also removes the subplans from the global execution plan. does that mean we do not have to touch that separately?
         queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     } catch (Exceptions::RuntimeException& e) {
-        throw Exceptions::QueryUndeploymentException(sharedQueryId, "failed to undeploy query with id " + std::to_string(queryId));
+        throw Exceptions::QueryUndeploymentException(sharedQueryId,
+                                                     "failed to undeploy query with id " + std::to_string(queryId));
     }
 }
 
@@ -124,7 +128,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 
     //undeploy queries
-    undeployQueries(storageHandle, sharedQueryId);
+    undeployQueries(sharedQueryId);
 
     //update global query plan
     postUndeployment(sharedQueryId);
@@ -141,6 +145,7 @@ void NES::Experimental::FailQueryRequest::postUndeployment(SharedQueryId sharedQ
         queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
     }
 
+    //todo: here or somewhere else?
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 }
 }// namespace NES::Experimental

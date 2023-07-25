@@ -33,7 +33,7 @@ class RequestExecutionException : public std::runtime_error {
      * @return bool true if object is of type ExceptionType
      */
     template<class ExceptionType>
-    bool instanceOf() {
+    [[nodiscard]] bool instanceOf() const {
         if (dynamic_cast<ExceptionType*>(this)) {
             return true;
         }
