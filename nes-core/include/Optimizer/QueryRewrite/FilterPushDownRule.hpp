@@ -129,7 +129,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      *
      * @param filterOperator the filter operator that is tried to be pushed
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
-     * @return true if we pushed the filter two both branches of this joinOperator
+     * @return true if we pushed the filter to both branches of this joinOperator
      */
     bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
 
@@ -180,6 +180,24 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
     static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
+
+    /**
+     * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
+     * the filter attribute name is renamed.
+     *
+     * Sink                             Sink
+     * |                                |
+     * Filter(b = 10)                   Projection(b, a -> b)
+     * |                                |
+     * Projection(a, a -> b)            Filter(a = 10)
+     * |                                |
+     * Src(a, b)                        Src(a, b)
+     *
+     * @param filterOperator the filter operator to be pushed down
+     * @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
+     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
+     */
+    void pushBelowProjection(FilterLogicalOperatorNodePtr filterOperator, NodePtr projectionOperator);
 
     /**
      * @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
