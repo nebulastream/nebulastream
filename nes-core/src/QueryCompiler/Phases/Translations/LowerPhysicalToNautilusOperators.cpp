@@ -32,6 +32,7 @@
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
@@ -66,6 +67,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
@@ -156,6 +158,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto filter = lowerFilter(pipeline, operatorNode);
         parentOperator->setChild(filter);
         return filter;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
+        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
+        parentOperator->setChild(limit);
+        return limit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
@@ -569,6 +575,16 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
     auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
     auto expression = expressionProvider->lowerExpression(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerLimit(Runtime::Execution::PhysicalOperatorPipeline&,
+                                              const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                              std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto limitOperator = operatorPtr->as<PhysicalOperators::PhysicalLimitOperator>();
+    const auto handler = std::make_shared<Runtime::Execution::Operators::LimitOperatorHandler>(limitOperator->getLimit());
+    operatorHandlers.push_back(handler);
+    return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
