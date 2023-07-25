@@ -32,7 +32,7 @@ class PhysicalLimitOperator : public PhysicalUnaryOperator {
 
     /**
    * @brief get the limit.
-   * @return PredicatePtr
+   * @return limit
    */
     uint64_t getLimit();
 
