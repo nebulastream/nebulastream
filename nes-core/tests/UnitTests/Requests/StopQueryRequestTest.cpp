@@ -26,6 +26,7 @@
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace z3 {
 class context;
