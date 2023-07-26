@@ -59,7 +59,7 @@ template<>
 struct LogCaller<LogLevel::LOG_INFO> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -67,7 +67,7 @@ template<>
 struct LogCaller<LogLevel::LOG_TRACE> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -75,7 +75,7 @@ template<>
 struct LogCaller<LogLevel::LOG_DEBUG> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -83,7 +83,7 @@ template<>
 struct LogCaller<LogLevel::LOG_ERROR> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -91,7 +91,7 @@ template<>
 struct LogCaller<LogLevel::LOG_FATAL_ERROR> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->fatal(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->fatal(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -99,7 +99,7 @@ template<>
 struct LogCaller<LogLevel::LOG_WARNING> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        Logger::getInstance()->warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
