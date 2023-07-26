@@ -198,13 +198,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMin) {
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<double_t>(), 42.0);
 
     EXPECT_EQ(dynamicBuffer[1][idString].read<int64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<double_t>::max());
 
     EXPECT_EQ(dynamicBuffer[2][idString].read<int64_t>(), 2);
     EXPECT_EQ(dynamicBuffer[2][approximateString].read<double_t>(), 1234.0);
 
     EXPECT_EQ(dynamicBuffer[3][idString].read<int64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<double_t>::max());
 
     EXPECT_EQ(dynamicBuffer[4][idString].read<int64_t>(), 4);
     EXPECT_EQ(dynamicBuffer[4][approximateString].read<double_t>(), 101.0);
@@ -227,13 +227,13 @@ TEST_F(RandomSampleWithoutReplacementTest, sampleTestMax) {
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<double_t>(), 42.0);
 
     EXPECT_EQ(dynamicBuffer[1][idString].read<int64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<double_t>::min());
 
     EXPECT_EQ(dynamicBuffer[2][idString].read<int64_t>(), 2);
     EXPECT_EQ(dynamicBuffer[2][approximateString].read<double_t>(), 1234.0);
 
     EXPECT_EQ(dynamicBuffer[3][idString].read<int64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<double_t>::min());
 
     EXPECT_EQ(dynamicBuffer[4][idString].read<int64_t>(), 4);
     EXPECT_EQ(dynamicBuffer[4][approximateString].read<double_t>(), 101.0);

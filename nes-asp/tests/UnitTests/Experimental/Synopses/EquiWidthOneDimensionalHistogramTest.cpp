@@ -255,7 +255,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
 
     EXPECT_EQ(dynamicBuffer[1][idString].read<int64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<double_t>::max());
     EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
     EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
 
@@ -265,7 +265,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
     EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
 
     EXPECT_EQ(dynamicBuffer[3][idString].read<int64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<double_t>::max());
     EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
     EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
 
@@ -295,7 +295,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
 
     EXPECT_EQ(dynamicBuffer[1][idString].read<int64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), std::numeric_limits<double_t>::min());
     EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
     EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
 
@@ -305,7 +305,7 @@ TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
     EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
 
     EXPECT_EQ(dynamicBuffer[3][idString].read<int64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), std::numeric_limits<double_t>::min());
     EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
     EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
 
