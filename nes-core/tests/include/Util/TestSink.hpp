@@ -153,9 +153,7 @@ class CollectTestSink : public SinkMedium {
 
     std::vector<Type>& getResult() { return results; }
 
-    void setup() override {
-        running = true;
-    };
+    void setup() override { running = true; };
 
     std::string toString() const override { return "Test_Sink"; }
 

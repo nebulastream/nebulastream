@@ -801,7 +801,6 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
                                                                   uint64_t numTuplesPerBuffer,
                                                                   const std::string& delimiter) {
 
-
     std::vector<Runtime::TupleBuffer> allBuffers;
     auto tupleCount = 0_u64;
     auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);

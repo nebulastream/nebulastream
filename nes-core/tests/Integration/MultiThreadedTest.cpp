@@ -22,12 +22,13 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
+#include <chrono>
 #include <gmock/gmock-matchers.h>
 #include <iostream>
-#include <chrono>
 
 namespace NES {
-class MultiThreadedTest : public Testing::NESBaseTest, public Runtime::BufferRecycler,
+class MultiThreadedTest : public Testing::NESBaseTest,
+                          public Runtime::BufferRecycler,
                           public ::testing::WithParamInterface<uint64_t> {
   public:
     const uint64_t numTuplesPerBuffer = 1;
@@ -66,7 +67,8 @@ class MultiThreadedTest : public Testing::NESBaseTest, public Runtime::BufferRec
     template<typename ResultRecord>
     std::vector<ResultRecord> runQuery(const std::vector<std::pair<SchemaPtr, std::string>>& inputs,
                                        const uint64_t expectedNumberOfTuples,
-                                       const std::shared_ptr<CollectTestSink<ResultRecord>>& testSink, const Query& query) {
+                                       const std::shared_ptr<CollectTestSink<ResultRecord>>& testSink,
+                                       const Query& query) {
 
         // Creating the input buffers
         auto bufferManager = executionEngine->getBufferManager();
@@ -74,7 +76,8 @@ class MultiThreadedTest : public Testing::NESBaseTest, public Runtime::BufferRec
         std::vector<std::vector<Runtime::TupleBuffer>> allInputBuffers;
         allInputBuffers.reserve(inputs.size());
         for (auto [inputSchema, fileNameInputBuffers] : inputs) {
-            allInputBuffers.emplace_back(TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager, numTuplesPerBuffer));
+            allInputBuffers.emplace_back(
+                TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager, numTuplesPerBuffer));
         }
 
         // Creating query and submitting it to the execution engine
@@ -116,22 +119,22 @@ TEST_P(MultiThreadedTest, testFilterQuery) {
     const auto& outputSchema = inputSchema;
 
     const std::string fileNameBuffers("window.csv");
-    const std::vector<ResultRecord> expectedTuples = {{1,1,1000},
-                                                      {1,12,1001},
-                                                      {1,4,1002},
-                                                      {2,1,2000},
-                                                      {2,11,2001},
-                                                      {2,16,2002},
-                                                      {3,1,3000},
-                                                      {3,11,3001},
-                                                      {3,1,3003},
-                                                      {3,1,3200},
-                                                      {4,1,4000},
-                                                      {5,1,5000},
-                                                      {6,1,6000},
-                                                      {7,1,7000},
-                                                      {8,1,8000},
-                                                      {9,1,9000}};
+    const std::vector<ResultRecord> expectedTuples = {{1, 1, 1000},
+                                                      {1, 12, 1001},
+                                                      {1, 4, 1002},
+                                                      {2, 1, 2000},
+                                                      {2, 11, 2001},
+                                                      {2, 16, 2002},
+                                                      {3, 1, 3000},
+                                                      {3, 11, 3001},
+                                                      {3, 1, 3003},
+                                                      {3, 1, 3200},
+                                                      {4, 1, 4000},
+                                                      {5, 1, 5000},
+                                                      {6, 1, 6000},
+                                                      {7, 1, 7000},
+                                                      {8, 1, 8000},
+                                                      {9, 1, 9000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -157,33 +160,17 @@ TEST_P(MultiThreadedTest, testProjectQuery) {
                                  ->addField(createField("test1$value", BasicType::UINT64))
                                  ->addField(createField("test1$id", BasicType::UINT64))
                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
-    const auto outputSchema = Schema::create()
-                                  ->addField(createField("test1$id", BasicType::UINT64));
+    const auto outputSchema = Schema::create()->addField(createField("test1$id", BasicType::UINT64));
 
     const std::string fileNameBuffers("window.csv");
-    const std::vector<ResultRecord> expectedTuples = {{1},
-                                                      {12},
-                                                      {4},
-                                                      {1},
-                                                      {11},
-                                                      {16},
-                                                      {1},
-                                                      {11},
-                                                      {1},
-                                                      {1},
-                                                      {1},
-                                                      {1},
-                                                      {1},
-                                                      {1}};
+    const std::vector<ResultRecord> expectedTuples = {{1}, {12}, {4}, {1}, {11}, {16}, {1}, {11}, {1}, {1}, {1}, {1}, {1}, {1}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
     const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
-    const auto query = TestQuery::from(testSourceDescriptor)
-                           .filter(Attribute("value") < 8)
-                           .project(Attribute("id"))
-                           .sink(testSinkDescriptor);
+    const auto query =
+        TestQuery::from(testSourceDescriptor).filter(Attribute("value") < 8).project(Attribute("id")).sink(testSinkDescriptor);
 
     // Running the query
     const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
@@ -216,31 +203,12 @@ TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
                                   ->addField(createField("test1$timestamp", BasicType::UINT64));
 
     const std::string fileNameBuffers("window.csv");
-    const std::vector<ResultRecord> expectedTuples = {{ 1000, 2000, 1, 1},
-                                                      { 1000, 2000, 12, 1},
-                                                      { 1000, 2000, 4, 1},
-                                                      { 2000, 3000, 11, 2},
-                                                      { 2000, 3000, 1, 2},
-                                                      { 2000, 3000, 16, 2},
-                                                      { 3000, 4000, 1, 9},
-                                                      { 3000, 4000, 11, 3},
-                                                      { 4000, 5000, 1, 4},
-                                                      { 5000, 6000, 1, 5},
-                                                      { 6000, 7000, 1, 6},
-                                                      { 7000, 8000, 1, 7},
-                                                      { 8000, 9000, 1, 8},
-                                                      { 9000, 10000, 1, 9},
-                                                      {10000, 11000, 1, 10},
-                                                      {11000, 12000, 1, 11},
-                                                      {12000, 13000, 1, 12},
-                                                      {13000, 14000, 1, 13},
-                                                      {14000, 15000, 1, 14},
-                                                      {15000, 16000, 1, 15},
-                                                      {16000, 17000, 1, 16},
-                                                      {17000, 18000, 1, 17},
-                                                      {18000, 19000, 1, 18},
-                                                      {19000, 20000, 1, 19},
-                                                      {20000, 21000, 1, 20}};
+    const std::vector<ResultRecord> expectedTuples = {
+        {1000, 2000, 1, 1},    {1000, 2000, 12, 1},   {1000, 2000, 4, 1},    {2000, 3000, 11, 2},   {2000, 3000, 1, 2},
+        {2000, 3000, 16, 2},   {3000, 4000, 1, 9},    {3000, 4000, 11, 3},   {4000, 5000, 1, 4},    {5000, 6000, 1, 5},
+        {6000, 7000, 1, 6},    {7000, 8000, 1, 7},    {8000, 9000, 1, 8},    {9000, 10000, 1, 9},   {10000, 11000, 1, 10},
+        {11000, 12000, 1, 11}, {12000, 13000, 1, 12}, {13000, 14000, 1, 13}, {14000, 15000, 1, 14}, {15000, 16000, 1, 15},
+        {16000, 17000, 1, 16}, {17000, 18000, 1, 17}, {18000, 19000, 1, 18}, {19000, 20000, 1, 19}, {20000, 21000, 1, 20}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -248,7 +216,8 @@ TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
     const auto query = TestQuery::from(testSourceDescriptor)
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                .byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                           .byKey(Attribute("id"))
+                           .apply(Sum(Attribute("value")))
                            .sink(testSinkDescriptor);
     // Running the query
     const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
@@ -281,14 +250,14 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
                                   ->addField(createField("test1$timestamp", BasicType::UINT64));
 
     const std::string fileNameBuffers("window.csv");
-    const std::vector<ResultRecord> expectedTuples = {{   0,  2000, 1, 1},
-                                                      {   0,  2000, 4, 1},
-                                                      {   0,  2000, 12, 1},
-                                                      {2000,  4000, 11, 5},
-                                                      {2000,  4000, 1, 11},
-                                                      {2000,  4000, 16, 2},
-                                                      {4000,  6000, 1, 9},
-                                                      {6000,  8000, 1, 13},
+    const std::vector<ResultRecord> expectedTuples = {{0, 2000, 1, 1},
+                                                      {0, 2000, 4, 1},
+                                                      {0, 2000, 12, 1},
+                                                      {2000, 4000, 11, 5},
+                                                      {2000, 4000, 1, 11},
+                                                      {2000, 4000, 16, 2},
+                                                      {4000, 6000, 1, 9},
+                                                      {6000, 8000, 1, 13},
                                                       {8000, 10000, 1, 17}};
 
     // Creating sink, source, and the query
@@ -296,11 +265,13 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
     const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
     const auto query = TestQuery::from(testSourceDescriptor)
-                           .filter(Attribute("value") < 12) // this is merely to keep the number of output tuples under control
+                           .filter(Attribute("value") < 12)// this is merely to keep the number of output tuples under control
                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                .byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                           .byKey(Attribute("id"))
+                           .apply(Sum(Attribute("value")))
                            .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
-                                .byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                           .byKey(Attribute("id"))
+                           .apply(Sum(Attribute("value")))
                            .sink(testSinkDescriptor);
 
     // Running the query
@@ -335,45 +306,30 @@ TEST_P(MultiThreadedTest, testOneJoin) {
                                      ->addField(createField("test1$id1", BasicType::UINT64))
                                      ->addField(createField("test1$timestamp", BasicType::UINT64));
     const auto inputSchemaRight = Schema::create()
-                                     ->addField(createField("test2$win2", BasicType::UINT64))
-                                     ->addField(createField("test2$id2", BasicType::UINT64))
-                                     ->addField(createField("test2$timestamp", BasicType::UINT64));
+                                      ->addField(createField("test2$win2", BasicType::UINT64))
+                                      ->addField(createField("test2$id2", BasicType::UINT64))
+                                      ->addField(createField("test2$timestamp", BasicType::UINT64));
     const auto joinFieldNameLeft = "test1$id1";
     const auto outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
 
     const std::string fileNameBuffersLeft("window.csv");
     const std::string fileNameBuffersRight("window2.csv");
-    const std::vector<ResultRecord> expectedTuples = {{1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
-                                                      {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
-                                                      {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
-                                                      {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
-                                                      {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
-                                                      {3000, 4000, 1, 3, 1, 3000, 3, 1, 3009},
-                                                      {3000, 4000, 1, 3, 1, 3000, 3, 1, 3201},
-                                                      {3000, 4000, 11, 3, 11, 3001, 3, 11, 3001},
-                                                      {3000, 4000, 1, 3, 1, 3003, 3, 1, 3009},
-                                                      {3000, 4000, 1, 3, 1, 3003, 3, 1, 3201},
-                                                      {3000, 4000, 1, 3, 1, 3200, 3, 1, 3009},
-                                                      {3000, 4000, 1, 3, 1, 3200, 3, 1, 3201},
-                                                      {4000, 5000, 1, 4, 1, 4000, 4, 1, 4001},
-                                                      {5000, 6000, 1, 5, 1, 5000, 5, 1, 5500},
-                                                      {6000, 7000, 1, 6, 1, 6000, 6, 1, 6000},
-                                                      {7000, 8000, 1, 7, 1, 7000, 7, 1, 7000},
-                                                      {8000, 9000, 1, 8, 1, 8000, 8, 1, 8000},
-                                                      {9000, 10000, 1, 9, 1, 9000, 9, 1, 9000},
-                                                      {10000, 11000, 1, 10, 1, 10000, 10, 1, 10000},
-                                                      {11000, 12000, 1, 11, 1, 11000, 11, 1, 11000},
-                                                      {12000, 13000, 1, 12, 1, 12000, 12, 1, 12000},
-                                                      {13000, 14000, 1, 13, 1, 13000, 13, 1, 13000},
-                                                      {14000, 15000, 1, 14, 1, 14000, 14, 1, 14000},
-                                                      {15000, 16000, 1, 15, 1, 15000, 15, 1, 15000},
-                                                      {16000, 17000, 1, 16, 1, 16000, 16, 1, 16000},
-                                                      {17000, 18000, 1, 17, 1, 17000, 17, 1, 17000},
-                                                      {18000, 19000, 1, 18, 1, 18000, 18, 1, 18000},
-                                                      {19000, 20000, 1, 19, 1, 19000, 19, 1, 19000},
-                                                      {20000, 21000, 1, 20, 1, 20000, 20, 1, 20000},
-                                                      {21000, 22000, 1, 21, 1, 21000, 21, 1, 21000}
-    };
+    const std::vector<ResultRecord> expectedTuples = {
+        {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+        {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},       {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+        {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},    {3000, 4000, 1, 3, 1, 3000, 3, 1, 3009},
+        {3000, 4000, 1, 3, 1, 3000, 3, 1, 3201},       {3000, 4000, 11, 3, 11, 3001, 3, 11, 3001},
+        {3000, 4000, 1, 3, 1, 3003, 3, 1, 3009},       {3000, 4000, 1, 3, 1, 3003, 3, 1, 3201},
+        {3000, 4000, 1, 3, 1, 3200, 3, 1, 3009},       {3000, 4000, 1, 3, 1, 3200, 3, 1, 3201},
+        {4000, 5000, 1, 4, 1, 4000, 4, 1, 4001},       {5000, 6000, 1, 5, 1, 5000, 5, 1, 5500},
+        {6000, 7000, 1, 6, 1, 6000, 6, 1, 6000},       {7000, 8000, 1, 7, 1, 7000, 7, 1, 7000},
+        {8000, 9000, 1, 8, 1, 8000, 8, 1, 8000},       {9000, 10000, 1, 9, 1, 9000, 9, 1, 9000},
+        {10000, 11000, 1, 10, 1, 10000, 10, 1, 10000}, {11000, 12000, 1, 11, 1, 11000, 11, 1, 11000},
+        {12000, 13000, 1, 12, 1, 12000, 12, 1, 12000}, {13000, 14000, 1, 13, 1, 13000, 13, 1, 13000},
+        {14000, 15000, 1, 14, 1, 14000, 14, 1, 14000}, {15000, 16000, 1, 15, 1, 15000, 15, 1, 15000},
+        {16000, 17000, 1, 16, 1, 16000, 16, 1, 16000}, {17000, 18000, 1, 17, 1, 17000, 17, 1, 17000},
+        {18000, 19000, 1, 18, 1, 18000, 18, 1, 18000}, {19000, 20000, 1, 19, 1, 19000, 19, 1, 19000},
+        {20000, 21000, 1, 20, 1, 20000, 20, 1, 20000}, {21000, 22000, 1, 21, 1, 21000, 21, 1, 21000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -382,15 +338,17 @@ TEST_P(MultiThreadedTest, testOneJoin) {
     const auto testSourceDescriptorRight = executionEngine->createDataSource(inputSchemaRight);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id2"))
-                                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
 
     // Running the query
-    const auto resultRecords = runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft},
-                                                       {inputSchemaRight, fileNameBuffersRight}},
-                                                      expectedTuples.size(), testSink, query);
+    const auto resultRecords =
+        runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft}, {inputSchemaRight, fileNameBuffersRight}},
+                               expectedTuples.size(),
+                               testSink,
+                               query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
@@ -399,7 +357,7 @@ TEST_P(MultiThreadedTest, testOneJoin) {
 
 // TODO enable this once #4034 is fixed
 TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
-    struct __attribute__((packed))  ResultRecord {
+    struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2window3start;
         uint64_t window1window2window3end;
         uint64_t window1window2window3key;
@@ -439,22 +397,24 @@ TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
                                       ->addField(createField("test3$id3", BasicType::UINT64))
                                       ->addField(createField("test3$timestamp", BasicType::UINT64));
     const auto joinFieldNameLeft = "test1$id1";
-    const auto joinSchemaLeftRight = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
-    const auto outputSchema = Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameLeft);
+    const auto joinSchemaLeftRight =
+        Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
+    const auto outputSchema =
+        Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameLeft);
     ASSERT_EQ(sizeof(ResultRecord), outputSchema->getSchemaSizeInBytes());
 
     const std::string fileNameBuffersLeft("window.csv");
     const std::string fileNameBuffersRight("window2.csv");
     const std::string fileNameBuffersThird("window4.csv");
-    const std::vector<ResultRecord> expectedTuples = {{1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
-                                                      {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
-                                                      {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
-                                                      {3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000},
-                                                      {12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
-                                                      {13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
-                                                      {14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-                                                      {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}
-    };
+    const std::vector<ResultRecord> expectedTuples = {
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
+        {3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000},
+        {12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
+        {13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
+        {14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
+        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -466,20 +426,22 @@ TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
 
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id2"))
-                                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id3"))
-                                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
 
     // Running the query
     const auto resultRecords = runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft},
-                                                 {inputSchemaRight, fileNameBuffersRight},
-                                                 {inputSchemaThird, fileNameBuffersThird}},
-                                                expectedTuples.size(), testSink, query);
+                                                       {inputSchemaRight, fileNameBuffersRight},
+                                                       {inputSchemaThird, fileNameBuffersThird}},
+                                                      expectedTuples.size(),
+                                                      testSink,
+                                                      query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
@@ -542,23 +504,27 @@ TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
                                        ->addField(createField("test4$id4", BasicType::UINT64))
                                        ->addField(createField("test4$timestamp", BasicType::UINT64));
     const auto joinFieldNameLeft = "test1$id1";
-    const auto joinSchemaLeftRight = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
-    const auto joinSchemaLeftRightThird = Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameLeft);
-    const auto outputSchema = Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRightThird, inputSchemaFourth, joinFieldNameLeft);
+    const auto joinSchemaLeftRight =
+        Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
+    const auto joinSchemaLeftRightThird =
+        Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameLeft);
+    const auto outputSchema =
+        Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRightThird, inputSchemaFourth, joinFieldNameLeft);
     ASSERT_EQ(sizeof(ResultRecord), outputSchema->getSchemaSizeInBytes());
 
     const std::string fileNameBuffersLeft("window.csv");
     const std::string fileNameBuffersRight("window2.csv");
     const std::string fileNameBuffersThird("window4.csv");
     const std::string fileNameBuffersFourth("window4.csv");
-    const std::vector<ResultRecord> expectedTuples = {{12000,13000,1,12000,13000,1,12000,13000,1,12,1,12000,12,1,12000,12,1,12000,12,1,12000},
-                                                      {13000,14000,1,13000,14000,1,13000,14000,1,13,1,13000,13,1,13000,13,1,13000,13,1,13000},
-                                                      {14000,15000,1,14000,15000,1,14000,15000,1,14,1,14000,14,1,14000,14,1,14000,14,1,14000},
-                                                      {15000,16000,1,15000,16000,1,15000,16000,1,15,1,15000,15,1,15000,15,1,15000,15,1,15000},
-                                                      {3000,4000,11,3000,4000,11,3000,4000,11,3,11,3001,3,11,3001,9,11,3000,9,11,3000},
-                                                      {1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-                                                      {1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-                                                      {1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300}};
+    const std::vector<ResultRecord> expectedTuples = {
+        {12000, 13000, 1, 12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
+        {13000, 14000, 1, 13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
+        {14000, 15000, 1, 14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
+        {15000, 16000, 1, 15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000},
+        {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -569,17 +535,17 @@ TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
     const auto testSourceDescriptorFourth = executionEngine->createDataSource(inputSchemaFourth);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id3"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(TestQuery::from(testSourceDescriptorFourth))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id4"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id4"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .sink(testSinkDescriptor);
 
     // Running the query
@@ -587,7 +553,9 @@ TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
                                                        {inputSchemaRight, fileNameBuffersRight},
                                                        {inputSchemaThird, fileNameBuffersThird},
                                                        {inputSchemaFourth, fileNameBuffersFourth}},
-                                                      expectedTuples.size(), testSink, query);
+                                                      expectedTuples.size(),
+                                                      testSink,
+                                                      query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
@@ -645,15 +613,18 @@ TEST_P(MultiThreadedTest, DISABLED_threeJoinsSlidingWindow) {
                                       ->addField(createField("test3$id3", BasicType::UINT64))
                                       ->addField(createField("test3$timestamp", BasicType::UINT64));
     const auto inputSchemaFourth = Schema::create()
-                                      ->addField(createField("test4$win4", BasicType::UINT64))
-                                      ->addField(createField("test4$id4", BasicType::UINT64))
-                                      ->addField(createField("test4$timestamp", BasicType::UINT64));
+                                       ->addField(createField("test4$win4", BasicType::UINT64))
+                                       ->addField(createField("test4$id4", BasicType::UINT64))
+                                       ->addField(createField("test4$timestamp", BasicType::UINT64));
     const auto joinFieldNameLeft = "test1$id1";
     const auto joinFieldNameThird = "test3$id3";
     const auto joinFieldNameFourth = "test4$id4";
-    const auto joinSchemaLeftRight = Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
-    const auto joinSchemaLeftRightThird = Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameThird);
-    const auto outputSchema = Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRightThird, inputSchemaFourth, joinFieldNameFourth);
+    const auto joinSchemaLeftRight =
+        Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
+    const auto joinSchemaLeftRightThird =
+        Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameThird);
+    const auto outputSchema =
+        Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRightThird, inputSchemaFourth, joinFieldNameFourth);
 
     const std::string fileNameBuffersLeft("window.csv");
     const std::string fileNameBuffersRight("window2.csv");
@@ -663,23 +634,23 @@ TEST_P(MultiThreadedTest, DISABLED_threeJoinsSlidingWindow) {
     // ANOTHER IDEA IS TO GET HERE RID OF THE WINDOWSTART AND WINDOWEND AS FLINK DOES ALSO NOT GIVE THIS INFO TO THE USER
     // WE CAN GET RID OF THEM VIA A PROJECT
     const std::vector<ResultRecord> expectedTuples = {};//{{2,11,2001,2,11,2301,9,11,3000,9,11,3000},
-//                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
-//                                                      {2,11,2001,2,11,2301,9,11,3000,9,11,3000},
-//                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
-//                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
-//                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
-//                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-//                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-//                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-//                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-//                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-//                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300}};
+    //                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
+    //                                                      {2,11,2001,2,11,2301,9,11,3000,9,11,3000},
+    //                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
+    //                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
+    //                                                      {3,11,3001,3,11,3001,9,11,3000,9,11,3000},
+    //                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1102,4,4,1001,4,4,1001},
+    //                                                      {1,4,1002,3,4,1112,4,4,1001,4,4,1001},
+    //                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
+    //                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
+    //                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300},
+    //                                                      {1,12,1001,5,12,1011,1,12,1300,1,12,1300}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -689,19 +660,19 @@ TEST_P(MultiThreadedTest, DISABLED_threeJoinsSlidingWindow) {
     const auto testSourceDescriptorThird = executionEngine->createDataSource(inputSchemaThird);
     const auto testSourceDescriptorFourth = executionEngine->createDataSource(inputSchemaFourth);
     const auto query = TestQuery::from(testSourceDescriptorLeft)
-                           .filter(Attribute("id1") < 6) // this is merely to keep the number of output tuples under control
+                           .filter(Attribute("id1") < 6)// this is merely to keep the number of output tuples under control
                            .joinWith(TestQuery::from(testSourceDescriptorRight))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id2"))
-                                .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(TestQuery::from(testSourceDescriptorThird))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id3"))
-                                .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(TestQuery::from(testSourceDescriptorFourth))
-                                .where(Attribute("id1"))
-                                .equalsTo(Attribute("id4"))
-                                .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id4"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .sink(testSinkDescriptor);
 
     // Running the query
@@ -709,7 +680,9 @@ TEST_P(MultiThreadedTest, DISABLED_threeJoinsSlidingWindow) {
                                                        {inputSchemaRight, fileNameBuffersRight},
                                                        {inputSchemaThird, fileNameBuffersThird},
                                                        {inputSchemaFourth, fileNameBuffersFourth}},
-                                                      expectedTuples.size(), testSink, query);
+                                                      expectedTuples.size(),
+                                                      testSink,
+                                                      query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());

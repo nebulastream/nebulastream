@@ -68,9 +68,10 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto windowIdentifier = recordBuffer.getBuffer().load<UInt64>();
     // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0
     Value<UInt64> workerIdForPagedVectors(0_u64);
-    auto windowReference =
-        Nautilus::FunctionCall("getNLJWindowRefAndCombinePagedVectorsProxy", getNLJWindowRefAndCombinePagedVectorsProxy,
-                               operatorHandlerMemRef, windowIdentifier);
+    auto windowReference = Nautilus::FunctionCall("getNLJWindowRefAndCombinePagedVectorsProxy",
+                                                  getNLJWindowRefAndCombinePagedVectorsProxy,
+                                                  operatorHandlerMemRef,
+                                                  windowIdentifier);
     auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                      getNLJPagedVectorProxy,
                                                      windowReference,

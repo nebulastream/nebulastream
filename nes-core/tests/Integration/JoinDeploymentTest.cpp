@@ -37,8 +37,10 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
         const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
         const auto numberOfWorkerThreads = 1;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode,
-                                                                         numberOfWorkerThreads, joinStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler,
+                                                                         queryCompilerDumpMode,
+                                                                         numberOfWorkerThreads,
+                                                                         joinStrategy);
     }
 
     /* Will be called before a test is executed. */

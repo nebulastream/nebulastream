@@ -78,8 +78,8 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
                                            const SchemaPtr& outputSchema,
                                            const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
                                            const JoinBuildSideType buildSide,
-                                           const std::string&  timeStampFieldName,
-                                           const std::string&  joinFieldName);
+                                           const std::string& timeStampFieldName,
+                                           const std::string& joinFieldName);
 
     /**
      * @brief Deconstructor

@@ -111,25 +111,27 @@ uint64_t OperatorPipeline::getPipelineId() const { return id; }
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
 std::string OperatorPipeline::toString() const {
-    auto successorsStr = std::accumulate(successorPipelines.begin(), successorPipelines.end(), std::string(),
+    auto successorsStr = std::accumulate(successorPipelines.begin(),
+                                         successorPipelines.end(),
+                                         std::string(),
                                          [](const std::string& result, const OperatorPipelinePtr& succPipeline) {
                                              auto succPipelineId = std::to_string(succPipeline->id);
                                              return result.empty() ? succPipelineId : result + ", " + succPipelineId;
                                          });
 
-    auto predeccesorsStr = std::accumulate(predecessorPipelines.begin(), predecessorPipelines.end(), std::string(),
-                                           [](const std::string& result, const std::weak_ptr<OperatorPipeline>& predecessorPipeline) {
-                                               auto predecessorPipelineId = std::to_string(predecessorPipeline.lock()->id);
-                                               return result.empty() ? predecessorPipelineId : result + ", " + predecessorPipelineId;
-                                           });
+    auto predeccesorsStr =
+        std::accumulate(predecessorPipelines.begin(),
+                        predecessorPipelines.end(),
+                        std::string(),
+                        [](const std::string& result, const std::weak_ptr<OperatorPipeline>& predecessorPipeline) {
+                            auto predecessorPipelineId = std::to_string(predecessorPipeline.lock()->id);
+                            return result.empty() ? predecessorPipelineId : result + ", " + predecessorPipelineId;
+                        });
 
     std::ostringstream oss;
-    oss <<
-        "- Id: " << id <<
-        ", Type: " << magic_enum::enum_name(pipelineType) <<
-        ", Successors: " << successorsStr <<
-        ", Predecessors: " << predeccesorsStr << std::endl <<
-        "- Queryplan: " << queryPlan->toString();
+    oss << "- Id: " << id << ", Type: " << magic_enum::enum_name(pipelineType) << ", Successors: " << successorsStr
+        << ", Predecessors: " << predeccesorsStr << std::endl
+        << "- Queryplan: " << queryPlan->toString();
 
     return oss.str();
 }
