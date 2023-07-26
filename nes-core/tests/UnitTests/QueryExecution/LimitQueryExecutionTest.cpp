@@ -13,15 +13,12 @@
 */
 // clang-format: off
 // clang-format: on
-#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <utility>
 
 using namespace NES;
 using Runtime::TupleBuffer;

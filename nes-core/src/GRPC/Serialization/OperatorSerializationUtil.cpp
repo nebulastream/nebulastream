@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
@@ -172,6 +173,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
         // serialize batch join operator
         serializeBatchJoinOperator(*operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>(), serializedOperator);
+
+    } else if (operatorNode->instanceOf<LimitLogicalOperatorNode>()) {
+        // serialize limit operator
+        serializeLimitOperator(*operatorNode->as<LimitLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         // serialize watermarkAssigner operator
@@ -342,6 +347,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         operatorNode = deserializeWatermarkAssignerOperator(serializedWatermarkStrategyDetails);
+
+    } else if (details.Is<SerializableOperator_LimitDetails>()) {
+        // de-serialize limit operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to limit operator");
+        auto serializedLimitDetails = SerializableOperator_LimitDetails();
+        details.UnpackTo(&serializedLimitDetails);
+        operatorNode = deserializeLimitOperator(serializedLimitDetails);
 
     } else if (details.Is<SerializableOperator_RenameDetails>()) {
         // Deserialize rename source operator.
@@ -1759,6 +1771,22 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
+}
+
+void OperatorSerializationUtil::serializeLimitOperator(
+    const LimitLogicalOperatorNode& limitOperator,
+    SerializableOperator& serializedOperator) {
+
+    NES_TRACE("OperatorSerializationUtil:: serialize limit operator ");
+
+    auto limitDetails = SerializableOperator_LimitDetails();
+    limitDetails.set_limit(limitOperator.getLimit());
+    serializedOperator.mutable_details()->PackFrom(limitDetails);
+}
+
+LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeLimitOperator(
+    const SerializableOperator_LimitDetails& limitDetails) {
+    return LogicalOperatorFactory::createLimitOperator(limitDetails.limit(),  Util::getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWatermarkAssignerOperator(

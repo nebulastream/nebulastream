@@ -35,6 +35,7 @@ class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
 class SerializableOperator_BatchJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
+class SerializableOperator_LimitDetails;
 class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
 class SerializableOperator_MapJavaUdfDetails;
@@ -229,6 +230,22 @@ class OperatorSerializationUtil {
      * @return OperatorNodePtr
      */
     static SinkDescriptorPtr deserializeSinkDescriptor(const SerializableOperator_SinkDetails& sinkDetails);
+
+    /**
+     * @brief Serializes the limit operator
+     * @param limit logical operator node
+     * @param serializedOperator serialized instance of the operator
+     */
+    static void serializeLimitOperator(const LimitLogicalOperatorNode& limitLogicalOperator,
+                                                   SerializableOperator& serializedOperator);
+
+    /**
+     * @brief Deserializes a limit operator
+     * @param LimitDetails
+     * @return LimitLogicalOperatorNode of type LogicalUnaryOperatorNode
+     */
+    static LogicalUnaryOperatorNodePtr
+    deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails);
 
     /**
      * @brief Serializes the watermarkAssigner operator
