@@ -15,4 +15,5 @@ add_subdirectory(RequestTypes)
 add_subdirectory(StorageHandles)
 add_source_files(nes-core
         RequestQueue.cpp
+        AsyncRequestExecutor.cpp
 )
