@@ -32,9 +32,9 @@ using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class NonKeyedThreadLocalSliceStore : public ThreadLocalSliceStore<NonKeyedSlice> {
   public:
     explicit NonKeyedThreadLocalSliceStore(uint64_t entrySize,
-                                         uint64_t windowSize,
-                                         uint64_t windowSlide,
-                                         const std::unique_ptr<State>& defaultState);
+                                           uint64_t windowSize,
+                                           uint64_t windowSlide,
+                                           const std::unique_ptr<State>& defaultState);
     ~NonKeyedThreadLocalSliceStore() = default;
 
   private:

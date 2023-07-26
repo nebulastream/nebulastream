@@ -31,14 +31,14 @@ std::string PhysicalNonKeyedThreadLocalPreAggregationOperator::toString() const 
 
 std::shared_ptr<PhysicalOperator>
 PhysicalNonKeyedThreadLocalPreAggregationOperator::create(SchemaPtr inputSchema,
-                                                        SchemaPtr outputSchema,
-                                                        WindowHandlerType keyedEventTimeWindowHandler,
-                                                        Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+                                                          SchemaPtr outputSchema,
+                                                          WindowHandlerType keyedEventTimeWindowHandler,
+                                                          Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalNonKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
-                                                                             inputSchema,
-                                                                             outputSchema,
-                                                                             keyedEventTimeWindowHandler,
-                                                                             windowDefinition);
+                                                                               inputSchema,
+                                                                               outputSchema,
+                                                                               keyedEventTimeWindowHandler,
+                                                                               windowDefinition);
 }
 
 OperatorNodePtr PhysicalNonKeyedThreadLocalPreAggregationOperator::copy() {

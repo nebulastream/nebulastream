@@ -40,7 +40,7 @@ void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionCon
 }
 
 void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                     Runtime::Execution::PipelineExecutionContextPtr) {
+                                       Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop NonKeyedSliceMergingHandler: {}", queryTerminationType);
 }
 

@@ -98,8 +98,8 @@ class LowerPhysicalToNautilusOperators {
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerNonKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,

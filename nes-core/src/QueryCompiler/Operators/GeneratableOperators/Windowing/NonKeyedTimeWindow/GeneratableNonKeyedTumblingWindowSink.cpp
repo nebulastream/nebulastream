@@ -28,10 +28,10 @@ GeneratableOperatorPtr GeneratableNonKeyedTumblingWindowSink::create(
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableNonKeyedTumblingWindowSink>(
         GeneratableNonKeyedTumblingWindowSink(id,
-                                            std::move(inputSchema),
-                                            std::move(outputSchema),
-                                            windowDefinition,
-                                            std::move(windowAggregation)));
+                                              std::move(inputSchema),
+                                              std::move(outputSchema),
+                                              windowDefinition,
+                                              std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableNonKeyedTumblingWindowSink::create(

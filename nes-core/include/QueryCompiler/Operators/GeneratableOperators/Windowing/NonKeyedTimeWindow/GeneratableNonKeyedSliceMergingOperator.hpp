@@ -54,10 +54,10 @@ class GeneratableNonKeyedSliceMergingOperator : public GeneratableOperator {
 
   private:
     GeneratableNonKeyedSliceMergingOperator(OperatorId id,
-                                          SchemaPtr inputSchema,
-                                          SchemaPtr outputSchema,
-                                          Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr operatorHandler,
-                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+                                            SchemaPtr inputSchema,
+                                            SchemaPtr outputSchema,
+                                            Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr operatorHandler,
+                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr windowHandler;
 };

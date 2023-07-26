@@ -144,9 +144,9 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
 
     auto slicePreAggregation =
         NonKeyedSlicePreAggregation(0 /*handler index*/,
-                                  std::make_unique<EventTimeFunction>(readTs),
-                                  {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
-                                   std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
+                                    std::make_unique<EventTimeFunction>(readTs),
+                                    {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
+                                     std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
     auto sliceStaging = std::make_shared<NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};

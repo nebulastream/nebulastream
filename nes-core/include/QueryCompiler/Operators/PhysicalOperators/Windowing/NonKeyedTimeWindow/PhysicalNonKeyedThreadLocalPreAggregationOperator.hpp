@@ -32,10 +32,10 @@ class PhysicalNonKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOp
     using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr,
                                            std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>;
     PhysicalNonKeyedThreadLocalPreAggregationOperator(OperatorId id,
-                                                    SchemaPtr inputSchema,
-                                                    SchemaPtr outputSchema,
-                                                    WindowHandlerType windowHandler,
-                                                    Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                                      SchemaPtr inputSchema,
+                                                      SchemaPtr outputSchema,
+                                                      WindowHandlerType windowHandler,
+                                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalOperator> create(SchemaPtr inputSchema,
                                                     SchemaPtr outputSchema,

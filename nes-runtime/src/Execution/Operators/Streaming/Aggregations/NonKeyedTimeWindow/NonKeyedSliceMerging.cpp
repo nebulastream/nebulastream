@@ -70,11 +70,12 @@ void* getDefaultMergingState(void* ss) {
     return handler->getDefaultState()->ptr;
 }
 
-NonKeyedSliceMerging::NonKeyedSliceMerging(uint64_t operatorHandlerIndex,
-                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                                       const std::string& startTsFieldName,
-                                       const std::string& endTsFieldName,
-                                       uint64_t resultOriginId)
+NonKeyedSliceMerging::NonKeyedSliceMerging(
+    uint64_t operatorHandlerIndex,
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+    const std::string& startTsFieldName,
+    const std::string& endTsFieldName,
+    uint64_t resultOriginId)
     : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName),
       endTsFieldName(endTsFieldName), resultOriginId(resultOriginId) {}
 
@@ -113,8 +114,8 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                                           Value<MemRef>& sliceMergeTask,
-                                                           Value<>& endSliceTs) const {
+                                                             Value<MemRef>& sliceMergeTask,
+                                                             Value<>& endSliceTs) const {
     auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
@@ -134,9 +135,9 @@ Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& glob
 }
 
 void NonKeyedSliceMerging::emitWindow(ExecutionContext& ctx,
-                                    Value<>& windowStart,
-                                    Value<>& windowEnd,
-                                    Value<MemRef>& globalSlice) const {
+                                      Value<>& windowStart,
+                                      Value<>& windowEnd,
+                                      Value<MemRef>& globalSlice) const {
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     ctx.setOrigin(resultOriginId);
 

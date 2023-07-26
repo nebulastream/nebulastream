@@ -19,9 +19,9 @@
 namespace NES::Runtime::Execution::Operators {
 
 NonKeyedThreadLocalSliceStore::NonKeyedThreadLocalSliceStore(uint64_t entrySize,
-                                                         uint64_t windowSize,
-                                                         uint64_t windowSlide,
-                                                         const std::unique_ptr<State>& defaultState)
+                                                             uint64_t windowSize,
+                                                             uint64_t windowSlide,
+                                                             const std::unique_ptr<State>& defaultState)
     : ThreadLocalSliceStore(windowSize, windowSlide), entrySize(entrySize), defaultState(defaultState) {}
 
 GlobalSlicePtr NonKeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {

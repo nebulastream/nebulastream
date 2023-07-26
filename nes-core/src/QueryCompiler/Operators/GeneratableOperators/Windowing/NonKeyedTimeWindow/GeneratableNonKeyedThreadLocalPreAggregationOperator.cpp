@@ -28,10 +28,10 @@ GeneratableOperatorPtr GeneratableNonKeyedThreadLocalPreAggregationOperator::cre
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableNonKeyedThreadLocalPreAggregationOperator>(
         GeneratableNonKeyedThreadLocalPreAggregationOperator(id,
-                                                           std::move(inputSchema),
-                                                           std::move(outputSchema),
-                                                           std::move(operatorHandler),
-                                                           std::move(windowAggregation)));
+                                                             std::move(inputSchema),
+                                                             std::move(outputSchema),
+                                                             std::move(operatorHandler),
+                                                             std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableNonKeyedThreadLocalPreAggregationOperator::create(

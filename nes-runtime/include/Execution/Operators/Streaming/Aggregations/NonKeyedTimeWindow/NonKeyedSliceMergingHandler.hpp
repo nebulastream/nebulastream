@@ -27,7 +27,7 @@ class NonKeyedSliceStaging;
  * tumbling and sliding window aggregations.
  */
 class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                  public ::NES::detail::virtual_enable_shared_from_this<NonKeyedSliceMergingHandler, false> {
+                                    public ::NES::detail::virtual_enable_shared_from_this<NonKeyedSliceMergingHandler, false> {
   public:
     /**
      * @brief Constructor for the GlobalSliceMergingHandler

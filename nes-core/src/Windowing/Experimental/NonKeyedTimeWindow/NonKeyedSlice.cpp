@@ -34,6 +34,7 @@ void NonKeyedSlice::reset(uint64_t start, uint64_t end) {
     this->state->reset();
 }
 
-NonKeyedSlice::NonKeyedSlice(NonKeyedSlice& entrySize) : start(0), end(0), state(std::make_unique<State>(entrySize.state->stateSize)) {}
+NonKeyedSlice::NonKeyedSlice(NonKeyedSlice& entrySize)
+    : start(0), end(0), state(std::make_unique<State>(entrySize.state->stateSize)) {}
 
 }// namespace NES::Windowing::Experimental

@@ -54,10 +54,10 @@ class GeneratableNonKeyedTumblingWindowSink : public GeneratableOperator {
 
   private:
     GeneratableNonKeyedTumblingWindowSink(OperatorId id,
-                                        SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+                                          SchemaPtr inputSchema,
+                                          SchemaPtr outputSchema,
+                                          Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };

@@ -29,10 +29,10 @@ GeneratableOperatorPtr GeneratableNonKeyedSliceMergingOperator::create(
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableNonKeyedSliceMergingOperator>(
         GeneratableNonKeyedSliceMergingOperator(id,
-                                              std::move(inputSchema),
-                                              std::move(outputSchema),
-                                              std::move(operatorHandler),
-                                              std::move(windowAggregation)));
+                                                std::move(inputSchema),
+                                                std::move(outputSchema),
+                                                std::move(operatorHandler),
+                                                std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableNonKeyedSliceMergingOperator::create(

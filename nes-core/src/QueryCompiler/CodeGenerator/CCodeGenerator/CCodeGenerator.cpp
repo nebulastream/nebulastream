@@ -3842,10 +3842,10 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
 
 uint64_t
 CCodeGenerator::generateNonKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                        PipelineContextPtr context,
-                                                        uint64_t id,
-                                                        uint64_t windowOperatorIndex,
-                                                        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+                                                          PipelineContextPtr context,
+                                                          uint64_t id,
+                                                          uint64_t windowOperatorIndex,
+                                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
@@ -4030,10 +4030,10 @@ CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindow
 
 uint64_t
 CCodeGenerator::generateNonKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                         PipelineContextPtr context,
-                                                         uint64_t id,
-                                                         uint64_t windowOperatorIndex,
-                                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+                                                           PipelineContextPtr context,
+                                                           uint64_t id,
+                                                           uint64_t windowOperatorIndex,
+                                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));

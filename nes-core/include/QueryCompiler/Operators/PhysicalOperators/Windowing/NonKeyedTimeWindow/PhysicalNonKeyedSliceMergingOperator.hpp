@@ -33,15 +33,15 @@ class PhysicalNonKeyedSliceMergingOperator : public PhysicalUnaryOperator, publi
     using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedSliceMergingOperatorHandlerPtr,
                                            std::shared_ptr<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>>;
     PhysicalNonKeyedSliceMergingOperator(OperatorId id,
-                                       SchemaPtr inputSchema,
-                                       SchemaPtr outputSchema,
-                                       WindowHandlerType operatorHandler,
-                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         WindowHandlerType operatorHandler,
+                                         Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalNonKeyedSliceMergingOperator> create(SchemaPtr inputSchema,
-                                                                      SchemaPtr outputSchema,
-                                                                      WindowHandlerType operatorHandler,
-                                                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                                                        SchemaPtr outputSchema,
+                                                                        WindowHandlerType operatorHandler,
+                                                                        Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     WindowHandlerType getWindowHandler();
 

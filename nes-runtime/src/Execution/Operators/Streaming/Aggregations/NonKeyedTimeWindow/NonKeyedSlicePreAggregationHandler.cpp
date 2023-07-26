@@ -26,9 +26,9 @@
 namespace NES::Runtime::Execution::Operators {
 
 NonKeyedSlicePreAggregationHandler::NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                                                   uint64_t windowSlide,
-                                                                   const std::vector<OriginId>& origins,
-                                                                   std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
+                                                                       uint64_t windowSlide,
+                                                                       const std::vector<OriginId>& origins,
+                                                                       std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
     : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(weakSliceStagingPtr),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
 
@@ -46,11 +46,11 @@ void NonKeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecu
 }
 
 void NonKeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
-                                                               Runtime::Execution::PipelineExecutionContext& ctx,
-                                                               uint64_t workerId,
-                                                               OriginId originId,
-                                                               uint64_t sequenceNumber,
-                                                               uint64_t watermarkTs) {
+                                                                 Runtime::Execution::PipelineExecutionContext& ctx,
+                                                                 uint64_t workerId,
+                                                                 OriginId originId,
+                                                                 uint64_t sequenceNumber,
+                                                                 uint64_t watermarkTs) {
 
     auto* threadLocalSliceStore = getThreadLocalSliceStore(workerId);
 
@@ -91,13 +91,13 @@ void NonKeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::Worker
 }
 
 void NonKeyedSlicePreAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                             Runtime::StateManagerPtr,
-                                             uint32_t) {
+                                               Runtime::StateManagerPtr,
+                                               uint32_t) {
     NES_DEBUG("start NonKeyedSlicePreAggregationHandler");
 }
 
 void NonKeyedSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                            Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
+                                              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("shutdown NonKeyedSlicePreAggregationHandler: {}", queryTerminationType);
 
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {

@@ -28,10 +28,10 @@ GeneratableOperatorPtr GeneratableNonKeyedWindowSliceStoreAppendOperator::create
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableNonKeyedWindowSliceStoreAppendOperator>(
         GeneratableNonKeyedWindowSliceStoreAppendOperator(id,
-                                                        std::move(inputSchema),
-                                                        std::move(outputSchema),
-                                                        std::move(operatorHandler),
-                                                        std::move(windowAggregation)));
+                                                          std::move(inputSchema),
+                                                          std::move(outputSchema),
+                                                          std::move(operatorHandler),
+                                                          std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableNonKeyedWindowSliceStoreAppendOperator::create(

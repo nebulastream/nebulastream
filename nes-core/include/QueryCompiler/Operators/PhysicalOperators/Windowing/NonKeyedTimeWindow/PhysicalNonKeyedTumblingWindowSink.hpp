@@ -26,9 +26,9 @@ namespace PhysicalOperators {
 class PhysicalNonKeyedTumblingWindowSink : public PhysicalUnaryOperator {
   public:
     PhysicalNonKeyedTumblingWindowSink(OperatorId id,
-                                     SchemaPtr inputSchema,
-                                     SchemaPtr outputSchema,
-                                     Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                       SchemaPtr inputSchema,
+                                       SchemaPtr outputSchema,
+                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalNonKeyedTumblingWindowSink>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);

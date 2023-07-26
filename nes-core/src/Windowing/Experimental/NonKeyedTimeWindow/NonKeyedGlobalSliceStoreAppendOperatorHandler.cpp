@@ -37,15 +37,15 @@ NonKeyedGlobalSliceStoreAppendOperatorHandler::NonKeyedGlobalSliceStoreAppendOpe
 }
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                                              Runtime::StateManagerPtr,
-                                                              uint32_t) {
+                                                          Runtime::StateManagerPtr,
+                                                          uint32_t) {
     NES_DEBUG("start NonKeyedGlobalSliceStoreAppendOperatorHandler");
 }
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
-                                                                            Runtime::Execution::PipelineExecutionContext& ctx,
-                                                                            uint64_t sequenceNumber,
-                                                                            NonKeyedSlicePtr slice) {
+                                                                        Runtime::Execution::PipelineExecutionContext& ctx,
+                                                                        uint64_t sequenceNumber,
+                                                                        NonKeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
     if (!global) {
         NES_FATAL_ERROR("GlobalSliceStore is invalid, this should only happen after a hard stop. Drop all in flight data.");
@@ -68,7 +68,7 @@ void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime:
 }
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                                             Runtime::Execution::PipelineExecutionContextPtr ctx) {
+                                                         Runtime::Execution::PipelineExecutionContextPtr ctx) {
     NES_DEBUG("stop NonKeyedGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto global = globalSliceStore.lock();

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -33,15 +33,15 @@
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
@@ -398,10 +398,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
     auto nonKeyedSliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
-                                                                            aggregationFunctions,
-                                                                            startTs,
-                                                                            endTs,
-                                                                            physicalGSMO->getWindowDefinition()->getOriginId());
+                                                                              aggregationFunctions,
+                                                                              startTs,
+                                                                              endTs,
+                                                                              physicalGSMO->getWindowDefinition()->getOriginId());
     pipeline.setRootOperator(nonKeyedSliceMergingOperator);
     return nonKeyedSliceMergingOperator;
 }
@@ -475,8 +475,8 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto sliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(operatorHandlers.size() - 1,
-                                                                                   std::move(timeFunction),
-                                                                                   aggregationFunctions);
+                                                                                     std::move(timeFunction),
+                                                                                     aggregationFunctions);
     return sliceMergingOperator;
 }
 
@@ -607,10 +607,10 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                    });
 
     return std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindow>(predicate,
-                                                                                   aggregationResultFieldNames,
-                                                                                   minCount,
-                                                                                   aggregationFunctions,
-                                                                                   handlerIndex);
+                                                                                    aggregationResultFieldNames,
+                                                                                    minCount,
+                                                                                    aggregationFunctions,
+                                                                                    handlerIndex);
 }
 
 #ifdef ENABLE_JNI
