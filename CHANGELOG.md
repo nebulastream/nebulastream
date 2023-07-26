@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.158](https://github.com/nebulastream/nebulastream/tree/v0.5.158) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.157...v0.5.158)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] add filter push-down rule for pushing down below projection operators [\#3799](https://github.com/nebulastream/nebulastream/issues/3799)
+
 ## [v0.5.157](https://github.com/nebulastream/nebulastream/tree/v0.5.157) (2023-07-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.156...v0.5.157)
