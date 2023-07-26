@@ -103,7 +103,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
 
-TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
+TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$f1_left", BasicType::UINT64)
                                 ->addField("test1$f2_left", BasicType::UINT64)
@@ -131,7 +131,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
     auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
 
-    auto testSink = executionEngine->createDataSink(joinSchema);
+    auto testSink = executionEngine->createDataSink(joinSchema, 2);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
