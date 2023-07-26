@@ -42,7 +42,7 @@ class NLJBuild : public ExecutableOperator {
       public:
         LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
                                  const Value<MemRef>& windowReference,
-                                 Nautilus::Interface::PagedVectorRef  pagedVectorRef)
+                                 Nautilus::Interface::PagedVectorRef pagedVectorRef)
             : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(std::move(pagedVectorRef)),
               windowStart(0_u64), windowEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
@@ -62,8 +62,8 @@ class NLJBuild : public ExecutableOperator {
      */
     NLJBuild(uint64_t operatorHandlerIndex,
              const SchemaPtr& schema,
-             std::string  joinFieldName,
-             std::string  timeStampField,
+             std::string joinFieldName,
+             std::string timeStampField,
              bool isLeftSide,
              TimeFunctionPtr timeFunction);
 

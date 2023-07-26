@@ -29,8 +29,7 @@ namespace NES::Runtime::Execution {
  */
 class StreamWindow {
   public:
-    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE,
-                                       ONCE_SEEN_DURING_TERMINATION };
+    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE, ONCE_SEEN_DURING_TERMINATION };
 
     /**
      * @brief Constructor for creating a window

@@ -57,10 +57,8 @@ QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPla
 
 std::string PipelineQueryPlan::toString() const {
     std::ostringstream oss;
-    oss << "PipelineQueryPlan: " << std::endl <<
-        "- queryId: " << queryId <<
-        ", subPlanId: " << querySubPlanId <<
-        ", no. pipelines: " << pipelines.size() << std::endl;
+    oss << "PipelineQueryPlan: " << std::endl
+        << "- queryId: " << queryId << ", subPlanId: " << querySubPlanId << ", no. pipelines: " << pipelines.size() << std::endl;
 
     for (auto& pipeline : pipelines) {
         oss << "- pipeline: " << pipeline->toString() << std::endl;

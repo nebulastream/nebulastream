@@ -122,7 +122,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      uint64_t sizeOfRecordRight)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)), joinStrategy(joinStrategy),
-      outputOriginId(outputOriginId), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
+      outputOriginId(outputOriginId), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft),
+      sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start StreamJoinOperatorHandler");
@@ -144,7 +145,6 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     NES_DEBUG("HashJoinOperatorHandler::setup was called!");
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
 }
-
 
 void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uint64_t workerId) {
     workerIdToWatermarkMap[workerId] = watermark;
@@ -169,7 +169,7 @@ std::vector<uint64_t> StreamJoinOperatorHandler::triggerAllWindows() {
         for (auto& window : *windowsLocked) {
 
             if (window->checkTriggeredDuringTerminate() && window->getNumberOfTuplesLeft() > 0
-                    && window->getNumberOfTuplesRight() > 0) {
+                && window->getNumberOfTuplesRight() > 0) {
                 windowIdentifiers.emplace_back(window->getWindowIdentifier());
                 NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
                           window->getWindowIdentifier(),

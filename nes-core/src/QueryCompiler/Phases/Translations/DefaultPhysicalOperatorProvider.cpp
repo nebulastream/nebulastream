@@ -370,13 +370,14 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
 
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
-    const auto joinOperatorHandler = Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
-                                                                           joinOperator->getOutputOriginIds()[0],
-                                                                           joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                                           joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                                           Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                                           Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                                           streamJoinConfig.windowSize);
+    const auto joinOperatorHandler =
+        Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
+                                              joinOperator->getOutputOriginIds()[0],
+                                              joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                              joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                              Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                              Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                              streamJoinConfig.windowSize);
 
     auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema,
                                       JoinBuildSideType buildSideType,

@@ -39,7 +39,10 @@ NLJWindow::NLJWindow(uint64_t windowStart,
             std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), rightEntrySize, rightPageSize));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
-              NLJWindow::toString(), numberOfWorker, leftTuples.size(), rightTuples.size());
+              NLJWindow::toString(),
+              numberOfWorker,
+              leftTuples.size(),
+              rightTuples.size());
 }
 
 uint64_t NLJWindow::getNumberOfTuplesLeft() {

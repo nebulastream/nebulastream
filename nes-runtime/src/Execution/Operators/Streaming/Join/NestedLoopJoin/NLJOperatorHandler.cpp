@@ -37,9 +37,7 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                 sizeOfTupleInByteRight),
       leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
 
-void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG("start NLJOperatorHandler");
-}
+void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) { NES_DEBUG("start NLJOperatorHandler"); }
 
 uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
@@ -55,9 +53,7 @@ uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier
     return -1;
 }
 
-void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_DEBUG("stop NLJOperatorHandler");
-}
+void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop NLJOperatorHandler"); }
 
 void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
                                         WorkerContext*,
