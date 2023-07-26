@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.159](https://github.com/nebulastream/nebulastream/tree/v0.5.159) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.158...v0.5.159)
+
+**Implemented enhancements:**
+
+- \[TASK\] Port MultipleJoinTest to Testharness and enable Nautilus [\#3996](https://github.com/nebulastream/nebulastream/issues/3996)
+- \[TASK\] Rename all logical, physical, and generatable operators of type GlobalWindow  as NonKeyedWindow [\#3967](https://github.com/nebulastream/nebulastream/issues/3967)
+- \[TASK\] Refactor MultipleJoinsTest [\#3965](https://github.com/nebulastream/nebulastream/issues/3965)
+
 ## [v0.5.158](https://github.com/nebulastream/nebulastream/tree/v0.5.158) (2023-07-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.157...v0.5.158)
