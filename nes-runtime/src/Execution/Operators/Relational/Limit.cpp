@@ -24,12 +24,7 @@ bool IncrementThreadSaveAndCheckLimit(void* op) {
     NES_ASSERT2_FMT(op != nullptr, "operator handler context should not be null");
     auto* opHandler = static_cast<LimitOperatorHandler*>(op);
 
-    // Increment using compare and swap to avoid race conditions
-    auto value = opHandler->counter.load(std::memory_order_relaxed);
-    while(value < opHandler->limit) {
-        if(opHandler->counter.compare_exchange_weak(value, value + 1, std::memory_order_release, std::memory_order_relaxed))
-            break;
-    }
+    auto value = opHandler->counter++;
     // Are we under the limit?
     return value < opHandler->limit;
 }
