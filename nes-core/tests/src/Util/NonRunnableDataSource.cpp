@@ -44,6 +44,10 @@ void NonRunnableDataSource::runningRoutine() {
 }
 
 bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
+    if (!isRunning()) {
+        // the source is already stopped, we don't have to do anything
+        return true;
+    }
     canTerminate.set_value(true);
     return NES::DefaultSource::stop(termination);
 }

@@ -41,7 +41,8 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param sizePageRight
      * @param windowSize
      */
-    explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
+    explicit NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                                const OriginId outputOriginId,
                                 uint64_t sizeOfTupleInByteLeft,
                                 uint64_t sizeOfTupleInByteRight,
                                 uint64_t sizePageLeft,
@@ -84,7 +85,8 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
-    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
+    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
+                                        const OriginId outputOriginId,
                                         const uint64_t sizeOfTupleInByteLeft,
                                         const uint64_t sizeOfTupleInByteRight,
                                         const uint64_t sizePageLeft,
@@ -134,7 +136,6 @@ uint64_t getNLJWindowStartProxy(void* ptrNljWindow);
  * @return uint64_t
  */
 uint64_t getNLJWindowEndProxy(void* ptrNljWindow);
-
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

@@ -13,6 +13,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
@@ -39,6 +40,7 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()
+//            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>() //Enable with #4018
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()

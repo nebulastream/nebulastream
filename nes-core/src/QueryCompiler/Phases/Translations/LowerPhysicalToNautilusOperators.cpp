@@ -347,7 +347,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()) {
         auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>();
 
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        NES_DEBUG("Added PhysicalNestedLoopJoinBuildOperator to operatorHandlers!");
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 

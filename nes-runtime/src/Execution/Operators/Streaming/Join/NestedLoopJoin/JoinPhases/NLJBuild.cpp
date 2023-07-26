@@ -25,6 +25,8 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <numeric>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -34,7 +36,7 @@ void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext)
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineContext);
 
-    opHandler->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 void* getCurrentWindowProxy(void* ptrOpHandler) {
@@ -49,6 +51,30 @@ void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
 
     return opHandler->getWindowByTimestampOrCreateIt(timestamp).get();
+}
+
+void triggerWindowsProxy(const std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    if (!windowIdentifiersToBeTriggered.empty()) {
+        opHandler->triggerWindows(windowIdentifiersToBeTriggered, nullptr, pipelineCtx);
+    }
+}
+
+void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_DEBUG("Triggering all windows for pipelineId {}!", pipelineCtx->getPipelineID());
+
+    const auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
+    triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 /**
@@ -72,11 +98,8 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    //TODO: Multi threaded this can become a problem
-    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
-    if (windowIdentifiersToBeTriggered.size() > 0) {
-        opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
-    }
+    const auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
+    triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
@@ -102,7 +125,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
 
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
-    auto* localJoinState = static_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
+    auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
@@ -116,7 +139,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto entryMemRef = localJoinState->pagedVectorRef.allocateEntry();
 
     // Write Record at entryMemRef
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -143,12 +166,21 @@ void NLJBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
                                                        windowReference,
                                                        workerId,
                                                        Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
+
+    // Getting the current window start and end
+    localJoinState->windowStart =
+        Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, localJoinState->windowReference);
+    localJoinState->windowEnd =
+        Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, localJoinState->windowReference);
+
+    // Storing the local state
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 
-void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void NLJBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     // Update the watermark for the nlj operator and trigger windows
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkWindowsTriggerProxyForNLJBuild",
@@ -156,18 +188,25 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
                            ctx.getWorkerContext(),
-                           recordBuffer.getWatermarkTs(),
-                           recordBuffer.getSequenceNr(),
-                           recordBuffer.getOriginId());
+                           ctx.getWatermarkTs(),
+                           ctx.getSequenceNumber(),
+                           ctx.getOriginId());
+}
+
+void NLJBuild::terminate(ExecutionContext& ctx) const {
+    // Trigger all windows, as the query has ended
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("triggerAllWindowsProxy", triggerAllWindowsProxy, operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const SchemaPtr& schema,
-                   const std::string& joinFieldName,
-                   const std::string& timeStampField,
+                   std::string joinFieldName,
+                   std::string timeStampField,
                    bool isLeftSide,
                    TimeFunctionPtr timeFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()), timeFunction(std::move(timeFunction)) {}
+    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(std::move(joinFieldName)),
+      timeStampField(std::move(timeStampField)), isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()),
+      timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

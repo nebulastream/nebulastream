@@ -54,7 +54,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
     // Note. This dose not perform any memory and only results in a seqential scan over all entries  plus a random lookup in the hash table.
     // TODO this look could be parallelized, but please check if needed.
     for (const auto& pagedVector : threadLocalStateStores) {
-        auto& pages = pagedVector->getPages();
+        const auto& pages = pagedVector->getPages();
         NES_ASSERT(!pages.empty(), "pagedVector should not be empty");
         // currently we assume that page 0 - (n-1) are full and contain capacity entries.
         for (size_t i = 0; i < pages.size() - 1; i++) {

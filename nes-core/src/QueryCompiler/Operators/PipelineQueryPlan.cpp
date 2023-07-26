@@ -50,7 +50,22 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const {
 }
 
 std::vector<OperatorPipelinePtr> const& PipelineQueryPlan::getPipelines() const { return pipelines; }
+
 QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
+
 QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
+std::string PipelineQueryPlan::toString() const {
+    std::ostringstream oss;
+    oss << "PipelineQueryPlan: " << std::endl <<
+        "- queryId: " << queryId <<
+        ", subPlanId: " << querySubPlanId <<
+        ", no. pipelines: " << pipelines.size() << std::endl;
+
+    for (auto& pipeline : pipelines) {
+        oss << "- pipeline: " << pipeline->toString() << std::endl;
+    }
+
+    return oss.str();
+}
 }// namespace NES::QueryCompilation

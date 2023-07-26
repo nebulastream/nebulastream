@@ -38,6 +38,18 @@ bool StreamWindow::compareExchangeStrong(StreamWindow::WindowState expectedState
     return windowState.compare_exchange_strong(expectedState, newWindowState);
 }
 
+bool StreamWindow::checkTriggeredDuringTerminate() {
+    std::lock_guard lock{triggerTerminationMutex};
+    if (windowState == StreamWindow::WindowState::ONCE_SEEN_DURING_TERMINATION) {
+        windowState = StreamWindow::WindowState::EMITTED_TO_PROBE;
+        return true;
+    } else if (windowState == StreamWindow::WindowState::BOTH_SIDES_FILLING) {
+        windowState = StreamWindow::WindowState::ONCE_SEEN_DURING_TERMINATION;
+    }
+
+    return false;
+}
+
 std::string StreamWindow::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "(windowState: " << magic_enum::enum_name(windowState.load()) << " windowStart: " << windowStart

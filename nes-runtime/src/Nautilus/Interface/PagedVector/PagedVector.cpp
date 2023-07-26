@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -55,7 +56,7 @@ uint64_t PagedVector::getNumberOfPages() { return pages.size(); }
 
 uint64_t PagedVector::getCapacityPerPage() const { return capacityPerPage; }
 
-const std::vector<int8_t*> PagedVector::getPages() { return pages; }
+std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
 void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) const {
     auto oldPosEntry = getEntry(oldPos);
@@ -96,5 +97,4 @@ void PagedVector::appendAllPages(PagedVector& other) {
 }
 
 uint64_t PagedVector::getPageSize() const { return pageSize; }
-
 }// namespace NES::Nautilus::Interface

@@ -352,8 +352,10 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
     auto numberOfRecordsRight = 1;
 
     std::vector<OriginId> originIds{0};
+    OriginId outputOriginId = 1;
     auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+        Operators::NLJOperatorHandler::create(originIds, outputOriginId, leftEntrySize, rightEntrySize, leftPageSize,
+                                              rightPageSize, windowSize);
 
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
@@ -399,8 +401,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     windowSize = 2000;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+    OriginId outputOriginId = 1;
+    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, outputOriginId, leftEntrySize, rightEntrySize,
+                                                                    leftPageSize, rightPageSize, windowSize);
 
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
@@ -445,8 +448,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     windowSize = 50;
 
     std::vector<OriginId> originIds{0};
-    auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+    OriginId outputOriginId = 1;
+    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, outputOriginId, leftEntrySize, rightEntrySize,
+                                                                    leftPageSize, rightPageSize, windowSize);
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldRight);
 
@@ -495,8 +499,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     const auto windowEndFieldName = joinSchema->get(1)->getName();
     const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
-    auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+    OriginId outputOriginId = 1;
+    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, outputOriginId, leftEntrySize, rightEntrySize,
+                                                                    leftPageSize, rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,
@@ -539,8 +544,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     const auto windowEndFieldName = joinSchema->get(1)->getName();
     const auto windowKeyFieldName = joinSchema->get(2)->getName();
 
-    auto nljOperatorHandler =
-        Operators::NLJOperatorHandler::create(originIds, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+    OriginId outputOriginId = 1;
+    auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds, outputOriginId, leftEntrySize, rightEntrySize,
+                                                                    leftPageSize, rightPageSize, windowSize);
     auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
                                                           leftSchema,
                                                           rightSchema,

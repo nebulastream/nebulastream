@@ -33,10 +33,12 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
         Testing::TestWithErrorHandling::SetUp();
-        auto joinStrategy = this->GetParam();
-        auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-        auto queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, joinStrategy);
+        const auto joinStrategy = this->GetParam();
+        const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        const auto queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+        const auto numberOfWorkerThreads = 1;
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode,
+                                                                         numberOfWorkerThreads, joinStrategy);
     }
 
     /* Will be called before a test is executed. */

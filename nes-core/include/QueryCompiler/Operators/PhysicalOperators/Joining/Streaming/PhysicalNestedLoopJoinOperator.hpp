@@ -39,9 +39,8 @@ class PhysicalNestedLoopJoinOperator {
     /**
      * @brief Constructor for PhysicalNestedLoopJoinOperator
      * @param operatorHandler
-     * @param id
      */
-    explicit PhysicalNestedLoopJoinOperator(Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler, OperatorId id);
+    explicit PhysicalNestedLoopJoinOperator(Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
 
   protected:
     Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler;

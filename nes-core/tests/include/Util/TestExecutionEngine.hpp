@@ -64,12 +64,14 @@ class TestSourceDescriptor;
  */
 class TestExecutionEngine {
   public:
-    TestExecutionEngine(
-        const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
-        const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
-        const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
+    explicit TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
+                                 const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode =
+                                     QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
+                                 const uint64_t numWorkerThreads = 1,
+                                 const QueryCompilation::StreamJoinStrategy& joinStrategy =
+                                     QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
-    std::shared_ptr<TestSink> createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
+    std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer = 1);
 
     template<class Type>
     auto createCollectSink(SchemaPtr outputSchema) {
@@ -85,7 +87,8 @@ class TestExecutionEngine {
 
     void emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer);
 
-    bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan);
+    bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                   Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
 
     Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer(const SchemaPtr& schema);
 

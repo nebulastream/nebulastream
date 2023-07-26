@@ -78,6 +78,12 @@ class PipelineQueryPlan {
      */
     [[nodiscard]] QuerySubPlanId getQuerySubPlanId() const;
 
+    /**
+     * @brief Creates a string representation of this PipelineQuery
+     * @return std::string
+     */
+    std::string toString() const;
+
   private:
     PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
     const QueryId queryId;

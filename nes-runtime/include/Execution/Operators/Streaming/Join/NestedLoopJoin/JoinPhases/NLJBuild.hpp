@@ -20,6 +20,8 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Util/StdInt.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 class TimeFunction;
@@ -40,9 +42,9 @@ class NLJBuild : public ExecutableOperator {
       public:
         LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
                                  const Value<MemRef>& windowReference,
-                                 const Nautilus::Interface::PagedVectorRef& pagedVectorRef)
-            : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(pagedVectorRef),
-              windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+                                 Nautilus::Interface::PagedVectorRef  pagedVectorRef)
+            : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(std::move(pagedVectorRef)),
+              windowStart(0_u64), windowEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> windowReference;
         Nautilus::Interface::PagedVectorRef pagedVectorRef;
@@ -60,8 +62,8 @@ class NLJBuild : public ExecutableOperator {
      */
     NLJBuild(uint64_t operatorHandlerIndex,
              const SchemaPtr& schema,
-             const std::string& joinFieldName,
-             const std::string& timeStampField,
+             std::string  joinFieldName,
+             std::string  timeStampField,
              bool isLeftSide,
              TimeFunctionPtr timeFunction);
 
@@ -82,6 +84,12 @@ class NLJBuild : public ExecutableOperator {
      * @param recordBuffer: RecordBuffer
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
+    /**
+     * @brief Triggers all windows that have been seen by both sides of the join
+     * @param executionCtx
+     */
+    void terminate(ExecutionContext& executionCtx) const override;
 
     /**
      * @brief Updates the localJoinState by getting the values via Nautilus::FunctionCalls()

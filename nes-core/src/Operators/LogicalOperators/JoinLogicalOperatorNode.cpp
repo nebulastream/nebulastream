@@ -171,7 +171,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
 bool JoinLogicalOperatorNode::equal(NodePtr const& other) const {
     if (other->instanceOf<JoinLogicalOperatorNode>()) {
         auto otherJoinNode = other->as<JoinLogicalOperatorNode>();
-        return this->joinDefinition->equals(*otherJoinNode->joinDefinition);
+        return this->joinDefinition->equals(*otherJoinNode->joinDefinition) && originId == otherJoinNode->originId;
     }
     return false;
 }

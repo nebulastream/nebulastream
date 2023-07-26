@@ -141,18 +141,21 @@ class CollectTestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink: emit buffer{}", inputBuffer.getNumberOfTuples());
+        NES_TRACE("TestSink: emit buffer with {} tuples", inputBuffer.getNumberOfTuples());
         auto typedResult = inputBuffer.getBuffer<Type>();
         for (size_t i = 0; i < inputBuffer.getNumberOfTuples(); i++) {
             results.emplace_back(typedResult[i]);
         }
+        NES_DEBUG("CollectTestSink saw now {} tuples!", results.size())
         cv.notify_all();
         return true;
     }
 
     std::vector<Type>& getResult() { return results; }
 
-    void setup() override{};
+    void setup() override {
+        running = true;
+    };
 
     std::string toString() const override { return "Test_Sink"; }
 
@@ -161,6 +164,10 @@ class CollectTestSink : public SinkMedium {
     void waitTillCompleted(size_t numberOfRecords) {
         std::unique_lock lock(m);
         cv.wait(lock, [&] {
+            if (!running) {
+                return true;
+            }
+            NES_DEBUG("Saw now {} tuples in waitTillCompleted and waits for {} tuples", this->results.size(), numberOfRecords);
             return this->results.size() >= numberOfRecords;
         });
     }
@@ -168,13 +175,14 @@ class CollectTestSink : public SinkMedium {
   public:
     void shutdown() override {
         // just in case someone is waiting. Check if they should be notified.
+        running = false;
         cv.notify_all();
     }
 
     mutable std::mutex m;
     std::condition_variable cv;
-    uint64_t expectedBuffer;
     std::vector<Type> results;
+    std::atomic<bool> running;
 };
 
 }// namespace NES

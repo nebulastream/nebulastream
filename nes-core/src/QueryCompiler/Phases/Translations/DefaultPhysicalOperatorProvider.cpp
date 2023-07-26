@@ -149,7 +149,7 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
 void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& queryPlan,
                                                          const LogicalOperatorNodePtr& operatorNode) {
 
-    // If a unary operator has more then one parent, we introduce a implicit multiplex operator before.
+    // If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
         insertMultiplexOperatorsAfter(operatorNode);
     }
@@ -371,8 +371,9 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
     const auto joinOperatorHandler = Operators::NLJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
-                                                                           joinOperator->getLeftInputSchema()->getSize(),
-                                                                           joinOperator->getRightInputSchema()->getSize(),
+                                                                           joinOperator->getOutputOriginIds()[0],
+                                                                           joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                                           joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
                                                                            Nautilus::Interface::PagedVector::PAGE_SIZE,
                                                                            Nautilus::Interface::PagedVector::PAGE_SIZE,
                                                                            streamJoinConfig.windowSize);
@@ -430,6 +431,7 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
     const auto logicalJoinOperatorNode = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
     const auto joinOperatorHandler =
         Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
+                                                         logicalJoinOperatorNode->getOutputOriginIds()[0],
                                                          streamJoinConfig.windowSize,
                                                          logicalJoinOperatorNode->getLeftInputSchema()->getSchemaSizeInBytes(),
                                                          logicalJoinOperatorNode->getRightInputSchema()->getSchemaSizeInBytes(),
