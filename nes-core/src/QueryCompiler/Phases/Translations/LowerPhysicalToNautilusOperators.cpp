@@ -13,6 +13,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
