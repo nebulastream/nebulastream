@@ -48,6 +48,10 @@ PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(
 
 std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalBatchJoinProbeOperator"; }
 
-OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
+OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, operatorHandler);
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators::Experimental

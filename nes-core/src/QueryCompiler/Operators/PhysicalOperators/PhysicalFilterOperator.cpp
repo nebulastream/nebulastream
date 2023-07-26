@@ -38,6 +38,10 @@ PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, Schema
 
 std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }
 
-OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
+OperatorNodePtr PhysicalFilterOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, getPredicate());
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators
