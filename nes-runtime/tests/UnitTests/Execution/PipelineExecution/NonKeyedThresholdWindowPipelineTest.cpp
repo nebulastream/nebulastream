@@ -43,7 +43,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class UnkeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NonKeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
@@ -53,14 +53,14 @@ class UnkeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public A
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("UnkeyedThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup UnkeyedThresholdWindowPipelineTest test class.");
+        NES::Logger::setupLogging("NonKeyedThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup UnkeyedThresholdWindowPipelineTest test case.");
+        NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -70,13 +70,13 @@ class UnkeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public A
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down UnkeyedThresholdWindowPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down NonKeyedThresholdWindowPipelineTest test class."); }
 };
 
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -157,7 +157,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -238,7 +238,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithCount) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Min aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -318,7 +318,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMin) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Max aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -398,7 +398,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithMax) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -476,7 +476,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 }
 
 // This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::FLOAT32);
@@ -556,7 +556,7 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
+TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::FLOAT32);
     scanSchema->addField("f2", BasicType::INT64);
@@ -635,9 +635,9 @@ TEST_P(UnkeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        UnkeyedThresholdWindowPipelineTest,
+                        NonKeyedThresholdWindowPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<UnkeyedThresholdWindowPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<NonKeyedThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 }// namespace NES::Runtime::Execution

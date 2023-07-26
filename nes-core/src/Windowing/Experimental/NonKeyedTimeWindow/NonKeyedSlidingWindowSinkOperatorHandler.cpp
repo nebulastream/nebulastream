@@ -39,26 +39,30 @@ void NonKeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::Pipelin
 void NonKeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                    Runtime::StateManagerPtr,
                                                    uint32_t) {
-    NES_DEBUG("start GlobalSlidingWindowSinkOperatorHandler");
+    NES_DEBUG("start NonKeyedSlidingWindowSinkOperatorHandler");
 }
 
 void NonKeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                   Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
+    NES_DEBUG("stop NonKeyedSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
 NonKeyedSlicePtr NonKeyedSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {
     return std::make_unique<NonKeyedSlice>(entrySize, windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
+
 std::vector<NonKeyedSliceSharedPtr>
 NonKeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
     NES_DEBUG("getSlicesForWindow {} - {}", windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
+
 Windowing::LogicalWindowDefinitionPtr NonKeyedSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
+
 GlobalSliceStore<NonKeyedSlice>& NonKeyedSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
+
 NonKeyedSlidingWindowSinkOperatorHandler::~NonKeyedSlidingWindowSinkOperatorHandler() {
-    NES_DEBUG("Destruct GlobalSlidingWindowSinkOperatorHandler");
+    NES_DEBUG("Destruct NonKeyedSlidingWindowSinkOperatorHandler");
 }
 
 void NonKeyedSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {

@@ -36,7 +36,7 @@ std::shared_ptr<PhysicalNonKeyedSlidingWindowSink> PhysicalNonKeyedSlidingWindow
                                                              keyedEventTimeWindowHandler);
 }
 
-std::string PhysicalNonKeyedSlidingWindowSink::toString() const { return "PhysicalGlobalSlidingWindowSink"; }
+std::string PhysicalNonKeyedSlidingWindowSink::toString() const { return "PhysicalNonKeyedSlidingWindowSink"; }
 
 OperatorNodePtr PhysicalNonKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
 

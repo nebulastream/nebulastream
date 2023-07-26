@@ -24,6 +24,7 @@ PhysicalNonKeyedSliceMergingOperator::PhysicalNonKeyedSliceMergingOperator(Opera
                                                                        Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       operatorHandler(operatorHandler), windowDefinition(windowDefinition) {}
+
 std::string PhysicalNonKeyedSliceMergingOperator::toString() const { return "PhysicalNonKeyedSliceMergingOperator"; }
 
 std::shared_ptr<PhysicalNonKeyedSliceMergingOperator>

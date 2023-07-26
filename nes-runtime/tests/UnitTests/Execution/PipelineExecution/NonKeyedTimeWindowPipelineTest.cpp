@@ -46,7 +46,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NonKeyedTimeWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -54,8 +54,8 @@ class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstrac
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Setup GlobalTimeWindowPipelineTest test class.");
+        NES::Logger::setupLogging("NonKeyedTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup Setup NonKeyedTimeWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -73,7 +73,7 @@ class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstrac
 /**
  * @brief Test running a pipeline containing a threshold window with a sum aggregation
  */
-TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
+TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -161,7 +161,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
 /**
  * @brief Test running a pipeline containing a threshold window with a sum aggregation
  */
-TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
+TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -263,9 +263,9 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
 }// namespace NES::Runtime::Execution
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        GlobalTimeWindowPipelineTest,
+                        NonKeyedTimeWindowPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<GlobalTimeWindowPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 }// namespace NES::Runtime::Execution
