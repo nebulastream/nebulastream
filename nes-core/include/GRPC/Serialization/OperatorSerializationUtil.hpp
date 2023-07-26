@@ -237,15 +237,14 @@ class OperatorSerializationUtil {
      * @param serializedOperator serialized instance of the operator
      */
     static void serializeLimitOperator(const LimitLogicalOperatorNode& limitLogicalOperator,
-                                                   SerializableOperator& serializedOperator);
+                                       SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a limit operator
      * @param LimitDetails
      * @return LimitLogicalOperatorNode of type LogicalUnaryOperatorNode
      */
-    static LogicalUnaryOperatorNodePtr
-    deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails);
+    static LogicalUnaryOperatorNodePtr deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails);
 
     /**
      * @brief Serializes the watermarkAssigner operator

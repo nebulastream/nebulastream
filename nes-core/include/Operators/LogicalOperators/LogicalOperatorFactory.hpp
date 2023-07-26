@@ -55,8 +55,7 @@ class LogicalOperatorFactory {
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorNodePtr createLimitOperator(const uint64_t limit,
-                                                            OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createLimitOperator(const uint64_t limit, OperatorId id = Util::getNextOperatorId());
 
     /**
     * @brief Create a new logical projection operator.

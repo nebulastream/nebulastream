@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Relational/Limit.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Relational/Limit.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -34,7 +34,7 @@ void Limit::execute(ExecutionContext& ctx, Record& record) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2) check if the limit was reached
-    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler)){
+    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler)) {
         child->execute(ctx, record);
     } else {
         // In the future we need here to somehow signal the parent or data source that we already finished

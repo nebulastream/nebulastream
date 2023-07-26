@@ -24,8 +24,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalLimitOperator : public PhysicalUnaryOperator {
   public:
     PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
     std::string toString() const override;
     OperatorNodePtr copy() override;

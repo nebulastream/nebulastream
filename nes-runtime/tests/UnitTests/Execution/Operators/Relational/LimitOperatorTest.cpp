@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <API/Schema.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
