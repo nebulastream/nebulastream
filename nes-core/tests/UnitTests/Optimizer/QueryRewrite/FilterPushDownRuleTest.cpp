@@ -101,10 +101,8 @@ TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithoutRename) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .project(Attribute("value"))
-                      .filter(Attribute("id") < 45)
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").project(Attribute("value")).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -173,8 +171,8 @@ TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithRename) {
     ++itr;
     EXPECT_TRUE(filterOperator->equal((*itr)));
     FilterLogicalOperatorNodePtr filterLogicalOperatorNodePtr = (*itr)->as<FilterLogicalOperatorNode>();
-    bool attributeChangedName = Optimizer::FilterPushDownRule::isFieldUsedInFilterPredicate(
-        filterLogicalOperatorNodePtr, "value");
+    bool attributeChangedName =
+        Optimizer::FilterPushDownRule::isFieldUsedInFilterPredicate(filterLogicalOperatorNodePtr, "value");
     EXPECT_TRUE(attributeChangedName);
 
     ++itr;
