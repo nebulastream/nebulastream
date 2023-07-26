@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.162](https://github.com/nebulastream/nebulastream/tree/v0.5.162) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.161...v0.5.162)
+
+**Implemented enhancements:**
+
+- \[TASK\] Change ASP Tests to new Default Min and Max AggregationValues [\#4019](https://github.com/nebulastream/nebulastream/issues/4019)
+- \[TASK\] Port MultiThreadedTest to Nautilus [\#3909](https://github.com/nebulastream/nebulastream/issues/3909)
+
 ## [v0.5.161](https://github.com/nebulastream/nebulastream/tree/v0.5.161) (2023-07-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.160...v0.5.161)
