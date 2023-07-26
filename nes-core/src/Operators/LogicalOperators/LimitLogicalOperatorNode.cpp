@@ -24,8 +24,6 @@ LimitLogicalOperatorNode::LimitLogicalOperatorNode(uint64_t limit, uint64_t id) 
 
 uint64_t LimitLogicalOperatorNode::getLimit() const { return limit; }
 
-void LimitLogicalOperatorNode::setLimit(uint64_t limit) { this->limit = limit; }
-
 bool LimitLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<LimitLogicalOperatorNode>()->getId() == id;
 }

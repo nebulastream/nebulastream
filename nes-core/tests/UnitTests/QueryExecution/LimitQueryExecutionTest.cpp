@@ -29,8 +29,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class LimitQueryExecutionTest : public Testing::TestWithErrorHandling,
-                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+class LimitQueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LimitQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -39,7 +38,7 @@ class LimitQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        auto queryCompiler = this->GetParam();
+        auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
@@ -63,7 +62,7 @@ class LimitQueryExecutionTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-TEST_P(LimitQueryExecutionTest, limitQuery) {
+TEST_F(LimitQueryExecutionTest, limitQuery) {
     auto constexpr LIMIT = 10;
     auto constexpr TUPLES = 20;
 
@@ -89,10 +88,3 @@ TEST_P(LimitQueryExecutionTest, limitQuery) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-INSTANTIATE_TEST_CASE_P(testLimitQueries,
-                        LimitQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<LimitQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

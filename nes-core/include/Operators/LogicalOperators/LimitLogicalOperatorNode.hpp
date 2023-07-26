@@ -34,12 +34,6 @@ class LimitLogicalOperatorNode : public LogicalUnaryOperatorNode {
     uint64_t getLimit() const;
 
     /**
-     * @brief changes the limit of this operator
-     * @param limit new limit
-     */
-    void setLimit(uint64_t limit);
-
-    /**
      * @brief check if two operators have the same limit predicate.
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
