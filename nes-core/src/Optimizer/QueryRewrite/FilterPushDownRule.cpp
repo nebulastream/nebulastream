@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -158,7 +158,9 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
 
-        renameFieldAccessExpressionNodes(newPredicate, joinDefinition->getLeftJoinKey()->getFieldName(), joinDefinition->getRightJoinKey()->getFieldName());
+        renameFieldAccessExpressionNodes(newPredicate,
+                                         joinDefinition->getLeftJoinKey()->getFieldName(),
+                                         joinDefinition->getRightJoinKey()->getFieldName());
 
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
@@ -175,7 +177,8 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
-        renameFieldAccessExpressionNodes(newPredicate, joinDefinition->getRightJoinKey()->getFieldName(),
+        renameFieldAccessExpressionNodes(newPredicate,
+                                         joinDefinition->getRightJoinKey()->getFieldName(),
                                          joinDefinition->getLeftJoinKey()->getFieldName());
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
@@ -188,7 +191,6 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
     }
     return false;
 }
-
 
 void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator,
                                             NodePtr mapOperator,
@@ -256,9 +258,8 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorN
 void FilterPushDownRule::pushBelowProjection(FilterLogicalOperatorNodePtr filterOperator, NodePtr projectionOperator) {
     renameFilterAttributesByExpressionNodes(filterOperator,
                                             projectionOperator->as<ProjectionLogicalOperatorNode>()->getExpressions());
-    pushDownFilter(filterOperator, projectionOperator -> getChildren()[0], projectionOperator);
+    pushDownFilter(filterOperator, projectionOperator->getChildren()[0], projectionOperator);
 }
-
 
 void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator,
                                                      NodePtr childOperator,
@@ -305,7 +306,8 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
     }
 }
 
-std::vector<FieldAccessExpressionNodePtr> FilterPushDownRule::getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate) {
+std::vector<FieldAccessExpressionNodePtr>
+FilterPushDownRule::getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate) {
     std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions;
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
@@ -319,7 +321,6 @@ std::vector<FieldAccessExpressionNodePtr> FilterPushDownRule::getFilterAccessExp
     }
     return filterAccessExpressions;
 }
-
 
 void FilterPushDownRule::renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode,
                                                           const std::string toReplace,
@@ -336,16 +337,16 @@ void FilterPushDownRule::renameFieldAccessExpressionNodes(ExpressionNodePtr expr
 }
 
 void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLogicalOperatorNodePtr& filterOperator,
-                                                                           const std::vector<ExpressionNodePtr>& expressionNodes) {
+                                                                 const std::vector<ExpressionNodePtr>& expressionNodes) {
     ExpressionNodePtr predicateCopy = filterOperator->getPredicate()->copy();
     NES_TRACE("FilterPushDownRule: Iterate over all expressions in the projection operator");
 
     for (auto& expressionNode : expressionNodes) {
         NES_TRACE("FilterPushDownRule: Check if the expression node is of type FieldRenameExpressionNode")
-        if(expressionNode -> instanceOf<FieldRenameExpressionNode>()) {
-            FieldRenameExpressionNodePtr fieldRenameExpressionNode = expressionNode -> as<FieldRenameExpressionNode>();
-            std::string newFieldName = fieldRenameExpressionNode -> getNewFieldName();
-            std::string originalFieldName = fieldRenameExpressionNode -> getOriginalField() -> getFieldName();
+        if (expressionNode->instanceOf<FieldRenameExpressionNode>()) {
+            FieldRenameExpressionNodePtr fieldRenameExpressionNode = expressionNode->as<FieldRenameExpressionNode>();
+            std::string newFieldName = fieldRenameExpressionNode->getNewFieldName();
+            std::string originalFieldName = fieldRenameExpressionNode->getOriginalField()->getFieldName();
             renameFieldAccessExpressionNodes(predicateCopy, newFieldName, originalFieldName);
         }
     }
@@ -356,9 +357,10 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLog
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
                                                       const std::string& fieldName) {
     std::vector<FieldAccessExpressionNodePtr> filterAttributeNames = getFilterAccessExpressions(filterOperator->getPredicate());
-    return std::any_of(filterAttributeNames.begin(), filterAttributeNames.end(),
-                       [&](const FieldAccessExpressionNodePtr & filterAttributeName) {
-                           return filterAttributeName -> getFieldName() == fieldName;
+    return std::any_of(filterAttributeNames.begin(),
+                       filterAttributeNames.end(),
+                       [&](const FieldAccessExpressionNodePtr& filterAttributeName) {
+                           return filterAttributeName->getFieldName() == fieldName;
                        });
 }
 
