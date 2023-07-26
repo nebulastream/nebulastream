@@ -460,4 +460,4 @@ void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex
 };// namespace NES::Runtime::Execution::Operators
 
 #endif//ENABLE_JNI
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_

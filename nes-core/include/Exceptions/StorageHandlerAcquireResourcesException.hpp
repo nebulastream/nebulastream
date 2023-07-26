@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP
-#define NES_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 
 namespace NES::Exceptions {
@@ -25,4 +25,4 @@ class StorageHandlerAcquireResourcesException : public RequestExecutionException
 };
 }// namespace NES::Exceptions
 
-#endif//NES_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_

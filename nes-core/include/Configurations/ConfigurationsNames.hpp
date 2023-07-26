@@ -210,4 +210,4 @@ const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
-#endif// NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

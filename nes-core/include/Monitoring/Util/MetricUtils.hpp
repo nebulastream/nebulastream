@@ -86,4 +86,4 @@ class MetricUtils {
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

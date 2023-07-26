@@ -50,4 +50,4 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_COUNTAGGREGATIONDESCRIPTOR_HPP_

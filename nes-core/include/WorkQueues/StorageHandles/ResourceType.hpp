@@ -39,4 +39,4 @@ const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
                                                     ResourceType::UdfCatalog};
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_
+#endif // NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_

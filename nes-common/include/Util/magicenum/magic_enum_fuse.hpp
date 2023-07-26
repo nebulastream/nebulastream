@@ -89,4 +89,4 @@ template<typename... Es>
 }// namespace magic_enum
 
 // clang-format on
-#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FUSE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FUSE_HPP_

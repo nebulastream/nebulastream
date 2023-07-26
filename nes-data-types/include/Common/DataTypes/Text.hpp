@@ -53,4 +53,4 @@ class Text final : public DataType {
 };
 
 }// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXT_HPP_

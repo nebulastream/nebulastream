@@ -58,4 +58,4 @@ class alignas(64) BloomFilter {
 };
 
 }// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_

@@ -93,4 +93,4 @@ class QueryRewritePhase {
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_
+#endif // NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_

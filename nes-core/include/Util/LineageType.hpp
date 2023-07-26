@@ -25,4 +25,4 @@ enum class LineageType : uint8_t {
     INVALID = 4
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_

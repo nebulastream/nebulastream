@@ -64,4 +64,4 @@ class Waypoint {
 };
 }// namespace NES::Spatial::DataTypes::Experimental
 
-#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_

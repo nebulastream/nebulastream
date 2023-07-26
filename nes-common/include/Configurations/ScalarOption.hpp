@@ -145,4 +145,4 @@ using BoolOption = ScalarOption<bool>;
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
+#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
