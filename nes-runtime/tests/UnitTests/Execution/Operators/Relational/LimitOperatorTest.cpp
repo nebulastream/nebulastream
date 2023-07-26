@@ -65,4 +65,31 @@ TEST_F(LimitOperatorTest, TestLimit) {
     ASSERT_EQ(collector->records.size(), LIMIT);
 }
 
+/**
+ * @brief Tests with a limit of 0
+ */
+TEST_F(LimitOperatorTest, TestLimitZero) {
+    constexpr uint64_t LIMIT = 0;
+    constexpr uint64_t TUPLES = 20;
+
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<WorkerContext>(0, bm, 100);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+
+    auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+
+    auto limitOperator = Limit(0);
+    auto collector = std::make_shared<CollectOperator>();
+    limitOperator.setChild(collector);
+    for (uint64_t i = 0; i < TUPLES; ++i) {
+        auto record = Record({{"f1", Value<>(0)}});
+        limitOperator.execute(ctx, record);
+    }
+
+    ASSERT_EQ(collector->records.size(), LIMIT);
+}
+
 }// namespace NES::Runtime::Execution::Operators

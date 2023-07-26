@@ -42,7 +42,7 @@ void Limit::execute(ExecutionContext& ctx, Record& record) const {
     if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler)){
         child->execute(ctx, record);
     } else {
-        // TODO: we need here to somehow signal the parent that we already finished. Also unsure if returning is sufficient
+        // In the future we need here to somehow signal the parent or data source that we already finished
         return;
     }
 }
