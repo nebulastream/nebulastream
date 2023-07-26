@@ -642,16 +642,23 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
                                   const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager);
 
-/**
- * @brief Creates multiple tuple buffers from the csv file
- * @param csvFileName
- * @param schema
- * @param bufferManager
- * @return Vector of TupleBuffer
- */
-std::vector<Runtime::TupleBuffer>
-fillBufferFromCsv(const std::string& csvFileName, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager);
+std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
+                                                    const SchemaPtr& schema,
+                                                    const Runtime::BufferManagerPtr& bufferManager,
+                                                    uint64_t numTuplesPerBuffer = 0,
+                                                    const std::string& delimiter = ",");
 
+std::vector<Runtime::TupleBuffer> fillBufferFromStream(std::istream& istream,
+                                                       const SchemaPtr& schema,
+                                                       const Runtime::BufferManagerPtr& bufferManager,
+                                                       uint64_t numTuplesPerBuffer = 0,
+                                                       const std::string& delimiter = ",");
+
+/**
+ * @brief Retrieves all physical types of the schema
+ * @param schema
+ * @return Vector of all physical types
+ */
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 
 };// namespace TestUtils

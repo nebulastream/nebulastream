@@ -256,6 +256,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
         }
 
         switch (terminationType) {
+            case QueryTerminationType::Graceful:
             case QueryTerminationType::HardStop: {
                 for (auto querySubPlanId : querySubPlanIds) {
                     try {
@@ -288,7 +289,6 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                     }
                 }
             }
-            case QueryTerminationType::Graceful:
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
         }
         return true;

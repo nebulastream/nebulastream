@@ -14,6 +14,9 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 namespace NES {
@@ -63,6 +66,12 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, 
 void ConsoleDumpHandler::dump(const NodePtr node) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
 void ConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
-void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
-void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
+
+void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan) {
+    out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
+}
+
+void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) {
+    out << "Dumping pipelineQueryPlan: " << pipelineQueryPlan->toString() << std::endl;
+}
 }// namespace NES

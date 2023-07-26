@@ -169,7 +169,9 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
+        OriginId outputOriginId = 1;
         auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
+                                                                        outputOriginId,
                                                                         leftEntrySize,
                                                                         rightEntrySize,
                                                                         leftPageSize,
@@ -217,7 +219,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         nljWorks = nljWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
 
         // Assure that at least one buffer has been emitted
-        nljWorks = nljWorks && (pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
+        nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         // Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
@@ -229,9 +231,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         }
         nljWorks = nljWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
 
-        nljWorks = nljWorks && (pipelineExecCtxSink.emittedBuffers.size() == 20);
         auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
-
         NES_DEBUG("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 

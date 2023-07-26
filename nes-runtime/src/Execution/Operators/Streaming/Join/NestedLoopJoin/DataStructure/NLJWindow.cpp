@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -37,7 +38,8 @@ NLJWindow::NLJWindow(uint64_t windowStart,
         rightTuples.emplace_back(
             std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), rightEntrySize, rightPageSize));
     }
-    NES_DEBUG("Created NLJWindow {}", NLJWindow::toString());
+    NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
+              NLJWindow::toString(), numberOfWorker, leftTuples.size(), rightTuples.size());
 }
 
 uint64_t NLJWindow::getNumberOfTuplesLeft() {
@@ -58,28 +60,40 @@ uint64_t NLJWindow::getNumberOfTuplesRight() {
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "NLJWindow(windowStart: " << windowStart << " windowEnd: " << windowEnd
+    basicOstringstream << "(windowStart: " << windowStart << " windowEnd: " << windowEnd
                        << " windowState: " << std::string(magic_enum::enum_name<WindowState>(windowState))
                        << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
     return basicOstringstream.str();
 }
 
-void* NLJWindow::getPagedVectorRefLeft(uint64_t workerId) { return leftTuples[workerId % leftTuples.size()].get(); }
+void* NLJWindow::getPagedVectorRefLeft(uint64_t workerId) {
+    const auto pos = workerId % leftTuples.size();
+    return leftTuples[pos].get();
+}
 
-void* NLJWindow::getPagedVectorRefRight(uint64_t workerId) { return rightTuples[workerId % rightTuples.size()].get(); }
+void* NLJWindow::getPagedVectorRefRight(uint64_t workerId) {
+    const auto pos = workerId % rightTuples.size();
+    return rightTuples[pos].get();
+}
 
 void NLJWindow::combinePagedVectors() {
-    // Appending all PagedVectors for the left join side
-    for (uint64_t i = 1; i < leftTuples.size(); ++i) {
-        leftTuples[0]->appendAllPages(*leftTuples[i]);
-        leftTuples[i].release();
+    NES_TRACE("Combining pagedVectors for window: {}", this->toString());
+
+    // Appending all PagedVectors for the left join side and removing all items except the first one
+    if (leftTuples.size() > 1) {
+        for (uint64_t i = 1; i < leftTuples.size(); ++i) {
+            leftTuples[0]->appendAllPages(*leftTuples[i]);
+        }
+        leftTuples.erase(leftTuples.begin() + 1, leftTuples.end());
     }
 
-    // Appending all PagedVectors for the right join side
-    for (uint64_t i = 1; i < rightTuples.size(); ++i) {
-        rightTuples[0]->appendAllPages(*rightTuples[i]);
-        rightTuples[i].release();
+    // Appending all PagedVectors for the right join side and removing all items except the first one
+    if (rightTuples.size() > 1) {
+        for (uint64_t i = 1; i < rightTuples.size(); ++i) {
+            rightTuples[0]->appendAllPages(*rightTuples[i]);
+        }
+        rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
     }
 }
 

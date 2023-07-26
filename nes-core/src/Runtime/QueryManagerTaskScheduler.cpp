@@ -375,7 +375,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
               queryExecutionPlanId,
               blocking,
-              int(message.getType()));
+              magic_enum::enum_name(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");

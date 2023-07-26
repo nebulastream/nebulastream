@@ -126,7 +126,7 @@ uint64_t getOriginIdProxyForHashJoin(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getOperatorId();
+    return opHandler->getOutputOriginId();
 }
 
 uint64_t getNumberOfPagesProxyForHashJoin(void* hashWindowPtr, bool isLeftSide, uint64_t bucketPos) {

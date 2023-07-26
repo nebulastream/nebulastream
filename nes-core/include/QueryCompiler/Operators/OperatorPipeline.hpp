@@ -146,6 +146,12 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      */
     bool isOperatorPipeline() const;
 
+    /**
+     * @brief Creates a string representation of this OperatorPipeline
+     * @return std::string
+     */
+    std::string toString() const;
+
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);
 

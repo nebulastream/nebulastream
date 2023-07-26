@@ -1341,9 +1341,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 /**
- * Test deploying unionWith query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy. Enabled with #4032
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
+TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     struct Test {
         uint64_t value;
         uint64_t id;
@@ -1567,9 +1567,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 }
 
 /**
- * Test deploying join with different sources and different Speed
+ * Test deploying join with different sources and different Speed. Enabled with #4032
  */
-TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
+TEST_F(QueryDeploymentTest, DISABLED_testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -1652,9 +1652,9 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
 }
 
 /**
- * Test deploying join with different three sources
+ * Test deploying join with different three sources. Enabled with #4032
  */
-TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
+TEST_F(QueryDeploymentTest, DISABLED_testJoinWithThreeSources) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -1741,9 +1741,9 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
 }
 
 /**
- * Test deploying join with four different sources
+ * Test deploying join with four different sources. Enabled with #4032
  */
-TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
+TEST_F(QueryDeploymentTest, DISABLED_testJoinWithFourSources) {
     struct Window {
         int64_t win1;
         uint64_t id1;

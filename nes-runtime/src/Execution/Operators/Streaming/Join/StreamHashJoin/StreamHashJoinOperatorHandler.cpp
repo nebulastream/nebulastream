@@ -26,7 +26,8 @@
 #include <atomic>
 namespace NES::Runtime::Execution::Operators {
 
-StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<OriginId>& origins,
+StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                                                             const OriginId outputOriginId,
                                                              size_t windowSize,
                                                              size_t sizeOfRecordLeft,
                                                              size_t sizeOfRecordRight,
@@ -35,7 +36,7 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<O
                                                              size_t preAllocPageSizeCnt,
                                                              size_t numPartitions,
                                                              QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamJoinOperatorHandler(origins, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
@@ -58,7 +59,7 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
         //get current window
         auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
         NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
-        auto hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
+        auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(currentWindow->get());
         auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(/* isLeftSide=*/true);
         auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(/* isLeftSide=*/false);
 
@@ -92,14 +93,15 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
 uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, bool isLeftSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        auto hashWindow = static_cast<StreamHashJoinWindow*>(window.value().get());
+        auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(window.value().get());
         return hashWindow->getNumberOfTuplesOfWorker(isLeftSide, workerId);
     }
 
     return -1;
 }
 
-StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& origins,
+StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& inputOrigins,
+                                                                       const OriginId outputOriginId,
                                                                        size_t windowSize,
                                                                        size_t sizeOfRecordLeft,
                                                                        size_t sizeOfRecordRight,
@@ -109,7 +111,8 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std
                                                                        size_t numPartitions,
                                                                        QueryCompilation::StreamJoinStrategy joinStrategy) {
 
-    return std::make_shared<StreamHashJoinOperatorHandler>(origins,
+    return std::make_shared<StreamHashJoinOperatorHandler>(inputOrigins,
+                                                           outputOriginId,
                                                            windowSize,
                                                            sizeOfRecordLeft,
                                                            sizeOfRecordRight,

@@ -22,13 +22,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
+NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                                       const OriginId outputOriginId,
                                        uint64_t sizeOfTupleInByteLeft,
                                        uint64_t sizeOfTupleInByteRight,
                                        uint64_t sizePageLeft,
                                        uint64_t sizePageRight,
                                        uint64_t windowSize)
-    : StreamJoinOperatorHandler(origins,
+    : StreamJoinOperatorHandler(inputOrigins,
+                                outputOriginId,
                                 windowSize,
                                 QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                 sizeOfTupleInByteLeft,
@@ -36,27 +38,29 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
       leftPageSize(sizePageLeft), rightPageSize(sizePageRight) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG("start HashJoinOperatorHandler");
+    NES_DEBUG("start NLJOperatorHandler");
 }
 
 uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        NLJWindow* nljWindow = static_cast<NLJWindow*>(window.value().get());
+        auto& windowVal = window.value();
         if (isLeftSide) {
-            return nljWindow->getNumberOfTuplesLeft();
+            return windowVal->getNumberOfTuplesLeft();
         } else {
-            return nljWindow->getNumberOfTuplesRight();
+            return windowVal->getNumberOfTuplesRight();
         }
     }
 
     return -1;
 }
 
-void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop HashJoinOperatorHandler"); }
+void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
+    NES_DEBUG("stop NLJOperatorHandler");
+}
 
 void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
-                                        WorkerContext* workerCtx,
+                                        WorkerContext*,
                                         PipelineExecutionContext* pipelineCtx) {
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
         auto nljWindow = getWindowByWindowIdentifier(windowIdentifier);
@@ -67,22 +71,24 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersT
         }
         std::dynamic_pointer_cast<NLJWindow>(nljWindow.value())->combinePagedVectors();
 
-        auto buffer = workerCtx->allocateTupleBuffer();
+        auto buffer = pipelineCtx->getBufferManager()->getBufferBlocking();
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
         buffer.setNumberOfTuples(1);
         pipelineCtx->dispatchBuffer(buffer);
-        NES_TRACE("Emitted windowIdentifier {}", windowIdentifier);
+        NES_TRACE("Emitted windowIdentifier for window {}", windowIdentifier, nljWindow.value()->toString());
     }
 }
 
-NLJOperatorHandlerPtr NLJOperatorHandler::create(const std::vector<OriginId>& origins,
+NLJOperatorHandlerPtr NLJOperatorHandler::create(const std::vector<OriginId>& inputOrigins,
+                                                 const OriginId outputOriginId,
                                                  const uint64_t sizeOfTupleInByteLeft,
                                                  const uint64_t sizeOfTupleInByteRight,
                                                  const uint64_t sizePageLeft,
                                                  const uint64_t rightPageSize,
                                                  const size_t windowSize) {
 
-    return std::make_shared<NLJOperatorHandler>(origins,
+    return std::make_shared<NLJOperatorHandler>(inputOrigins,
+                                                outputOriginId,
                                                 sizeOfTupleInByteLeft,
                                                 sizeOfTupleInByteRight,
                                                 sizePageLeft,
@@ -91,10 +97,10 @@ NLJOperatorHandlerPtr NLJOperatorHandler::create(const std::vector<OriginId>& or
 }
 
 StreamWindow* NLJOperatorHandler::getCurrentWindowOrCreate() {
-    if (windows.empty()) {
+    if (windows.rlock()->empty()) {
         return getWindowByTimestampOrCreateIt(0).get();
     }
-    return windows.back().get();
+    return windows.rlock()->back().get();
 }
 
 uint64_t NLJOperatorHandler::getLeftPageSize() const { return leftPageSize; }
@@ -122,5 +128,4 @@ uint64_t getNLJWindowEndProxy(void* ptrNljWindow) {
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
     return nljWindow->getWindowEnd();
 }
-
 }// namespace NES::Runtime::Execution::Operators

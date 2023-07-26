@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -54,12 +55,13 @@ QueryCompilation::QueryCompilationResultPtr
 NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
     NES_INFO("Compile Query with Nautilus");
     try {
-        Timer timer("DefaultQueryCompiler");
+        Timer timer("NautilusQueryCompiler");
         auto queryId = request->getQueryPlan()->getQueryId();
         auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
         auto query = std::to_string(queryId) + "-" + std::to_string(subPlanId);
         // create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         timer.start();
         NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);

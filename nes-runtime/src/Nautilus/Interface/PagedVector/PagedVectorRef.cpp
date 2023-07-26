@@ -38,8 +38,7 @@ Value<UInt64> PagedVectorRef::getCapacityPerPage() const {
 
 Value<MemRef> PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
-    Value<UInt64> capacityPerPage = getCapacityPerPage();
-    if (getNumberOfEntries() >= capacityPerPage) {
+    if (getNumberOfEntries() >= getCapacityPerPage()) {
         FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.

@@ -29,7 +29,8 @@ namespace NES::Runtime::Execution {
  */
 class StreamWindow {
   public:
-    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_SINK };
+    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE,
+                                       ONCE_SEEN_DURING_TERMINATION };
 
     /**
      * @brief Constructor for creating a window
@@ -56,13 +57,13 @@ class StreamWindow {
      * @brief Getter for the start ts of the window
      * @return uint64_t
      */
-    uint64_t getWindowStart() const;
+    [[nodiscard]] uint64_t getWindowStart() const;
 
     /**
      * @brief Getter for the end ts of the window
      * @return uint64_t
      */
-    uint64_t getWindowEnd() const;
+    [[nodiscard]] uint64_t getWindowEnd() const;
 
     /**
      * @brief Returns the number of tuples in this window for the left side
@@ -91,17 +92,28 @@ class StreamWindow {
     bool compareExchangeStrong(WindowState expectedState, WindowState newWindowState);
 
     /**
+     * @brief Checks if this window should be triggered during termination. During query termination, we should only trigger a
+     * window if it has been seen from all sides (left and right)
+     * @return
+     */
+    bool checkTriggeredDuringTerminate();
+
+    /**
      * @brief Creates a string representation of this window
      * @return String
      */
     virtual std::string toString() = 0;
 
+    /**
+     * @brief Virtual deconstructor
+     */
     virtual ~StreamWindow() = default;
 
   protected:
     std::atomic<WindowState> windowState;
     uint64_t windowStart;
     uint64_t windowEnd;
+    std::mutex triggerTerminationMutex;
 };
 
 using StreamWindowPtr = std::shared_ptr<StreamWindow>;

@@ -783,30 +783,39 @@ void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::D
 
 std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string& csvFileName,
                                                                const SchemaPtr& schema,
-                                                               const Runtime::BufferManagerPtr& bufferManager) {
+                                                               const Runtime::BufferManagerPtr& bufferManager,
+                                                               uint64_t numTuplesPerBuffer,
+                                                               const std::string& delimiter) {
     std::vector<Runtime::TupleBuffer> allBuffers;
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
     NES_DEBUG("read file={}", fullPath);
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
     std::ifstream inputFile(fullPath);
-    std::istream_iterator<std::string> beginIt(inputFile);
-    std::istream_iterator<std::string> endIt;
-    auto tupleCount = 0_u64;
+    return fillBufferFromStream(inputFile, schema, bufferManager, numTuplesPerBuffer, delimiter);
+}
 
+std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& istream,
+                                                                  const SchemaPtr& schema,
+                                                                  const Runtime::BufferManagerPtr& bufferManager,
+                                                                  uint64_t numTuplesPerBuffer,
+                                                                  const std::string& delimiter) {
+
+
+    std::vector<Runtime::TupleBuffer> allBuffers;
+    auto tupleCount = 0_u64;
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
 
-    for (auto it = beginIt; it != endIt; ++it) {
-        const std::string& line = *it;
+    std::string line;
+    while (std::getline(istream, line)) {
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
         parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
         tupleCount++;
 
-        if (tupleCount >= maxTuplePerBuffer) {
+        if (tupleCount >= numTuplesPerBuffer) {
             tupleBuffer.setNumberOfTuples(tupleCount);
             allBuffers.emplace_back(tupleBuffer);
             tupleCount = 0;

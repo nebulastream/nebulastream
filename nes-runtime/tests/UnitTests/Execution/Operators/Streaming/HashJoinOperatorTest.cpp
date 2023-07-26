@@ -93,10 +93,12 @@ struct HashJoinBuildHelper {
 };
 
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
+    OriginId outputOriginId = 1;
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler =
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
+                                                         outputOriginId,
                                                          buildHelper.windowSize,
                                                          buildHelper.schema->getSchemaSizeInBytes(),
                                                          buildHelper.schema->getSchemaSizeInBytes(),
@@ -255,8 +257,10 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
+    OriginId outputOriginId = 1;
     auto hashJoinOpHandler =
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1, 2}),
+                                                         outputOriginId,
                                                          hashJoinProbeHelper.windowSize,
                                                          hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
                                                          hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),

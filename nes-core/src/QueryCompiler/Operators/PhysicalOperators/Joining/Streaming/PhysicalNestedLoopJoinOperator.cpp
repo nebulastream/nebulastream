@@ -17,10 +17,8 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalNestedLoopJoinOperator::PhysicalNestedLoopJoinOperator(
-    Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler,
-    OperatorId id)
+    Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler)
     : operatorHandler(std::move(operatorHandler)) {
-    this->operatorHandler->addOperatorId(id);
 }
 
 Runtime::Execution::Operators::NLJOperatorHandlerPtr PhysicalNestedLoopJoinOperator::getOperatorHandler() const {

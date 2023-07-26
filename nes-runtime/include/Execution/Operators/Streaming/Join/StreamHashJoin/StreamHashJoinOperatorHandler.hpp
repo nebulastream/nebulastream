@@ -49,7 +49,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
   public:
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
-     * @param origins
+     * @param inputOrigins
+     * @param outputOriginId
      * @param windowSize
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
@@ -59,7 +60,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @param numPartitions
      * @param joinStrategy
      */
-    explicit StreamHashJoinOperatorHandler(const std::vector<OriginId>& origins,
+    explicit StreamHashJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                                           const OriginId outputOriginId,
                                            size_t windowSize,
                                            size_t sizeOfRecordLeft,
                                            size_t sizeOfRecordRight,
@@ -71,19 +73,21 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
-    * @param origins
-    * @param windowSize
-    * @param sizeOfRecordLeft
-    * @param sizeOfRecordRight
-    * @param totalSizeForDataStructures
-    * @param pageSize
-    * @param preAllocPageSizeCnt
-    * @param numPartitions
-    * @param joinStrategy
+     * @param inputOrigins
+     * @param outputOriginId
+     * @param windowSize
+     * @param sizeOfRecordLeft
+     * @param sizeOfRecordRight
+     * @param totalSizeForDataStructures
+     * @param pageSize
+     * @param preAllocPageSizeCnt
+     * @param numPartitions
+     * @param joinStrategy
      * @return StreamJoinOperatorHandlerPtr
      */
 
-    static StreamHashJoinOperatorHandlerPtr create(const std::vector<OriginId>& origins,
+    static StreamHashJoinOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
+                                                   const OriginId outputOriginId,
                                                    size_t windowSize,
                                                    size_t sizeOfRecordLeft,
                                                    size_t sizeOfRecordRight,

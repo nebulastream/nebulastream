@@ -407,7 +407,7 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
             NES_DEBUG("soft end-of-stream Exec Pipeline opId={} reconfType={} queryExecutionPlanId={} "
                       "threadPool->getNumberOfThreads()={} qep {}",
                       sourceId,
-                      int(ReconfigurationType::SoftEndOfStream),
+                      magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
                       executablePipeline->get()->getQuerySubPlanId(),
                       threadPool->getNumberOfThreads(),
                       executablePipeline->get()->getQueryId());
@@ -420,7 +420,7 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
             NES_DEBUG(
                 "soft end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
                 sourceId,
-                int(ReconfigurationType::SoftEndOfStream),
+                magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
                 sink->get()->getParentPlanId(),
                 threadPool->getNumberOfThreads(),
                 sink->get()->getQueryId());
