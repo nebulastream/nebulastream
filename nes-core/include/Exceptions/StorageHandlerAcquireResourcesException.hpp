@@ -25,4 +25,4 @@ class StorageHandlerAcquireResourcesException : public RequestExecutionException
 };
 }// namespace NES::Exceptions
 
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_STORAGEHANDLERACQUIRERESOURCESEXCEPTION_HPP_

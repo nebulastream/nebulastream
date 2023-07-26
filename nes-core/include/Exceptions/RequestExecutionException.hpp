@@ -42,4 +42,4 @@ class RequestExecutionException : public std::runtime_error {
 };
 }// namespace NES::Exceptions
 
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

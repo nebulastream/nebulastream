@@ -53,4 +53,4 @@ enum class QueryState : uint8_t {
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_UTIL_QUERYSTATE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_QUERYSTATE_HPP_

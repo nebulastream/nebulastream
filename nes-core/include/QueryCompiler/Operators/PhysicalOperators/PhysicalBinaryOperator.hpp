@@ -29,4 +29,4 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperatorNod
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_

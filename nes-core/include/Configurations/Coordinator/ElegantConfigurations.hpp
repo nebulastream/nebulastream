@@ -50,4 +50,4 @@ class ElegantConfigurations : public BaseConfiguration {
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
 };
 }// namespace NES::Configurations
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_

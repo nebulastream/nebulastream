@@ -352,4 +352,4 @@ class JoinHandler : public AbstractJoinHandler {
 };
 }// namespace NES::Join
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_

@@ -74,4 +74,4 @@ class BottomUpStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_
+#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_

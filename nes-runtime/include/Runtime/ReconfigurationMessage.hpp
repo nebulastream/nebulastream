@@ -192,4 +192,4 @@ class ReconfigurationMessage {
     std::any userdata;
 };
 }// namespace NES::Runtime
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_

@@ -33,4 +33,4 @@ class InvalidQueryStateException : public RequestExecutionException {
     std::string message;
 };
 }// namespace NES::Exceptions
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_

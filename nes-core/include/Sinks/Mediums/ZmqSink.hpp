@@ -87,4 +87,4 @@ struct formatter<NES::ZmqSink> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

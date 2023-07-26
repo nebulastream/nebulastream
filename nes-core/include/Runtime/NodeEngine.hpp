@@ -396,4 +396,4 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace Runtime
 }// namespace NES
-#endif // NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_

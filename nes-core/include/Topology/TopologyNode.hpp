@@ -224,4 +224,4 @@ struct formatter<NES::TopologyNode> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif // NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif// NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
