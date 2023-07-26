@@ -16,7 +16,7 @@ if (NES_USE_CCACHE)
                 "fi\n"
                 "\n"
                 "export CCACHE_CPP2=true\n"
-                "export CCACHE_SLOPPINESS=\"pch_defines,time_macros,include_file_ctime,include_file_mtime\"\n"
+                "export CCACHE_SLOPPINESS=\"pch_defines,time_macros\"\n"
                 "exec \"${C_LAUNCHER}\"  \"${CMAKE_C_COMPILER}\" \"$@\"\n"
                 )
 
@@ -30,7 +30,7 @@ if (NES_USE_CCACHE)
                 "fi\n"
                 "\n"
                 "export CCACHE_CPP2=true\n"
-                "export CCACHE_SLOPPINESS=\"pch_defines,time_macros,include_file_ctime,include_file_mtime\"\n"
+                "export CCACHE_SLOPPINESS=\"pch_defines,time_macros\"\n"
                 "exec \"${CXX_LAUNCHER}\" \"${CMAKE_CXX_COMPILER}\" \"$@\"\n"
                 )
 
