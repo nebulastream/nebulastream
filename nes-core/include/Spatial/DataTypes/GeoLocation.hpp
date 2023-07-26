@@ -106,4 +106,4 @@ class GeoLocation {
 }// namespace DataTypes::Experimental
 }// namespace NES::Spatial
 
-#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_GEOLOCATION_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_DATATYPES_GEOLOCATION_HPP_

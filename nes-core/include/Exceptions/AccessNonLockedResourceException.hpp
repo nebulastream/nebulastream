@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP
-#define NES_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES {
 enum class ResourceType : uint8_t;
@@ -35,4 +35,4 @@ class AccessNonLockedResourceException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif//NES_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_

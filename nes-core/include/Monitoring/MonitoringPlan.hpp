@@ -80,4 +80,4 @@ class MonitoringPlan {
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
+#endif // NES_CORE_INCLUDE_MONITORING_MONITORINGPLAN_HPP_

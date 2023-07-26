@@ -243,4 +243,4 @@ using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_

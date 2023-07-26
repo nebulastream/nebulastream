@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
@@ -36,4 +36,4 @@ class InvalidOperatorStateException : public RequestExecutionException {
     std::string message;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATUSEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_

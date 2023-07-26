@@ -27,4 +27,4 @@ class MapEntryNotFoundException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_MAPENTRYNOTFOUNDEXCEPTION_HPP_

@@ -88,4 +88,4 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
     HashTablePtr<KeyType, InputTypeBuild> hashTable;
 };
 }// namespace NES::Join::Experimental
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_

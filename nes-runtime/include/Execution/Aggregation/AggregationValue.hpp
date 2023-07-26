@@ -67,4 +67,4 @@ struct MaxAggregationValue : AggregationValue {
 
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

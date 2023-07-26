@@ -27,4 +27,4 @@ enum class QueryExecutionMode : uint8_t {
 };
 }
 
-#endif// NES_CORE_INCLUDE_RUNTIME_QUERYEXECUTIONMODE_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_QUERYEXECUTIONMODE_HPP_

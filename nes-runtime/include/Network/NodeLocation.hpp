@@ -83,4 +83,4 @@ class NodeLocation {
     uint32_t port;
 };
 }// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NODELOCATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NODELOCATION_HPP_

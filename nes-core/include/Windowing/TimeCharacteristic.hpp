@@ -80,4 +80,4 @@ class TimeCharacteristic final {
 };
 }// namespace NES::Windowing
 
-#endif// NES_CORE_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_

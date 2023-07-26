@@ -129,4 +129,4 @@ class Hash {
 
 }// namespace NES::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASH_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_HASH_HPP_

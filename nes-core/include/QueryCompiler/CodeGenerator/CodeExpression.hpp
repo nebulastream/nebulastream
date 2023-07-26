@@ -33,4 +33,4 @@ class CodeExpression {
 CodeExpressionPtr combine(CodeExpressionPtr const& lhs, CodeExpressionPtr const& rhs);
 
 }// namespace NES::QueryCompilation
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CODEEXPRESSION_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CODEEXPRESSION_HPP_

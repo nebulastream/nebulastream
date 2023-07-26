@@ -135,4 +135,4 @@ class QueryService {
 
 };// namespace NES
 
-#endif// NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#endif // NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_

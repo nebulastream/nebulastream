@@ -54,4 +54,4 @@ class MaterializedView {
 
 };// class MaterializedView
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_CORE_INCLUDE_VIEWS_MATERIALIZEDVIEW_HPP_
+#endif // NES_CORE_INCLUDE_VIEWS_MATERIALIZEDVIEW_HPP_

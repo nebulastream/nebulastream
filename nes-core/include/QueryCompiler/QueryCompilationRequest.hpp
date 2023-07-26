@@ -83,4 +83,4 @@ class QueryCompilationRequest {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_

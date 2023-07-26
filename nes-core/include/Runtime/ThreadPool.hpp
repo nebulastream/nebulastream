@@ -113,4 +113,4 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
 }// namespace NES::Runtime
 
-#endif// NES_CORE_INCLUDE_RUNTIME_THREADPOOL_HPP_
+#endif // NES_CORE_INCLUDE_RUNTIME_THREADPOOL_HPP_

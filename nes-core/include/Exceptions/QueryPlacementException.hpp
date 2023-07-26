@@ -38,4 +38,4 @@ class QueryPlacementException : public RequestExecutionException {
     SharedQueryId sharedQueryId;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_

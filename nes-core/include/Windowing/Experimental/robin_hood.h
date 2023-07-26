@@ -2418,4 +2418,4 @@ using unordered_set = detail::Table<sizeof(Key) <= sizeof(size_t) * 6 && std::is
 
 }// namespace robin_hood
 
-#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_ROBIN_HOOD_H_
+#endif // NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_ROBIN_HOOD_H_

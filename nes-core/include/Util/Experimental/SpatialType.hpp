@@ -29,4 +29,4 @@ enum class SpatialType : uint8_t {
 };
 }// namespace NES::Spatial::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_

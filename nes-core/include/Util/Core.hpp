@@ -128,4 +128,4 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
 };// namespace Util
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_CORE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_CORE_HPP_

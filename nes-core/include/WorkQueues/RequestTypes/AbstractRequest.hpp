@@ -138,4 +138,4 @@ class AbstractRequest {
     std::vector<ResourceType> requiredResources;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
+#endif // NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
