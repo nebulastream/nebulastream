@@ -50,8 +50,8 @@ class NonKeyedThreadLocalPreAggregationOperatorHandler
      * @param weakSliceStagingPtr access to the slice staging.
      */
     NonKeyedThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                   const std::vector<OriginId> origins,
-                                                   std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
+                                                     const std::vector<OriginId> origins,
+                                                     std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator

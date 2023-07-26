@@ -51,7 +51,7 @@ class NonKeyedGlobalSliceStoreAppendOperatorHandler
      * @param globalSliceStore reference to the global slice store
      */
     NonKeyedGlobalSliceStoreAppendOperatorHandler(const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                      std::weak_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore);
+                                                  std::weak_ptr<GlobalSliceStore<NonKeyedSlice>> globalSliceStore);
 
     ~NonKeyedGlobalSliceStoreAppendOperatorHandler();
 

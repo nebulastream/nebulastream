@@ -18,10 +18,10 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -49,7 +49,7 @@ NonKeyedThreadLocalSliceStore& NonKeyedThreadLocalPreAggregationOperatorHandler:
 }
 
 void NonKeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
-                                                           uint64_t entrySize) {
+                                                             uint64_t entrySize) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto threadLocal = std::make_unique<NonKeyedThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
         threadLocalSliceStores.push_back(std::move(threadLocal));
@@ -57,11 +57,11 @@ void NonKeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution:
 }
 
 void NonKeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
-                                                                             Runtime::Execution::PipelineExecutionContext& ctx,
-                                                                             uint64_t workerId,
-                                                                             OriginId originId,
-                                                                             uint64_t sequenceNumber,
-                                                                             uint64_t watermarkTs) {
+                                                                               Runtime::Execution::PipelineExecutionContext& ctx,
+                                                                               uint64_t workerId,
+                                                                               OriginId originId,
+                                                                               uint64_t sequenceNumber,
+                                                                               uint64_t watermarkTs) {
 
     auto& threadLocalSliceStore = getThreadLocalSliceStore(workerId);
 
@@ -103,8 +103,8 @@ void NonKeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(R
 }
 
 void NonKeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                                           Runtime::StateManagerPtr,
-                                                           uint32_t) {
+                                                             Runtime::StateManagerPtr,
+                                                             uint32_t) {
     NES_DEBUG("start NonKeyedThreadLocalPreAggregationOperatorHandler");
 }
 

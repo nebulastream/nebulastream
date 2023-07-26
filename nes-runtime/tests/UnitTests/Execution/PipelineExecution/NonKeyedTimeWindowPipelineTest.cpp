@@ -93,16 +93,16 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
     auto slicePreAggregation =
         std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
-                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
-                                                               aggregationFunctions);
+                                                                 std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                                 aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
-                                                                        aggregationFunctions,
-                                                                        "start",
-                                                                        "end",
-                                                                        /*origin id*/ 0);
+                                                                          aggregationFunctions,
+                                                                          "start",
+                                                                          "end",
+                                                                          /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -188,17 +188,17 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
         std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName4)};
     auto slicePreAggregation =
         std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
-                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
-                                                               aggregationFunctions);
+                                                                 std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                                 aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
-                                                                        aggregationFunctions,
+                                                                          aggregationFunctions,
 
-                                                                        "start",
-                                                                        "end",
-                                                                        /*origin id*/ 0);
+                                                                          "start",
+                                                                          "end",
+                                                                          /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("test$sum", BasicType::INT64)
                      ->addField("test$avg", BasicType::INT64)

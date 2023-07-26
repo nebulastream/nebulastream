@@ -42,9 +42,9 @@ class NonKeyedSlicePreAggregationHandler
      * @param weakSliceStagingPtr access to the slice staging.
      */
     NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                     uint64_t windowSlide,
-                                     const std::vector<OriginId>& origins,
-                                     std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
+                                       uint64_t windowSlide,
+                                       const std::vector<OriginId>& origins,
+                                       std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator

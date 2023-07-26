@@ -19,19 +19,19 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalNonKeyedTumblingWindowSink::PhysicalNonKeyedTumblingWindowSink(OperatorId id,
-                                                                   SchemaPtr inputSchema,
-                                                                   SchemaPtr outputSchema,
-                                                                   Windowing::LogicalWindowDefinitionPtr windowDefinition)
+                                                                       SchemaPtr inputSchema,
+                                                                       SchemaPtr outputSchema,
+                                                                       Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowDefinition(windowDefinition) {}
 
 std::shared_ptr<PhysicalNonKeyedTumblingWindowSink>
 PhysicalNonKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+                                           SchemaPtr outputSchema,
+                                           Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalNonKeyedTumblingWindowSink>(Util::getNextOperatorId(),
-                                                              inputSchema,
-                                                              outputSchema,
-                                                              windowDefinition);
+                                                                inputSchema,
+                                                                outputSchema,
+                                                                windowDefinition);
 }
 
 Windowing::LogicalWindowDefinitionPtr PhysicalNonKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }

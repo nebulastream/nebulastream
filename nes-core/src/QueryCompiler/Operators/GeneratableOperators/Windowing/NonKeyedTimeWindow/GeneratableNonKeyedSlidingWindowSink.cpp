@@ -21,23 +21,25 @@
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(OperatorId id,
-                                           SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
-                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableNonKeyedSlidingWindowSink>(
         GeneratableNonKeyedSlidingWindowSink(id,
-                                                                                                   std::move(inputSchema),
-                                                                                                   std::move(outputSchema),
-                                                                                                   std::move(operatorHandler),
-                                                                                                   std::move(windowAggregation)));
+                                             std::move(inputSchema),
+                                             std::move(outputSchema),
+                                             std::move(operatorHandler),
+                                             std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
-                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableNonKeyedSlidingWindowSink::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),

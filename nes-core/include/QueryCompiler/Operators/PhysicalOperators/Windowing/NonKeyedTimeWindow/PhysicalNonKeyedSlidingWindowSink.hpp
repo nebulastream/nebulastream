@@ -26,10 +26,11 @@ namespace PhysicalOperators {
  */
 class PhysicalNonKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
-    PhysicalNonKeyedSlidingWindowSink(OperatorId id,
-                                    SchemaPtr inputSchema,
-                                    SchemaPtr outputSchema,
-                                    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
+    PhysicalNonKeyedSlidingWindowSink(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler);
 
     static std::shared_ptr<PhysicalNonKeyedSlidingWindowSink>
     create(SchemaPtr inputSchema,
@@ -39,7 +40,9 @@ class PhysicalNonKeyedSlidingWindowSink : public PhysicalUnaryOperator, public A
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr getWindowHandler() { return keyedEventTimeWindowHandler; }
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr getWindowHandler() {
+        return keyedEventTimeWindowHandler;
+    }
 
   private:
     Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;

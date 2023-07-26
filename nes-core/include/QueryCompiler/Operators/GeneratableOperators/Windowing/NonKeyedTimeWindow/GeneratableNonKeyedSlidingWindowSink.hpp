@@ -54,10 +54,10 @@ class GeneratableNonKeyedSlidingWindowSink : public GeneratableOperator {
 
   private:
     GeneratableNonKeyedSlidingWindowSink(OperatorId id,
-                                       SchemaPtr inputSchema,
-                                       SchemaPtr outputSchema,
-                                       Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
-                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
+                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr windowHandler;
 };

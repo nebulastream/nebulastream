@@ -31,13 +31,15 @@ std::shared_ptr<PhysicalNonKeyedSlidingWindowSink> PhysicalNonKeyedSlidingWindow
     SchemaPtr outputSchema,
     Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
     return std::make_shared<PhysicalNonKeyedSlidingWindowSink>(Util::getNextOperatorId(),
-                                                             inputSchema,
-                                                             outputSchema,
-                                                             keyedEventTimeWindowHandler);
+                                                               inputSchema,
+                                                               outputSchema,
+                                                               keyedEventTimeWindowHandler);
 }
 
 std::string PhysicalNonKeyedSlidingWindowSink::toString() const { return "PhysicalNonKeyedSlidingWindowSink"; }
 
-OperatorNodePtr PhysicalNonKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
+OperatorNodePtr PhysicalNonKeyedSlidingWindowSink::copy() {
+    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

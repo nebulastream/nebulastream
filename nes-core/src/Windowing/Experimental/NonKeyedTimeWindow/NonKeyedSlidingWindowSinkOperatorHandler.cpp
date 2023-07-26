@@ -37,13 +37,13 @@ void NonKeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::Pipelin
 }
 
 void NonKeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                                   Runtime::StateManagerPtr,
-                                                   uint32_t) {
+                                                     Runtime::StateManagerPtr,
+                                                     uint32_t) {
     NES_DEBUG("start NonKeyedSlidingWindowSinkOperatorHandler");
 }
 
 void NonKeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                                  Runtime::Execution::PipelineExecutionContextPtr) {
+                                                    Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop NonKeyedSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 

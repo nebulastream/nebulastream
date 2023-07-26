@@ -36,7 +36,7 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class SingleNodeThreadLocalNonKeyedTumblingWindowTests : public Testing::NESBaseTest{
+class SingleNodeThreadLocalNonKeyedTumblingWindowTests : public Testing::NESBaseTest {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {

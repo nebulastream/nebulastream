@@ -18,10 +18,10 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalNonKeyedSliceMergingOperator::PhysicalNonKeyedSliceMergingOperator(OperatorId id,
-                                                                       SchemaPtr inputSchema,
-                                                                       SchemaPtr outputSchema,
-                                                                       WindowHandlerType operatorHandler,
-                                                                       Windowing::LogicalWindowDefinitionPtr windowDefinition)
+                                                                           SchemaPtr inputSchema,
+                                                                           SchemaPtr outputSchema,
+                                                                           WindowHandlerType operatorHandler,
+                                                                           Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       operatorHandler(operatorHandler), windowDefinition(windowDefinition) {}
 
@@ -29,14 +29,14 @@ std::string PhysicalNonKeyedSliceMergingOperator::toString() const { return "Phy
 
 std::shared_ptr<PhysicalNonKeyedSliceMergingOperator>
 PhysicalNonKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           WindowHandlerType keyedEventTimeWindowHandler,
-                                           Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+                                             SchemaPtr outputSchema,
+                                             WindowHandlerType keyedEventTimeWindowHandler,
+                                             Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalNonKeyedSliceMergingOperator>(Util::getNextOperatorId(),
-                                                                inputSchema,
-                                                                outputSchema,
-                                                                keyedEventTimeWindowHandler,
-                                                                windowDefinition);
+                                                                  inputSchema,
+                                                                  outputSchema,
+                                                                  keyedEventTimeWindowHandler,
+                                                                  windowDefinition);
 }
 
 PhysicalNonKeyedSliceMergingOperator::WindowHandlerType PhysicalNonKeyedSliceMergingOperator::getWindowHandler() {

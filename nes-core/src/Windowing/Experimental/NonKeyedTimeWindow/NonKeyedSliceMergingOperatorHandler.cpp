@@ -36,13 +36,13 @@ void NonKeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExec
 }
 
 void NonKeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                              Runtime::StateManagerPtr,
-                                              uint32_t) {
+                                                Runtime::StateManagerPtr,
+                                                uint32_t) {
     NES_DEBUG("start NonKeyedSliceMergingOperatorHandler");
 }
 
 void NonKeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                             Runtime::Execution::PipelineExecutionContextPtr) {
+                                               Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop NonKeyedSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
@@ -50,7 +50,9 @@ NonKeyedSlicePtr NonKeyedSliceMergingOperatorHandler::createGlobalSlice(SliceMer
     return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
 
-NonKeyedSliceMergingOperatorHandler::~NonKeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct NonKeyedSliceMergingOperatorHandler"); }
+NonKeyedSliceMergingOperatorHandler::~NonKeyedSliceMergingOperatorHandler() {
+    NES_DEBUG("Destruct NonKeyedSliceMergingOperatorHandler");
+}
 
 Windowing::LogicalWindowDefinitionPtr NonKeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
 

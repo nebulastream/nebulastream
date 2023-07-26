@@ -163,7 +163,7 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param operatorNode the current operator node.
      */
     void lowerNonKeyedThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan,
-                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+                                                     const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the thread local slice merge operator for keyed windows.
@@ -171,21 +171,23 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param operatorNode the current operator node.
      */
     void lowerNonKeyedSliceMergingOperator(const QueryPlanPtr& queryPlan,
-                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+                                           const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the window sink for keyed tumbling windows.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerNonKeyedTumblingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerNonKeyedTumblingWindowSink(const QueryPlanPtr& queryPlan,
+                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the window sink for keyed sliding windows.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerNonKeyedSlidingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerNonKeyedSlidingWindowSink(const QueryPlanPtr& queryPlan,
+                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the global slice store append operator for keyed windows.
@@ -193,7 +195,7 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param operatorNode the current operator node.
      */
     void lowerNonKeyedWindowSliceStoreAppendOperator(const QueryPlanPtr& queryPlan,
-                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+                                                     const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join build operator.

@@ -31,10 +31,10 @@ class NonKeyedSliceMerging : public Operator {
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
     NonKeyedSliceMerging(uint64_t operatorHandlerIndex,
-                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                       const std::string& startTsFieldName,
-                       const std::string& endTsFieldName,
-                       uint64_t resultOriginId);
+                         const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                         const std::string& startTsFieldName,
+                         const std::string& endTsFieldName,
+                         uint64_t resultOriginId);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 

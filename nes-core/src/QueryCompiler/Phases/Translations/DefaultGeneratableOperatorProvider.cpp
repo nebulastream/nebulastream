@@ -58,16 +58,16 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSlidingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
@@ -492,9 +492,9 @@ void DefaultGeneratableOperatorProvider::lowerNonKeyedSliceMergingOperator(
     }
     auto generatableOperator =
         GeneratableOperators::GeneratableNonKeyedSliceMergingOperator::create(sliceMergingOperator->getInputSchema(),
-                                                                            sliceMergingOperator->getOutputSchema(),
-                                                                            windowHandler,
-                                                                            generatableAggregations);
+                                                                              sliceMergingOperator->getOutputSchema(),
+                                                                              windowHandler,
+                                                                              generatableAggregations);
     queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
 }
 
@@ -509,9 +509,9 @@ void DefaultGeneratableOperatorProvider::lowerNonKeyedTumblingWindowSink(
         generatableAggregations.emplace_back(lowerWindowAggregation(agg));
     }
     auto generatableOperator = GeneratableOperators::GeneratableNonKeyedTumblingWindowSink::create(sink->getInputSchema(),
-                                                                                                 sink->getOutputSchema(),
-                                                                                                 sink->getWindowDefinition(),
-                                                                                                 generatableAggregations);
+                                                                                                   sink->getOutputSchema(),
+                                                                                                   sink->getWindowDefinition(),
+                                                                                                   generatableAggregations);
     queryPlan->replaceOperator(sink, generatableOperator);
 }
 void DefaultGeneratableOperatorProvider::lowerNonKeyedSlidingWindowSink(
@@ -525,9 +525,9 @@ void DefaultGeneratableOperatorProvider::lowerNonKeyedSlidingWindowSink(
         generatableAggregations.emplace_back(lowerWindowAggregation(agg));
     }
     auto generatableOperator = GeneratableOperators::GeneratableNonKeyedSlidingWindowSink::create(sink->getInputSchema(),
-                                                                                                sink->getOutputSchema(),
-                                                                                                sink->getWindowHandler(),
-                                                                                                generatableAggregations);
+                                                                                                  sink->getOutputSchema(),
+                                                                                                  sink->getWindowHandler(),
+                                                                                                  generatableAggregations);
     queryPlan->replaceOperator(sink, generatableOperator);
 }
 
@@ -543,9 +543,9 @@ void DefaultGeneratableOperatorProvider::lowerNonKeyedWindowSliceStoreAppendOper
     }
     auto generatableOperator =
         GeneratableOperators::GeneratableNonKeyedWindowSliceStoreAppendOperator::create(sink->getInputSchema(),
-                                                                                      sink->getOutputSchema(),
-                                                                                      sink->getWindowHandler(),
-                                                                                      generatableAggregations);
+                                                                                        sink->getOutputSchema(),
+                                                                                        sink->getWindowHandler(),
+                                                                                        generatableAggregations);
     queryPlan->replaceOperator(sink, generatableOperator);
 }
 

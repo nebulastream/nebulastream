@@ -31,15 +31,17 @@ std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyed
     SchemaPtr outputSchema,
     Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
     return std::make_shared<PhysicalNonKeyedWindowSliceStoreAppendOperator>(Util::getNextOperatorId(),
-                                                                          inputSchema,
-                                                                          outputSchema,
-                                                                          keyedEventTimeWindowHandler);
+                                                                            inputSchema,
+                                                                            outputSchema,
+                                                                            keyedEventTimeWindowHandler);
 }
 
 std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
     return "PhysicalNonKeyedWindowSliceStoreAppendOperator";
 }
 
-OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() { return create(inputSchema, outputSchema, windowHandler); }
+OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() {
+    return create(inputSchema, outputSchema, windowHandler);
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

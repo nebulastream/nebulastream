@@ -49,7 +49,7 @@ class NonKeyedSlidingWindowSinkOperatorHandler
      * @param globalSliceStore
      */
     NonKeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                           std::shared_ptr<GlobalSliceStore<NonKeyedSlice>>& globalSliceStore);
+                                             std::shared_ptr<GlobalSliceStore<NonKeyedSlice>>& globalSliceStore);
 
     /**
      * @brief Initializes the operator handler.
