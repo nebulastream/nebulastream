@@ -14,9 +14,9 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_LIMIT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_LIMIT_HPP_
 
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,7 +29,7 @@ class LimitOperatorHandler : public Runtime::Execution::OperatorHandler,
     /**
      * @brief Creates the operator handler.
      */
-    explicit LimitOperatorHandler(const uint64_t limit) : limit(limit) {};
+    explicit LimitOperatorHandler(const uint64_t limit) : limit(limit){};
     void start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
         NES_DEBUG("start LimitOperatorHandler");
     }

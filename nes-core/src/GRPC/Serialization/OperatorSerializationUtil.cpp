@@ -21,11 +21,11 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
-#include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
@@ -1773,9 +1773,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
     }
 }
 
-void OperatorSerializationUtil::serializeLimitOperator(
-    const LimitLogicalOperatorNode& limitOperator,
-    SerializableOperator& serializedOperator) {
+void OperatorSerializationUtil::serializeLimitOperator(const LimitLogicalOperatorNode& limitOperator,
+                                                       SerializableOperator& serializedOperator) {
 
     NES_TRACE("OperatorSerializationUtil:: serialize limit operator ");
 
@@ -1784,9 +1783,9 @@ void OperatorSerializationUtil::serializeLimitOperator(
     serializedOperator.mutable_details()->PackFrom(limitDetails);
 }
 
-LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeLimitOperator(
-    const SerializableOperator_LimitDetails& limitDetails) {
-    return LogicalOperatorFactory::createLimitOperator(limitDetails.limit(),  Util::getNextOperatorId());
+LogicalUnaryOperatorNodePtr
+OperatorSerializationUtil::deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails) {
+    return LogicalOperatorFactory::createLimitOperator(limitDetails.limit(), Util::getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
