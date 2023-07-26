@@ -14,35 +14,46 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 
-#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <atomic>
 #include <vector>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
+
 
 namespace NES {
+struct StorageDataStructures;
+
 /**
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.
  */
 class TwoPhaseLockingStorageHandler : public StorageHandler {
   public:
-    //todo #3956: implement one data structure which wraps these pointers
-    explicit TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           QueryCatalogServicePtr queryCatalogService,
-                                           GlobalQueryPlanPtr globalQueryPlan,
-                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                           Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    /**
+     * @brief constructor
+     * @param storageDataStructures a struct containing pointers to the following data structures:
+     * -globalExecutionPlan
+     * -topology
+     * -queryCatalogService
+     * -globalQueryPlan
+     * -sourceCatalog
+     * -udfCatalog
+     * -lockManager
+     */
+    explicit TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures);
 
     /**
      * @brief factory to create a two phase locking storage manager object
+     * @param storageDataStructures a struct containing pointers to the following data structures:
+     * -globalExecutionPlan
+     * -topology
+     * -queryCatalogService
+     * -globalQueryPlan
+     * -sourceCatalog
+     * -udfCatalog
+     * -lockManager
      * @return shared pointer to the two phase locking storage manager
      */
-    static std::shared_ptr<TwoPhaseLockingStorageHandler> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                 TopologyPtr topology,
-                                                                 QueryCatalogServicePtr queryCatalogService,
-                                                                 GlobalQueryPlanPtr globalQueryPlan,
-                                                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                                 Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    static std::shared_ptr<TwoPhaseLockingStorageHandler> create(StorageDataStructures storageDataStructures);
 
     /**
      * @brief Locks the specified resources ordered after the corresponding enum variants in ResourceType beginning

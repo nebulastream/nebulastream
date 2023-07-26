@@ -46,6 +46,7 @@
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 using namespace std;
 
@@ -226,12 +227,12 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
                                                                    maxRetries,
                                                                    workerRpcClient,
                                                                    std::move(promise));
-    TwoPhaseLockingStorageHandler storageHandler(globalExecutionPlan,
+    TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,
                                                  globalQueryPlan,
                                                  sourceCatalog,
-                                                 udfCatalog);
+                                                 udfCatalog});
     auto thread = std::make_shared<std::thread>([&failQueryRequest, &storageHandler, this]() {
         try {
             failQueryRequest->execute(storageHandler);
@@ -277,12 +278,12 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
                                                                    maxRetries,
                                                                    workerRpcClient,
                                                                    std::move(promise));
-    TwoPhaseLockingStorageHandler storageHandler(globalExecutionPlan,
+    TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,
                                                  globalQueryPlan,
                                                  sourceCatalog,
-                                                 udfCatalog);
+                                                 udfCatalog});
     EXPECT_THROW(failQueryRequest->execute(storageHandler), Exceptions::QueryNotFoundException);
 }
 
@@ -307,12 +308,12 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
                                                                    workerRpcClient,
                                                                    std::move(promise));
 
-    TwoPhaseLockingStorageHandler storageHandler(globalExecutionPlan,
+    TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,
                                                  globalQueryPlan,
                                                  sourceCatalog,
-                                                 udfCatalog);
+                                                 udfCatalog});
     EXPECT_THROW(failQueryRequest->execute(storageHandler), Exceptions::InvalidQueryStateException);
 }
 }// namespace NES

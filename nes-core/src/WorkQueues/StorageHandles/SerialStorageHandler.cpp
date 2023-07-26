@@ -11,35 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Topology/Topology.hpp>
-#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <memory>
 #include <utility>
+#include <Topology/Topology.hpp>
+#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES {
 
-SerialStorageHandler::SerialStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           QueryCatalogServicePtr queryCatalogService,
-                                           GlobalQueryPlanPtr globalQueryPlan,
-                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
-      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
+SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStructures)
+    : globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)), topology(std::move(storageDataStructures.topology)),
+      queryCatalogService(std::move(storageDataStructures.queryCatalogService)), globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
+      sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
 
-std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                   TopologyPtr topology,
-                                                                   QueryCatalogServicePtr queryCatalogService,
-                                                                   GlobalQueryPlanPtr globalQueryPlan,
-                                                                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                                   Catalogs::UDF::UDFCatalogPtr udfCatalog) {
-    return std::make_shared<SerialStorageHandler>(std::move(globalExecutionPlan),
-                                                  std::move(topology),
-                                                  std::move(queryCatalogService),
-                                                  std::move(globalQueryPlan),
-                                                  std::move(sourceCatalog),
-                                                  std::move(udfCatalog));
+std::shared_ptr<SerialStorageHandler>
+SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
+    return std::make_shared<SerialStorageHandler>(storageDataStructures);
 }
 
 GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {

@@ -17,36 +17,39 @@
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 namespace NES {
+struct StorageDataStructures;
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
  */
 class SerialStorageHandler : public StorageHandler {
   public:
-    SerialStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                         TopologyPtr topology,
-                         QueryCatalogServicePtr queryCatalogService,
-                         GlobalQueryPlanPtr globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    /**
+     * @brief constructor
+     * @param storageDataStructures a struct containing pointers to the following data structures:
+     * -globalExecutionPlan
+     * -topology
+     * -queryCatalogService
+     * -globalQueryPlan
+     * -sourceCatalog
+     * -udfCatalog
+     * -lockManager
+     */
+    SerialStorageHandler(StorageDataStructures storageDataStructures);
 
     /**
      * @brief factory to create a serial storage manager object
-     * @param globalExecutionPlan a pointer to the global execution plan
-     * @param topology a pointer to the topology
-     * @param queryCatalogService a pointer to the query catalog service
-     * @param globalQueryPlan a pointer to the global query plan
-     * @param sourceCatalog a pointer to the source catalog
-     * @param udfCatalog a pointer to the udf catalog
-     * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
+     * @param storageDataStructures a struct containing pointers to the following data structures:
+     * -globalExecutionPlan
+     * -topology
+     * -queryCatalogService
+     * -globalQueryPlan
+     * -sourceCatalog
+     * -udfCatalog
+     * -lockManager
      * @return shared pointer to the serial storage manager
      */
-    static std::shared_ptr<SerialStorageHandler> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                        TopologyPtr topology,
-                                                        QueryCatalogServicePtr queryCatalogService,
-                                                        GlobalQueryPlanPtr globalQueryPlan,
-                                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    static std::shared_ptr<SerialStorageHandler> create(StorageDataStructures storageDataStructures);
 
     /**
      * @brief Obtain a mutable topology handle.

@@ -11,26 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Exceptions/AccessNonLockedResourceException.hpp>
 #include <Exceptions/ResourceLockingException.hpp>
 #include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <utility>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES {
-TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                             TopologyPtr topology,
-                                                             QueryCatalogServicePtr queryCatalogService,
-                                                             GlobalQueryPlanPtr globalQueryPlan,
-                                                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                             Catalogs::UDF::UDFCatalogPtr udfCatalog)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
-      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)), globalExecutionPlanHolder(INVALID_REQUEST_ID),
-      topologyHolder(INVALID_REQUEST_ID), queryCatalogServiceHolder(INVALID_REQUEST_ID), globalQueryPlanHolder(0),
-      sourceCatalogHolder(0), udfCatalogHolder(0) {}
+static constexpr RequestId INVALID_REQUEST_ID = 0;
+TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures)
+    : globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)), topology(std::move(storageDataStructures.topology)),
+      queryCatalogService(std::move(storageDataStructures.queryCatalogService)), globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
+      sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)), globalExecutionPlanHolder(INVALID_REQUEST_ID),
+      topologyHolder(INVALID_REQUEST_ID), queryCatalogServiceHolder(INVALID_REQUEST_ID), globalQueryPlanHolder(INVALID_REQUEST_ID),
+      sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
+
+std::shared_ptr<TwoPhaseLockingStorageHandler>
+TwoPhaseLockingStorageHandler::create(StorageDataStructures storageDataStructures) {
+    return std::make_shared<TwoPhaseLockingStorageHandler>(storageDataStructures);
+}
 
 void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId,
                                                      const std::vector<ResourceType>& requiredResources) {
@@ -129,20 +131,5 @@ UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const Reques
                                                            ResourceType::UdfCatalog);
     }
     return udfCatalog;
-}
-
-std::shared_ptr<TwoPhaseLockingStorageHandler>
-TwoPhaseLockingStorageHandler::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                      TopologyPtr topology,
-                                      QueryCatalogServicePtr queryCatalogService,
-                                      GlobalQueryPlanPtr globalQueryPlan,
-                                      Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                      Catalogs::UDF::UDFCatalogPtr udfCatalog) {
-    return std::make_shared<TwoPhaseLockingStorageHandler>(std::move(globalExecutionPlan),
-                                                           std::move(topology),
-                                                           std::move(queryCatalogService),
-                                                           std::move(globalQueryPlan),
-                                                           std::move(sourceCatalog),
-                                                           std::move(udfCatalog));
 }
 }// namespace NES
