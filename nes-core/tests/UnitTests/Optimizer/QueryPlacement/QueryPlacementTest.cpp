@@ -207,7 +207,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 }
 
 
-/* Test query placement with top down strategy  */
+/* Test query placement with elegant strategy  */
 TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});

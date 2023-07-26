@@ -42,7 +42,9 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
 std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);
+    auto result = create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);
+    result->addAllProperties(properties);
+    return result;
 }
 
 JoinBuildSideType PhysicalJoinBuildOperator::getBuildSide() { return joinBuildSide; }

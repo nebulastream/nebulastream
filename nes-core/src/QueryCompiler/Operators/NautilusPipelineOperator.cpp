@@ -30,7 +30,11 @@ NautilusPipelineOperator::NautilusPipelineOperator(std::shared_ptr<Runtime::Exec
 
 std::string NautilusPipelineOperator::toString() const { return "NautilusPipelineOperator"; }
 
-OperatorNodePtr NautilusPipelineOperator::copy() { return create(nautilusPipeline, operatorHandlers); }
+OperatorNodePtr NautilusPipelineOperator::copy() {
+    auto result = create(nautilusPipeline, operatorHandlers);
+    result->addAllProperties(properties);
+    return result;
+}
 
 std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline() {
     return nautilusPipeline;

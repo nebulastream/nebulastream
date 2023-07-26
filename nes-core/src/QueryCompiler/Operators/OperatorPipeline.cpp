@@ -103,7 +103,9 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
-    operatorIds.push_back(std::any_cast<uint64_t>(newRootOperator->getId()));
+    if (newRootOperator->hasProperty("LogicalOperatorId")) {
+        operatorIds.push_back(std::any_cast<uint64_t>(newRootOperator->getProperty("LogicalOperatorId")));
+    }
     this->queryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 

@@ -45,6 +45,10 @@ SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourc
 
 std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
 
-OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, originId, inputSchema, outputSchema, sourceDescriptor); }
+OperatorNodePtr PhysicalSourceOperator::copy() {
+    auto result = create(id, originId, inputSchema, outputSchema, sourceDescriptor);
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

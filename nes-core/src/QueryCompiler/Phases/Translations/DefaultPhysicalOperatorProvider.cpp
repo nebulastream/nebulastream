@@ -166,12 +166,14 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                               logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
                                                               logicalSourceOperator->getSourceDescriptor());
+        physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
         auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getInputSchema(),
                                                                                     logicalSinkOperator->getOutputSchema(),
                                                                                     logicalSinkOperator->getSinkDescriptor());
+        physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSinkOperator);
         queryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
@@ -245,6 +247,8 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
                                                                                       projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
+
+    physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
 }
 
@@ -268,6 +272,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
                                                                               mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -852,6 +857,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                     PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                                windowOutputSchema,
                                                                                windowOperatorHandler);
+                thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
                 operatorNode->replace(thresholdWindowPhysicalOperator);
                 return;
             } else {
@@ -870,6 +877,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
                                                                                     windowOutputSchema,
                                                                                     windowOperatorHandler);
+            windowSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
             operatorNode->replace(windowSink);
         }
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
@@ -880,22 +889,31 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
         auto sliceSink =
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
         // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
+
         auto sliceSink =
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
         auto sliceSink =
             PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->replace(sliceSink);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
