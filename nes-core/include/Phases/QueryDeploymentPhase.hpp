@@ -112,4 +112,4 @@ class QueryDeploymentPhase {
     const std::string DEVICE_INFO_AVAILABLE_PROCESSORS_KEY = "availableProcessors";
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

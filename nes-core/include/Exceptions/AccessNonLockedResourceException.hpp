@@ -35,4 +35,4 @@ class AccessNonLockedResourceException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_

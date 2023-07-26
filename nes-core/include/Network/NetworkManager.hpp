@@ -183,4 +183,4 @@ class NetworkManager {
 
 }// namespace NES::Network
 
-#endif // NES_CORE_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_NETWORK_NETWORKMANAGER_HPP_

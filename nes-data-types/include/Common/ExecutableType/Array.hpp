@@ -410,4 +410,4 @@ struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::strin
 };
 }//namespace fmt
 
-#endif // NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

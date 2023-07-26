@@ -187,4 +187,4 @@ class PluginFactory {
 
 }// namespace NES::Util
 
-#endif // NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_

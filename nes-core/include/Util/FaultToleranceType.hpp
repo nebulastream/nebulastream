@@ -28,4 +28,4 @@ enum class FaultToleranceType : uint8_t {
 };
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#endif// NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
