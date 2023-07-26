@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.161](https://github.com/nebulastream/nebulastream/tree/v0.5.161) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.160...v0.5.161)
+
+**Implemented enhancements:**
+
+- \[TASK\] Batch Limit Operator [\#3696](https://github.com/nebulastream/nebulastream/issues/3696)
+
+## [v0.5.160](https://github.com/nebulastream/nebulastream/tree/v0.5.160) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.159...v0.5.160)
+
 ## [v0.5.159](https://github.com/nebulastream/nebulastream/tree/v0.5.159) (2023-07-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.158...v0.5.159)
