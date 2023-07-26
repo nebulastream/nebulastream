@@ -36,7 +36,7 @@ PhysicalNonKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
 
 Windowing::LogicalWindowDefinitionPtr PhysicalNonKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }
 
-std::string PhysicalNonKeyedTumblingWindowSink::toString() const { return "PhysicalGlobalTumblingWindowSink"; }
+std::string PhysicalNonKeyedTumblingWindowSink::toString() const { return "PhysicalNonKeyedTumblingWindowSink"; }
 
 OperatorNodePtr PhysicalNonKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
 

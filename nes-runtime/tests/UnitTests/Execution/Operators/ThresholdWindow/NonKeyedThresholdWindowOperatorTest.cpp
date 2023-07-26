@@ -39,24 +39,24 @@
 namespace NES::Runtime::Execution::Operators {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
+class NonKeyedThresholdWindowOperatorTest : public Testing::NESBaseTest {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowOperatorTest test class.");
+        NES::Logger::setupLogging("NonKeyedThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup NonKeyedThresholdWindowOperatorTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down NonKeyedThresholdWindowOperatorTest test class."); }
 };
 
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -110,7 +110,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -162,7 +162,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -210,7 +210,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
 /**
  * @brief Tests the threshold window operator with a min aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -263,7 +263,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
 /**
  * @brief Tests the threshold window operator with a Max aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -316,7 +316,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 /**
  * @brief Tests the threshold window operator with a Avg aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -369,7 +369,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
 /**
  * @brief Tests the threshold window operator with a Count aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
@@ -426,7 +426,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
 /**
  * @brief Tests the threshold window operator with multiple aggregations.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     //set up
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
@@ -514,7 +514,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42.5);
@@ -568,7 +568,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipleWindowsTest) {
+TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipleWindowsTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);

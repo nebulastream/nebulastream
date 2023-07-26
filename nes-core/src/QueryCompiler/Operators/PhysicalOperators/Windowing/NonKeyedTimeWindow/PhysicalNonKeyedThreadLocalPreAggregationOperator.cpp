@@ -24,8 +24,9 @@ PhysicalNonKeyedThreadLocalPreAggregationOperator::PhysicalNonKeyedThreadLocalPr
     Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowHandler(keyedEventTimeWindowHandler),
       windowDefinition(windowDefinition) {}
+
 std::string PhysicalNonKeyedThreadLocalPreAggregationOperator::toString() const {
-    return "PhysicalGlobalThreadLocalPreAggregationOperator";
+    return "PhysicalNonKeyedThreadLocalPreAggregationOperator";
 }
 
 std::shared_ptr<PhysicalOperator>

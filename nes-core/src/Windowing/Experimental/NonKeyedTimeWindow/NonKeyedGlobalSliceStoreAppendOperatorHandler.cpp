@@ -39,7 +39,7 @@ NonKeyedGlobalSliceStoreAppendOperatorHandler::NonKeyedGlobalSliceStoreAppendOpe
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                               Runtime::StateManagerPtr,
                                                               uint32_t) {
-    NES_DEBUG("start NonKeyedWindowGlobalSliceStoreAppendOperatorHandler");
+    NES_DEBUG("start NonKeyedGlobalSliceStoreAppendOperatorHandler");
 }
 
 void NonKeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
@@ -87,9 +87,11 @@ void NonKeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminati
         }
     }
 }
+
 NonKeyedGlobalSliceStoreAppendOperatorHandler::~NonKeyedGlobalSliceStoreAppendOperatorHandler() {
     NES_DEBUG("Destruct NonKeyedGlobalSliceStoreAppendOperatorHandler");
 }
+
 Windowing::LogicalWindowDefinitionPtr NonKeyedGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }

@@ -158,10 +158,10 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t id,
         uint64_t windowOperatorIndex,
-        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) override;
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
 
     uint64_t generateNonKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                 SchemaPtr,
+                                                 SchemaPtr windowOutputSchema,
                                                  PipelineContextPtr context,
                                                  uint64_t id,
                                                  uint64_t windowOperatorIndex,

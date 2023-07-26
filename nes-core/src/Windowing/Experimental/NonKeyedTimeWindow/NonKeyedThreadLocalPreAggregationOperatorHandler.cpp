@@ -105,13 +105,13 @@ void NonKeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(R
 void NonKeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                            Runtime::StateManagerPtr,
                                                            uint32_t) {
-    NES_DEBUG("start GlobalThreadLocalPreAggregationOperatorHandler");
+    NES_DEBUG("start NonKeyedThreadLocalPreAggregationOperatorHandler");
 }
 
 void NonKeyedThreadLocalPreAggregationOperatorHandler::stop(
     Runtime::QueryTerminationType queryTerminationType,
     Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
-    NES_DEBUG("shutdown GlobalThreadLocalPreAggregationOperatorHandler: {}", queryTerminationType);
+    NES_DEBUG("shutdown NonKeyedThreadLocalPreAggregationOperatorHandler: {}", queryTerminationType);
 
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto sliceStaging = this->weakSliceStaging.lock();
@@ -141,9 +141,11 @@ void NonKeyedThreadLocalPreAggregationOperatorHandler::stop(
         }
     }
 }
+
 NonKeyedThreadLocalPreAggregationOperatorHandler::~NonKeyedThreadLocalPreAggregationOperatorHandler() {
-    NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
+    NES_DEBUG("~NonKeyedThreadLocalPreAggregationOperatorHandler");
 }
+
 Windowing::LogicalWindowDefinitionPtr NonKeyedThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }

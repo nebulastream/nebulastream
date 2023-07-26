@@ -93,12 +93,12 @@ void NonKeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::Worker
 void NonKeyedSlicePreAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                              Runtime::StateManagerPtr,
                                              uint32_t) {
-    NES_DEBUG("start GlobalSlicePreAggregationHandler");
+    NES_DEBUG("start NonKeyedSlicePreAggregationHandler");
 }
 
 void NonKeyedSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                             Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
-    NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
+    NES_DEBUG("shutdown NonKeyedSlicePreAggregationHandler: {}", queryTerminationType);
 
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto sliceStaging = this->weakSliceStaging.lock();
@@ -128,7 +128,7 @@ void NonKeyedSlicePreAggregationHandler::stop(Runtime::QueryTerminationType quer
         }
     }
 }
-NonKeyedSlicePreAggregationHandler::~NonKeyedSlicePreAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
+NonKeyedSlicePreAggregationHandler::~NonKeyedSlicePreAggregationHandler() { NES_DEBUG("~NonKeyedSlicePreAggregationHandler"); }
 
 void NonKeyedSlicePreAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
     // this->threadLocalSliceStores.clear();
