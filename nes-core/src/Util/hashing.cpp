@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <random>
 #include "Util/hashing.hpp"
 
 namespace NES {
@@ -28,9 +30,10 @@ namespace NES {
     std::vector<uint32_t> q;
     q.reserve(numberBits);
 
-    boost::random::mt19937 gen;
-    // fill buffers
-    for (uint32_t i = 0; i < numberBits * depth; i++){
+    std::mt19937 gen(0);
+
+    // Fill buffers
+    for (uint32_t i = 0; i < numberBits * depth; i++) {
       q.push_back(gen());
     }
 
@@ -54,7 +57,7 @@ namespace NES {
 
   uint32_t H3::hashH3(uint32_t x, uint32_t* q) {
     uint32_t hash = 0;
-    for(int i = 0; i < sizeof(uint32_t) * 8; i++){
+    for(uint64_t i = 0; i < sizeof(uint32_t) * 8; i++){
       hash ^= isSetLSB(x,i) * q[i];
     }
     return hash;

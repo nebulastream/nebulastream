@@ -13,7 +13,6 @@
 */
 
 #include "StatManager/StatCollectors/StatCollector.hpp"
-#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
 //#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/ddsketch.hpp"
 //#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/hyperLogLog.hpp"
 //#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/reservoirSample.hpp"
@@ -28,43 +27,18 @@ namespace NES {
     return field;
   }
 
-  StatCollector* StatCollector::createStat(const std::string& physicalSourceName,
-      const std::string& field,
-      time_t duration,
-      time_t interval,
-      Yaml::Node configNode) {
-
-    if ((configNode["Type"].As<std::string>()).compare("CountMin") == 0) {
-
-        auto CMSketch = CountMin::initialize( /*physicalSourcePtr,*/ field, duration, interval, configNode);
-        StatCollector* statCollectorPtr = CMSketch;
-        return statCollectorPtr;
-
-        //    } else if ((configNode["Type"].As<std::string>()).compare("DDSketch") == 0) {
-        //
-        //      auto myDDSketch = ddsketch::initialize( /*physicalSourcePtr,*/ field, duration, interval, configNode);
-        //      statCollector* statCollectorPtr = myDDSketch;
-        //      return statCollectorPtr;
-        //
-        //    } else if ((configNode["Type"].As<std::string>()).compare("HyperLogLog") == 0) {
-        //
-        //      auto myHLL = hyperLogLog::initialize( /*physicalSourcePtr,*/ field, duration, interval, configNode);
-        //      statCollector* statCollectorPtr = myHLL;
-        //      return statCollectorPtr;
-        //
-        //    } else if ((configNode["Type"].As<std::string>()).compare("ReservoirSample") == 0) {
-        //
-        //      auto mySample = reservoirSample::initialize( /*physicalSourcePtr,*/ field, duration, interval, configNode);
-        //      statCollector* statCollectorPtr = mySample;
-        //      return statCollectorPtr;
-
-//      }
-    } else {
-
-      std::cout << "statCollector type is unknown!\n Returning nullptr!" << std::endl;
-      return nullptr;
-
-    }
+  time_t StatCollector::getDuration() const {
+    return duration;
   }
+
+  time_t StatCollector::getFrequency() const {
+    return frequency;
+  }
+
+  StatCollector::StatCollector(const std::string &physicalSourceName, const std::string &field, time_t duration, time_t frequency)
+  : physicalSourceName(physicalSourceName), field(field), duration(duration), frequency(frequency) {
+
+  }
+
 
 } // NES

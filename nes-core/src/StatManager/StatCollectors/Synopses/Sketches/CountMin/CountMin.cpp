@@ -41,13 +41,8 @@ namespace NES {
     mClassOfHashingFunctions = ClassOfHashingFunctions;
   }
 
-  CountMin::CountMin(double error, double prob, const std::string& physicalSourceName,
-                     const std::string& field, time_t duration, time_t interval)
-      : Sketches(physicalSourceName, field, duration, interval),
-        mError(error), mProb(prob) {
-
-    auto depth = ceil(std::log(1.0 / prob));
-    auto width = ceil(log(1/error));
+  CountMin::CountMin(double error, double prob, const std::string& physicalSourceName, const std::string& field, time_t duration, time_t interval)
+      : Sketch((ceil(log(1.0 / prob))), (ceil(M_E/error)), physicalSourceName, field, duration, interval) {
 
     this->setClassOfHashFunctions(new H3(this->getDepth(), this->getWidth()));
 
@@ -67,32 +62,46 @@ namespace NES {
 
   CountMin* CountMin::createCountMinWidthDepth(uint32_t depth,
                                                uint32_t width,
-                                               const std::string& physicalSourceName,
-                                               const std::string& field,
-                                               time_t duration,
-                                               time_t interval) {
+                                               Yaml::Node configNode) {
+
+    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
+    std::string field = configNode["field"].As<std::string>();
+    auto key = configNode["key"].As<uint32_t>();
+    auto duration = std::stoi(configNode["duration"].As<std::string>());
+    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
 
     double error = 1 / (std::exp(depth));
     double prob = std::exp(1 / width);
 
-    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, interval);
+    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
 
     return sketch;
   }
 
-  CountMin* CountMin::createCountMinErrorProb(double error, double prob, const std::string& physicalSourceName,
-                                              const std::string& field, time_t duration, time_t interval) {
+  CountMin* CountMin::createCountMinErrorProb(double error, double prob, Yaml::Node configNode) {
 
-    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, interval);
+    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
+    std::string field = configNode["field"].As<std::string>();
+    auto key = configNode["key"].As<uint32_t>();
+    auto duration = std::stoi(configNode["duration"].As<std::string>());
+    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
+
+    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
 
     return sketch;
   }
 
-  CountMin* CountMin::initialize(const std::string& physicalSourceName,
+/*  CountMin* CountMin::initialize(*//*const std::string& physicalSourceName,
       const std::string& field,
       time_t duration,
-      time_t interval,
+      time_t interval,*//*
       Yaml::Node configNode) {
+
+    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
+    std::string field = configNode["field"].As<std::string>();
+    auto key = configNode["key"].As<uint32_t>();
+    auto duration = std::stoi(configNode["duration"].As<std::string>());
+    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
 
     CountMin* mySketchA;
     if ((configNode["Attributes"][0]["Error"]).IsNone()
@@ -119,7 +128,7 @@ namespace NES {
       std::cout << "Only pass either an error and a probability or a depth and a width!" << std::endl;
     }
     return mySketchA;
-  }
+  }*/
 
   void CountMin::update(uint32_t key) {
 
@@ -171,7 +180,7 @@ namespace NES {
     double_t error = leftCM->getError();
     double_t prob = leftCM->getProb();
 
-    auto mergedCM = new CountMin(error, prob);
+    auto mergedCM = new CountMin(error, prob, "mergedSources", this->getField(), this->getDuration(), this->getFrequency());
 
     uint32_t** leftSketchData = leftCM->getDataPointer();
     uint32_t** rightSketchData = rightCM->getDataPointer();
@@ -183,7 +192,7 @@ namespace NES {
       }
     }
 
-    Sketches* mergedSketch = mergedCM;
+    Sketch* mergedSketch = mergedCM;
     return mergedSketch;
   }
 
