@@ -219,7 +219,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
     deployQuery();
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<Experimental::FailQueryResponse> promise;
+    std::promise<AbstractRequestResponsePtr> promise;
     auto future = promise.get_future();
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    queryId,
@@ -257,7 +257,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         }
     });
     thread->join();
-    ASSERT_EQ(future.get().sharedQueryId, sharedQueryId);
+    ASSERT_EQ(std::static_pointer_cast<Experimental::FailQueryResponse>(future.get())->sharedQueryId, sharedQueryId);
 }
 
 //test error handling if a fail query request is executed but no query with the supplied id exists
@@ -271,7 +271,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<Experimental::FailQueryResponse> promise;
+    std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    nonExistentId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
@@ -300,7 +300,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<Experimental::FailQueryResponse> promise;
+    std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    queryId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,

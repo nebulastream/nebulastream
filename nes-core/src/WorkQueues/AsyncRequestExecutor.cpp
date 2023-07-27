@@ -15,37 +15,46 @@
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <Util/ThreadNaming.hpp>
 
-NES::Experimental::AsyncRequestExecutor::AsyncRequestExecutor(uint32_t numOfThreads) : running(true) {
-    for (uint32_t i = 0; i < numOfThreads; ++i) {
-        std::promise<bool> promise;
-        completionFutures.emplace_back(promise.get_future());
-        //auto thread = std::thread(runThread, i, std::move(promise));
-        auto thread = std::thread([this, i, promise = std::move(promise)]() mutable {
-          try {
-              setThreadName("RequestExecThr-%d", i);
-              runningRoutine();
-              promise.set_value(true);
-          } catch (std::exception const& ex) {
-              promise.set_exception(std::make_exception_ptr(ex));
-          }
-        });
-        thread.detach();
-    }
-}
-
-
-void NES::Experimental::AsyncRequestExecutor::runningRoutine() {
-    while (true) {
-        std::unique_lock lock(workMutex);
-        while (asyncRequestQueue.empty()) {
-            cv.wait(lock);
-        }
-        if (running) {
-            AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
-            asyncRequestQueue.pop_front();
-            lock.unlock();
-
-            abstractRequest
-        }
-    }
-}
+//NES::Experimental::AsyncRequestExecutor::AsyncRequestExecutor(uint32_t numOfThreads, StorageHandlerPtr storageHandler) : running(true), storageHandler(std::move(storageHandler)) {
+//    for (uint32_t i = 0; i < numOfThreads; ++i) {
+//        std::promise<bool> promise;
+//        completionFutures.emplace_back(promise.get_future());
+//        //todo: is there a reason why the task implementation was passing ptrs to promises?
+//        auto thread = std::thread([this, i, promise = std::move(promise)]() mutable {
+//          try {
+//              setThreadName("RequestExecThr-%d", i);
+//              runningRoutine();
+//              promise.set_value(true);
+//          } catch (std::exception const& ex) {
+//              promise.set_exception(std::make_exception_ptr(ex));
+//          }
+//        });
+//        thread.detach();
+//    }
+//}
+//
+//
+//void NES::Experimental::AsyncRequestExecutor::runningRoutine() {
+//    while (true) {
+//        std::unique_lock lock(workMutex);
+//        while (asyncRequestQueue.empty()) {
+//            cv.wait(lock);
+//        }
+//        if (running) {
+//            AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
+//            asyncRequestQueue.pop_front();
+//            lock.unlock();
+//
+//            //todo: call error handling inside execute or here?
+//
+//            //todo: make execute function accept ref to const ptr instead of the deref here?
+//            auto handler = *storageHandler;
+//            //todo: to avaid the abstract type trouble, we either need to use a template or make execute accept pointers
+//            abstractRequest->execute(handler);
+//
+//            //todo: allow execute to return follow up reqeust or execute the follow up as part of execute?
+//        } else {
+//            break;
+//        }
+//    }
+//}

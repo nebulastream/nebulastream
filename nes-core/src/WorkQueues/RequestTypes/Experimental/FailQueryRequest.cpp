@@ -31,7 +31,7 @@ FailQueryRequest::FailQueryRequest(const RequestId requestId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient,
-                                   std::promise<FailQueryResponse> responsePromise)
+                                   std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise)
     : AbstractRequest(requestId,
                       {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
@@ -46,7 +46,7 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
                                                            NES::QuerySubPlanId failedSubPlanId,
                                                            uint8_t maxRetries,
                                                            NES::WorkerRPCClientPtr workerRpcClient,
-                                                           std::promise<FailQueryResponse> responsePromise) {
+                                                           std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise) {
     return std::make_shared<FailQueryRequest>(requestId,
                                               queryId,
                                               failedSubPlanId,
@@ -57,9 +57,7 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {
-    return std::vector<AbstractRequestPtr>();
-}
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) { return {}; }
 
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 
@@ -79,10 +77,8 @@ std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequ
                                                  + " in the global query plan");
     }
 
-    //respond to the calling service which is the shared query id of the query being undeployed
-    FailQueryResponse response{};
-    response.sharedQueryId = sharedQueryId;
-    responsePromise.set_value(response);
+    //respond to the calling service which is the shared query id o the query being undeployed
+    responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
@@ -101,7 +97,10 @@ std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequ
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
-    //todo: #3727 return correct requests
-    return {};
+
+    //no follow up requests
+    return std::vector<AbstractRequestPtr>();
 }
+
+FailQueryResponse::FailQueryResponse(SharedQueryId sharedQueryId) : sharedQueryId(sharedQueryId) {}
 }// namespace NES::Experimental
