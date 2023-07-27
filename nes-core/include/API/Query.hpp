@@ -51,7 +51,7 @@ namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 
-class PythonDFDescriptor;
+class PythonUDFDescriptor;
 using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 }// namespace Catalogs::UDF
 
