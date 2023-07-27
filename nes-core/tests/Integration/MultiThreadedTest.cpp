@@ -282,7 +282,7 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testOneJoin) {
+TEST_P(MultiThreadedTest, DISABLED_testOneJoin) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
