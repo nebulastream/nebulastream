@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 AbstractJavaUDFOperator::AbstractJavaUDFOperator(uint64_t operatorHandlerIndex,
@@ -247,6 +247,5 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
         return inputPojoPtr;
     }
 }
-
 
 }// namespace NES::Runtime::Execution::Operators

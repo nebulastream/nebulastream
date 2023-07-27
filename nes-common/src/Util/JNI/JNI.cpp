@@ -50,7 +50,8 @@ static JavaVM* jvmInstance = nullptr;
 
 static bool getEnv(JavaVM* vm, JNIEnv** env) {
     NES_ASSERT(vm != nullptr, "java vm should not be null");
-    return vm->GetEnv((void**) env, JNI_VERSION_1_8) == JNI_OK; }
+    return vm->GetEnv((void**) env, JNI_VERSION_1_8) == JNI_OK;
+}
 
 static bool isAttached(JavaVM* vm) {
     JNIEnv* env = nullptr;
@@ -178,4 +179,4 @@ JVM& JVM::addOption(const std::string& option) {
 }
 bool JVM::isInitialized() { return isJVMInitialized; }
 
-}// namespace jni
+}// namespace NES::jni

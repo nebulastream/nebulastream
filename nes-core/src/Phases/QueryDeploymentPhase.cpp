@@ -184,11 +184,10 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //find the bytecode for the udf class
                     auto className = javaDescriptor->getClassName();
                     auto byteCodeList = javaDescriptor->getByteCodeList();
-                    auto classByteCode = std::find_if(byteCodeList.cbegin(),
-                                                      byteCodeList.cend(),
-                                                      [&](const jni::JavaClassDefinition& c) {
-                                                          return c.first == className;
-                                                      });
+                    auto classByteCode =
+                        std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
+                            return c.first == className;
+                        });
 
                     if (classByteCode == byteCodeList.end()) {
                         throw QueryDeploymentException(queryId,

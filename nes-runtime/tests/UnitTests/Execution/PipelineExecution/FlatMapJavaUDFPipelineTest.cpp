@@ -170,11 +170,8 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("stream.nebula.StringFlatMapFunction",
-                                  "flatMap",
-                                  "java.lang.String",
-                                  "java.util.Collection",
-                                  schema);
+    auto handler =
+        initMapHandler("stream.nebula.StringFlatMapFunction", "flatMap", "java.lang.String", "java.util.Collection", schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

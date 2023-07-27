@@ -15,12 +15,12 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 
-#include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {

@@ -46,7 +46,7 @@ UDFSerializationUtil::deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessag
     // C++ represents the bytes type of serialized_instance and byte_code as std::strings
     // which have to be converted to typed byte arrays.
     auto serializedInstance = jni::JavaSerializedInstance{JavaUdfDescriptorMessage.serialized_instance().begin(),
-                                                                    JavaUdfDescriptorMessage.serialized_instance().end()};
+                                                          JavaUdfDescriptorMessage.serialized_instance().end()};
     auto javaUdfByteCodeList = jni::JavaUDFByteCodeList{};
     javaUdfByteCodeList.reserve(JavaUdfDescriptorMessage.classes().size());
     for (const auto& classDefinition : JavaUdfDescriptorMessage.classes()) {

@@ -16,7 +16,6 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-#include <Nautilus/Backends/Executable.hpp>
 #include <future>
 
 namespace NES::Nautilus::Backends {

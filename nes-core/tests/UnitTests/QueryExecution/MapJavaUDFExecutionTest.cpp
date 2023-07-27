@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-
 #ifdef ENABLE_JNI
-#include <Util/JNI/JNIUtils.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/JNI/JNIUtils.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>

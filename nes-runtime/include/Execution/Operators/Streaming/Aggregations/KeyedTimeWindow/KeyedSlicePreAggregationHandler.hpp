@@ -32,8 +32,9 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                        public ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
+class KeyedSlicePreAggregationHandler
+    : public Runtime::Execution::OperatorHandler,
+      public ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
     using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
