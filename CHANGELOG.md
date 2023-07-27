@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.165](https://github.com/nebulastream/nebulastream/tree/v0.5.165) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.164...v0.5.165)
+
+**Implemented enhancements:**
+
+- \[TASK\] split up filter \(where the predicate consits of andExpressionNodes\) [\#3970](https://github.com/nebulastream/nebulastream/issues/3970)
+- \[TASK\] add promise as member of AbstractRequest [\#3958](https://github.com/nebulastream/nebulastream/issues/3958)
+
 ## [v0.5.164](https://github.com/nebulastream/nebulastream/tree/v0.5.164) (2023-07-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.163...v0.5.164)
