@@ -495,13 +495,13 @@ template<typename T>
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file {}", outputFilePath);
 
         auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryStatus() == QueryStatus::FAILED) {
+        if (entry->getQueryState() == QueryState::FAILED) {
             // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
-        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::STOPPED;
+        auto isQueryStopped = entry->getQueryState() == QueryState::STOPPED;
 
         // check if result is ready.
         std::ifstream ifs(outputFilePath);
@@ -643,14 +643,71 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
                                   Runtime::BufferManagerPtr bufferManager);
 
 /**
- * @brief Creates multiple tuple buffers from the csv file
+ * @brief Fills the buffer from the csv
  * @param csvFileName
  * @param schema
  * @param bufferManager
- * @return Vector of TupleBuffer
+ * @param numTuplesPerBuffer
+ * @param delimiter
+ * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer>
-fillBufferFromCsv(const std::string& csvFileName, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager);
+std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
+                                                    const SchemaPtr& schema,
+                                                    const Runtime::BufferManagerPtr& bufferManager,
+                                                    uint64_t numTuplesPerBuffer = 0,
+                                                    const std::string& delimiter = ",");
+                                                    
+/**
+ * @brief Fills the buffer from a stream
+ * @param csvFileName
+ * @param schema
+ * @param bufferManager
+ * @param numTuplesPerBuffer
+ * @param delimiter
+ * @return Vector of TupleBuffers
+ */
+std::vector<Runtime::TupleBuffer> fillBufferFromStream(std::istream& istream,
+                                                       const SchemaPtr& schema,
+                                                       const Runtime::BufferManagerPtr& bufferManager,
+                                                       uint64_t numTuplesPerBuffer = 0,
+                                                       const std::string& delimiter = ",");
+
+/**
+ * @brief Creates a vector for the memory [startPtr, endPtr]
+ * @tparam T
+ * @param startPtr
+ * @param endPtr
+ * @return Vector for the memory [startPtr, endPtr]
+ */
+template <typename T>
+inline  std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
+    return std::vector<T>(startPtr, endPtr);
+}
+
+/**
+ * @brief Creates a vector for the memory [startPtr, startPtr + numItems]
+ * @tparam T
+ * @param startPtr
+ * @param numItems
+ * @return Vector for the memory [startPtr, startPtr + numItems]
+ */
+template <typename T>
+inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
+    return createVecFromPointer<T>(startPtr, startPtr + numItems);
+}
+
+/**
+ * @brief Creates a vector for the memory that this tupleBuffer is responsible for
+ * @tparam T
+ * @param startPtr
+ * @param numItems
+ * @return Vector
+ */
+template <typename T>
+inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
+    return createVecFromPointer<T>(buffer.getBuffer<T>(), buffer.getBuffer<T>() + buffer.getNumberOfTuples());
+}
+
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 

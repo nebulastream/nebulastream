@@ -14,7 +14,7 @@
 include(ExternalProject)
 
 # Copy Test Data --------------------------------------------------------------
-file(COPY test_data DESTINATION .)
+file(COPY test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
@@ -285,6 +285,10 @@ add_nes_unit_test(convert-logical-to-physical-source-tests "UnitTests/Phases/Con
 
 # Type inference test
 add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
+
+
+# FilterMergeTest
+add_nes_unit_test(filter-merge-rule-test "UnitTests/Optimizer/QueryRewrite/FilterMergeRuleTest.cpp")
 
 
 # FilterPushDownTest

@@ -62,6 +62,14 @@ class QueryPlanBuilder {
     static NES::QueryPlanPtr addFilter(NES::ExpressionNodePtr const& filterExpression, NES::QueryPlanPtr queryPlan);
 
     /**
+     * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
+     * @param filterExpression as expression node containing the predicate
+     * @param queryPlanPtr the queryPlan the filter node is added to
+     * @return the updated queryPlan
+     */
+    static NES::QueryPlanPtr addLimit(const uint64_t limit, NES::QueryPlanPtr queryPlan);
+
+    /**
      * @brief: Map records according to a map expression. An
      * exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
      * @param mapExpression as expression node

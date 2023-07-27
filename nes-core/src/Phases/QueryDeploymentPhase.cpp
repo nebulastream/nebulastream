@@ -91,7 +91,7 @@ bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::DEPLOYED, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
     }
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
@@ -105,7 +105,7 @@ bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
     }
 
     NES_DEBUG("QueryService: start query");
@@ -184,18 +184,17 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //find the bytecode for the udf class
                     auto className = javaDescriptor->getClassName();
                     auto byteCodeList = javaDescriptor->getByteCodeList();
-                    auto classByteCode = std::find_if(byteCodeList.cbegin(),
-                                                      byteCodeList.cend(),
-                                                      [&](const Catalogs::UDF::JavaClassDefinition& c) {
-                                                          return c.first == className;
-                                                      });
+                    auto classByteCode =
+                        std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
+                            return c.first == className;
+                        });
 
                     if (classByteCode == byteCodeList.end()) {
                         throw QueryDeploymentException(queryId,
                                                        "The bytecode list of classes implementing the "
                                                        "UDF must contain the fully-qualified name of the UDF");
                     }
-                    Catalogs::UDF::JavaByteCode javaByteCode = classByteCode->second;
+                    jni::JavaByteCode javaByteCode = classByteCode->second;
 
                     //5. Prepare the multi-part message
                     cpr::Part part1 = {"firstPayload", to_string(payload)};

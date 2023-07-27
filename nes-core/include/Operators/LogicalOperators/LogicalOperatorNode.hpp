@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Util/OperatorState.hpp>
 
 namespace z3 {
 class expr;
@@ -76,7 +77,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * @brief update the hash based signature for the logical operator
      * @param signature : the signature
      */
-    void updateHashBasedSignature(size_t hashCode, std::string stringSignature);
+    void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
@@ -97,10 +98,24 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
 
+    /**
+     * @brief Update state of the operator
+     * @param newOperatorState : new state of the operator
+     * @throws InvalidOperatorStateException
+     */
+    void setOperatorState(OperatorState newOperatorState);
+
+    /**
+     * @brief Get the operator state
+     * @return the current state of the operator
+     */
+    OperatorState getOperatorState();
+
   protected:
     Optimizer::QuerySignaturePtr z3Signature;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
     std::hash<std::string> hashGenerator;
+    OperatorState operatorState;
 };
 
 }// namespace NES

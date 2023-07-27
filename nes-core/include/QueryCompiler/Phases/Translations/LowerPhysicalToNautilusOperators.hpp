@@ -90,6 +90,11 @@ class LowerPhysicalToNautilusOperators {
                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerLimit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
@@ -97,9 +102,9 @@ class LowerPhysicalToNautilusOperators {
     lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeBasedWindowType);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    lowerNonKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,

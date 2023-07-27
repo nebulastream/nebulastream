@@ -24,9 +24,9 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
-                                     QueryStatus queryStatus)
+                                     QueryState queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
-      inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
+      inputQueryPlan(std::move(inputQueryPlan)), queryState(queryStatus) {}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
@@ -41,19 +41,19 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
     this->executedQueryPlan = executedQueryPlan;
 }
 
-QueryStatus QueryCatalogEntry::getQueryStatus() const {
+QueryState QueryCatalogEntry::getQueryState() const {
     std::unique_lock lock(mutex);
-    return queryStatus;
+    return queryState;
 }
 
 std::string QueryCatalogEntry::getQueryStatusAsString() const {
     std::unique_lock lock(mutex);
-    return std::string(magic_enum::enum_name(queryStatus));
+    return std::string(magic_enum::enum_name(queryState));
 }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) {
+void QueryCatalogEntry::setQueryStatus(QueryState queryStatus) {
     std::unique_lock lock(mutex);
-    this->queryStatus = queryStatus;
+    this->queryState = queryStatus;
 }
 
 void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {
@@ -74,7 +74,10 @@ void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr
     optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
 }
 
-std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
+std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
+    std::unique_lock lock(mutex);
+    return optimizationPhases;
+}
 
 void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
     std::unique_lock lock(mutex);
@@ -83,7 +86,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::RUNNING, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryState::RUNNING, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

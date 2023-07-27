@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
-
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -54,34 +52,35 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
+        options.setDumpToConsole(true);
     }
 
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData";
-};
+    /**
+     * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
+     * @param schema Schema of the input and output tuples.
+     * @param memoryLayout memory layout
+     * @return
+     */
+    auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
+        std::shared_ptr<Operators::ExecutableOperator> mapOperator;
 
-/**
- * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
- * @param schema Schema of the input and output tuples.
- * @param memoryLayout memory layout
- * @return
- */
-auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
-    auto mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+        mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
 
-    scanOperator->setChild(mapOperator);
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
+        scanOperator->setChild(mapOperator);
 
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-    return pipeline;
-}
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        mapOperator->setChild(emitOperator);
 
-/**
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+        return pipeline;
+    }
+
+    /**
  * Initializes the input buffer for numeric values.
  * @tparam T type of the numeric values
  * @param variableName name of the variable in the schema
@@ -89,18 +88,18 @@ auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
  * @param memoryLayout memory layout
  * @return input buffer
  */
-template<typename T>
-auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
-    auto buffer = bufferManager->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i][variableName].write((T) i);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+    template<typename T>
+    auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
+        auto buffer = bufferManager->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t i = 0; i < 10; i++) {
+            dynamicBuffer[i][variableName].write((T) i);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+        return buffer;
     }
-    return buffer;
-}
 
-/**
+    /**
  * Initializes the map handler for the given pipeline.
  * @param className java class name of the udf
  * @param methodName method name of the udf
@@ -110,43 +109,43 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string className,
-                    std::string methodName,
-                    std::string inputProxyName,
-                    std::string outputProxyName,
-                    SchemaPtr schema,
-                    std::string testDataPath) {
-    Operators::JavaUDFByteCodeList byteCodeList;
-    Operators::JavaSerializedInstance serializedInstance;
-    return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
-                                                               methodName,
-                                                               inputProxyName,
-                                                               outputProxyName,
-                                                               byteCodeList,
-                                                               serializedInstance,
-                                                               schema,
-                                                               schema,
-                                                               testDataPath);
-}
+    auto initMapHandler(std::string className,
+                        std::string methodName,
+                        std::string inputProxyName,
+                        std::string outputProxyName,
+                        SchemaPtr schema) {
+        jni::JavaUDFByteCodeList byteCodeList;
+        jni::JavaSerializedInstance serializedInstance;
+        return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
+                                                                   methodName,
+                                                                   inputProxyName,
+                                                                   outputProxyName,
+                                                                   byteCodeList,
+                                                                   serializedInstance,
+                                                                   schema,
+                                                                   schema,
+                                                                   std::nullopt);
+    }
 
-/**
+    /**
  * Check the output buffer for numeric values.
  * @tparam T type of the numeric values
  * @param variableName name of the variable in the schema
  * @param pipelineContext pipeline context
  * @param memoryLayout memory layout
  */
-template<typename T>
-void checkBufferResult(std::string variableName, auto pipelineContext, auto memoryLayout) {
-    ASSERT_EQ(pipelineContext.buffers.size(), 1);
-    auto resultBuffer = pipelineContext.buffers[0];
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    template<typename T>
+    void checkBufferResult(std::string variableName, auto pipelineContext, auto memoryLayout) {
+        ASSERT_EQ(pipelineContext.buffers.size(), 1);
+        auto resultBuffer = pipelineContext.buffers[0];
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i][variableName].read<T>(), i + 10);
+        auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+        for (uint64_t i = 0; i < 10; i++) {
+            ASSERT_EQ(resultDynamicBuffer[i][variableName].read<T>(), i + 10);
+        }
     }
-}
+};
 
 /**
  * @brief Test a pipeline containing a scan, a java map with integers, and a emit operator
@@ -159,7 +158,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("IntegerMapFunction", "map", "java/lang/Integer", "java/lang/Integer", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.IntegerMapFunction", "map", "java.lang.Integer", "java.lang.Integer", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -180,7 +179,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("ShortMapFunction", "map", "java/lang/Short", "java/lang/Short", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.ShortMapFunction", "map", "java.lang.Short", "java.lang.Short", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -201,7 +200,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("ByteMapFunction", "map", "java/lang/Byte", "java/lang/Byte", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.ByteMapFunction", "map", "java.lang.Byte", "java.lang.Byte", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -222,7 +221,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("LongMapFunction", "map", "java/lang/Long", "java/lang/Long", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.LongMapFunction", "map", "java.lang.Long", "java.lang.Long", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -243,7 +242,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("DoubleMapFunction", "map", "java/lang/Double", "java/lang/Double", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.DoubleMapFunction", "map", "java.lang.Double", "java.lang.Double", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -269,7 +268,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("BooleanMapFunction", "map", "java/lang/Boolean", "java/lang/Boolean", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.BooleanMapFunction", "map", "java.lang.Boolean", "java.lang.Boolean", schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -309,7 +308,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("StringMapFunction", "map", "java/lang/String", "java/lang/String", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.StringMapFunction", "map", "java.lang.String", "java.lang.String", schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -335,14 +334,14 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
  */
 TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("stringVariable", BasicType::TEXT);
+    schema->addField("intVariable", BasicType::INT32);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);
-    schema->addField("intVariable", BasicType::INT32);
     schema->addField("longVariable", BasicType::INT64);
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -368,7 +367,11 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("ComplexPojoMapFunction", "map", "ComplexPojo", "ComplexPojo", schema, testDataPath);
+    auto handler = initMapHandler("stream.nebula.ComplexPojoMapFunction",
+                                  "map",
+                                  "stream.nebula.ComplexPojo",
+                                  "stream.nebula.ComplexPojo",
+                                  schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -392,11 +395,11 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
+        EXPECT_EQ(std::string(textValue->c_str(), size), "XAppended String:");
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
+INSTANTIATE_TEST_CASE_P(testMapJavaUDF,
                         MapJavaUDFPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<MapJavaUDFPipelineTest::ParamType>& info) {
@@ -404,4 +407,3 @@ INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         });
 
 }// namespace NES::Runtime::Execution
-#endif// ENABLE_JNI

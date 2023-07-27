@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -57,7 +57,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
                 matchedOperatorPairs.reserve(targetToHostSinkOperatorMap.size());
 
-                std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryPlan->getSinkOperators();
+                std::vector<LogicalOperatorNodePtr> hostSinkOperators = hostSharedQueryPlan->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
                 for (auto& targetSinkOperator : targetQueryPlan->getSinkOperators()) {
@@ -65,7 +65,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
 
                     auto hostSinkOperator = std::find_if(hostSinkOperators.begin(),
                                                          hostSinkOperators.end(),
-                                                         [hostSinkOperatorId](const OperatorNodePtr& hostOperator) {
+                                                         [hostSinkOperatorId](const LogicalOperatorNodePtr& hostOperator) {
                                                              return hostOperator->getId() == hostSinkOperatorId;
                                                          });
 

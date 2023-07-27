@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
-
-#ifdef ENABLE_JNI
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <jni.h>
+#include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -30,7 +29,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This operator evaluates a map expression defined as java function on input records.
  * Its state is managed inside a JavaUDFOperatorHandler.
  */
-class MapJavaUDF : public ExecutableOperator {
+class MapJavaUDF : public AbstractJavaUDFOperator {
   public:
     /**
      * @brief Creates a MapJavaUDF operator
@@ -38,21 +37,10 @@ class MapJavaUDF : public ExecutableOperator {
      * @param operatorInputSchema The input schema of the map operator.
      * @param operatorOutputSchema The output schema of the map operator.
      */
-    MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema)
-        : operatorHandlerIndex(operatorHandlerIndex), operatorInputSchema(operatorInputSchema),
-          operatorOutputSchema(operatorOutputSchema) {}
+    MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema);
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void terminate(ExecutionContext& ctx) const override;
-
-  private:
-    const uint64_t operatorHandlerIndex;
-
-    // These needs to be the same Schemas as used in the operator handler.
-    // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
-    const SchemaPtr operatorInputSchema, operatorOutputSchema;
 };
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//ENABLE_JNI
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_

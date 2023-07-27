@@ -13,6 +13,7 @@
 */
 
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <string>
 
 namespace NES::Windowing {
 

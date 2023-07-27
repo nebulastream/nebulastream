@@ -326,18 +326,18 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId,
                   queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryState();
 
         switch (status) {
-            case QueryStatus::MARKED_FOR_HARD_STOP:
-            case QueryStatus::MARKED_FOR_SOFT_STOP:
-            case QueryStatus::SOFT_STOP_COMPLETED:
-            case QueryStatus::SOFT_STOP_TRIGGERED:
-            case QueryStatus::STOPPED:
-            case QueryStatus::RUNNING: {
+            case QueryState::MARKED_FOR_HARD_STOP:
+            case QueryState::MARKED_FOR_SOFT_STOP:
+            case QueryState::SOFT_STOP_COMPLETED:
+            case QueryState::SOFT_STOP_TRIGGERED:
+            case QueryState::STOPPED:
+            case QueryState::RUNNING: {
                 return true;
             }
-            case QueryStatus::FAILED: {
+            case QueryState::FAILED: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
                           std::string(magic_enum::enum_name(status)));
                 return false;
@@ -370,9 +370,9 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
         NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
                   queryId,
                   queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryStatus();
+        auto status = queryCatalogEntry->getQueryState();
 
-        if (status == QueryStatus::STOPPED) {
+        if (status == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: Status for query with id = {} is stopped", queryId);
             return true;
         }

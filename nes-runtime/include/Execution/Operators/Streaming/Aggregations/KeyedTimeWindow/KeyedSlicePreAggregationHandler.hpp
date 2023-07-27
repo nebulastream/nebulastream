@@ -14,8 +14,11 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+
+#include <Common/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
+
 namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
@@ -29,9 +32,10 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                        public detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
+class KeyedSlicePreAggregationHandler
+    : public Runtime::Execution::OperatorHandler,
+      public ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
+    using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:

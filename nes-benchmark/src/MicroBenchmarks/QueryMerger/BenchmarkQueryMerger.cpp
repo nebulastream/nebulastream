@@ -354,7 +354,7 @@ int main(int argc, const char* argv[]) {
                 //Fetch the last query for the query catalog
                 auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries);
                 //Wait till the status of the last query is set as running
-                while (lastQuery->getQueryStatus() != QueryStatus::RUNNING) {
+                while (lastQuery->getQueryState() != QueryState::RUNNING) {
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

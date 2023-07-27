@@ -50,21 +50,21 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
         ASSERT_TRUE(responseJson == expected);
     }
 
-    static void verifySerializedInstance(const UDF::JavaSerializedInstance& actual, const std::string& expected) {
-        auto converted = UDF::JavaSerializedInstance{expected.begin(), expected.end()};
+    static void verifySerializedInstance(const jni::JavaSerializedInstance& actual, const std::string& expected) {
+        auto converted = jni::JavaSerializedInstance{expected.begin(), expected.end()};
         ASSERT_EQ(actual, converted);
     }
 
     static void
-    verifyByteCodeList(const UDF::JavaUDFByteCodeList& actual,
+    verifyByteCodeList(const jni::JavaUDFByteCodeList& actual,
                        const google::protobuf::RepeatedPtrField<JavaUdfDescriptorMessage_JavaUdfClassDefinition>& expected) {
         ASSERT_EQ(actual.size(), static_cast<decltype(actual.size())>(expected.size()));
         for (const auto& classDefinition : expected) {
-            auto actualByteCode = std::find_if(actual.cbegin(), actual.cend(), [&](const UDF::JavaClassDefinition& c) {
+            auto actualByteCode = std::find_if(actual.cbegin(), actual.cend(), [&](const jni::JavaClassDefinition& c) {
                 return c.first == classDefinition.class_name();
             });
             ASSERT_TRUE(actualByteCode != actual.end());
-            auto converted = UDF::JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
+            auto converted = jni::JavaByteCode(classDefinition.byte_code().begin(), classDefinition.byte_code().end());
             ASSERT_EQ(actualByteCode->second, converted);
         }
     }

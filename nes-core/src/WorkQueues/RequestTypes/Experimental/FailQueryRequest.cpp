@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -26,33 +26,35 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
-                                   NES::QuerySubPlanId failedSubPlanId,
-                                   uint8_t maxRetries,
+FailQueryRequest::FailQueryRequest(const RequestId requestId,
+                                   const NES::QueryId queryId,
+                                   const NES::QuerySubPlanId failedSubPlanId,
+                                   const uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest({ResourceType::GlobalQueryPlan,
+    : AbstractRequest(requestId,
+                      {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
-void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
+void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-void FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {}
+void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) {}
 
-void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {
+void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandler&) {}
+void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
-    globalQueryPlan = storageHandle.getGlobalQueryPlanHandle();
-    globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle();
-    queryCatalogService = storageHandle.getQueryCatalogServiceHandle();
-    topology = storageHandle.getTopologyHandle();
+    globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
+    globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle(requestId);
+    queryCatalogService = storageHandle.getQueryCatalogServiceHandle(requestId);
+    topology = storageHandle.getTopologyHandle(requestId);
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
@@ -66,7 +68,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     //undeploy queries
     try {
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-        queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
+        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
                                                      "failed to undeploy query with id " + std::to_string(queryId));
@@ -74,7 +76,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     //update global query plan
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
+        queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
 }
 }// namespace NES::Experimental

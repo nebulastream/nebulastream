@@ -31,10 +31,31 @@ namespace NES {
 
 class KafkaSource : public DataSource {
   public:
+    /**
+   * @brief constructor for a kafka source
+   * @param schema schema of the elements
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
+   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+   * @param brokers list of brokers
+   * @param topic the kafka topic which organizes tuples of the same entity. Usually the name of a data stream
+   * @param groupId the ID of a logical group which consumes messages from one or more kafka topics
+   * @param autoCommit bool indicating if offset has to be committed automatically or not
+   * @param kafkaConsumerTimeout the timeperiod after which a timeout is issued
+   * @param offsetMode instructs the broker from which point of a topic a consumer wants consume messages from
+   * @param kafkaSourceType
+   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+   * @param operatorId current operator id
+   * @param numSourceLocalBuffers the number of buffers allocated to a source
+   * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
+   * @param physicalSourceName the name and unique identifier of a physical source
+   * @param successors the subsequent operators in the pipeline to which the data is pushed
+   * @return
+   */
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
                 Runtime::QueryManagerPtr queryManager,
-                uint64_t numbersOfBufferToProduce,
+                uint64_t numberOfBuffersToProduce,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,
@@ -46,6 +67,7 @@ class KafkaSource : public DataSource {
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
                 uint64_t batchSize,
+                const std::string& physicalSourceName,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**

@@ -13,6 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -24,7 +25,7 @@ PhysicalHashJoinBuildOperator::PhysicalHashJoinBuildOperator(
     const JoinBuildSideType buildSide,
     const std::string& timeStampFieldName,
     const std::string& joinFieldName)
-    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName), buildSide(buildSide) {}
 
 PhysicalOperatorPtr

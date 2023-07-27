@@ -1168,7 +1168,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
+bool CCodeGenerator::generateCodeForNonKeyedThreadLocalPreAggregationOperator(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
     PipelineContextPtr context,
@@ -1181,7 +1181,7 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
     auto getOperatorHandlerCall =
-        call("getOperatorHandler<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>");
+        call("getOperatorHandler<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement =
@@ -1376,7 +1376,7 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     return 0;
 }
 
-bool CCodeGenerator::generateCodeForGlobalSliceMergingOperator(
+bool CCodeGenerator::generateCodeForNonKeyedSliceMergingOperator(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
     PipelineContextPtr context,
@@ -1423,7 +1423,7 @@ bool CCodeGenerator::generateCodeForGlobalSliceMergingOperator(
             .copy());
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSliceMergingOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::NonKeyedSliceMergingOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
@@ -1493,7 +1493,7 @@ bool CCodeGenerator::generateCodeForKeyedSliceStoreAppend(PipelineContextPtr con
     return true;
 }
 
-bool CCodeGenerator::generateCodeForGlobalSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) {
+bool CCodeGenerator::generateCodeForNonKeyedSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto code = context->code;
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
@@ -1503,7 +1503,7 @@ bool CCodeGenerator::generateCodeForGlobalSliceStoreAppend(PipelineContextPtr co
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler2");
     auto getOperatorHandlerCall =
-        call("getOperatorHandler<Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandler>");
+        call("getOperatorHandler<Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
@@ -1774,7 +1774,7 @@ ExpressionStatementPtr CCodeGenerator::createGetEntryCall(Windowing::LogicalWind
     return getEntry;
 }
 
-bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
+bool CCodeGenerator::generateCodeForNonKeyedSlidingWindowSink(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
     PipelineContextPtr context,
@@ -1823,7 +1823,7 @@ bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
             .copy());
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
@@ -2236,7 +2236,7 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(
     return false;
 }
 
-bool CCodeGenerator::generateCodeForGlobalTumblingWindowSink(
+bool CCodeGenerator::generateCodeForNonKeyedTumblingWindowSink(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
     PipelineContextPtr context,
@@ -3841,11 +3841,11 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
 }
 
 uint64_t
-CCodeGenerator::generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                        PipelineContextPtr context,
-                                                        uint64_t id,
-                                                        uint64_t windowOperatorIndex,
-                                                        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+CCodeGenerator::generateNonKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                          PipelineContextPtr context,
+                                                          uint64_t id,
+                                                          uint64_t windowOperatorIndex,
+                                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
@@ -3862,7 +3862,7 @@ CCodeGenerator::generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindow
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSliceMergingOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::NonKeyedSliceMergingOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
@@ -4029,11 +4029,11 @@ CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindow
 }
 
 uint64_t
-CCodeGenerator::generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                         PipelineContextPtr context,
-                                                         uint64_t id,
-                                                         uint64_t windowOperatorIndex,
-                                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+CCodeGenerator::generateNonKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                           PipelineContextPtr context,
+                                                           uint64_t id,
+                                                           uint64_t windowOperatorIndex,
+                                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
@@ -4050,7 +4050,7 @@ CCodeGenerator::generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindo
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
@@ -4138,7 +4138,7 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     return 0;
 }
 
-uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
+uint64_t CCodeGenerator::generateNonKeyedThreadLocalPreAggregationSetup(
     Windowing::LogicalWindowDefinitionPtr window,
     SchemaPtr,
     PipelineContextPtr context,
@@ -4157,7 +4157,7 @@ uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
     auto getOperatorHandlerCall =
-        call("getOperatorHandler<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>");
+        call("getOperatorHandler<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 

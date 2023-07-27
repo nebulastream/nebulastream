@@ -28,7 +28,7 @@ PhysicalNestedLoopJoinProbeOperator::PhysicalNestedLoopJoinProbeOperator(
     const std::string& windowEndFieldName,
     const std::string& windowKeyFieldName,
     Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), PhysicalNestedLoopJoinOperator(std::move(operatorHandler), id),
+    : OperatorNode(id), PhysicalNestedLoopJoinOperator(std::move(operatorHandler)),
       PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)),
       joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName),
       windowEndFieldName(windowEndFieldName), windowKeyFieldName(windowKeyFieldName) {}

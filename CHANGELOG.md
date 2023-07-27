@@ -1,5 +1,113 @@
 # Changelog
 
+## [v0.5.163](https://github.com/nebulastream/nebulastream/tree/v0.5.163) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.162...v0.5.163)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor Java UDF and JNI integration [\#3974](https://github.com/nebulastream/nebulastream/issues/3974)
+
+## [v0.5.162](https://github.com/nebulastream/nebulastream/tree/v0.5.162) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.161...v0.5.162)
+
+**Implemented enhancements:**
+
+- \[TASK\] Change ASP Tests to new Default Min and Max AggregationValues [\#4019](https://github.com/nebulastream/nebulastream/issues/4019)
+- \[TASK\] Port MultiThreadedTest to Nautilus [\#3909](https://github.com/nebulastream/nebulastream/issues/3909)
+
+## [v0.5.161](https://github.com/nebulastream/nebulastream/tree/v0.5.161) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.160...v0.5.161)
+
+**Implemented enhancements:**
+
+- \[TASK\] Batch Limit Operator [\#3696](https://github.com/nebulastream/nebulastream/issues/3696)
+
+## [v0.5.160](https://github.com/nebulastream/nebulastream/tree/v0.5.160) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.159...v0.5.160)
+
+## [v0.5.159](https://github.com/nebulastream/nebulastream/tree/v0.5.159) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.158...v0.5.159)
+
+**Implemented enhancements:**
+
+- \[TASK\] Port MultipleJoinTest to Testharness and enable Nautilus [\#3996](https://github.com/nebulastream/nebulastream/issues/3996)
+- \[TASK\] Rename all logical, physical, and generatable operators of type GlobalWindow  as NonKeyedWindow [\#3967](https://github.com/nebulastream/nebulastream/issues/3967)
+- \[TASK\] Refactor MultipleJoinsTest [\#3965](https://github.com/nebulastream/nebulastream/issues/3965)
+
+## [v0.5.158](https://github.com/nebulastream/nebulastream/tree/v0.5.158) (2023-07-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.157...v0.5.158)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] add filter push-down rule for pushing down below projection operators [\#3799](https://github.com/nebulastream/nebulastream/issues/3799)
+
+## [v0.5.157](https://github.com/nebulastream/nebulastream/tree/v0.5.157) (2023-07-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.156...v0.5.157)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add PhysicalSourceName to Data Sources [\#3860](https://github.com/nebulastream/nebulastream/issues/3860)
+
+### Bug Fixes 🐛
+
+- \[BUG\]  Parameter for Query undeployment phase execute function has wrong type, fail request supplies wrong value as argument [\#3982](https://github.com/nebulastream/nebulastream/issues/3982)
+
+## [v0.5.156](https://github.com/nebulastream/nebulastream/tree/v0.5.156) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.155...v0.5.156)
+
+**Implemented enhancements:**
+
+- \[TASK\] Filter merge rule  [\#4014](https://github.com/nebulastream/nebulastream/issues/4014)
+- \[TASK\] Use only a single 2pl storage handler object for all requests [\#3814](https://github.com/nebulastream/nebulastream/issues/3814)
+
+## [v0.5.155](https://github.com/nebulastream/nebulastream/tree/v0.5.155) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.154...v0.5.155)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add logic for operator state transition [\#3899](https://github.com/nebulastream/nebulastream/issues/3899)
+
+### Bug Fixes 🐛
+
+- \[BUG\]: TextFunction LIKE passes test but fails when shuting down [\#3633](https://github.com/nebulastream/nebulastream/issues/3633)
+
+## [v0.5.154](https://github.com/nebulastream/nebulastream/tree/v0.5.154) (2023-07-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.153...v0.5.154)
+
+**Implemented enhancements:**
+
+- \[TASK\] Redundancy elimination rule  [\#3874](https://github.com/nebulastream/nebulastream/issues/3874)
+
+### Miscellaneous Issues ✌️
+
+- Schema getIndex is complicated [\#1537](https://github.com/nebulastream/nebulastream/issues/1537)
+
+## [v0.5.153](https://github.com/nebulastream/nebulastream/tree/v0.5.153) (2023-07-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.152...v0.5.153)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Nautilus in QueryDeployment [\#3984](https://github.com/nebulastream/nebulastream/issues/3984)
+
+## [v0.5.152](https://github.com/nebulastream/nebulastream/tree/v0.5.152) (2023-07-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.151...v0.5.152)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Nautilus in ThreadLocalGlobalTumblingWindowTests and ThreadLocalTumblingWindowTests [\#4004](https://github.com/nebulastream/nebulastream/issues/4004)
+
 ## [v0.5.151](https://github.com/nebulastream/nebulastream/tree/v0.5.151) (2023-07-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.150...v0.5.151)

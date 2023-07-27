@@ -35,21 +35,23 @@ namespace NES {
 DefaultSource::DefaultSource(SchemaPtr schema,
                              Runtime::BufferManagerPtr bufferManager,
                              Runtime::QueryManagerPtr queryManager,
-                             const uint64_t numbersOfBufferToProduce,
+                             const uint64_t numberOfBufferToProduce,
                              uint64_t gatheringInterval,
                              OperatorId operatorId,
                              OriginId originId,
                              size_t numSourceLocalBuffers,
-                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                             const std::string& physicalSourceName)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
-                      numbersOfBufferToProduce,
+                      numberOfBufferToProduce,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
-                      GatheringMode ::INTERVAL_MODE,
-                      std::move(successors)) {
+                      GatheringMode::INTERVAL_MODE,
+                      std::move(successors),
+                      physicalSourceName) {
     this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }
 

@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Common/Identifiers.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -24,7 +24,7 @@
 
 namespace NES::Catalogs::Query {
 
-std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus status) {
+std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryState status) {
     NES_INFO("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status {}", magic_enum::enum_name(status));
     std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueryCatalogEntries(status);
     std::map<uint64_t, std::string> result;
@@ -54,7 +54,7 @@ QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString
     QueryId queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id {}", queryId);
     QueryCatalogEntryPtr queryCatalogEntry =
-        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryStatus::REGISTERED);
+        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryState::REGISTERED);
     queryIdAndCatalogEntryMapping[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
 }
@@ -79,11 +79,11 @@ bool QueryCatalog::queryExists(QueryId queryId) {
     return false;
 }
 
-std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryStatus requestedStatus) {
+std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryState requestedStatus) {
     NES_TRACE("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping={}", printQueries());
     std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
     for (auto const& q : queryIdAndCatalogEntryMapping) {
-        if (q.second->getQueryStatus() == requestedStatus) {
+        if (q.second->getQueryState() == requestedStatus) {
             matchingQueries.insert(q);
         }
     }
@@ -93,7 +93,7 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(Qu
 std::string QueryCatalog::printQueries() {
     std::stringstream ss;
     for (const auto& q : queryIdAndCatalogEntryMapping) {
-        ss << "queryID=" << q.first << " running=" << magic_enum::enum_name(q.second->getQueryStatus()) << std::endl;
+        ss << "queryID=" << q.first << " running=" << magic_enum::enum_name(q.second->getQueryState()) << std::endl;
     }
     return ss.str();
 }
@@ -109,7 +109,6 @@ void QueryCatalog::mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalo
     auto queryCatalogEntries = sharedQueryIdAndCatalogEntryMapping[sharedQueryId];
     queryCatalogEntries.emplace_back(queryCatalogEntry);
     sharedQueryIdAndCatalogEntryMapping[sharedQueryId] = queryCatalogEntries;
-    return;
 }
 
 std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId) {

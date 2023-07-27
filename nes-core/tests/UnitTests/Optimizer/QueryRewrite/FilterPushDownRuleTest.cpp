@@ -94,6 +94,91 @@ bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> a
     return count == 0;
 }
 
+TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithoutRename) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query =
+        Query::from("default_logical").project(Attribute("value")).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr projectOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(projectOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithRename) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query = Query::from("default_logical")
+                      .project(Attribute("value").as("value2"))
+                      .filter(Attribute("value2") < 45)
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr projectOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+
+    ++itr;
+    EXPECT_TRUE(projectOperator->equal((*itr)));
+
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    FilterLogicalOperatorNodePtr filterLogicalOperatorNodePtr = (*itr)->as<FilterLogicalOperatorNode>();
+    bool attributeChangedName =
+        Optimizer::FilterPushDownRule::isFieldUsedInFilterPredicate(filterLogicalOperatorNodePtr, "value");
+    EXPECT_TRUE(attributeChangedName);
+
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());

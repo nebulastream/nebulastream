@@ -18,6 +18,7 @@ add_source_files(nes-core
         PhysicalSourceOperator.cpp
         PhysicalSinkOperator.cpp
         PhysicalFilterOperator.cpp
+        PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalInferModelOperator.cpp
         PhysicalMapOperator.cpp

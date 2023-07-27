@@ -28,15 +28,16 @@ namespace NES {
 class MonitoringSource : public DataSource {
   public:
     /**
-     * @brief Ctor for the monitoring source
+     * @brief Constructor for the monitoring source
      * @param metricCollector the metric collector
      * @param waitTime wait time during fill buffer until a new metric is read
-     * @param bufferManager
-     * @param queryManager
-     * @param operatorId
-     * @param originId
-     * @param numSourceLocalBuffers
-     * @param successors
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
     MonitoringSource(Monitoring::MetricCollectorPtr metricCollector,
                      std::chrono::milliseconds waitTime,
@@ -45,6 +46,7 @@ class MonitoringSource : public DataSource {
                      OperatorId operatorId,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
+                     const std::string& physicalSourceName,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;

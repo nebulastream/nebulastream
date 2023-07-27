@@ -224,23 +224,23 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
             return false;
         }
         NES_TRACE("TestUtils: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus status = queryCatalogEntry->getQueryStatus();
-
-        switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MARKED_FOR_HARD_STOP:
-            case QueryStatus::MARKED_FOR_SOFT_STOP:
-            case QueryStatus::SOFT_STOP_COMPLETED:
-            case QueryStatus::SOFT_STOP_TRIGGERED:
-            case QueryStatus::STOPPED:
-            case QueryStatus::RUNNING: {
+        auto queryState = queryCatalogEntry->getQueryState();
+        switch (queryState) {
+            case QueryState::MARKED_FOR_HARD_STOP:
+            case QueryState::MARKED_FOR_SOFT_STOP:
+            case QueryState::SOFT_STOP_COMPLETED:
+            case QueryState::SOFT_STOP_TRIGGERED:
+            case QueryState::STOPPED:
+            case QueryState::RUNNING: {
                 return true;
             }
-            case QueryStatus::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}", magic_enum::enum_name(status));
+            case QueryState::FAILED: {
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
+                          magic_enum::enum_name(queryState));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found {}", magic_enum::enum_name(status));
+                NES_WARNING("Expected: Running or Scheduling but found {}", magic_enum::enum_name(queryState));
                 break;
             }
         }
@@ -263,7 +263,7 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::STOPPED) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
@@ -288,7 +288,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkFailedOrTimeout: check query status");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::FAILED) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::FAILED) {
             NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
         }
@@ -783,30 +783,38 @@ void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::D
 
 std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string& csvFileName,
                                                                const SchemaPtr& schema,
-                                                               const Runtime::BufferManagerPtr& bufferManager) {
+                                                               const Runtime::BufferManagerPtr& bufferManager,
+                                                               uint64_t numTuplesPerBuffer,
+                                                               const std::string& delimiter) {
     std::vector<Runtime::TupleBuffer> allBuffers;
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
     NES_DEBUG("read file={}", fullPath);
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
     std::ifstream inputFile(fullPath);
-    std::istream_iterator<std::string> beginIt(inputFile);
-    std::istream_iterator<std::string> endIt;
-    auto tupleCount = 0_u64;
+    return fillBufferFromStream(inputFile, schema, bufferManager, numTuplesPerBuffer, delimiter);
+}
 
+std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& istream,
+                                                                  const SchemaPtr& schema,
+                                                                  const Runtime::BufferManagerPtr& bufferManager,
+                                                                  uint64_t numTuplesPerBuffer,
+                                                                  const std::string& delimiter) {
+
+    std::vector<Runtime::TupleBuffer> allBuffers;
+    auto tupleCount = 0_u64;
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
 
-    for (auto it = beginIt; it != endIt; ++it) {
-        const std::string& line = *it;
+    std::string line;
+    while (std::getline(istream, line)) {
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
         parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
         tupleCount++;
 
-        if (tupleCount >= maxTuplePerBuffer) {
+        if (tupleCount >= numTuplesPerBuffer) {
             tupleBuffer.setNumberOfTuples(tupleCount);
             allBuffers.emplace_back(tupleBuffer);
             tupleCount = 0;
@@ -818,7 +826,6 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string
     if (tupleCount > 0) {
         tupleBuffer.setNumberOfTuples(tupleCount);
         allBuffers.emplace_back(tupleBuffer);
-        tupleCount = 0;
     }
 
     return allBuffers;

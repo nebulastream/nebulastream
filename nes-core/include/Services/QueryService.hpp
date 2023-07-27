@@ -104,7 +104,7 @@ class QueryService {
      * @param queryId : query id of the query to be stopped.
      * @returns: true if successful
      * @throws QueryNotFoundException : when query id is not found in the query catalog.
-     * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
+     * @throws InvalidQueryStateException : when the query is found to be in an invalid state.
      */
     bool validateAndQueueStopQueryRequest(QueryId queryId);
 

@@ -369,6 +369,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     // Start thread for receivingh the data.
@@ -425,6 +426,7 @@ TEST_F(SinkTest, testTextZMQSink) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 
@@ -473,6 +475,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 
@@ -533,6 +536,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       1,
                                       0,
                                       12,
+                                      "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 

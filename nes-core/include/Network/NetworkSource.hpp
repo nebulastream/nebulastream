@@ -33,6 +33,19 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
+    /*
+   * @param SchemaPtr
+   * @param bufferManager
+   * @param queryManager
+   * @param networkManager
+   * @param nesPartition
+   * @param sinkLocation
+   * @param numSourceLocalBuffers
+   * @param waitTime
+   * @param retryTimes
+   * @param successors
+   * @param physicalSourceName
+   */
     NetworkSource(SchemaPtr schema,
                   Runtime::BufferManagerPtr bufferManager,
                   Runtime::QueryManagerPtr queryManager,
@@ -42,7 +55,8 @@ class NetworkSource : public DataSource {
                   size_t numSourceLocalBuffers,
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                  const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!

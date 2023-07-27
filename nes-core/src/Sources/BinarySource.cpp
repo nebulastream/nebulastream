@@ -25,11 +25,12 @@ namespace NES {
 BinarySource::BinarySource(const SchemaPtr& schema,
                            Runtime::BufferManagerPtr bufferManager,
                            Runtime::QueryManagerPtr queryManager,
-                           const std::string& _file_path,
+                           const std::string& pathToFile,
                            OperatorId operatorId,
                            OriginId originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
+                           const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -38,15 +39,16 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  originId,
                  numSourceLocalBuffers,
                  gatheringMode,
+                 physicalSourceName,
                  std::move(successors)),
-      input(std::ifstream(_file_path.c_str())), filePath(_file_path) {
+      input(std::ifstream(pathToFile.c_str())), filePath(pathToFile) {
     if (!(input.is_open() && input.good())) {
         NES_THROW_RUNTIME_ERROR("Binary input file is not valid");
     }
     input.seekg(0, std::ifstream::end);
     fileSize = input.tellg();
     if (fileSize < 0) {
-        NES_FATAL_ERROR("ERROR: File {} is corrupted", _file_path);
+        NES_FATAL_ERROR("ERROR: File {} is corrupted", pathToFile);
     }
     input.seekg(0, std::ifstream::beg);
     tupleSize = schema->getSchemaSizeInBytes();

@@ -117,20 +117,24 @@ class GlobalQueryPlanUpdatePhase {
   public:
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
-     * @param queryCatalogService: the catalog of queryIdAndCatalogEntryMapping
-     * @param sourceCatalog: the catalog of sources
-     * @param globalQueryPlan: the input global query plan
-     * @param coordinatorConfiguration: configuration of the coordinator
-     * @return Shared pointer for the GlobalQueryPlanUpdatePhase
+     * @param topology : the topology
+     * @param queryCatalogService : the query catalog service
+     * @param sourceCatalog : the source catalog
+     * @param globalQueryPlan : the empty global query plan
+     * @param z3Context : the z3 context
+     * @param coordinatorConfiguration configuration of the coordinator
+     * @param udfCatalog : the udf catalog
+     * @param globalExecutionPlan : the global query plan
+     * @return the shared pointer of the global query plan update phase
      */
-    static GlobalQueryPlanUpdatePhasePtr create(TopologyPtr topology,
-                                                QueryCatalogServicePtr queryCatalogService,
-                                                Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                GlobalQueryPlanPtr globalQueryPlan,
-                                                z3::ContextPtr z3Context,
+    static GlobalQueryPlanUpdatePhasePtr create(const TopologyPtr& topology,
+                                                const QueryCatalogServicePtr& queryCatalogService,
+                                                const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                const GlobalQueryPlanPtr& globalQueryPlan,
+                                                const z3::ContextPtr& z3Context,
                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                                Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                                                GlobalExecutionPlanPtr globalExecutionPlan);
+                                                const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                                const GlobalExecutionPlanPtr& globalExecutionPlan);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -140,14 +144,14 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& nesRequests);
 
   private:
-    explicit GlobalQueryPlanUpdatePhase(TopologyPtr topology,
-                                        QueryCatalogServicePtr queryCatalogService,
-                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                        GlobalQueryPlanPtr globalQueryPlan,
-                                        z3::ContextPtr z3Context,
+    explicit GlobalQueryPlanUpdatePhase(const TopologyPtr& topology,
+                                        const QueryCatalogServicePtr& queryCatalogService,
+                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                        const GlobalQueryPlanPtr& globalQueryPlan,
+                                        const z3::ContextPtr& z3Context,
                                         const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                                        GlobalExecutionPlanPtr globalExecutionPlan);
+                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                        const GlobalExecutionPlanPtr& globalExecutionPlan);
 
     /**
      * @brief Process add query request
@@ -191,6 +195,26 @@ class GlobalQueryPlanUpdatePhase {
                                              const ExecutionNodePtr& upstreamExecutionNode,
                                              const ExecutionNodePtr& downstreamExecutionNode);
 
+    /**
+     * @brief
+     * @param sharedQueryPlanId
+     * @param downstreamExecutionNode
+     * @param downstreamOperatorIds
+     */
+    void getDownstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
+                                        const ExecutionNodePtr& downstreamExecutionNode,
+                                        std::set<OperatorId>& downstreamOperatorIds) const;
+
+    /**
+     * @brief
+     * @param sharedQueryPlanId
+     * @param upstreamExecutionNode
+     * @param upstreamOperatorIds
+     */
+    void getUpstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
+                                      const ExecutionNodePtr& upstreamExecutionNode,
+                                      std::set<OperatorId>& upstreamOperatorIds) const;
+
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
@@ -204,12 +228,6 @@ class GlobalQueryPlanUpdatePhase {
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
     z3::ContextPtr z3Context;
-    void getDownstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
-                                        const ExecutionNodePtr& downstreamExecutionNode,
-                                        std::set<OperatorId>& downstreamOperatorIds) const;
-    void getUpstreamPinnedOperatorIds(SharedQueryId sharedQueryPlanId,
-                                      const ExecutionNodePtr& upstreamExecutionNode,
-                                      std::set<OperatorId>& upstreamOperatorIds) const;
 };
 }// namespace Optimizer
 }// namespace NES

@@ -55,8 +55,8 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
     /**
      * @brief creates an Object of this class through a static create function
@@ -74,20 +74,20 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
                                  TypeInferencePhasePtr typeInferencePhase);
 
     void performOperatorPlacement(QueryId queryId,
-                                  const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(QueryId queryId,
-                                 const OperatorNodePtr& operatorNode,
+                                 const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities
      * @param operatorNode
      * @return
      */
-    bool pushUpBasedOnFilterSelectivity(const OperatorNodePtr& operatorNode);
+    bool pushUpBasedOnFilterSelectivity(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief removes redundant operators

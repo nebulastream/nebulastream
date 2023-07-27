@@ -32,7 +32,7 @@ namespace NES {
 KafkaSource::KafkaSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
-                         uint64_t numbersOfBufferToProduce,
+                         uint64_t numberOfBuffersToProduce,
                          const std::string brokers,
                          const std::string topic,
                          const std::string groupId,
@@ -44,6 +44,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
                          uint64_t batchSize,
+                         const std::string& physicalSourceName,
                          const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -52,6 +53,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  originId,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
+                 physicalSourceName,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode), batchSize(batchSize) {
@@ -62,7 +64,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
               // Disable auto commit
               {"enable.auto.commit", false}};
 
-    this->numberOfBuffersToProduce = numbersOfBufferToProduce;
+    this->numberOfBuffersToProduce = numberOfBuffersToProduce;
 
     numberOfTuplesPerBuffer =
         std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));

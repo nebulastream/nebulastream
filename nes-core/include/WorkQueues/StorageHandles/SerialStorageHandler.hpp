@@ -17,7 +17,6 @@
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 namespace NES {
-
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
@@ -42,54 +41,54 @@ class SerialStorageHandler : public StorageHandler {
      * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
      * @return shared pointer to the serial storage manager
      */
-    static std::shared_ptr<SerialStorageHandler> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                        const TopologyPtr& topology,
-                                                        const QueryCatalogServicePtr& queryCatalogService,
-                                                        const GlobalQueryPlanPtr& globalQueryPlan,
-                                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
-
-    /**
-     * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
-     * @param requiredResources The resources required for request execution
-     */
-    void acquireResources(std::vector<ResourceType> requiredResources) override;
+    static std::shared_ptr<SerialStorageHandler> create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                        TopologyPtr topology,
+                                                        QueryCatalogServicePtr queryCatalogService,
+                                                        GlobalQueryPlanPtr globalQueryPlan,
+                                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Obtain a mutable topology handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the topology
      */
-    TopologyHandle getTopologyHandle() override;
+    TopologyHandle getTopologyHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable query catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable source catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the source catalog.
      */
-    SourceCatalogHandle getSourceCatalogHandle() override;
+    SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the global execution plan.
      */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global query plan handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the global query plan.
      */
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
+    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the udf catalog.
      */
-    UDFCatalogHandle getUDFCatalogHandle() override;
+    UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

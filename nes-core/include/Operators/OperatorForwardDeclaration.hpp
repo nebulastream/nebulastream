@@ -53,13 +53,15 @@ class MapLogicalOperatorNode;
 using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
 
 class WindowLogicalOperatorNode;
-
 using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
+
+class LimitLogicalOperatorNode;
+using LimitLogicalOperatorNodePtr = std::shared_ptr<LimitLogicalOperatorNode>;
+
 class WatermarkAssignerLogicalOperatorNode;
-
 using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
-class SourceLogicalOperatorNode;
 
+class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 namespace Catalogs::UDF {

@@ -26,18 +26,28 @@ namespace NES {
 class BinarySource : public DataSource {
   public:
     /**
-     * @brief constructor for binary source
+     * @brief the constructor for a binary source
      * @param schema of the data source
-     * @param file path
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param pathToFile path to the binary file
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @return a DataSourcePtr pointing to the data source
      */
     explicit BinarySource(const SchemaPtr& schema,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
-                          const std::string& file_path,
+                          const std::string& pathToFile,
                           OperatorId operatorId,
                           OriginId originId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
+                          const std::string& physicalSourceName,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

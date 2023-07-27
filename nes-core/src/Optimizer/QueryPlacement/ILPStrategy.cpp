@@ -55,8 +55,8 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             FaultToleranceType faultToleranceType,
                                             LineageType lineageType,
-                                            const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                            const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id {}", queryId);
 
@@ -79,12 +79,12 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
             //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
             auto& operatorToProcess = operatorPath.back();
-            auto isPinnedDownStreamOperator =
-                std::find_if(pinnedDownStreamOperators.begin(),
-                             pinnedDownStreamOperators.end(),
-                             [operatorToProcess](const OperatorNodePtr& pinnedDownStreamOperator) {
-                                 return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<OperatorNode>()->getId();
-                             });
+            auto isPinnedDownStreamOperator = std::find_if(
+                pinnedDownStreamOperators.begin(),
+                pinnedDownStreamOperators.end(),
+                [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
+                    return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
+                });
 
             //Skip further processing if encountered pinned downstream operator
             if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
@@ -111,7 +111,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 }
 
                 // Only include unplaced operators in the path
-                if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
+                if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
                     operatorPath.push_back(downstreamOperator);
                     unplacedDownStreamOperatorCount++;
                 }
@@ -123,7 +123,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto upstreamTopologyNode = topologyMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
-            std::any_cast<uint64_t>(operatorPath.back()->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID));
+            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_NODE_ID));
         auto downstreamTopologyNode = topologyMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
@@ -151,24 +151,24 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
 
     for (auto const& [operatorID, position] : operatorPositionMap) {
-        OperatorNodePtr operatorNode = operatorMap[operatorID]->as<OperatorNode>();
-        if (operatorNode->getParents().empty()) {
+        LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperatorNode>();
+        if (logicalOperatorNode->getParents().empty()) {
             continue;
         }
 
         //Loop over downstream operators and compute network cost
-        for (auto downStreamOperator : operatorNode->getParents()) {
-            OperatorId downStreamOperatorId = downStreamOperator->as_if<OperatorNode>()->getId();
+        for (auto downStreamOperator : logicalOperatorNode->getParents()) {
+            OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
             //Only consider nodes that are to be placed
             if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
                 auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
                 NES_DEBUG("distance: {} {}", operatorID, distance.to_string());
                 double output;
-                if (!operatorNode->hasProperty("output")) {
-                    output = getDefaultOperatorOutput(operatorNode);
+                if (!logicalOperatorNode->hasProperty("output")) {
+                    output = getDefaultOperatorOutput(logicalOperatorNode);
                 } else {
-                    std::any prop = operatorNode->getProperty("output");
+                    std::any prop = logicalOperatorNode->getProperty("output");
                     output = std::any_cast<double>(prop);
                 }
                 cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
@@ -219,11 +219,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
-            OperatorNodePtr operatorNode = operatorMap[operatorId];
+            LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
             TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
 
             // collect the solution to operatorToTopologyNodeMap
-            operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+            operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
         }
     }
 
@@ -245,7 +245,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 
-std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<OperatorNodePtr>& pinnedUpStreamOperators) {
+std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
     std::map<uint64_t, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
@@ -284,7 +284,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<uint64_t, double>& nodeMileageMap) {
 
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
-        OperatorNodePtr operatorNode = operatorNodePath[i]->as<OperatorNode>();
+        auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
 
         if (operatorMap.find(operatorID) != operatorMap.end()) {
@@ -375,7 +375,7 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-double ILPStrategy::getDefaultOperatorOutput(OperatorNodePtr operatorNode) {
+double ILPStrategy::getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode) {
 
     double dmf = 1;
     double input = 10;
@@ -392,7 +392,7 @@ double ILPStrategy::getDefaultOperatorOutput(OperatorNodePtr operatorNode) {
 }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-int ILPStrategy::getDefaultOperatorCost(OperatorNodePtr operatorNode) {
+int ILPStrategy::getDefaultOperatorCost(LogicalOperatorNodePtr operatorNode) {
 
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return 0;

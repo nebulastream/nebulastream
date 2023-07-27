@@ -19,7 +19,8 @@ add_source_files(nes-core
         TaskExecutionException.cpp
         InvalidFieldException.cpp
         InvalidQueryException.cpp
-        InvalidQueryStatusException.cpp
+        InvalidQueryStateException.cpp
+        InvalidOperatorStateException.cpp
         QueryDeploymentException.cpp
         QueryPlacementException.cpp
         QueryNotFoundException.cpp
@@ -37,4 +38,7 @@ add_source_files(nes-core
         RPCQueryUndeploymentException.cpp
         SharedQueryPlanNotFoundException.cpp
         RequestExecutionException.cpp
+        ResourceLockingException.cpp
+        StorageHandlerAcquireResourcesException.cpp
+        AccessNonLockedResourceException.cpp
 )

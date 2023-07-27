@@ -31,40 +31,45 @@
 
 namespace NES {
 
-StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
-                                                           size_t maxRetries,
+StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId,
+                                                           const QueryId queryId,
+                                                           const size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
                                                            Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : AbstractRequest(
-        {
-            ResourceType::QueryCatalogService,
-            ResourceType::GlobalExecutionPlan,
-            ResourceType::Topology,
-            ResourceType::GlobalQueryPlan,
-            ResourceType::UdfCatalog,
-            ResourceType::SourceCatalog,
-        },
-        maxRetries),
+    : AbstractRequest(requestId,
+                      {
+                          ResourceType::QueryCatalogService,
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                      },
+                      maxRetries),
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
-StopQueryRequestPtr StopQueryRequestExperimental::create(QueryId queryId,
-                                                         size_t maxRetries,
+StopQueryRequestPtr StopQueryRequestExperimental::create(const RequestId requestId,
+                                                         const QueryId queryId,
+                                                         const size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
+    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(requestId,
+                                                                                       queryId,
+                                                                                       maxRetries,
+                                                                                       std::move(workerRpcClient),
+                                                                                       std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
     NES_TRACE("Acquire Resources.");
     try {
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
-        topology = storageHandler.getTopologyHandle();
-        queryCatalogService = storageHandler.getQueryCatalogServiceHandle();
-        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle();
-        udfCatalog = storageHandler.getUDFCatalogHandle();
-        sourceCatalog = storageHandler.getSourceCatalogHandle();
+        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
+        topology = storageHandler.getTopologyHandle(requestId);
+        queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
+        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
+        udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
@@ -100,7 +105,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
-                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryStatus::STOPPED, "Hard Stopped");
+                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
             }
             globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
@@ -134,14 +139,17 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         //  - Query status of the removed query is marked as stopped.
         // Actual Result:
         //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
 
     } catch (RequestExecutionException& e) {
         handleError(e, storageHandler);
     }
 }
 
-void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE("Release locks."); }
+void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) {
+    NES_TRACE("Release locks.");
+    storageHandler.releaseResources(requestId);
+}
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
@@ -149,18 +157,18 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
-void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex,
+void StopQueryRequestExperimental::preRollbackHandle(const RequestExecutionException& ex,
                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
+void StopQueryRequestExperimental::postRollbackHandle(const RequestExecutionException& ex,
                                                       [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
 
-void StopQueryRequestExperimental::rollBack(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }

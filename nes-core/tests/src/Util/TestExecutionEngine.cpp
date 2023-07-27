@@ -20,6 +20,7 @@ namespace NES::Testing {
 
 TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
+                                         const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
@@ -30,6 +31,10 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     workerConfiguration->queryCompiler.windowingStrategy =
         QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+    workerConfiguration->numWorkerThreads = numWorkerThreads;
+    workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * 10240;
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * 512;
+
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
     workerConfiguration->physicalSources.add(sourceConf);
@@ -54,7 +59,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 }
 
-std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer) {
+std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer) {
     return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine);
 }
 
@@ -66,14 +71,14 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr& nodeEngine,
             size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
             return createNonRunnableSource(inputSchema,
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
                                            originId,
                                            numSourceLocalBuffers,
-                                           std::move(successors));
+                                           successors);
         });
 }
 
@@ -98,8 +103,9 @@ void TestExecutionEngine::emitBuffer(std::shared_ptr<Runtime::Execution::Executa
     nodeEngine->getQueryManager()->addWorkForNextPipeline(buffer, plan->getPipelines()[0]);
 }
 
-bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan) {
-    return nodeEngine->stopQuery(plan->getQueryId(), Runtime::QueryTerminationType::HardStop);
+bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+                                    Runtime::QueryTerminationType type) {
+    return nodeEngine->getQueryManager()->stopQuery(plan, type);
 }
 
 Runtime::MemoryLayouts::DynamicTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {

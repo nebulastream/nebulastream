@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ELEGANTCONFIGURATIONS_HPP
-#define NES_ELEGANTCONFIGURATIONS_HPP
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
@@ -50,4 +50,4 @@ class ElegantConfigurations : public BaseConfiguration {
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
 };
 }// namespace NES::Configurations
-#endif//NES_ELEGANTCONFIGURATIONS_HPP
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_

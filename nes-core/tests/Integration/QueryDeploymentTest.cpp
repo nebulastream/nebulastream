@@ -53,276 +53,85 @@ class QueryDeploymentTest : public Testing::NESBaseTest {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    struct ResultRecord {
+        uint32_t id;
+        uint32_t value;
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+        // overload the == operator to check if two instances are the same
+        bool operator==(ResultRecord const& other) const { return (id == other.id && value == other.value); }
+    };
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
-    defaultSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
-    workerConfig2->physicalSources.add(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto query = R"(Query::from("truck").unionWith(Query::from("car")))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  //                                  .enableNautilus() Enabled once #4009 is fixed
+                                  .addLogicalSource("truck", testSchema)
+                                  .addLogicalSource("car", testSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("truck")
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
-    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
+    std::vector<ResultRecord> expectedOutput;
+    for (auto i = 0_u32; i < 10; ++i) {
+        // Creating two new elements, one for each stream
+        ResultRecord elementCarStream = {i % 3, i};
+        ResultRecord elementTruckStream = {i + 1000, i % 5};
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG("query={}", query);
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        // Pushing them into the expected output and the testHarness
+        expectedOutput.emplace_back(elementCarStream);
+        expectedOutput.emplace_back(elementTruckStream);
+        testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
+    }
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
-    string expectedContent = "car$id:INTEGER(32 bits),car$value:INTEGER(64 bits)\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-    NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    remove(outputFilePath.c_str());
+    // Validating, setting up the topology, and then running the query
+    std::vector<ResultRecord> actualOutput =
+        testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedOutput.size(), "BottomUp");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    struct ResultRecord {
+        uint32_t id;
+        uint32_t value;
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+        // overload the == operator to check if two instances are the same
+        bool operator==(ResultRecord const& other) const { return (id == other.id && value == other.value); }
+    };
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
-    defaultSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
-    workerConfig2->physicalSources.add(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
-    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
+    auto query = R"(Query::from("car").unionWith(Query::from("truck")))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  //                                  .enableNautilus() Enabled once #4009 is fixed
+                                  .addLogicalSource("car", testSchema)
+                                  .addLogicalSource("truck", testSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  .attachWorkerWithMemorySourceToCoordinator("truck");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    std::vector<ResultRecord> expectedOutput;
+    for (auto i = 0_u32; i < 10; ++i) {
+        // Creating two new elements, one for each stream
+        ResultRecord elementCarStream = {i % 3, i};
+        ResultRecord elementTruckStream = {i + 1000, i % 5};
 
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        // Pushing them into the expected output and the testHarness
+        expectedOutput.emplace_back(elementCarStream);
+        expectedOutput.emplace_back(elementTruckStream);
+        testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
+    }
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
-    string expectedContent = "car$id:INTEGER(32 bits),car$value:INTEGER(64 bits)\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
-
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    remove(outputFilePath.c_str());
+    // Validating, setting up the topology, and then running the query
+    std::vector<ResultRecord> actualOutput =
+        testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedOutput.size(), "TopDown");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
@@ -338,11 +147,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (uint32_t i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
+        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
     }
 
     testHarness.validate().setupTopology();
@@ -357,8 +167,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     std::vector<Output> expectedOutput = {{1, 0}, {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6}, {1, 7}, {1, 8}, {1, 9}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -379,10 +188,11 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+        testHarness.pushElement<Test>({1, 1}, 2);
     }
     testHarness.validate().setupTopology();
 
@@ -396,8 +206,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
 
     std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
-
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -415,12 +224,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test") //2
                                   .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
     testHarness.validate().setupTopology();
 
@@ -437,8 +247,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1},
                                           {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -820,12 +629,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
 
     string query = R"(Query::from("test"))";
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
 
     testHarness.validate().setupTopology();
@@ -843,7 +653,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1},
                                           {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -862,11 +672,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
     string query = R"(Query::from("test").filter(Attribute("id") < 5))";
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (int i = 0; i < 5; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
     }
 
     testHarness.validate().setupTopology();
@@ -881,7 +692,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
     std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1069,6 +880,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 
     string query = R"(Query::from("test").project(Attribute("id")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -1087,7 +899,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 
     std::vector<Output> expectedOutput = {{1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}, {1}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1529,7 +1341,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 /**
- * Test deploying unionWith query with source on two different worker node using top down strategy.
+ * Test deploying joinWith query with source on two different worker node using top down strategy
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     struct Test {
@@ -1549,12 +1361,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
-    csvSourceType->setSkipHeader(true);
+    csvSourceType->setSkipHeader(false);
 
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
     Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window", testSchema)
                                   .addLogicalSource("window2", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
@@ -1584,12 +1397,13 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 1, 4, 1002},
+                                          {1000, 2000, 1, 1, 1, 1000, 1, 1, 1000},
                                           {1000, 2000, 12, 1, 12, 1001, 1, 12, 1001},
                                           {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
                                           {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1717,6 +1531,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window", windowSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
                                   .validate()
@@ -1746,7 +1561,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
                                           {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1786,19 +1601,20 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setGatheringInterval(0);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setGatheringInterval(1);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -1830,7 +1646,7 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
                                           {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1869,18 +1685,19 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -1918,7 +1735,7 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1957,18 +1774,19 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -2007,7 +1825,7 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

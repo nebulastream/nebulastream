@@ -13,10 +13,10 @@
 */
 
 #ifdef ENABLE_JNI
-
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/JNI/JNIUtils.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -83,7 +83,7 @@ void createJVM(JavaVM* jvm, JNIEnv** env) {
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
     }
-    args.version = JNI_VERSION_1_2;
+    args.version = JNI_VERSION_1_8;
     args.ignoreUnrecognized = false;
     args.options = options.data();
     args.nOptions = std::size(options);
@@ -124,8 +124,11 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    Catalogs::UDF::JavaUDFByteCodeList byteCodeList;
-    for (const auto& className : {"MapFunction", "IntegerMapFunction"}) {
+    std::vector<std::string> classNames = {"stream/nebula/MapFunction", "IntegerMapFunction"};
+    auto methodName = "map";
+    std::vector<char> serializedInstance = {};
+    jni::JavaUDFByteCodeList byteCodeList;
+    for (const auto& className : classNames) {
         auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.emplace_back(className, buffer);
     }
@@ -137,8 +140,8 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .setInstance({})
                                  .setByteCodeList(byteCodeList)
                                  .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
-                                 .setInputClassName("java/lang/Integer")
-                                 .setOutputClassName("java/lang/Integer")
+                                 .setInputClassName("java.lang.Integer")
+                                 .setOutputClassName("java.lang.Integer")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);

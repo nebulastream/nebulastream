@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
-#define NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
@@ -46,4 +46,4 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
     TopologyNodeId id;
 };
 }// namespace NES::Exceptions
-#endif//NES_EXECUTIONNODENOTFOUNDEXCEPTION_HPP
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

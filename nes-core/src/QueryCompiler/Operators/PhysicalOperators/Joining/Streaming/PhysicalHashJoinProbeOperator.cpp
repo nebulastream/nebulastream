@@ -25,7 +25,7 @@ PhysicalHashJoinProbeOperator::PhysicalHashJoinProbeOperator(
     const std::string& joinFieldNameLeft,
     const std::string& joinFieldNameRight,
     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler)
-    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler, id),
+    : OperatorNode(id), PhysicalHashJoinOperator(operatorHandler),
       PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight) {}
 

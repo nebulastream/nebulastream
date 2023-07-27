@@ -23,6 +23,7 @@ namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
+using RequestId = uint64_t;
 class UnlockDeleter;
 template<typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
@@ -69,46 +70,61 @@ class StorageHandler {
     virtual ~StorageHandler() = default;
 
     /**
-     * Performs tasks necessary before request execution and locks resources if necessary
+     * This function is to be executed before the request logic. It's base class implementation is empty. Derived classes need
+     * to override this function in case they need to lock resources or perform other actions before a request is executed.
+     * @param requestId The id of the request which calls this function
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void acquireResources(std::vector<ResourceType> requiredResources) = 0;
+    virtual void acquireResources(RequestId requestId, const std::vector<ResourceType>& requiredResources);
+
+    /**
+     * This function is called after the request finished executing. The base class implementation is empty. Derived classes need
+     * to override this function in case they need to release resources or perform other actions after a request finished executing
+     * @param requestId The id of the request which calls this function
+     */
+    virtual void releaseResources(RequestId requestId);
 
     /**
      * @brief Obtain a mutable global execution plan handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the global execution plan.
      */
-    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable topology handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the topology
      */
-    virtual TopologyHandle getTopologyHandle() = 0;
+    virtual TopologyHandle getTopologyHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable query catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle() = 0;
+    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable global query plan handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the global query plan.
      */
-    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable source catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the source catalog.
      */
-    virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
+    virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the udf catalog.
      */
-    virtual UDFCatalogHandle getUDFCatalogHandle() = 0;
+    virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) = 0;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_

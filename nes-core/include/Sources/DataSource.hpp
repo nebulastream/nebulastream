@@ -55,6 +55,16 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers number of local source buffers
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+     * @param taskQueueId the ID of the queue to which the task is pushed
      */
     explicit DataSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
@@ -63,6 +73,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
+                        const std::string& physicalSourceName,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -287,6 +298,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
     bool sourceSharing = false;
+    const std::string physicalSourceName;
 
     //this counter is used to count the number of queries that use this source
     std::atomic<uint64_t> refCounter = 0;

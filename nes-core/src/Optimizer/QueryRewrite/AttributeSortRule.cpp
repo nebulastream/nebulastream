@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -44,19 +45,25 @@ AttributeSortRulePtr AttributeSortRule::create() { return std::make_shared<Attri
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
 
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
-    for (auto& filter : filterOperators) {
-        auto predicate = filter->getPredicate();
+    for (auto const& filterOperator : filterOperators) {
+        auto predicate = filterOperator->getPredicate();
         auto updatedPredicate = sortAttributesInExpression(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
-        filter->replace(updatedFilter);
+        updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
+        updatedFilter->as_if<LogicalOperatorNode>()->setOutputSchema(
+            filterOperator->as_if<LogicalOperatorNode>()->getOutputSchema()->copy());
+        filterOperator->replace(updatedFilter);
     }
 
     auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
-    for (auto& map : mapOperators) {
-        auto mapExpression = map->getMapExpression();
+    for (auto const& mapOperator : mapOperators) {
+        auto mapExpression = mapOperator->getMapExpression();
         auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
-        map->replace(updatedMap);
+        updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
+        updatedMap->as_if<LogicalOperatorNode>()->setOutputSchema(
+            mapOperator->as_if<LogicalOperatorNode>()->getOutputSchema()->copy());
+        mapOperator->replace(updatedMap);
     }
     return queryPlan;
 }

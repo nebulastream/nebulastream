@@ -48,6 +48,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                                    OperatorId operatorId,
                                    OriginId originId,
                                    size_t numSourceLocalBuffers,
+                                   const std::string& physicalSourceName,
                                    std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -57,7 +58,8 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       originId,
                       numSourceLocalBuffers,
                       GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
-                      std::move(successors)),
+                      std::move(successors),
+                      physicalSourceName),
       lateStart(lateStart), pathTableFile(pathTableFile) {
 
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");

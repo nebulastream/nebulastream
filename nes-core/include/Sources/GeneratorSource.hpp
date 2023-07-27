@@ -32,19 +32,27 @@ class GeneratorSource : public DataSource {
   public:
     /**
    * @brief constructor to create a generator source
-   * @param schema of the source
-   * @param number of buffer that should be processed
-   * @param via template, the functor that determines what to do
+   * @param schema of the data that this source produces
+   * @param bufferManager pointer to the buffer manager
+   * @param queryManager pointer to the query manager
+   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+   * @param operatorId current operator id
+   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+   * @param numSourceLocalBuffers the number of buffers allocated to a source
+   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+   * @param physicalSourceName the name and unique identifier of a physical source
+   * @param successors the subsequent operators in the pipeline to which the data is pushed
    */
     GeneratorSource(SchemaPtr schema,
                     Runtime::BufferManagerPtr bufferManager,
                     Runtime::QueryManagerPtr queryManager,
-                    uint64_t numbersOfBufferToProduce,
+                    uint64_t numberOfBufferToProduce,
                     OperatorId operatorId,
                     OriginId originId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                    const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
         : DataSource(std::move(schema),
                      std::move(bufferManager),
                      std::move(queryManager),
@@ -52,8 +60,9 @@ class GeneratorSource : public DataSource {
                      originId,
                      numSourceLocalBuffers,
                      gatheringMode,
+                     physicalSourceName,
                      std::move(successors)) {
-        this->numberOfBuffersToProduce = numbersOfBufferToProduce;
+        this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }
     /**
    * @brief override function to create one buffer

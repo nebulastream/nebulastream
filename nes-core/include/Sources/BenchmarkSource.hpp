@@ -40,17 +40,27 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param schema the schema of the source
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
      * @param memoryAreaSize the non-zero size of the memory area
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
-     * @param
-     * @param operatorId the valid id of the source
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param numberOfBuffersToProcess the number of buffers to be produced by the source
+     * @param gatheringValue how many tuples to collect per interval
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param sourceMode
+     * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
+     * @param taskQueueId the ID of the queue to which the task is pushed
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     * @return a DataSourcePtr pointing to the data source
      */
     explicit BenchmarkSource(SchemaPtr schema,
                              const std::shared_ptr<uint8_t>& memoryArea,
                              size_t memoryAreaSize,
                              Runtime::BufferManagerPtr bufferManager,
                              Runtime::QueryManagerPtr queryManager,
-                             uint64_t numBuffersToProcess,
+                             uint64_t numberOfBuffersToProcess,
                              uint64_t gatheringValue,
                              OperatorId operatorId,
                              OriginId originId,
@@ -59,6 +69,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              SourceMode sourceMode,
                              uint64_t sourceAffinity,
                              uint64_t taskQueueId,
+                             const std::string& physicalSourceName,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     ~BenchmarkSource();

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -22,13 +22,14 @@
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
+#include <folly/Synchronized.h>
 #include <list>
 #include <map>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This operator is the general join operator handler withh basic functionality
+ * @brief This operator is the general join operator handler with basic functionality
  */
 class StreamJoinOperatorHandler;
 using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
@@ -37,15 +38,17 @@ class StreamJoinOperatorHandler : public OperatorHandler {
   public:
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
-     * @param origins
+     * @param inputOrigins
+     * @param outputOriginId
      * @param windowSize
      * @param JoinStrategy
      */
-    StreamJoinOperatorHandler(const std::vector<OriginId>& origins,
-                              uint64_t windowSize,
-                              QueryCompilation::StreamJoinStrategy joinStrategy,
-                              size_t sizeOfRecordLeft,
-                              size_t sizeOfRecordRight);
+    StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                              const OriginId outputOriginId,
+                              const uint64_t windowSize,
+                              const QueryCompilation::StreamJoinStrategy joinStrategy,
+                              uint64_t sizeOfRecordLeft,
+                              uint64_t sizeOfRecordRight);
 
     virtual ~StreamJoinOperatorHandler() = default;
 
@@ -92,6 +95,12 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
 
     /**
+     * @brief Triggers all windows that have not been already emitted to the probe
+     * @return Vector<uint64_t> containing windows that have not been triggered.
+     */
+    std::vector<uint64_t> triggerAllWindows();
+
+    /**
      * @brief method to trigger the finished windows
      * @param windowIdentifiersToBeTriggered
      * @param workerCtx
@@ -114,12 +123,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @return StreamWindowPtr
      */
     StreamWindowPtr getWindowByTimestampOrCreateIt(uint64_t timestamp);
-
-    /**
-     * Return the current watermark
-     * @return
-     */
-    uint64_t getLastWatermark();
 
     /**
      * @brief Creates a new window that corresponds to this timestamp
@@ -147,16 +150,10 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     uint64_t getMinWatermarkForWorker();
 
     /**
-     * @brief Add the id of the operator this handler is responsible for this join
-     * @param operatorId
-     */
-    void addOperatorId(OperatorId operatorId);
-
-    /**
-     * @brief Returns the operator id that this handler is responsible for
+     * @brief Returns the output origin id that this handler is responsible for
      * @return OperatorId
      */
-    OperatorId getOperatorId();
+    OperatorId getOutputOriginId() const;
 
     /**
      * @brief Returns the next sequence number for the operator that this operator handler is responsible for
@@ -172,14 +169,13 @@ class StreamJoinOperatorHandler : public OperatorHandler {
 
   protected:
     uint64_t numberOfWorkerThreads = 1;
-    std::list<StreamWindowPtr> windows;
+    folly::Synchronized<std::list<StreamWindowPtr>> windows;
     SliceAssigner sliceAssigner;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     QueryCompilation::StreamJoinStrategy joinStrategy;
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
-    OperatorId operatorId;
-    std::mutex windowCreateLock;
+    const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;
@@ -187,4 +183,4 @@ class StreamJoinOperatorHandler : public OperatorHandler {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

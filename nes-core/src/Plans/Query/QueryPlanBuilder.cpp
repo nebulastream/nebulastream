@@ -71,6 +71,13 @@ QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExp
     return queryPlan;
 }
 
+QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, NES::QueryPlanPtr queryPlan) {
+    NES_DEBUG("QueryPlanBuilder: add limit operator to query plan");
+    OperatorNodePtr op = LogicalOperatorFactory::createLimitOperator(limit);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
 NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
                                                   NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");

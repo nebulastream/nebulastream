@@ -141,15 +141,15 @@ ChangeLogEntryPtr
 ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToCompact) {
 
     ChangeLogEntryPtr firstChangeLogEntry = changeLogEntriesToCompact.at(0).second;
-    std::set<OperatorNodePtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
-    std::set<OperatorNodePtr> firstDownstreamOperators = firstChangeLogEntry->downstreamOperators;
+    std::set<LogicalOperatorNodePtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
+    std::set<LogicalOperatorNodePtr> firstDownstreamOperators = firstChangeLogEntry->downstreamOperators;
 
     //iterate from the first entry as the 0th entry is assigned as the first change log entry above.
     for (uint32_t index = 1; index < changeLogEntriesToCompact.size(); index++) {
         // check if the upstream operators in the temp is also the upstream operator of the change log entry under consideration
         // push the most upstream operator into the new upstream Operator set
-        std::set<OperatorNodePtr> tempUpstreamOperators;
-        std::set<OperatorNodePtr> nextUpstreamOperators = changeLogEntriesToCompact[index].second->upstreamOperators;
+        std::set<LogicalOperatorNodePtr> tempUpstreamOperators;
+        std::set<LogicalOperatorNodePtr> nextUpstreamOperators = changeLogEntriesToCompact[index].second->upstreamOperators;
 
         for (auto firstItr = firstUpstreamOperators.begin(); firstItr != firstUpstreamOperators.end();) {
             bool incFirstItr = true;
@@ -202,8 +202,8 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
 
         // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
         // push the most downstream operator into the new downstream Operator set
-        std::set<OperatorNodePtr> tempDownstreamOperators;
-        std::set<OperatorNodePtr> nextDownstreamOperators = changeLogEntriesToCompact[index].second->downstreamOperators;
+        std::set<LogicalOperatorNodePtr> tempDownstreamOperators;
+        std::set<LogicalOperatorNodePtr> nextDownstreamOperators = changeLogEntriesToCompact[index].second->downstreamOperators;
 
         for (auto firstItr = firstDownstreamOperators.begin(); firstItr != firstDownstreamOperators.end();) {
             bool incFirstItr = true;

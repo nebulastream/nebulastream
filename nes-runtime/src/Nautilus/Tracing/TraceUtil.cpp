@@ -29,14 +29,14 @@ namespace NES::Nautilus::Tracing::TraceUtil {
 [[maybe_unused, nodiscard]] bool inInterpreter() { return !inTracer(); }
 
 void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef) {
-    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+    if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive()) {
         return ctx->traceStore(memRef, valueRef);
     }
 }
 
 bool traceBoolOperation(const AnyPtr& value, const Nautilus::Tracing::ValueRef& sourceRef) {
     if (value->isType<Boolean>()) {
-        if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+        if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive()) {
             return ctx->traceCMP(sourceRef);
         } else {
             auto boolValue = cast<Boolean>(value);
@@ -47,7 +47,7 @@ bool traceBoolOperation(const AnyPtr& value, const Nautilus::Tracing::ValueRef& 
 }
 
 void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef) {
-    if (auto ctx = Tracing::TraceContext::get()) {
+    if (auto ctx = Tracing::TraceContext::getIfActive()) {
         ctx->traceAssignmentOperation(targetRef, sourceRef);
     }
 };
@@ -56,7 +56,7 @@ void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
                           const Nautilus::Tracing::ValueRef& resultRef,
                           const Nautilus::Tracing::ValueRef& leftRef,
                           const Nautilus::Tracing::ValueRef& rightRef) {
-    if (auto ctx = Tracing::TraceContext::get()) {
+    if (auto ctx = Tracing::TraceContext::getIfActive()) {
         ctx->traceBinaryOperation(op, leftRef, rightRef, resultRef);
     }
 }
@@ -64,13 +64,13 @@ void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
 void traceUnaryOperation(const Nautilus::Tracing::OpCode& op,
                          const Nautilus::Tracing::ValueRef& resultRef,
                          const Nautilus::Tracing::ValueRef& inputRef) {
-    if (auto ctx = Tracing::TraceContext::get()) {
+    if (auto ctx = Tracing::TraceContext::getIfActive()) {
         ctx->traceUnaryOperation(op, inputRef, resultRef);
     }
 }
 
 void traceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
-    if (auto ctx = Tracing::TraceContext::get()) {
+    if (auto ctx = Tracing::TraceContext::getIfActive()) {
         ctx->traceConstOperation(valueReference, constValue);
     }
 };

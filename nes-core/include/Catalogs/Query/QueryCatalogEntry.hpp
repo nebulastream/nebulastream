@@ -17,7 +17,7 @@
 
 #include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/QueryStatus.hpp>
+#include <Util/QueryState.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -48,7 +48,7 @@ class QueryCatalogEntry {
                                std::string queryString,
                                std::string queryPlacementStrategy,
                                QueryPlanPtr inputQueryPlan,
-                               QueryStatus queryStatus);
+                               QueryState queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -84,7 +84,7 @@ class QueryCatalogEntry {
      * @brief method to get the status of the query
      * @return query status
      */
-    [[nodiscard]] QueryStatus getQueryStatus() const;
+    [[nodiscard]] QueryState getQueryState() const;
 
     /**
      * @brief method to get the status of the query as string
@@ -96,7 +96,7 @@ class QueryCatalogEntry {
      * @brief method to set the status of the query
      * @param query status
      */
-    void setQueryStatus(QueryStatus queryStatus);
+    void setQueryStatus(QueryState queryStatus);
 
     /**
      * @brief Get name of the query placement strategy
@@ -155,7 +155,7 @@ class QueryCatalogEntry {
     std::string queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
-    QueryStatus queryStatus;
+    QueryState queryState;
     std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;

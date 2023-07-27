@@ -30,7 +30,19 @@ using MaterializedViewSourcePtr = std::shared_ptr<MaterializedViewSource>;
 class MaterializedViewSource : public DataSource {
 
   public:
-    /// @brief constructor
+    /*
+     * @brief The constructor of a materialized view Source
+     * @param schema of the source
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode
+     * @param physicalSourceName
+     * @param successors
+     * @param view
+     **/
     MaterializedViewSource(SchemaPtr schema,
                            Runtime::BufferManagerPtr bufferManager,
                            Runtime::QueryManagerPtr queryManager,
@@ -38,6 +50,7 @@ class MaterializedViewSource : public DataSource {
                            OriginId originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
+                           const std::string& physicalSourceName,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                            MaterializedViewPtr view);
 

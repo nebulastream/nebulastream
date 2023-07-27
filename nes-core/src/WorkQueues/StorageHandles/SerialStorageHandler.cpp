@@ -28,35 +28,35 @@ SerialStorageHandler::SerialStorageHandler(GlobalExecutionPlanPtr globalExecutio
       queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
-std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                   const TopologyPtr& topology,
-                                                                   const QueryCatalogServicePtr& queryCatalogService,
-                                                                   const GlobalQueryPlanPtr& globalQueryPlan,
-                                                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog) {
-    return std::make_shared<SerialStorageHandler>(globalExecutionPlan,
-                                                  topology,
-                                                  queryCatalogService,
-                                                  globalQueryPlan,
-                                                  sourceCatalog,
-                                                  udfCatalog);
+std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                   TopologyPtr topology,
+                                                                   QueryCatalogServicePtr queryCatalogService,
+                                                                   GlobalQueryPlanPtr globalQueryPlan,
+                                                                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                                   Catalogs::UDF::UDFCatalogPtr udfCatalog) {
+    return std::make_shared<SerialStorageHandler>(std::move(globalExecutionPlan),
+                                                  std::move(topology),
+                                                  std::move(queryCatalogService),
+                                                  std::move(globalQueryPlan),
+                                                  std::move(sourceCatalog),
+                                                  std::move(udfCatalog));
 }
 
-GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle() {
+GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {
     return {&*globalExecutionPlan, UnlockDeleter()};
 }
 
-TopologyHandle SerialStorageHandler::getTopologyHandle() { return {&*topology, UnlockDeleter()}; }
+TopologyHandle SerialStorageHandler::getTopologyHandle(const RequestId) { return {&*topology, UnlockDeleter()}; }
 
-QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle() {
+QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle(const RequestId) {
     return {&*queryCatalogService, UnlockDeleter()};
 }
 
-GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter()}; }
+GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId) {
+    return {&*globalQueryPlan, UnlockDeleter()};
+}
 
-SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
+SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle() { return {&*udfCatalog, UnlockDeleter()}; }
-
-void SerialStorageHandler::acquireResources(std::vector<ResourceType>) {}
+UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(const RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
 }// namespace NES

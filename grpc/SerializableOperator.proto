@@ -361,6 +361,13 @@ message SerializableOperator{
     google.protobuf.Any strategy = 1;
   }
 
+    /**
+      LimitDetails contains properties for the limit operator
+     */
+    message LimitDetails {
+        uint64 limit = 1;
+    }
+
   /**
    Map Details contains properties for the map operator, such as the field assignment expression
    */
@@ -564,6 +571,7 @@ message SerializableOperator{
     string windowStartFieldName = 12;
     string windowEndFieldName = 13;
     string windowKeyFieldName = 14;
+    uint64 origin = 15;
   }
 
   /**

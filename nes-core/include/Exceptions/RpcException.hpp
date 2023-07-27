@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RPCEXCEPTION_HPP
-#define NES_RPCEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -63,4 +63,4 @@ class RpcException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif//NES_RPCEXCEPTION_HPP
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_

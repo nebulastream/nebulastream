@@ -126,7 +126,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         JOIN_STRATEGY,
         QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
         "Indicates the windowingStrategy"
-        "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
+        "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
     /**
      * @brief Sets the path to the locally installed CUDA SDK.

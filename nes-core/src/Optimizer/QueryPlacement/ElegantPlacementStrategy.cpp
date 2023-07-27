@@ -61,8 +61,8 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(std::string serviceURL,
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                          FaultToleranceType faultToleranceType,
                                                          LineageType lineageType,
-                                                         const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                         const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     try {
 
@@ -109,9 +109,10 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
 }
 
-void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId,
-                                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators,
-                                                                 cpr::Response& response) const {
+void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
+    QueryId queryId,
+    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+    cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
     auto placementData = jsonResponse[PLACEMENT_KEY];
@@ -145,8 +146,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(QueryId queryId
     }
 }
 
-nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
+nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of the query plan");
 

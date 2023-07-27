@@ -107,7 +107,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator, targetSinkOperator));
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperatorNode>(),
+                                                                                  targetSinkOperator->as<LogicalOperatorNode>()));
                 }
 
                 //add matched operators to the host shared query plan

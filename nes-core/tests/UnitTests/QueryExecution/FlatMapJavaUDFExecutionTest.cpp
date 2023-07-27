@@ -79,7 +79,7 @@ void createJVM(JavaVM* jvm, JNIEnv** env) {
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
     }
-    args.version = JNI_VERSION_1_2;
+    args.version = JNI_VERSION_1_8;
     args.ignoreUnrecognized = false;
     args.options = options.data();
     args.nOptions = std::size(options);
@@ -93,7 +93,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Open the file
     std::ifstream file(path + className + ".class", std::ios::binary);
     if (!file.is_open()) {
-        NES_ERROR("Could not open file: {} {}.class", path, className);
+        NES_ERROR("Could not open file: {}", path + className + ".class");
         return {};
     }
 
@@ -105,7 +105,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Read the file into the buffer
     file.seekg(0, std::ios::beg);
     if (!file.read(buffer.data(), fileSize)) {
-        NES_ERROR("Could not read file: {} {}.class", path, className);
+        NES_ERROR("Could not read file: {}", path + className + ".class");
         return {};
     }
     return buffer;
@@ -120,21 +120,26 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    Catalogs::UDF::JavaUDFByteCodeList byteCodeList;
-    for (const auto& className : {"MapFunction", "IntegerMapFunction"}) {
+    std::vector<std::string> classNames = {"stream/nebula/FlatMapFunction", "IntegerFlatMapFunction"};
+    auto methodName = "flatMap";
+    std::vector<char> serializedInstance = {};
+    jni::JavaUDFByteCodeList byteCodeList;
+    for (const auto& className : classNames) {
         auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.emplace_back(className, buffer);
     }
 
-    NES_INFO("testDataPath: {}", testDataPath);
+    auto className = classNames[1];
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
+    NES_INFO("testDataPath:{}", testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
-                                 .setClassName("IntegerMapFunction")
-                                 .setMethodName("map")
-                                 .setInstance({})
+                                 .setClassName(className)
+                                 .setMethodName(methodName)
+                                 .setInstance(serializedInstance)
                                  .setByteCodeList(byteCodeList)
-                                 .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
-                                 .setInputClassName("java/lang/Integer")
-                                 .setOutputClassName("java/lang/Integer")
+                                 .setOutputSchema(outputSchema)
+                                 .setInputClassName("java.lang.Integer")
+                                 .setOutputClassName("java.util.Collection")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).flatMapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);
@@ -149,10 +154,8 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), NUMBER_OF_RECORDS);
-    int32_t udfState = UDF_INCREMENT;
     for (uint32_t recordIndex = 0u; recordIndex < NUMBER_OF_RECORDS; ++recordIndex) {
-        udfState += recordIndex;
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), udfState);
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + UDF_INCREMENT);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);

@@ -28,11 +28,9 @@ class OptimizerConfiguration;
 }
 
 class StorageHandler;
-using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class AbstractRequest;
-using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
@@ -57,10 +55,11 @@ class AbstractRequest {
   public:
     /**
      * @brief constructor
+     * @param requestId: the id of this request
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      */
-    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
+    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -74,14 +73,14 @@ class AbstractRequest {
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    virtual void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void handleError(RequestExecutionException& ex, StorageHandler& storageHandle);
+    void handleError(const RequestExecutionException& ex, StorageHandler& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -101,14 +100,14 @@ class AbstractRequest {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
@@ -129,6 +128,9 @@ class AbstractRequest {
      * request
      */
     virtual void executeRequestLogic(StorageHandler& storageHandle) = 0;
+
+  protected:
+    RequestId requestId;
 
   private:
     uint8_t maxRetries;

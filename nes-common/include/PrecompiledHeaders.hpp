@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_PRECOMPILED_HEADERS_HPP_
-#define NES_COMMON_INCLUDE_PRECOMPILED_HEADERS_HPP_
+#ifndef NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
+#define NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
 // This is a list of often used and expensive header libraries that we want to precompile
 
 // Commonly-used first-party headers that do not often change (e.g., logging, basic components)
@@ -31,4 +31,4 @@
 #include <unordered_map>
 #include <vector>
 
-#endif// NES_COMMON_INCLUDE_PRECOMPILED_HEADERS_HPP_
+#endif// NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_

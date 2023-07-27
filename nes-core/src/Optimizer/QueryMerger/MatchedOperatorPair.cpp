@@ -17,11 +17,11 @@
 
 namespace NES::Optimizer {
 
-MatchedOperatorPairPtr MatchedOperatorPair::create(NES::OperatorNodePtr hostOperator, NES::OperatorNodePtr targetOperator) {
+MatchedOperatorPairPtr MatchedOperatorPair::create(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator) {
     return std::make_unique<MatchedOperatorPair>(MatchedOperatorPair(std::move(hostOperator), std::move(targetOperator)));
 }
 
-MatchedOperatorPair::MatchedOperatorPair(NES::OperatorNodePtr hostOperator, NES::OperatorNodePtr targetOperator)
+MatchedOperatorPair::MatchedOperatorPair(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator)
     : hostOperator(std::move(hostOperator)), targetOperator(std::move(targetOperator)) {}
 
 }// namespace NES::Optimizer

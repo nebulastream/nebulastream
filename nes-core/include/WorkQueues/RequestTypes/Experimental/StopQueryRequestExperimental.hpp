@@ -83,18 +83,19 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 class StopQueryRequestExperimental : public AbstractRequest {
 
   public:
-    static StopQueryRequestPtr create(QueryId queryId,
+    static StopQueryRequestPtr create(RequestId requestId,
+                                      QueryId queryId,
                                       size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
 
-    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
-    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
-    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     void preExecution(StorageHandler& storageHandle) override;
 
@@ -105,7 +106,8 @@ class StopQueryRequestExperimental : public AbstractRequest {
     ~StopQueryRequestExperimental() = default;
 
   private:
-    StopQueryRequestExperimental(QueryId queryId,
+    StopQueryRequestExperimental(RequestId requestId,
+                                 QueryId queryId,
                                  size_t maxRetries,
                                  WorkerRPCClientPtr workerRpcClient,
                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);

@@ -284,6 +284,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     auto joinSizeInByte = 1 * 1024 * 1024;
     auto windowSize = 20UL;
     auto numberOfTuplesToProduce = windowSize * 20;
+    OriginId outputOriginId = 1;
 
     auto handlerIndex = 0;
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
@@ -311,6 +312,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                                                      joinFieldNameRight);
     auto hashJoinOpHandler =
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
+                                                         outputOriginId,
                                                          windowSize,
                                                          leftSchema->getSchemaSizeInBytes(),
                                                          rightSchema->getSchemaSizeInBytes(),

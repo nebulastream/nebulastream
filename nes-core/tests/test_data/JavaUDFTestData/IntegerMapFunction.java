@@ -1,6 +1,6 @@
 // IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
-
+import stream.nebula.MapFunction;
 /**
  * A {@link MapFunction} implementation that adds an instance variable to the input Integer value.
  */
@@ -35,19 +35,7 @@ public class IntegerMapFunction implements MapFunction<Integer, Integer> {
      */
     @Override
     public Integer map(Integer value) {
-        this.instanceVariable = (int)value + (int)this.instanceVariable;
-        return instanceVariable;
-    }
-
-    /**
-     * Updates the instanceVariable by adding the given value to it and returns it.
-     *
-     * @param value the input Integer value to apply the function to and add to the instanceVariable
-     * @return the result of applying the function to the input Integer value
-     */
-    @Override
-    public Integer flatMap(Integer value) {
-        instanceVariable += (int) value;
-        return instanceVariable;
+        Integer result = (int)value + (int)this.instanceVariable;
+        return result;
     }
 }

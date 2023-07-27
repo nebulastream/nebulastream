@@ -14,7 +14,7 @@
 
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -350,7 +350,7 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
              sharedQueryId)
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SOFT_STOP_TRIGGERED);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_TRIGGERED);
 
     //update response
     response->set_success(success);
@@ -365,7 +365,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     auto querySubPlanId = request->querysubplanid();
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SOFT_STOP_COMPLETED);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
 
     //update response
     response->set_success(success);

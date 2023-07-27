@@ -36,26 +36,32 @@ namespace NES::Optimizer {
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
-class FilterPushDownRule;
-using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
-
-class PredicateReorderingRule;
-using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
-
-class RenameSourceToProjectOperatorRule;
-using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
-
-class ProjectBeforeUnionOperatorRule;
-using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
-
 class AttributeSortRule;
 using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 
 class BinaryOperatorSortRule;
 using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
+class FilterMergeRule;
+using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
+
+class FilterPushDownRule;
+using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
+
 class MapUDFsToOpenCLOperatorsRule;
 using MapUDFsToOpenCLOperatorsRulePtr = std::shared_ptr<MapUDFsToOpenCLOperatorsRule>;
+
+class PredicateReorderingRule;
+using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
+
+class ProjectBeforeUnionOperatorRule;
+using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
+
+class RenameSourceToProjectOperatorRule;
+using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
+
+class RedundancyEliminationRule;
+using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan
@@ -76,13 +82,15 @@ class QueryRewritePhase {
 
     bool isElegantAccelerationEnabled;
     bool applyRulesImprovingSharingIdentification;
-    FilterPushDownRulePtr filterPushDownRule;
-    PredicateReorderingRulePtr predicateReorderingRule;
-    RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
-    ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
+    FilterMergeRulePtr filterMergeRule;
+    FilterPushDownRulePtr filterPushDownRule;
+    RedundancyEliminationRulePtr redundancyEliminationRule;
     MapUDFsToOpenCLOperatorsRulePtr mapUDFsToOpenCLOperatorsRule;
+    PredicateReorderingRulePtr predicateReorderingRule;
+    ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
+    RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_

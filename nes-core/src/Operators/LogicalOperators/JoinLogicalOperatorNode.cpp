@@ -154,7 +154,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
 }
 
 OperatorNodePtr JoinLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id);
+    auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id)->as<JoinLogicalOperatorNode>();
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -162,6 +162,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
+    copy->setOriginId(originId);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }
@@ -171,7 +172,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
 bool JoinLogicalOperatorNode::equal(NodePtr const& other) const {
     if (other->instanceOf<JoinLogicalOperatorNode>()) {
         auto otherJoinNode = other->as<JoinLogicalOperatorNode>();
-        return this->joinDefinition->equals(*otherJoinNode->joinDefinition);
+        return this->joinDefinition->equals(*otherJoinNode->joinDefinition) && originId == otherJoinNode->originId;
     }
     return false;
 }

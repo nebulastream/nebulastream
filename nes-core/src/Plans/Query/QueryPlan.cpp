@@ -22,6 +22,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
+#include <stack>
 #include <utility>
 
 namespace NES {
@@ -287,6 +288,75 @@ Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return pl
 
 void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy) {
     this->placementStrategy = placementStrategy;
+}
+
+std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
+                                                             const std::set<OperatorNodePtr>& upstreamOperators) {
+
+    std::set<OperatorNodePtr> operatorsBetween;
+
+    //initialize the operators to visit with upstream operators of all downstream operators
+    for (const auto& downStreamOperator : downstreamOperators) {
+        auto operatorsBetweenChildAndTargetUpstream =
+            findOperatorsBetweenSourceAndTargetOperators(downStreamOperator->as_if<OperatorNode>(), upstreamOperators);
+        operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
+    }
+
+    if (!operatorsBetween.empty()) {
+        //Remove upstream operators
+        for (const auto& upstreamOperator : upstreamOperators) {
+            erase_if(operatorsBetween, [upstreamOperator](const auto& operatorToErase) {
+                return operatorToErase->getId() == upstreamOperator->getId();
+            });
+        }
+
+        //Remove downstream operators
+        for (const auto& downstreamOperator : downstreamOperators) {
+            erase_if(operatorsBetween, [downstreamOperator](const auto& operatorToErase) {
+                return operatorToErase->getId() == downstreamOperator->getId();
+            });
+        }
+    }
+
+    return operatorsBetween;
+}
+
+std::set<OperatorNodePtr>
+QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,
+                                                        const std::set<OperatorNodePtr>& targetOperators) {
+
+    //Find if downstream operator is also in the vector of target operators
+    auto found = std::find_if(targetOperators.begin(), targetOperators.end(), [&](const auto& upstreamOperator) {
+        return upstreamOperator->getId() == sourceOperator->getId();
+    });
+
+    //If downstream operator is in the list of target operators then return the operator
+    if (found != targetOperators.end()) {
+        return {sourceOperator};
+    }
+
+    bool foundTargetUpstreamOperator = false;
+    std::set<OperatorNodePtr> operatorsBetween;
+    //Check further upstream operators if they are in the target operator vector
+    for (const auto& nextUpstreamOperatorToCheck : sourceOperator->getChildren()) {
+
+        //Fetch the operators between upstream and target operators
+        auto operatorsBetweenUpstreamAndTargetUpstream =
+            findOperatorsBetweenSourceAndTargetOperators(nextUpstreamOperatorToCheck->as_if<OperatorNode>(), targetOperators);
+
+        //If there are operators between upstream and target operators then mark the input down stream operator for return
+        if (!operatorsBetweenUpstreamAndTargetUpstream.empty()) {
+            foundTargetUpstreamOperator = true;
+            operatorsBetween.insert(operatorsBetweenUpstreamAndTargetUpstream.begin(),
+                                    operatorsBetweenUpstreamAndTargetUpstream.end());
+        }
+    }
+
+    //Add downstream operator
+    if (foundTargetUpstreamOperator) {
+        operatorsBetween.insert(sourceOperator);
+    }
+    return operatorsBetween;
 }
 
 }// namespace NES

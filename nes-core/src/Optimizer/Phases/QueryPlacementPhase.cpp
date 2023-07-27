@@ -106,12 +106,16 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
     } else {
         //1. Fetch all upstream pinned operators
-        const auto& leafOperators = queryPlan->getLeafOperators();
-        std::set<OperatorNodePtr> pinnedUpstreamOperators(leafOperators.begin(), leafOperators.end());
+        std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
+        for (const auto& leafOperator : queryPlan->getLeafOperators()) {
+            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperatorNode>());
+        };
 
         //2. Fetch all downstream pinned operators
-        const auto& rootOperators = queryPlan->getRootOperators();
-        std::set<OperatorNodePtr> pinnedDownStreamOperators(rootOperators.begin(), rootOperators.end());
+        std::set<LogicalOperatorNodePtr> pinnedDownStreamOperators;
+        for (const auto& rootOperator : queryPlan->getRootOperators()) {
+            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperatorNode>());
+        };
 
         //3. Pin all sink operators
         pinAllSinkOperators(pinnedDownStreamOperators);
@@ -137,7 +141,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     return true;
 }
 
-bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {
 
     //Find if one of the operator does not have PINNED_NODE_ID property
     return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
@@ -145,7 +149,7 @@ bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<OperatorNo
     });
 }
 
-void QueryPlacementPhase::pinAllSinkOperators(const std::set<OperatorNodePtr>& operators) {
+void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
     uint64_t rootNodeId = topology->getRoot()->getId();
     for (const auto& operatorToCheck : operators) {
         if (!operatorToCheck->hasProperty(PINNED_NODE_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {

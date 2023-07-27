@@ -18,11 +18,13 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
+#include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
+#include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
@@ -49,39 +51,43 @@ QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::Coordinator
 QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification)
     : isElegantAccelerationEnabled(elegantAccelerationEnabled),
       applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
-    filterPushDownRule = FilterPushDownRule::create();
-    predicateReorderingRule = PredicateReorderingRule::create();
-    renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
-    projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    filterMergeRule = FilterMergeRule::create();
+    filterPushDownRule = FilterPushDownRule::create();
+    redundancyEliminationRule = RedundancyEliminationRule::create();
     mapUDFsToOpenCLOperatorsRule = MapUDFsToOpenCLOperatorsRule::create();
+    predicateReorderingRule = PredicateReorderingRule::create();
+    projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
+    renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
 QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
 
-    //duplicate query plan
+    // Duplicate query plan
     auto duplicateQueryPlan = queryPlan->copy();
 
-    //apply elegant specific rule for accelerating  Java Map UDFs
+    // Apply elegant specific rule for accelerating  Java Map UDFs
     if (isElegantAccelerationEnabled) {
         mapUDFsToOpenCLOperatorsRule->apply(duplicateQueryPlan);
     }
 
-    //apply rules necessary for improving sharing identification
+    // Apply rules necessary for improving sharing identification
     if (applyRulesImprovingSharingIdentification) {
         duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
 
-    //apply rules necessary for enabling query execution when stream alias or union operators are invlved
+    // Apply rules necessary for enabling query execution when stream alias or union operators are invlved
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
 
-    //Perform filter push down optimization
+    // Apply rule for filter push down optimization
     duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
-    // Perform filter reordering optimization
-    return predicateReorderingRule->apply(duplicateQueryPlan);
+    // Apply rule for filter reordering optimization
+    duplicateQueryPlan = predicateReorderingRule->apply(duplicateQueryPlan);
+    // Apply rule for filter merge
+    return filterMergeRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES::Optimizer

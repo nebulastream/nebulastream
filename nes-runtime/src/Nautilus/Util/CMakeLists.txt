@@ -17,3 +17,9 @@ add_source_files(nes-runtime
         IRDumpHandler.cpp
         CompilationOptions.cpp
         )
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
+    add_source_files(nes-runtime
+            Dyncall.cpp
+            )
+endif ()

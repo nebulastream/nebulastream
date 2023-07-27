@@ -61,14 +61,14 @@ Nautilus::Value<> callMin(const Nautilus::Value<>& leftValue, const Nautilus::Va
     throw Exceptions::NotImplementedException("Type not implemented");
 }
 
-void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> sate, Nautilus::Record& inputRecord) {
+void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
     // load
-    auto oldValue = AggregationFunction::loadFromMemref(sate, inputType);
+    auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
     auto inputValue = inputExpression->execute(inputRecord);
     auto result = callMin(inputValue, oldValue);
-    sate.store(result);
+    state.store(result);
 }
 
 void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
@@ -85,7 +85,7 @@ void MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Naut
 }
 
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto minVal = createConstValue(std::numeric_limits<int64_t>::max(), inputType);
+    auto minVal = createMaxValue(inputType);
     memref.store(minVal);
 }
 uint64_t MinAggregationFunction::getSize() { return inputType->size(); }

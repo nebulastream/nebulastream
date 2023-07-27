@@ -86,6 +86,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                operatorId,
                                originId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getPhysicalSourceName(),
                                successors);
     }
     if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
@@ -99,6 +100,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                               operatorId,
                                                               originId,
                                                               numSourceLocalBuffers,
+                                                              sourceDescriptor->getPhysicalSourceName(),
                                                               successors);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
@@ -110,6 +112,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       operatorId,
                                       originId,
                                       numSourceLocalBuffers,
+                                      sourceDescriptor->getPhysicalSourceName(),
                                       successors);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
@@ -121,6 +124,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    operatorId,
                                    originId,
                                    numSourceLocalBuffers,
+                                   sourceDescriptor->getPhysicalSourceName(),
                                    successors);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
@@ -141,6 +145,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  originId,
                                  numSourceLocalBuffers,
                                  kafkaSourceDescriptor->getBatchSize(),
+                                 sourceDescriptor->getPhysicalSourceName(),
                                  successors);
 #endif
 #ifdef ENABLE_MQTT_BUILD
@@ -154,6 +159,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 operatorId,
                                 originId,
                                 numSourceLocalBuffers,
+                                sourceDescriptor->getPhysicalSourceName(),
                                 successors);
 #endif
 #ifdef ENABLE_OPC_BUILD
@@ -169,6 +175,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                opcSourceDescriptor->getPassword(),
                                operatorId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getPhysicalSourceName(),
                                successors);
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
@@ -181,6 +188,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  operatorId,
                                  originId,
                                  numSourceLocalBuffers,
+                                 sourceDescriptor->getPhysicalSourceName(),
                                  successors);
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
@@ -195,6 +203,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    numSourceLocalBuffers,
                                    networkSourceDescriptor->getWaitTime(),
                                    networkSourceDescriptor->getRetryTimes(),
+                                   sourceDescriptor->getPhysicalSourceName(),
                                    successors);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
@@ -212,6 +221,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getGatheringMode(),
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
+                                  sourceDescriptor->getPhysicalSourceName(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
@@ -226,6 +236,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       operatorId,
                                       originId,
                                       numSourceLocalBuffers,
+                                      sourceDescriptor->getPhysicalSourceName(),
                                       successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
@@ -238,6 +249,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                          operatorId,
                                                          originId,
                                                          numSourceLocalBuffers,
+                                                         sourceDescriptor->getPhysicalSourceName(),
                                                          successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
@@ -256,6 +268,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                      benchmarkSourceDescriptor->getSourceMode(),
                                      benchmarkSourceDescriptor->getSourceAffinity(),
                                      benchmarkSourceDescriptor->getTaskQueueId(),
+                                     sourceDescriptor->getPhysicalSourceName(),
                                      successors);
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
@@ -272,6 +285,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
+                                  sourceDescriptor->getPhysicalSourceName(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating LoRaWANPRoxySource");
@@ -302,6 +316,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                                                  operatorId,
                                                                                  originId,
                                                                                  numSourceLocalBuffers,
+                                                                                 sourceDescriptor->getPhysicalSourceName(),
                                                                                  successors,
                                                                                  std::move(view));
     } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
@@ -314,6 +329,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                operatorId,
                                originId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getPhysicalSourceName(),
                                successors);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());

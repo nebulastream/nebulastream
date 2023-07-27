@@ -70,7 +70,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
 
 void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                       Runtime::Execution::PipelineExecutionContextPtr ctx) {
-    NES_DEBUG("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
+    NES_DEBUG("stop KeyedGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto global = globalSliceStore.lock();
         NES_ASSERT(global, "Global slice store is invalid. This should not happen in a graceful stop.");

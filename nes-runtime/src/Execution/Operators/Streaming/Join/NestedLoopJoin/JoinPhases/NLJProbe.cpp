@@ -16,6 +16,7 @@
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -28,26 +29,22 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getNLJWindowRefProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+void* getNLJWindowRefAndCombinePagedVectorsProxy(void* ptrOpHandler, uint64_t windowIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+    NES_INFO("windowIdentifier: {}", windowIdentifier);
+    const auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto window = opHandler->getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
+        std::dynamic_pointer_cast<NLJWindow>(window.value())->combinePagedVectors();
         return window.value().get();
-    } else {
-        return nullptr;
     }
+    // For now this is fine. We should handle this as part of issue #4016
+    return nullptr;
 }
 
-void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, void* windowIdentifierPtr) {
+void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, uint64_t windowIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
     auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
     opHandler->deleteWindow(windowIdentifier);
 }
 
@@ -61,18 +58,20 @@ uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->getOperatorId();
+    return opHandler->getOutputOriginId();
 }
 
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    child->open(ctx, recordBuffer);
+    Operator::open(ctx, recordBuffer);
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto windowIdentifierMemRef = recordBuffer.getBuffer();
+    auto windowIdentifier = recordBuffer.getBuffer().load<UInt64>();
     // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0
     Value<UInt64> workerIdForPagedVectors(0_u64);
-    auto windowReference =
-        Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+    auto windowReference = Nautilus::FunctionCall("getNLJWindowRefAndCombinePagedVectorsProxy",
+                                                  getNLJWindowRefAndCombinePagedVectorsProxy,
+                                                  operatorHandlerMemRef,
+                                                  windowIdentifier);
     auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                      getNLJPagedVectorProxy,
                                                      windowReference,
@@ -90,25 +89,26 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Value<UInt64> windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
     Value<UInt64> windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, windowReference);
 
-    ctx.setWatermarkTs(windowEnd);
     auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin",
                                                  getSequenceNumberProxyForNestedLoopJoin,
                                                  operatorHandlerMemRef);
-    ctx.setSequenceNumber(sequenceNumber);
     auto originId =
         Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
-    ctx.setOrigin(originId);
+
+    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    ctx.setSequenceNumber(sequenceNumber.as<UInt64>());
+    ctx.setOrigin(originId.as<UInt64>());
 
     // As we know that the tuples are lying one after the other (row layout), we can ignore the buffer size
     auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);
     auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema);
 
-    Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
+    Nautilus::Value<UInt64> zeroVal(0_u64);
     for (auto leftRecordMemRef : leftPagedVector) {
         for (auto rightRecordMemRef : rightPagedVector) {
             auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
             auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
-            /* This can be later replaced by an interface that returns bool and gets passed the
+            /* This can be later replaced by an interface that returns boolean and gets passed the
              * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                 Record joinedRecord;
@@ -139,7 +139,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Nautilus::FunctionCall("deleteWindowProxyForNestedLoopJoin",
                            deleteWindowProxyForNestedLoopJoin,
                            operatorHandlerMemRef,
-                           windowIdentifierMemRef);
+                           windowIdentifier);
 }
 
 NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,

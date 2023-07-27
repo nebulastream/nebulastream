@@ -13,6 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#include <API/Schema.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
@@ -49,7 +50,7 @@ class PagedVector {
      * @brief Returns the set of pages
      * @return std::vector<int8_t*>
      */
-    const std::vector<int8_t*> getPages();
+    std::vector<int8_t*> getPages();
 
     /**
      * @brief Clear the sequential data of pages

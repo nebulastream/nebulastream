@@ -50,6 +50,14 @@ class LogicalOperatorFactory {
                                                                   OperatorId id = Util::getNextOperatorId());
 
     /**
+     * @brief Create a new logical limit operator.
+     * @param limit number of tuples to output
+     * @param id: the id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr createLimitOperator(const uint64_t limit, OperatorId id = Util::getNextOperatorId());
+
+    /**
     * @brief Create a new logical projection operator.
     * @param expression list
     * @param id: the id of the operator if not defined then next free operator id is used.

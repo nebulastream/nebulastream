@@ -43,6 +43,7 @@
 #include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -618,7 +619,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             1,
             NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
 
-        auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
+        auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
+        join->setOriginId(42);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));

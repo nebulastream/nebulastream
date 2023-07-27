@@ -39,10 +39,8 @@ class PhysicalHashJoinOperator {
     /**
      * @brief Constructor for PhysicalHashJoinOperator
      * @param operatorHandler
-     * @param id
      */
-    explicit PhysicalHashJoinOperator(Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-                                      OperatorId id);
+    explicit PhysicalHashJoinOperator(Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler);
 
   protected:
     Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler;
