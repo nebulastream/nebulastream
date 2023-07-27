@@ -13,6 +13,7 @@
 */
 #include <NesBaseTest.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -23,23 +24,20 @@ class DummyResponse : public AbstractRequestResponse {
     uint32_t number;
 };
 
-class DummyRequest : public AbstractRequest<DummyResponse> {
+class DummyRequest : public AbstractRequest {
   public:
     DummyRequest(RequestId requestId,
                  const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
-                 std::promise<DummyResponse> responsePromise,
-                 uint32_t responseValue)
-        : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue){};
+                 std::promise<AbstractRequestResponsePtr> responsePromise, uint32_t responseValue)
+        : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue) {};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
-        responsePromise.set_value(DummyResponse(responseValue));
-        return std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>();
+        responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
+        return {};
     }
 
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandler&) override {
-        return std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>();
-    }
+    std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
 
   protected:
     void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
@@ -73,7 +71,7 @@ class AbstractRequestTest : public Testing::NESBaseTest {
 
 TEST_F(AbstractRequestTest, testPromise) {
     constexpr uint32_t responseValue = 20;
-    std::promise<DummyResponse> promise;
+    std::promise<AbstractRequestResponsePtr> promise;
     auto future = promise.get_future();
     RequestId requestId = 1;
     std::vector<ResourceType> requiredResources;
@@ -84,6 +82,6 @@ TEST_F(AbstractRequestTest, testPromise) {
         request.executeRequestLogic(storageHandler);
     });
     thread->join();
-    ASSERT_EQ(future.get().number, responseValue);
+    ASSERT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
 }// namespace NES

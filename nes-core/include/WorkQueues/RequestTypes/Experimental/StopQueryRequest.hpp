@@ -86,7 +86,7 @@ struct StopQueryResponse : public AbstractRequestResponse {
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
+class StopQueryRequest : public AbstractRequest {
 
   public:
     /**

@@ -17,28 +17,102 @@
 #include <future>
 #include <memory>
 #include <vector>
-//todo: remove
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <Util/ThreadNaming.hpp>
 
-namespace NES::Experimental {
-//class AbstractRequest;
-using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
-class AsyncRequestExecutor {
-    AsyncRequestExecutor(uint32_t numOfThreads);
+namespace NES {
+class StorageHandler;
+namespace Experimental {
+    //class AbstractRequest;
+    using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
-  private:
-    /// the inner thread routine that executes async tasks
-    void runningRoutine();
+    template <typename T>
+    concept ConceptStorageHandler = std::is_base_of<StorageHandler, T>::value;
 
-    std::mutex workMutex;
-    std::condition_variable cv;
-    std::atomic<bool> running;
-    std::vector<std::future<bool>> completionFutures;
-    std::deque<AbstractRequestPtr> asyncRequestQueue;
-    //todo: would we need that?
-    //std::vector<std::shared_ptr<std::thread>> runningThreads;
-};
+    //using StorageHandlerPtr = std::shared_ptr<T>;
 
+    template <ConceptStorageHandler T>
+    class AsyncRequestExecutor {
+        //AsyncRequestExecutor(uint32_t numOfThreads, StorageHandlerPtr storageHandler);
+        AsyncRequestExecutor(uint32_t numOfThreads, T storageHandler);
+        std::future<AbstractRequestResponsePtr> runAsync(AbstractRequestPtr request);
+
+      private:
+        /// the inner thread routine that executes async tasks
+        void runningRoutine();
+
+        std::mutex workMutex;
+        std::condition_variable cv;
+        std::atomic<bool> running;
+        std::vector<std::future<bool>> completionFutures;
+        std::deque<AbstractRequestPtr> asyncRequestQueue;
+        //StorageHandlerPtr storageHandler;
+        T storageHandler;
+        //todo: would we need that?
+        //std::vector<std::shared_ptr<std::thread>> runningThreads;
+    };
+
+    template <ConceptStorageHandler T>
+    NES::Experimental::AsyncRequestExecutor<T>::AsyncRequestExecutor(uint32_t numOfThreads, T storageHandler) : running(true), storageHandler(std::move(storageHandler)) {
+        for (uint32_t i = 0; i < numOfThreads; ++i) {
+            std::promise<bool> promise;
+            completionFutures.emplace_back(promise.get_future());
+            //todo: is there a reason why the task implementation was passing ptrs to promises?
+            auto thread = std::thread([this, i, promise = std::move(promise)]() mutable {
+                try {
+                    setThreadName("RequestExecThr-%d", i);
+                    runningRoutine();
+                    promise.set_value(true);
+                } catch (const std::exception& ex) {
+                    promise.set_exception(std::make_exception_ptr(ex));
+                }
+            });
+            thread.detach();
+        }
+    }
+
+
+    template <ConceptStorageHandler T>
+    void NES::Experimental::AsyncRequestExecutor<T>::runningRoutine() {
+        while (true) {
+            std::unique_lock lock(workMutex);
+            while (asyncRequestQueue.empty()) {
+                cv.wait(lock);
+            }
+            if (running) {
+                AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
+                asyncRequestQueue.pop_front();
+                lock.unlock();
+
+                //todo: call error handling inside execute or here?
+
+                //todo: make execute function accept ref to const ptr instead of the ref here?
+                //todo: to avaid the abstract type trouble, we either need to use a template or make execute accept pointers
+
+                //todo: add return type
+                //todo: queue new functions
+                std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);
+
+
+                //todo: allow execute to return follow up reqeust or execute the follow up as part of execute?
+            } else {
+                break;
+            }
+        }
+    }
+template <ConceptStorageHandler T>
+std::future<AbstractRequestResponsePtr> NES::Experimental::AsyncRequestExecutor<T>::runAsync(AbstractRequestPtr request) {
+    if (!running) {
+            NES_THROW_RUNTIME_ERROR("Cannot execute request, Async request executor is not runnign");
+    }
+    {
+            std::unique_lock lock(workMutex);
+            asyncRequestQueue.emplace_back(std::move(request));
+            cv.notify_all();
+    }
 }
-
+    template <typename T>
+    using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<T>>;
+}
+}
 #endif//NES_ASYNCREQUESTEXECUTOR_HPP

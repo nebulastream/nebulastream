@@ -526,6 +526,9 @@ add_nes_unit_test(add-query-request-test "UnitTests/WorkQueues/AddQueryRequestTe
 ### Stop Query Request Test ###
 add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTest.cpp")
 
+### Async Request Executor Test Test ###
+add_nes_unit_test(async-request-executor-test "UnitTests/WorkQueues/AsyncRequestExecutorTest.cpp")
+
 ### Request Execution Exception Test ###
 add_nes_unit_test(request-execution-exception-test "UnitTests/Exceptions/RequestExecutionExceptionTest.cpp")
 
