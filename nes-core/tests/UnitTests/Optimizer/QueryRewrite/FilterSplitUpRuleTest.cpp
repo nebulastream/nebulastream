@@ -590,5 +590,4 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
     EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<EqualsExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
-
 }
