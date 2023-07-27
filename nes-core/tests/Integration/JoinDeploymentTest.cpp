@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
@@ -19,10 +19,52 @@
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestUtils.hpp>
+#include <gmock/gmock-matchers.h>
+
 
 namespace NES::Runtime::Execution {
 
-class JoinDeploymentTest : public Testing::TestWithErrorHandling,
+/**
+ * @brief Struct for storing all csv file params
+ */
+struct CsvFileParams {
+    CsvFileParams(const string& csvFileLeft, const string& csvFileRight, const string& expectedFile)
+        : csvFileLeft(csvFileLeft), csvFileRight(csvFileRight), expectedFile(expectedFile) {}
+
+    const std::string csvFileLeft;
+    const std::string csvFileRight;
+    const std::string expectedFile;
+};
+
+/**
+ * @brief Struct for storing all parameter for the join
+ */
+struct JoinParams {
+    JoinParams(const SchemaPtr& leftSchema,
+               const SchemaPtr& rightSchema,
+               const string& joinFieldName)
+        : leftSchema(leftSchema), rightSchema(rightSchema), joinFieldName(joinFieldName) {
+        outputSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldName);
+    }
+
+    SchemaPtr leftSchema;
+    SchemaPtr rightSchema;
+    SchemaPtr outputSchema;
+    const std::string joinFieldName;
+};
+
+/**
+ * @brief Creates a schema that consists of (value, id, timestamp) with all fields being a UINT64
+ * @return SchemaPtr
+ */
+static SchemaPtr createValueIdTimeStamp() {
+    return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                    ->addField("value", BasicType::UINT64)
+                    ->addField("id", BasicType::UINT64)
+                    ->addField("timestamp", BasicType::UINT64);
+}
+
+class JoinDeploymentTest : public Testing::NESBaseTest,
                            public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
     static void SetUpTestCase() {
@@ -32,326 +74,205 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
-        Testing::TestWithErrorHandling::SetUp();
-        const auto joinStrategy = this->GetParam();
-        const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-        const auto queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
-        const auto numberOfWorkerThreads = 1;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler,
-                                                                         queryCompilerDumpMode,
-                                                                         numberOfWorkerThreads,
-                                                                         joinStrategy);
+        NESBaseTest::SetUp();
+
+        joinStrategy = this->GetParam();
+        bufferManager = std::make_shared<BufferManager>();
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override {
-        NES_INFO("QueryExecutionTest: Tear down JoinDeploymentTest test case.");
-        EXPECT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+    template<typename ResultRecord>
+    void runJoinQueryTwoLogicalStreams(const Query& query, const CsvFileParams& csvFileParams, const JoinParams& joinParams) {
+        auto createSourceConfig = [&](const std::string& fileName) {
+            CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+            sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + fileName);
+            sourceConfig->setGatheringInterval(0);
+            sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+            sourceConfig->setNumberOfBuffersToProduce(0);
+            return sourceConfig;
+        };
+        auto sourceConfig1 = createSourceConfig(csvFileParams.csvFileLeft);
+        auto sourceConfig2 = createSourceConfig(csvFileParams.csvFileRight);
+        auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema,
+                                                               bufferManager)[0];
+        auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
+        ASSERT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
+
+
+        TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                      .enableNautilus()
+                                      .setJoinStrategy(joinStrategy)
+                                      .addLogicalSource("test1", joinParams.leftSchema)
+                                      .addLogicalSource("test2", joinParams.rightSchema)
+                                      .attachWorkerWithCSVSourceToCoordinator("test1", sourceConfig1)
+                                      .attachWorkerWithCSVSourceToCoordinator("test2", sourceConfig2)
+                                      .validate().setupTopology();
+
+        auto actualResult = testHarness.getOutput<ResultRecord>(expectedSinkBuffer.getNumberOfTuples());
+
+        ASSERT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
+        EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));
     }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down JoinDeploymentTest test class."); }
 
-    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+
+    BufferManagerPtr bufferManager;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
 };
-
-std::istream& operator>>(std::istream& is, std::string& l) {
-    std::getline(is, l);
-    return is;
-}
 
 /**
 * Test deploying join with same data and same schema
  * */
 TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value", BasicType::UINT64)
-                                ->addField("test1$id", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Value;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value", BasicType::UINT64)
-                                 ->addField("test2$id", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
+                && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
+    JoinParams joinParams(createValueIdTimeStamp(), createValueIdTimeStamp(), "id");
+    CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id"))
+                     .equalsTo(Attribute("id"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    const auto joinFieldNameLeft = "test1$id";
-    const auto joinFieldNameRight = "test2$id";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window.csv");
-    const std::string fileNameBuffersSink("window_sink.csv");
-
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 20);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    NES_DEBUG("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->resultBuffers[0], joinSchema));
-
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Value;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
+                && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    JoinParams joinParams(leftSchema, rightSchema, "id1");
+    CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window.csv");
-    const std::string fileNameBuffersSink("window_sink.csv");
-
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    NES_DEBUG("leftInputHuffer: {}", NES::Util::printTupleBufferAsCSV(leftBuffer, leftSchema));
-    NES_DEBUG("rightInputHuffer: {}", NES::Util::printTupleBufferAsCSV(rightBuffer, rightSchema));
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 20);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Value;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
+                && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    JoinParams joinParams(leftSchema, rightSchema, "id1");
+    CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window2.csv");
-    const std::string fileNameBuffersSink("window_sink2.csv");
-
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 20);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp  && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    JoinParams joinParams(leftSchema, rightSchema, "id1");
+    CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window3.csv");
-    const std::string fileNameBuffersSink("window_sink3.csv");
-
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 20);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
@@ -359,74 +280,38 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
  */
 // TODO this test can be enabled once #3353 is merged
 TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Value;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$win2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
+                && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
 
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
+    JoinParams joinParams(createValueIdTimeStamp(), createValueIdTimeStamp(), "id");
+    CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window2.csv");
-    const std::string fileNameBuffersSink("window_sink5.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                               Milliseconds(windowSize),
+                                               Milliseconds(windowSlide)));
 
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 40);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query =
-        TestQuery::from(testSourceDescriptorLeft)
-            .joinWith(TestQuery::from(testSourceDescriptorRight))
-            .where(Attribute(joinFieldNameLeft))
-            .equalsTo(Attribute(joinFieldNameRight))
-            .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-            .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
@@ -434,73 +319,43 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
  */
 // TODO this test can be enabled once #3353 is merged
 TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
+    struct ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        uint64_t test1Value;
+        uint64_t test1Id;
+        uint64_t test1Timestamp;
+        uint64_t test2Id;
+        uint64_t test2Timestamp;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
+                && test1Timestamp == rhs.test1Timestamp  && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    JoinParams joinParams(leftSchema, rightSchema, "id1");
+    CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    const std::string fileNameBuffersLeft("window.csv");
-    const std::string fileNameBuffersRight("window3.csv");
-    const std::string fileNameBuffersSink("window_sink6.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
+                                               Milliseconds(windowSize),
+                                               Milliseconds(windowSlide)));
 
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 40);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query =
-        TestQuery::from(testSourceDescriptorLeft)
-            .joinWith(TestQuery::from(testSourceDescriptorRight))
-            .where(Attribute(joinFieldNameLeft))
-            .equalsTo(Attribute(joinFieldNameRight))
-            .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-            .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 /**
@@ -508,6 +363,24 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
  */
 // TODO this test can be enabled once #3638 is merged
 TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
+    struct __attribute__((packed)) ResultRecord {
+        uint64_t test1test2Start;
+        uint64_t test1test2End;
+        uint64_t test1test2Key;
+        char test1Id[7];
+        uint64_t test1Timestamp;
+        char test2Id[7];
+        uint64_t test2Timestamp;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+                && test1test2Key == rhs.test1test2Key && test1Timestamp == rhs.test1Timestamp
+                && (std::strcmp(test1Id, rhs.test1Id) == 0)
+                && (std::strcmp(test2Id, rhs.test2Id) == 0)
+                && test2Timestamp == rhs.test2Timestamp;
+        }
+    };
+
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$id1", BasicType::TEXT)
                                 ->addField("test1$timestamp", BasicType::UINT64);
@@ -515,78 +388,25 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("test2$id2", BasicType::TEXT)
                                  ->addField("test2$timestamp", BasicType::UINT64);
+    JoinParams joinParams(leftSchema, rightSchema, "id1");
+    CsvFileParams csvFileParams("window5.csv", "window6.csv", "window_sink4.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    const auto joinFieldNameLeft = "test1$id1";
-    const auto joinFieldNameRight = "test2$id2";
-    const auto timeStampField = "timestamp";
-
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft("window5.csv");
-    const std::string fileNameBuffersRight("window6.csv");
-    const std::string fileNameBuffersSink("window_sink4.csv");
-
-    auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersLeft, leftSchema, bufferManager)[0];
-    auto rightBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersRight, rightSchema, bufferManager)[0];
-    auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(fileNameBuffersSink, joinSchema, bufferManager)[0];
-
-    auto testSink = executionEngine->createDataSink(joinSchema, 2);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .project(Attribute("test1test2$start"),
-                              Attribute("test1test2$end"),
-                              Attribute("test1test2$key"),
-                              Attribute(timeStampField))
-                     .sink(testSinkDescriptor);
-
-    NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
-
-    leftBuffer.setWatermark(1000);
-    leftBuffer.setOriginId(2);
-    leftBuffer.setSequenceNumber(1);
-    sourceLeft->emitBuffer(leftBuffer);
-
-    rightBuffer.setWatermark(1000);
-    rightBuffer.setOriginId(3);
-    rightBuffer.setSequenceNumber(1);
-    sourceRight->emitBuffer(rightBuffer);
-    testSink->waitTillCompleted();
-
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2);
-    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
-
-    NES_DEBUG("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
-    NES_DEBUG("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer, joinSchema));
-
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(TestUtils::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer, joinSchema->getSchemaSizeInBytes()));
+    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
 INSTANTIATE_TEST_CASE_P(
     testJoinQueries,
     JoinDeploymentTest,
-    ::testing::Values(
-        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
         //                                          TODO Enable the disabled test and fix them #3926
         //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
         //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+        //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
     [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
         return std::string(magic_enum::enum_name(info.param));
     });

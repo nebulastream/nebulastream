@@ -826,7 +826,6 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     if (tupleCount > 0) {
         tupleBuffer.setNumberOfTuples(tupleCount);
         allBuffers.emplace_back(tupleBuffer);
-        tupleCount = 0;
     }
 
     return allBuffers;

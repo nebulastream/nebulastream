@@ -81,7 +81,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         // Pushing them into the expected output and the testHarness
         expectedOutput.emplace_back(elementCarStream);
         expectedOutput.emplace_back(elementTruckStream);
-        testHarness = testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
+        testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
     }
 
     // Validating, setting up the topology, and then running the query
@@ -124,7 +124,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         // Pushing them into the expected output and the testHarness
         expectedOutput.emplace_back(elementCarStream);
         expectedOutput.emplace_back(elementTruckStream);
-        testHarness = testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
+        testHarness.pushElement<ResultRecord>(elementCarStream, 2).pushElement<ResultRecord>(elementTruckStream, 3);
     }
 
     // Validating, setting up the topology, and then running the query
@@ -152,7 +152,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (uint32_t i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
+        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
     }
 
     testHarness.validate().setupTopology();
@@ -192,7 +192,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+        testHarness.pushElement<Test>({1, 1}, 2);
     }
     testHarness.validate().setupTopology();
 
@@ -230,7 +230,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
                                   .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
     testHarness.validate().setupTopology();
 
@@ -635,7 +635,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
 
     testHarness.validate().setupTopology();
@@ -677,7 +677,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
                            .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (int i = 0; i < 5; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
+        testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
     }
 
     testHarness.validate().setupTopology();
@@ -1341,9 +1341,9 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 /**
- * Test deploying unionWith query with source on two different worker node using top down strategy. Enabled with #4032
+ * Test deploying joinWith query with source on two different worker node using top down strategy
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     struct Test {
         uint64_t value;
         uint64_t id;
@@ -1361,7 +1361,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSc
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
-    csvSourceType->setSkipHeader(true);
+    csvSourceType->setSkipHeader(false);
 
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1397,6 +1397,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerJoinUsingTopDownOnSameSc
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 1, 4, 1002},
+                                          {1000, 2000, 1, 1, 1, 1000, 1, 1, 1000},
                                           {1000, 2000, 12, 1, 12, 1001, 1, 12, 1001},
                                           {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
@@ -1567,9 +1568,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 }
 
 /**
- * Test deploying join with different sources and different Speed. Enabled with #4032
+ * Test deploying join with different sources and different Speed
  */
-TEST_F(QueryDeploymentTest, DISABLED_testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
+TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -1600,14 +1601,14 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoinWithDifferentSourceDifferentSpeedTu
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setGatheringInterval(0);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setGatheringInterval(1);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1652,9 +1653,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoinWithDifferentSourceDifferentSpeedTu
 }
 
 /**
- * Test deploying join with different three sources. Enabled with #4032
+ * Test deploying join with different three sources
  */
-TEST_F(QueryDeploymentTest, DISABLED_testJoinWithThreeSources) {
+TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -1684,13 +1685,13 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoinWithThreeSources) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1741,9 +1742,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoinWithThreeSources) {
 }
 
 /**
- * Test deploying join with four different sources. Enabled with #4032
+ * Test deploying join with four different sources
  */
-TEST_F(QueryDeploymentTest, DISABLED_testJoinWithFourSources) {
+TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -1773,13 +1774,13 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoinWithFourSources) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSkipHeader(true);
+    csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSkipHeader(true);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),

@@ -69,7 +69,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2);//idx=6
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2)
+        testHarness.pushElement<Test>({1, 1}, 2)
                           .pushElement<Test>({1, 1}, 3)
                           .pushElement<Test>({1, 1}, 4)
                           .pushElement<Test>({1, 1}, 5)
@@ -135,7 +135,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 5);//id=7
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2)
+        testHarness.pushElement<Test>({1, 1}, 2)
                           .pushElement<Test>({1, 1}, 3)
                           .pushElement<Test>({1, 1}, 4)
                           .pushElement<Test>({1, 1}, 5)
@@ -200,7 +200,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2);//6
 
     for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness
+        testHarness
                           .pushElement<Test>({1, 1}, 2)
                           // worker with id 3 does not produce data
                           .pushElement<Test>({1, 1}, 4)
@@ -208,7 +208,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
                           .pushElement<Test>({1, 1}, 6);
     }
 
-    testHarness = testHarness.validate().setupTopology();
+    testHarness.validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
@@ -268,7 +268,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0 does not produce data
-        testHarness = testHarness.pushElement<Test>({1, 1}, 3)
+        testHarness.pushElement<Test>({1, 1}, 3)
                           .pushElement<Test>({1, 1}, 4)
                           // worker with idx 3 does not produce data
                           .pushElement<Test>({1, 1}, 6)
@@ -347,7 +347,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 1-7 do not produce data
-        testHarness = testHarness.pushElement<Test>({1, 1}, 8)
+        testHarness.pushElement<Test>({1, 1}, 8)
                           .pushElement<Test>({1, 1}, 9)
                           .pushElement<Test>({1, 1}, 10)
                           .pushElement<Test>({1, 1}, 11);
@@ -706,7 +706,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0-5 do not produce data
-        testHarness = testHarness.pushElement<Test>({1, 1}, 8)
+        testHarness.pushElement<Test>({1, 1}, 8)
                           .pushElement<Test>({1, 1}, 9)
                           .pushElement<Test>({1, 1}, 10)
                           .pushElement<Test>({1, 1}, 11);
