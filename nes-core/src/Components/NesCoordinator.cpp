@@ -223,8 +223,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                                                          HEALTH_SERVICE_NAME,
                                                                          coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
-    NES_DEBUG("NesCoordinator start health check");
-    healthCheckService->startHealthCheck();
+    //NES_DEBUG("NesCoordinator start health check");
+    //healthCheckService->startHealthCheck();
+    NES_DEBUG("NesCoordinator not starting health check until start health check endpoint is called.");
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");

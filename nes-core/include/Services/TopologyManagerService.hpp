@@ -162,6 +162,8 @@ class TopologyManagerService {
       */
     nlohmann::json getTopologyAsJson();
 
+    void startCoordinatorHealthCheck();
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;

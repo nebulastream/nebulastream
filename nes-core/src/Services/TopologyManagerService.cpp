@@ -362,4 +362,8 @@ std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
 TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {
     return locationIndex->getGeoLocationForNode(nodeId);
 }
+
+void TopologyManagerService::startCoordinatorHealthCheck() {
+    healthCheckService->startHealthCheck();
+}
 }// namespace NES

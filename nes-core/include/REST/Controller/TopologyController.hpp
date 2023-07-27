@@ -87,6 +87,23 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("GET", "/startCoordinatorHealthCheck", startCoordinatorHealthCheckService) {
+        try {
+            topologyManagerService->startCoordinatorHealthCheck();
+            return createResponse(Status::CODE_200, "");
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (const std::exception& exc) {
+            NES_ERROR("TopologyController: handleGet -startCoordinatorHealthCheck: Exception occurred while building the "
+                      "topology: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_500,
+                                             "Exception occurred while startCoordinatorHealthCheck" + std::string(exc.what()));
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
     ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
