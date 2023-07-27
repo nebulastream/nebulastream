@@ -26,13 +26,17 @@ namespace NES {
   public:
     const std::string& getPhysicalSourceName() const;
     const std::string& getField() const;
-
-    static StatCollector* createStat(const std::string& physicalSourceName,
-        const std::string& field,
-        time_t duration,
-        time_t interval,
-        Yaml::Node configNode
-    );
+    time_t getDuration() const;
+    time_t getFrequency() const;
+    std::vector<uint32_t>& getKeys();
+    void addKey(uint32_t key);
+    StatCollector(const std::string& physicalSourceName, const std::string& field, time_t duration, time_t frequency);
+//    static StatCollector* createStat(const std::string& physicalSourceName,
+//        const std::string& field,
+//        time_t duration,
+//        time_t interval,
+//        Yaml::Node configNode
+//    );
     virtual void update(uint32_t key) = 0;
     virtual StatCollector* merge(StatCollector* rightStatCollector) = 0;
     virtual bool equal(StatCollector* rightStatCollector) = 0;
@@ -42,9 +46,9 @@ namespace NES {
   private:
     const std::string physicalSourceName;
     const std::string field;
-    time_t duration;
-    time_t frequency;
-
+    const time_t duration;
+    const time_t frequency;
+//    std::vector<double> keys;
   };
 
 } // NES

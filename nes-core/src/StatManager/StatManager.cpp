@@ -14,23 +14,33 @@
 
 #include "StatManager/StatManager.hpp"
 #include "StatManager/StatCollectors/StatCollector.hpp"
+#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
+#include <Util/yaml/Yaml.hpp>
+
 
 namespace NES {
 
-  std::vector<NES::StatCollector>& StatManager::getStatCollectors() {
+  std::vector<NES::StatCollector*>& StatManager::getStatCollectors() {
     return statCollectors;
   }
 
   void StatManager::createStat (const std::string& physicalSourceName,
-                   const std::string& field/*,
-                   const std::string& statName*/) {
+                   const std::string& field,
+                   const std::string& statName,
+                   const time_t duration,
+                   const time_t frequency) {
 
     bool found = 0;
 
     // check if the stat is already being tracked passively
     for (const auto& collector : statCollectors) {
-      if (collector.getPhysicalSourceName() == physicalSourceName && collector.getField() == field) {
+      // could add a hashmap or something here that first checks if a statCollector can even generate the according statistic
+      if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
+          collector->getDuration() == duration && collector->getFrequency() == frequency) {
+
         found = 1;
+
+
         break;
       }
     }
@@ -38,6 +48,29 @@ namespace NES {
     // if the stat is not yet tracked, then create it
     if(!found) {
 
+      // create configNode
+      Yaml::Node configNode;
+      configNode["physicalSourceName"] = physicalSourceName;
+      configNode["field"] = field;
+      configNode["duration"] = std::to_string(duration);
+      configNode["frequency"] = std::to_string(frequency);
+
+      if (statName.compare("Frequency")) {
+
+        // create stat
+        auto cm = CountMin::createCountMinErrorProb(0.001, 0.001, configNode);
+
+        // write stat to statVector
+        StatCollector* cmSketch = cm;
+        statCollectors.push_back(cmSketch);
+
+//      } else if (statName.compare("Distinct Keys")) {
+
+//      } else if (statName.compare("Quantile")) {
+
+      } else {
+        std::cout << "statName is not defined!" << std::endl;
+      }
     }
 
   }
