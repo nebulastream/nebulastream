@@ -19,18 +19,17 @@ namespace NES::Runtime::Execution::Operators {
 struct SliceMergeTask;
 class State;
 class NonKeyedSlice;
-using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class NonKeyedSliceStaging;
 
 /**
- * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
+ * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
  * tumbling and sliding window aggregations.
  */
-class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                    public ::NES::detail::virtual_enable_shared_from_this<NonKeyedSliceMergingHandler, false> {
+class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
   public:
     /**
-     * @brief Constructor for the GlobalSliceMergingHandler
+     * @brief Constructor for the NonKeyedSliceMergingHandler
      * @param windowDefinition
      */
     NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
@@ -52,17 +51,11 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     inline NonKeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
-     * @brief Gets a weak pointer to the slice staging
-     * @return std::weak_ptr<KeyedSliceStaging>
-     */
-    std::weak_ptr<NonKeyedSliceStaging> getSliceStagingPtr();
-
-    /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr
      */
-    GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
+    NonKeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
     const State* getDefaultState() const;
 
     ~NonKeyedSliceMergingHandler();

@@ -61,6 +61,8 @@ class KeyedSlice {
 
     friend std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice);
 
+    ~KeyedSlice();
+
   private:
     uint64_t start;
     uint64_t end;

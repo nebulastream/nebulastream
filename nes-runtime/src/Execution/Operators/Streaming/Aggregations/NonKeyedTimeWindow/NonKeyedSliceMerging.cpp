@@ -60,6 +60,11 @@ void deletePartition(void* p) {
     delete partition;
 }
 
+void deleteNonKeyedSlice(void* slice) {
+    auto deleteNonKeyedSlice = static_cast<NonKeyedSlice*>(slice);
+    delete deleteNonKeyedSlice;
+}
+
 void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<NonKeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
@@ -105,20 +110,23 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
-    Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
+    Value<UInt64> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
+    Value<UInt64> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
+    Value<UInt64> sequenceNumber = getMember(sliceMergeTask, SliceMergeTask, sequenceNumber).load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
+
     // emit global slice when we have a tumbling window.
-    emitWindow(ctx, startSliceTs, endSliceTs, globalSliceState);
+    emitWindow(ctx, startSliceTs, endSliceTs, sequenceNumber, globalSliceState);
+
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
                                                              Value<MemRef>& sliceMergeTask,
-                                                             Value<>& endSliceTs) const {
+                                                             Value<UInt64>& endSliceTs) const {
     auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
-    auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
+    auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs);
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
     for (Value<UInt64> i = 0_u64; i < sizeOfPartitions; i = i + 1_u64) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
@@ -135,12 +143,14 @@ Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& glob
 }
 
 void NonKeyedSliceMerging::emitWindow(ExecutionContext& ctx,
-                                      Value<>& windowStart,
-                                      Value<>& windowEnd,
+                                      Value<UInt64>& windowStart,
+                                      Value<UInt64>& windowEnd,
+                                      Value<UInt64>& sequenceNumber,
                                       Value<MemRef>& globalSlice) const {
-    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    NES_TRACE("Emit window: {}-{}-{}", windowStart->toString(), windowEnd->toString(), sequenceNumber->toString());
+    ctx.setWatermarkTs(windowEnd);
     ctx.setOrigin(resultOriginId);
-
+    ctx.setSequenceNumber(sequenceNumber);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
@@ -152,6 +162,7 @@ void NonKeyedSliceMerging::emitWindow(ExecutionContext& ctx,
         stateOffset = stateOffset + function->getSize();
     }
     child->execute(ctx, resultWindow);
+    Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice, globalSlice);
 }
 
 }// namespace NES::Runtime::Execution::Operators
