@@ -17,6 +17,7 @@
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,7 +38,7 @@ void UDFLogicalOperator::inferStringSignature() {
     auto signatureStream = std::stringstream{};
 
     // IF JAVA UDF
-    if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptorPtr>()) {
+    if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
         // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
         // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
         auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
@@ -76,8 +77,9 @@ void UDFLogicalOperator::inferStringSignature() {
                         << ", instance=" << instanceHash << ", byteCode=" << byteCodeListHash << ")"
                         << "." << *child->getHashBasedSignature().begin()->second.begin();
         auto signature = signatureStream.str();
+        NES_DEBUG("Hash code : {}, signature {}", stringHash(signature), signatureStream.str());
         hashBasedSignature[stringHash(signature)] = {signature};
-    } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptorPtr>()) {
+    } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>()) {
         // IF PYTHON UDF
         auto childSignature = child->getHashBasedSignature();
 
@@ -89,7 +91,10 @@ void UDFLogicalOperator::inferStringSignature() {
 
         //Update the signature
         auto hashCode = hashGenerator(signatureStream.str());
+        NES_DEBUG("Hash code : {}, signature {}", hashCode, signatureStream.str());
         hashBasedSignature[hashCode] = {signatureStream.str()};
+    } else {
+        throw UDFException("Your UDFDescriptor is neither a Python or Java UDF Descriptor!");
     }
 }
 
