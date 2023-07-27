@@ -158,8 +158,7 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
             auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
             Value<MemRef> globalValue = globalEntry.getValuePtr();
-            NES_TRACE("merge key {} th {} gb {}",
-                      key.load<UInt64>()->toString(),
+            NES_TRACE("merge key {} th {} gb {}", key.load<UInt64>()->toString(),
                       threadLocalValue.load<UInt64>()->toString(),
                       globalValue.load<UInt64>()->toString())
             // 2c. apply aggregation functions and combine the values
@@ -169,6 +168,7 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
                 NES_TRACE("result value {}", globalValue.load<UInt64>()->toString());
                 globalValue = globalValue + function->getSize();
             }
+
         });
     }
 }
@@ -178,10 +178,7 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowEnd,
                                    Value<>& sequenceNumber,
                                    Interface::ChainedHashMapRef& globalSliceHashMap) const {
-    NES_DEBUG("Emit window: {}-{}-{}",
-              windowStart.as<UInt64>()->toString(),
-              windowEnd.as<UInt64>()->toString(),
-              sequenceNumber.as<UInt64>()->toString());
+    NES_DEBUG("Emit window: {}-{}-{}", windowStart.as<UInt64>()->toString(), windowEnd.as<UInt64>()->toString(), sequenceNumber.as<UInt64>()->toString());
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber.as<UInt64>());

@@ -13,6 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_
+#include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -21,7 +22,8 @@ class State;
 class NonKeyedSlice;
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class NonKeyedSliceStaging;
-
+class NonKeyedSliceStaging;
+class MultiOriginWatermarkProcessor;
 /**
  * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
  * tumbling and sliding window aggregations.
@@ -33,6 +35,8 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
      * @param windowDefinition
      */
     NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
+    NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging,
+                                std::unique_ptr<SlidingWindowSliceStore<NonKeyedSlice>> globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -58,12 +62,24 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
     NonKeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
     const State* getDefaultState() const;
 
+    void appendToGlobalSliceStore(NonKeyedSlicePtr slice);
+
+    void triggerSlidingWindows(Runtime::WorkerContext& wctx,
+                               Runtime::Execution::PipelineExecutionContext& ctx,
+                               uint64_t sequenceNumber,
+                               uint64_t slideEnd);
+
     ~NonKeyedSliceMergingHandler();
 
   private:
     uint64_t entrySize;
     std::shared_ptr<NonKeyedSliceStaging> sliceStaging;
     std::unique_ptr<State> defaultState;
+    std::unique_ptr<SlidingWindowSliceStore<NonKeyedSlice>> globalSliceStore;
+    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
+    std::atomic<uint64_t> lastTriggerWatermark = 0;
+    std::atomic<uint64_t> resultSequenceNumber = 1;
+    std::mutex triggerMutex;
 };
 
 }// namespace NES::Runtime::Execution::Operators

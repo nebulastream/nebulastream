@@ -18,4 +18,5 @@ add_source_files(nes-runtime
         NonKeyedThreadLocalSliceStore.cpp
         NonKeyedSliceMerging.cpp
         NonKeyedSliceMergingHandler.cpp
+        NonKeyedSlidingWindowSink.cpp
         )
