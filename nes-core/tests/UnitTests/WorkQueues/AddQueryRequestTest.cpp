@@ -40,7 +40,6 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
-#include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -56,7 +55,6 @@ class AddQueryRequestTest : public Testing::TestWithErrorHandling {
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
     uint8_t ZERO_RETRIES = 0;
-    std::shared_ptr<LockManager> lockManager;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;
@@ -93,12 +91,6 @@ class AddQueryRequestTest : public Testing::TestWithErrorHandling {
         globalQueryPlan = GlobalQueryPlan::create();
         globalExecutionPlan = GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        lockManager = std::make_shared<LockManager>(globalExecutionPlan,
-                                                    topology,
-                                                    queryCatalogService,
-                                                    globalQueryPlan,
-                                                    sourceCatalog,
-                                                    udfCatalog);
         z3Context = std::make_shared<z3::context>();
     }
 };
@@ -107,6 +99,7 @@ class AddQueryRequestTest : public Testing::TestWithErrorHandling {
 TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Prepare
+    constexpr RequestId requestId = 1;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -114,27 +107,35 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
+    auto storageHandler = TwoPhaseLockingStorageHandler(globalExecutionPlan,
+                                                        topology,
+                                                        queryCatalogService,
+                                                        globalQueryPlan,
+                                                        sourceCatalog,
+                                                        udfCatalog);
 
     //Create new entry in query catalog service
     queryCatalogService->createNewEntry("query string", queryPlan, "TopDown");
 
-    EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::REGISTERED);
+    EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::REGISTERED);
 
     // Create add request
-    NES::Experimental::AddQueryRequest addQueryRequest(queryPlan,
-                                                       TEST_PLACEMENT_STRATEGY,
-                                                       ZERO_RETRIES,
-                                                       workerRpcClient,
-                                                       coordinatorConfiguration,
-                                                       z3Context);
+    std::promise<NES::Experimental::AddQueryResponse> promise;
+    auto addQueryRequest = NES::Experimental::AddQueryRequest::create(requestId,
+                                                              queryPlan,
+                                                              TEST_PLACEMENT_STRATEGY,
+                                                              ZERO_RETRIES,
+                                                              workerRpcClient,
+                                                              coordinatorConfiguration,
+                                                              z3Context,
+                                                              std::move(promise));
 
     // Execute add request until deployment phase
     try {
-        addQueryRequest.execute(storageHandler);
+        addQueryRequest->execute(storageHandler);
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
         EXPECT_EQ(e.getMode(), RpcClientModes::Register);
         EXPECT_EQ(queryCatalogService->getAllQueryCatalogEntries().size(), 1);
-        EXPECT_EQ(queryCatalogService->getAllQueryCatalogEntries()[0]->getQueryStatus(), QueryStatus::REGISTERED);
+        EXPECT_EQ(queryCatalogService->getAllQueryCatalogEntries()[0]->getQueryState(), QueryState::REGISTERED);
     }
 }

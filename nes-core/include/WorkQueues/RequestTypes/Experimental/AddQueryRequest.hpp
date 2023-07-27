@@ -15,24 +15,9 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_ADDQUERYREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_ADDQUERYREQUEST_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
-#include <WorkQueues/RequestTypes/Request.hpp>
-#include <WorkQueues/StorageHandles/StorageHandler.hpp>
-
-namespace NES::Optimizer {
-class TypeInferencePhase;
-using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-
-class QueryRewritePhase;
-using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
-
-class QueryPlacementPhase;
-using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
-
-class GlobalQueryPlanUpdatePhase;
-using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
-}// namespace NES::Optimizer
 
 namespace NES {
 
@@ -100,26 +85,69 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class MemoryLayoutSelectionPhase;
 using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
+
+class TypeInferencePhase;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class QueryRewritePhase;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
+
+class QueryPlacementPhase;
+using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+
+class GlobalQueryPlanUpdatePhase;
+using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
 }// namespace Optimizer
 
 namespace Experimental {
-class AddQueryRequest : public AbstractRequest {
+
+//a response to the creator of the request
+struct AddQueryResponse : public AbstractRequestResponse {
+    SharedQueryId sharedQueryId;
+};
+
+class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
   public:
     /**
      * @brief Constructor
+     * @param requestId: the id assigned to this request
      * @param queryId: The id of the query that failed
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
+     * @return a smart pointer to the newly created object
      */
-    AddQueryRequest(const QueryPlanPtr& queryPlan,
+    AddQueryRequest(const RequestId requestId,
+                    const QueryPlanPtr& queryPlan,
                     Optimizer::PlacementStrategy queryPlacementStrategy,
                     uint8_t maxRetries,
                     NES::WorkerRPCClientPtr workerRpcClient,
                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                    z3::ContextPtr z3Context);
+                    z3::ContextPtr z3Context,
+                    std::promise<AddQueryResponse> responsePromise);
+
+    /**
+     * @brief creates a new AddQueryRequest object
+     * @param requestId: the id assigned to this request
+     * @param queryId: The id of the query that failed
+     * @param failedSubPlanId: The id of the subplan that caused the failure
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param workerRpcClient: The worker rpc client to be used during undeployment
+     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
+     */
+    static std::shared_ptr<AddQueryRequest> create(const RequestId requestId,
+                                                   const QueryPlanPtr& queryPlan,
+                                                   Optimizer::PlacementStrategy queryPlacementStrategy,
+                                                   uint8_t maxRetries,
+                                                   NES::WorkerRPCClientPtr workerRpcClient,
+                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                   z3::ContextPtr z3Context,
+                                                   std::promise<AddQueryResponse> responsePromise);
 
   protected:
     /**
@@ -127,21 +155,21 @@ class AddQueryRequest : public AbstractRequest {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandler) override;
+    void preRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(RequestExecutionException& ex, StorageHandler& storageHandler) override;
+    void postRollbackHandle(const RequestExecutionException& ex, StorageHandler& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
