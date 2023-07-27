@@ -551,6 +551,7 @@ message SerializableOperator{
     string windowStartFieldName = 12;
     string windowEndFieldName = 13;
     string windowKeyFieldName = 14;
+    uint64 origin = 15;
   }
 
   /**

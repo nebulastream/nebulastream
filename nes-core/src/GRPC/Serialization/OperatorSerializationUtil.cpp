@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -923,6 +924,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     joinDetails.set_windowstartfieldname(joinOperator.getWindowStartFieldName());
     joinDetails.set_windowendfieldname(joinOperator.getWindowEndFieldName());
     joinDetails.set_windowkeyfieldname(joinOperator.getWindowKeyFieldName());
+    joinDetails.set_origin(joinOperator.getOutputOriginIds()[0]);
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::INNER_JOIN) {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
@@ -1026,7 +1028,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
     joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(),
                                                 joinDetails.windowendfieldname(),
                                                 joinDetails.windowkeyfieldname());
-
+    joinOperator->setOriginId(joinDetails.origin());
     return joinOperator;
 
     //TODO: enable distrChar for distributed joins

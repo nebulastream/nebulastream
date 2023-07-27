@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
@@ -84,10 +85,31 @@ class TestHarness {
                          uint64_t memSrcNumBuffToProcess = 1);
 
     /**
+     * @brief The constructor of TestHarness
+     * @param numWorkers number of worker (each for one physical source) to be used in the test
+     * @param queryWithoutSink query object to test (without the sink operator)
+     * @param restPort port for the rest service
+     * @param rpcPort for for the grpc
+     */
+    explicit TestHarness(Query queryWithoutSink,
+                         uint16_t restPort,
+                         uint16_t rpcPort,
+                         std::filesystem::path testHarnessResourcePath,
+                         uint64_t memSrcFrequency = 0,
+                         uint64_t memSrcNumBuffToProcess = 1);
+
+    /**
      * @brief Enable using nautilus compiler
      * @return self
      */
     TestHarness& enableNautilus();
+
+    /**
+     * @brief Sets the join strategy
+     * @param joinStrategy
+     * @return Self
+     */
+    TestHarness& setJoinStrategy(QueryCompilation::StreamJoinStrategy& newJoinStrategy);
 
     /**
          * @brief push a single element/tuple to specific source
@@ -260,15 +282,24 @@ class TestHarness {
         remove(filePath.c_str());
 
         //register query
-        std::string queryString =
-            queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
         auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
         auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
+        QueryId queryId = INVALID_QUERY_ID;
 
-        QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
-                                                                        std::move(placementStrategyName),
-                                                                        faultToleranceMode,
-                                                                        lineageMode);
+        if (!queryWithoutSinkStr.empty()) {
+            // we can remove this, once we just use Query
+            std::string queryString =
+                queryWithoutSinkStr + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
+            queryId = queryService->validateAndQueueAddQueryRequest(queryString, std::move(placementStrategyName),
+                                                                    faultToleranceMode, lineageMode);
+        } else if (queryWithoutSink.get() != nullptr){
+            auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "NES_FORMAT", "APPEND"));
+            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(),
+                                                    std::move(placementStrategyName),
+                                                    faultToleranceMode, lineageMode);
+        } else {
+            NES_THROW_RUNTIME_ERROR("TestHarness expects that either the query is given as a string or as a query object!");
+        }
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
@@ -344,7 +375,8 @@ class TestHarness {
 
     uint32_t getNextTopologyId();
 
-    std::string queryWithoutSink;
+    const std::string queryWithoutSinkStr;
+    const QueryPtr queryWithoutSink;
     std::string coordinatorIPAddress;
     uint16_t restPort;
     uint16_t rpcPort;
@@ -357,6 +389,7 @@ class TestHarness {
     std::vector<TestHarnessWorkerConfigurationPtr> testHarnessWorkerConfigurations;
     uint32_t physicalSourceCount;
     uint32_t topologyId;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
     bool validationDone;
     bool topologySetupDone;
     std::filesystem::path testHarnessResourcePath;
