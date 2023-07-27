@@ -28,12 +28,11 @@ class DummyRequest : public AbstractRequest<DummyResponse> {
     DummyRequest(RequestId requestId,
                  const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
-                 std::promise<DummyResponse> responsePromise, uint32_t responseValue)
+                 std::promise<DummyResponse> responsePromise,
+                 uint32_t responseValue)
         : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue){};
 
-    void executeRequestLogic(NES::StorageHandler&) override {
-        responsePromise.set_value(DummyResponse(responseValue));
-    }
+    void executeRequestLogic(NES::StorageHandler&) override { responsePromise.set_value(DummyResponse(responseValue)); }
 
     void rollBack(const RequestExecutionException&, StorageHandler&) override {}
 
@@ -41,6 +40,7 @@ class DummyRequest : public AbstractRequest<DummyResponse> {
     void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
     void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
     void postExecution(StorageHandler&) override {}
+
   private:
     uint32_t responseValue;
 };
@@ -48,17 +48,17 @@ class DummyRequest : public AbstractRequest<DummyResponse> {
 class DummyStorageHandler : public StorageHandler {
   public:
     explicit DummyStorageHandler() = default;
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId) override {return nullptr; };
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId) override { return nullptr; };
 
-    TopologyHandle getTopologyHandle(RequestId) override {return nullptr; };
+    TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
 
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId) override {return nullptr; };
+    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId) override { return nullptr; };
 
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override {return nullptr; };
+    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override { return nullptr; };
 
-    SourceCatalogHandle getSourceCatalogHandle(RequestId) override {return nullptr; };
+    SourceCatalogHandle getSourceCatalogHandle(RequestId) override { return nullptr; };
 
-    UDFCatalogHandle getUDFCatalogHandle(RequestId) override {return nullptr; };
+    UDFCatalogHandle getUDFCatalogHandle(RequestId) override { return nullptr; };
 };
 
 class AbstractRequestTest : public Testing::NESBaseTest {

@@ -17,9 +17,9 @@
 #include <Exceptions/RequestExecutionException.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
+#include <future>
 #include <memory>
 #include <vector>
-#include <future>
 
 namespace NES {
 using Exceptions::RequestExecutionException;
@@ -32,7 +32,7 @@ class OptimizerConfiguration;
 struct AbstractRequestResponse {};
 
 //constrain template parameter to be a subclass of AbastractRequestResponse
-template <typename T>
+template<typename T>
 concept ConceptResponse = std::is_base_of<AbstractRequestResponse, T>::value;
 
 class StorageHandler;
@@ -67,7 +67,10 @@ class AbstractRequest {
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
-    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::promise<ResponseType> responsePromise);
+    explicit AbstractRequest(RequestId requestId,
+                             const std::vector<ResourceType>& requiredResources,
+                             uint8_t maxRetries,
+                             std::promise<ResponseType> responsePromise);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -152,9 +155,7 @@ AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
                                                const std::vector<ResourceType>& requiredResources,
                                                const uint8_t maxRetries,
                                                std::promise<ResponseType> responsePromise)
-    : requestId(requestId), responsePromise(std::move(responsePromise)),
-      maxRetries(maxRetries),
-      actualRetries(0),
+    : requestId(requestId), responsePromise(std::move(responsePromise)), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
 template<ConceptResponse ResponseType>
@@ -170,7 +171,9 @@ void AbstractRequest<ResponseType>::handleError(const RequestExecutionException&
 }
 
 template<ConceptResponse ResponseType>
-bool AbstractRequest<ResponseType>::retry() { return actualRetries++ < maxRetries; }
+bool AbstractRequest<ResponseType>::retry() {
+    return actualRetries++ < maxRetries;
+}
 
 template<ConceptResponse ResponseType>
 void AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {

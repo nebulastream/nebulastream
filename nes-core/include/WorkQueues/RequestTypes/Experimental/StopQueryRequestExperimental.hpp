@@ -90,7 +90,8 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
                                       QueryId queryId,
                                       size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
-                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration, std::promise<StopQueryResponse> responsePromise);
+                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                      std::promise<StopQueryResponse> responsePromise);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
 
@@ -106,12 +107,14 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
 
     std::string toString();
 
-    StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
+    StopQueryRequestExperimental(RequestId requestId,
+                                 QueryId queryId,
                                  size_t maxRetries,
                                  WorkerRPCClientPtr workerRpcClient,
-                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration, std::promise<StopQueryResponse> responsePromise);
-  private:
+                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                 std::promise<StopQueryResponse> responsePromise);
 
+  private:
     WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
