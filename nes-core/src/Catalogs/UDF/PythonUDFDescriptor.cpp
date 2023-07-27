@@ -14,6 +14,7 @@
 
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
+#include <sstream>
 
 namespace NES::Catalogs::UDF {
 
@@ -26,5 +27,11 @@ PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, const 
 bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
     return functionString == other.functionString && getMethodName() == other.getMethodName()
         && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
+}
+std::stringstream PythonUDFDescriptor::generateInferStringSignature() {
+    auto signatureStream = std::stringstream{};
+    auto& functionName = getMethodName();
+    signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")";
+    return signatureStream;
 }
 }// namespace NES::Catalogs::UDF

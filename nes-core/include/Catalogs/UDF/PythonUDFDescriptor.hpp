@@ -46,6 +46,12 @@ class PythonUDFDescriptor : public UDFDescriptor {
     const std::string& getFunctionString() const { return functionString; }
 
     /**
+     * @brief Generates the infer string signature required for the logical operator
+     * @return the infer string signature stream
+     */
+    std::stringstream generateInferStringSignature() override;
+
+    /**
      * Compare to Python UDF descriptors.
      *
      * @param other The other PythonUDFDescriptor in the comparison.

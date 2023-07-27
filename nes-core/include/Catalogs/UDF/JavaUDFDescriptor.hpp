@@ -133,6 +133,12 @@ class JavaUDFDescriptor : public UDFDescriptor {
     const std::string& getOutputClassName() const { return outputClassName; }
 
     /**
+     * @brief Generates the infer string signature required for the logical operator
+     * @return the infer string signature stream
+     */
+    std::stringstream generateInferStringSignature() override;
+
+    /**
      * Compare to Java UDF descriptors.
      *
      * @param other The other JavaUDFDescriptor in the comparison.

@@ -11,38 +11,79 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef PYTHON_UDF_ENABLED
-#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Exceptions/UDFException.hpp>
+
 #include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 using namespace std::string_literals;
 
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Exceptions/UDFException.hpp>
+#include <Util/PythonUDFDescriptorBuilder.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Catalogs::UDF {
 
-class PythonUDFDescriptorTest : public Testing::NESBaseTest {
+class PythonUDFDescriptorTest : public Testing::TestWithErrorHandling {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
-
-    const std::string methodName{"py_method"};
-    int numberOfArgs = 2;
-    DataTypePtr undefinedType = DataTypeFactory::createUndefined();
-    DataTypePtr returnType = DataTypeFactory::createInt32();
 };
 
-TEST_F(PythonUDFDescriptorTest, methodNameMustNotBeEmpty) {
-    EXPECT_THROW(PythonUDFDescriptor(""s, numberOfArgs, returnType), UDFException);
+// The following tests check that constructing a Python UDF descriptor with invalid data is not possible.
+// In order to eliminate the need to change every construction of a PythonUDFDescriptor instance when adding fields to the
+// PythonUDFDescriptor class, the construction is done using a builder pattern.
+// By default, the PythonUDFDescriptorBuilder contains valid data for all fields required for the Python UDF descriptor,
+// e.g., class name, method name, serialized instance, bytecode list, and others.
+
+TEST_F(PythonUDFDescriptorTest, NoExceptionIsThrownForValidData) {
+    EXPECT_NO_THROW(PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor());
 }
 
-TEST_F(PythonUDFDescriptorTest, numberOfArgsMustBePositive) {
-    EXPECT_THROW(PythonUDFDescriptor(methodName, -1, returnType), UDFException);
+TEST_F(PythonUDFDescriptorTest, TheFunctionNameMustNotBeEmtpy) {
+    EXPECT_THROW(PythonUDFDescriptorBuilder{}
+                     .setFunctionName("")
+                     .build(),
+                 UDFException);
 }
 
-TEST_F(PythonUDFDescriptorTest, returnTypeMustBeDefined) {
-    EXPECT_THROW(PythonUDFDescriptor(methodName, numberOfArgs, undefinedType), UDFException);
+TEST_F(PythonUDFDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
+    EXPECT_THROW(PythonUDFDescriptorBuilder{}
+                     .setOutputSchema(std::make_shared<Schema>())// empty list
+                     .build(),
+                 UDFException);
+}
+
+TEST_F(PythonUDFDescriptorTest, TheFunctionStringMustNotBeEmpty) {
+    EXPECT_THROW(PythonUDFDescriptorBuilder{}
+                     .setFunctionString("")
+                     .build(),
+                 UDFException);
+}
+
+// The following tests verify the equality logic of the Python UDF descriptor.
+
+TEST_F(PythonUDFDescriptorTest, Equality) {
+    // when
+    auto descriptor1 = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+    auto descriptor2 = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+    // then
+    ASSERT_TRUE(*descriptor1 == *descriptor2);// Compare pointed-to variables, not the pointers.
+}
+
+TEST_F(PythonUDFDescriptorTest, InEquality) {
+    // when
+    auto descriptor = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+    // Check a different function name
+    auto differentFunctionName = "different_function_name";
+    auto descriptorWithDifferentFunctionName =
+        PythonUDFDescriptorBuilder{}.setFunctionName(differentFunctionName).build();
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentFunctionName);
+    // different function string
+    auto differentFunctionString = "print(\"Hello World\")";
+    auto descriptorWithDifferentFunctionString =
+        PythonUDFDescriptorBuilder{}.setFunctionName(differentFunctionName).build();
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentFunctionString);
 }
 
 }// namespace NES::Catalogs::UDF
-#endif

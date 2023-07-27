@@ -73,6 +73,8 @@ class UDFDescriptor {
      */
     void setInputSchema(const SchemaPtr& inputSchema);
 
+    virtual std::stringstream generateInferStringSignature() = 0;
+
     template<class UDFDescriptor>
     static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr) {
         return std::dynamic_pointer_cast<UDFDescriptor>(ptr);
