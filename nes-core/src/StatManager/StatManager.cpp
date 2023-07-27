@@ -39,7 +39,6 @@ namespace NES::Experimental::Statistics {
           collector->getDuration() == duration && collector->getFrequency() == frequency) {
 
         found = 1;
-
         break;
       }
     }
