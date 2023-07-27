@@ -23,21 +23,28 @@ namespace NES {
 
   class StatManager {
   private:
-    std::vector<NES::StatCollector> statCollectors;
+    std::vector<NES::StatCollector*> statCollectors;
 
   public:
     virtual ~StatManager() = default;
 
-    std::vector<NES::StatCollector>& getStatCollectors();
+    std::vector<NES::StatCollector*>& getStatCollectors();
 
     void createStat(const std::string& physicalStreamName,
-                    const std::string& field/*,
-                    const std::string& statName*/);
+                    const std::string& field,
+                    const std::string& statName,
+                    const time_t duration,
+                    const time_t frequency);
 
 //    double queryStat(const std::string& physicalStreamName,
 //                     const std::string& field,
 //                     const std::string& statName);
-//
+
+//    void deleteStat(const std::string& physicalStreamName);
+
+//    void deleteStat(const std::string& physicalStreamName,
+//                    const std::string& field);
+
 //    void deleteStat(const std::string& physicalStreamName,
 //                    const std::string& field,
 //                    const std::string& statName);

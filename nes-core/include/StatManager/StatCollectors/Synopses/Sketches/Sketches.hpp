@@ -18,18 +18,18 @@
 
 namespace NES {
 
-  class Sketches : public StatCollector {
+  class Sketch : public StatCollector {
 
   public:
     [[nodiscard]]uint32_t getDepth() const;
     [[nodiscard]]uint32_t getWidth() const;
     void setDepth(uint32_t depth);
     void setWidth(uint32_t width);
-    Sketches(const std::string& physicalSourceName, const std::string& field,
-             time_t duration, time_t interval);
+    Sketch(const uint32_t depth, const uint32_t width, const std::string& physicalSourceName,
+             const std::string& field, time_t duration, time_t frequency);
     void update(uint32_t key) override = 0;
-    sketch* merge(sketch* rightSketch) override = 0;
-    bool equal(sketch* otherSketch) override = 0;
+    StatCollector* merge(StatCollector* rightSketch) override = 0;
+    bool equal(StatCollector* otherSketch) override = 0;
   private:
     uint32_t depth;
     uint32_t width;

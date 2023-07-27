@@ -16,12 +16,18 @@
 
 namespace NES {
 
-  uint32_t Sketches::getDepth() const {
+  uint32_t Sketch::getDepth() const {
     return this->depth;
   }
 
-  uint32_t Sketches::getWidth() const {
+  uint32_t Sketch::getWidth() const {
     return this->width;
+  }
+
+  Sketch::Sketch(const uint32_t depth, const uint32_t width, const std::string &physicalSourceName,
+                     const std::string &field, time_t duration, time_t frequency)
+                     : StatCollector(physicalSourceName, field, duration, frequency) , depth(depth), width(width) {
+
   }
 
 } // NES
