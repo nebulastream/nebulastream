@@ -51,7 +51,7 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     NES_DEBUG("Print tuple" << inputBuffer.getSequenceNumber());
-//    workerContext.printStatistics(inputBuffer);
+    workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     return true;
 }

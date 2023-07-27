@@ -55,20 +55,20 @@ const uint64_t numberOfTupleBuffers = 4;
 //const uint64_t numberOfNodesPerLevel1 = 2;
 //const uint64_t numberOfNodes = 95;
 
-const uint64_t numberOfNodesPerLevel3 = 95;
-const uint64_t numberOfNodesPerLevel2 = 21;
-const uint64_t numberOfNodesPerLevel1 = 8;
-const uint64_t numberOfNodes = 16035;
+//const uint64_t numberOfNodesPerLevel3 = 95;
+//const uint64_t numberOfNodesPerLevel2 = 21;
+//const uint64_t numberOfNodesPerLevel1 = 8;
+//const uint64_t numberOfNodes = 16035;
 
 //const uint64_t numberOfNodesPerLevel3 = 176;
 //const uint64_t numberOfNodesPerLevel2 = 21;
 //const uint64_t numberOfNodesPerLevel1 = 8;
 //const uint64_t numberOfNodes = 29743;
 
-//const uint64_t numberOfNodesPerLevel3 = 140;
-//const uint64_t numberOfNodesPerLevel2 = 25;
-//const uint64_t numberOfNodesPerLevel1 = 12;
-//const uint64_t numberOfNodes = 42311;
+const uint64_t numberOfNodesPerLevel3 = 140;
+const uint64_t numberOfNodesPerLevel2 = 25;
+const uint64_t numberOfNodesPerLevel1 = 12;
+const uint64_t numberOfNodes = 42311;
 
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
@@ -518,87 +518,87 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
-//    while (var < numberOfNodes) {
-//        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//        childNode->addNodeProperty("tf_installed", true);
-//        topology->addNewTopologyNodeAsChild(rootNode, childNode);
-//        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//        childNode->addLinkProperty(rootNode, linkProperty);
-//        childNode->addNodeProperty("slots", 100);
-//        childNode->addNodeProperty("reliability", 100);
-//        for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
-//            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//            subChildNode->addNodeProperty("tf_installed", true);
-//            topology->addNewTopologyNodeAsChild(childNode, subChildNode);
-//            LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//            subChildNode->addLinkProperty(childNode, linkProperty);
-//            subChildNode->addNodeProperty("slots", 100);
-//            subChildNode->addNodeProperty("reliability", 100);
-//            for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
-//                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//                subSubChildNode->addNodeProperty("tf_installed", true);
-//                topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
-//                LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//                subSubChildNode->addLinkProperty(subChildNode, linkProperty);
-//                subSubChildNode->addNodeProperty("slots", 100);
-//                subSubChildNode->addNodeProperty("reliability", 100);
-//                for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
-//                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//                    sourceNode->addNodeProperty("tf_installed", true);
-//                    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
-//                    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//                    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
-//                    sourceNode->addNodeProperty("slots", 100);
-//                    sourceNode->addNodeProperty("reliability", 100);
+    while (var < numberOfNodes) {
+        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+        childNode->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(rootNode, childNode);
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+        childNode->addLinkProperty(rootNode, linkProperty);
+        childNode->addNodeProperty("slots", 100);
+        childNode->addNodeProperty("reliability", 100);
+        for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
+            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+            subChildNode->addNodeProperty("tf_installed", true);
+            topology->addNewTopologyNodeAsChild(childNode, subChildNode);
+            LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+            subChildNode->addLinkProperty(childNode, linkProperty);
+            subChildNode->addNodeProperty("slots", 100);
+            subChildNode->addNodeProperty("reliability", 100);
+            for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
+                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+                subSubChildNode->addNodeProperty("tf_installed", true);
+                topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
+                LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+                subSubChildNode->addLinkProperty(subChildNode, linkProperty);
+                subSubChildNode->addNodeProperty("slots", 100);
+                subSubChildNode->addNodeProperty("reliability", 100);
+                for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
+                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+                    sourceNode->addNodeProperty("tf_installed", true);
+                    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
+                    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+                    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
+                    sourceNode->addNodeProperty("slots", 100);
+                    sourceNode->addNodeProperty("reliability", 100);
+
+                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+
+
+                    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+                }
+            }
+        }
+    }
+    std::cout << "numberOfNodes" << var;
+
+//    TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+//    childNode->addNodeProperty("tf_installed", true);
+//    topology->addNewTopologyNodeAsChild(rootNode, childNode);
+//    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+//    childNode->addLinkProperty(rootNode, linkProperty);
+//    childNode->addNodeProperty("slots", 100);
+//    childNode->addNodeProperty("reliability", 100);
 //
-//                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-//                        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+//    TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+//    subChildNode->addNodeProperty("tf_installed", true);
+//    topology->addNewTopologyNodeAsChild(childNode, subChildNode);
+//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+//    subChildNode->addLinkProperty(childNode, linkProperty);
+//    subChildNode->addNodeProperty("slots", 100);
+//    subChildNode->addNodeProperty("reliability", 100);
 //
+//    TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+//    subSubChildNode->addNodeProperty("tf_installed", true);
+//    topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
+//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+//    subSubChildNode->addLinkProperty(subChildNode, linkProperty);
+//    subSubChildNode->addNodeProperty("slots", 100);
+//    subSubChildNode->addNodeProperty("reliability", 100);
 //
-//                    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
-//                }
-//            }
-//        }
-//    }
-//    std::cout << "numberOfNodes" << var;
+//    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
+//    sourceNode->addNodeProperty("tf_installed", true);
+//    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
+//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+//    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
+//    sourceNode->addNodeProperty("slots", 100);
+//    sourceNode->addNodeProperty("reliability", 100);
 
-    TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-    childNode->addNodeProperty("tf_installed", true);
-    topology->addNewTopologyNodeAsChild(rootNode, childNode);
-    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-    childNode->addLinkProperty(rootNode, linkProperty);
-    childNode->addNodeProperty("slots", 100);
-    childNode->addNodeProperty("reliability", 100);
-
-    TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-    subChildNode->addNodeProperty("tf_installed", true);
-    topology->addNewTopologyNodeAsChild(childNode, subChildNode);
-    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-    subChildNode->addLinkProperty(childNode, linkProperty);
-    subChildNode->addNodeProperty("slots", 100);
-    subChildNode->addNodeProperty("reliability", 100);
-
-    TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-    subSubChildNode->addNodeProperty("tf_installed", true);
-    topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
-    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-    subSubChildNode->addLinkProperty(subChildNode, linkProperty);
-    subSubChildNode->addNodeProperty("slots", 100);
-    subSubChildNode->addNodeProperty("reliability", 100);
-
-    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-    sourceNode->addNodeProperty("tf_installed", true);
-    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
-    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
-    sourceNode->addNodeProperty("slots", 100);
-    sourceNode->addNodeProperty("reliability", 100);
-
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+//    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+//        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
 
 
-    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+//    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
 
     globalExecutionPlan = GlobalExecutionPlan::create();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -609,7 +609,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
+//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -620,6 +620,6 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
 }
 }// namespace NES
