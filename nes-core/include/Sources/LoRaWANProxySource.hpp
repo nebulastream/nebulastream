@@ -78,6 +78,7 @@ class LoRaWANProxySource : public DataSource {
         virtual bool disconnect() = 0;
         virtual EndDeviceProtocol::Output receiveData() = 0;
         virtual bool sendMessage(EndDeviceProtocol::Message) = 0;
+        virtual std::string toString() = 0;
 
       protected:
         const std::string url;
@@ -111,6 +112,7 @@ class LoRaWANProxySource : public DataSource {
         bool disconnect() override;
         EndDeviceProtocol::Output receiveData() override;
         bool sendMessage(EndDeviceProtocol::Message) override;
+        std::string toString() override;
     };
 
     class TheThingsNetworkServer : public NetworkServer {
@@ -136,6 +138,7 @@ class LoRaWANProxySource : public DataSource {
         bool disconnect() override;
         EndDeviceProtocol::Output receiveData() override;
         bool sendMessage(EndDeviceProtocol::Message) override;
+        std::string toString() override;
     };
 
     LoRaWANProxySourceTypePtr sourceConfig;

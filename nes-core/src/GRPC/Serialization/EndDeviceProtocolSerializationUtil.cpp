@@ -163,7 +163,7 @@ void EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(Expressi
     auto fullName = fanode->getFieldName();
     auto name = getFieldNameFromSchemaName(fullName);
     if (std::find(registers.begin(), registers.end(), name) == registers.end()) {
-        NES_WARNING("No register defined for field: " + name);
+        NES_WARNING("No register defined for field: {}", name);
         throw UnsupportedEDSerialisationException();
     }
 

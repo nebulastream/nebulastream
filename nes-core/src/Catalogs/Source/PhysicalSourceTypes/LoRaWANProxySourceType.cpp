@@ -68,7 +68,7 @@ LoRaWANProxySourceType::LoRaWANProxySourceType()
           "for example if config on sensor has \"sensors: ['ESP32Temperature']\" "
           "then the value from that sensor will be mapped to the \"temperature\" field in the logical schema")) {
     queries = std::make_shared<std::map<QueryId, std::shared_ptr<EndDeviceProtocol::Query>>>();
-    NES_INFO(Configurations::LORAWAN_SOURCE_CONFIG + "Init source config object with default values");
+    NES_INFO("{}", Configurations::LORAWAN_SOURCE_CONFIG + "Init source config object with default values");
 }
 
 LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string> sourceConfigMap) : LoRaWANProxySourceType() {
