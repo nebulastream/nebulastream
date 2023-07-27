@@ -40,14 +40,13 @@ void* findKeyedSliceStateByTsProxy(void* ss, uint64_t ts) {
 void triggerKeyedThreadLocalWindow(void* op,
                                    void* wctx,
                                    void* pctx,
-                                   uint64_t workerId,
                                    uint64_t originId,
                                    uint64_t sequenceNumber,
                                    uint64_t watermarkTs) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
 }
 
 void setupWindowHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
@@ -153,8 +152,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
         valuePtr = valuePtr + aggregationFunction->getSize();
     }
 }
-void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto sliceStore = reinterpret_cast<LocalKeyedSliceStoreState*>(ctx.getLocalState(this));
+void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerKeyedThreadLocalWindow
@@ -164,9 +162,8 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& record
                            globalOperatorHandler,
                            ctx.getWorkerContext(),
                            ctx.getPipelineContext(),
-                           ctx.getWorkerId(),
                            ctx.getOriginId(),
-                           recordBuffer.getSequenceNr(),
+                           ctx.getSequenceNumber(),
                            ctx.getWatermarkTs());
 }
 

@@ -72,6 +72,7 @@ class KeyedSliceMerging : public Operator {
     void emitWindow(ExecutionContext& ctx,
                     Value<>& windowStart,
                     Value<>& windowEnd,
+                    Value<>& sequenceNumber,
                     Interface::ChainedHashMapRef& globalSliceHashMap) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

@@ -142,7 +142,7 @@ class NodeEngineBuilder {
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     std::shared_ptr<AbstractQueryStatusListener> nesWorker;
-    uint64_t nodeEngineId;
+    uint64_t nodeEngineId = 0;
     Network::PartitionManagerPtr partitionManager;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;

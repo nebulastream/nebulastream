@@ -56,12 +56,6 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     inline KeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
-     * @brief Gets a weak pointer to the slice staging
-     * @return std::weak_ptr<KeyedSliceStaging>
-     */
-    std::weak_ptr<KeyedSliceStaging> getSliceStagingPtr();
-
-    /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr

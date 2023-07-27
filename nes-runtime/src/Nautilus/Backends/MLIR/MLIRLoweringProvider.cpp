@@ -166,6 +166,11 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
+MLIRLoweringProvider::~MLIRLoweringProvider(){
+    NES_DEBUG("~MLIRLoweringProvider");
+    delete globalInsertPoint;
+}
+
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph> ir) {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);

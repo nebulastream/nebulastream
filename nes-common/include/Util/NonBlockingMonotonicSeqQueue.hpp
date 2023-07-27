@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -85,6 +86,12 @@ class NonBlockingMonotonicSeqQueue {
      * @throws RuntimeException if an element with the same sequence number was already inserted.
      */
     void emplace(uint64_t sequenceNumber, T value) {
+        if (sequenceNumber <= currentSeq) {
+            NES_FATAL_ERROR("Invalid sequence number {} as it is <= {}", sequenceNumber, currentSeq);
+            // TODO add exception, currently tests fail
+            // throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
+            //                                   + " as it is <= " + std::to_string(currentSeq));
+        }
         // First emplace the value to the specific block of the sequenceNumber.
         // After this call it is safe to assume that a block, which contains the sequenceNumber exists.
         emplaceValueInBlock(sequenceNumber, value);

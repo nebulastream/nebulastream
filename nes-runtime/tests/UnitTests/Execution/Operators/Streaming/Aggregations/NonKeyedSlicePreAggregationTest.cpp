@@ -130,7 +130,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, 0);
+    ASSERT_EQ(smt->sequenceNumber, 1);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
@@ -186,7 +186,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, 0);
+    ASSERT_EQ(smt->sequenceNumber, 1);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 

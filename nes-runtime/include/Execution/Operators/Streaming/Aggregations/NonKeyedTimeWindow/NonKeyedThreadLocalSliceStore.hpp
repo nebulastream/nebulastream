@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class State;
 class NonKeyedSlice;
-using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
+using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**
  * @brief A thread local slice store for global (non-keyed) tumbling and sliding windows,
@@ -38,7 +38,7 @@ class NonKeyedThreadLocalSliceStore : public ThreadLocalSliceStore<NonKeyedSlice
     ~NonKeyedThreadLocalSliceStore() = default;
 
   private:
-    GlobalSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
+    NonKeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t entrySize;
     const std::unique_ptr<State>& defaultState;
 };

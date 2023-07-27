@@ -68,7 +68,7 @@ class MLIRLoweringProvider {
      */
     MLIRLoweringProvider(mlir::MLIRContext& context);
 
-    ~MLIRLoweringProvider() = default;
+    ~MLIRLoweringProvider();
     /**
      * @brief Root MLIR generation function. Takes  as an IRGraph, and recursively lowers its operations to MLIR.
      * @param :  represented as an IRGraph.
