@@ -39,8 +39,8 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
         auto joinStrategy = this->GetParam();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads,
-                                                                         joinStrategy);
+        executionEngine =
+            std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads, joinStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -780,16 +780,17 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
-                        StreamJoinQueryExecutionTest,
-                        ::testing::Values(
-                            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                            //                                          TODO Enable the disabled test and fix them #3926
-//                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-//                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-                            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
-                        [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testStreamJoinQueries,
+    StreamJoinQueryExecutionTest,
+    ::testing::Values(
+        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+        //                                          TODO Enable the disabled test and fix them #3926
+        //                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+        //                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+    [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
+        return std::string(magic_enum::enum_name(info.param));
+    });
 
 }// namespace NES::Runtime::Execution

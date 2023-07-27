@@ -290,13 +290,17 @@ class TestHarness {
             // we can remove this, once we just use Query
             std::string queryString =
                 queryWithoutSinkStr + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-            queryId = queryService->validateAndQueueAddQueryRequest(queryString, std::move(placementStrategyName),
-                                                                    faultToleranceMode, lineageMode);
-        } else if (queryWithoutSink.get() != nullptr){
+            queryId = queryService->validateAndQueueAddQueryRequest(queryString,
+                                                                    std::move(placementStrategyName),
+                                                                    faultToleranceMode,
+                                                                    lineageMode);
+        } else if (queryWithoutSink.get() != nullptr) {
             auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "NES_FORMAT", "APPEND"));
-            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(),
+            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
                                                     std::move(placementStrategyName),
-                                                    faultToleranceMode, lineageMode);
+                                                    faultToleranceMode,
+                                                    lineageMode);
         } else {
             NES_THROW_RUNTIME_ERROR("TestHarness expects that either the query is given as a string or as a query object!");
         }

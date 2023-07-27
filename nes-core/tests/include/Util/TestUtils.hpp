@@ -656,7 +656,7 @@ std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileNa
                                                     const Runtime::BufferManagerPtr& bufferManager,
                                                     uint64_t numTuplesPerBuffer = 0,
                                                     const std::string& delimiter = ",");
-                                                    
+
 /**
  * @brief Fills the buffer from a stream
  * @param csvFileName
@@ -679,8 +679,8 @@ std::vector<Runtime::TupleBuffer> fillBufferFromStream(std::istream& istream,
  * @param endPtr
  * @return Vector for the memory [startPtr, endPtr]
  */
-template <typename T>
-inline  std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
+template<typename T>
+inline std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
     return std::vector<T>(startPtr, endPtr);
 }
 
@@ -691,7 +691,7 @@ inline  std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
  * @param numItems
  * @return Vector for the memory [startPtr, startPtr + numItems]
  */
-template <typename T>
+template<typename T>
 inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
     return createVecFromPointer<T>(startPtr, startPtr + numItems);
 }
@@ -703,11 +703,10 @@ inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
  * @param numItems
  * @return Vector
  */
-template <typename T>
+template<typename T>
 inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
     return createVecFromPointer<T>(buffer.getBuffer<T>(), buffer.getBuffer<T>() + buffer.getNumberOfTuples());
 }
-
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 
