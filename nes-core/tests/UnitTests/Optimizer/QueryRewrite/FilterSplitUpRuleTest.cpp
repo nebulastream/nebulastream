@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-    // clang-format off
+// clang-format off
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
-    // clang-format on
+// clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -25,8 +25,8 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
@@ -99,9 +99,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") == 1 && Attribute("ts") == 2)
-                      .sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(Attribute("id") == 1 && Attribute("ts") == 2).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -132,7 +130,6 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
@@ -140,10 +137,10 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") == 1 && Attribute("ts") == 2 &&
-                              Attribute("fictional") == 3 && Attribute("fictional2") == 4)
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical")
+            .filter(Attribute("id") == 1 && Attribute("ts") == 2 && Attribute("fictional") == 3 && Attribute("fictional2") == 4)
+            .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -190,10 +187,10 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") == 1 && (Attribute("ts") == 2 ||
-                              Attribute("fictional") == 3 && Attribute("fictional2") == 4))
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical")
+            .filter(Attribute("id") == 1 && (Attribute("ts") == 2 || Attribute("fictional") == 3 && Attribute("fictional2") == 4))
+            .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -236,8 +233,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .filter((Attribute("id") == 1 && Attribute("ts") == 2) ||
-                                                       (Attribute("fictional") == 3 && Attribute("fictional2") == 4))
+                      .filter((Attribute("id") == 1 && Attribute("ts") == 2)
+                              || (Attribute("fictional") == 3 && Attribute("fictional2") == 4))
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -276,9 +273,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(!(Attribute("id") == 1 && Attribute("ts") == 2))
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").filter(!(Attribute("id") == 1 && Attribute("ts") == 2)).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -314,9 +310,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(!(Attribute("id") == 1 || Attribute("ts") == 2))
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").filter(!(Attribute("id") == 1 || Attribute("ts") == 2)).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -357,9 +352,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") == 1 || Attribute("ts") == 2)
-                      .sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(Attribute("id") == 1 || Attribute("ts") == 2).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -519,9 +512,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(!!(Attribute("id") == 1))
-                      .sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(!!(Attribute("id") == 1)).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -556,9 +547,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(!(!(Attribute("id") == 1) || !(Attribute("id2") == 2)))
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("default_logical").filter(!(!(Attribute("id") == 1) || !(Attribute("id2") == 2))).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);

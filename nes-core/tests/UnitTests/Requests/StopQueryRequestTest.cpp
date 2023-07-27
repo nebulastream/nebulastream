@@ -49,8 +49,12 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     std::promise<StopQueryResponse> promise;
-    auto stopQueryRequest =
-        StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration, std::move(promise));
+    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId,
+                                                                 queryId,
+                                                                 0,
+                                                                 workerRPCClient,
+                                                                 coordinatorConfiguration,
+                                                                 std::move(promise));
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 /**
@@ -62,8 +66,12 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     std::promise<StopQueryResponse> promise;
-    auto stopQueryRequest =
-        StopQueryRequestExperimental::create(requestId, queryId, 0, workerRPCClient, coordinatorConfiguration, std::move(promise));
+    auto stopQueryRequest = StopQueryRequestExperimental::create(requestId,
+                                                                 queryId,
+                                                                 0,
+                                                                 workerRPCClient,
+                                                                 coordinatorConfiguration,
+                                                                 std::move(promise));
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
