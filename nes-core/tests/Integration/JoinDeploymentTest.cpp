@@ -11,16 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/TestHarness/TestHarness.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
-
 
 namespace NES::Runtime::Execution {
 
@@ -40,9 +39,7 @@ struct CsvFileParams {
  * @brief Struct for storing all parameter for the join
  */
 struct JoinParams {
-    JoinParams(const SchemaPtr& leftSchema,
-               const SchemaPtr& rightSchema,
-               const string& joinFieldName)
+    JoinParams(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const string& joinFieldName)
         : leftSchema(leftSchema), rightSchema(rightSchema), joinFieldName(joinFieldName) {
         outputSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldName);
     }
@@ -59,9 +56,9 @@ struct JoinParams {
  */
 static SchemaPtr createValueIdTimeStamp() {
     return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                    ->addField("value", BasicType::UINT64)
-                    ->addField("id", BasicType::UINT64)
-                    ->addField("timestamp", BasicType::UINT64);
+        ->addField("value", BasicType::UINT64)
+        ->addField("id", BasicType::UINT64)
+        ->addField("timestamp", BasicType::UINT64);
 }
 
 class JoinDeploymentTest : public Testing::NESBaseTest,
@@ -92,11 +89,10 @@ class JoinDeploymentTest : public Testing::NESBaseTest,
         };
         auto sourceConfig1 = createSourceConfig(csvFileParams.csvFileLeft);
         auto sourceConfig2 = createSourceConfig(csvFileParams.csvFileRight);
-        auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema,
-                                                               bufferManager)[0];
+        auto expectedSinkBuffer =
+            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
         ASSERT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
-
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .enableNautilus()
@@ -105,15 +101,14 @@ class JoinDeploymentTest : public Testing::NESBaseTest,
                                       .addLogicalSource("test2", joinParams.rightSchema)
                                       .attachWorkerWithCSVSourceToCoordinator("test1", sourceConfig1)
                                       .attachWorkerWithCSVSourceToCoordinator("test2", sourceConfig2)
-                                      .validate().setupTopology();
+                                      .validate()
+                                      .setupTopology();
 
         auto actualResult = testHarness.getOutput<ResultRecord>(expectedSinkBuffer.getNumberOfTuples());
 
         ASSERT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
         EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));
     }
-
-
 
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy;
@@ -253,7 +248,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
         bool operator==(const ResultRecord& rhs) const {
             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
                 && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp  && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
+                && test1Timestamp == rhs.test1Timestamp && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -303,13 +298,12 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    auto query = Query::from("test1")
-                     .joinWith(Query::from("test2"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
-                                               Milliseconds(windowSize),
-                                               Milliseconds(windowSlide)));
+    auto query =
+        Query::from("test1")
+            .joinWith(Query::from("test2"))
+            .where(Attribute("id1"))
+            .equalsTo(Attribute("id2"))
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
@@ -332,7 +326,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
         bool operator==(const ResultRecord& rhs) const {
             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
                 && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp  && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
+                && test1Timestamp == rhs.test1Timestamp && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -347,13 +341,12 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
     const auto windowSlide = 500UL;
-    auto query = Query::from("test1")
-                     .joinWith(Query::from("test2"))
-                     .where(Attribute("id1"))
-                     .equalsTo(Attribute("id2"))
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),
-                                               Milliseconds(windowSize),
-                                               Milliseconds(windowSlide)));
+    auto query =
+        Query::from("test1")
+            .joinWith(Query::from("test2"))
+            .where(Attribute("id1"))
+            .equalsTo(Attribute("id2"))
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
@@ -375,8 +368,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
         bool operator==(const ResultRecord& rhs) const {
             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
                 && test1test2Key == rhs.test1test2Key && test1Timestamp == rhs.test1Timestamp
-                && (std::strcmp(test1Id, rhs.test1Id) == 0)
-                && (std::strcmp(test2Id, rhs.test2Id) == 0)
+                && (std::strcmp(test1Id, rhs.test1Id) == 0) && (std::strcmp(test2Id, rhs.test2Id) == 0)
                 && test2Timestamp == rhs.test2Timestamp;
         }
     };
@@ -403,10 +395,10 @@ INSTANTIATE_TEST_CASE_P(
     testJoinQueries,
     JoinDeploymentTest,
     ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-        //                                          TODO Enable the disabled test and fix them #3926
-        //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-        //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-        //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+    //                                          TODO Enable the disabled test and fix them #3926
+    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
     [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
         return std::string(magic_enum::enum_name(info.param));
     });
