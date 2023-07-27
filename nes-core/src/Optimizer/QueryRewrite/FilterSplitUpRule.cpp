@@ -28,10 +28,10 @@ FilterSplitUpRule::FilterSplitUpRule() = default;
 QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
 
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
-    const std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
+    const auto rootOperators = queryPlan->getRootOperators();
     std::set<FilterLogicalOperatorNodePtr> filterOperatorsSet;
     for (const OperatorNodePtr& rootOperator: rootOperators){
-        std::vector<FilterLogicalOperatorNodePtr> filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+        auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
     std::vector<FilterLogicalOperatorNodePtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
@@ -44,7 +44,7 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
     auto originalQueryPlan = queryPlan->copy();
     try {
         NES_DEBUG("FilterSplitUpRule: Iterate over all the filter operators to split them");
-        for (FilterLogicalOperatorNodePtr filterOperator : filterOperators) {
+        for (auto filterOperator : filterOperators) {
             splitUpFilters(filterOperator);
         }
         return queryPlan;
@@ -71,24 +71,23 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
 
         // insert new filter with expression1 of the andExpression
         if (!filterOperator->insertBetweenThisAndChildNodes(child1)) {
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
             NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
+            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
         }
         // insert new filter with expression2 of the andExpression
         if (!child1->insertBetweenThisAndChildNodes(child2)) {
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
             NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
+            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
         }
         // remove old filter that had the andExpression
         if (!filterOperator->removeAndJoinParentAndChildren()) {
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
             NES_ERROR("FilterSplitUpRule: Error while trying to remove a filterOperator from the queryPlan");
+            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
         }
 
         // newly created filters could also be andExpressions that can be further split up
         splitUpFilters(child1);
         splitUpFilters(child2);
-
     }
     //it might be possible to reformulate negated expressions
     else if (filterOperator->getPredicate()->instanceOf<NegateExpressionNode>()) {
@@ -101,7 +100,6 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
 
             auto equivalentAndExpression = AndExpressionNode::create(negatedChild1, negatedChild2);
             filterOperator->setPredicate(equivalentAndExpression); //changing predicate to equivalent AndExpression
-
             splitUpFilters(filterOperator); //splitting up the filter
         }
         // Reformulates predicates in the form (!!expression) to (expression)
@@ -109,7 +107,6 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
             // getPredicate() is the first NegateExpression; first getChildren()[0] is the second NegateExpression;
             // second getChildren()[0] is the expressionNode that was negated twice. copy() only copies children of this expressionNode. (probably not mandatory but no reference to the negations needs to be kept)
             filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->copy());
-
             splitUpFilters(filterOperator);
         }
     }
