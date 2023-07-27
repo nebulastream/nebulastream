@@ -57,9 +57,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class StopQueryRequestExperimental;
-using StopQueryRequestPtr = std::shared_ptr<StopQueryRequestExperimental>;
-
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -78,6 +75,33 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
+namespace Optimizer {
+
+class TypeInferencePhase;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class QueryRewritePhase;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
+
+class SampleCodeGenerationPhase;
+using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
+
+class OriginIdInferencePhase;
+using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
+
+class TopologySpecificQueryRewritePhase;
+using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQueryRewritePhase>;
+
+class SignatureInferencePhase;
+using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
+
+class QueryMergerPhase;
+using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
+
+class MemoryLayoutSelectionPhase;
+using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
+}// namespace Optimizer
+
 namespace Experimental {
 class AddQueryRequest : public AbstractRequest {
   public:
@@ -87,11 +111,15 @@ class AddQueryRequest : public AbstractRequest {
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
+     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     Optimizer::PlacementStrategy queryPlacementStrategy,
                     uint8_t maxRetries,
-                    NES::WorkerRPCClientPtr workerRpcClient);
+                    NES::WorkerRPCClientPtr workerRpcClient,
+                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                    z3::ContextPtr z3Context);
 
   protected:
     /**
@@ -145,6 +173,14 @@ class AddQueryRequest : public AbstractRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
+    Optimizer::MemoryLayoutSelectionPhasePtr memoryLayoutSelectionPhase;
+    Optimizer::QueryRewritePhasePtr queryRewritePhase;
+    Optimizer::SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
+    Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    Optimizer::TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
+    Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
+    Optimizer::QueryMergerPhasePtr queryMergerPhase;
+    z3::ContextPtr z3Context;
 };
 }// namespace Experimental
 }// namespace NES
