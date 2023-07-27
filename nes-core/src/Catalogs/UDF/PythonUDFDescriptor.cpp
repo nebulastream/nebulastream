@@ -19,15 +19,8 @@ namespace NES::Catalogs::UDF {
 
 PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, const std::string& functionString, const SchemaPtr& inputSchema,  const SchemaPtr& outputSchema)
     : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
-
-    if (functionName.empty()) {
-        throw UDFException("The function name of a Python UDF must not be empty");
-    }
     if (functionString.empty()){
         throw UDFException("Function String of Python UDF must not be empty");
-    }
-    if (inputSchema->empty()) {
-        throw UDFException("The input schema of a Python UDF must not be empty");
     }
 }
 bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
