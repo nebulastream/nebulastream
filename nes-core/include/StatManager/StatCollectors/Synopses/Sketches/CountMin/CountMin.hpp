@@ -14,13 +14,14 @@
 #ifndef NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
 
+#include <Util/yaml/Yaml.hpp>
 #include "StatManager/StatCollectors/StatCollector.hpp"
 #include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
 #include "Util/hashing.hpp"
 
 namespace NES {
 
-  class CountMin : public Sketches {
+  class CountMin : public Sketch {
 
   public:
     [[nodiscard]] double getError() const;
@@ -30,13 +31,13 @@ namespace NES {
     H3* getClassOfHashFunctions();
     void setClassOfHashFunctions(H3* ClassOfHashingFunctions);
     CountMin(double error, double prob, const std::string& physicalSourceName, const std::string& field, time_t duration, time_t interval);
-    static CountMin* createCountMinWidthDepth(uint32_t depth, uint32_t width, const std::string& physicalSourceName, const std::string& field, time_t duration, time_t interval);
-    static CountMin* createCountMinErrorProb(double error, double prob, const std::string& physicalSourceName, const std::string& field, time_t duration, time_t interval);
-    static CountMin* initialize(const std::string& physicalSourcePtr,
+    static CountMin* createCountMinWidthDepth(uint32_t depth, uint32_t width, Yaml::Node configNode);
+    static CountMin* createCountMinErrorProb(double error, double prob, Yaml::Node configNode);
+    /*static CountMin* initialize(*//*const std::string& physicalSourcePtr,
         const std::string& field,
         time_t duration,
-        time_t interval,
-        Yaml::Node configNode);
+        time_t interval,*//*
+        Yaml::Node configNode);*/
     void update(uint32_t key) override;
     bool equal(StatCollector* otherSketch) override;
     StatCollector* merge(StatCollector* rightSketch) override;
