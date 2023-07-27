@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.164](https://github.com/nebulastream/nebulastream/tree/v0.5.164) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.163...v0.5.164)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate invalid OriginId for Multiworker Joins [\#4032](https://github.com/nebulastream/nebulastream/issues/4032)
+- \[TASK\] Port tests in JoinDeployment to use TestHarness [\#4021](https://github.com/nebulastream/nebulastream/issues/4021)
+- \[TASK\] TestHarness receive query as object not as string [\#4008](https://github.com/nebulastream/nebulastream/issues/4008)
+
 ## [v0.5.163](https://github.com/nebulastream/nebulastream/tree/v0.5.163) (2023-07-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.162...v0.5.163)
