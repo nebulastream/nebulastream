@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGING_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGING_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLIDINGWINDOWSINK_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLIDINGWINDOWSINK_HPP_
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -21,22 +21,21 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief GlobalSliceMerging operator that performs the merges pre-aggregated slices from the GlobalSlicePreAggregation operator
+ * @brief NonKeyedSlidingWindowSink operator that performs the merges pre-aggregated slices from the GlobalSlicePreAggregation operator
  * The slice merging operator is always the first element in a pipeline. Thus it acts like a scan and emits window to downstream operators.
  */
-class NonKeyedSliceMerging : public Operator {
+class NonKeyedSlidingWindowSink : public Operator {
   public:
     /**
      * @brief Creates a GlobalSliceMerging operator
      * @param operatorHandlerIndex the index of the GlobalSliceMerging operator handler
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
-    NonKeyedSliceMerging(uint64_t operatorHandlerIndex,
-                         WindowType type,
-                         const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                         const std::string& startTsFieldName,
-                         const std::string& endTsFieldName,
-                         uint64_t resultOriginId);
+    NonKeyedSlidingWindowSink(uint64_t operatorHandlerIndex,
+                              const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                              const std::string& startTsFieldName,
+                              const std::string& endTsFieldName,
+                              uint64_t resultOriginId);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -48,8 +47,7 @@ class NonKeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    Value<MemRef>
-    combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<>& endSliceTs) const;
+    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask) const;
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context
@@ -60,7 +58,6 @@ class NonKeyedSliceMerging : public Operator {
     emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<>& sequenceNumber, Value<MemRef>&) const;
 
     const uint64_t operatorHandlerIndex;
-    const WindowType type;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::string startTsFieldName;
     const std::string endTsFieldName;
@@ -69,4 +66,4 @@ class NonKeyedSliceMerging : public Operator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGING_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLIDINGWINDOWSINK_HPP_

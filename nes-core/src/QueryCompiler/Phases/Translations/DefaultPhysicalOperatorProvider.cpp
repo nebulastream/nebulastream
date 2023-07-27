@@ -667,12 +667,25 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
 
         globalOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
+
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        timeBasedWindowType->getTimeBasedSubWindowType();
         auto sliceStaging = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceStaging>();
-        globalOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+        if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+            globalOperatorHandlers.sliceMergingOperatorHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+        } else {
+            auto slidingWindowSliceStore = std::make_unique<
+                Runtime::Execution::Operators::SlidingWindowSliceStore<Runtime::Execution::Operators::NonKeyedSlice>>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime());
+            globalOperatorHandlers.sliceMergingOperatorHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging,
+                                                                                             std::move(slidingWindowSliceStore));
+        }
 
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+
         globalOperatorHandlers.preAggregationWindowHandler =
             std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
                 timeBasedWindowType->getSize().getTime(),
@@ -753,7 +766,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalNonKeyedSlidingWindowSink::create(windowInputSchema,
                                                                             windowOutputSchema,
-                                                                            slidingWindowSinkOperator);
+                                                                            slidingWindowSinkOperator,
+                                                                            windowDefinition);
     }
 }
 

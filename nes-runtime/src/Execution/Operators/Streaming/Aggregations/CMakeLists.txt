@@ -15,4 +15,5 @@ add_subdirectory(KeyedTimeWindow)
 
 add_source_files(nes-runtime
         WindowProcessingException.cpp
-        )
+        SlidingWindowSliceStore.cpp
+)

@@ -14,6 +14,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #include <cinttypes>
+#include <memory>
+#include <vector>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -34,10 +36,12 @@ struct WindowTriggerTask {
     uint64_t windowEnd;
 };
 
+template<typename SliceType>
 struct Window {
     uint64_t startTs;
     uint64_t endTs;
     uint64_t sequenceNumber;
+    std::vector<std::shared_ptr<SliceType>> slices;
 };
 
 }// namespace NES::Runtime::Execution::Operators

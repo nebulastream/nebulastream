@@ -22,24 +22,29 @@ PhysicalNonKeyedSlidingWindowSink::PhysicalNonKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler)
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler), windowDefinition(windowDefinition) {}
 
 std::shared_ptr<PhysicalNonKeyedSlidingWindowSink> PhysicalNonKeyedSlidingWindowSink::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalNonKeyedSlidingWindowSink>(Util::getNextOperatorId(),
                                                                inputSchema,
                                                                outputSchema,
-                                                               keyedEventTimeWindowHandler);
+                                                               keyedEventTimeWindowHandler,
+                                                               windowDefinition);
 }
+
+Windowing::LogicalWindowDefinitionPtr PhysicalNonKeyedSlidingWindowSink::getWindowDefinition() { return windowDefinition; }
 
 std::string PhysicalNonKeyedSlidingWindowSink::toString() const { return "PhysicalNonKeyedSlidingWindowSink"; }
 
 OperatorNodePtr PhysicalNonKeyedSlidingWindowSink::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
+    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition);
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators
