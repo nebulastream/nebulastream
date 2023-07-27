@@ -101,7 +101,7 @@ class ThreadLocalSliceStore {
      */
     inline SliceTypePtr& getFirstSlice() {
         auto lock = lockedSlices.rlock();
-        return lock->front();
+        return lock.asNonConstUnsafe().front();
     }
 
     /**
