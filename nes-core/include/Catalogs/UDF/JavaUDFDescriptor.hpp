@@ -29,7 +29,7 @@ using JavaByteCode = std::vector<char>;
 // that is provided by the Java client.
 using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
 using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
-}// namespace jni
+}// namespace NES::jni
 
 namespace NES::Catalogs::UDF {
 

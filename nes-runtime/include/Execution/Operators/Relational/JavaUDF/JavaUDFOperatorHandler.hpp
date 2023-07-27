@@ -28,7 +28,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-
 /**
  * @brief This handler stores states of a MapJavaUDF operator during its execution.
  */

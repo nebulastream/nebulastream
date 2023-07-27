@@ -60,7 +60,7 @@ jclass findClass(const std::string_view& clazzName);
  * @param methodName
  * @return jmethodID
  */
-jmethodID getMethod(jclass clazz, const std::string_view&  methodName, const std::string_view&  signature);
+jmethodID getMethod(jclass clazz, const std::string_view& methodName, const std::string_view& signature);
 
 /**
  * @brief Creates a java.lang.Boolean object for a given bool.
@@ -192,6 +192,6 @@ const std::string convertToJNIName(const std::string& javaClassName);
  */
 jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance);
 
-}// namespace jni
+}// namespace NES::jni
 
 #endif//NES_NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
