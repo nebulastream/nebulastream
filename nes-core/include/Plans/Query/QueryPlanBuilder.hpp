@@ -84,7 +84,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
+    static NES::QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
 
     /**
      * @brief: FlatMap java udf according to the java method given in the descriptor.
@@ -92,16 +92,8 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
+    static NES::QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor,
                                                NES::QueryPlanPtr queryPlan);
-
-    /**
-     * @brief Adds the Python UDF to the query plan
-     * @param descriptor python udf descriptor
-     * @param queryPlan  query plan that the operator is added to
-     * @return updated queryPlan
-     */
-    static NES::QueryPlanPtr addMapPythonUDF(Catalogs::UDF::PythonUDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans

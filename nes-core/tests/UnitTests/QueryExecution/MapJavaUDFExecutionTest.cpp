@@ -144,7 +144,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .setOutputClassName("java.lang.Integer")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).mapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);
