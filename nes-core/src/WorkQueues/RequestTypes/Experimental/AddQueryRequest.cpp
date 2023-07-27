@@ -39,57 +39,72 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <string>
 #include <utility>
 
-namespace NES {
-namespace Experimental {
-
-AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
+namespace NES::Experimental {
+AddQueryRequest::AddQueryRequest(const RequestId requestId,
+                                 const QueryPlanPtr& queryPlan,
                                  Optimizer::PlacementStrategy queryPlacementStrategy,
                                  uint8_t maxRetries,
                                  NES::WorkerRPCClientPtr workerRpcClient,
                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                 z3::ContextPtr z3Context)
-    : AbstractRequest(
-        {
-            ResourceType::QueryCatalogService,
-            ResourceType::GlobalExecutionPlan,
-            ResourceType::Topology,
-            ResourceType::GlobalQueryPlan,
-            ResourceType::UdfCatalog,
-            ResourceType::SourceCatalog,
-        },
-        maxRetries),
+                                 z3::ContextPtr z3Context,
+                                 std::promise<AddQueryResponse> responsePromise)
+    : AbstractRequest(requestId,
+                      {ResourceType::QueryCatalogService,
+                       ResourceType::GlobalExecutionPlan,
+                       ResourceType::Topology,
+                       ResourceType::GlobalQueryPlan,
+                       ResourceType::UdfCatalog,
+                       ResourceType::SourceCatalog},
+                      maxRetries,
+                      std::move(responsePromise)),
       workerRpcClient(workerRpcClient), queryId(queryPlan->getQueryId()), coordinatorConfiguration(coordinatorConfiguration),
       queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), z3Context(std::move(z3Context)) {}
 
-void AddQueryRequest::preRollbackHandle([[maybe_unused]] RequestExecutionException& ex,
+std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const RequestId requestId,
+                                                         const QueryPlanPtr& queryPlan,
+                                                         Optimizer::PlacementStrategy queryPlacementStrategy,
+                                                         uint8_t maxRetries,
+                                                         NES::WorkerRPCClientPtr workerRpcClient,
+                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                                         z3::ContextPtr z3Context,
+                                                         std::promise<AddQueryResponse> responsePromise) {
+    return std::make_shared<AddQueryRequest>(requestId,
+                                             queryPlan,
+                                             queryPlacementStrategy,
+                                             maxRetries,
+                                             std::move(workerRpcClient),
+                                             coordinatorConfiguration,
+                                             std::move(z3Context),
+                                             std::move(responsePromise));
+}
+
+void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                         [[maybe_unused]] StorageHandler& storageHandler) {}
 
-void AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {}
+void AddQueryRequest::rollBack([[maybe_unused]] const RequestExecutionException& ex,
+                               [[maybe_unused]] StorageHandler& storageHandle) {}
 
-void AddQueryRequest::postRollbackHandle([[maybe_unused]] RequestExecutionException& ex,
+void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                          [[maybe_unused]] StorageHandler& storageHandler) {
 
     //todo: #4038 add error handling
-
 }
 
 void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHandler) {}
 
 void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     try {
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
-        topology = storageHandler.getTopologyHandle();
-        queryCatalogService = storageHandler.getQueryCatalogServiceHandle();
-        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle();
-        udfCatalog = storageHandler.getUDFCatalogHandle();
-        sourceCatalog = storageHandler.getSourceCatalogHandle();
+        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
+        topology = storageHandler.getTopologyHandle(requestId);
+        queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
+        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
+        udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
         NES_DEBUG("Locks acquired. Start creating phases.");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
@@ -105,7 +120,8 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         topologySpecificQueryRewritePhase =
             Optimizer::TopologySpecificQueryRewritePhase::create(this->topology, sourceCatalog, optimizerConfigurations);
-        signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
+        signatureInferencePhase =
+            Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
         NES_INFO("Phases created. Add request initialized.");
 
@@ -114,7 +130,7 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
         NES_INFO("Request received for optimizing and deploying of the query {}", queryId);
 
         //2. Set query status as Optimizing
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::OPTIMIZING, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -236,5 +252,4 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     }
 }
 
-}// namespace Experimental
-}// namespace NES
+}// namespace NES::Experimental
