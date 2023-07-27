@@ -142,7 +142,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
                                  .setOutputClassName("java.util.Collection")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).flatMapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).flatMapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);

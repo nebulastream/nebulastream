@@ -94,7 +94,7 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
 
     auto javaUDFDescriptor =
         Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
-    Query query = Query::from("src").mapJavaUDF(javaUDFDescriptor).sink(printSinkDescriptor);
+    Query query = Query::from("src").mapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
@@ -127,9 +127,9 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
     auto javaUDFDescriptor =
         Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
     Query query = Query::from("src")
-                      .mapJavaUDF(javaUDFDescriptor)
+                      .mapUDF(javaUDFDescriptor)
                       .map(Attribute("b") = Attribute("b") + Attribute("a"))
-                      .mapJavaUDF(javaUDFDescriptor)
+                      .mapUDF(javaUDFDescriptor)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 

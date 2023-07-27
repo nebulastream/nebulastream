@@ -90,7 +90,7 @@ using namespace NES;
 
         NES_DEBUG("Set up Descriptor");
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-        auto query = TestQuery::from(testSourceDescriptor).mapPythonUDF(pythonUDFDescriptor).sink(testSinkDescriptor);
+        auto query = TestQuery::from(testSourceDescriptor).mapUDF(pythonUDFDescriptor).sink(testSinkDescriptor);
         auto plan = executionEngine->submitQuery(query.getQueryPlan());
         auto source = executionEngine->getDataSource(plan, 0);
         NES_DEBUG("submitted query and got source");
