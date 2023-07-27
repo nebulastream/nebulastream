@@ -27,9 +27,8 @@ UDFDescriptor::UDFDescriptor(const std::string& methodName,
     if (outputSchema->empty()) {
         throw UDFException("The output schema of a  UDF must not be empty");
     }
-    if (inputSchema->empty()) {
-        throw UDFException("The input schema of a Python UDF must not be empty");
-    }
+
+    // We allow the input schema to be empty for now so that we don't have to serialize it in the client
 }
 
 void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { UDFDescriptor::inputSchema = inputSchema; }

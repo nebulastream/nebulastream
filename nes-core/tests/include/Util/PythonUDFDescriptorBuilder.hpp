@@ -74,13 +74,6 @@ class PythonUDFDescriptorBuilder {
     PythonUDFDescriptorBuilder& setOutputSchema(const SchemaPtr& newOutputSchema);
 
     /**
-     * Set the class name of the input type of the UDF function.
-     * @param newInputClassName The class name of the input type of the UDF function.
-     * @return The PythonUDFDescriptorBuilder instance.
-     */
-    PythonUDFDescriptorBuilder& setInputClassName(const std::string newInputClassName);
-
-    /**
      * Create a default Python UDF descriptor that can be used in tests.
      * @return A Python UDF descriptor instance.
      */
