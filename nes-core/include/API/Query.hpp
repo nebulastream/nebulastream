@@ -14,7 +14,6 @@
 
 #ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
-#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
