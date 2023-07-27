@@ -16,6 +16,7 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
