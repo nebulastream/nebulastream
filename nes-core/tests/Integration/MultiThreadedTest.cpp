@@ -180,8 +180,52 @@ TEST_P(MultiThreadedTest, testProjectQuery) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-// TODO Enable with #3966
-TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
+TEST_P(MultiThreadedTest, testNonKeyedEventTimeWindowAggregation) {
+    struct ResultRecord {
+        uint64_t windowStart;
+        uint64_t windowEnd;
+        uint64_t value;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return windowStart == rhs.windowStart && windowEnd == rhs.windowEnd && value == rhs.value;
+        }
+    };
+    const auto inputSchema = Schema::create()
+                                 ->addField(createField("test1$value", BasicType::UINT64))
+                                 ->addField(createField("test1$id", BasicType::UINT64))
+                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto outputSchema = Schema::create()
+                                  ->addField(createField("test1$start", BasicType::UINT64))
+                                  ->addField(createField("test1$end", BasicType::UINT64))
+                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+
+    const std::string fileNameBuffers("window.csv");
+    const std::vector<ResultRecord> expectedTuples = {
+        {1000, 2000, 3},    {2000, 3000, 6},    {3000, 4000, 12},   {4000, 5000, 4},    {5000, 6000, 5},    {6000, 7000, 6},
+        {7000, 8000, 7},    {8000, 9000, 8},    {9000, 10000, 9},   {10000, 11000, 10}, {11000, 12000, 11}, {12000, 13000, 12},
+        {13000, 14000, 13}, {14000, 15000, 14}, {15000, 16000, 15}, {16000, 17000, 16}, {17000, 18000, 17}, {18000, 19000, 18},
+        {19000, 20000, 19}, {20000, 21000, 20}, {21000, 22000, 21}};
+
+    // Creating sink, source, and the query
+    const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
+    const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+    const auto query = TestQuery::from(testSourceDescriptor)
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                           .apply(Sum(Attribute("value")))
+                           .sink(testSinkDescriptor);
+    // Running the query
+    const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+
+    for (auto& res : resultRecords) {
+        NES_DEBUG("{}-{}-{}", res.windowStart, res.windowEnd, res.value);
+    }
+
+    // Checking for correctness
+    EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
+}
+
+TEST_P(MultiThreadedTest, testKeyedEventTimeWindowAggregation) {
     struct ResultRecord {
         uint64_t windowStart;
         uint64_t windowEnd;
@@ -199,7 +243,6 @@ TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     const auto outputSchema = Schema::create()
                                   ->addField(createField("test1$start", BasicType::UINT64))
                                   ->addField(createField("test1$end", BasicType::UINT64))
-                                  ->addField(createField("test1$id", BasicType::UINT64))
                                   ->addField(createField("test1$timestamp", BasicType::UINT64));
 
     const std::string fileNameBuffers("window.csv");
@@ -208,7 +251,8 @@ TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
         {2000, 3000, 16, 2},   {3000, 4000, 1, 9},    {3000, 4000, 11, 3},   {4000, 5000, 1, 4},    {5000, 6000, 1, 5},
         {6000, 7000, 1, 6},    {7000, 8000, 1, 7},    {8000, 9000, 1, 8},    {9000, 10000, 1, 9},   {10000, 11000, 1, 10},
         {11000, 12000, 1, 11}, {12000, 13000, 1, 12}, {13000, 14000, 1, 13}, {14000, 15000, 1, 14}, {15000, 16000, 1, 15},
-        {16000, 17000, 1, 16}, {17000, 18000, 1, 17}, {18000, 19000, 1, 18}, {19000, 20000, 1, 19}, {20000, 21000, 1, 20}};
+        {16000, 17000, 1, 16}, {17000, 18000, 1, 17}, {18000, 19000, 1, 18}, {19000, 20000, 1, 19}, {20000, 21000, 1, 20},
+        {21000, 22000, 1, 21}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -222,13 +266,64 @@ TEST_P(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     // Running the query
     const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
 
+    for (auto& res : resultRecords) {
+        NES_DEBUG("{}-{}-{}-{}", res.windowStart, res.windowEnd, res.id, res.value);
+    }
+
+    // Checking for correctness
+    EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
+}
+
+TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeWindows) {
+    struct ResultRecord {
+        uint64_t windowStart;
+        uint64_t windowEnd;
+        uint64_t value;
+
+        bool operator==(const ResultRecord& rhs) const {
+            return windowStart == rhs.windowStart && windowEnd == rhs.windowEnd && value == rhs.value;
+        }
+    };
+    const auto inputSchema = Schema::create()
+                                 ->addField(createField("test1$value", BasicType::UINT64))
+                                 ->addField(createField("test1$id", BasicType::UINT64))
+                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto outputSchema = Schema::create()
+                                  ->addField(createField("test1$start", BasicType::UINT64))
+                                  ->addField(createField("test1$end", BasicType::UINT64))
+                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+
+    const std::string fileNameBuffers("window.csv");
+    const std::vector<ResultRecord> expectedTuples = {{0, 2000, 3},
+                                                      {2000, 4000, 18},
+                                                      {4000, 6000, 9},
+                                                      {6000, 8000, 13},
+                                                      {8000, 10000, 17},
+                                                      {10000, 12000, 21}};
+
+    // Creating sink, source, and the query
+    const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
+    const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+    const auto query = TestQuery::from(testSourceDescriptor)
+                           .filter(Attribute("value") < 12)// this is merely to keep the number of output tuples under control
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                           .apply(Sum(Attribute("value")))
+                           .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
+                           .apply(Sum(Attribute("value")))
+                           .sink(testSinkDescriptor);
+
+    // Running the query
+    const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+    for (auto& res : resultRecords) {
+        NES_DEBUG("{}-{}-{}", res.windowStart, res.windowEnd, res.value);
+    }
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-// TODO Enable with #3966
-TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
+TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
     struct ResultRecord {
         uint64_t windowStart;
         uint64_t windowEnd;
@@ -258,7 +353,8 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
                                                       {2000, 4000, 16, 2},
                                                       {4000, 6000, 1, 9},
                                                       {6000, 8000, 1, 13},
-                                                      {8000, 10000, 1, 17}};
+                                                      {8000, 10000, 1, 17},
+                                                      {10000, 12000, 1, 21}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(outputSchema);
@@ -276,7 +372,9 @@ TEST_P(MultiThreadedTest, DISABLED_testMultipleWindows) {
 
     // Running the query
     const auto resultRecords = runQuery<ResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
-
+    for (auto& res : resultRecords) {
+        NES_DEBUG("{}-{}-{}-{}", res.windowStart, res.windowEnd, res.id, res.value);
+    }
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));

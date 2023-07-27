@@ -51,8 +51,5 @@ KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceM
 }
 KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 
-uint64_t KeyedSliceMergingHandler::getNextSequenceNumber() { return sequenceNumber++; }
-
-std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Runtime::Execution::Operators

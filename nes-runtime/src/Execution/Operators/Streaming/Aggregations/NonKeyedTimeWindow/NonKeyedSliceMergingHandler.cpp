@@ -32,7 +32,6 @@ NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler(std::shared_ptr<NonKeye
 void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
     defaultState = std::make_unique<State>(entrySize);
-    defaultState = std::make_unique<State>(entrySize);
 }
 
 void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
@@ -52,6 +51,5 @@ const State* NonKeyedSliceMergingHandler::getDefaultState() const { return defau
 
 NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() { NES_DEBUG("Destruct NonKeyedSliceMergingHandler"); }
 
-std::weak_ptr<NonKeyedSliceStaging> NonKeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Runtime::Execution::Operators

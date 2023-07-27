@@ -107,10 +107,11 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     auto sliceMergeTask = buffer.getBuffer();
     Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
     Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
+    Value<> sequenceNumber = getMember(sliceMergeTask, SliceMergeTask, sequenceNumber).load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
     // emit global slice when we have a tumbling window.
-    emitWindow(ctx, startSliceTs, endSliceTs, globalSliceState);
+    emitWindow(ctx, startSliceTs, endSliceTs, sequenceNumber, globalSliceState);
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
@@ -137,10 +138,12 @@ Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& glob
 void NonKeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                       Value<>& windowStart,
                                       Value<>& windowEnd,
+                                      Value<>& sequenceNumber,
                                       Value<MemRef>& globalSlice) const {
+    NES_DEBUG("Emit window: {}-{}-{}", windowStart.as<UInt64>()->toString(), windowEnd.as<UInt64>()->toString(), sequenceNumber.as<UInt64>()->toString());
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     ctx.setOrigin(resultOriginId);
-
+    ctx.setSequenceNumber(sequenceNumber.as<UInt64>());
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);

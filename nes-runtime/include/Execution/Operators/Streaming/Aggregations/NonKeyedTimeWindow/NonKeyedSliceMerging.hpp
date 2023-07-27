@@ -54,7 +54,7 @@ class NonKeyedSliceMerging : public Operator {
      * @param windowStart start of the window
      * @param windowEnd end of the window
      */
-    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
+    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<>& sequenceNumber, Value<MemRef>&) const;
 
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

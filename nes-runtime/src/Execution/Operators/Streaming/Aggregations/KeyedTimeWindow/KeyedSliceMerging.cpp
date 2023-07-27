@@ -42,6 +42,7 @@ void* getKeyedSliceState(void* gs) {
 }
 
 void* eraseKeyedPartition(void* op, uint64_t ts) {
+    NES_DEBUG("eraseKeyedPartition {}", ts);
     auto handler = static_cast<KeyedSliceMergingHandler*>(op);
     auto partition = handler->getSliceStaging().erasePartition(ts);
     // we give nautilus the ownership, thus deletePartition must be called.
@@ -67,13 +68,6 @@ void setupKeyedSliceMergingHandler(void* ss, void* ctx, uint64_t keySize, uint64
     auto handler = static_cast<KeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
-}
-
-uint64_t getSeqNumberProxyForKeyedSliceMerging(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    auto handler = static_cast<KeyedSliceMergingHandler*>(ptrOpHandler);
-    NES_DEBUG("Getting next sequence number");
-    return handler->getNextSequenceNumber();
 }
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
@@ -115,9 +109,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     auto sliceMergeTask = buffer.getBuffer();
     Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
     Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
-    Value<> sequenceNumber = FunctionCall("getSeqNumberProxyForKeyedSliceMerging",
-                                          getSeqNumberProxyForKeyedSliceMerging,
-                                          globalOperatorHandler);
+    Value<> sequenceNumber = getMember(sliceMergeTask, SliceMergeTask, sequenceNumber).load<UInt64>();
 
     // 2. initialize global slice state, which is represented by a chained hashtable
     auto globalSlice = Nautilus::FunctionCall("createKeyedState", createKeyedState, globalOperatorHandler, sliceMergeTask);
@@ -138,7 +130,7 @@ void KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHa
     auto partition =
         Nautilus::FunctionCall("eraseKeyedPartition", eraseKeyedPartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfKeyedPartition", getNumberOfKeyedPartition, partition);
-    NES_TRACE("combine {} slice stores for slice {}", numberOfPartitions->toString(), endSliceTs->toString())
+    NES_DEBUG("combine {} slice stores for slice {}", numberOfPartitions->toString(), endSliceTs->toString());
 
     for (Value<UInt64> i = 0_u64; i < numberOfPartitions; i = i + 1_u64) {
         auto partitionState = Nautilus::FunctionCall("getKeyedPartitionState", getKeyedPartitionState, partition, i);
@@ -179,7 +171,7 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowEnd,
                                    Value<>& sequenceNumber,
                                    Interface::ChainedHashMapRef& globalSliceHashMap) const {
-    NES_TRACE("Emit window: {}-{}", windowStart->toString(), windowEnd->toString());
+    NES_DEBUG("Emit window: {}-{}-{}", windowStart.as<UInt64>()->toString(), windowEnd.as<UInt64>()->toString(), sequenceNumber.as<UInt64>()->toString());
     ctx.setWatermarkTs(windowEnd.as<UInt64>());
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber.as<UInt64>());

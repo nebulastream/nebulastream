@@ -85,6 +85,10 @@ class NonBlockingMonotonicSeqQueue {
      * @throws RuntimeException if an element with the same sequence number was already inserted.
      */
     void emplace(uint64_t sequenceNumber, T value) {
+        if (sequenceNumber <= currentSeq) {
+            throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
+                                               + " as it is <= " + std::to_string(currentSeq));
+        }
         // First emplace the value to the specific block of the sequenceNumber.
         // After this call it is safe to assume that a block, which contains the sequenceNumber exists.
         emplaceValueInBlock(sequenceNumber, value);

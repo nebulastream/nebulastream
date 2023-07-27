@@ -38,7 +38,7 @@ std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer,
     return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
 }
 
-bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
+bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     std::unique_lock lock(m);
 
     NES_DEBUG("Writing to the resultBuffer from worker {}", workerContext.getId());
