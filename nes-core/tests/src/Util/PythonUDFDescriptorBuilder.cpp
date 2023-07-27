@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+
 #include <Util/PythonUDFDescriptorBuilder.hpp>
 
 namespace NES::Catalogs::UDF {
@@ -40,4 +40,3 @@ namespace NES::Catalogs::UDF {
     PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() { return PythonUDFDescriptorBuilder().build(); }
 
 }// namespace NES::Catalogs::UDF
-#endif// NAUTILUS_PYTHON_UDF_ENABLED

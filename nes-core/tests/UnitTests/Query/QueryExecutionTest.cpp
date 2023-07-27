@@ -57,10 +57,6 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
-#endif
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -1547,92 +1543,6 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-/**
- * The PythonUdfQuery test and PythonUdfPipelineStage class
- * invoke the Python interpreter and will fail if Python UDF are not enabled
- */
-#ifdef PYTHON_UDF_ENABLED
-
-TEST_F(QueryExecutionTest, PythonUdfQuery) {
-    // creating query plan
-    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-        testSchema,
-        [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
-
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
-
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-
-    // add physical operator behind the filter
-    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
-
-    auto pythonUdfPipelineStage =
-        std::make_shared<NES::QueryCompilation::PhysicalOperators::Experimental::PythonUdfExecutablePipelineStage>(testSchema);
-
-    auto pythonUdfOperator =
-        NES::QueryCompilation::PhysicalOperators::Experimental::PhysicalPythonUdfOperator::create(testSchema,
-                                                                                                  SchemaPtr(),
-                                                                                                  pythonUdfPipelineStage);
-
-    filterOperator->insertBetweenThisAndParentNodes(pythonUdfOperator);
-
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
-    // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 2u);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-        fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-        ASSERT_EQ(plan->getPipelines()[1]->execute(buffer, workerContext), ExecutionResult::Ok);
-
-        // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-
-        auto resultBuffer = testSink->get(0);
-        // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
-
-        auto resultRecordIndexFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        auto resultRecordValueFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
-            // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex + 42);
-            EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
-        }
-    }
-    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
-
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
-}
-#endif
 
 /**
  * @brief This test creates a CASE-WHEN query with three CASE-expressions

@@ -36,7 +36,7 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/MetricValidator.cpp"
         "src/Util/JavaUdfDescriptorBuilder.cpp"
         "src/Util/TestSink.cpp"
-        src/Util/PythonUDFDescriptorBuilder.cpp include/Util/PythonUDFDescriptorBuilder.hpp)
+        "src/Util/PythonUDFDescriptorBuilder.cpp")
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -725,7 +725,7 @@ add_test(NAME e2e-coordinator-multi-worker-test COMMAND e2e-coordinator-multi-wo
 set_tests_properties(e2e-coordinator-multi-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-worker-test nesCoordinator nesWorker)
 
-add_executable(e2e-coordinator-multi-query-test "E2e/E2ECoordinatorMultiQueryTest.cpp" UnitTests/QueryExecution/MapPythonUDFExecutionTest.cpp)
+add_executable(e2e-coordinator-multi-query-test "E2e/E2ECoordinatorMultiQueryTest.cpp")
 target_link_libraries(e2e-coordinator-multi-query-test nes-core-test-util)
 add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-query-test)
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
