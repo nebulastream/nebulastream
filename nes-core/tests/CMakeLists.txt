@@ -513,6 +513,9 @@ add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/FailQueryRequest
 ### Abstract Request Test ###
 add_nes_unit_test(abstract-request-test "UnitTests/WorkQueues/AbstractRequestTest.cpp")
 
+### Add Query Request Test ###
+add_nes_unit_test(add-query-request-test "UnitTests/WorkQueues/AddQueryRequestTest.cpp")
+
 ### Stop Query Request Test ###
 add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTest.cpp")
 
