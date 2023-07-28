@@ -128,7 +128,10 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerUnaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
-    * @brief Lowers a union operator
+    * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
+    *        using a Multiplex operation that connects two sources with one sink. The two sources then form one stream 
+    *        that continuously sends TupleBuffers to the sink. This means a query that only contains an Union operator 
+    *        does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
     * @param queryPlan current plan
     * @param operatorNode current operator
     */

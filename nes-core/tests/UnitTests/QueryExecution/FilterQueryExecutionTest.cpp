@@ -30,7 +30,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class FilterQueryExecutionTest : public Testing::TestWithErrorHandling,
+class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
                                  public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -65,7 +65,7 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
+TEST_P(UnionQueryExecutionTest, filterQueryLessThan) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
@@ -90,7 +90,7 @@ TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
+TEST_P(UnionQueryExecutionTest, filterQueryEquals) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
@@ -116,9 +116,9 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
 }
 
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
-                        FilterQueryExecutionTest,
+                        UnionQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
                                           QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<FilterQueryExecutionTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<UnionQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });
