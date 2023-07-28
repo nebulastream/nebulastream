@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
@@ -39,14 +40,13 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) { NES_DEBUG("start NLJOperatorHandler"); }
 
-uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
+uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, QueryCompilation::JoinBuildSideType joinBuildSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         auto& windowVal = window.value();
-        if (isLeftSide) {
-            return windowVal->getNumberOfTuplesLeft();
-        } else {
-            return windowVal->getNumberOfTuplesRight();
+        switch (joinBuildSide) {
+            case QueryCompilation::JoinBuildSideType::Left: return windowVal->getNumberOfTuplesLeft();
+            case QueryCompilation::JoinBuildSideType::Right: return windowVal->getNumberOfTuplesRight();
         }
     }
 
@@ -103,13 +103,13 @@ uint64_t NLJOperatorHandler::getLeftPageSize() const { return leftPageSize; }
 
 uint64_t NLJOperatorHandler::getRightPageSize() const { return rightPageSize; }
 
-void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide) {
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljWindow != nullptr, "nlj window pointer should not be null!");
+    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljWindow = static_cast<NLJWindow*>(ptrNljWindow);
-    if (isLeftSide) {
-        return nljWindow->getPagedVectorRefLeft(workerId);
-    } else {
-        return nljWindow->getPagedVectorRefRight(workerId);
+    switch (joinBuildSide) {
+        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(workerId);
+        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(workerId);
     }
 }
 

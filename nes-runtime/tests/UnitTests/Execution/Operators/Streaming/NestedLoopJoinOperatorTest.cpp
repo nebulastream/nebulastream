@@ -32,6 +32,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
+#include <Util/Common.hpp>
 #include <random>
 
 namespace NES::Runtime::Execution {
@@ -109,12 +110,12 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
     }
 
     std::vector<Record> createRandomRecords(uint64_t numberOfRecords,
-                                            bool isLeftSide,
+                                            QueryCompilation::JoinBuildSideType joinBuildSide,
                                             uint64_t minValue = 0,
                                             uint64_t maxValue = 1000,
                                             uint64_t randomSeed = 42) {
         std::vector<Record> retVector;
-        auto schema = isLeftSide ? leftSchema : rightSchema;
+        auto schema = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? leftSchema : rightSchema;
 
         std::mt19937 generator(randomSeed);
         std::uniform_int_distribution<uint64_t> distribution(minValue, maxValue);
@@ -148,8 +149,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                                 const std::string& timestampRight,
                                 ExecutionContext& executionContext) {
 
-        auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, /*isLeftSide*/ true);
-        auto allRightRecords = createRandomRecords(numberOfRecordsRight, /*isLeftSide*/ false);
+        auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, QueryCompilation::JoinBuildSideType::Left);
+        auto allRightRecords = createRandomRecords(numberOfRecordsRight, QueryCompilation::JoinBuildSideType::Right);
 
         nljBuildLeft.setup(executionContext);
         nljBuildRight.setup(executionContext);
@@ -181,9 +182,9 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
             NES_DEBUG("Check window={}", windowIdentifier);
-            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true),
+            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, QueryCompilation::JoinBuildSideType::Left),
                       expectedNumberOfTuplesInWindowLeft);
-            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),
+            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, QueryCompilation::JoinBuildSideType::Right),
                       expectedNumberOfTuplesInWindowRight);
             auto nljWindow =
                 std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler.getWindowByWindowIdentifier(windowIdentifier).value());
@@ -235,8 +236,8 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                                 const std::string& joinFieldNameRight,
                                 ExecutionContext& executionContext) {
 
-        auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, /*isLeftSide*/ true);
-        auto allRightRecords = createRandomRecords(numberOfRecordsRight, /*isLeftSide*/ false);
+        auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, QueryCompilation::JoinBuildSideType::Left);
+        auto allRightRecords = createRandomRecords(numberOfRecordsRight, QueryCompilation::JoinBuildSideType::Right);
         auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
         auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
@@ -279,9 +280,9 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
-            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true),
+            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, QueryCompilation::JoinBuildSideType::Left),
                       expectedNumberOfTuplesInWindowLeft);
-            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false),
+            ASSERT_EQ(nljOperatorHandler.getNumberOfTuplesInWindow(windowIdentifier, QueryCompilation::JoinBuildSideType::Right),
                       expectedNumberOfTuplesInWindowRight);
 
             {
@@ -369,14 +370,14 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
         leftSchema,
         joinFieldnameLeft,
         timestampFieldLeft,
-        /*isLeftSide*/ true,
+        QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldnameRight,
         timestampFieldRight,
-        /*isLeftSide*/ false,
+        QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -422,14 +423,14 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
         leftSchema,
         joinFieldnameLeft,
         timestampFieldLeft,
-        /*isLeftSide*/ true,
+        QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldnameRight,
         timestampFieldRight,
-        /*isLeftSide*/ false,
+        QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -473,14 +474,14 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
         leftSchema,
         joinFieldNameLeft,
         timestampFieldLeft,
-        /*isLeftSide*/ true,
+        QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldNameRight,
         timestampFieldRight,
-        /*isLeftSide*/ false,
+        QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
@@ -508,7 +509,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     windowSize = 1000;
 
     std::vector<OriginId> originIds{0};
-    auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
     const auto windowKeyFieldName = joinSchema->get(2)->getName();

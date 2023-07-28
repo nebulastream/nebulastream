@@ -89,7 +89,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param watermarkTs
      * @param sequenceNumber
      * @param originId
-     * @param isLeft
      * @return Vector<uint64_t> containing windows that can be triggered
      */
     std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);

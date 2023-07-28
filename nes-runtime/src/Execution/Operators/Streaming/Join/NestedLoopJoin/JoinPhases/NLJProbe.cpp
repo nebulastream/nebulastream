@@ -26,6 +26,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -76,12 +77,12 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                      getNLJPagedVectorProxy,
                                                      windowReference,
                                                      workerIdForPagedVectors,
-                                                     Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ true));
+                                                     Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
     auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                       getNLJPagedVectorProxy,
                                                       windowReference,
                                                       workerIdForPagedVectors,
-                                                      Nautilus::Value<Nautilus::Boolean>(/*isLeftSide*/ false));
+                                                      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
     Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
@@ -153,8 +154,8 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const std::string& windowStartFieldName,
                    const std::string& windowEndFieldName,
                    const std::string& windowKeyFieldName)
-    : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
+    : operatorHandlerIndex(operatorHandlerIndex), leftSchema(leftSchema), rightSchema(rightSchema),
+      joinSchema(joinSchema), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
       joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName),
       windowEndFieldName(windowEndFieldName), windowKeyFieldName(windowKeyFieldName) {}
 

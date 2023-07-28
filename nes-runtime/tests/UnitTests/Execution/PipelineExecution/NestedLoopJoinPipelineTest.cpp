@@ -144,7 +144,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             leftSchema,
             joinFieldNameLeft,
             timeStampFieldLeft,
-            /*isLeftSide*/ true,
+            QueryCompilation::JoinBuildSideType::Left,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
 
         auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
@@ -152,7 +152,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             rightSchema,
             joinFieldNameRight,
             timeStampFieldRight,
-            /*isLeftSide*/ false,
+            QueryCompilation::JoinBuildSideType::Right,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,

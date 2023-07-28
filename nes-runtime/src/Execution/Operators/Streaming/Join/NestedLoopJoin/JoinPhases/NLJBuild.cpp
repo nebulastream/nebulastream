@@ -27,6 +27,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <numeric>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -91,7 +92,6 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     //update last seen watermark by this worker
@@ -115,7 +115,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                                        getNLJPagedVectorProxy,
                                                        localJoinState->windowReference,
                                                        workerId,
-                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+                                                       Value<UInt64>(to_underlying(joinBuildSide)));
     localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     localJoinState->windowStart =
         Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, localJoinState->windowReference);
@@ -165,8 +165,7 @@ void NLJBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
                                                        getNLJPagedVectorProxy,
                                                        windowReference,
                                                        workerId,
-                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
-
+                                                       Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
 
@@ -201,12 +200,11 @@ void NLJBuild::terminate(ExecutionContext& ctx) const {
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const SchemaPtr& schema,
-                   std::string joinFieldName,
-                   std::string timeStampField,
-                   bool isLeftSide,
+                   const std::string& joinFieldName,
+                   const std::string& timeStampField,
+                   const QueryCompilation::JoinBuildSideType joinBuildSide,
                    TimeFunctionPtr timeFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(std::move(joinFieldName)),
-      timeStampField(std::move(timeStampField)), isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()),
-      timeFunction(std::move(timeFunction)) {}
+    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
+      joinBuildSide(joinBuildSide), entrySize(schema->getSchemaSizeInBytes()), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
