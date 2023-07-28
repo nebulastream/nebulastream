@@ -63,7 +63,6 @@ class OpenCLLogicalOperatorNode : public UDFLogicalOperator {
   private:
     std::string openCLCode;
     std::string deviceId;
-    const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_

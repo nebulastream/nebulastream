@@ -22,7 +22,7 @@
 namespace NES {
 
 OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
-    : OperatorNode(id), UDFLogicalOperator(javaUDFDescriptor, id), javaUDFDescriptor(javaUDFDescriptor) {}
+    : OperatorNode(id), UDFLogicalOperator(javaUDFDescriptor, id) {}
 
 std::string OpenCLLogicalOperatorNode::toString() const {
     auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
@@ -61,6 +61,6 @@ const std::string& OpenCLLogicalOperatorNode::getDeviceId() const { return devic
 
 void OpenCLLogicalOperatorNode::setDeviceId(const std::string& deviceId) { OpenCLLogicalOperatorNode::deviceId = deviceId; }
 
-Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const { return javaUDFDescriptor; }
+Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const { return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor); }
 
 }// namespace NES
