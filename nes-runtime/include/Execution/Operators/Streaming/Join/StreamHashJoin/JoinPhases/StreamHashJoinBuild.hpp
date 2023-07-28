@@ -16,6 +16,7 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -35,13 +36,13 @@ class StreamHashJoinBuild : public ExecutableOperator {
     /**
      * @brief Constructors for a StreamJoinBuild
      * @param handlerIndex
-     * @param isLeftSide
+     * @param joinBuildSide
      * @param joinFieldName
      * @param timeStampField
      * @param schema
      */
     StreamHashJoinBuild(uint64_t handlerIndex,
-                        bool isLeftSide,
+                        const QueryCompilation::JoinBuildSideType joinBuildSide,
                         const std::string& joinFieldName,
                         const std::string& timeStampField,
                         SchemaPtr inputSchema,
@@ -75,7 +76,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
 
   private:
     uint64_t handlerIndex;
-    bool isLeftSide;
+    const QueryCompilation::JoinBuildSideType joinBuildSide;
     std::string joinFieldName;
     std::string timeStampField;
     SchemaPtr inputSchema;

@@ -20,6 +20,7 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 #include <utility>
 
@@ -58,13 +59,13 @@ class NLJBuild : public ExecutableOperator {
      * @param schema
      * @param joinFieldName
      * @param timeStampField
-     * @param isLeftSide
+     * @param joinBuildSide
      */
     NLJBuild(uint64_t operatorHandlerIndex,
              const SchemaPtr& schema,
-             std::string joinFieldName,
-             std::string timeStampField,
-             bool isLeftSide,
+             const std::string& joinFieldName,
+             const std::string& timeStampField,
+             const QueryCompilation::JoinBuildSideType joinBuildSide,
              TimeFunctionPtr timeFunction);
 
     void setup(ExecutionContext& executionCtx) const override;
@@ -108,7 +109,7 @@ class NLJBuild : public ExecutableOperator {
     const SchemaPtr schema;
     const std::string joinFieldName;
     const std::string timeStampField;
-    const bool isLeftSide;
+    const QueryCompilation::JoinBuildSideType joinBuildSide;
     const uint64_t entrySize;
     const TimeFunctionPtr timeFunction;
 };

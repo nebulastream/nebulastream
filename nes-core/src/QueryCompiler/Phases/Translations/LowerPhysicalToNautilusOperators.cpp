@@ -324,7 +324,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
                 handlerIndex,
-                buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                buildOperator->getBuildSide(),
                 buildOperator->getJoinFieldName(),
                 buildOperator->getTimeStampFieldName(),
                 buildOperator->getInputSchema(),
@@ -335,7 +335,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
                 handlerIndex,
-                buildOperator->getBuildSide() == JoinBuildSideType::Left,
+                buildOperator->getBuildSide(),
                 buildOperator->getJoinFieldName(),
                 buildOperator->getTimeStampFieldName(),
                 buildOperator->getInputSchema(),
@@ -352,7 +352,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto tsField = buildOperator->getTimeStampFieldName();
-        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
+        auto joinBuildSide = buildOperator->getBuildSide();
         std::shared_ptr<Runtime::Execution::Operators::NLJBuild> joinBuildNautilus;
 
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
@@ -361,7 +361,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                           buildOperator->getInputSchema(),
                                                                                           buildOperator->getJoinFieldName(),
                                                                                           buildOperator->getTimeStampFieldName(),
-                                                                                          isLeftSide,
+                                                                                          joinBuildSide,
                                                                                           std::move(timeFunction));
         } else {
             auto timeStampFieldRecord =
@@ -371,7 +371,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                           buildOperator->getInputSchema(),
                                                                                           buildOperator->getJoinFieldName(),
                                                                                           buildOperator->getTimeStampFieldName(),
-                                                                                          isLeftSide,
+                                                                                          joinBuildSide,
                                                                                           std::move(timeFunction));
         }
 
