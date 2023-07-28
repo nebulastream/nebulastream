@@ -163,7 +163,8 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     const auto joinPartitionIdTWindowIdentifier = recordBuffer.getBuffer();
     const auto partitionId = Nautilus::FunctionCall("getPartitionId", getPartitionId, joinPartitionIdTWindowIdentifier);
-    const auto windowIdentifier = Nautilus::FunctionCall("getWindowIdentifier", getWindowIdentifier, joinPartitionIdTWindowIdentifier);
+    const auto windowIdentifier =
+        Nautilus::FunctionCall("getWindowIdentifier", getWindowIdentifier, joinPartitionIdTWindowIdentifier);
 
     Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForHashJoin",
                                                     getWindowStartProxyForHashJoin,
@@ -178,22 +179,27 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
     const auto sequenceNumber =
         Nautilus::FunctionCall("getSequenceNumberProxyForHashJoin", getSequenceNumberProxyForHashJoin, operatorHandlerMemRef);
     ctx.setSequenceNumber(sequenceNumber);
-    const auto originId = Nautilus::FunctionCall("getOriginIdProxyForHashJoin", getOriginIdProxyForHashJoin, operatorHandlerMemRef);
+    const auto originId =
+        Nautilus::FunctionCall("getOriginIdProxyForHashJoin", getOriginIdProxyForHashJoin, operatorHandlerMemRef);
     ctx.setOrigin(originId);
 
-    const auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaLeft);
-    const auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaRight);
+    const auto leftMemProvider =
+        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaLeft);
+    const auto rightMemProvider =
+        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaRight);
     const auto hashWindowRef = Nautilus::FunctionCall("getHashWindow", getHashWindow, operatorHandlerMemRef, windowIdentifier);
-    const auto numberOfPagesLeft = Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                                                          getNumberOfPagesProxyForHashJoin,
-                                                          hashWindowRef,
-                                                          Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
-                                                          partitionId);
-    const auto numberOfPagesRight = Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                                                       getNumberOfPagesProxyForHashJoin,
-                                                       hashWindowRef,
-                                                       Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
-                                                       partitionId);
+    const auto numberOfPagesLeft =
+        Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
+                               getNumberOfPagesProxyForHashJoin,
+                               hashWindowRef,
+                               Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
+                               partitionId);
+    const auto numberOfPagesRight =
+        Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
+                               getNumberOfPagesProxyForHashJoin,
+                               hashWindowRef,
+                               Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
+                               partitionId);
 
     //first check if one of the page is 0 then we can return
     if (numberOfPagesLeft == 0 || numberOfPagesRight == 0) {
@@ -210,21 +216,23 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
 
     //for every left page
     for (Value<UInt64> leftPageNo((uint64_t) 0); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
-        auto numberOfTuplesLeft = Nautilus::FunctionCall("getNumberOfTuplesForPage",
-                                                         getNumberOfTuplesForPage,
-                                                         hashWindowRef,
-                                                         Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
-                                                         partitionId,
-                                                         leftPageNo);
+        auto numberOfTuplesLeft =
+            Nautilus::FunctionCall("getNumberOfTuplesForPage",
+                                   getNumberOfTuplesForPage,
+                                   hashWindowRef,
+                                   Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
+                                   partitionId,
+                                   leftPageNo);
         //for every key in left page
         for (Value<UInt64> leftKeyPos((uint64_t) 0); leftKeyPos < numberOfTuplesLeft; leftKeyPos = leftKeyPos + 1) {
-            auto leftRecordRef = Nautilus::FunctionCall("getTupleFromBucketAtPosProxyForHashJoin",
-                                                        getTupleFromBucketAtPosProxyForHashJoin,
-                                                        hashWindowRef,
-                                                        Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
-                                                        partitionId,
-                                                        leftPageNo,
-                                                        leftKeyPos);
+            auto leftRecordRef = Nautilus::FunctionCall(
+                "getTupleFromBucketAtPosProxyForHashJoin",
+                getTupleFromBucketAtPosProxyForHashJoin,
+                hashWindowRef,
+                Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
+                partitionId,
+                leftPageNo,
+                leftKeyPos);
 
             Value<UInt64> zeroValue = (uint64_t) 0;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
@@ -232,12 +240,13 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
             //TODO we should write an iterator in nautilus over the pages to make it more elegant
             //for every right page
             for (Value<UInt64> rightPageNo((uint64_t) 0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
-                auto numberOfTuplesRight = Nautilus::FunctionCall("getNumberOfTuplesForPage",
-                                                                  getNumberOfTuplesForPage,
-                                                                  hashWindowRef,
-                                                                  Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
-                                                                  partitionId,
-                                                                  rightPageNo);
+                auto numberOfTuplesRight = Nautilus::FunctionCall(
+                    "getNumberOfTuplesForPage",
+                    getNumberOfTuplesForPage,
+                    hashWindowRef,
+                    Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
+                    partitionId,
+                    rightPageNo);
                 if (numberOfTuplesRight == 0) {
                     continue;
                 }
@@ -249,13 +258,14 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
 
                 //for every key in right page
                 for (Value<UInt64> rightKeyPos((uint64_t) 0); rightKeyPos < numberOfTuplesRight; rightKeyPos = rightKeyPos + 1) {
-                    auto rightRecordRef = Nautilus::FunctionCall("getTupleFromBucketAtPosProxyForHashJoin",
-                                                                 getTupleFromBucketAtPosProxyForHashJoin,
-                                                                 hashWindowRef,
-                                                                 Value<UInt64>((uint64_t)magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
-                                                                 partitionId,
-                                                                 rightPageNo,
-                                                                 rightKeyPos);
+                    auto rightRecordRef = Nautilus::FunctionCall(
+                        "getTupleFromBucketAtPosProxyForHashJoin",
+                        getTupleFromBucketAtPosProxyForHashJoin,
+                        hashWindowRef,
+                        Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
+                        partitionId,
+                        rightPageNo,
+                        rightKeyPos);
 
                     auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
                     if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {

@@ -371,7 +371,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         uint64_t size = leftRecords[i].size();
         recordBufferLeft.setNumRecords(uint64_t(0));
         //for one record in the buffer
-        for (auto & u : leftRecords[i]) {
+        for (auto& u : leftRecords[i]) {
             hashJoinBuildLeft->execute(executionContext, u);
             NES_DEBUG("Insert left tuple {}", u.toString());
         }

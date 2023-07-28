@@ -74,7 +74,8 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
                 sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
                 //push actual bucket from local to global hash table for right side
-                auto localHashTableRight = hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
+                auto localHashTableRight =
+                    hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
                 sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
             }
 
@@ -90,7 +91,8 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
     }
 }
 
-uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId,
+uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier,
+                                                                  uint64_t workerId,
                                                                   QueryCompilation::JoinBuildSideType joinBuildSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {

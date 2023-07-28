@@ -144,7 +144,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @param joinBuildSide
      * @return
      */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    uint64_t
+    getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
      * @brief method to trigger the finished windows

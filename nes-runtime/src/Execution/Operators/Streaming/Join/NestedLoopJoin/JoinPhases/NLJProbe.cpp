@@ -154,9 +154,9 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const std::string& windowStartFieldName,
                    const std::string& windowEndFieldName,
                    const std::string& windowKeyFieldName)
-    : operatorHandlerIndex(operatorHandlerIndex), leftSchema(leftSchema), rightSchema(rightSchema),
-      joinSchema(joinSchema), leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
-      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName),
-      windowEndFieldName(windowEndFieldName), windowKeyFieldName(windowKeyFieldName) {}
+    : operatorHandlerIndex(operatorHandlerIndex), leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema),
+      leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize), joinFieldNameLeft(joinFieldNameLeft),
+      joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
+      windowKeyFieldName(windowKeyFieldName) {}
 
 }// namespace NES::Runtime::Execution::Operators
