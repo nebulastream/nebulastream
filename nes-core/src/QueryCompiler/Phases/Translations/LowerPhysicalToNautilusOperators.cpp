@@ -322,24 +322,24 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         std::shared_ptr<Runtime::Execution::Operators::StreamHashJoinBuild> joinBuildNautilus;
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
-                handlerIndex,
-                buildOperator->getBuildSide(),
-                buildOperator->getJoinFieldName(),
-                buildOperator->getTimeStampFieldName(),
-                buildOperator->getInputSchema(),
-                std::move(timeFunction));
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                                     buildOperator->getBuildSide(),
+                                                                                     buildOperator->getJoinFieldName(),
+                                                                                     buildOperator->getTimeStampFieldName(),
+                                                                                     buildOperator->getInputSchema(),
+                                                                                     std::move(timeFunction));
         } else {
             auto timeStampFieldRecord =
                 std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(
-                handlerIndex,
-                buildOperator->getBuildSide(),
-                buildOperator->getJoinFieldName(),
-                buildOperator->getTimeStampFieldName(),
-                buildOperator->getInputSchema(),
-                std::move(timeFunction));
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                                     buildOperator->getBuildSide(),
+                                                                                     buildOperator->getJoinFieldName(),
+                                                                                     buildOperator->getTimeStampFieldName(),
+                                                                                     buildOperator->getInputSchema(),
+                                                                                     std::move(timeFunction));
         }
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));

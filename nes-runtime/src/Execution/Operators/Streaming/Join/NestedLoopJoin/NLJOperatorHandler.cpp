@@ -40,7 +40,8 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) { NES_DEBUG("start NLJOperatorHandler"); }
 
-uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, QueryCompilation::JoinBuildSideType joinBuildSide) {
+uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier,
+                                                       QueryCompilation::JoinBuildSideType joinBuildSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         auto& windowVal = window.value();

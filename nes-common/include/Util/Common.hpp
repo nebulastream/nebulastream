@@ -28,7 +28,7 @@ enum class StreamJoinStrategy : uint8_t {
 };
 
 enum class JoinBuildSideType : uint8_t { Right, Left };
-template <typename E = JoinBuildSideType, typename Out = uint64_t>
+template<typename E = JoinBuildSideType, typename Out = uint64_t>
 constexpr Out to_underlying(E e) noexcept {
     return static_cast<Out>(e);
 }

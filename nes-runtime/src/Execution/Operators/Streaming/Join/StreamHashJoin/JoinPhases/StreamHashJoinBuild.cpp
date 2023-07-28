@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <atomic>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -27,6 +26,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
 class LocalGlobalJoinState : public Operators::OperatorState {
@@ -66,8 +66,10 @@ void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, uint64_t joi
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
     auto* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(),
-              magic_enum::enum_name(joinBuildSide), workerIdx);
+    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
+              hashWindow->getWindowIdentifier(),
+              magic_enum::enum_name(joinBuildSide),
+              workerIdx);
     auto ptr = hashWindow->getHashTable(joinBuildSide, workerIdx);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
@@ -134,7 +136,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                                getLocalHashTableProxy,
                                                                joinState->windowReference,
                                                                ctx.getWorkerId(),
-                                                               Value<UInt64>((uint64_t)magic_enum::enum_integer(joinBuildSide)));
+                                                               Value<UInt64>((uint64_t) magic_enum::enum_integer(joinBuildSide)));
 
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
