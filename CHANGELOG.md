@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.166](https://github.com/nebulastream/nebulastream/tree/v0.5.166) (2023-07-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.165...v0.5.166)
+
+**Implemented enhancements:**
+
+- \[TASK\] StreamJoin Replace leftSide with an Enum [\#3692](https://github.com/nebulastream/nebulastream/issues/3692)
+
 ## [v0.5.165](https://github.com/nebulastream/nebulastream/tree/v0.5.165) (2023-07-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.164...v0.5.165)
