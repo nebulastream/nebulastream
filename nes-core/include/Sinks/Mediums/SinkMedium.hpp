@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
-#include <API/Schema.hpp>
+// #include <API/Schema.hpp>
 
-#include <Common/Identifiers.hpp>
+// #include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>
@@ -75,6 +75,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
+    //Todo: In the scope of #4040 we decide whether writeData() should return an ExecutionResult
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**

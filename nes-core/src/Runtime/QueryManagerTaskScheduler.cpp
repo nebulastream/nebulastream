@@ -30,6 +30,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <Runtime/ExecutionResult.hpp>
 
 namespace NES::Runtime {
 
@@ -305,9 +306,8 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestampInMS();
-        auto diff = now - creation;
-        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
-        statistics->incLatencySum(diff);
+        NES_ASSERT((unsigned long) now >= creation, "timestamp is in the past");
+        statistics->incLatencySum(now - creation);
 
         for (auto& bufferManager : bufferManagers) {
             statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
@@ -329,6 +329,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
 }
 
 void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
+    //Todo: If we do not execute code, the buffer is a nullptr at this point and the rest of the execution fails.
     NES_TRACE("AbstractQueryManager::completedWork: Work for task={} worker ctx id={}", task.toString(), wtx.getId());
     if (task.isReconfiguration()) {
         return;

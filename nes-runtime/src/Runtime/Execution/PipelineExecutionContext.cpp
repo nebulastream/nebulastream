@@ -33,7 +33,7 @@ PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
       operatorHandlers(std::move(operatorHandlers)), bufferProvider(bufferProvider),
       numberOfWorkerThreads(numberOfWorkerThreads) {}
 
-void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {
+void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
     // call the function handler
     emitFunctionHandler(buffer, workerContext);
 }
