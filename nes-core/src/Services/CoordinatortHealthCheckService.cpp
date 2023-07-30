@@ -47,41 +47,41 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     if (parent->as<TopologyNode>()->getId() == 1) {
                         NES_TRACE("NesCoordinator::healthcheck: coordinator will check on direct child with id={}",
                                   node.second->getId());
+                        auto nodeIp = node.second->getIpAddress();
+                        auto nodeGrpcPort = node.second->getGrpcPort();
+                        std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+
+                        //check health
+                        NES_TRACE("NesCoordinator::healthCheck: checking node= {}", destAddress);
+                        auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
+                        if (res) {
+                            NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);
+                            if (inactiveWorkers.contains(node.first)) {
+                                inactiveWorkers.erase(node.first);
+                            }
+                        } else {
+                            NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
+                            if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
+                                NES_WARNING("The failing node is the root node so we cannot delete it");
+                                shutdownRPC->set_value(true);
+                                return;
+                            } else {
+                                auto ret = topologyManagerService->removePhysicalNode(node.second);
+                                inactiveWorkers.insert(node.first);
+                                if (ret) {
+                                    NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
+                                } else {
+                                    NES_WARNING("Node went offline but could not be removed from topology");
+                                }
+                                //TODO Create issue for remove and child
+                                //TODO add remove from source catalog
+                            }
+                        }
                     }
                 }
 
 
-//                auto nodeIp = node.second->getIpAddress();
-//                auto nodeGrpcPort = node.second->getGrpcPort();
-//                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-//
-//
-//                //check health
-//                NES_TRACE("NesCoordinator::healthCheck: checking node= {}", destAddress);
-//                auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
-//                if (res) {
-//                    NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);
-//                    if (inactiveWorkers.contains(node.first)) {
-//                        inactiveWorkers.erase(node.first);
-//                    }
-//                } else {
-//                    NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
-//                    if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
-//                        NES_WARNING("The failing node is the root node so we cannot delete it");
-//                        shutdownRPC->set_value(true);
-//                        return;
-//                    } else {
-//                        auto ret = topologyManagerService->removePhysicalNode(node.second);
-//                        inactiveWorkers.insert(node.first);
-//                        if (ret) {
-//                            NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
-//                        } else {
-//                            NES_WARNING("Node went offline but could not be removed from topology");
-//                        }
-//                        //TODO Create issue for remove and child
-//                        //TODO add remove from source catalog
-//                    }
-//                }
+
             }
             {
                 std::unique_lock<std::mutex> lk(cvMutex);
