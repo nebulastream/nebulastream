@@ -224,8 +224,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                                                          coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
 
-    NES_DEBUG("NesCoordinator not starting health check. this is a decentralized implementation for health check.");
-    //healthCheckService->startHealthCheck();
+    NES_DEBUG("NesCoordinator starting health check on its direct children");
+    healthCheckService->startHealthCheck();
 
 //    NES_DEBUG("NesCoordinator start health check");
 //    healthCheckService->startHealthCheck();
