@@ -44,6 +44,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
 
+#include <fstream>
 #include <utility>
 
 using namespace std;
@@ -197,6 +198,40 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    if (workerConfig->enableStatisticOutput) {
+        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+            NES_DEBUG("NesWorker: start statistic collection");
+            std::ofstream statisticsFile;
+            statisticsFile.open("statistics.csv", ios::out);
+            if (statisticsFile.is_open()) {
+                statisticsFile << "timestamp,";
+                statisticsFile << "queryId,";
+                statisticsFile << "subPlanId,";
+                statisticsFile << "processedTasks,";
+                statisticsFile << "processedTuple,";
+                statisticsFile << "processedBuffers,";
+                statisticsFile << "processedWatermarks,";
+                statisticsFile << "latencyAVG,";
+                statisticsFile << "queueSizeAVG,";
+                statisticsFile << "availableGlobalBufferAVG,";
+                statisticsFile << "availableFixedBufferAVG\n";
+                while (isRunning) {
+                    auto ts = std::chrono::system_clock::now();
+                    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                    auto stats = nodeEngine->getQueryStatistics(true);
+                    for (auto& query : stats) {
+                        statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                       << query.getQueryStatisticsAsString() << "\n";
+                        statisticsFile.flush();
+                    }
+                    sleep(1);
+                }
+            }
+            NES_DEBUG("NesWorker: statistic collection end");
+            statisticsFile.close();
+        }));
+    }
+
     if (withConnect && locationProvider
         && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
         workerMobilityHandler =
@@ -214,22 +249,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
     }
 
-    if (workerConfig->enableStatisticOuput) {
-        statisticOutputThread = std::make_shared<std::thread>(([this]() {
-            NES_DEBUG("NesWorker: start statistic collection");
-            while (isRunning) {
-                auto ts = std::chrono::system_clock::now();
-                auto timeNow = std::chrono::system_clock::to_time_t(ts);
-                auto stats = nodeEngine->getQueryStatistics(true);
-                for (auto& query : stats) {
-                    std::cout << "Statistics " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
-                              << query.getQueryStatisticsAsString() << std::endl;
-                }
-                sleep(1);
-            }
-            NES_DEBUG("NesWorker: statistic collection end");
-        }));
-    }
+//    if (workerConfig->enableStatisticOuput) {
+//        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+//            NES_DEBUG("NesWorker: start statistic collection");
+//            while (isRunning) {
+//                auto ts = std::chrono::system_clock::now();
+//                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+//                auto stats = nodeEngine->getQueryStatistics(true);
+//                for (auto& query : stats) {
+//                    std::cout << "Statistics " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
+//                              << query.getQueryStatisticsAsString() << std::endl;
+//                }
+//                sleep(1);
+//            }
+//            NES_DEBUG("NesWorker: statistic collection end");
+//        }));
+//    }
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);

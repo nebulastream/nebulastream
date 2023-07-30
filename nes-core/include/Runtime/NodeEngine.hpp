@@ -251,7 +251,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param withReset specifies if the statistics is deleted after reading (so we start with 0)
      * @return vector of queryStatistics
     */
-    std::vector<QueryStatistics> getQueryStatistics(bool withReset = false);
+    std::vector<QueryStatistics> getQueryStatistics(bool withReset=false);
 
     Network::PartitionManagerPtr getPartitionManager();
 

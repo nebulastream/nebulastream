@@ -57,6 +57,7 @@
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <fstream>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 
@@ -74,7 +75,8 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
-      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      rpcPort(this->coordinatorConfiguration->rpcPort),
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -227,6 +229,38 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     //healthCheckService->startHealthCheck();
     NES_DEBUG("NesCoordinator not starting health check until start health check endpoint is called.");
 
+    statisticOutputThread = std::make_shared<std::thread>(([this]() {
+        NES_DEBUG("NesWorker: start statistic collection");
+        std::ofstream statisticsFile;
+        statisticsFile.open("coordinator.csv", std::ios::out);
+        if (statisticsFile.is_open()) {
+            statisticsFile << "timestamp,";
+            statisticsFile << "queryId,";
+            statisticsFile << "subPlanId,";
+            statisticsFile << "processedTasks,";
+            statisticsFile << "processedTuple,";
+            statisticsFile << "processedBuffers,";
+            statisticsFile << "processedWatermarks,";
+            statisticsFile << "latencyAVG,";
+            statisticsFile << "queueSizeAVG,";
+            statisticsFile << "availableGlobalBufferAVG,";
+            statisticsFile << "availableFixedBufferAVG\n";
+            while (isRunning) {
+                auto ts = std::chrono::system_clock::now();
+                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                auto stats = worker->getNodeEngine()->getQueryStatistics(false);
+                for (auto& query : stats) {
+                    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                   << query.getQueryStatisticsAsString() << "\n";
+                    statisticsFile.flush();
+                }
+                sleep(1);
+            }
+        }
+        NES_DEBUG("NesWorker: statistic collection end");
+        statisticsFile.close();
+    }));
+
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -342,6 +376,11 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
+}
+
+std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(bool withReset) {
+    NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
+    return worker->getNodeEngine()->getQueryStatistics(withReset);
 }
 
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }

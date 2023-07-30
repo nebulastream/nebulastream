@@ -135,6 +135,13 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
+    * @brief method to return the query statistics
+    * @param id of the query
+    * @return vector of queryStatistics
+    */
+    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(bool withReset);
+
+    /**
      * @brief catalog method for debug use only
      * @return sourceCatalog
      */
@@ -255,6 +262,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
+    std::shared_ptr<std::thread> statisticOutputThread;
     LocationServicePtr locationService;
 
   public:
