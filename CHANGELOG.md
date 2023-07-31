@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.167](https://github.com/nebulastream/nebulastream/tree/v0.5.167) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.166...v0.5.167)
+
+**Implemented enhancements:**
+
+- \[TASK\] Use parameterized tests in MapQueryExecutionTest.cpp [\#3761](https://github.com/nebulastream/nebulastream/issues/3761)
+
 ## [v0.5.166](https://github.com/nebulastream/nebulastream/tree/v0.5.166) (2023-07-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.165...v0.5.166)
