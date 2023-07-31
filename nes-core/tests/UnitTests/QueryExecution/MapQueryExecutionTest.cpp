@@ -72,56 +72,23 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     double(*stdLogFunctions[])(double) = {std::log10, std::log2, std::log};*/
 
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                           "Log",
+                           "Abs",
                            std::vector<string>{"test$log10", "test$log2", "test$ln"},
                            std::vector<string>{"log10", "log2", "ln"});
                             /*logFunctions,
-                            stdLogFunctions);*/
+                             * stdLogFunctions);*/
     }
-    static auto creatAbsTestData(){
-    /*double(*absFunctions[])(double) = {ABS};
-    double(*stdAbsFunctions[])(double) = {std::fabs};*/
+    /*static auto creatAbsTestData(){
+    double(*absFunctions[])(double) = {ABS};
+    double(*stdAbsFunctions[])(double) = {std::fabs};
 
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                           "Abs",
                            std::vector<string>{"test$abs"},
-                           std::vector<string>{"abs"});
-                           /*absFunctions,
-                           stdAbsFunctions);*/
-    }
+                           std::vector<string>{"abs"},
+                           absFunctions,
+                           stdAbsFunctions);
+    }*/
 };
-
-static auto getFunc(std::string func, int input) {
-    int funcInt = 0;
-    if(func == "test$log10") {funcInt = 1;}
-    else if(func == "test$log2") {funcInt = 2;}
-    else if(func == "test$ln") {funcInt = 3;}
-    switch(funcInt) {
-        case 1:
-            return std::log10(input);
-        case 2:
-            return std::log2(input);
-        case 3:
-            return std::log(input);
-    }
-    return 0.0;
-}
-
-static auto getExp(std::string exp) {
-    int expInt = 0;
-    if(exp == "log10") {expInt = 1;}
-    else if(exp == "log2") {expInt = 2;}
-    else if(exp == "ln") {expInt = 3;}
-    switch(expInt) {
-        case 1:
-            return LOG10(Attribute("id"));
-        case 2:
-            return LOG2(Attribute("id"));
-        case 3:
-            return LN(Attribute("id"));
-    }
-    return EXP(Attribute("id"));
-}
 
 /*TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
@@ -354,11 +321,8 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
                             ->addField("test$id", BasicType::FLOAT64);
 
     auto resultArray = std::get<2>(GetParam());
-    if(resultArray.size() == 1){
-        resultSchema = Schema::create()
-                           ->addField("test$id", BasicType::FLOAT64)
-                           ->addField(resultArray[0], BasicType::FLOAT64);
-    } else if(resultArray.size() == 3){
+    auto resultLen = resultArray.size();
+    if(resultLen == 3){
         resultSchema = Schema::create()
                                 ->addField("test$id", BasicType::FLOAT64)
                                 ->addField(resultArray[0], BasicType::FLOAT64)
@@ -377,9 +341,9 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     //auto funcArray = std::get<4>(GetParam());
 
     auto query = TestQuery::from(testSourceDescriptor)
-                     .map(Attribute(queryArray[0]) = getExp(queryArray[0])) // vorerst so hardcoden schauen obs mit strings funktioniert
-                     .map(Attribute(queryArray[1]) = getExp(queryArray[1]))
-                     .map(Attribute(queryArray[2]) = getExp(queryArray[2]))
+                     .map(Attribute(queryArray[0]) = LOG10(Attribute("id"))) // vorerst so hardcoden schauen obs mit strings funktioniert
+                     .map(Attribute(queryArray[1]) = LOG2(Attribute("id")))
+                     .map(Attribute(queryArray[2]) = LN(Attribute("id")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -402,9 +366,9 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
     for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[0]].read<double>(), getFunc(resultArray[0], recordIndex));
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[1]].read<double>(), getFunc(resultArray[1], recordIndex));
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), getFunc(resultArray[2], recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex][resultArray[0]].read<double>(), std::log10(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex][resultArray[1]].read<double>(), std::log2(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), std::log(recordIndex));
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
@@ -413,7 +377,6 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
                         ::testing::Values(MapQueryExecutionTest::createLogTestData()
-                                          //MapQueryExecutionTest::creatAbsTestData()
                                           ),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
                             //return std::string(magic_enum::enum_name(info.param));
