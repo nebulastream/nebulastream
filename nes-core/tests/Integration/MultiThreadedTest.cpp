@@ -196,7 +196,6 @@ std::ostream& operator<<(std::ostream& os, const NonKeyedResultRecord& record) {
     return os;
 }
 
-
 struct KeyedResultRecord {
     uint64_t windowStart;
     uint64_t windowEnd;
@@ -278,7 +277,8 @@ TEST_P(MultiThreadedTest, testKeyedEventTimeWindowAggregation) {
                            .apply(Sum(Attribute("value")))
                            .sink(testSinkDescriptor);
     // Running the query
-    const auto resultRecords = runQuery<KeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+    const auto resultRecords =
+        runQuery<KeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
 
     // Checking for correctness
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
@@ -312,7 +312,8 @@ TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeWindows) {
                            .sink(testSinkDescriptor);
 
     // Running the query
-    const auto resultRecords = runQuery<NonKeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+    const auto resultRecords =
+        runQuery<NonKeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
@@ -333,15 +334,15 @@ TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
 
     const std::string fileNameBuffers("window.csv");
     const std::vector<KeyedResultRecord> expectedTuples = {{0, 2000, 1, 1},
-                                                      {0, 2000, 4, 1},
-                                                      {0, 2000, 12, 1},
-                                                      {2000, 4000, 11, 5},
-                                                      {2000, 4000, 1, 11},
-                                                      {2000, 4000, 16, 2},
-                                                      {4000, 6000, 1, 9},
-                                                      {6000, 8000, 1, 13},
-                                                      {8000, 10000, 1, 17},
-                                                      {10000, 12000, 1, 21}};
+                                                           {0, 2000, 4, 1},
+                                                           {0, 2000, 12, 1},
+                                                           {2000, 4000, 11, 5},
+                                                           {2000, 4000, 1, 11},
+                                                           {2000, 4000, 16, 2},
+                                                           {4000, 6000, 1, 9},
+                                                           {6000, 8000, 1, 13},
+                                                           {8000, 10000, 1, 17},
+                                                           {10000, 12000, 1, 21}};
 
     // Creating sink, source, and the query
     const auto testSink = executionEngine->createCollectSink<KeyedResultRecord>(outputSchema);
@@ -358,7 +359,8 @@ TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
                            .sink(testSinkDescriptor);
 
     // Running the query
-    const auto resultRecords = runQuery<KeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+    const auto resultRecords =
+        runQuery<KeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());

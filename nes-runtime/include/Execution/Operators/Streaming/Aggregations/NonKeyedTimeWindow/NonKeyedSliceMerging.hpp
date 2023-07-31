@@ -46,8 +46,9 @@ class NonKeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    Value<MemRef>
-    combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<UInt64>& endSliceTs) const;
+    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
+                                           Value<MemRef>& sliceMergeTask,
+                                           Value<UInt64>& endSliceTs) const;
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context

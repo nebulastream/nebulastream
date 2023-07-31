@@ -51,5 +51,4 @@ KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceM
 }
 KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 
-
 }// namespace NES::Runtime::Execution::Operators
