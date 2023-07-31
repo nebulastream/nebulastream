@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.170](https://github.com/nebulastream/nebulastream/tree/v0.5.170) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.169...v0.5.170)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Enable Multithreaded Window Tests [\#3966](https://github.com/nebulastream/nebulastream/issues/3966)
+
 ## [v0.5.169](https://github.com/nebulastream/nebulastream/tree/v0.5.169) (2023-07-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.168...v0.5.169)
