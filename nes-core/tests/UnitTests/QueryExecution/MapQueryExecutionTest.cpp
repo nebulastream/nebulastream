@@ -104,7 +104,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
     static auto createPowerTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                               "MapPowerFunction",
+                               "MapPowerFunctions",
                                std::vector<string>{"test$left$id", "test$right$id", "test$power"},
                                std::vector<string>{"left$id", "right$id", "power"},
                                1);
@@ -112,7 +112,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
 };
 
 static auto getExpression(const std::string expression) {  // Includes the names for the query
-    if (expression == "id") {  // MapQueryArithmetic
+    if (expression == "id") {  // MapLogarithmicFunctions
         return Attribute("id") * 2;
     } else if (expression == "log10") {  // MapLogarithmicFunctions
         return LOG10(Attribute("id"));
@@ -124,7 +124,7 @@ static auto getExpression(const std::string expression) {  // Includes the names
         return Attribute("test$id") * 2;
     } else if (expression == "test$new2") {
         return Attribute("test$id") + 2;
-    } else if (expression == "abs") {  // MapAbsFunction
+    } else if (expression == "abs") {  // MapAbsFunctions
         return ABS(Attribute("id"));
     } else if (expression == "sin") {  // MapTrigonometricFunctions
         return SIN(Attribute("id"));
@@ -132,14 +132,14 @@ static auto getExpression(const std::string expression) {  // Includes the names
         return COS(Attribute("id"));
     } else if (expression == "radians") {
         return RADIANS(Attribute("id"));
-    } else if (expression == "power") {  // MapPowerFunction
+    } else if (expression == "power") {  // MapPowerFunctions
         return POWER(Attribute("left$id"), Attribute("right$id"));
     } else {
         return EXP(Attribute("id"));
     }
 }
 static auto getFunction(const std::string function, int input) {  // Includes the names for the EXPECT_EQ statement
-    if (function == "test$one") {  // MapQueryArithmetic
+    if (function == "test$one") {  // MapLogarithmicFunctions
         return (double) input * 2;
     } else if (function == "test$log10") {  // MapLogarithmicFunctions
         return std::log10(input);
@@ -151,7 +151,7 @@ static auto getFunction(const std::string function, int input) {  // Includes th
         return (double) input * 2;
     } else if (function == "test$new2") {
         return (double) input + 2;
-    } else if (function == "test$abs") {  // MapAbsFunction
+    } else if (function == "test$abs") {  // MapAbsFunctions
         return std::fabs(input);
     } else if (function == "test$sin") {  // MapTrigonometricFunctions
         return std::sin(input);
@@ -159,7 +159,7 @@ static auto getFunction(const std::string function, int input) {  // Includes th
         return std::cos(input);
     } else if (function == "test$radians") {
         return (input * M_PI) / 180;
-    } else if (function == "test$power") {  // MapPowerFunction
+    } else if (function == "test$power") {  // MapPowerFunctions
         return std::pow(2 * input, input);
     } else {
         return 0.0;
@@ -230,7 +230,7 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
             EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
             EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
         }
-    } else if (testCase == "MapPowerFunction") {
+    } else if (testCase == "MapPowerFunctions") {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             inputBuffer[recordIndex]["test$left$id"].write<double>((double) 2 * sign * recordIndex);
             inputBuffer[recordIndex]["test$right$id"].write<double>((double) sign * recordIndex);
