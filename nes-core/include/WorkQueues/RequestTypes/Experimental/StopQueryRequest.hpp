@@ -18,6 +18,7 @@
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
+#include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 
 namespace NES::Optimizer {
 class TypeInferencePhase;
@@ -55,9 +56,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
-
-class StopQueryRequestExperimental;
-using StopQueryRequestPtr = std::shared_ptr<StopQueryRequestExperimental>;
 
 namespace Configurations {
 class CoordinatorConfiguration;
@@ -98,17 +96,30 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
      * @param coordinatorConfiguration The coordinator configuration
      */
-    StopQueryRequest(const RequestId requestId,
-                     const QueryId queryId,
-                     const size_t maxRetries,
+    StopQueryRequest(RequestId requestId,
+                     QueryId queryId,
+                     size_t maxRetries,
                      WorkerRPCClientPtr workerRpcClient,
                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                      std::promise<StopQueryResponse> responsePromise);
+    /**
+     * @brief creates a new Stop Query Request object
+     * @param queryId The id of the query that we want to stop
+     * @param maxRetries maximal number of retries to stop a query
+     * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
+     * @param coordinatorConfiguration The coordinator configuration
+     * @return a smart pointer to the newly created object
+     */
+    static StopQueryRequestPtr create(const RequestId requestId,
+                                      const QueryId queryId,
+                                      const size_t maxRetries,
+                                      WorkerRPCClientPtr workerRpcClient,
+                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                                      std::promise<StopQueryResponse> responsePromise);
 
     std::string toString();
 
   protected:
-
     /**
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
@@ -118,13 +129,13 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      * @throws QueryPlacementException if the query placement phase fails
      * @throws RequestExecutionException if resource acquisition fails
      */
-    void executeRequestLogic(StorageHandler& storageHandle) override;
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> executeRequestLogic(StorageHandler& storageHandle) override;
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
@@ -147,16 +158,7 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      */
     void postExecution(StorageHandler& storageHandler) override;
 
-    ~StopQueryRequest() override = default;
-
   private:
-    StopQueryRequest(RequestId requestId,
-                     QueryId queryId,
-                     size_t maxRetries,
-                     WorkerRPCClientPtr workerRpcClient,
-                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                     std::promise<StopQueryResponse> responsePromise);
-
     WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
