@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.169](https://github.com/nebulastream/nebulastream/tree/v0.5.169) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.168...v0.5.169)
+
+**Implemented enhancements:**
+
+- \[TASK\] Retrieve OpenCL device information in worker [\#3852](https://github.com/nebulastream/nebulastream/issues/3852)
+
 ## [v0.5.168](https://github.com/nebulastream/nebulastream/tree/v0.5.168) (2023-07-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.167...v0.5.168)
