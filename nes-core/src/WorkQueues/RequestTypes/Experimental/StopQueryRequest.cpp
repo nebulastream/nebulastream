@@ -71,8 +71,7 @@ StopQueryRequestPtr StopQueryRequest::create(const RequestId requestId,
                                               std::move(responsePromise));
 }
 
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>
-StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
+std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     NES_TRACE("Start Stop Request logic.");
     std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> failureRequests = {};
     try {
@@ -172,9 +171,8 @@ void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [
     NES_TRACE("Error: {}", ex.what());
 }
 
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>
-StopQueryRequest::rollBack(RequestExecutionException& ex, StorageHandler& storageHandler) {
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> failRequest;
+std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex, StorageHandler& storageHandler) {
+    std::vector<AbstractRequestPtr> failRequest;
     try {
         NES_TRACE("Error: {}", ex.what());
         if (ex.instanceOf<Exceptions::QueryPlacementException>()) {

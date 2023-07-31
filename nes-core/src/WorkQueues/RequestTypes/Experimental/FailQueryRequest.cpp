@@ -57,8 +57,8 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {
-    return std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>();
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {
+    return std::vector<AbstractRequestPtr>();
 }
 
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
@@ -68,7 +68,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES:
 
 void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
 
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
+std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle(requestId);
     queryCatalogService = storageHandle.getQueryCatalogServiceHandle(requestId);
