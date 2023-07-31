@@ -14,6 +14,7 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#include "Runtime/TupleBuffer.hpp"
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -604,8 +605,8 @@ template<typename T>
  * @param schemaSizeInByte
  * @return True if the buffers contain the same tuples
  */
-bool checkIfBuffersContainTheSameTuples(Runtime::MemoryLayouts::DynamicTupleBuffer buffer1, 
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer2, uint64_t schemaSizeInByte);
+bool 
+checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
  * @brief Check if a outputfile is created
@@ -684,7 +685,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  * @param bufferManager
  * @return merged TupleBuffer
  */
-Runtime::MemoryLayouts::DynamicTupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
                                   const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager);
 
