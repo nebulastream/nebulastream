@@ -33,6 +33,9 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <z3++.h>
+#include <iostream>
+#include <string>
+#include <cctype>
 
 namespace NES::Optimizer {
 
@@ -213,19 +216,86 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_DEBUG("ILPStrategy:model: {}", z3Model.to_string());
     NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
+    //get ID of watermark/window
+    /*
+    int watermarkOpID;
+    int windowOpID;
+    for (auto operatorNode : this->operatorMap){
+        if (operatorNode.second->toString().find("WINDOW") != std::string::npos){
+            NES_INFO("window found");
+            windowOpID = operatorNode.first;
+            NES_INFO("window op id is {}", windowOpID);
+        }
+        if (operatorNode.second->toString().find("WATERMARK") != std::string::npos){
+            NES_INFO("watermark found");
+            watermarkOpID = operatorNode.first;
+            NES_INFO("waterm op id is {}", watermarkOpID);
+        }
+    }
+    uint64_t watermarkTopologyNode = 0;
+    uint64_t windowTopologyNode = 0;
+    bool watermarkSet = false;
+    bool windowSet = false;*/
+
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
         if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
+
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
             LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
             TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
+            /*
+            if (!((windowSet || watermarkSet) && (watermarkTopologyNode > windowTopologyNode))){
+                NES_INFO("windowSet:{} and watermSet: {} and watermarkTNode: {} and windowTNode: {}", windowSet, watermarkSet, windowTopologyNode, watermarkTopologyNode);
+                NES_INFO("inside if with {}", operatorId);
+                if (watermarkSet) watermarkSet = !watermarkSet;
+                if (windowSet) windowSet = !windowSet;*/
 
             // collect the solution to operatorToTopologyNodeMap
             operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
         }
     }
+
+/*
+    for (auto elem : operatorToTopologyNodeMap){
+        if (int(elem.first->getId()) == watermarkOpID) {
+            if (elem.second->getId() <= windowTopologyNode) {
+ //               operatorToTopologyNodeMap.insert(std::make_pair(elem.first,));
+            }
+        }
+    }*/
+
+/*
+    int windowTopId;
+    for (auto const& [topologyID, P] : placementVariables) {
+        int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
+        int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+        if (operatorId == windowOpID && topologyNodeId > 2){
+            OperatorNodePtr operatorNode = operatorMap[operatorId];
+            TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
+            operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+            windowTopId = topologyNodeId;
+        }
+    }
+    for (auto const& [topologyID, P] : placementVariables) {
+        int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
+        int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+        if (operatorId == watermarkOpID && topologyNodeId < windowTopId && topologyNodeId > 1){
+            OperatorNodePtr operatorNode = operatorMap[operatorId];
+            TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
+            operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+        }
+
+    }*/
+
+/*
+    int sizeopTNM = operatorToTopologyNodeMap.size();
+    int sizeOM = operatorMap.size();
+    NES_INFO("size of optm {} and om {}", sizeopTNM, sizeOM);
+    */
+
 
     NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
     for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
@@ -283,6 +353,32 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<uint64_t, z3::expr>& nodeUtilizationMap,
                                  std::map<uint64_t, double>& nodeMileageMap) {
 
+    //get IDs of query operators
+    int watermarkOpId;
+    int windowOpId;
+    int sourceOpId;
+    int sinkOpId;
+    for (auto operatorNode : operatorNodePath){
+        NES_INFO("current operator node is: {}", operatorNode->toString());
+
+        if (operatorNode->toString().find("SINK") != std::string::npos){
+            sinkOpId = extractId(operatorNode);
+            NES_INFO("operator ID of sink is {}", sinkOpId);
+        }
+        if (operatorNode->toString().find("WATERMARK") != std::string::npos){
+            watermarkOpId = extractId(operatorNode);
+            NES_INFO("operator ID of watermark is {}", watermarkOpId);
+        }
+        if (operatorNode->toString().find("WINDOW") != std::string::npos){
+            windowOpId = extractId(operatorNode);
+            NES_INFO("operator ID of window is {}", windowOpId);
+        }
+        if (operatorNode->toString().find("SOURCE") != std::string::npos){
+            sourceOpId = extractId(operatorNode);
+            NES_INFO("operator ID of source is {}", sourceOpId);
+        }
+    }
+
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
@@ -307,6 +403,8 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
         // Fill the placement variable, utilization, and distance map
         auto sum_i = z3Context->int_val(0);
         auto D_i = z3Context->int_val(0);
+        NES_INFO("path size beträgt{}", topologyNodePath.size());
+        NES_INFO("IDs for source, sink, waterm, window:  {} {} {} {}", sourceOpId, sinkOpId, watermarkOpId, windowOpId);
         for (uint64_t j = 0; j < topologyNodePath.size(); j++) {
             TopologyNodePtr topologyNode = topologyNodePath[j]->as<TopologyNode>();
             uint64_t topologyID = topologyNode->getId();
@@ -320,7 +418,26 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
                 opt.add(P_IJ == 0 || P_IJ == 1);
             }
-            placementVariable.insert(std::make_pair(variableID, P_IJ));
+
+            NES_INFO("placement of variables with variableID = {} and topologyID = {} and operatorID={} and in {}.loop", variableID, topologyID, operatorID, j+1);
+            uint64_t lastIndex = topologyNodePath.size() - 1;
+            if (int(operatorID) == sourceOpId && (j == 0)){
+                placementVariable.insert(std::make_pair(variableID, P_IJ));
+                NES_INFO("in source-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+            }
+            if (int(operatorID) == watermarkOpId && (j == 0 || j == 1)){
+                placementVariable.insert(std::make_pair(variableID, P_IJ));
+                NES_INFO("in watermark-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+            }
+            if (int(operatorID) == windowOpId && (j == 1 || j == 2)){
+                placementVariable.insert(std::make_pair(variableID, P_IJ));
+                NES_INFO("in window-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+            }
+            if (int(operatorID) == sinkOpId && j == 2){
+                placementVariable.insert(std::make_pair(variableID, P_IJ));
+                NES_INFO("in sink-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+            }
+            //placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
 
             // add to node utilization
@@ -347,6 +464,38 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
         operatorDistanceMap.insert(std::make_pair(operatorID, D_i));
         // add constraint that operator is placed exactly once on topology path
         opt.add(sum_i == 1);
+    }
+    for (auto elem : placementVariable){
+        NES_INFO("placement variables: {}", elem.second.to_string());
+    }
+}
+
+int ILPStrategy::extractId(const NodePtr& operatorNode) {
+    const std::string& str = operatorNode->toString();
+    NES_INFO("Inside extractId method the operator Node looks like this: {}", str);
+    bool foundOpenParenthesis = false;
+    std::string numberString;
+
+    for (char c : str) {
+    if (c == '(') {
+        if (!foundOpenParenthesis) {
+            foundOpenParenthesis = true;
+        } else {
+            break; // Ignore numbers after the first open parenthesis
+        }
+    } else if (foundOpenParenthesis && std::isdigit(c)) {
+        numberString += c;
+        NES_INFO("Inside extractId method the number that was found looks like this: {}", numberString);
+    } else if (foundOpenParenthesis && !std::isspace(c)) {
+        break; // Stop extracting if a non-space character is encountered after the number
+    }
+    }
+    try {
+        NES_INFO("just before return {}", std::stoi(numberString));
+        return std::stoi(numberString); // Convert the extracted string to an integer
+    } catch (std::exception&) {
+    // Handle invalid number extraction, e.g., if no number was found or the number is out of range
+        return -1; // Return a sentinel value to indicate failure
     }
 }
 
