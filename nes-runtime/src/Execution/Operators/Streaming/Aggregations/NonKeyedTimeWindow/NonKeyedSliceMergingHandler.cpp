@@ -51,5 +51,4 @@ const State* NonKeyedSliceMergingHandler::getDefaultState() const { return defau
 
 NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() { NES_DEBUG("Destruct NonKeyedSliceMergingHandler"); }
 
-
 }// namespace NES::Runtime::Execution::Operators

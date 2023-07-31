@@ -37,7 +37,7 @@ void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
 void triggerThreadLocalStateProxy(void* op,
                                   void* wctx,
                                   void* pctx,
-                                  uint64_t ,
+                                  uint64_t,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t watermarkTs) {

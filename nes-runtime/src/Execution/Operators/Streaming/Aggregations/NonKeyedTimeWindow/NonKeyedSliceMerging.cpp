@@ -118,7 +118,6 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
 
     // emit global slice when we have a tumbling window.
     emitWindow(ctx, startSliceTs, endSliceTs, sequenceNumber, globalSliceState);
-
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,

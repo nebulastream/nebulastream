@@ -33,8 +33,6 @@ NonKeyedSlice::NonKeyedSlice(uint64_t entrySize, uint64_t start, uint64_t end, c
     : start(start), end(end), state(std::make_unique<State>(entrySize)) {
     std::memcpy(state->ptr, defaultState->ptr, entrySize);
 }
-NonKeyedSlice::~NonKeyedSlice() {
-    NES_DEBUG("~NonKeyedSlice {}-{}", start, end);
-}
+NonKeyedSlice::~NonKeyedSlice() { NES_DEBUG("~NonKeyedSlice {}-{}", start, end); }
 
 }// namespace NES::Runtime::Execution::Operators
