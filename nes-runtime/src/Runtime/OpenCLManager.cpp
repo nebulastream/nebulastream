@@ -14,10 +14,10 @@
 
 #include <Runtime/OpenCLManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <regex>
 
 namespace NES::Runtime {
 
@@ -133,7 +133,8 @@ bool retrieveOpenCLDoubleFPSupport(const cl_device_id deviceId) {
         auto major = std::stoi(regexMatch[1]);
         auto minor = std::stoi(regexMatch[2]);
         if (major == 1 && (minor == 0 || minor == 1 || minor == 2)) {
-            expectedBits = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM;
+            expectedBits =
+                CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM;
         } else if (major >= 2) {
             expectedBits = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN | CL_FP_DENORM;
         } else {
@@ -192,20 +193,20 @@ OpenCLManager::OpenCLManager() {
                 auto doubleFPSupport = retrieveOpenCLDoubleFPSupport(device);
                 auto maxWorkItems = retrieveOpenCLMaxWorkItems(device);
                 auto deviceType = retrieveOpenCLDeviceType(device);
-                NES_INFO(
-                    "Found OpenCL device: [platformVendor={}, platformName={}, deviceName={}, doubleFPSupport={}, "
-                    "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, availableProcessors={}]",
-                    platformVendor,
-                    platformName,
-                    deviceName,
-                    doubleFPSupport,
-                    maxWorkItems[0],
-                    maxWorkItems[1],
-                    maxWorkItems[2],
-                    deviceAddressBits,
-                    deviceType,
-                    deviceExtensions,
-                    availableProcessors);
+                NES_INFO("Found OpenCL device: [platformVendor={}, platformName={}, deviceName={}, doubleFPSupport={}, "
+                         "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, "
+                         "availableProcessors={}]",
+                         platformVendor,
+                         platformName,
+                         deviceName,
+                         doubleFPSupport,
+                         maxWorkItems[0],
+                         maxWorkItems[1],
+                         maxWorkItems[2],
+                         deviceAddressBits,
+                         deviceType,
+                         deviceExtensions,
+                         availableProcessors);
                 this->devices.emplace_back(platformId,
                                            device,
                                            platformVendor,
@@ -223,12 +224,10 @@ OpenCLManager::OpenCLManager() {
         NES_ERROR("{}: {}", e.what(), e.status());
     }
 }
-#else  // ENABLE_OPENCL
+#else // ENABLE_OPENCL
 // Define an (almost) empty constructor for OpenCLManager.
 // This will leave OpenCLManager::devices as an empty vector, indicating that there are no installed OpenCL devices.
-OpenCLManager::OpenCLManager() {
-    NES_DEBUG("OpenCL support was disabled at build time");
-}
-#endif // ENABLE_OPENCL
+OpenCLManager::OpenCLManager() { NES_DEBUG("OpenCL support was disabled at build time"); }
+#endif// ENABLE_OPENCL
 
 }// namespace NES::Runtime

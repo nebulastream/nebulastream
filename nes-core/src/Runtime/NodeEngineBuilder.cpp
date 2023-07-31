@@ -27,8 +27,8 @@
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/OpenCLManager.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

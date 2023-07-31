@@ -58,8 +58,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
-      materializedViewManager(std::move(materializedViewManager)), openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
-      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      materializedViewManager(std::move(materializedViewManager)), openCLManager(std::move(openCLManager)),
+      nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 
