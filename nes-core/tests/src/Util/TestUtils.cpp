@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/TupleBuffer.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -404,37 +404,15 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     return false;
 }
 
-
-// Todo: refactor with dynamicTupleBuffer
-bool checkIfBuffersContainTheSameTuples(Runtime::MemoryLayouts::DynamicTupleBuffer buffer1, Runtime::MemoryLayouts::DynamicTupleBuffer buffer2, uint64_t schemaSizeInByte) {
-    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
+// Todo: 
+bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte) {
+    NES_DEBUG("Checking if the buffers contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_DEBUG("Buffers do not contain exactly the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
     std::set<uint64_t> sameTupleIndices;
-    // Iterate over the tuples in the first buffer
-    for (uint32_t bufferIndex1 = 0UL; bufferIndex1 < buffer1.getNumberOfTuples(); ++bufferIndex1) {
-        // EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
-        auto tup1 = buffer1.readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(bufferIndex1);
-        bool indexFoundInBuffer2 = false;
-        for (uint32_t bufferIndex2 = 0UL; bufferIndex2 < buffer2.getNumberOfTuples(); ++bufferIndex2) {
-            if(!sameTupleIndices.contains(bufferIndex2)) { 
-                auto tup2 = buffer2.readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(bufferIndex2);
-                if(tup1 == tup2) {
-                    sameTupleIndices.emplace(bufferIndex2);
-                    indexFoundInBuffer2 = true;
-                }
-            }
-        }
-        if (!indexFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
-                      bufferIndex1);
-            return false;
-        }
-    }
-    
     for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
         bool idxFoundInBuffer2 = false;
         for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
@@ -724,7 +702,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
     return result;
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
                                   const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager) {
 
@@ -737,7 +715,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer mergeBuffers(std::vector<Runtime::Tup
         cnt += buffer.getNumberOfTuples();
         if (cnt > maxPossibleTuples) {
             NES_WARNING("Too many tuples to fit in a single buffer.");
-            return Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(retBuffer, schema);
+            return retBuffer;
         }
 
         auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
@@ -746,9 +724,8 @@ Runtime::MemoryLayouts::DynamicTupleBuffer mergeBuffers(std::vector<Runtime::Tup
         retBufferPtr += bufferSize;
         retBuffer.setNumberOfTuples(cnt);
     }
-    
-    //Todo: change roder
-    return Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(retBuffer, schema);
+
+    return retBuffer;
     // return Runtime::MemoryLayouts::DynamicTupleBuffer(schema, retBuffer);
 }
 
