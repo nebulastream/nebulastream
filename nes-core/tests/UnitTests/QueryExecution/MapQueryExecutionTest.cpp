@@ -70,35 +70,35 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     static auto createMapQueryArithmeticTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "MapQueryArithmetic",
-                               std::vector<string>{"test$id", "test$one"},
+                               std::vector<string>{"test$one"},
                                std::vector<string>{"id"},
                                1);
     }
     static auto createLogTestData(){
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                            "MapLogarithmicFunctions",
-                           std::vector<string>{"test$id", "test$log10", "test$log2", "test$ln"},
+                           std::vector<string>{"test$log10", "test$log2", "test$ln"},
                            std::vector<string>{"log10", "log2", "ln"},
                            1);
     }
     static auto createTwoMapQueryTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "TwoMapQuery",
-                               std::vector<string>{"test$id", "test$new1", "test$new2"},
+                               std::vector<string>{"test$new1", "test$new2"},
                                std::vector<string>{"test$new1", "test$new2"},
                                1);
     }
     static auto createAbsTestData(){
     return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                            "MapAbsFunction",
-                           std::vector<string>{"test$id", "test$abs"},
+                           std::vector<string>{"test$abs"},
                            std::vector<string>{"abs"},
                            -1);
     }
     static auto createTrigTestData(){
         return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
                                "MapTrigonometricFunctions",
-                               std::vector<string>{"test$id", "test$sin", "test$cos", "test$radians"},
+                               std::vector<string>{"test$sin", "test$cos", "test$radians"},
                                std::vector<string>{"sin", "cos", "radians"},
                                1);
     }
@@ -111,55 +111,55 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 };
 
-static auto getExpression(const std::string expression) {  // Includes the names for the query
-    if (expression == "id") {  // MapLogarithmicFunctions
+static auto getExp(std::string exp) {  // Includes the names for the query
+    if (exp == "id") {  // MapLogarithmicFunctions
         return Attribute("id") * 2;
-    } else if (expression == "log10") {  // MapLogarithmicFunctions
+    } else if (exp == "log10") {  // MapLogarithmicFunctions
         return LOG10(Attribute("id"));
-    } else if (expression == "log2") {
+    } else if (exp == "log2") {
         return LOG2(Attribute("id"));
-    } else if (expression == "ln") {
+    } else if (exp == "ln") {
         return LN(Attribute("id"));
-    } else if (expression == "test$new1") {  // TwoMapQuery
+    } else if (exp == "test$new1") {  // TwoMapQuery
         return Attribute("test$id") * 2;
-    } else if (expression == "test$new2") {
+    } else if (exp == "test$new2") {
         return Attribute("test$id") + 2;
-    } else if (expression == "abs") {  // MapAbsFunctions
+    } else if (exp == "abs") {  // MapAbsFunctions
         return ABS(Attribute("id"));
-    } else if (expression == "sin") {  // MapTrigonometricFunctions
+    } else if (exp == "sin") {  // MapTrigonometricFunctions
         return SIN(Attribute("id"));
-    } else if (expression == "cos") {
+    } else if (exp == "cos") {
         return COS(Attribute("id"));
-    } else if (expression == "radians") {
+    } else if (exp == "radians") {
         return RADIANS(Attribute("id"));
-    } else if (expression == "power") {  // MapPowerFunctions
+    } else if (exp == "power") {  // MapPowerFunctions
         return POWER(Attribute("left$id"), Attribute("right$id"));
     } else {
         return EXP(Attribute("id"));
     }
 }
-static auto getFunction(const std::string function, int input) {  // Includes the names for the EXPECT_EQ statement
-    if (function == "test$one") {  // MapLogarithmicFunctions
+static auto getFunc(std::string func, int input) {  // Includes the names for the EXPECT_EQ statement
+    if (func == "test$one") {  // MapLogarithmicFunctions
         return (double) input * 2;
-    } else if (function == "test$log10") {  // MapLogarithmicFunctions
+    } else if (func == "test$log10") {  // MapLogarithmicFunctions
         return std::log10(input);
-    } else if (function == "test$log2") {
+    } else if (func == "test$log2") {
         return std::log2(input);
-    } else if (function == "test$ln") {
+    } else if (func == "test$ln") {
         return std::log(input);
-    } else if (function == "test$new1") {  // TwoMapQuery
+    } else if (func == "test$new1") {  // TwoMapQuery
         return (double) input * 2;
-    } else if (function == "test$new2") {
+    } else if (func == "test$new2") {
         return (double) input + 2;
-    } else if (function == "test$abs") {  // MapAbsFunctions
+    } else if (func == "test$abs") {  // MapAbsFunctions
         return std::fabs(input);
-    } else if (function == "test$sin") {  // MapTrigonometricFunctions
+    } else if (func == "test$sin") {  // MapTrigonometricFunctions
         return std::sin(input);
-    } else if (function == "test$cos") {
+    } else if (func == "test$cos") {
         return std::cos(input);
-    } else if (function == "test$radians") {
+    } else if (func == "test$radians") {
         return (input * M_PI) / 180;
-    } else if (function == "test$power") {  // MapPowerFunctions
+    } else if (func == "test$power") {  // MapPowerFunctions
         return std::pow(2 * input, input);
     } else {
         return 0.0;
@@ -167,11 +167,11 @@ static auto getFunction(const std::string function, int input) {  // Includes th
 }
 
 
-TEST_P(MapQueryExecutionTest, MapAllFunctions) {
+TEST_P(MapQueryExecutionTest, AllFunctions) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
 
     auto resultArray = std::get<2>(GetParam());
-    if (resultArray[1] == "test$one") {  // for MapQueryArithmetic
+    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
          schema = Schema::create()
                           ->addField("test$id", BasicType::INT64)
                           ->addField("test$one", BasicType::INT64);
@@ -182,27 +182,53 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
     }
 
     auto resultSchema = Schema::create()
-                            ->addField(resultArray[0], BasicType::FLOAT64);
-    for(uint32_t index = 1; index < resultArray.size(); index++) {
-        resultSchema = resultSchema->addField(resultArray[index], BasicType::FLOAT64);
+                            ->addField("test$id", BasicType::FLOAT64);
+    if (resultArray.size() == 1) {
+        resultSchema = Schema::create()
+                           ->addField("test$id", BasicType::FLOAT64)
+                           ->addField(resultArray[0], BasicType::FLOAT64);
+    } else if (resultArray.size() == 2) {
+        resultSchema = Schema::create()
+                           ->addField("test$id", BasicType::FLOAT64)
+                           ->addField(resultArray[0], BasicType::FLOAT64)
+                           ->addField(resultArray[1], BasicType::FLOAT64);
+    } else if (resultArray.size() == 3 && resultArray[0] != "test$left$id") {
+        resultSchema = Schema::create()
+                                ->addField("test$id", BasicType::FLOAT64)
+                                ->addField(resultArray[0], BasicType::FLOAT64)
+                                ->addField(resultArray[1], BasicType::FLOAT64)
+                                ->addField(resultArray[2], BasicType::FLOAT64);
+    } else if(resultArray.size() == 3 && resultArray[0] == "test$left$id") {
+        resultSchema = Schema::create()
+                                ->addField(resultArray[0], BasicType::FLOAT64)
+                                ->addField(resultArray[1], BasicType::FLOAT64)
+                                ->addField(resultArray[2], BasicType::FLOAT64);
     }
 
     auto testSink = executionEngine->createDataSink(resultSchema);
-    if (resultArray[1] == "test$one") { testSink = executionEngine->createDataSink(schema);} // for MapQueryArithmetic
+    if (resultArray[0] == "test$one") { testSink = executionEngine->createDataSink(schema);} // for MapQueryArithmetic
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto queryArray = std::get<3>(GetParam());
-    auto query = TestQuery::from(testSourceDescriptor);
-    for (uint32_t index = 0; index < queryArray.size(); index++) {
-        query = query.map(Attribute(queryArray[index]) = getExpression(queryArray[index]));
-    }
-    query = query.sink(testSinkDescriptor);
-
-    if (queryArray[0] == "left$id") {
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
+                     .sink(testSinkDescriptor);
+    if (queryArray.size() == 2) {
         query = TestQuery::from(testSourceDescriptor)
-                    .map(Attribute(queryArray[2]) = getExpression(queryArray[2]))
+                    .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
+                    .map(Attribute(queryArray[1]) = getExp(queryArray[1]))
+                    .sink(testSinkDescriptor);
+    } else if (queryArray.size() == 3  && queryArray[0] != "left$id") {
+        query = TestQuery::from(testSourceDescriptor)
+                         .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
+                         .map(Attribute(queryArray[1]) = getExp(queryArray[1]))
+                         .map(Attribute(queryArray[2]) = getExp(queryArray[2]))
+                         .sink(testSinkDescriptor);
+    } else if (queryArray.size() == 3  && queryArray[0] == "left$id") {
+        query = TestQuery::from(testSourceDescriptor)
+                    .map(Attribute(queryArray[2]) = getExp(queryArray[2]))
                     .sink(testSinkDescriptor);
     }
 
@@ -211,62 +237,42 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
     ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer =  executionEngine->getBuffer(schema);
-
-    string testCase = std::get<1>(GetParam());
     int sign = std::get<4>(GetParam());
-    if (testCase == "MapQueryArithmetic") {
+    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
         fillBuffer(inputBuffer);
-
-        source->emitBuffer(inputBuffer);
-        testSink->waitTillCompleted();
-
-        // compare results
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-        auto resultBuffer = testSink->getResultBuffer(0);
-
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-            EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
-            EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
-        }
-    } else if (testCase == "MapPowerFunctions") {
+    } else if (resultArray[0] == "test$left$id") {  // for MapPowerFunction
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             inputBuffer[recordIndex]["test$left$id"].write<double>((double) 2 * sign * recordIndex);
             inputBuffer[recordIndex]["test$right$id"].write<double>((double) sign * recordIndex);
         }
         inputBuffer.setNumberOfTuples(10);
-
-        source->emitBuffer(inputBuffer);
-        testSink->waitTillCompleted();
-
-        // compare results
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-        auto resultBuffer = testSink->getResultBuffer(0);
-
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-            EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), getFunction(resultArray[2], sign * recordIndex));
-        }
     } else {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             inputBuffer[recordIndex][0].write<double>((double) sign * recordIndex);
         }
         inputBuffer.setNumberOfTuples(10);
+    }
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
 
-        source->emitBuffer(inputBuffer);
-        testSink->waitTillCompleted();
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
 
-        // compare results
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-        auto resultBuffer = testSink->getResultBuffer(0);
-
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
         for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-            for (uint32_t index = 1; index < resultArray.size(); index++) {
-                EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(), getFunction(resultArray[index],sign * recordIndex));
+            EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
+            EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
+        }
+    } else if (resultArray[0] == "test$left$id") {
+        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+            EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), getFunc(resultArray[2], sign * recordIndex));
+        }
+    } else {
+        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+            for (uint32_t index = 0; index < resultArray.size(); index++) {
+                EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(), getFunc(resultArray[index],sign * recordIndex));
             }
         }
     }
