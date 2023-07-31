@@ -79,7 +79,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     }
 }
 
-bool QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
+void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
                                        const std::vector<ExecutionNodePtr>& executionNodes,
                                        SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", sharedQueryId);

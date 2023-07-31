@@ -20,7 +20,6 @@
 #include <utility>
 
 namespace NES {
-static constexpr RequestId INVALID_REQUEST_ID = 0;
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                                                              TopologyPtr topology,
                                                              QueryCatalogServicePtr queryCatalogService,

@@ -57,7 +57,9 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) {}
+std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {
+    return std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>();
+}
 
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 
@@ -66,7 +68,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES:
 
 void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
 
-void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
+std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle(requestId);
     queryCatalogService = storageHandle.getQueryCatalogServiceHandle(requestId);
@@ -77,7 +79,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
                                                  + " in the global query plan");
     }
 
-    //respond to the calling service which is the shared query id o the query being undeployed
+    //respond to the calling service which is the shared query id of the query being undeployed
     FailQueryResponse response{};
     response.sharedQueryId = sharedQueryId;
     responsePromise.set_value(response);
@@ -99,6 +101,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
-    //todo: remove failed shared query plan from global query plan
+    //todo: #3727 return correct requests
+    return {};
 }
 }// namespace NES::Experimental

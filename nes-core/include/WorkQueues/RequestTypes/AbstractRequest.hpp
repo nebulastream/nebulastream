@@ -58,7 +58,7 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
  * }
  */
 template<ConceptResponse ResponseType>
-class AbstractRequest {
+class AbstractRequest : public std::enable_shared_from_this<AbstractRequest<ResponseType>> {
   public:
     /**
      * @brief constructor
@@ -77,21 +77,22 @@ class AbstractRequest {
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    void execute(StorageHandler& storageHandle);
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> execute(StorageHandler& storageHandle);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    virtual void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
+     * @return A list of requests that should be called because of failure
      */
-    void handleError(const RequestExecutionException& ex, StorageHandler& storageHandle);
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> handleError(RequestExecutionException& ex, StorageHandler& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -104,6 +105,32 @@ class AbstractRequest {
      * @brief destructor
      */
     virtual ~AbstractRequest() = default;
+
+    /**
+     * @brief Checks if this object is of type AbstractRequest
+     * @tparam RequestType: a subclass ob AbstractRequest
+     * @return bool true if object is of type AbstractRequest
+     */
+    template<class RequestType>
+    bool instanceOf() {
+        if (dynamic_cast<RequestType*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+    * @brief Dynamically casts the exception to the given type
+    * @tparam RequestType: a subclass ob AbstractRequest
+    * @return returns a shared pointer of the given type
+    */
+    template<class RequestType>
+    std::shared_ptr<RequestType> as() {
+        if (instanceOf<RequestType>()) {
+            return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
+        }
+        throw std::logic_error("Exception:: we performed an invalid cast of exception");
+    }
 
   protected:
     /**
@@ -138,7 +165,7 @@ class AbstractRequest {
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    virtual void executeRequestLogic(StorageHandler& storageHandle) = 0;
+    virtual std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> executeRequestLogic(StorageHandler& storageHandle) = 0;
 
   protected:
     RequestId requestId;
@@ -159,15 +186,20 @@ AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
       requiredResources(requiredResources) {}
 
 template<ConceptResponse ResponseType>
-void AbstractRequest<ResponseType>::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
+std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> AbstractRequest<ResponseType>::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> remainingRequests = {};
+
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 
     //roll back the changes made by the failed request
-    rollBack(ex, storageHandle);
+    auto requests = rollBack(ex, storageHandle);
+    remainingRequests.insert(remainingRequests.end(), requests.begin(), requests.end());
 
     //error handling to be performed after rolling back
     postRollbackHandle(ex, storageHandle);
+
+    return remainingRequests;
 }
 
 template<ConceptResponse ResponseType>
@@ -176,15 +208,19 @@ bool AbstractRequest<ResponseType>::retry() {
 }
 
 template<ConceptResponse ResponseType>
-void AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
+std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
+    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> remainingRequests = {};
+
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);
 
     //execute the request logic
-    executeRequestLogic(storageHandle);
+    auto requests = executeRequestLogic(storageHandle);
+    remainingRequests.insert(remainingRequests.end(), requests.begin(), requests.end());
 
     //release locks
     postExecution(storageHandle);
+    return remainingRequests;
 }
 
 template<ConceptResponse ResponseType>

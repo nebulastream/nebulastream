@@ -55,7 +55,6 @@ class RequestExecutionException : public std::enable_shared_from_this<RequestExe
             return std::dynamic_pointer_cast<ExceptionType>(this->shared_from_this());
         }
         throw std::logic_error("Exception:: we performed an invalid cast of exception");
-        return nullptr;
     }
 
     QueryId getQueryId() const;
