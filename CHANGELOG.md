@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.168](https://github.com/nebulastream/nebulastream/tree/v0.5.168) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.167...v0.5.168)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor Java UDF and JNI integration [\#3974](https://github.com/nebulastream/nebulastream/issues/3974)
+
 ## [v0.5.167](https://github.com/nebulastream/nebulastream/tree/v0.5.167) (2023-07-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.166...v0.5.167)
@@ -38,10 +46,6 @@
 ## [v0.5.163](https://github.com/nebulastream/nebulastream/tree/v0.5.163) (2023-07-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.162...v0.5.163)
-
-**Implemented enhancements:**
-
-- \[TASK\] Refactor Java UDF and JNI integration [\#3974](https://github.com/nebulastream/nebulastream/issues/3974)
 
 ## [v0.5.162](https://github.com/nebulastream/nebulastream/tree/v0.5.162) (2023-07-26)
 
