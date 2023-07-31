@@ -147,14 +147,14 @@ bool retrieveOpenCLDoubleFPSupport(const cl_device_id deviceId) {
 
 // Special function to retrieve information about the maximum work group size.
 // Assumes and enforces that the OpenCL ND range has 3 dimensions.
-std::array<size_t, 3> retrieveOpenCLMaxWorkItems(const cl_device_id deviceId) {
+std::array<size_t, OpenCLDeviceInfo::GRID_DIMENSIONS> retrieveOpenCLMaxWorkItems(const cl_device_id deviceId) {
     auto dimensions = retrieveOpenCLDeviceInfo<cl_uint, unsigned>(deviceId,
                                                                   CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
                                                                   "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS");
-    if (dimensions != 3) {
+    if (dimensions != OpenCLDeviceInfo::GRID_DIMENSIONS) {
         throw OpenCLInitializationException("Only three work item dimensions are supported", dimensions);
     }
-    std::array<size_t, 3> maxWorkItems;
+    std::array<size_t, OpenCLDeviceInfo::GRID_DIMENSIONS> maxWorkItems;
     cl_uint status = clGetDeviceInfo(deviceId, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(maxWorkItems), maxWorkItems.data(), nullptr);
     ASSERT_OPENCL_SUCCESS(status, "Could not get CL_DEVICE_MAX_WORK_ITEM_SIZES information");
     return maxWorkItems;
