@@ -14,6 +14,7 @@
 // clang-format: off
 // clang-format: on
 #include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <NesBaseTest.hpp>
@@ -68,7 +69,9 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
 };
 
 TEST_P(UnionQueryExecutionTest, unionOperatorFailing) {
-    auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
+    auto schema = Schema::create()
+            ->addField("test$id", BasicType::INT64)
+            ->addField("test$one", BasicType::INT64);
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
     auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
     auto testSink = executionEngine->createDataSink(schema, 2);
@@ -77,7 +80,6 @@ TEST_P(UnionQueryExecutionTest, unionOperatorFailing) {
 
     Query query = TestQuery::from(testSourceDescriptor1)
                       .unionWith(TestQuery::from(testSourceDescriptor2))
-                    //   .filter(Attribute("test$id") >= 0)
                       .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -98,19 +100,12 @@ TEST_P(UnionQueryExecutionTest, unionOperatorFailing) {
     testSink->waitTillCompleted();
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2u);
 
-    // Todo: check if merging actually works correctly
-    // auto resultBuffer = 
-    //     TestUtils::mergeBuffers(testSink->resultBuffers, schema, executionEngine->getBufferManager());
-    // auto layout = NES::Runtime::MemoryLayouts::ColumnLayout::create(schema, executionEngine->getBufferManager()->getBufferSize());
-    // auto dynamicResultBuffer = *std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(layout, resultBuffer);
-
-    auto resultBuffer1 = testSink->getResultBuffer(0);
-    auto resultBuffer2 = testSink->getResultBuffer(1);
-    EXPECT_EQ(resultBuffer1.getNumberOfTuples(), 10u);
-    EXPECT_EQ(resultBuffer2.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer1[recordIndex][0].read<int64_t>(), recordIndex);
-        EXPECT_EQ(resultBuffer2[recordIndex][0].read<int64_t>(), recordIndex);
+    // Merge the result buffers, create 
+    auto resultBuffer = 
+        TestUtils::mergeBuffers(testSink->resultBuffers, schema, executionEngine->getBufferManager());
+    for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
+        NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
