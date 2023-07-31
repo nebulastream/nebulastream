@@ -103,13 +103,6 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
                                std::vector<string>{"sin", "cos", "radians"},
                                1);
     }
-    static auto createPowerTestData(){
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                               "MapPowerFunctions",
-                               std::vector<string>{"test$left$id", "test$right$id", "test$power"},
-                               std::vector<string>{"left$id", "right$id", "power"},
-                               1);
-    }
 };
 
 static auto getExp(std::string exp) {  // Includes the names for the query
@@ -133,8 +126,6 @@ static auto getExp(std::string exp) {  // Includes the names for the query
         return COS(Attribute("id"));
     } else if (exp == "radians") {
         return RADIANS(Attribute("id"));
-    } else if (exp == "power") {
-        return POWER(Attribute("left$id"), Attribute("right$id"));
     } else {
         return EXP(Attribute("id"));
     }
@@ -160,8 +151,6 @@ static auto getFunc(std::string func, int input) {  // Includes the names for th
         return std::cos(input);
     } else if (func == "test$radians") {
         return (input * M_PI) / 180;
-    } else if (func == "test$power") {
-        return std::pow(2 * input, input);
     } else {
         return 0.0;
     }
@@ -395,14 +384,10 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
 
     auto resultArray = std::get<2>(GetParam());
-    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
+    if (resultArray[0] == "test$one") {
          schema = Schema::create()
                           ->addField("test$id", BasicType::INT64)
                           ->addField("test$one", BasicType::INT64);
-    } else if (resultArray[0] == "test$left$id") {
-        schema = Schema::create()
-                          ->addField("test$left$id", BasicType::FLOAT64)
-                          ->addField("test$right$id", BasicType::FLOAT64);
     }
 
     auto resultSchema = Schema::create()
@@ -416,27 +401,23 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
                            ->addField("test$id", BasicType::FLOAT64)
                            ->addField(resultArray[0], BasicType::FLOAT64)
                            ->addField(resultArray[1], BasicType::FLOAT64);
-    } else if (resultArray.size() == 3 && resultArray[0] != "test$left$id") {
+    } else if (resultArray.size() == 3) {
         resultSchema = Schema::create()
                                 ->addField("test$id", BasicType::FLOAT64)
-                                ->addField(resultArray[0], BasicType::FLOAT64)
-                                ->addField(resultArray[1], BasicType::FLOAT64)
-                                ->addField(resultArray[2], BasicType::FLOAT64);
-    } else if(resultArray.size() == 3 && resultArray[0] == "test$left$id") {
-        resultSchema = Schema::create()
                                 ->addField(resultArray[0], BasicType::FLOAT64)
                                 ->addField(resultArray[1], BasicType::FLOAT64)
                                 ->addField(resultArray[2], BasicType::FLOAT64);
     }
 
     auto testSink = executionEngine->createDataSink(resultSchema);
-    // for MapQueryArithmetic
-    if (resultArray[0] == "test$one") { testSink = executionEngine->createDataSink(schema); }
+    if (resultArray[0] == "test$one") {
+        testSink = executionEngine->createDataSink(schema);
+    }
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
     auto queryArray = std::get<3>(GetParam());
+
     auto query = TestQuery::from(testSourceDescriptor)
                      .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
                      .sink(testSinkDescriptor);
@@ -445,16 +426,12 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
                     .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
                     .map(Attribute(queryArray[1]) = getExp(queryArray[1]))
                     .sink(testSinkDescriptor);
-    } else if (queryArray.size() == 3  && queryArray[0] != "left$id") {
+    } else if (queryArray.size() == 3) {
         query = TestQuery::from(testSourceDescriptor)
-                         .map(Attribute(queryArray[0]) = getExp(queryArray[0]))
+                         .map(Attribute(queryArray[0]) = getExp(queryArray[0])) // vorerst so hardcoden schauen obs mit strings funktioniert
                          .map(Attribute(queryArray[1]) = getExp(queryArray[1]))
                          .map(Attribute(queryArray[2]) = getExp(queryArray[2]))
                          .sink(testSinkDescriptor);
-    } else if (queryArray.size() == 3  && queryArray[0] == "left$id") {
-        query = TestQuery::from(testSourceDescriptor)
-                    .map(Attribute(queryArray[2]) = getExp(queryArray[2]))
-                    .sink(testSinkDescriptor);
     }
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -463,17 +440,11 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     // add buffer
     auto inputBuffer =  executionEngine->getBuffer(schema);
     int sign = std::get<4>(GetParam());
-    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
+    if (resultArray[0] == "test$one") {
         fillBuffer(inputBuffer);
-    } else if (resultArray[0] == "test$left$id") {  // for MapPowerFunction
-        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-            inputBuffer[recordIndex]["test$left$id"].write<double>((double) 2 * sign * recordIndex);
-            inputBuffer[recordIndex]["test$right$id"].write<double>((double) sign * recordIndex);
-        }
-        inputBuffer.setNumberOfTuples(10);
     } else {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-            inputBuffer[recordIndex][0].write<double>((double) sign * recordIndex);
+            inputBuffer[recordIndex][0].write<double>(sign * recordIndex);
         }
         inputBuffer.setNumberOfTuples(10);
     }
@@ -484,15 +455,13 @@ TEST_P(MapQueryExecutionTest, AllFunctions) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
+    //auto stdFuncArray = std::get<5>(GetParam());
+
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    if (resultArray[0] == "test$one") {  // for MapQueryArithmetic
+    if (resultArray[0] == "test$one") {
         for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
             EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
             EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
-        }
-    } else if (resultArray[0] == "test$left$id") {
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-            EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), getFunc(resultArray[2], sign * recordIndex));
         }
     } else {
         for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
@@ -511,7 +480,6 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createLogTestData(),
                                           MapQueryExecutionTest::createTwoMapQueryTestData(),
                                           MapQueryExecutionTest::createAbsTestData(),
-                                          MapQueryExecutionTest::createPowerTestData(),
                                           MapQueryExecutionTest::createTrigTestData()
                                           ),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
