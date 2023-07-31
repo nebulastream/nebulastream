@@ -39,6 +39,10 @@ class StorageHandler;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
+template<ConceptResponse ResponseType>
+class AbstractRequest;
+using AbstractRequestPtr = std::shared_ptr<AbstractRequest<AbstractRequestResponse>>;
+
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
  * other actions. Specific request types are implemented as subclasses of this request.
@@ -77,14 +81,14 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest<Resp
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> execute(StorageHandler& storageHandle);
+    std::vector<AbstractRequestPtr> execute(StorageHandler& storageHandle);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    virtual std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
@@ -92,7 +96,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest<Resp
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return A list of requests that should be called because of failure
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> handleError(RequestExecutionException& ex, StorageHandler& storageHandle);
+    std::vector<AbstractRequestPtr> handleError(RequestExecutionException& ex, StorageHandler& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -165,7 +169,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest<Resp
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    virtual std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> executeRequestLogic(StorageHandler& storageHandle) = 0;
+    virtual std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandle) = 0;
 
   protected:
     RequestId requestId;
@@ -186,8 +190,8 @@ AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
       requiredResources(requiredResources) {}
 
 template<ConceptResponse ResponseType>
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> AbstractRequest<ResponseType>::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> remainingRequests = {};
+std::vector<AbstractRequestPtr> AbstractRequest<ResponseType>::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
+    std::vector<AbstractRequestPtr> remainingRequests = {};
 
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
@@ -208,8 +212,8 @@ bool AbstractRequest<ResponseType>::retry() {
 }
 
 template<ConceptResponse ResponseType>
-std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> remainingRequests = {};
+std::vector<AbstractRequestPtr> AbstractRequest<ResponseType>::execute(StorageHandler& storageHandle) {
+    std::vector<AbstractRequestPtr> remainingRequests = {};
 
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);

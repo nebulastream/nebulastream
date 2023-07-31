@@ -129,13 +129,13 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
      * @throws QueryPlacementException if the query placement phase fails
      * @throws RequestExecutionException if resource acquisition fails
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> executeRequestLogic(StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandle) override;
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back

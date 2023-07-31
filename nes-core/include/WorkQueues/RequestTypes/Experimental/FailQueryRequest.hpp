@@ -76,7 +76,7 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
@@ -97,7 +97,7 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>> executeRequestLogic(StorageHandler& storageHandler) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandler) override;
 
   private:
     QueryId queryId;
