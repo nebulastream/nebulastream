@@ -31,8 +31,7 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
-                              public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompilerOptions::QueryCompiler, std::string, std::vector<string>, std::vector<string>>> {
-                              //public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+                              public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -41,7 +40,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        auto queryCompiler = std::get<0>(GetParam()); //this->GetParam();
+        auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
@@ -64,33 +63,9 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-
-    // The following methods create the test data for the parameterized test.
-    // The test data is a four-tuple which contains
-    static auto createLogTestData(){
-    /* double(*logFunctions[])(double) = {LOG10, LOG2, LN};
-    double(*stdLogFunctions[])(double) = {std::log10, std::log2, std::log};*/
-
-    return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                           "Abs",
-                           std::vector<string>{"test$log10", "test$log2", "test$ln"},
-                           std::vector<string>{"log10", "log2", "ln"});
-                            /*logFunctions,
-                             * stdLogFunctions);*/
-    }
-    /*static auto creatAbsTestData(){
-    double(*absFunctions[])(double) = {ABS};
-    double(*stdAbsFunctions[])(double) = {std::fabs};
-
-    return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                           std::vector<string>{"test$abs"},
-                           std::vector<string>{"abs"},
-                           absFunctions,
-                           stdAbsFunctions);
-    }*/
 };
 
-/*TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
+TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
@@ -312,74 +287,11 @@ TEST_P(MapQueryExecutionTest, MapTrigonometricFunctions) {
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
-}*/
-
-TEST_P(MapQueryExecutionTest, AllFunctions) {
-    auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
-
-    auto resultSchema = Schema::create()
-                            ->addField("test$id", BasicType::FLOAT64);
-
-    auto resultArray = std::get<2>(GetParam());
-    auto resultLen = resultArray.size();
-    if(resultLen == 3){
-        resultSchema = Schema::create()
-                                ->addField("test$id", BasicType::FLOAT64)
-                                ->addField(resultArray[0], BasicType::FLOAT64)
-                                ->addField(resultArray[1], BasicType::FLOAT64)
-                                ->addField(resultArray[2], BasicType::FLOAT64);
-    }
-    /*for(uint32_t i = 0u; i < resultLen; ++i){
-        resultSchema = Schema::create()->addField(resultArray[i], BasicType::FLOAT64);
-    }*/
-
-    auto testSink = executionEngine->createDataSink(resultSchema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
-
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto queryArray = std::get<3>(GetParam());
-    //auto funcArray = std::get<4>(GetParam());
-
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .map(Attribute(queryArray[0]) = LOG10(Attribute("id"))) // vorerst so hardcoden schauen obs mit strings funktioniert
-                     .map(Attribute(queryArray[1]) = LOG2(Attribute("id")))
-                     .map(Attribute(queryArray[2]) = LN(Attribute("id")))
-                     .sink(testSinkDescriptor);
-
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
-    auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool) source);
-    // add buffer
-    auto inputBuffer =  executionEngine->getBuffer(schema);
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        inputBuffer[recordIndex][0].write<double>(recordIndex);
-    }
-    inputBuffer.setNumberOfTuples(10);
-    source->emitBuffer(inputBuffer);
-    testSink->waitTillCompleted();
-
-    // compare results
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-    auto resultBuffer = testSink->getResultBuffer(0);
-
-    //auto stdFuncArray = std::get<5>(GetParam());
-
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[0]].read<double>(), std::log10(recordIndex));
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[1]].read<double>(), std::log2(recordIndex));
-        EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), std::log(recordIndex));
-    }
-    ASSERT_TRUE(executionEngine->stopQuery(plan));
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
-                        ::testing::Values(MapQueryExecutionTest::createLogTestData()
-                                          ),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
-                            //return std::string(magic_enum::enum_name(info.param));
-                            std::string name = std::get<1>(info.param);
-                            return name;
+                            return std::string(magic_enum::enum_name(info.param));
                         });
