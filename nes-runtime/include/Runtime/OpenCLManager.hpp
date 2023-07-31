@@ -56,13 +56,16 @@ struct OpenCLDeviceInfo {
           availableProcessors(availableProcessors) {}
 
   public:
+    constexpr static unsigned GRID_DIMENSIONS = 3;
+
+  public:
     cl_platform_id platformId;
     cl_device_id deviceId;
     std::string platformVendor;
     std::string platformName;
     std::string deviceName;
     bool doubleFPSupport;
-    std::array<size_t, 3> maxWorkItems;
+    std::array<size_t, GRID_DIMENSIONS> maxWorkItems;
     unsigned deviceAddressBits;
     std::string deviceType;
     std::string deviceExtensions;
