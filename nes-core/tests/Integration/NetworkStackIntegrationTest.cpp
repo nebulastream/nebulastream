@@ -40,10 +40,10 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Runtime/OpenCLManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DefaultSource.hpp>

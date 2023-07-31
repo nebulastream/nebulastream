@@ -83,7 +83,6 @@ class OpenCLManager {
     std::vector<OpenCLDeviceInfo> devices;
 };
 
-
 }// namespace NES::Runtime
 
 #endif//NES_OPENCLMANAGER_H
