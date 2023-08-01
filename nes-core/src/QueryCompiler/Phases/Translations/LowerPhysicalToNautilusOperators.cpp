@@ -324,7 +324,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return watermarkOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(), 
+        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
+                                                                        projectOperator->getInputSchema()->getFieldNames(), 
                                                                         projectOperator->getOutputSchema()->getFieldNames());
         parentOperator->setChild(projection);
         return projection;
@@ -606,7 +607,6 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
         std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-    auto testSchema = operatorNode->getOutputSchema();
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
 }
 

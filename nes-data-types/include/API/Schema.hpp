@@ -218,7 +218,7 @@ class Schema {
     void setLayoutType(MemoryLayoutType layoutType);
 
     /**
-     * @brief getFieldNames
+     * @brief Get the field names as a vector of strings.
      * @return std::vector<std::string> fieldNames
      */
     std::vector<std::string> getFieldNames() const;
