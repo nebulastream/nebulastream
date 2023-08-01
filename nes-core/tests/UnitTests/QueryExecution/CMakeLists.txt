@@ -18,6 +18,7 @@ add_nes_unit_test(query-execution-test
         "MapQueryExecutionTest.cpp"
         "UnionQueryExecutionTest.cpp")
 
+add_nes_unit_test(demo-city-query-execution-test "DemoCityQueryExecutionTest.cpp")
 add_nes_unit_test(map-java-udf-query-execution-test "MapJavaUDFExecutionTest.cpp")
 add_nes_unit_test(flatmap-java-udf-query-execution-test "FlatMapJavaUDFExecutionTest.cpp")
 add_nes_unit_test(map-python-udf-query-execution-test "MapPythonUDFExecutionTest.cpp")
