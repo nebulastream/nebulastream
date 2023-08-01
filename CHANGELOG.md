@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.173](https://github.com/nebulastream/nebulastream/tree/v0.5.173) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.172...v0.5.173)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Add Request Implementation [\#3636](https://github.com/nebulastream/nebulastream/issues/3636)
+
 ## [v0.5.172](https://github.com/nebulastream/nebulastream/tree/v0.5.172) (2023-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.171...v0.5.172)
