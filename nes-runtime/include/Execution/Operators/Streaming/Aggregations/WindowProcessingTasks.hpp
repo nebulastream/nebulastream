@@ -13,6 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
+#include <Util/Logger/Logger.hpp>
 #include <cinttypes>
 #include <memory>
 #include <vector>
@@ -42,6 +43,7 @@ struct Window {
     uint64_t endTs;
     uint64_t sequenceNumber;
     std::vector<std::shared_ptr<SliceType>> slices;
+    ~Window() { NES_DEBUG("~Window {}-{}", startTs, endTs); }
 };
 
 }// namespace NES::Runtime::Execution::Operators

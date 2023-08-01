@@ -75,28 +75,13 @@ void* getDefaultMergingState(void* ss) {
     return handler->getDefaultState()->ptr;
 }
 
-void appendToGlobalSliceStore(void* ss, void* slicePtr) {
-    auto handler = static_cast<NonKeyedSliceMergingHandler*>(ss);
-    auto slice = std::unique_ptr<NonKeyedSlice>((NonKeyedSlice*) slicePtr);
-    handler->appendToGlobalSliceStore(std::move(slice));
-}
-
-void triggerSlidingWindows(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t sliceEnd) {
-    auto handler = static_cast<NonKeyedSliceMergingHandler*>(sh);
-    auto workerContext = static_cast<WorkerContext*>(wctx);
-    auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, sequenceNumber, sliceEnd);
-}
 
 NonKeyedSliceMerging::NonKeyedSliceMerging(
     uint64_t operatorHandlerIndex,
-    WindowType type,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-    const std::string& startTsFieldName,
-    const std::string& endTsFieldName,
-    uint64_t resultOriginId)
-    : operatorHandlerIndex(operatorHandlerIndex), type(type), aggregationFunctions(aggregationFunctions),
-      startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName), resultOriginId(resultOriginId) {}
+    std::unique_ptr<SliceMergingAction> sliceMergingAction)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
+      sliceMergingAction(std::move(sliceMergingAction)) {}
 
 void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -126,30 +111,19 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
-    Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
-    Value<> sequenceNumber = getMember(sliceMergeTask, SliceMergeTask, sequenceNumber).load<UInt64>();
+    auto startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
+    auto endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
+    auto sequenceNumber = getMember(sliceMergeTask, SliceMergeTask, sequenceNumber).load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
-    auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
+    auto combinedSlice = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
 
-    if (type == TumblingWindow) {
-        // emit global slice when we have a tumbling window.
-        emitWindow(ctx, startSliceTs, endSliceTs, sequenceNumber, globalSliceState);
-    } else if (type == SlidingWindow) {
-        FunctionCall("appendToGlobalSliceStore", appendToGlobalSliceStore, globalOperatorHandler, globalSliceState);
-        FunctionCall("triggerSlidingWindows",
-                     triggerSlidingWindows,
-                     globalOperatorHandler,
-                     ctx.getWorkerContext(),
-                     ctx.getPipelineContext(),
-                     sequenceNumber.as<UInt64>(),
-                     endSliceTs.as<UInt64>());
-    }
+    // 3. emit the combined slice via an action
+    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, combinedSlice);
 }
 
 Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
                                                              Value<MemRef>& sliceMergeTask,
-                                                             Value<>& endSliceTs) const {
+                                                             Value<UInt64>& endSliceTs) const {
     auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
@@ -166,32 +140,6 @@ Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& glob
     }
     Nautilus::FunctionCall("deletePartition", deletePartition, partition);
     return globalSlice;
-}
-
-void NonKeyedSliceMerging::emitWindow(ExecutionContext& ctx,
-                                      Value<>& windowStart,
-                                      Value<>& windowEnd,
-                                      Value<>& sequenceNumber,
-                                      Value<MemRef>& globalSlice) const {
-    NES_DEBUG("Emit window: {}-{}-{}",
-              windowStart.as<UInt64>()->toString(),
-              windowEnd.as<UInt64>()->toString(),
-              sequenceNumber.as<UInt64>()->toString());
-    ctx.setWatermarkTs(windowEnd.as<UInt64>());
-    ctx.setOrigin(resultOriginId);
-    ctx.setSequenceNumber(sequenceNumber.as<UInt64>());
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
-    Record resultWindow;
-    resultWindow.write(startTsFieldName, windowStart);
-    resultWindow.write(endTsFieldName, windowEnd);
-    uint64_t stateOffset = 0;
-    for (const auto& function : aggregationFunctions) {
-        auto valuePtr = globalSliceState + stateOffset;
-        function->lower(valuePtr.as<MemRef>(), resultWindow);
-        stateOffset = stateOffset + function->getSize();
-    }
-    child->execute(ctx, resultWindow);
-    Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice, globalSlice);
 }
 
 }// namespace NES::Runtime::Execution::Operators

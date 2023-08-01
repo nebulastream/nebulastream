@@ -17,6 +17,7 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowType.hpp>
 namespace NES::Runtime::Execution::Operators {
 
@@ -32,11 +33,8 @@ class NonKeyedSliceMerging : public Operator {
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
     NonKeyedSliceMerging(uint64_t operatorHandlerIndex,
-                         WindowType type,
                          const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                         const std::string& startTsFieldName,
-                         const std::string& endTsFieldName,
-                         uint64_t resultOriginId);
+                         std::unique_ptr<SliceMergingAction> sliceMergingAction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -48,8 +46,9 @@ class NonKeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    Value<MemRef>
-    combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<>& endSliceTs) const;
+    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
+                                           Value<MemRef>& sliceMergeTask,
+                                           Value<UInt64>& endSliceTs) const;
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context
@@ -60,11 +59,8 @@ class NonKeyedSliceMerging : public Operator {
     emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<>& sequenceNumber, Value<MemRef>&) const;
 
     const uint64_t operatorHandlerIndex;
-    const WindowType type;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::string startTsFieldName;
-    const std::string endTsFieldName;
-    const uint64_t resultOriginId;
+    const std::unique_ptr<SliceMergingAction> sliceMergingAction;
 };
 
 }// namespace NES::Runtime::Execution::Operators
