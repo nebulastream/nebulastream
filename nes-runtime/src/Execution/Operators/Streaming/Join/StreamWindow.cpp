@@ -25,9 +25,7 @@ uint64_t StreamWindow::getWindowStart() const { return windowStart; }
 
 uint64_t StreamWindow::getWindowEnd() const { return windowEnd; }
 
-bool StreamWindow::isAlreadyEmitted() const {
-    return windowState == StreamWindow::WindowState::EMITTED_TO_PROBE;
-}
+bool StreamWindow::isAlreadyEmitted() const { return windowState == StreamWindow::WindowState::EMITTED_TO_PROBE; }
 
 StreamWindow::StreamWindow(uint64_t windowStart, uint64_t windowEnd)
     : windowState(WindowState::BOTH_SIDES_FILLING), windowStart(windowStart), windowEnd(windowEnd) {}

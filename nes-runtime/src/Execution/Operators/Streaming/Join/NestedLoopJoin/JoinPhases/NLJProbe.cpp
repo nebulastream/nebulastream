@@ -56,7 +56,6 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     Operator::open(ctx, recordBuffer);
 
-
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifier = recordBuffer.getBuffer().load<UInt64>();
     // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0

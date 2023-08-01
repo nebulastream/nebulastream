@@ -181,8 +181,9 @@ std::vector<uint64_t> StreamJoinOperatorHandler::triggerAllWindows() {
     return windowIdentifiers;
 }
 
-std::vector<uint64_t>
-StreamJoinOperatorHandler::checkWindowsTrigger(const uint64_t watermarkTs, const uint64_t sequenceNumber, const OriginId originId) {
+std::vector<uint64_t> StreamJoinOperatorHandler::checkWindowsTrigger(const uint64_t watermarkTs,
+                                                                     const uint64_t sequenceNumber,
+                                                                     const OriginId originId) {
     // The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 

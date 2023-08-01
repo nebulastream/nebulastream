@@ -66,9 +66,9 @@ class MultiThreadedTest : public Testing::NESBaseTest,
 
     template<typename ResultRecord>
     std::vector<ResultRecord>& runQuery(const std::vector<std::pair<SchemaPtr, std::string>>& inputs,
-                                       const uint64_t expectedNumberOfTuples,
-                                       const std::shared_ptr<CollectTestSink<ResultRecord>>& testSink,
-                                       const Query& query) {
+                                        const uint64_t expectedNumberOfTuples,
+                                        const std::shared_ptr<CollectTestSink<ResultRecord>>& testSink,
+                                        const Query& query) {
 
         // Creating the input buffers
         auto bufferManager = executionEngine->getBufferManager();
@@ -633,12 +633,12 @@ TEST_P(MultiThreadedTest, testThreeJoins) {
 
     // Running the query
     const auto& resultRecords = runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft},
-                                                       {inputSchemaRight, fileNameBuffersRight},
-                                                       {inputSchemaThird, fileNameBuffersThird},
-                                                       {inputSchemaFourth, fileNameBuffersFourth}},
-                                                      expectedTuples.size(),
-                                                      testSink,
-                                                      query);
+                                                        {inputSchemaRight, fileNameBuffersRight},
+                                                        {inputSchemaThird, fileNameBuffersThird},
+                                                        {inputSchemaFourth, fileNameBuffersFourth}},
+                                                       expectedTuples.size(),
+                                                       testSink,
+                                                       query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedTuples.size());
