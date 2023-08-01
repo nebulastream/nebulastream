@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Runtime/TupleBuffer.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -404,7 +403,13 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     return false;
 }
 
-// Todo: 
+/**
+   * @brief Check if two TupleBuffers contain the same tuples (order does not matter).
+   * @param buffer1: First TupleBuffer
+   * @param buffer2: Second TupleBuffer
+   * @param schemaSizeInByte: The schema size is used to read the correct number of bytes for tuple-based memcmp
+   * @return true if successful
+   */
 bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte) {
     NES_DEBUG("Checking if the buffers contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {

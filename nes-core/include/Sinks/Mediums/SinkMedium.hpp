@@ -15,9 +15,6 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
-// #include <API/Schema.hpp>
-
-// #include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>

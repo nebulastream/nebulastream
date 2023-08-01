@@ -44,12 +44,11 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     resultBuffers.emplace_back(inputBuffer);
     NES_DEBUG("Already saw {} buffers and expects a total of {}", resultBuffers.size(), expectedBuffer);
     if (resultBuffers.size() == expectedBuffer) {
-        //Todo: this is never called if no data is written to the output
+        //Todo: #4043: this is never called if no data is written to the output
         completed.set_value(expectedBuffer);
     } else if (resultBuffers.size() > expectedBuffer) {
         NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), expectedBuffer);
         EXPECT_TRUE(false);
-        completed.set_value(expectedBuffer);
     }
     return true;
 }
