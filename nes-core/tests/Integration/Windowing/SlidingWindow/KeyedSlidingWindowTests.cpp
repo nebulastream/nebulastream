@@ -18,11 +18,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/Identifiers.hpp>
-#include <Components/NesCoordinator.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
@@ -41,12 +39,12 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class SingleNodeThreadLocalSlidingWindowTests : public Testing::NESBaseTest, public ::testing::WithParamInterface<int> {
+class KeyedSlidingWindowTests : public Testing::NESBaseTest, public ::testing::WithParamInterface<int> {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SingleNodeThreadLocalSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalSlidingWindowTests test class.");
+        NES::Logger::setupLogging("KeyedSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup KeyedSlidingWindowTests test class.");
     }
 
     void SetUp() override {
@@ -198,22 +196,21 @@ class DataGenerator {
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-            .byKey(Attribute("id"))
-            .apply(Sum(Attribute("value"))))";
-    // R"(Query::from("window"))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto lambdaSource = createSimpleInputStream(1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
@@ -229,23 +226,22 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowSingleBuf
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-            .byKey(Attribute("id"))
-            .apply(Sum(Attribute("value"))))";
-    // R"(Query::from("window"))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
 
     auto lambdaSource = createSimpleInputStream(1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
+                           .enableNautilus()
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -260,21 +256,21 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowSingleBuf
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-            .byKey(Attribute("id"))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
+                           .enableNautilus()
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -285,20 +281,20 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowMultiBuff
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
+TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-            .byKey(Attribute("id"))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -325,20 +321,20 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSlidingWindowMultiBu
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
+TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
-            .byKey(Attribute("id"))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -359,7 +355,7 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowIrigular
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleMultiKeySlidingWindow) {
+TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("key1", DataTypeFactory::createUInt64())
@@ -368,12 +364,13 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleMultiKeySlidingWindow)
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValueMultiKeys), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-            .byKey(Attribute("key1"),Attribute("key2"),Attribute("key3")).apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
+                     .byKey(Attribute("key1"), Attribute("key2"), Attribute("key3"))
+                     .apply(Sum(Attribute("value")));
     auto dg = DataGeneratorMultiKey(1, 102);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
 
@@ -387,13 +384,4 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleMultiKeySlidingWindow)
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
-
-INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
-                        SingleNodeThreadLocalSlidingWindowTests,
-                        ::testing::Values(1, 2, 4),
-                        [](const testing::TestParamInfo<SingleNodeThreadLocalSlidingWindowTests::ParamType>& info) {
-                            std::string name = std::to_string(info.param) + "Worker";
-                            return name;
-                        });
-
 }// namespace NES
