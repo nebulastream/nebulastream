@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.171](https://github.com/nebulastream/nebulastream/tree/v0.5.171) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.170...v0.5.171)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor StreamJoinExecutionTest with CollectSink [\#4035](https://github.com/nebulastream/nebulastream/issues/4035)
+
 ## [v0.5.170](https://github.com/nebulastream/nebulastream/tree/v0.5.170) (2023-07-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.169...v0.5.170)
