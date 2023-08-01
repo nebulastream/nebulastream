@@ -35,8 +35,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel::ALL);
     options.setWindowingStrategy(WindowingStrategy::DEFAULT);
-    options.setQueryCompiler(QueryCompiler::NAUTILUS_QUERY_COMPILER);
-    // options.setQueryCompiler(QueryCompiler::DEFAULT_QUERY_COMPILER);
+    options.setQueryCompiler(QueryCompiler::DEFAULT_QUERY_COMPILER);
     options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
     options.setNautilusBackend(NautilusBackend::MLIR_COMPILER);
 

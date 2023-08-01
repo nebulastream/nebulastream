@@ -80,7 +80,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
 
-    // Apply rules necessary for enabling query execution when stream alias or union operators are invlved
+    // Apply rules necessary for enabling query execution when stream alias or union operators are involved
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
 

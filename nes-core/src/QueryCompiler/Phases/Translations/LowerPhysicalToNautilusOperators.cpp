@@ -35,6 +35,7 @@
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
@@ -322,22 +323,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(watermarkOperator);
         return watermarkOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
-        // As the projection is part of the emit, we can ignore this operator for now.
-        // Todo: What if we have an implicit cast for a Union?
-        //  -> currently the emit operator contains the correct output schema (the projected output schema), but the
-        //     the record contains the 'old' field names. Since no mapping ever took place, we run into an error.
-        // The UnaryOperatorNode in the projectOperator contains an input- and outputSchema that contains the required
-        // mapping.
-        // -> can we use indexes?
-        // -> we could insert a map operation that maps the input field name to the output
-        // -> can we store the input- outputSchema information at the EmitOperator?
         auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-        if(!projectOperator->getChildren().empty() && projectOperator->getChildren().at(0)->instanceOf<PhysicalOperators::PhysicalEmitOperator>()) {
-            auto emitOperator = projectOperator->getChildren().at(0)->as<PhysicalOperators::PhysicalEmitOperator>();
-            emitOperator->setOutputSchema(projectOperator->getInputSchema()->copy());
-        }
-        // if(parentOperator->instanceOf<PhysicalOperators::PhysicalEmitOperator>)
-        return parentOperator;
+        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(), 
+                                                                        projectOperator->getOutputSchema()->getFieldNames());
+        parentOperator->setChild(projection);
+        return projection;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinProbeOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinProbeOperator>();
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");

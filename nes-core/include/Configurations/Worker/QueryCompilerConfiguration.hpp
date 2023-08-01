@@ -43,8 +43,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::QueryCompiler> queryCompilerType = {
         QUERY_COMPILER_TYPE_CONFIG,
-        // QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER, //Todo adapt
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER, //Todo adapt
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER, //Todo adapt
+        // QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER, //Todo adapt
         "Indicates the type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
 
     /**
