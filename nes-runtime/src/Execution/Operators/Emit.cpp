@@ -38,6 +38,7 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
 }
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const {
+    // Todo: How are the field names of the output schema determined? -> Via the sink?
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto outputIndex = emitState->outputIndex;
     memoryProvider->write(outputIndex, emitState->bufferReference, record);
