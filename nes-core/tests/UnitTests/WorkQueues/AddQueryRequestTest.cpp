@@ -122,13 +122,13 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     // Create add request
     std::promise<NES::Experimental::AddQueryResponse> promise;
     auto addQueryRequest = NES::Experimental::AddQueryRequest::create(requestId,
-                                                              queryPlan,
-                                                              TEST_PLACEMENT_STRATEGY,
-                                                              ZERO_RETRIES,
-                                                              workerRpcClient,
-                                                              coordinatorConfiguration,
-                                                              z3Context,
-                                                              std::move(promise));
+                                                                      queryPlan,
+                                                                      TEST_PLACEMENT_STRATEGY,
+                                                                      ZERO_RETRIES,
+                                                                      workerRpcClient,
+                                                                      coordinatorConfiguration,
+                                                                      z3Context,
+                                                                      std::move(promise));
 
     // Execute add request until deployment phase
     try {
