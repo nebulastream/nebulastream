@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.175](https://github.com/nebulastream/nebulastream/tree/v0.5.175) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.174...v0.5.175)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate Query Shutdown [\#4034](https://github.com/nebulastream/nebulastream/issues/4034)
+
 ## [v0.5.174](https://github.com/nebulastream/nebulastream/tree/v0.5.174) (2023-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.173...v0.5.174)
@@ -1561,7 +1569,6 @@
 - \[DBPRO\] Add lower & upper  [\#3185](https://github.com/nebulastream/nebulastream/issues/3185)
 - \[JIT Compiler\] Add Loop Operations [\#3169](https://github.com/nebulastream/nebulastream/issues/3169)
 - \[Feature\] Spatial Data Type with functions  [\#3156](https://github.com/nebulastream/nebulastream/issues/3156)
-- \[Feature\] Initial OpenCV integration [\#3150](https://github.com/nebulastream/nebulastream/issues/3150)
 - \[Feature\] Java UDF Compiler Integration [\#3144](https://github.com/nebulastream/nebulastream/issues/3144)
 - \[DBPRO\] Add a test und `nes-runtime/tests/Execution/Expressions/Functions` [\#3100](https://github.com/nebulastream/nebulastream/issues/3100)
 - \[DBPRO\] Add the new expression under `nes-runtime/include/Execution/Expressions/Functions` and  `nes-runtime/src/Execution/Expressions/Functions`. [\#3099](https://github.com/nebulastream/nebulastream/issues/3099)
