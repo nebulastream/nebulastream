@@ -20,7 +20,8 @@
 namespace NES::Experimental::TopologyPrediction {
 class Edge;
 /**
- * @brief this class represents a set of changes to be applied to the topology
+ * @brief this class represents a set of changes to be applied to the topology changelog for a certain point in time. It consists
+ * of prediction from one or more nodes.
  */
 class TopologyDelta {
   public:
@@ -34,22 +35,22 @@ class TopologyDelta {
     TopologyDelta(std::vector<Edge> added, std::vector<Edge> removed);
 
     /**
-   * @brief this function returns a string visualizing the content of the changelog
-   * @return a string in the format "added: {CHILD->PARENT, CHILD->PARENT, ...} removed: {CHILD->PARENT, CHILD->PARENT, ...}"
-   */
+     * @brief this function returns a string visualizing the content of the changelog
+     * @return a string in the format "added: {CHILD->PARENT, CHILD->PARENT, ...} removed: {CHILD->PARENT, CHILD->PARENT, ...}"
+     */
     [[nodiscard]] std::string toString() const;
 
     /**
-   * @brief return the list of added edges contained in this delta
-   * @return a vector of edges
-   */
-    [[nodiscard]] std::vector<Edge> getAdded() const;
+     * @brief return the list of added edges contained in this delta
+     * @return a const reference to a vector of edges
+     */
+    [[nodiscard]] const std::vector<Edge>& getAdded() const;
 
     /**
      * @brief return the list of removed edges contained in this delta
-     * @return a vector of edges
+     * @return a const reference to a vector of edges
      */
-    [[nodiscard]] std::vector<Edge> getRemoved() const;
+    [[nodiscard]] const std::vector<Edge>& getRemoved() const;
 
   private:
     /**

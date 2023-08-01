@@ -23,14 +23,14 @@
 namespace NES::Experimental::TopologyPrediction {
 TopologyTimeline::TopologyTimeline(TopologyPtr originalTopology) : originalTopology(std::move(originalTopology)) {}
 
-TopologyTimelinePtr TopologyTimeline::create(const TopologyPtr& originalTopology) {
+TopologyTimelinePtr TopologyTimeline::create(TopologyPtr originalTopology) {
     return std::make_shared<TopologyTimeline>(originalTopology);
 }
 
 TopologyPtr TopologyTimeline::getTopologyVersion(Timestamp time) {
     //to get the node changes with timestamp equal or less than time
     auto nodeChanges = createAggregatedChangeLog(time);
-    return createTopologyVersion(originalTopology, nodeChanges);
+    return createTopologyVersion(nodeChanges);
 }
 
 void TopologyTimeline::removeTopologyChangeLogAt(Timestamp time) { changeMap.erase(time); }
@@ -52,7 +52,7 @@ bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const Topolo
     return true;
 }
 
-TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalTopology, const TopologyChangeLog& changeLog) {
+TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& changeLog) {
     auto copiedTopology = Topology::create();
     copiedTopology->setAsRoot(originalTopology->getRoot()->copy());
 
@@ -123,6 +123,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyPtr& originalT
 TopologyChangeLog TopologyTimeline::createAggregatedChangeLog(Timestamp time) {
     TopologyChangeLog aggregatedTopologyChangeLog;
     //todo #3937: garbage collect
+    //todo: create issue for caching
     for (auto changeLog = changeMap.begin(); changeLog != changeMap.end() && changeLog->first <= time; ++changeLog) {
         aggregatedTopologyChangeLog.add(changeLog->second);
     }

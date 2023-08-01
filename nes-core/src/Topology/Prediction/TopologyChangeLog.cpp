@@ -18,7 +18,7 @@
 
 namespace NES::Experimental::TopologyPrediction {
 
-void TopologyChangeLog::addMap(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
+void TopologyChangeLog::updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
             std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
             std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
     //iterate over the parent ids and corresponding lists of children
@@ -55,28 +55,28 @@ void TopologyChangeLog::addMap(const std::unordered_map<TopologyNodeId, std::vec
     }
 }
 
-void TopologyChangeLog::add(const TopologyChangeLog& addedChangelog) {
+void TopologyChangeLog::add(const TopologyChangeLog& newChangeLog) {
     /* add added edges from the addedChangelog to the list of added edges at this object unless they already exist in the list of
      * removed edges at this object. In case the added edge exists in the list of removed edges at this object, remove it from the list.
      */
-    addMap(addedChangelog.changelogAdded, changelogAdded, changelogRemoved);
+    updateChangelog(newChangeLog.addedLinks, this->addedLinks, this->removedLinks);
     /* add removed edges from the addedChangelog to the list of removed edges at this object unless they already exist in the list of
      * added edges at this object. In case the removed edge exists in the list of added edges at this object, remove it from the list.
      */
-    addMap(addedChangelog.changelogRemoved, changelogRemoved, changelogAdded);
+    updateChangelog(newChangeLog.removedLinks, this->removedLinks, this->addedLinks);
 }
 
 std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId nodeId) const {
-    auto it = changelogAdded.find(nodeId);
-    if (it != changelogAdded.end()) {
+    auto it = addedLinks.find(nodeId);
+    if (it != addedLinks.end()) {
         return it->second;
     }
     return {};
 }
 
 std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId nodeId) const {
-    auto it = changelogRemoved.find(nodeId);
-    if (it != changelogRemoved.end()) {
+    auto it = removedLinks.find(nodeId);
+    if (it != removedLinks.end()) {
         return it->second;
     }
     return {};
@@ -84,35 +84,35 @@ std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId
 
 void TopologyChangeLog::update(const TopologyDelta& newDelta) {
     for (auto addedEdge : newDelta.getAdded()) {
-        changelogAdded[addedEdge.parent].push_back(addedEdge.child);
+        addedLinks[addedEdge.downstreamTopologyNode].push_back(addedEdge.upstreamTopologyNode);
     }
     for (auto removedEdge : newDelta.getRemoved()) {
-        changelogRemoved[removedEdge.parent].push_back(removedEdge.child);
+        removedLinks[removedEdge.downstreamTopologyNode].push_back(removedEdge.upstreamTopologyNode);
     }
 }
 
 void TopologyChangeLog::erase(const TopologyDelta& delta) {
-    removeEdgesFromMap(changelogAdded, delta.getAdded());
-    removeEdgesFromMap(changelogRemoved, delta.getRemoved());
+    removeLinksFromMap(addedLinks, delta.getAdded());
+    removeLinksFromMap(removedLinks, delta.getRemoved());
 }
 
-void TopologyChangeLog::removeEdgesFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
+void TopologyChangeLog::removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
     const std::vector<Edge>& edges) {
     for (auto edge : edges) {
-        auto& children = map[edge.parent];
-        auto iterator = std::find(children.begin(), children.end(), edge.child);
+        auto& children = map[edge.downstreamTopologyNode];
+        auto iterator = std::find(children.begin(), children.end(), edge.upstreamTopologyNode);
         if (iterator != children.end()) {
             children.erase(iterator);
         } else if (!children.empty()) {
             NES_THROW_RUNTIME_ERROR("Trying to remove edge " + edge.toString() + " which does not exist in the changelog");
         }
         if (children.empty()) {
-            map.erase(edge.parent);
+            map.erase(edge.downstreamTopologyNode);
         }
     }
 }
 
 bool TopologyChangeLog::empty() {
-    return changelogAdded.empty() && changelogRemoved.empty();
+    return addedLinks.empty() && removedLinks.empty();
 }
 }
