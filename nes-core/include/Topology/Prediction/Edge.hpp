@@ -25,7 +25,7 @@ class Edge {
   public:
     /**
      * @brief get a string representation of this edge
-     * @return a string in the format "CHILD_ID->PARENT_ID"
+     * @return a string in the format "UPSTREAM_ID->DOWNSTREAM_ID"
      */
     [[nodiscard]] std::string toString() const;
 
@@ -35,8 +35,9 @@ class Edge {
      * @return true if the edges are equal
      */
     bool operator==(const Edge& other) const;
-    TopologyNodeId child;
-    TopologyNodeId parent;
+
+    TopologyNodeId upstreamTopologyNode;
+    TopologyNodeId downstreamTopologyNode;
 };
 }
 }

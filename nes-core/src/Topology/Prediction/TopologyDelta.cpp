@@ -54,7 +54,7 @@ std::string TopologyDelta::edgeListToString(const std::vector<Edge>& edges) {
     return deltaString.str();
 }
 
-std::vector<Edge> TopologyDelta::getAdded() const { return added; }
+const std::vector<Edge>& TopologyDelta::getAdded() const { return added; }
 
-std::vector<Edge> TopologyDelta::getRemoved() const { return removed; }
+const std::vector<Edge>& TopologyDelta::getRemoved() const { return removed; }
 }// namespace NES::Experimental::TopologyPrediction

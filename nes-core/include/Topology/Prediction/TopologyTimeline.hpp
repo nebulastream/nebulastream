@@ -28,6 +28,13 @@ class TopologyChangeLog;
 class TopologyTimeline;
 using TopologyTimelinePtr = std::shared_ptr<TopologyTimeline>;
 
+/**
+ * This class processes predicted topology changes and allows inspecting the exepcted future states of the topology based on those
+ * predictions. Predictions can be added by supplying a TopologyDelta containing the expected link changes for a certain point in
+ * time. Predictions can be removed by supplying a delta containing all link changes that are to be removed. Topology versions for
+ * a specified time are created by making a copy of the existing topology and applying all changes expected to happen before the
+ * specified time onto the copy.
+ */
 class TopologyTimeline {
   public:
     /**
@@ -41,7 +48,7 @@ class TopologyTimeline {
      * @param originalTopology a pointer to the original topology
      * @return a pointer to the newly created object
      */
-    static TopologyTimelinePtr create(const TopologyPtr& originalTopology);
+    static TopologyTimelinePtr create(TopologyPtr originalTopology);
 
     /**
      * @brief adds a topology delta to the changes expected to happen at a specific point in time
@@ -69,11 +76,10 @@ class TopologyTimeline {
     /**
      * @brief create a new topology representing the state which would result if all changes in the changelog were applied onto
      * the original topology
-     * @param originalTopology a pointer to the original topology
      * @param changeLog a change log containing the changes to be applied
      * @return a pointer to the new topology object onto which the changes are applied
      */
-    static TopologyPtr createTopologyVersion(const TopologyPtr& originalTopology, const TopologyChangeLog& changeLog);
+    TopologyPtr createTopologyVersion(const TopologyChangeLog& changeLog);
 
     /**
      * @brief remove all changes expected to happen at the specified time

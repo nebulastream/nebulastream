@@ -16,9 +16,9 @@
 namespace NES::Experimental::TopologyPrediction {
 std::string Edge::toString() const {
     std::stringstream ss;
-    ss << child << "->" << parent;
+    ss << upstreamTopologyNode << "->" << downstreamTopologyNode;
     return ss.str();
 }
 
-bool Edge::operator==(const Edge& other) const { return this->parent == other.parent && this->child == other.child; }
+bool Edge::operator==(const Edge& other) const { return this->downstreamTopologyNode == other.downstreamTopologyNode && this->upstreamTopologyNode == other.upstreamTopologyNode; }
 }
