@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "API/Expressions/Expressions.hpp"
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 
@@ -59,7 +60,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         buf.setNumberOfTuples(numberOfTuples);
     }
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer 
+    Runtime::MemoryLayouts::DynamicTupleBuffer
     runQuery(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan) {
         // Setup first source and emit buffer
         auto source1 = executionEngine->getDataSource(queryPlan, 0);
@@ -74,8 +75,6 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         source2->emitBuffer(inputBuffer2);
 
         // Wait until the sink processed all tuples
-        //Todo: #4043 If no tuples are produced (100% selectivity filter) or not enough result buffers are produced,
-        //            'waitTillCompleted()' stalls indefinitely.
         testSink->waitTillCompleted();
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), expectedResultBuffers);
 
@@ -165,8 +164,35 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
+TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
+    createSchemaAndSink(2);
+    auto schema2 = Schema::create()
+            ->addField("test2$id", BasicType::INT64)
+            ->addField("test2$one", BasicType::INT64);
+    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
+    auto testSourceDescriptor2 = executionEngine->createDataSource(schema2);
+
+    Query query = TestQuery::from(testSourceDescriptor1)
+                      .unionWith(TestQuery::from(testSourceDescriptor2)
+                      .project(Attribute("test2$id").as("test$id"), Attribute("test2$one").as("test$one")))
+                      .sink(testSinkDescriptor);
+    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    
+    auto resultBuffer = runQuery(queryPlan);
+
+    for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
+        NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
+        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
+    }
+
+    ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
+}
+
 //Todo: #4043: Currently, we cannot use the TestSink to check whether a query does not produce any results
-// -> could call writeData with a nullptr to signalize that no TupleBuffer was produced
+// -> If no tuples are produced (100% selectivity filter) or not enough result buffers are produced,
+//            'waitTillCompleted()' stalls indefinitely.
+// (-> could call writeData with a nullptr to signalize that no TupleBuffer was produced)
 TEST_P(UnionQueryExecutionTest, DISABLED_unionOperatorWithoutResults) {
     createSchemaAndSink(2);
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);

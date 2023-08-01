@@ -258,7 +258,6 @@ void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layout
 
 std::vector<std::string> Schema::getFieldNames() const {
     std::vector<std::string> fieldNames;
-    // Todo: is order correct?
     for (const auto& attribute : fields) {
         fieldNames.emplace_back(attribute->getName());
     }
