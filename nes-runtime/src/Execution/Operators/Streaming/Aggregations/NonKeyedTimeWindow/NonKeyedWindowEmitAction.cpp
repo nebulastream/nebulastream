@@ -1,5 +1,5 @@
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedWindowEmitAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Operators {

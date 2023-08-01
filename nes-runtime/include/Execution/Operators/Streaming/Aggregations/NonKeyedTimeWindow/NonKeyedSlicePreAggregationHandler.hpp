@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Common/Identifiers.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -24,8 +23,6 @@
 namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
-class NonKeyedSliceStaging;
-class NonKeyedThreadLocalSliceStore;
 class State;
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
@@ -35,18 +32,16 @@ class State;
  * This is decided by the current watermark timestamp.
  */
 class NonKeyedSlicePreAggregationHandler
-    : public AbstractSlicePreAggregationHandler<NonKeyedSliceStaging, NonKeyedThreadLocalSliceStore> {
+    : public AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore> {
   public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
      * @param windowDefinition logical window definition
      * @param origins the set of origins, which can produce data for the window operator
-     * @param weakSliceStagingPtr access to the slice staging.
      */
     NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
                                        uint64_t windowSlide,
-                                       const std::vector<OriginId>& origins,
-                                       std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr);
+                                       const std::vector<OriginId>& origins);
 
     /**
      * @brief Initializes the thread local state for the window operator

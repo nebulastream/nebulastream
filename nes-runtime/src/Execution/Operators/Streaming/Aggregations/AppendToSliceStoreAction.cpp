@@ -60,9 +60,9 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
         auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
         NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
-        auto task = buffer.getBuffer<Window<Slice>>();
-        task->startTs = windowStart;
-        task->endTs = windowEnd;
+        auto task = buffer.getBuffer<SliceMergeTask<Slice>>();
+        task->startSlice = windowStart;
+        task->endSlice = windowEnd;
         task->slices = slicesForWindow;
         task->sequenceNumber = resultSequenceNumber++;
         buffer.setNumberOfTuples(1);
@@ -76,7 +76,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
 template<class Slice>
 void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType queryTerminationType,
                                             NES::Runtime::Execution::PipelineExecutionContextPtr ctx) {
-    NES_DEBUG("stop NonKeyedSliceMergingHandler: {}", queryTerminationType);
+    NES_DEBUG("stop AppendToSliceStoreHandler: {}", queryTerminationType);
     if (queryTerminationType == QueryTerminationType::Graceful) {
         // the watermark has changed get the lock to trigger
         std::lock_guard<std::mutex> lock(triggerMutex);
@@ -87,11 +87,14 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
             NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = buffer.getBuffer<Window<Slice>>();
-            task->startTs = windowStart;
-            task->endTs = windowEnd;
+            auto task = buffer.getBuffer<SliceMergeTask<Slice>>();
+            task->startSlice = windowStart;
+            task->endSlice = windowEnd;
             task->slices = slicesForWindow;
             task->sequenceNumber = resultSequenceNumber++;
+            buffer.addRecycleCallback([&](auto, auto){
+                NES_DEBUG("RemoveTask");
+            });
             buffer.setNumberOfTuples(1);
             ctx->dispatchBuffer(buffer);
         }

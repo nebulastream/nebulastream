@@ -17,6 +17,7 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 namespace NES {
 class PhysicalType;
@@ -37,11 +38,10 @@ class KeyedSliceMerging : public Operator {
      */
     KeyedSliceMerging(uint64_t operatorHandlerIndex,
                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                      const std::unique_ptr<SliceMergingAction> sliceMergingAction,
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
-                      const std::vector<std::string>& resultKeyFields,
-                      std::string startTsFieldName,
-                      std::string endTsFieldName,
-                      uint64_t resultOriginId);
+                      const uint64_t keySize,
+                      const uint64_t valueSize);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -52,9 +52,7 @@ class KeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    void combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                  Nautilus::Interface::ChainedHashMapRef& globalHashTable,
-                                  Value<>& endSliceTs) const;
+    void combineThreadLocalSlices(Nautilus::Interface::ChainedHashMapRef& globalHashTable, Value<MemRef>& sliceMergeTask) const;
 
     /**
      * @brief Function to merge a thread local hash table of key-value paris into the global hash table
@@ -63,26 +61,13 @@ class KeyedSliceMerging : public Operator {
      */
     void mergeHashTable(Interface::ChainedHashMapRef& globalEntry, Interface::ChainedHashMapRef& threadLocalSliceHashMap) const;
 
-    /**
-     * @brief Function to emit a window to the downstream operator.
-     * @param ctx execution context
-     * @param windowStart start of the window
-     * @param windowEnd end of the window
-     */
-    void emitWindow(ExecutionContext& ctx,
-                    Value<>& windowStart,
-                    Value<>& windowEnd,
-                    Value<>& sequenceNumber,
-                    Interface::ChainedHashMapRef& globalSliceHashMap) const;
-    uint64_t operatorHandlerIndex;
+  private:
+    const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::vector<std::string> resultKeyFields;
+    const std::unique_ptr<SliceMergingAction> sliceMergingAction;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::string startTsFieldName;
-    const std::string endTsFieldName;
-    uint64_t keySize;
-    uint64_t valueSize;
-    uint64_t resultOriginId;
+    const uint64_t keySize;
+    const uint64_t valueSize;
 };
 
 }// namespace NES::Runtime::Execution::Operators

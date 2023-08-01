@@ -15,10 +15,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
@@ -632,9 +630,8 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
 
         keyedOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::KeyedSliceStaging>();
         keyedOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
+            std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
 
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -642,8 +639,7 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
             std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
                 timeBasedWindowType->getSize().getTime(),
                 timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds(),
-                sliceStaging);
+                windowOperator->getInputOriginIds());
     }
 
     return keyedOperatorHandlers;
@@ -670,9 +666,8 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
 
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         timeBasedWindowType->getTimeBasedSubWindowType();
-        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceStaging>();
         globalOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
         /*if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
             globalOperatorHandlers.sliceMergingOperatorHandler =
                 std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
@@ -692,8 +687,7 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
             std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
                 timeBasedWindowType->getSize().getTime(),
                 timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds(),
-                sliceStaging);
+                windowOperator->getInputOriginIds());
     }
 
     return globalOperatorHandlers;

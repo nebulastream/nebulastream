@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
@@ -27,8 +26,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging)
-    : sliceStaging(globalSliceStaging) {}
+NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() {}
 
 void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
@@ -39,7 +37,7 @@ void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionCon
     NES_DEBUG("start NonKeyedSliceMergingHandler");
 }
 
-GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
+GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask) {
     return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
 }
 

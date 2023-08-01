@@ -9,7 +9,7 @@ namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
 
 template<class Slice>
-class AppendToSliceStoreHandler : public Runtime::Execution::OperatorHandler {
+class AppendToSliceStoreHandler : public OperatorHandler {
   public:
     AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide);
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}

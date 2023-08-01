@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -23,12 +22,10 @@ namespace NES::Runtime::Execution::Operators {
 
 NonKeyedSlicePreAggregationHandler::NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                        uint64_t windowSlide,
-                                                                       const std::vector<OriginId>& origins,
-                                                                       std::weak_ptr<NonKeyedSliceStaging> weakSliceStagingPtr)
-    : AbstractSlicePreAggregationHandler<NonKeyedSliceStaging, NonKeyedThreadLocalSliceStore>(windowSize,
+                                                                       const std::vector<OriginId>& origins)
+    : AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>(windowSize,
                                                                                               windowSlide,
-                                                                                              origins,
-                                                                                              weakSliceStagingPtr) {}
+                                                                                              origins) {}
 
 void NonKeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
     defaultState = std::make_unique<State>(entrySize);

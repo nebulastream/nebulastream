@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -27,12 +26,10 @@ namespace NES::Runtime::Execution::Operators {
 
 KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                  uint64_t windowSlide,
-                                                                 const std::vector<OriginId>& origins,
-                                                                 std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr)
-    : AbstractSlicePreAggregationHandler<KeyedSliceStaging, KeyedThreadLocalSliceStore>(windowSize,
+                                                                 const std::vector<OriginId>& origins)
+    : AbstractSlicePreAggregationHandler<KeyedSlice,  KeyedThreadLocalSliceStore>(windowSize,
                                                                                         windowSlide,
-                                                                                        origins,
-                                                                                        weakSliceStagingPtr) {}
+                                                                                        origins) {}
 
 void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                             uint64_t keySize,

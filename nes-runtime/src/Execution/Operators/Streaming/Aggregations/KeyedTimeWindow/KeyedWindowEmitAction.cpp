@@ -1,0 +1,66 @@
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+
+namespace NES::Runtime::Execution::Operators {
+
+void* getGlobalSliceState(void* combinedSlice);
+void* getKeyedSliceState(void* gs);
+
+void deleteSlice(void* gs) {
+    auto globalSlice = static_cast<KeyedSlice*>(gs);
+    delete globalSlice;
+}
+
+KeyedWindowEmitAction::KeyedWindowEmitAction(
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    const std::string startTsFieldName,
+    const std::string endTsFieldName,
+    const uint64_t keySize,
+    const uint64_t valueSize,
+    const std::vector<std::string> resultKeyFields,
+    const std::vector<PhysicalTypePtr> keyDataTypes,
+    const uint64_t resultOriginId)
+    : aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName),
+      keySize(keySize), valueSize(valueSize), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
+      resultOriginId(resultOriginId) {}
+
+void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
+                                      ExecuteOperatorPtr& child,
+                                      Value<UInt64>& windowStart,
+                                      Value<UInt64>& windowEnd,
+                                      Value<UInt64>& sequenceNumber,
+                                      Value<MemRef>& globalSlice) const {
+    NES_DEBUG("Emit window: {}-{}-{}", windowStart->toString(), windowEnd->toString(), sequenceNumber->toString());
+    ctx.setWatermarkTs(windowEnd);
+    ctx.setOrigin(resultOriginId);
+    ctx.setSequenceNumber(sequenceNumber);
+
+    auto globalSliceState = Nautilus::FunctionCall("getKeyedSliceState", getKeyedSliceState, globalSlice);
+    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);
+    // create the final window content and emit it to the downstream operator
+    for (const auto& globalEntry : globalHashTable) {
+        Record resultWindow;
+        // write window start and end to result record
+        resultWindow.write(startTsFieldName, windowStart);
+        resultWindow.write(endTsFieldName, windowEnd);
+        // load keys and write them to result record
+        auto sliceKeys = globalEntry.getKeyPtr();
+        for (size_t i = 0; i < resultKeyFields.size(); ++i) {
+            auto value = sliceKeys.load<UInt64>();
+            resultWindow.write(resultKeyFields[i], value);
+            sliceKeys = sliceKeys + keyDataTypes[i]->size();
+        }
+        // load values and write them to result record
+        auto sliceValue = globalEntry.getValuePtr();
+        for (const auto& aggregationFunction : aggregationFunctions) {
+            aggregationFunction->lower(sliceValue, resultWindow);
+            sliceValue = sliceValue + aggregationFunction->getSize();
+        }
+        child->execute(ctx, resultWindow);
+    }
+    Nautilus::FunctionCall("deleteSlice", deleteSlice, globalSlice);
+}
+}// namespace NES::Runtime::Execution::Operators

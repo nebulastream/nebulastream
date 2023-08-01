@@ -45,13 +45,13 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlidingWindowSink.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedWindowEmitAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowType.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
@@ -509,7 +509,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalNonKeyedSlidingWindowSink>();
-    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(nullptr);
+    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
     operatorHandlers.emplace_back(handler);
     auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
@@ -517,12 +517,17 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
     auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
-    auto nonKeyedSliceMergingOperator = std::make_shared<Runtime::Execution::Operators::NonKeyedSlidingWindowSink>(
-        operatorHandlers.size() - 1,
+
+    auto sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
         aggregationFunctions,
         startTs,
         endTs,
         physicalSWS->getWindowDefinition()->getOriginId());
+
+    auto nonKeyedSliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                              aggregationFunctions,
+                                                                              std::move(sliceMergingAction));
 
     pipeline.setRootOperator(nonKeyedSliceMergingOperator);
     return nonKeyedSliceMergingOperator;
@@ -550,14 +555,31 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         resultKeyFields.emplace_back(key->getFieldName());
         keyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
     }
-    auto sliceMergingOperator =
-        std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
-                                                                           aggregationFunctions,
-                                                                           keyDataTypes,
-                                                                           resultKeyFields,
-                                                                           startTs,
-                                                                           endTs,
-                                                                           physicalGSMO->getWindowDefinition()->getOriginId());
+    uint64_t keySize;
+    uint64_t valueSize;
+    for (auto& keyType : keyDataTypes) {
+        keySize = keySize + keyType->size();
+    }
+    for (auto& function : aggregationFunctions) {
+        valueSize = valueSize + function->getSize();
+    }
+
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
+        std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
+            aggregationFunctions,
+            startTs,
+            endTs,
+            keySize,
+            valueSize,
+            resultKeyFields,
+            keyDataTypes,
+            physicalGSMO->getWindowDefinition()->getOriginId());
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                                                   aggregationFunctions,
+                                                                                                   std::move(sliceMergingAction),
+                                                                                                   keyDataTypes,
+                                                                                                   keySize,
+                                                                                                   valueSize);
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
