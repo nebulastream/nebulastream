@@ -607,7 +607,7 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
         std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     auto testSchema = operatorNode->getOutputSchema();
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider)); //Todo: No Projections?
+    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

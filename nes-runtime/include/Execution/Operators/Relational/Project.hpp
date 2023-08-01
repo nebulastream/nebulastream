@@ -18,14 +18,14 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Project operator that evaluates a project expression on a input records. todo
- * Project expressions read record fields, apply transformations, and can set/update fields.
+ * @brief Project operator that maps the field names of a record from input field names to output field names.
  */
 class Project : public ExecutableOperator {
   public:
     /**
-     * @brief Creates a project operator
-     * @param todo
+     * @brief Constructs a project operator (maps field names of a record(input) to new field names(output))
+     * @param inputFields: The input field names that must be reflected in the record during execute()
+     * @param inputFields: The output field names that the input field names of the record are mapped to during execute()
      */
     Project(const std::vector<Record::RecordFieldIdentifier>& inputFields, const std::vector<Record::RecordFieldIdentifier>& outputFields) 
         : inputFields(inputFields), outputFields(outputFields){};
