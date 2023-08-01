@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
 #include <API/QueryAPI.hpp>
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -30,11 +30,9 @@ using namespace std;
 
 namespace NES::Runtime::Execution {
 
-
 class MultipleJoinsTest : public Testing::NESBaseTest,
-                          public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy>{
+                          public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
-
     Runtime::BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy;
     static void SetUpTestCase() {
@@ -63,9 +61,9 @@ class MultipleJoinsTest : public Testing::NESBaseTest,
 
         for (auto i = 0_u64; i < joinParams.inputSchemas.size(); ++i) {
             auto sourceConfig = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[i]);
-            std::string logicalSourceName = "window" + std::to_string(i+1);
+            std::string logicalSourceName = "window" + std::to_string(i + 1);
             testHarness.addLogicalSource(logicalSourceName, joinParams.inputSchemas[i])
-                       .attachWorkerWithCSVSourceToCoordinator(logicalSourceName, sourceConfig);
+                .attachWorkerWithCSVSourceToCoordinator(logicalSourceName, sourceConfig);
         }
 
         auto actualResult = testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedRecords.size());
@@ -128,18 +126,17 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
         {12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12, 1, 12000},
         {13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13, 1, 13000},
         {14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14, 1, 14000},
-        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}
-    };
+        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15, 1, 15000}};
 
     const auto query = Query::from("window1")
                            .joinWith(Query::from("window2"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(Query::from("window3"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id3"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
 
@@ -208,22 +205,21 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
         {3000, 4000, 11, 3000, 4000, 11, 3000, 4000, 11, 3, 11, 3001, 3, 11, 3001, 9, 11, 3000, 9, 11, 3000},
         {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
         {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
-        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300}
-    };
+        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300}};
 
     const auto query = Query::from("window1")
                            .joinWith(Query::from("window2"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(Query::from("window3"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id3"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith(Query::from("window4"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id4"))
-                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id4"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
 
@@ -292,22 +288,21 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
         {12000, 13000, 1, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000, 12000, 13000, 1, 12, 1, 12000, 12, 1, 12000},
         {13000, 14000, 1, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000, 13000, 14000, 1, 13, 1, 13000, 13, 1, 13000},
         {14000, 15000, 1, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000, 14000, 15000, 1, 14, 1, 14000, 14, 1, 14000},
-        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000}
-    };
+        {15000, 16000, 1, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000, 15000, 16000, 1, 15, 1, 15000, 15, 1, 15000}};
 
     const auto query = Query::from("window1")
                            .joinWith(Query::from("window2"))
                            .where(Attribute("id1"))
                            .equalsTo(Attribute("id2"))
-                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                            .joinWith((Query::from("window3"))
                                          .joinWith(Query::from("window4"))
                                          .where(Attribute("id3"))
                                          .equalsTo(Attribute("id4"))
-                                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000))))
+                                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))
                            .where(Attribute("id1"))
                            .equalsTo(Attribute("id4"))
-                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)));
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
@@ -360,30 +355,28 @@ TEST_P(MultipleJoinsTest, DISABLED_testJoins2WithDifferentSourceSlidingWindowOnC
                                    ->addField(createField("timestamp", BasicType::UINT64));
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema}, {"id1", "id2", "id3"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv"}, "");
-    const std::vector<ResultRecord> expectedTuples = {
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001},
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001},
-        {1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300},
-        {1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300},
-        {500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300},
-        {500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300}
-    };
+    const std::vector<ResultRecord> expectedTuples = {{1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
+                                                      {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
+                                                      {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
+                                                      {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
+                                                      {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
+                                                      {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
+                                                      {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001},
+                                                      {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001},
+                                                      {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
+                                                      {1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
+                                                      {500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300},
+                                                      {500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300}};
 
     const auto query = Query::from("window1")
                            .joinWith(Query::from("window2"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(Query::from("window3"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id3"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)));
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)));
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
 
@@ -446,45 +439,44 @@ TEST_P(MultipleJoinsTest, DISABLED_testJoin3WithDifferentSourceSlidingWindowOnCo
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
     const std::vector<ResultRecord> expectedTuples = {
-        {1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001},
-        {1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {1000,2000,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {1000,2000,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {1000,2000,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {500,1500,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {500,1500,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {500,1500,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300},
-        {500,1500,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300}
-    };
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1, 12, 1300, 1, 12, 1300}};
 
     const auto query = Query::from("window1")
                            .joinWith(Query::from("window2"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id2"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(Query::from("window3"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id3"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id3"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                            .joinWith(Query::from("window4"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id4"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)));
+                           .where(Attribute("id1"))
+                           .equalsTo(Attribute("id4"))
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)));
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
 // TODO this test can be enabled once #3353 is merged
@@ -546,45 +538,45 @@ TEST_P(MultipleJoinsTest, DISABLED_testJoin3WithDifferentSourceSlidingWindowOnCo
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
     const std::vector<ResultRecord> expectedTuples = {
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001},
-        {1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001},
-        {1000,2000,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001},
-        {500,1500,4,1000,2000,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1102,500,1500,4,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001},
-        {500,1500,4,500,1500,4,1,4,1002,3,4,1112,500,1500,4,4,4,1001,4,4,1001},
-        {1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300},
-        {1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300},
-        {1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300},
-        {1000,2000,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300},
-        {500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300},
-        {500,1500,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300},
-        {500,1500,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300},
-        {500,1500,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300}
-    };
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1102, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 1000, 2000, 4, 1, 4, 1002, 3, 4, 1112, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1102, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 1000, 2000, 4, 4, 4, 1001, 4, 4, 1001},
+        {500, 1500, 4, 500, 1500, 4, 1, 4, 1002, 3, 4, 1112, 500, 1500, 4, 4, 4, 1001, 4, 4, 1001},
+        {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1000, 2000, 12, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 500, 1500, 12, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1000, 2000, 12, 1, 12, 1300, 1, 12, 1300},
+        {1000, 2000, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 500, 1500, 12, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 1000, 2000, 12, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 1000, 2000, 12, 1, 12, 1001, 5, 12, 1011, 500, 1500, 12, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 1000, 2000, 12, 1, 12, 1300, 1, 12, 1300},
+        {500, 1500, 12, 500, 1500, 12, 1, 12, 1001, 5, 12, 1011, 500, 1500, 12, 1, 12, 1300, 1, 12, 1300}};
 
-    const auto query = Query::from("window1")
-                           .joinWith(Query::from("window2"))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id2"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
-                           .joinWith((Query::from("window3"))
-                                         .joinWith(Query::from("window4"))
-                                         .where(Attribute("id3"))
-                                         .equalsTo(Attribute("id4"))
-                                         .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))
-                               .where(Attribute("id1"))
-                               .equalsTo(Attribute("id4"))
-                               .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)));
+    const auto query =
+        Query::from("window1")
+            .joinWith(Query::from("window2"))
+            .where(Attribute("id1"))
+            .equalsTo(Attribute("id2"))
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+            .joinWith((Query::from("window3"))
+                          .joinWith(Query::from("window4"))
+                          .where(Attribute("id3"))
+                          .equalsTo(Attribute("id4"))
+                          .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500))))
+            .where(Attribute("id1"))
+            .equalsTo(Attribute("id4"))
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)));
     runJoinQuery<ResultRecord>(query, csvFileParams, joinParams, expectedTuples);
 }
 
