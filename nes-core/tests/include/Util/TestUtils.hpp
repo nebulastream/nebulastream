@@ -18,6 +18,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -27,6 +28,7 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <Util/StdInt.hpp>
 #include <chrono>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -57,14 +59,16 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 namespace TestUtils {
 
 /**
- * @brief Struct for storing all csv file params
+ * @brief Struct for storing all csv file params for tests. It is solely a container for grouping csv files.
  */
 struct CsvFileParams {
     CsvFileParams(const string& csvFileLeft, const string& csvFileRight, const string& expectedFile)
-        : csvFileLeft(csvFileLeft), csvFileRight(csvFileRight), expectedFile(expectedFile) {}
+        : inputCsvFiles({csvFileLeft, csvFileRight}), expectedFile(expectedFile) {}
 
-    const std::string csvFileLeft;
-    const std::string csvFileRight;
+    explicit CsvFileParams(const std::vector<std::string>& inputCsvFiles, const string& expectedFile = "")
+        : inputCsvFiles(inputCsvFiles), expectedFile(expectedFile) {}
+
+    const std::vector<std::string> inputCsvFiles;
     const std::string expectedFile;
 };
 
@@ -72,20 +76,28 @@ struct CsvFileParams {
  * @brief Struct for storing all parameter for the join
  */
 struct JoinParams {
-    JoinParams(const SchemaPtr& leftSchema,
-               const SchemaPtr& rightSchema,
-               const string& joinFieldNameLeft,
-               const string& joinFieldNameRight = "")
-        : leftSchema(leftSchema), rightSchema(rightSchema), joinFieldNameLeft(joinFieldNameLeft),
-          joinFieldNameRight(joinFieldNameRight) {
-        outputSchema = Runtime::Execution::Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    JoinParams(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const string& joinFieldNameLeft,
+               const std::string& joinFieldNameRight)
+        : JoinParams({leftSchema, rightSchema}, {joinFieldNameLeft, joinFieldNameRight}) {
     }
 
-    SchemaPtr leftSchema;
-    SchemaPtr rightSchema;
+    JoinParams(const std::vector<SchemaPtr>& inputSchemas, const std::vector<std::string>& joinFieldNames)
+        : inputSchemas(inputSchemas), joinFieldNames(joinFieldNames) {
+          NES_ASSERT(inputSchemas.size() >= 2, "JoinParams expect to have at least two input schemas");
+          outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemas[0], inputSchemas[1], joinFieldNames[0]);
+
+          if (inputSchemas.size() > 2) {
+              auto cnt = 0_u64;
+              for (auto it = inputSchemas.begin() + 2; it != inputSchemas.end(); ++it) {
+                  outputSchema = Runtime::Execution::Util::createJoinSchema(outputSchema, *it, joinFieldNames[0]);
+                  cnt++;
+              }
+          }
+    }
+
+    std::vector<SchemaPtr> inputSchemas;
     SchemaPtr outputSchema;
-    const std::string joinFieldNameLeft;
-    const std::string joinFieldNameRight;
+    const std::vector<std::string> joinFieldNames;
 };
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
@@ -739,6 +751,13 @@ template<typename T>
 inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
     return createVecFromPointer<T>(buffer.getBuffer<T>(), buffer.getBuffer<T>() + buffer.getNumberOfTuples());
 }
+
+/**
+ * @brief Creates a csv source that produces as many buffers as the csv file contains
+ * @param fileName
+ * @return CSVSourceTypePtr
+ */
+CSVSourceTypePtr createSourceConfig (const std::string& fileName);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 

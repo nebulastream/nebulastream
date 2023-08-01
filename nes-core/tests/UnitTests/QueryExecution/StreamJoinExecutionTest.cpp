@@ -113,19 +113,19 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
 
         const auto testSink = executionEngine->createCollectSink<ResultRecord>(joinParams.outputSchema);
         const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-        const auto testSourceDescriptorLeft = executionEngine->createDataSource(joinParams.leftSchema);
-        const auto testSourceDescriptorRight = executionEngine->createDataSource(joinParams.rightSchema);
+        const auto testSourceDescriptorLeft = executionEngine->createDataSource(joinParams.inputSchemas[0]);
+        const auto testSourceDescriptorRight = executionEngine->createDataSource(joinParams.inputSchemas[1]);
 
         auto query = TestQuery::from(testSourceDescriptorLeft)
                          .joinWith(TestQuery::from(testSourceDescriptorRight))
-                         .where(Attribute(joinParams.joinFieldNameLeft))
-                         .equalsTo(Attribute(joinParams.joinFieldNameRight))
+                         .where(Attribute(joinParams.joinFieldNames[0]))
+                         .equalsTo(Attribute(joinParams.joinFieldNames[1]))
                          .window(joinWindow)
                          .sink(testSinkDescriptor);
 
         // Running the query
         auto resultRecords = runQueryWithCsvFiles<ResultRecord>(
-            {{joinParams.leftSchema, csvFileParams.csvFileLeft}, {joinParams.rightSchema, csvFileParams.csvFileRight}},
+            {{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]}, {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
             expectedSinkVector.size(),
             testSink,
             query);
@@ -380,7 +380,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSliding
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -421,7 +421,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttribut
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
@@ -543,24 +543,25 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     // Creating the sink and the sources
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
     const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    const auto testSourceDescriptorLeft = executionEngine->createDataSource(joinParams.leftSchema);
-    const auto testSourceDescriptorRight = executionEngine->createDataSource(joinParams.rightSchema);
+    const auto testSourceDescriptorLeft = executionEngine->createDataSource(joinParams.inputSchemas[0]);
+    const auto testSourceDescriptorRight = executionEngine->createDataSource(joinParams.inputSchemas[1]);
 
     // Running the query
     auto query = TestQuery::from(testSourceDescriptorLeft)
                      .window(TumblingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize)))
-                     .byKey(Attribute(joinParams.joinFieldNameLeft))
+                     .byKey(Attribute(joinParams.joinFieldNames[0]))
                      .apply(Sum(Attribute("fieldForSum1")))
                      .joinWith(TestQuery::from(testSourceDescriptorRight)
                                    .window(TumblingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize)))
-                                   .byKey(Attribute(joinParams.joinFieldNameRight))
+                                   .byKey(Attribute(joinParams.joinFieldNames[1]))
                                    .apply(Sum(Attribute("fieldForSum2"))))
-                     .where(Attribute(joinParams.joinFieldNameLeft))
-                     .equalsTo(Attribute(joinParams.joinFieldNameRight))
+                     .where(Attribute(joinParams.joinFieldNames[0]))
+                     .equalsTo(Attribute(joinParams.joinFieldNames[1]))
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
     const auto resultRecords = runQueryWithCsvFiles<ResultRecord>(
-        {{joinParams.leftSchema, csvFileParams.csvFileLeft}, {joinParams.rightSchema, csvFileParams.csvFileRight}},
+        {{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]},
+         {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
         expectedSinkVector.size(),
         testSink,
         query);
