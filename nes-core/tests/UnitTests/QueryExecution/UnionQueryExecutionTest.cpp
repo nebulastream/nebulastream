@@ -42,7 +42,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    void createSchemaAndSink(uint64_t numResultBuffers) {
+    void createSchemaAndSink(const uint64_t numResultBuffers) {
         schema = Schema::create()
                 ->addField("test$id", BasicType::INT64)
                 ->addField("test$one", BasicType::INT64);
@@ -51,7 +51,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     }
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, uint64_t numberOfTuples = 10) {
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t numberOfTuples = 10) {
         for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
             buf[recordIndex][1].write<int64_t>(1);
@@ -60,7 +60,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 
     Runtime::MemoryLayouts::DynamicTupleBuffer 
-    runQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> queryPlan) {
+    runQuery(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan) {
         // Setup first source and emit buffer
         auto source1 = executionEngine->getDataSource(queryPlan, 0);
         auto inputBuffer1 = executionEngine->getBuffer(schema);
