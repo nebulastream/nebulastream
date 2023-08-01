@@ -29,7 +29,6 @@ constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptio
 class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
                                      public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
-
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
     static void SetUpTestCase() {
@@ -76,8 +75,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
         std::vector<std::vector<Runtime::TupleBuffer>> allInputBuffers;
         allInputBuffers.reserve(inputs.size());
         for (auto [inputSchema, fileNameInputBuffers] : inputs) {
-            allInputBuffers.emplace_back(
-                TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager));
+            allInputBuffers.emplace_back(TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager));
         }
 
         // Creating query and submitting it to the execution engine
@@ -109,9 +107,8 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
                                                  const WindowTypePtr& joinWindow) {
         // Getting the expected output tuples
         auto bufferManager = executionEngine->getBufferManager();
-        const auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile,
-                                                                     joinParams.outputSchema,
-                                                                     bufferManager)[0];
+        const auto expectedSinkBuffer =
+            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         const auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
 
         const auto testSink = executionEngine->createCollectSink<ResultRecord>(joinParams.outputSchema);
@@ -142,7 +139,6 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 };
 
-
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t test1test2Start;
@@ -158,8 +154,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
         bool operator==(const ResultRecord& rhs) const {
             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
                 && test1test2Key == rhs.test1test2Key && test1f1_left == rhs.test1f1_left && test1f2_left == rhs.test1f2_left
-                && test1timestamp == rhs.test1timestamp && test2f1_right == rhs.test2f1_right && test2f2_right == rhs.test2f2_right
-                && test2timestamp == rhs.test2timestamp;
+                && test1timestamp == rhs.test1timestamp && test2f1_right == rhs.test2f1_right
+                && test2f2_right == rhs.test2f2_right && test2timestamp == rhs.test2timestamp;
         }
     };
 
@@ -323,8 +319,8 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
+                && window2timestamp == rhs.window2timestamp;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -406,8 +402,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttribut
         bool operator==(const ResultRecord& rhs) const {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
+                && window2timestamp == rhs.window2timestamp;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -447,8 +443,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
                 && std::memcmp(window1window2Key, rhs.window1window2Key, sizeof(char) * 7) == 0
                 && std::memcmp(window1id1, rhs.window1id1, sizeof(char) * 7) == 0
-                && std::memcmp(window2id2, rhs.window2id2, sizeof(char) * 7) == 0
-                && window1timestamp == rhs.window1timestamp && window2timestamp == rhs.window2timestamp;
+                && std::memcmp(window2id2, rhs.window2id2, sizeof(char) * 7) == 0 && window1timestamp == rhs.window1timestamp
+                && window2timestamp == rhs.window2timestamp;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -501,16 +497,16 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                     ->addField("test1$f1_left", BasicType::INT64)
-                                     ->addField("test1$f2_left", BasicType::INT64)
-                                     ->addField("test1$timestamp", BasicType::INT64)
-                                     ->addField("test1$fieldForSum1", BasicType::INT64);
+                                ->addField("test1$f1_left", BasicType::INT64)
+                                ->addField("test1$f2_left", BasicType::INT64)
+                                ->addField("test1$timestamp", BasicType::INT64)
+                                ->addField("test1$fieldForSum1", BasicType::INT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                      ->addField("test2$f1_right", BasicType::INT64)
-                                      ->addField("test2$f2_right", BasicType::INT64)
-                                      ->addField("test2$timestamp", BasicType::INT64)
-                                      ->addField("test2$fieldForSum2", BasicType::INT64);
+                                 ->addField("test2$f1_right", BasicType::INT64)
+                                 ->addField("test2$f2_right", BasicType::INT64)
+                                 ->addField("test2$timestamp", BasicType::INT64)
+                                 ->addField("test2$fieldForSum2", BasicType::INT64);
 
     const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1test2$start", BasicType::INT64)
@@ -534,15 +530,14 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
                                 ->addField("test2$fieldForSum2", BasicType::INT64);
     const auto timestampFieldName = "timestamp";
     const auto windowSize = 10UL;
-    TestUtils::CsvFileParams csvFileParams("stream_join_left_withSum.csv", "stream_join_right_withSum.csv",
+    TestUtils::CsvFileParams csvFileParams("stream_join_left_withSum.csv",
+                                           "stream_join_right_withSum.csv",
                                            "stream_join_withSum_sink.csv");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "f2_left", "f2_right");
 
     // Getting the expected output tuples
     auto bufferManager = executionEngine->getBufferManager();
-    const auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile,
-                                                                 sinkSchema,
-                                                                 bufferManager)[0];
+    const auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, sinkSchema, bufferManager)[0];
     const auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
 
     // Creating the sink and the sources
@@ -575,17 +570,15 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedSinkVector));
 }
 
-INSTANTIATE_TEST_CASE_P(
-    testStreamJoinQueries,
-    StreamJoinQueryExecutionTest,
-    ::testing::Values(
-        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-        //TODO Enable the disabled test and fix them #3926
-        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
-    [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-        return std::string(magic_enum::enum_name(info.param));
-    });
+INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
+                        StreamJoinQueryExecutionTest,
+                        ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+                        //TODO Enable the disabled test and fix them #3926
+                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+                        [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
+                            return std::string(magic_enum::enum_name(info.param));
+                        });
 
 }// namespace NES::Runtime::Execution

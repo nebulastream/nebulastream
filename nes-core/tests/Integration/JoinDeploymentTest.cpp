@@ -51,7 +51,9 @@ class JoinDeploymentTest : public Testing::NESBaseTest,
     }
 
     template<typename ResultRecord>
-    void runJoinQueryTwoLogicalStreams(const Query& query, const TestUtils::CsvFileParams& csvFileParams, const TestUtils::JoinParams& joinParams) {
+    void runJoinQueryTwoLogicalStreams(const Query& query,
+                                       const TestUtils::CsvFileParams& csvFileParams,
+                                       const TestUtils::JoinParams& joinParams) {
         auto createSourceConfig = [&](const std::string& fileName) {
             CSVSourceTypePtr sourceConfig = CSVSourceType::create();
             sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + fileName);
