@@ -39,6 +39,6 @@ class Edge {
     TopologyNodeId upstreamTopologyNode;
     TopologyNodeId downstreamTopologyNode;
 };
-}
-}
-#endif //TOPOLOGY_PREDICTION_EDGE_HPP_
+}// namespace Experimental::TopologyPrediction
+}// namespace NES
+#endif//TOPOLOGY_PREDICTION_EDGE_HPP_

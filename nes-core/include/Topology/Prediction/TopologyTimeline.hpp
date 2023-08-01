@@ -13,9 +13,9 @@
 */
 #ifndef TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
 #define TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
-#include <memory>
-#include <absl/container/btree_map.h>
 #include <Topology/Prediction/TopologyChangeLog.hpp>
+#include <absl/container/btree_map.h>
+#include <memory>
 
 namespace NES {
 class Topology;
@@ -94,7 +94,7 @@ class TopologyTimeline {
      * @return an aggregated changelog
      */
     TopologyChangeLog createAggregatedChangeLog(Timestamp time);
-    
+
     TopologyPtr originalTopology;
     absl::btree_map<Timestamp, TopologyChangeLog> changeMap;
 };

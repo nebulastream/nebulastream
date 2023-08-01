@@ -14,80 +14,80 @@
 #ifndef TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
 #define TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
 
-#include <unordered_map>
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 namespace NES {
 using TopologyNodeId = uint64_t;
 namespace Experimental::TopologyPrediction {
-    class TopologyDelta;
-    class Edge;
-    /**
+class TopologyDelta;
+class Edge;
+/**
      * This class represents a list of changes (added or removed links) which are expected to happen to the topology within a
      * certain time frame. Predictions can be added or removed from a changelog in the form of TopologyDeltas.
      */
-    class TopologyChangeLog {
-      public:
-        /**
+class TopologyChangeLog {
+  public:
+    /**
          * @brief construct an empty changelog
          */
-        TopologyChangeLog() = default;
+    TopologyChangeLog() = default;
 
-        /**
+    /**
          * @brief add another changelog to this one. If an edge is removed in one changelog and added in the other, it will neither
          * appear as added nor as removed in the resulting changelog.
          * @param newChangeLog the changelog whose contents are to be added to this changelog. The caller has to ensure that the
          * added changelog does not contain any added edges which are already present as added or any removed edges which are
          * already present as removed edges
          */
-        void add(const TopologyChangeLog& newChangeLog);
+    void add(const TopologyChangeLog& newChangeLog);
 
-        /**
+    /**
          * @brief insert information about added and removed edges from a topology delta to this changelog
          * @param newDelta the delta whose information is to be inserted into this changelog. The caller has to ensure that the added
          * delta does not contain any added edges which are already present as added in the changelog or any removed edges which are
          * already present as removed edges
          */
-        void update(const TopologyDelta& newDelta);
+    void update(const TopologyDelta& newDelta);
 
-        /**
+    /**
          * @brief remove information about added and removed edges from a topology delta from this changelog
          * @param newDelta the delta whose information is to be removed from this changelog
          */
-        void erase(const TopologyDelta& delta);
+    void erase(const TopologyDelta& delta);
 
-        /**
+    /**
          * @brief indicates if this changelog is empty
          * @return true if this changelog does not contain any added or removed links
          */
-        bool empty();
+    bool empty();
 
-        /**
+    /**
          * @brief get a list of the children which would be added to a certain node if the changes in this changelog were applied
          * @param nodeId the id of the node in question
          * @return a vector of node ids
          */
-        std::vector<TopologyNodeId> getAddedChildren(TopologyNodeId nodeId) const;
+    std::vector<TopologyNodeId> getAddedChildren(TopologyNodeId nodeId) const;
 
-        /**
+    /**
          * @brief get a list of the children which would be removed from a certain node if the changes in this changelog were applied
          * @param nodeId the id of the node in question
          * @return a vector of node ids
          */
-        std::vector<TopologyNodeId> getRemovedChildren(TopologyNodeId nodeId) const;
+    std::vector<TopologyNodeId> getRemovedChildren(TopologyNodeId nodeId) const;
 
-      private:
-        /**
+  private:
+    /**
          * @brief removes the links represented by an edge from a map which has the parent as a key and a vector of children as the
          * value type and removes the whole entry if the vector becomes empty after removing the last child
          * @param map the mop from which values are to be removed
          * @param edges the list of links to remove from the map
          */
-        static void removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
-                                       const std::vector<Edge>& edges);
+    static void removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
+                                   const std::vector<Edge>& edges);
 
-        /**
+    /**
          * @brief Helper function that adds the elements in the vectors contained in newMap to the vectors found under the same key in additionTarget, but
          * only if the element is not contained in the vector found under the same key in toSubtract. This helper function is used
          * to update the lists of added or removed links when a new changelog is added to an existing one.
@@ -97,13 +97,13 @@ namespace Experimental::TopologyPrediction {
          * @param toSubtract if an element is present here, it will not get added to additionTarget even if it is present in newMap
          * but any element present in newMap will be removed from toSubtract
          */
-        static void updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
-                           std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
-                           std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract);
+    static void updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
+                                std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
+                                std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract);
 
-        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> addedLinks;
-        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> removedLinks;
-    };
-}
-}
-#endif //TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
+    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> addedLinks;
+    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> removedLinks;
+};
+}// namespace Experimental::TopologyPrediction
+}// namespace NES
+#endif//TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H

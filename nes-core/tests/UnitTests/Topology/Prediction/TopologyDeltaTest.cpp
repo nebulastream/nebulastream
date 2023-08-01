@@ -16,8 +16,8 @@
 #include <Topology/Prediction/TopologyDelta.hpp>
 #include <gtest/gtest.h>
 namespace NES {
-using Experimental::TopologyPrediction::TopologyDelta;
 using Experimental::TopologyPrediction::Edge;
+using Experimental::TopologyPrediction::TopologyDelta;
 
 class TopologyDeltaTest : public Testing::NESBaseTest {
   public:
@@ -28,15 +28,15 @@ class TopologyDeltaTest : public Testing::NESBaseTest {
 };
 
 TEST_F(TopologyDeltaTest, testToString) {
-    TopologyDelta delta({{1, 2}, {1,3}, {5,3}}, {{2,3},{1,5}});
+    TopologyDelta delta({{1, 2}, {1, 3}, {5, 3}}, {{2, 3}, {1, 5}});
     EXPECT_EQ(delta.toString(), "added: {1->2, 1->3, 5->3}, removed: {2->3, 1->5}");
     TopologyDelta emptyDelta({}, {});
     EXPECT_EQ(emptyDelta.toString(), "added: {}, removed: {}");
 }
 
 TEST_F(TopologyDeltaTest, testGetEdges) {
-    std::vector<Edge> added = {{1, 2}, {1,3}, {5,3}};
-    std::vector<Edge> removed = {{2,3},{1,5}};
+    std::vector<Edge> added = {{1, 2}, {1, 3}, {5, 3}};
+    std::vector<Edge> removed = {{2, 3}, {1, 5}};
     TopologyDelta delta(added, removed);
     EXPECT_EQ(delta.getAdded(), added);
     EXPECT_EQ(delta.getRemoved(), removed);
@@ -45,4 +45,4 @@ TEST_F(TopologyDeltaTest, testGetEdges) {
     EXPECT_TRUE(emptyDelta.getAdded().empty());
     EXPECT_TRUE(emptyDelta.getRemoved().empty());
 }
-}
+}// namespace NES
