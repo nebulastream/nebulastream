@@ -82,7 +82,7 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param workerCtx
      * @param pipelineCtx
      */
-    void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+    void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 

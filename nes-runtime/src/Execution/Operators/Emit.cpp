@@ -48,6 +48,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
         resultBuffer.setNumRecords(emitState->outputIndex);
         resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
         resultBuffer.setOriginId(ctx.getOriginId());
+        resultBuffer.setSequenceNr(ctx.getSequenceNumber());
         ctx.emitBuffer(resultBuffer);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
@@ -63,6 +64,7 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
     resultBuffer.setNumRecords(emitState->outputIndex);
     resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
     resultBuffer.setOriginId(ctx.getOriginId());
+    resultBuffer.setSequenceNr(ctx.getSequenceNumber());
     ctx.emitBuffer(resultBuffer);
 }
 

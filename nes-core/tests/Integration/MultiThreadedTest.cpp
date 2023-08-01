@@ -65,7 +65,7 @@ class MultiThreadedTest : public Testing::NESBaseTest,
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override {}
 
     template<typename ResultRecord>
-    std::vector<ResultRecord> runQuery(const std::vector<std::pair<SchemaPtr, std::string>>& inputs,
+    std::vector<ResultRecord>& runQuery(const std::vector<std::pair<SchemaPtr, std::string>>& inputs,
                                        const uint64_t expectedNumberOfTuples,
                                        const std::shared_ptr<CollectTestSink<ResultRecord>>& testSink,
                                        const Query& query) {
@@ -367,7 +367,7 @@ TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, DISABLED_testOneJoin) {
+TEST_P(MultiThreadedTest, testOneJoin) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -440,8 +440,7 @@ TEST_P(MultiThreadedTest, DISABLED_testOneJoin) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-// TODO enable this once #4034 is fixed
-TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
+TEST_P(MultiThreadedTest, testTwoJoins) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2window3start;
         uint64_t window1window2window3end;
@@ -533,8 +532,7 @@ TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-// TODO enable this once #4034 is fixed
-TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
+TEST_P(MultiThreadedTest, testThreeJoins) {
     struct ResultRecord {
         uint64_t window1window2window3window4start;
         uint64_t window1window2window3window4end;
@@ -634,7 +632,7 @@ TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
                            .sink(testSinkDescriptor);
 
     // Running the query
-    const auto resultRecords = runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft},
+    const auto& resultRecords = runQuery<ResultRecord>({{inputSchemaLeft, fileNameBuffersLeft},
                                                        {inputSchemaRight, fileNameBuffersRight},
                                                        {inputSchemaThird, fileNameBuffersThird},
                                                        {inputSchemaFourth, fileNameBuffersFourth}},
@@ -776,7 +774,7 @@ TEST_P(MultiThreadedTest, DISABLED_threeJoinsSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testQueriesMultiThreaded,
                         MultiThreadedTest,
-                        ::testing::Values(1, 2, 3, 4),
+                        ::testing::Values(1, 2, 3, 4, 8),
                         [](const testing::TestParamInfo<MultiThreadedTest::ParamType>& info) {
                             return std::to_string(info.param) + "Workerthreads";
                         });
