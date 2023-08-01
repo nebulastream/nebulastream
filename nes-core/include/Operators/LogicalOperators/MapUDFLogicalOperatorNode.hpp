@@ -29,7 +29,7 @@ class MapUDFLogicalOperatorNode : public UDFLogicalOperator {
   public:
     /**
      * Construct a MapUdfLogicalOperatorNode.
-     * @param udfDescriptor The descriptor of the  UDF used in the map operation.
+     * @param udfDescriptor The descriptor of the UDF used in the map operation.
      * @param id The ID of the operator.
      */
     MapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);

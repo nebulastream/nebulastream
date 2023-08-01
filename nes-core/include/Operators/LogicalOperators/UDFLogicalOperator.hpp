@@ -25,7 +25,7 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 }// namespace Catalogs::UDF
 
 /**
- * Logical operator node for a udf. This class acts as a parent class for any j udf logical operator node
+ * Logical operator node for a udf. This class acts as a parent class for any udf logical operator node
  */
 class UDFLogicalOperator : public LogicalUnaryOperatorNode {
 

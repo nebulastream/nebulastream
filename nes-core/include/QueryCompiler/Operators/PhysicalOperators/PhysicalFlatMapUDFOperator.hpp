@@ -25,7 +25,7 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 namespace QueryCompilation::PhysicalOperators {
 
 /**
- * @brief Physical FlatMap  UDF operator.
+ * @brief Physical FlatMap UDF operator.
  */
 class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
   public:
@@ -34,7 +34,7 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @param id The identifier of this operator
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      */
     PhysicalFlatMapUDFOperator(OperatorId id,
                                    const SchemaPtr& inputSchema,
@@ -45,7 +45,7 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @param id The identifier of this operator
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalFlatMapUDFOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
@@ -57,7 +57,7 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @brief Creates a new instance of PhysicalFlatMapUDFOperator with no specified operator ID
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalFlatMapUDFOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
@@ -65,7 +65,7 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
                                       const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
 
     /**
-     * @brief Returns the java udf descriptor of this map operator
+     * @brief Returns the udf descriptor of this map operator
      * @return FieldAssignmentExpressionNodePtr
      */
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor();

@@ -20,16 +20,16 @@
 namespace NES {
 
 /**
- * Logical operator node for a flat map operation which uses a  UDF.
+ * Logical operator node for a flat map operation which uses a UDF.
  *
- * The operation completely replaces the stream tuple based on the result of the  UDF method. Therefore, the output schema is
+ * The operation completely replaces the stream tuple based on the result of the UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
 class FlatMapUDFLogicalOperatorNode : public UDFLogicalOperator {
   public:
     /**
      * @brief Construct a FlatMapUdfLogicalOperatorNode.
-     * @param udfDescriptor The descriptor of the  UDF used in the map operation.
+     * @param udfDescriptor The descriptor of the UDF used in the map operation.
      * @param id The ID of the operator.
      */
     FlatMapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id);

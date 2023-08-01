@@ -347,6 +347,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
+// TODO #3980 enable once string works
 // schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -404,6 +405,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
+// TODO #3980 enable this once string works
         // auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
         // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         // auto textValue = varLengthBuffer.getBuffer<TextValue>();

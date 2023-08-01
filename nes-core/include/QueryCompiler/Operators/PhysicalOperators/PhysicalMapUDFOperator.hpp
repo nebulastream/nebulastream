@@ -27,7 +27,7 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 /**
- * @brief Physical Map  Udf operator.
+ * @brief Physical Map Udf operator.
  */
 class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
   public:
@@ -36,7 +36,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @param id The identifier of this operator
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      */
     PhysicalMapUDFOperator(OperatorId id,
                                const SchemaPtr& inputSchema,
@@ -47,7 +47,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @param id The identifier of this operator
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
@@ -59,7 +59,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @brief Creates a new instance of PhysicalMapUDFOperator with no specified operator ID
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
-     * @param udfDescriptor The UDF descriptor for the -based UDF
+     * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
     static PhysicalOperatorPtr
@@ -78,7 +78,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
     OperatorNodePtr copy() override;
 
     /**
-     * @brief Returns the java udf descriptor of this map operator
+     * @brief Returns the udf descriptor of this map operator
      * @return FieldAssignmentExpressionNodePtr
      */
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor();

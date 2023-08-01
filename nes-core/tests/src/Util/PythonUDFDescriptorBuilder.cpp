@@ -32,11 +32,27 @@ namespace NES::Catalogs::UDF {
         return *this;
     }
 
+    PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr& newInputSchema) {
+        this->inputSchema = newInputSchema;
+        return *this;
+    }
+
     PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
         this->outputSchema = newOutputSchema;
         return *this;
     }
 
-    PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() { return PythonUDFDescriptorBuilder().build(); }
+    PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() {
+        std::string functionName = "udf_function";
+        std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
+        SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
+        SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
+        return PythonUDFDescriptorBuilder{}
+            .setFunctionName(functionName)
+            .setFunctionString(functionString)
+            .setInputSchema(inputSchema)
+            .setOutputSchema(outputSchema)
+            .build();
+    }
 
 }// namespace NES::Catalogs::UDF
