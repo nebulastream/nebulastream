@@ -19,9 +19,9 @@
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
-#include <vector>
 #include <list>
 #include <memory>
+#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -35,7 +35,8 @@ template<class SliceType>
 class SlidingWindowSliceStore {
   public:
     using SliceTypePtr = std::shared_ptr<SliceType>;
-    explicit SlidingWindowSliceStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide){};
+    explicit SlidingWindowSliceStore(uint64_t windowSize, uint64_t windowSlide)
+        : windowSize(windowSize), windowSlide(windowSlide){};
     virtual ~SlidingWindowSliceStore() = default;
 
     /**
@@ -82,21 +83,38 @@ class SlidingWindowSliceStore {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         std::list<std::tuple<uint64_t, uint64_t>> windows;
         // collect all windows, for which the list of slices contains the slice end.
-        // use __builtin_sub_overflow to detect negative overflowing sub
-        uint64_t maxWindowEndTs = currentTs;
-        if (__builtin_sub_overflow(maxWindowEndTs, windowSize, &maxWindowEndTs)) {
-            maxWindowEndTs = 0;
-        }
         // iterate over all slices that would open a window that ends before endTs.
         for (auto& slice : slices) {
-            if (slice->getStart() + windowSize > currentTs) {
+            if (slice->getEnd() > currentTs) {
                 break;
             }
-            if (slice->getStart() >= maxWindowEndTs && slice->getEnd() <= currentTs) {
-                auto windowStart = slice->getStart();
+            if (slice->getEnd() >= oldTs && slice->getEnd() <= currentTs) {
+                uint64_t windowStart;
+                auto windowEnd = slice->getEnd();
+                // use __builtin_sub_overflow to detect negative overflowing sub
+                if (__builtin_sub_overflow(slice->getEnd(), windowSize, &windowStart)) {
+                    continue;
+                }
+                // check if it is a valid window
+                if ((oldTs < windowEnd) && ((windowStart % windowSlide) == 0)) {
+                    windows.emplace_back(std::make_tuple(windowStart, windowEnd));
+                }
+            }
+        }
+        return windows;
+    }
+
+    std::list<std::tuple<uint64_t, uint64_t>> collectAllWindows(uint64_t oldTs) {
+        const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+        std::list<std::tuple<uint64_t, uint64_t>> windows;
+        // collect all windows, for which the list of slices contains the slice end.
+        // iterate over all slices that would open a window that ends before endTs.
+        for (auto& slice : slices) {
+            if (slice->getEnd() >= oldTs) {
+                uint64_t windowStart = slice->getStart();
                 auto windowEnd = slice->getStart() + windowSize;
                 // check if it is a valid window
-                if ((oldTs > windowStart) && ((windowStart % windowSlide) == 0)) {
+                if ((oldTs < windowEnd) && ((windowStart % windowSlide) == 0)) {
                     windows.emplace_back(std::make_tuple(windowStart, windowEnd));
                 }
             }
@@ -127,7 +145,7 @@ class SlidingWindowSliceStore {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
 
         uint64_t maxWindowEndTs = ts;
-        if (__builtin_sub_overflow(maxWindowEndTs, windowSize, &maxWindowEndTs)) {
+        if (__builtin_sub_overflow(maxWindowEndTs, windowSlide, &maxWindowEndTs)) {
             maxWindowEndTs = 0;
         }
         while (!slices.empty() && slices.front()->getEnd() <= maxWindowEndTs) {

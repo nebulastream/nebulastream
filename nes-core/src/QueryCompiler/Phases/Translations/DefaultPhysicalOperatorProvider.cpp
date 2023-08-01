@@ -671,7 +671,9 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         timeBasedWindowType->getTimeBasedSubWindowType();
         auto sliceStaging = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceStaging>();
-        if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+        globalOperatorHandlers.sliceMergingOperatorHandler =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+        /*if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
             globalOperatorHandlers.sliceMergingOperatorHandler =
                 std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
         } else {
@@ -682,7 +684,7 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
             globalOperatorHandlers.sliceMergingOperatorHandler =
                 std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging,
                                                                                              std::move(slidingWindowSliceStore));
-        }
+        }*/
 
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
 

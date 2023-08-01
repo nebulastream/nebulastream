@@ -40,6 +40,7 @@
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
@@ -50,6 +51,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlidingWindowSink.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowType.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
@@ -462,6 +464,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto handler =
         std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>>(physicalGSMO->getWindowHandler());
     operatorHandlers.emplace_back(handler);
+    auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
     auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
     // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
@@ -473,13 +476,30 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         : Runtime::Execution::Operators::WindowType::SlidingWindow;
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
+
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
+    if (windowTypeEnum == Runtime::Execution::Operators::TumblingWindow) {
+        sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
+            aggregationFunctions,
+            startTs,
+            endTs,
+            physicalGSMO->getWindowDefinition()->getOriginId());
+    } else if (windowTypeEnum == Runtime::Execution::Operators::SlidingWindow) {
+        auto timeBasedWindowType =
+            Windowing::WindowType::asTimeBasedWindowType(physicalGSMO->getWindowDefinition()->getWindowType());
+        auto windowSize = timeBasedWindowType->getSize().getTime();
+        auto windowSlide = timeBasedWindowType->getSlide().getTime();
+        auto actionHandler =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
+        operatorHandlers.emplace_back(actionHandler);
+        sliceMergingAction =
+            std::make_unique<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreAction>(operatorHandlers.size() - 1);
+    }
     auto nonKeyedSliceMergingOperator =
-        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
-                                                                              windowTypeEnum,
+        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
                                                                               aggregationFunctions,
-                                                                              startTs,
-                                                                              endTs,
-                                                                              physicalGSMO->getWindowDefinition()->getOriginId());
+                                                                              std::move(sliceMergingAction));
+
     pipeline.setRootOperator(nonKeyedSliceMergingOperator);
     return nonKeyedSliceMergingOperator;
 }

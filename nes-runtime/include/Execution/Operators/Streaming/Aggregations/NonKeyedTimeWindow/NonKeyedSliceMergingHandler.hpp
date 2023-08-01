@@ -35,8 +35,6 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
      * @param windowDefinition
      */
     NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
-    NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging,
-                                std::unique_ptr<SlidingWindowSliceStore<NonKeyedSlice>> globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -62,24 +60,12 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
     NonKeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
     const State* getDefaultState() const;
 
-    void appendToGlobalSliceStore(NonKeyedSlicePtr slice);
-
-    void triggerSlidingWindows(Runtime::WorkerContext& wctx,
-                               Runtime::Execution::PipelineExecutionContext& ctx,
-                               uint64_t sequenceNumber,
-                               uint64_t slideEnd);
-
     ~NonKeyedSliceMergingHandler();
 
   private:
     uint64_t entrySize;
     std::shared_ptr<NonKeyedSliceStaging> sliceStaging;
     std::unique_ptr<State> defaultState;
-    std::unique_ptr<SlidingWindowSliceStore<NonKeyedSlice>> globalSliceStore;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = 1;
-    std::mutex triggerMutex;
 };
 
 }// namespace NES::Runtime::Execution::Operators
