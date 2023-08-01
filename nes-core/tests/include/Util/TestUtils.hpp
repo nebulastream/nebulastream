@@ -72,7 +72,9 @@ struct CsvFileParams {
  * @brief Struct for storing all parameter for the join
  */
 struct JoinParams {
-    JoinParams(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const string& joinFieldNameLeft,
+    JoinParams(const SchemaPtr& leftSchema,
+               const SchemaPtr& rightSchema,
+               const string& joinFieldNameLeft,
                const string& joinFieldNameRight = "")
         : leftSchema(leftSchema), rightSchema(rightSchema), joinFieldNameLeft(joinFieldNameLeft),
           joinFieldNameRight(joinFieldNameRight) {
