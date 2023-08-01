@@ -24,7 +24,8 @@ Record::Record() {}
 Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
 
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
-    if (!fields.contains(fieldIdentifier)) {
+    auto fieldsMapIterator = fields.find(fieldIdentifier);
+    if (fieldsMapIterator == fields.end()) {
         std::stringstream ss;
         std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {
             ss << entry.first;
@@ -32,7 +33,7 @@ Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
         });
         throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
     } else {
-        return fields.at(fieldIdentifier);
+        return fieldsMapIterator->second;
     }
 }
 

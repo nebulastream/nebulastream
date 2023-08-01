@@ -17,15 +17,21 @@
 namespace NES::Runtime::Execution::Operators {
 
 void Project::execute(ExecutionContext& ctx, Record& record) const {
-    Record projectedRecord;
-    for(size_t index = 0; index < record.numberOfFields(); ++index) {
-        auto inputName = inputFields.at(index);
-        auto value = record.read(inputName);
-        auto newName = outputFields.at(index);
-        projectedRecord.write(newName, value);
+    
+    // If the number of inputFields and outputFields match, map inputFields to outputFields.
+    if(inputFields.size() == outputFields.size()) {
+        Record projectedRecord;
+        for(size_t index = 0; index < record.numberOfFields(); ++index) {
+            auto inputName = inputFields.at(index);
+            auto value = record.read(inputName);
+            auto newName = outputFields.at(index);
+            projectedRecord.write(newName, value);
+        }
+        // call next operator
+        child->execute(ctx, projectedRecord);
+    } else {
+        child->execute(ctx, record);
     }
-    // call next operator
-    child->execute(ctx, projectedRecord);
 }
 
 }// namespace NES::Runtime::Execution::Operators
