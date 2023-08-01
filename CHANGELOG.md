@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.174](https://github.com/nebulastream/nebulastream/tree/v0.5.174) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.173...v0.5.174)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add predicted topology timeline [\#3649](https://github.com/nebulastream/nebulastream/issues/3649)
+
 ## [v0.5.173](https://github.com/nebulastream/nebulastream/tree/v0.5.173) (2023-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.172...v0.5.173)
