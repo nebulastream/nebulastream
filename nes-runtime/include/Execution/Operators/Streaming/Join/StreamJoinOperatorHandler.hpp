@@ -91,7 +91,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param originId
      * @return Vector<uint64_t> containing windows that can be triggered
      */
-    std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
+    std::vector<uint64_t> checkWindowsTrigger(const uint64_t watermarkTs, const uint64_t sequenceNumber, const OriginId originId);
 
     /**
      * @brief Triggers all windows that have not been already emitted to the probe
@@ -105,7 +105,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param workerCtx
      * @param pipelineCtx
      */
-    virtual void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+    virtual void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                                 WorkerContext* workerCtx,
                                 PipelineExecutionContext* pipelineCtx) = 0;
 
@@ -160,11 +160,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     uint64_t getNextSequenceNumber();
 
-    /**
-     * @brief Sets the number of worker thread for the join, especially necessary for the build part of the join
-     * @param numberOfWorkerThreads
-     */
-    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
   protected:
     uint64_t numberOfWorkerThreads = 1;

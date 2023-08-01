@@ -30,13 +30,12 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getNLJWindowRefAndCombinePagedVectorsProxy(void* ptrOpHandler, uint64_t windowIdentifier) {
+void* getNLJWindowRef(void* ptrOpHandler, uint64_t windowIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_INFO("windowIdentifier: {}", windowIdentifier);
     const auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto window = opHandler->getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        std::dynamic_pointer_cast<NLJWindow>(window.value())->combinePagedVectors();
         return window.value().get();
     }
     // For now this is fine. We should handle this as part of issue #4016
@@ -49,30 +48,20 @@ void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, uint64_t windowIdent
     opHandler->deleteWindow(windowIdentifier);
 }
 
-uint64_t getSequenceNumberProxyForNestedLoopJoin(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->getNextSequenceNumber();
-}
-uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->getOutputOriginId();
-}
-
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    // As this operator functions as a scan, we have to set the execution context for this pipeline
+    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+    ctx.setOrigin(recordBuffer.getOriginId());
+
     Operator::open(ctx, recordBuffer);
+
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowIdentifier = recordBuffer.getBuffer().load<UInt64>();
     // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0
     Value<UInt64> workerIdForPagedVectors(0_u64);
-    auto windowReference = Nautilus::FunctionCall("getNLJWindowRefAndCombinePagedVectorsProxy",
-                                                  getNLJWindowRefAndCombinePagedVectorsProxy,
-                                                  operatorHandlerMemRef,
-                                                  windowIdentifier);
+    auto windowReference = Nautilus::FunctionCall("getNLJWindowRef", getNLJWindowRef, operatorHandlerMemRef, windowIdentifier);
     auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                      getNLJPagedVectorProxy,
                                                      windowReference,
@@ -89,16 +78,6 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     Value<UInt64> windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
     Value<UInt64> windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, windowReference);
-
-    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxyForNestedLoopJoin",
-                                                 getSequenceNumberProxyForNestedLoopJoin,
-                                                 operatorHandlerMemRef);
-    auto originId =
-        Nautilus::FunctionCall("getOriginIdProxyForNestedLoopJoin", getOriginIdProxyForNestedLoopJoin, operatorHandlerMemRef);
-
-    ctx.setWatermarkTs(windowEnd.as<UInt64>());
-    ctx.setSequenceNumber(sequenceNumber.as<UInt64>());
-    ctx.setOrigin(originId.as<UInt64>());
 
     // As we know that the tuples are lying one after the other (row layout), we can ignore the buffer size
     auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);

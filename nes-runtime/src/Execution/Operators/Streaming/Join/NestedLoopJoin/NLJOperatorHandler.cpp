@@ -56,23 +56,37 @@ uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier
 
 void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop NLJOperatorHandler"); }
 
-void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+void NLJOperatorHandler::triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                                         WorkerContext*,
                                         PipelineExecutionContext* pipelineCtx) {
+
+    // We expect the windowIdentifier to be the windowEnd. We have to set the seq number in order of the window end timestamps.
+    // Otherwise, it can happen that the buffer <seq 2, ts 1000> gets processed after <seq 1, ts 20000>, which will lead to wrong results upstream
+    std::sort(windowIdentifiersToBeTriggered.begin(), windowIdentifiersToBeTriggered.end());
+
+    // We expect the windowIdentifiersToBeTriggered to be sorted to not
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
         auto nljWindow = getWindowByWindowIdentifier(windowIdentifier);
         if (!nljWindow.has_value()) {
             NES_THROW_RUNTIME_ERROR("Could not find window for " << std::to_string(windowIdentifier)
                                                                  << ". Therefore, the window will not be triggered!!!");
-            continue;
         }
-        std::dynamic_pointer_cast<NLJWindow>(nljWindow.value())->combinePagedVectors();
+        const auto& windowVal = nljWindow.value();
+        std::dynamic_pointer_cast<NLJWindow>(windowVal)->combinePagedVectors();
 
         auto buffer = pipelineCtx->getBufferManager()->getBufferBlocking();
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
         buffer.setNumberOfTuples(1);
+
+        // As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
+        // As we have a global watermark that is larger then the window end, we can set the watermarkTs to be the window end.
+        buffer.setOriginId(getOutputOriginId());
+        buffer.setSequenceNumber(getNextSequenceNumber());
+        buffer.setWatermark(windowVal->getWindowEnd());
+
         pipelineCtx->dispatchBuffer(buffer);
-        NES_TRACE("Emitted windowIdentifier for window {}", windowIdentifier, nljWindow.value()->toString());
+        NES_TRACE("Emitted windowIdentifier for window {} with watermarkTs {} sequenceNumber {} originId {}",
+                  windowVal->toString(), buffer.getWatermark(), buffer.getSequenceNumber(), buffer.getOriginId());
     }
 }
 

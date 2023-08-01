@@ -65,6 +65,12 @@ class StreamWindow {
     [[nodiscard]] uint64_t getWindowEnd() const;
 
     /**
+     * @brief Check if this window has been emitted to the probe
+     * @return Boolean
+     */
+    bool isAlreadyEmitted() const;
+
+    /**
      * @brief Returns the number of tuples in this window for the left side
      * @return uint64_t
      */
@@ -95,7 +101,7 @@ class StreamWindow {
      * window if it has been seen from all sides (left and right)
      * @return
      */
-    bool checkTriggeredDuringTerminate();
+    bool shouldTriggerDuringTerminate();
 
     /**
      * @brief Creates a string representation of this window

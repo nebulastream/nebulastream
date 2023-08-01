@@ -54,7 +54,7 @@ void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     return opHandler->getWindowByTimestampOrCreateIt(timestamp).get();
 }
 
-void triggerWindowsProxy(const std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+void triggerWindowsProxy(std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
@@ -74,7 +74,7 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     NES_DEBUG("Triggering all windows for pipelineId {}!", pipelineCtx->getPipelineID());
 
-    const auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
+    auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
     triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
@@ -98,7 +98,7 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    const auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
     triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 

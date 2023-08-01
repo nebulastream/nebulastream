@@ -50,7 +50,7 @@ void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecution
     NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
-void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                                                    WorkerContext* workerCtx,
                                                    PipelineExecutionContext* pipelineCtx) {
     //for every window
