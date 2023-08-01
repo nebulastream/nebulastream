@@ -36,7 +36,7 @@ class UDFDescriptor {
 
     /**
     * @brief Return the name of the UDF method.
-    * @return The name of the UDF method.
+    * @return The name of the UDF method.udf
     */
     [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
@@ -47,7 +47,7 @@ class UDFDescriptor {
     [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
 
     /**
-     * @brief Return the output schema of the map UDF operation.
+     * @brief Return the output schema of the UDF operation.
      *
      * The output schema must correspond to the return type of the UDF method.
      *
@@ -56,7 +56,7 @@ class UDFDescriptor {
     const SchemaPtr& getOutputSchema() const { return outputSchema; }
 
     /**
-     * @brief Return the input schema of the map UDF operation.
+     * @brief Return the input schema of the UDF operation.
      *
      * The input schema must correspond to the input type of the UDF method.
      *
@@ -65,7 +65,7 @@ class UDFDescriptor {
     const SchemaPtr& getInputSchema() const { return inputSchema; }
 
     /**
-     * @brief Set the input schema of the map UDF operation.
+     * @brief Set the input schema of the UDF operation.
      *
      * The input schema must correspond to the input type of the UDF method.
      *
@@ -94,10 +94,10 @@ class UDFDescriptor {
     };
 
     /**
-     * Compare to Python UDF descriptors.
+     * Compare to UDF descriptors.
      *
-     * @param other The other PythonUDFDescriptor in the comparison.
-     * @return True, if both PythonUdfDescriptors are the same, i.e., same UDF class and method name,
+     * @param other The other UDFDescriptor in the comparison.
+     * @return True, if both UDFDescriptors are the same, i.e., same UDF class and method name,
      * same serialized instance (state), and same byte code list; False, otherwise.
      */
     bool operator==(const UDFDescriptor& other) const;

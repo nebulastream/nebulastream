@@ -35,6 +35,10 @@ class PythonUDFDescriptorTest : public Testing::TestWithErrorHandling {
 // PythonUDFDescriptor class, the construction is done using a builder pattern.
 // By default, the PythonUDFDescriptorBuilder contains valid data for all fields required for the Python UDF descriptor,
 // e.g., class name, method name, serialized instance, bytecode list, and others.
+const std::string functionName = "udf_function";
+const std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
+const SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
+const SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
 
 TEST_F(PythonUDFDescriptorTest, NoExceptionIsThrownForValidData) {
     EXPECT_NO_THROW(PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor());
@@ -43,12 +47,18 @@ TEST_F(PythonUDFDescriptorTest, NoExceptionIsThrownForValidData) {
 TEST_F(PythonUDFDescriptorTest, TheFunctionNameMustNotBeEmtpy) {
     EXPECT_THROW(PythonUDFDescriptorBuilder{}
                      .setFunctionName("")
+                     .setFunctionString(functionString)
+                     .setInputSchema(inputSchema)
+                     .setOutputSchema(outputSchema)
                      .build(),
                  UDFException);
 }
 
 TEST_F(PythonUDFDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
     EXPECT_THROW(PythonUDFDescriptorBuilder{}
+                     .setFunctionName(functionName)
+                     .setFunctionString(functionString)
+                     .setInputSchema(inputSchema)
                      .setOutputSchema(std::make_shared<Schema>())// empty list
                      .build(),
                  UDFException);
@@ -56,7 +66,10 @@ TEST_F(PythonUDFDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
 
 TEST_F(PythonUDFDescriptorTest, TheFunctionStringMustNotBeEmpty) {
     EXPECT_THROW(PythonUDFDescriptorBuilder{}
+                     .setFunctionName(functionName)
                      .setFunctionString("")
+                     .setInputSchema(inputSchema)
+                     .setOutputSchema(outputSchema)
                      .build(),
                  UDFException);
 }
@@ -76,13 +89,22 @@ TEST_F(PythonUDFDescriptorTest, InEquality) {
     auto descriptor = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
     // Check a different function name
     auto differentFunctionName = "different_function_name";
-    auto descriptorWithDifferentFunctionName =
-        PythonUDFDescriptorBuilder{}.setFunctionName(differentFunctionName).build();
+    auto descriptorWithDifferentFunctionName = PythonUDFDescriptorBuilder{}
+                                                   .setFunctionName(differentFunctionName)
+                                                   .setFunctionString(functionString)
+                                                   .setInputSchema(inputSchema)
+                                                   .setOutputSchema(outputSchema)
+                                                   .build();
     EXPECT_FALSE(*descriptor == *descriptorWithDifferentFunctionName);
+
     // different function string
     auto differentFunctionString = "print(\"Hello World\")";
-    auto descriptorWithDifferentFunctionString =
-        PythonUDFDescriptorBuilder{}.setFunctionName(differentFunctionName).build();
+    auto descriptorWithDifferentFunctionString = PythonUDFDescriptorBuilder{}
+                                                     .setFunctionName(functionName)
+                                                     .setFunctionString(differentFunctionString)
+                                                     .setInputSchema(inputSchema)
+                                                     .setOutputSchema(outputSchema)
+                                                     .build();
     EXPECT_FALSE(*descriptor == *descriptorWithDifferentFunctionString);
 }
 

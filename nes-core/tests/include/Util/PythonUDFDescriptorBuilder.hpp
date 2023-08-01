@@ -61,10 +61,7 @@ class PythonUDFDescriptorBuilder {
      * @param newInputSchema The input schema of the Python UDF descriptor.
      * @return The PythonUDFDescriptorBuilder instance.
      */
-    PythonUDFDescriptorBuilder& setInputSchema(const SchemaPtr& newInputSchema) {
-        this->inputSchema = newInputSchema;
-        return *this;
-    }
+    PythonUDFDescriptorBuilder& setInputSchema(const SchemaPtr& newInputSchema);
 
     /**
      * Set the output schema of the Python UDF descriptor.
@@ -80,10 +77,10 @@ class PythonUDFDescriptorBuilder {
     static PythonUDFDescriptorPtr createDefaultPythonUDFDescriptor();
 
   private:
-    std::string functionName = "udf_function";
-    std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
-    SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
-    SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
+    std::string functionName;
+    std::string functionString;
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
 
 };
 
