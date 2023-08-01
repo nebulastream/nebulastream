@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.172](https://github.com/nebulastream/nebulastream/tree/v0.5.172) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.171...v0.5.172)
+
+**Implemented enhancements:**
+
+- \[TASK\] Parameterize and Port MultipleJoinsTest  [\#3983](https://github.com/nebulastream/nebulastream/issues/3983)
+
 ## [v0.5.171](https://github.com/nebulastream/nebulastream/tree/v0.5.171) (2023-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.170...v0.5.171)
