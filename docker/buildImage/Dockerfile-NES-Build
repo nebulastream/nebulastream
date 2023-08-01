@@ -25,9 +25,6 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     cmake \
     software-properties-common \
     openjdk-8-jdk \
-    libopencv-dev \
-    libopencv4.5-java \
-    libopencv4.5d-jni \
     opencl-headers \
     ocl-icd-opencl-dev \
     && apt-get clean -qq
