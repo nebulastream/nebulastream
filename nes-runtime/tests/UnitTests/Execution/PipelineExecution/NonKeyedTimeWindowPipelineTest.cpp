@@ -29,7 +29,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -98,11 +98,13 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
+    auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
+                                                                                    "start",
+                                                                                    "end",
+                                                                                    /*origin id*/ 0);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
-                                                                          "start",
-                                                                          "end",
-                                                                          /*origin id*/ 0);
+                                                                          std::move(sliceMergingAction));
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -134,15 +136,14 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
-    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
     sliceMergingExecutablePipeline->setup(pipeline2Context);
@@ -193,12 +194,13 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
+    auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
+                                                                                    "start",
+                                                                                    "end",
+                                                                                    /*origin id*/ 0);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
-
-                                                                          "start",
-                                                                          "end",
-                                                                          /*origin id*/ 0);
+                                                                          std::move(sliceMergingAction));
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("test$sum", BasicType::INT64)
                      ->addField("test$avg", BasicType::INT64)
@@ -233,15 +235,14 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    auto sliceStaging = std::make_shared<Operators::NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
 
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
-    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>(sliceStaging);
+    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
     sliceMergingExecutablePipeline->setup(pipeline2Context);

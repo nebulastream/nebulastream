@@ -17,24 +17,21 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-struct SliceMergeTask;
 class State;
 class NonKeyedSlice;
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
-class NonKeyedSliceStaging;
-class NonKeyedSliceStaging;
 class MultiOriginWatermarkProcessor;
 /**
  * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
  * tumbling and sliding window aggregations.
  */
-class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
+class NonKeyedSliceMergingHandler : public OperatorHandler {
   public:
     /**
      * @brief Constructor for the NonKeyedSliceMergingHandler
      * @param windowDefinition
      */
-    NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging);
+    NonKeyedSliceMergingHandler();
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -45,26 +42,19 @@ class NonKeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler {
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-    /**
-     * @brief Get a reference to the slice staging.
-     * @note This should be only called from the generated code.
-     * @return KeyedSliceStaging
-     */
-    inline NonKeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr
      */
-    NonKeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
+    NonKeyedSlicePtr createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask);
     const State* getDefaultState() const;
 
     ~NonKeyedSliceMergingHandler();
 
   private:
     uint64_t entrySize;
-    std::shared_ptr<NonKeyedSliceStaging> sliceStaging;
     std::unique_ptr<State> defaultState;
 };
 

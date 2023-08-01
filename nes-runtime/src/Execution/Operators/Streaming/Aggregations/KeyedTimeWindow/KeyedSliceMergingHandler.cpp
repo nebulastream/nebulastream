@@ -15,19 +15,14 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-KeyedSliceMergingHandler::KeyedSliceMergingHandler(std::shared_ptr<KeyedSliceStaging> sliceStaging)
-    : sliceStaging(sliceStaging) {}
+KeyedSliceMergingHandler::KeyedSliceMergingHandler() {}
 
 void KeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t keySize, uint64_t valueSize) {
     this->keySize = keySize;
@@ -43,7 +38,7 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
     NES_DEBUG("stop GlobalSliceMergingHandler: {}", queryTerminationType);
 }
 
-KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys) {
+KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys) {
     // allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));

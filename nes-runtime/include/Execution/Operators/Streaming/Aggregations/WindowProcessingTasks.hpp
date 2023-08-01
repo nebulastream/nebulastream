@@ -22,10 +22,13 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This task models the merge task of an a specific slice, with a start and a end.
  */
+template<typename SliceType>
 struct SliceMergeTask {
     uint64_t sequenceNumber;
     uint64_t startSlice;
     uint64_t endSlice;
+    std::vector<std::shared_ptr<SliceType>> slices;
+    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber); }
 };
 
 /**
@@ -35,15 +38,6 @@ struct WindowTriggerTask {
     uint64_t sequenceNumber;
     uint64_t windowStart;
     uint64_t windowEnd;
-};
-
-template<typename SliceType>
-struct Window {
-    uint64_t startTs;
-    uint64_t endTs;
-    uint64_t sequenceNumber;
-    std::vector<std::shared_ptr<SliceType>> slices;
-    ~Window() { NES_DEBUG("~Window {}-{}", startTs, endTs); }
 };
 
 }// namespace NES::Runtime::Execution::Operators

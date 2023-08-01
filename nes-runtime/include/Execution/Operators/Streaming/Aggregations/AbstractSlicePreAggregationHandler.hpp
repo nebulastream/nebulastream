@@ -15,6 +15,8 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Common/Identifiers.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -36,7 +38,7 @@ class MultiOriginWatermarkProcessor;
  * For each processed tuple buffer trigger is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-template<class SliceStaging, typename SliceStore>
+template<class SliceType, typename SliceStore>
 class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler {
   public:
     /**
@@ -47,9 +49,8 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
      */
     AbstractSlicePreAggregationHandler(uint64_t windowSize,
                                        uint64_t windowSlide,
-                                       const std::vector<OriginId>& origins,
-                                       std::weak_ptr<SliceStaging> weakSliceStagingPtr)
-        : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(weakSliceStagingPtr),
+                                       const std::vector<OriginId>& origins)
+        : windowSize(windowSize), windowSlide(windowSlide),
           watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)){};
 
     SliceStore* getThreadLocalSliceStore(uint64_t workerId) {
@@ -84,43 +85,43 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
         // the watermark has changed get the lock to trigger
         std::lock_guard<std::mutex> lock(triggerMutex);
         // update currentWatermark, such that other threads to have to acquire the lock
-        NES_TRACE("{} Trigger slices between {}-{}", windowSize, lastTriggerWatermark, currentWatermark);
+        NES_DEBUG("{} Trigger slices between {}-{}", windowSize, lastTriggerWatermark, currentWatermark);
         lastTriggerWatermark = currentWatermark;
 
-        auto sliceStaging = this->weakSliceStaging.lock();
-        if (!sliceStaging) {
-            NES_FATAL_ERROR("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
-            return;
-        }
-
         // collect all slices that end <= watermark from all thread local slice stores.
-        std::set<std::tuple<uint64_t, uint64_t>> sliceMetaData;
+        std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> collectedSlices;
         for (auto& threadLocalSliceStore : threadLocalSliceStores) {
             auto slices = threadLocalSliceStore->extractSlicesUntilTs(lastTriggerWatermark);
             for (const auto& slice : slices) {
-                sliceMetaData.emplace(slice->getStart(), slice->getEnd());
-                NES_TRACE("Assign thread local slices {}-{}", slice->getStart(), slice->getEnd());
-                sliceStaging->addToSlice(slice->getEnd(), std::move(slice->getState()));
+                NES_DEBUG("Assign thread local slices {}-{}", slice->getStart(), slice->getEnd());
+                auto sliceData = std::make_tuple(slice->getStart(), slice->getEnd());
+                if (!collectedSlices.contains(sliceData)) {
+                    collectedSlices.emplace(std::make_tuple(slice->getStart(), slice->getEnd()),
+                                            std::vector<std::shared_ptr<SliceType>>());
+                }
+                collectedSlices.find(sliceData)->second.emplace_back(slice);
             }
             threadLocalSliceStore->setLastWatermark(lastTriggerWatermark);
         }
-        dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), sliceMetaData);
+        dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(),  collectedSlices);
     };
 
     void dispatchSliceMergingTasks(Runtime::Execution::PipelineExecutionContext& ctx,
                                    std::shared_ptr<AbstractBufferProvider> bufferProvider,
-                                   std::set<std::tuple<uint64_t, uint64_t>>& sliceMetaData) {
+                                   std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices) {
         // for all slices that have been collected, emit a merge task to combine this slices.
         // note: the sliceMetaData set is ordered implicitly by the slice start time as the std::set
         // is an associative container that contains a sorted set of unique objects of type Key.
         // Thus, we emit slice deployment tasks in increasing order.
-        for (const auto& [sliceStart, sliceEnd] : sliceMetaData) {
-            NES_TRACE("{} Deploy merge task for slice {}-{} ", windowSize, sliceStart, sliceEnd);
+        for (const auto& [metaData, slices] : collectedSlices) {
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = buffer.getBuffer<SliceMergeTask>();
-            task->startSlice = sliceStart;
-            task->endSlice = sliceEnd;
+            auto task = buffer.getBuffer<SliceMergeTask<SliceType>>();
+            task->startSlice = std::get<0>(metaData);
+            task->endSlice = std::get<1>(metaData);
             task->sequenceNumber = resultSequenceNumber++;
+            task->slices = slices;
+            NES_DEBUG("{} Deploy merge task for slice {}-{} ", windowSize, task->startSlice, task->endSlice);
+            // task->slices = slices[sliceEnd];
             // the buffer contains one slice tasks, so we have to set the number of tuples to 1.
             buffer.setNumberOfTuples(1);
             ctx.dispatchBuffer(buffer);
@@ -138,28 +139,28 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
         std::lock_guard<std::mutex> lock(triggerMutex);
 
         if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
-            auto sliceStaging = this->weakSliceStaging.lock();
-            NES_ASSERT(sliceStaging, "SliceStaging is invalid, this should only happen after a soft stop.");
-
             // collect all remaining slices from all thread local slice stores.
-            std::set<std::tuple<uint64_t, uint64_t>> sliceMetaData;
+            std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> collectedSlices;
             for (auto& threadLocalSliceStore : threadLocalSliceStores) {
                 // we can directly access the slices as no other worker can concurrently change them
                 for (auto& slice : threadLocalSliceStore->getSlices()) {
                     auto& sliceState = slice->getState();
                     // each worker adds its local state to the staging area
-                    sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
-                    sliceMetaData.emplace(slice->getStart(), slice->getEnd());
+                    auto sliceData = std::make_tuple(slice->getStart(), slice->getEnd());
+                    if (!collectedSlices.contains(sliceData)) {
+                        collectedSlices.emplace(std::make_tuple(slice->getStart(), slice->getEnd()),
+                                                std::vector<std::shared_ptr<SliceType>>());
+                    }
+                    collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
                 }
             }
-            dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), sliceMetaData);
+            dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(),  collectedSlices);
         }
     }
 
   protected:
     const uint64_t windowSize;
     const uint64_t windowSlide;
-    std::weak_ptr<SliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<SliceStore>> threadLocalSliceStores;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;

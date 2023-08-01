@@ -113,11 +113,11 @@ class ThreadLocalSliceStore {
         return lock.asNonConstUnsafe().back();
     }
 
-    std::list<SliceTypePtr> extractSlicesUntilTs(uint64_t ts) {
+    std::list<std::shared_ptr<SliceType>> extractSlicesUntilTs(uint64_t ts) {
         // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         auto lock = synchronizedSlices.wlock();
         auto& slices = *lock;
-        std::list<SliceTypePtr> resultSlices;
+        std::list<std::shared_ptr<SliceType>> resultSlices;
         while (!slices.empty() && slices.front()->getEnd() <= ts) {
             resultSlices.emplace_back(std::move(slices.front()));
             lock->pop_front();
@@ -163,7 +163,7 @@ class ThreadLocalSliceStore {
      */
     auto& getSlices() {
         auto lock = synchronizedSlices.rlock();
-        return *lock;
+        return lock.asNonConstUnsafe();
     }
 
   private:

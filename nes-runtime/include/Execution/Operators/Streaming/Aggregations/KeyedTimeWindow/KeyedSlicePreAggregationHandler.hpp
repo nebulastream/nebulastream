@@ -17,7 +17,7 @@
 
 #include <Common/Identifiers.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
@@ -35,7 +35,7 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<KeyedSliceStaging, KeyedThreadLocalSliceStore> {
+class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore> {
   public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
@@ -45,8 +45,7 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
      */
     KeyedSlicePreAggregationHandler(uint64_t windowSize,
                                     uint64_t windowSlide,
-                                    const std::vector<OriginId>& origins,
-                                    std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr);
+                                    const std::vector<OriginId>& origins);
 
     /**
      * @brief Initializes the thread local state for the window operator
