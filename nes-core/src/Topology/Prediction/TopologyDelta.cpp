@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <sstream>
 #include <Topology/Prediction/Edge.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
+#include <sstream>
 #include <utility>
 
 namespace NES::Experimental::TopologyPrediction {
-TopologyDelta::TopologyDelta(std::vector<Edge> added, std::vector<Edge> removed) : added(std::move(added)), removed(std::move(removed)) {}
+TopologyDelta::TopologyDelta(std::vector<Edge> added, std::vector<Edge> removed)
+    : added(std::move(added)), removed(std::move(removed)) {}
 
 std::string TopologyDelta::toString() const {
     std::stringstream deltaString;

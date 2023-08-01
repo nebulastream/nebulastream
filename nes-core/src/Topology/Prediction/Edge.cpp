@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <sstream>
 #include <Topology/Prediction/Edge.hpp>
+#include <sstream>
 namespace NES::Experimental::TopologyPrediction {
 std::string Edge::toString() const {
     std::stringstream ss;
@@ -20,5 +20,8 @@ std::string Edge::toString() const {
     return ss.str();
 }
 
-bool Edge::operator==(const Edge& other) const { return this->downstreamTopologyNode == other.downstreamTopologyNode && this->upstreamTopologyNode == other.upstreamTopologyNode; }
+bool Edge::operator==(const Edge& other) const {
+    return this->downstreamTopologyNode == other.downstreamTopologyNode
+        && this->upstreamTopologyNode == other.upstreamTopologyNode;
 }
+}// namespace NES::Experimental::TopologyPrediction

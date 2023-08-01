@@ -11,16 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Topology/Prediction/Edge.hpp>
 #include <Topology/Prediction/TopologyChangeLog.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
-#include <Topology/Prediction/Edge.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Experimental::TopologyPrediction {
 
 void TopologyChangeLog::updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
-            std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
-            std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
+                                        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
+                                        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
     //iterate over the parent ids and corresponding lists of children
     for (const auto& [parentToAdd, childrenToAdd] : newMap) {
         //get the list of children to which new children will be added
@@ -97,7 +97,7 @@ void TopologyChangeLog::erase(const TopologyDelta& delta) {
 }
 
 void TopologyChangeLog::removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
-    const std::vector<Edge>& edges) {
+                                           const std::vector<Edge>& edges) {
     for (auto edge : edges) {
         auto& children = map[edge.downstreamTopologyNode];
         auto iterator = std::find(children.begin(), children.end(), edge.upstreamTopologyNode);
@@ -112,7 +112,5 @@ void TopologyChangeLog::removeLinksFromMap(std::unordered_map<TopologyNodeId, st
     }
 }
 
-bool TopologyChangeLog::empty() {
-    return addedLinks.empty() && removedLinks.empty();
-}
-}
+bool TopologyChangeLog::empty() { return addedLinks.empty() && removedLinks.empty(); }
+}// namespace NES::Experimental::TopologyPrediction

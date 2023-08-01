@@ -15,8 +15,8 @@
 #include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Topology/Prediction/TopologyDelta.hpp>
 #include <Topology/Prediction/Edge.hpp>
+#include <Topology/Prediction/TopologyDelta.hpp>
 #include <Topology/Prediction/TopologyTimeline.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -54,14 +54,18 @@ class TopologyTimelineTest : public Testing::NESBaseTest {
         ASSERT_EQ(originalIds, copiedIds);
     }
 
-    static void compareNodeAt(Experimental::TopologyPrediction::TopologyTimeline versions, Timestamp time, uint64_t id, std::vector<uint64_t> parents, std::vector<uint64_t> children) {
-        NES_DEBUG("compare node {}",id);
+    static void compareNodeAt(Experimental::TopologyPrediction::TopologyTimeline versions,
+                              Timestamp time,
+                              uint64_t id,
+                              std::vector<uint64_t> parents,
+                              std::vector<uint64_t> children) {
+        NES_DEBUG("compare node {}", id);
         auto predictedNode = versions.getTopologyVersion(time)->findNodeWithId(id);
 
         //check if the node is predicted to be removed
         if (children.empty() && parents.empty()) {
             EXPECT_EQ(predictedNode, nullptr);
-            return ;
+            return;
         }
 
         //compare links
@@ -74,7 +78,7 @@ class TopologyTimelineTest : public Testing::NESBaseTest {
 
     static void testTopologyEquality(const TopologyPtr& original, const TopologyPtr& copy) {
         NES_DEBUG("comparing topologies");
-        (void ) copy;
+        (void) copy;
 
         std::queue<TopologyNodePtr> originalQueue;
         originalQueue.push(original->getRoot());
@@ -109,9 +113,12 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1),
+                                        TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+                                        TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+                                        TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
 
     auto timeline = TopologyTimeline::create(topology);
     auto changedTopology = timeline->getTopologyVersion(23);
@@ -119,14 +126,16 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     testTopologyEquality(changedTopology, topology);
 }
 
-
 TEST_F(TopologyTimelineTest, testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1), TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2), TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1),
+                                        TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+                                        TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
+    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+                                        TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
     NES_DEBUG("Original Topology");
     NES_DEBUG("{}", topology->toString());
     Experimental::TopologyPrediction::TopologyTimeline versionTimeline(topology);

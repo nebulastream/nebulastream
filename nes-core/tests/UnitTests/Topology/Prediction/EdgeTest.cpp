@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <Topology/Prediction/Edge.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 using Experimental::TopologyPrediction::Edge;
@@ -37,4 +37,4 @@ TEST_F(EdgeTest, testEquality) {
     ASSERT_NE(edge, edge2);
     ASSERT_NE(edge3, edge2);
 }
-}
+}// namespace NES
