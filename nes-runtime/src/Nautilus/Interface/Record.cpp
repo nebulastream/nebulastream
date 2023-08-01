@@ -27,11 +27,6 @@ Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
     // Todo: Using the fieldIdentifier means that we can run into errors due to projections (changed fieldNames)
     //  - since 'fields' is a map, we cannot use an index
     // auto fieldValue = fields.find(fieldIdentifier);
-    // if(fieldIdentifier == "car$id") {
-    //     fieldIdentifier = "truck$id";
-    // } else if (fieldIdentifier == "car$value") {
-    //     fieldIdentifier = "truck$value";
-    // }
     if (!fields.contains(fieldIdentifier)) {
         std::stringstream ss;
         std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {

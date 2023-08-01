@@ -217,6 +217,12 @@ class Schema {
      */
     void setLayoutType(MemoryLayoutType layoutType);
 
+    /**
+     * @brief getFieldNames
+     * @return std::vector<std::string> fieldNames
+     */
+    std::vector<std::string> getFieldNames() const;
+
     std::vector<AttributeFieldPtr> fields;
 
   private:

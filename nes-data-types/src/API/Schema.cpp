@@ -256,6 +256,15 @@ Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
 
 void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layoutType = layoutType; }
 
+std::vector<std::string> Schema::getFieldNames() const {
+    std::vector<std::string> fieldNames;
+    // Todo: is order correct?
+    for (const auto& attribute : fields) {
+        fieldNames.emplace_back(attribute->getName());
+    }
+    return fieldNames;
+}
+
 bool Schema::empty() { return fields.empty(); }
 
 }// namespace NES
