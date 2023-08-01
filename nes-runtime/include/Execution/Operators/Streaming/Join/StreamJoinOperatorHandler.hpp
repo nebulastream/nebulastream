@@ -160,7 +160,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     uint64_t getNextSequenceNumber();
 
-
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamWindowPtr>> windows;

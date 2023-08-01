@@ -86,7 +86,10 @@ void NLJOperatorHandler::triggerWindows(std::vector<uint64_t>& windowIdentifiers
 
         pipelineCtx->dispatchBuffer(buffer);
         NES_TRACE("Emitted windowIdentifier for window {} with watermarkTs {} sequenceNumber {} originId {}",
-                  windowVal->toString(), buffer.getWatermark(), buffer.getSequenceNumber(), buffer.getOriginId());
+                  windowVal->toString(),
+                  buffer.getWatermark(),
+                  buffer.getSequenceNumber(),
+                  buffer.getOriginId());
     }
 }
 
