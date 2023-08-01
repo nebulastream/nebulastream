@@ -124,11 +124,11 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
                          .sink(testSinkDescriptor);
 
         // Running the query
-        auto resultRecords = runQueryWithCsvFiles<ResultRecord>(
-            {{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]}, {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
-            expectedSinkVector.size(),
-            testSink,
-            query);
+        auto resultRecords = runQueryWithCsvFiles<ResultRecord>({{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]},
+                                                                 {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
+                                                                expectedSinkVector.size(),
+                                                                testSink,
+                                                                query);
 
         // Checking for correctness
         EXPECT_EQ(resultRecords.size(), expectedSinkVector.size());
@@ -559,12 +559,11 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
                      .equalsTo(Attribute(joinParams.joinFieldNames[1]))
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
-    const auto resultRecords = runQueryWithCsvFiles<ResultRecord>(
-        {{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]},
-         {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
-        expectedSinkVector.size(),
-        testSink,
-        query);
+    const auto resultRecords = runQueryWithCsvFiles<ResultRecord>({{joinParams.inputSchemas[0], csvFileParams.inputCsvFiles[0]},
+                                                                   {joinParams.inputSchemas[1], csvFileParams.inputCsvFiles[1]}},
+                                                                  expectedSinkVector.size(),
+                                                                  testSink,
+                                                                  query);
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedSinkVector.size());

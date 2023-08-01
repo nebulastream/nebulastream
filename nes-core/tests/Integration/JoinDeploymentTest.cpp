@@ -52,7 +52,8 @@ class JoinDeploymentTest : public Testing::NESBaseTest,
     }
 
     template<typename ResultRecord>
-    void runJoinQueryTwoLogicalStreams(const Query& query, const TestUtils::CsvFileParams& csvFileParams,
+    void runJoinQueryTwoLogicalStreams(const Query& query,
+                                       const TestUtils::CsvFileParams& csvFileParams,
                                        const TestUtils::JoinParams& joinParams) {
         auto sourceConfig1 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[0]);
         auto sourceConfig2 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[1]);
