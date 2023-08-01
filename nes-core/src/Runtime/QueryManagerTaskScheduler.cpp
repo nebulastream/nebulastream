@@ -30,7 +30,6 @@
 #include <memory>
 #include <stack>
 #include <utility>
-#include <Runtime/ExecutionResult.hpp>
 
 namespace NES::Runtime {
 
@@ -329,7 +328,6 @@ void AbstractQueryManager::updateStatistics(const Task& task,
 }
 
 void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    //Todo: If we do not execute code, the buffer is a nullptr at this point and the rest of the execution fails.
     NES_TRACE("AbstractQueryManager::completedWork: Work for task={} worker ctx id={}", task.toString(), wtx.getId());
     if (task.isReconfiguration()) {
         return;

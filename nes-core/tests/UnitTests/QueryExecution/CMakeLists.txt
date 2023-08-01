@@ -15,8 +15,7 @@ add_nes_unit_test(query-execution-test
         "FilterQueryExecutionTest.cpp"
         "ProjectionQueryExecutionTest.cpp"
         "MergeQueryExecutionTest.cpp"
-        "MapQueryExecutionTest.cpp")
-add_nes_unit_test(union-query-execution-test
+        "MapQueryExecutionTest.cpp"
         "UnionQueryExecutionTest.cpp")
 
 add_nes_unit_test(map-java-udf-query-execution-test "MapJavaUDFExecutionTest.cpp")
