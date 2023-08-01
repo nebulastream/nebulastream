@@ -19,9 +19,7 @@ add_nes_unit_test(query-execution-test
 
 add_nes_unit_test(map-java-udf-query-execution-test "MapJavaUDFExecutionTest.cpp")
 add_nes_unit_test(flatmap-java-udf-query-execution-test "FlatMapJavaUDFExecutionTest.cpp")
-
-# Will be enabled with issue #4035
-#add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
+add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
 add_nes_unit_test(limit-query-execution-test "LimitQueryExecutionTest.cpp")
 
 add_subdirectory(Windowing)

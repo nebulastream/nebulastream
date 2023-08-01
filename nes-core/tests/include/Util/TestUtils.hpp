@@ -56,6 +56,36 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
  */
 namespace TestUtils {
 
+/**
+ * @brief Struct for storing all csv file params
+ */
+struct CsvFileParams {
+    CsvFileParams(const string& csvFileLeft, const string& csvFileRight, const string& expectedFile)
+        : csvFileLeft(csvFileLeft), csvFileRight(csvFileRight), expectedFile(expectedFile) {}
+
+    const std::string csvFileLeft;
+    const std::string csvFileRight;
+    const std::string expectedFile;
+};
+
+/**
+ * @brief Struct for storing all parameter for the join
+ */
+struct JoinParams {
+    JoinParams(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const string& joinFieldNameLeft,
+               const string& joinFieldNameRight = "")
+        : leftSchema(leftSchema), rightSchema(rightSchema), joinFieldNameLeft(joinFieldNameLeft),
+          joinFieldNameRight(joinFieldNameRight) {
+        outputSchema = Runtime::Execution::Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+    }
+
+    SchemaPtr leftSchema;
+    SchemaPtr rightSchema;
+    SchemaPtr outputSchema;
+    const std::string joinFieldNameLeft;
+    const std::string joinFieldNameRight;
+};
+
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
