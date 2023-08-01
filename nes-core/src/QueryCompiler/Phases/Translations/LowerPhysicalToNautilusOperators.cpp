@@ -323,6 +323,20 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return watermarkOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         // As the projection is part of the emit, we can ignore this operator for now.
+        // Todo: What if we have an implicit cast for a Union?
+        //  -> currently the emit operator contains the correct output schema (the projected output schema), but the
+        //     the record contains the 'old' field names. Since no mapping ever took place, we run into an error.
+        // The UnaryOperatorNode in the projectOperator contains an input- and outputSchema that contains the required
+        // mapping.
+        // -> can we use indexes?
+        // -> we could insert a map operation that maps the input field name to the output
+        // -> can we store the input- outputSchema information at the EmitOperator?
+        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
+        if(!projectOperator->getChildren().empty() && projectOperator->getChildren().at(0)->instanceOf<PhysicalOperators::PhysicalEmitOperator>()) {
+            auto emitOperator = projectOperator->getChildren().at(0)->as<PhysicalOperators::PhysicalEmitOperator>();
+            emitOperator->setOutputSchema(projectOperator->getInputSchema()->copy());
+        }
+        // if(parentOperator->instanceOf<PhysicalOperators::PhysicalEmitOperator>)
         return parentOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinProbeOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinProbeOperator>();
@@ -602,7 +616,8 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
         std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
+    auto testSchema = operatorNode->getOutputSchema();
+    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider)); //Todo: No Projections?
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

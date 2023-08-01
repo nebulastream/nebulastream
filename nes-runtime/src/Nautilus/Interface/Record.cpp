@@ -24,16 +24,24 @@ Record::Record() {}
 Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
 
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
-    auto fieldValue = fields.find(fieldIdentifier);
-    if (fieldValue == fields.end()) {
+    // Todo: Using the fieldIdentifier means that we can run into errors due to projections (changed fieldNames)
+    //  - since 'fields' is a map, we cannot use an index
+    // auto fieldValue = fields.find(fieldIdentifier);
+    // if(fieldIdentifier == "car$id") {
+    //     fieldIdentifier = "truck$id";
+    // } else if (fieldIdentifier == "car$value") {
+    //     fieldIdentifier = "truck$value";
+    // }
+    if (!fields.contains(fieldIdentifier)) {
         std::stringstream ss;
         std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {
             ss << entry.first;
             ss << ", ";
         });
         throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
+    } else {
+        return fields.at(fieldIdentifier);
     }
-    return fieldValue->second;
 }
 
 uint64_t Record::numberOfFields() { return fields.size(); }
