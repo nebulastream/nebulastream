@@ -47,9 +47,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
      * @param origins the set of origins, which can produce data for the window operator
      * @param weakSliceStagingPtr access to the slice staging.
      */
-    AbstractSlicePreAggregationHandler(uint64_t windowSize,
-                                       uint64_t windowSlide,
-                                       const std::vector<OriginId>& origins)
+    AbstractSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins)
         : windowSize(windowSize), windowSlide(windowSlide),
           watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)){};
 
@@ -91,6 +89,9 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
         // collect all slices that end <= watermark from all thread local slice stores.
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> collectedSlices;
         for (auto& threadLocalSliceStore : threadLocalSliceStores) {
+            for (const auto& slice : threadLocalSliceStore->getSlices()) {
+                NES_DEBUG("Slices in slice store {}-{}", slice->getStart(), slice->getEnd());
+            }
             auto slices = threadLocalSliceStore->extractSlicesUntilTs(lastTriggerWatermark);
             for (const auto& slice : slices) {
                 NES_DEBUG("Assign thread local slices {}-{}", slice->getStart(), slice->getEnd());
@@ -103,12 +104,13 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
             }
             threadLocalSliceStore->setLastWatermark(lastTriggerWatermark);
         }
-        dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(),  collectedSlices);
+        dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), collectedSlices);
     };
 
-    void dispatchSliceMergingTasks(Runtime::Execution::PipelineExecutionContext& ctx,
-                                   std::shared_ptr<AbstractBufferProvider> bufferProvider,
-                                   std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices) {
+    void dispatchSliceMergingTasks(
+        Runtime::Execution::PipelineExecutionContext& ctx,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices) {
         // for all slices that have been collected, emit a merge task to combine this slices.
         // note: the sliceMetaData set is ordered implicitly by the slice start time as the std::set
         // is an associative container that contains a sorted set of unique objects of type Key.
@@ -154,7 +156,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
                     collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
                 }
             }
-            dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(),  collectedSlices);
+            dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
         }
     }
 

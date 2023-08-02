@@ -574,7 +574,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
         functionArgs.push_back(frame.getValue(arg->getIdentifier()));
     }
     if (!proxyCallOp->getStamp()->isVoid()) {
-        auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
+        auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc(proxyCallOp->getFunctionSymbol()),
                                                        getMLIRType(proxyCallOp->getStamp()),
                                                        functionRef,
                                                        functionArgs);

@@ -79,9 +79,9 @@ class SlidingWindowSliceStore {
         return slices.back();
     }
 
-    std::list<std::tuple<uint64_t, uint64_t>> collectWindows(uint64_t oldTs, uint64_t currentTs) {
+    std::set<std::tuple<uint64_t, uint64_t>> collectWindows(uint64_t oldTs, uint64_t currentTs) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        std::list<std::tuple<uint64_t, uint64_t>> windows;
+        std::set<std::tuple<uint64_t, uint64_t>> windows;
         // collect all windows, for which the list of slices contains the slice end.
         // iterate over all slices that would open a window that ends before endTs.
         for (auto& slice : slices) {
@@ -89,15 +89,15 @@ class SlidingWindowSliceStore {
                 break;
             }
             if (slice->getEnd() >= oldTs && slice->getEnd() <= currentTs) {
-                uint64_t windowStart;
-                auto windowEnd = slice->getEnd();
-                // use __builtin_sub_overflow to detect negative overflowing sub
-                if (__builtin_sub_overflow(slice->getEnd(), windowSize, &windowStart)) {
-                    continue;
+                auto windowStart = slice->getStart();
+                auto windowEnd = slice->getStart() + windowSize;
+                if ((windowEnd > oldTs) && (windowEnd <= currentTs) && ((windowStart % windowSlide) == 0)) {
+                    windows.insert(std::make_tuple(windowStart, windowEnd));
                 }
-                // check if it is a valid window
-                if ((oldTs < windowEnd) && ((windowStart % windowSlide) == 0)) {
-                    windows.emplace_back(std::make_tuple(windowStart, windowEnd));
+                windowStart = slice->getEnd();
+                windowEnd = slice->getEnd() + windowSize;
+                if ((windowEnd > oldTs) && (windowEnd <= currentTs) && ((windowStart % windowSlide) == 0)) {
+                    windows.insert(std::make_tuple(windowStart, windowEnd));
                 }
             }
         }

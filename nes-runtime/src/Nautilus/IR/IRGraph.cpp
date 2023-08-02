@@ -22,6 +22,10 @@ namespace NES::Nautilus::IR {
 
 IRGraph::IRGraph(Flags flags) : flags(std::move(flags)) {}
 
+IRGraph::~IRGraph() {
+    NES_DEBUG("~IRGraph");
+}
+
 std::shared_ptr<Operations::FunctionOperation>
 IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
     this->rootOperation = std::move(rootOperation);
