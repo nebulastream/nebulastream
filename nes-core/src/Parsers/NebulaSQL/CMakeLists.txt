@@ -14,6 +14,7 @@
 
 add_source_files(nes-core
         NebulaSQLOperatorNode.cpp
+        NebulaSQLQueryPlanCreator.cpp
 )
 
 add_subdirectory(gen)
