@@ -77,13 +77,15 @@ void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
                            executionCtx.getPipelineContext(),
                            Value<UInt64>(keySize),
                            Value<UInt64>(valueSize));
-    this->child->setup(executionCtx);
+    if (this->child != nullptr)
+        this->child->setup(executionCtx);
 }
 
 void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
-    this->child->open(ctx, buffer);
+    if (this->child != nullptr)
+        this->child->open(ctx, buffer);
 
     // 1. get the operator handler and extract the slice information that should be combined.
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);

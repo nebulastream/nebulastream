@@ -725,7 +725,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
                                                                          windowOutputSchema,
-                                                                         slidingWindowSinkOperator);
+                                                                         slidingWindowSinkOperator,
+                                                                         windowDefinition);
     }
 }
 
