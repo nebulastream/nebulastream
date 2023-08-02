@@ -117,7 +117,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
         // Thus, we emit slice deployment tasks in increasing order.
         for (const auto& [metaData, slices] : collectedSlices) {
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = buffer.getBuffer<SliceMergeTask<SliceType>>();
+            auto task = new (buffer.getBuffer()) SliceMergeTask<SliceType>();
             task->startSlice = std::get<0>(metaData);
             task->endSlice = std::get<1>(metaData);
             task->sequenceNumber = resultSequenceNumber++;
