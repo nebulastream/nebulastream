@@ -32,8 +32,8 @@ class DummyRequest : public AbstractRequest {
     DummyRequest(RequestId requestId,
                  const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
-                 std::promise<AbstractRequestResponsePtr> responsePromise, uint32_t responseValue)
-        : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue) {};
+                 uint32_t responseValue)
+        : AbstractRequest(requestId, requiredResources, maxRetries), responseValue(responseValue) {};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
@@ -50,32 +50,73 @@ class DummyRequest : public AbstractRequest {
     uint32_t responseValue;
 };
 
+//    class DummyConcatResponse : public AbstractRequestResponse {
+//    public:
+//        explicit DummyConcatResponse(uint32_t number) : number(number){};
+//        uint32_t number;
+//        std::optional<
+//    };
+//
+//    class DummyRequest : public AbstractRequest {
+//    public:
+//        DummyRequest(RequestId requestId,
+//                     const std::vector<ResourceType>& requiredResources,
+//                     uint8_t maxRetries,
+//                     uint32_t responseValue)
+//                : AbstractRequest(requestId, requiredResources, maxRetries), responseValue(responseValue) {};
+//
+//        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+//            responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
+//            return {};
+//        }
+//
+//        std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
+//
+//    protected:
+//        void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+//        void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+//        void postExecution(StorageHandler&) override {}
+//    private:
+//        uint32_t responseValue;
+//    };
+
 class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
   public:
-    static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
-    //todo: check if we need base setup
+    static void SetUpTestCase() { NES::Logger::setupLogging("AsyncRequestExecutorTest.log", NES::LogLevel::LOG_DEBUG); }
     using Base = Testing::TestWithErrorHandling;
+  protected:
+    Experimental::AsyncRequestExecutorPtr<TwoPhaseLockingStorageHandler> executor{nullptr};
+public:
+    void SetUp() override {
+        Base::SetUp();
+        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+        executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(GetParam(), storageDataStructures);
+    }
+
+    void TearDown() override {
+        executor.reset();
+        Base::TearDown();
+    }
 };
 
-TEST_F(AsyncRequestExecutorTest, startAndDestroy) {
-    StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-    auto executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(0, storageDataStructures);
+TEST_P(AsyncRequestExecutorTest, startAndDestroy) {
     ASSERT_TRUE(executor->destroy());
 }
 
-TEST_F(AsyncRequestExecutorTest, submitRequest) {
-//    constexpr uint32_t responseValue = 20;
-//    constexpr uint32_t requestId = 1;
-//    try {
-//        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-//        auto executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(0, storageDataStructures);
-//        auto request = std::make_shared<DummyRequest>();
-//        std::promise<
-//        auto future = executor->runAsync(requestId, {}, 0, )
-//    } catch (std::exception const& ex) {
-//        NES_DEBUG("{}", ex.what());
-//        FAIL();
-//    }
+TEST_P(AsyncRequestExecutorTest, submitRequest) {
+    constexpr uint32_t responseValue = 20;
+    constexpr uint32_t requestId = 1;
+    try {
+        auto request = std::make_shared<DummyRequest>(requestId, std::vector<ResourceType>{}, 0, responseValue);
+        auto future = executor->runAsync(request);
+        ASSERT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
+        ASSERT_TRUE(executor->destroy());
+    } catch (std::exception const& ex) {
+        NES_DEBUG("{}", ex.what());
+        FAIL();
+    }
 }
+
+INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestExecutorTest, ::testing::Values(1, 4, 8));
 
 }// namespace NES

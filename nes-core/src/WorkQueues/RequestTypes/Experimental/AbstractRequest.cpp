@@ -20,9 +20,8 @@ namespace NES {
 //template<ConceptResponse ResponseType>
 AbstractRequest::AbstractRequest(RequestId requestId,
                                  const std::vector<ResourceType>& requiredResources,
-                                 const uint8_t maxRetries,
-                                 std::promise<AbstractRequestResponsePtr> responsePromise)
-    : requestId(requestId), responsePromise(std::move(responsePromise)), maxRetries(maxRetries), actualRetries(0),
+                                 const uint8_t maxRetries)
+    : requestId(requestId), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
 //template<ConceptResponse ResponseType>

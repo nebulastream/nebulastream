@@ -44,7 +44,7 @@ class FailQueryRequest : public AbstractRequest {
                      NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
                      uint8_t maxRetries,
-                     NES::WorkerRPCClientPtr workerRpcClient, std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise);
+                     NES::WorkerRPCClientPtr workerRpcClient);
 
     /**
     * @brief creates a new FailQueryRequest object
@@ -59,7 +59,7 @@ class FailQueryRequest : public AbstractRequest {
     static std::shared_ptr<FailQueryRequest> create(RequestId requestId, NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
                      uint8_t maxRetries,
-                     NES::WorkerRPCClientPtr workerRpcClient, std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise);
+                     NES::WorkerRPCClientPtr workerRpcClient);
 
   protected:
     /**
