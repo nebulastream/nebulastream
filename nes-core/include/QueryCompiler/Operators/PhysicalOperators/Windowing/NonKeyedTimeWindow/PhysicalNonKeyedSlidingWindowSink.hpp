@@ -47,7 +47,6 @@ class PhysicalNonKeyedSlidingWindowSink : public PhysicalUnaryOperator, public A
 
   private:
     Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;
-
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 

@@ -24,23 +24,26 @@ PhysicalKeyedSlidingWindowSink::PhysicalKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler)
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler), windowDefinition(windowDefinition) {}
 
 std::shared_ptr<PhysicalKeyedSlidingWindowSink> PhysicalKeyedSlidingWindowSink::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalKeyedSlidingWindowSink>(Util::getNextOperatorId(),
                                                             inputSchema,
                                                             outputSchema,
-                                                            keyedEventTimeWindowHandler);
+                                                            keyedEventTimeWindowHandler,
+                                                            windowDefinition);
 }
 
 std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
-
-OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
+Windowing::LogicalWindowDefinitionPtr PhysicalKeyedSlidingWindowSink::getWindowDefinition() { return windowDefinition; }
+OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

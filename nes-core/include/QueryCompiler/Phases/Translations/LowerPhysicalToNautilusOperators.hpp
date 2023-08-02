@@ -112,7 +112,12 @@ class LowerPhysicalToNautilusOperators {
                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    std::shared_ptr<Runtime::Execution::Operators::Operator> lowerKeyedSlidingWindowSinkOperator(
+        Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+        std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
