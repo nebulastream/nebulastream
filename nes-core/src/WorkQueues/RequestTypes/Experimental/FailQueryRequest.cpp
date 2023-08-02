@@ -30,29 +30,25 @@ FailQueryRequest::FailQueryRequest(const RequestId requestId,
                                    const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries,
-                                   NES::WorkerRPCClientPtr workerRpcClient,
-                                   std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise)
+                                   NES::WorkerRPCClientPtr workerRpcClient)
     : AbstractRequest(requestId,
                       {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
-                      maxRetries,
-                      std::move(responsePromise)),
+                      maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
 std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
                                                            NES::QueryId queryId,
                                                            NES::QuerySubPlanId failedSubPlanId,
                                                            uint8_t maxRetries,
-                                                           NES::WorkerRPCClientPtr workerRpcClient,
-                                                           std::promise<std::shared_ptr<AbstractRequestResponse>> responsePromise) {
+                                                           NES::WorkerRPCClientPtr workerRpcClient) {
     return std::make_shared<FailQueryRequest>(requestId,
                                               queryId,
                                               failedSubPlanId,
                                               maxRetries,
-                                              std::move(workerRpcClient),
-                                              std::move(responsePromise));
+                                              std::move(workerRpcClient));
 }
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}

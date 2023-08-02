@@ -29,8 +29,8 @@ class DummyRequest : public AbstractRequest {
     DummyRequest(RequestId requestId,
                  const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
-                 std::promise<AbstractRequestResponsePtr> responsePromise, uint32_t responseValue)
-        : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue) {};
+                 uint32_t responseValue)
+        : AbstractRequest(requestId, requiredResources, maxRetries), responseValue(responseValue) {};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
@@ -71,11 +71,10 @@ class AbstractRequestTest : public Testing::NESBaseTest {
 
 TEST_F(AbstractRequestTest, testPromise) {
     constexpr uint32_t responseValue = 20;
-    std::promise<AbstractRequestResponsePtr> promise;
     RequestId requestId = 1;
     std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
-    DummyRequest request(requestId, requiredResources, maxRetries, std::move(promise), responseValue);
+    DummyRequest request(requestId, requiredResources, maxRetries,responseValue);
     auto future = request.makeFuture();
     auto thread = std::make_shared<std::thread>([&request]() {
         DummyStorageHandler storageHandler;

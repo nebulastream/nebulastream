@@ -40,7 +40,7 @@ namespace Experimental {
         //define an empty request type that does nothing and is used only for flushing the executor
         class FlushRequest : public AbstractRequest {
           public:
-            FlushRequest() : AbstractRequest(INVALID_REQUEST_ID, {}, 0, {}) {}
+            FlushRequest() : AbstractRequest(INVALID_REQUEST_ID, {}, 0) {}
             std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { return {}; }
             std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
           protected:
@@ -159,7 +159,7 @@ bool NES::Experimental::AsyncRequestExecutor<T>::destroy() {
     return false;
 }
 template <ConceptStorageHandler T>
-NES::Experimental::AsyncRequestExecutor<T>::~AsyncRequestExecutor() {
+NES::Experimental::AsyncRequestExecutor<T>::~AsyncRequestExecutor<T>() {
     destroy();
 }
 

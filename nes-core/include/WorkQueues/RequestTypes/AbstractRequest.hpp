@@ -78,7 +78,7 @@ class AbstractRequest {
      * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
      //todo: remove promise from constructor
-    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::promise<AbstractRequestResponsePtr> responsePromise);
+    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic

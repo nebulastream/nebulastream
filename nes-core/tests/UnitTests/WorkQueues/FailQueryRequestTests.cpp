@@ -219,13 +219,12 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
     deployQuery();
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<AbstractRequestResponsePtr> promise;
+    //std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    queryId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,
-                                                                   workerRpcClient,
-                                                                   std::move(promise));
+                                                                   workerRpcClient);
     auto future = failQueryRequest->makeFuture();
     TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,
@@ -271,13 +270,12 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<AbstractRequestResponsePtr> promise;
+    //std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    nonExistentId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,
-                                                                   workerRpcClient,
-                                                                   std::move(promise));
+                                                                   workerRpcClient);
     TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,
@@ -300,13 +298,12 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    std::promise<AbstractRequestResponsePtr> promise;
+    //std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(requestId,
                                                                    queryId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,
-                                                                   workerRpcClient,
-                                                                   std::move(promise));
+                                                                   workerRpcClient);
 
     TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,

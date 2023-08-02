@@ -114,8 +114,7 @@ class StopQueryRequest : public AbstractRequest {
                                       const QueryId queryId,
                                       const size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
-                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                      std::promise<StopQueryResponse> responsePromise);
+                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     std::string toString();
 
