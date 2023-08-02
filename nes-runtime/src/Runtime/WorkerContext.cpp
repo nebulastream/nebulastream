@@ -95,7 +95,6 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     else
         statisticsFile << millisec << ",";
     statisticsFile << value.count() - inputBuffer.getCreationTimestampInMS() << "\n";
-    statisticsFile.flush();
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
