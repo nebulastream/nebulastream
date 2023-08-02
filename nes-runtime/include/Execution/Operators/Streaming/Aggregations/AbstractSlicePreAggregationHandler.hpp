@@ -117,15 +117,13 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
         // Thus, we emit slice deployment tasks in increasing order.
         for (const auto& [metaData, slices] : collectedSlices) {
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = new (buffer.getBuffer()) SliceMergeTask<SliceType>();
+            // allocate a slice merge task withing the buffer.
+            auto task = allocateWithin<SliceMergeTask<SliceType>>(buffer);
             task->startSlice = std::get<0>(metaData);
             task->endSlice = std::get<1>(metaData);
             task->sequenceNumber = resultSequenceNumber++;
             task->slices = slices;
             NES_DEBUG("{} Deploy merge task for slice {}-{} ", windowSize, task->startSlice, task->endSlice);
-            // task->slices = slices[sliceEnd];
-            // the buffer contains one slice tasks, so we have to set the number of tuples to 1.
-            buffer.setNumberOfTuples(1);
             ctx.dispatchBuffer(buffer);
         }
     }
