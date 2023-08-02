@@ -66,7 +66,7 @@ class TestExecutionEngine {
   public:
     explicit TestExecutionEngine(
         const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
-        const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE,
+        const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
         const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
