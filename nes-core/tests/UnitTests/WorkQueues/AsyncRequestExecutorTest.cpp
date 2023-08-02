@@ -21,15 +21,61 @@
 
 namespace NES {
 
+class DummyResponse : public AbstractRequestResponse {
+  public:
+    explicit DummyResponse(uint32_t number) : number(number){};
+    uint32_t number;
+};
+
+class DummyRequest : public AbstractRequest {
+  public:
+    DummyRequest(RequestId requestId,
+                 const std::vector<ResourceType>& requiredResources,
+                 uint8_t maxRetries,
+                 std::promise<AbstractRequestResponsePtr> responsePromise, uint32_t responseValue)
+        : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue) {};
+
+    std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+        responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
+        return {};
+    }
+
+    std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
+
+  protected:
+    void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+    void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+    void postExecution(StorageHandler&) override {}
+  private:
+    uint32_t responseValue;
+};
+
 class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
+  public:
+    static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
+    //todo: check if we need base setup
     using Base = Testing::TestWithErrorHandling;
 };
 
 TEST_F(AsyncRequestExecutorTest, startAndDestroy) {
     StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-    auto storageHandler = std::make_shared<TwoPhaseLockingStorageHandler>(storageDataStructures);
-    //auto executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>();
-    //ASSERT_TRUE(executor->destroy());
+    auto executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(0, storageDataStructures);
+    ASSERT_TRUE(executor->destroy());
+}
+
+TEST_F(AsyncRequestExecutorTest, submitRequest) {
+//    constexpr uint32_t responseValue = 20;
+//    constexpr uint32_t requestId = 1;
+//    try {
+//        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+//        auto executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(0, storageDataStructures);
+//        auto request = std::make_shared<DummyRequest>();
+//        std::promise<
+//        auto future = executor->runAsync(requestId, {}, 0, )
+//    } catch (std::exception const& ex) {
+//        NES_DEBUG("{}", ex.what());
+//        FAIL();
+//    }
 }
 
 }// namespace NES

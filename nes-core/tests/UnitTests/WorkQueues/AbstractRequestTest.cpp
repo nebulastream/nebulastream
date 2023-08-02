@@ -72,11 +72,11 @@ class AbstractRequestTest : public Testing::NESBaseTest {
 TEST_F(AbstractRequestTest, testPromise) {
     constexpr uint32_t responseValue = 20;
     std::promise<AbstractRequestResponsePtr> promise;
-    auto future = promise.get_future();
     RequestId requestId = 1;
     std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
     DummyRequest request(requestId, requiredResources, maxRetries, std::move(promise), responseValue);
+    auto future = request.makeFuture();
     auto thread = std::make_shared<std::thread>([&request]() {
         DummyStorageHandler storageHandler;
         request.executeRequestLogic(storageHandler);

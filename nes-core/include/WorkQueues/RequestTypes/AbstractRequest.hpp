@@ -77,6 +77,7 @@ class AbstractRequest {
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
+     //todo: remove promise from constructor
     explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::promise<AbstractRequestResponsePtr> responsePromise);
 
     /**
@@ -107,6 +108,8 @@ class AbstractRequest {
      * @return true if the actual retries are less than the allowed maximum
      */
     bool retry();
+
+    std::future<AbstractRequestResponsePtr> makeFuture();
 
     /**
      * @brief destructor
