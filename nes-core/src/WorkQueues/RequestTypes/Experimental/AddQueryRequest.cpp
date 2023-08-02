@@ -86,8 +86,10 @@ std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const RequestId request
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                         [[maybe_unused]] StorageHandler& storageHandler) {}
 
-void AddQueryRequest::rollBack([[maybe_unused]] const RequestExecutionException& ex,
-                               [[maybe_unused]] StorageHandler& storageHandle) {}
+std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex,
+                               [[maybe_unused]] StorageHandler& storageHandle) {
+    return {};
+}
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                          [[maybe_unused]] StorageHandler& storageHandler) {
@@ -97,7 +99,7 @@ void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecution
 
 void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHandler) {}
 
-void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
+std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     try {
         globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
         topology = storageHandler.getTopologyHandle(requestId);
@@ -209,11 +211,7 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
             }
 
             //20.2 Perform deployment of placed shared query plan
-            bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
-            if (!deploymentSuccessful) {
-                throw QueryDeploymentException(sharedQueryId,
-                                               "Failed to deploy query with global query Id " + std::to_string(sharedQueryId));
-            }
+            queryDeploymentPhase->execute(sharedQueryPlan);
 
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
@@ -238,11 +236,7 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
             }
 
             //20.6 Perform deployment of re-placed shared query plan
-            bool deploymentSuccessful = queryDeploymentPhase->execute(sharedQueryPlan);
-            if (!deploymentSuccessful) {
-                throw QueryDeploymentException(sharedQueryId,
-                                               "Failed to deploy query with global query Id " + std::to_string(sharedQueryId));
-            }
+            queryDeploymentPhase->execute(sharedQueryPlan);
 
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
@@ -250,6 +244,7 @@ void AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     } catch (RequestExecutionException& e) {
         handleError(e, storageHandler);
     }
+    return {};
 }
 
 }// namespace NES::Experimental
