@@ -138,14 +138,12 @@ LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations,
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                        OperatorId id) {
+LogicalOperatorFactory::createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id) {
     return std::make_shared<MapUDFLogicalOperatorNode>(udfDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                            OperatorId id) {
+LogicalOperatorFactory::createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id) {
     return std::make_shared<FlatMapUDFLogicalOperatorNode>(udfDescriptor, id);
 }
 

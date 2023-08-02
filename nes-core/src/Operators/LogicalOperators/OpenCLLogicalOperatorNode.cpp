@@ -26,8 +26,7 @@ OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescr
 
 std::string OpenCLLogicalOperatorNode::toString() const {
     auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
-    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName()
-        + ")";
+    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName() + ")";
 }
 
 OperatorNodePtr OpenCLLogicalOperatorNode::copy() {
@@ -61,6 +60,8 @@ const std::string& OpenCLLogicalOperatorNode::getDeviceId() const { return devic
 
 void OpenCLLogicalOperatorNode::setDeviceId(const std::string& deviceId) { OpenCLLogicalOperatorNode::deviceId = deviceId; }
 
-Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const { return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor); }
+Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const {
+    return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+}
 
 }// namespace NES

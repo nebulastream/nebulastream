@@ -16,8 +16,8 @@
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -109,13 +109,8 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string function,
-                    std::string functionName,
-                    SchemaPtr schema) {
-    return std::make_shared<Operators::PythonUDFOperatorHandler>(function,
-                                                                 functionName,
-                                                               schema,
-                                                               schema);
+auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
+    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, schema, schema);
 }
 
 /**
@@ -347,8 +342,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-// TODO #3980 enable once string works
-// schema->addField("stringVariable", BasicType::TEXT);
+    // TODO #3980 enable once string works
+    // schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -369,21 +364,21 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer[i]["floatVariable"].write((float) i);
         dynamicBuffer[i]["doubleVariable"].write((double) i);
         dynamicBuffer[i]["booleanVariable"].write(true);
-// dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
+        // dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-// TODO #3980 once string works add string here as argument
+    // TODO #3980 once string works add string here as argument
     std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
-                                      "\n\tbyte_var = byte_var + 10"
-                                      "\n\tshort_var = short_var + 10"
-                                      "\n\tint_var = int_var + 10"
-                                      "\n\tlong_var = long_var + 10"
-                                      "\n\tfloat_var = float_var + 10.0"
-                                      "\n\tdouble_var = double_var + 10.0"
-                                      "\n\tboolean_var = False"
-                                      "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
+                           "\n\tbyte_var = byte_var + 10"
+                           "\n\tshort_var = short_var + 10"
+                           "\n\tint_var = int_var + 10"
+                           "\n\tlong_var = long_var + 10"
+                           "\n\tfloat_var = float_var + 10.0"
+                           "\n\tdouble_var = double_var + 10.0"
+                           "\n\tboolean_var = False"
+                           "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
     std::string functionName = "complex_test";
     auto handler = initMapHandler(function, functionName, schema);
 
@@ -405,7 +400,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-// TODO #3980 enable this once string works
+        // TODO #3980 enable this once string works
         // auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
         // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         // auto textValue = varLengthBuffer.getBuffer<TextValue>();

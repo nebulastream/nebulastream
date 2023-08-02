@@ -60,7 +60,6 @@ class PythonUDFDescriptor : public UDFDescriptor {
      */
     bool operator==(const PythonUDFDescriptor& other) const;
 
-
   private:
     const std::string functionString;
 };

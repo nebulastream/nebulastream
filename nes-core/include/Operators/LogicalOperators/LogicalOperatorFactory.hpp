@@ -217,9 +217,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorNodePtr
-    createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                    OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
+                                                                   OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new FlatMapJavaUDFLogicalOperatorNode.
@@ -227,9 +226,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorNodePtr
-    createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                        OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
+                                                                       OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new OpenCL logical operator
@@ -239,7 +237,6 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                                    OperatorId id = Util::getNextOperatorId());
-
 };
 
 }// namespace NES

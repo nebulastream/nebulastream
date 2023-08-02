@@ -17,9 +17,7 @@
 
 namespace NES::Catalogs::UDF {
 
-UDFDescriptor::UDFDescriptor(const std::string& methodName,
-                             const SchemaPtr& inputSchema,
-                             const SchemaPtr& outputSchema)
+UDFDescriptor::UDFDescriptor(const std::string& methodName, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema)
     : methodName(methodName), inputSchema(inputSchema), outputSchema(outputSchema) {
     if (methodName.empty()) {
         throw UDFException("The method name of a UDF must not be empty");
@@ -34,7 +32,7 @@ UDFDescriptor::UDFDescriptor(const std::string& methodName,
 void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { UDFDescriptor::inputSchema = inputSchema; }
 
 bool UDFDescriptor::operator==(const UDFDescriptor& other) const {
-    return getMethodName() == other.getMethodName()
-        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true);
+    return getMethodName() == other.getMethodName() && inputSchema->equals(other.inputSchema, true)
+        && outputSchema->equals(other.outputSchema, true);
 }
 }// namespace NES::Catalogs::UDF

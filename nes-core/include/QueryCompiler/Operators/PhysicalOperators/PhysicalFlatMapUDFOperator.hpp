@@ -37,9 +37,9 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @param udfDescriptor The UDF descriptor
      */
     PhysicalFlatMapUDFOperator(OperatorId id,
-                                   const SchemaPtr& inputSchema,
-                                   const SchemaPtr& outputSchema,
-                                   const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
+                               const SchemaPtr& inputSchema,
+                               const SchemaPtr& outputSchema,
+                               const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
     /**
      * @brief Creates a new instance of PhysicalFlatMapUDFOperator
      * @param id The identifier of this operator
@@ -60,9 +60,8 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalFlatMapUDFOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
+    static PhysicalOperatorPtr
+    create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
 
     /**
      * @brief Returns the udf descriptor of this map operator

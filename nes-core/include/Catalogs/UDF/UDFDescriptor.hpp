@@ -28,9 +28,7 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
 class UDFDescriptor {
   public:
-    explicit UDFDescriptor(const std::string& methodName,
-                           const SchemaPtr& inputSchema,
-                           const SchemaPtr& outputSchema);
+    explicit UDFDescriptor(const std::string& methodName, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
 
     virtual ~UDFDescriptor() = default;
 

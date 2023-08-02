@@ -20,8 +20,7 @@
 
 namespace NES {
 
-FlatMapUDFLogicalOperatorNode::FlatMapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
-                                                                     OperatorId id)
+FlatMapUDFLogicalOperatorNode::FlatMapUDFLogicalOperatorNode(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id)
     : OperatorNode(id), UDFLogicalOperator(udfDescriptor, id) {}
 
 std::string FlatMapUDFLogicalOperatorNode::toString() const {

@@ -70,7 +70,7 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
-    protected:
+  protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
 
