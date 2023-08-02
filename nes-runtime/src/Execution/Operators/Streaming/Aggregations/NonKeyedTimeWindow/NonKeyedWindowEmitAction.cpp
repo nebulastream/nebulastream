@@ -14,7 +14,6 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -35,7 +34,6 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          Value<UInt64>& windowEnd,
                                          Value<UInt64>& sequenceNumber,
                                          Value<MemRef>& globalSlice) const {
-    NES_DEBUG("Emit window: {}-{}-{}", windowStart->toString(), windowEnd->toString(), sequenceNumber->toString());
     ctx.setWatermarkTs(windowEnd);
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber);

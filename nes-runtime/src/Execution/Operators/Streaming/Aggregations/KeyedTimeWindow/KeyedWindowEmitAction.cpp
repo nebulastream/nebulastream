@@ -16,7 +16,6 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -47,7 +46,6 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       Value<UInt64>& windowEnd,
                                       Value<UInt64>& sequenceNumber,
                                       Value<MemRef>& globalSlice) const {
-    NES_DEBUG("Emit window: {}-{}-{}", windowStart->toString(), windowEnd->toString(), sequenceNumber->toString());
     ctx.setWatermarkTs(windowEnd);
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber);
