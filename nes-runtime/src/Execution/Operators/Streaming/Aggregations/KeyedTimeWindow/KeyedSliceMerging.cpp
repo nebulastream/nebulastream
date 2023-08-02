@@ -118,7 +118,6 @@ void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& g
         auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keyDataTypes, keySize, valueSize);
         mergeHashTable(globalHashTable, partitionStateHashTable);
     }
-    Nautilus::FunctionCall("freeKeyedSliceMergeTask", freeKeyedSliceMergeTask, sliceMergeTask);
 }
 
 void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSliceHashMap,

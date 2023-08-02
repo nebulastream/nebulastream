@@ -73,12 +73,11 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
         auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
         NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
-        auto task = new (buffer.getBuffer()) SliceMergeTask<Slice>();
+        auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
         task->startSlice = windowStart;
         task->endSlice = windowEnd;
         task->slices = slicesForWindow;
         task->sequenceNumber = resultSequenceNumber++;
-        buffer.setNumberOfTuples(1);
         ctx.dispatchBuffer(buffer);
     }
     // remove all slices from the slice store that are not necessary anymore.
@@ -100,15 +99,11 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
             NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = new (buffer.getBuffer()) SliceMergeTask<Slice>();
+            auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
             task->startSlice = windowStart;
             task->endSlice = windowEnd;
             task->slices = slicesForWindow;
             task->sequenceNumber = resultSequenceNumber++;
-            buffer.addRecycleCallback([&](auto, auto){
-                NES_DEBUG("RemoveTask");
-            });
-            buffer.setNumberOfTuples(1);
             ctx->dispatchBuffer(buffer);
         }
     }

@@ -108,8 +108,6 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     // 2. load the thread local slice store according to the worker id.
     auto combinedSlice = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask);
 
-    Nautilus::FunctionCall("freeNonKeyedSliceMergeTask", freeNonKeyedSliceMergeTask, sliceMergeTask);
-
     // 3. emit the combined slice via an action
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, combinedSlice);
 }
