@@ -52,7 +52,6 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
-#include <Execution/Operators/Streaming/Aggregations/WindowType.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
@@ -470,21 +469,19 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
-
-    auto windowTypeEnum = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr
-        ? Runtime::Execution::Operators::WindowType::TumblingWindow
-        : Runtime::Execution::Operators::WindowType::SlidingWindow;
+    // TODO refactor operator selection
+    auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (windowTypeEnum == Runtime::Execution::Operators::TumblingWindow) {
+    if (isTumblingWindow) {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions,
             startTs,
             endTs,
             physicalGSMO->getWindowDefinition()->getOriginId());
-    } else if (windowTypeEnum == Runtime::Execution::Operators::SlidingWindow) {
+    } else {
         auto timeBasedWindowType =
             Windowing::WindowType::asTimeBasedWindowType(physicalGSMO->getWindowDefinition()->getWindowType());
         auto windowSize = timeBasedWindowType->getSize().getTime();
