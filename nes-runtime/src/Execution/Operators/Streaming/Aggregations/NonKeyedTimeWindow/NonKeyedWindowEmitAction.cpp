@@ -14,6 +14,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

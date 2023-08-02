@@ -16,6 +16,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
