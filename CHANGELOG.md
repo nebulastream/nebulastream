@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.176](https://github.com/nebulastream/nebulastream/tree/v0.5.176) (2023-08-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.175...v0.5.176)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Logical Operator for the Python UDF  Map Operator [\#3912](https://github.com/nebulastream/nebulastream/issues/3912)
+- \[TASK\] Create Physical Operator for the Python UDF  Map Operator [\#3911](https://github.com/nebulastream/nebulastream/issues/3911)
+
 ## [v0.5.175](https://github.com/nebulastream/nebulastream/tree/v0.5.175) (2023-08-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.174...v0.5.175)
