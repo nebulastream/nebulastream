@@ -18,7 +18,6 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
-#include <Execution/Operators/Streaming/Aggregations/WindowType.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 /**

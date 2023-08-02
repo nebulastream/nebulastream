@@ -31,15 +31,6 @@ struct SliceMergeTask {
     ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber); }
 };
 
-/**
- * @brief This task models the trigger of a window with a start and a end.
- */
-struct WindowTriggerTask {
-    uint64_t sequenceNumber;
-    uint64_t windowStart;
-    uint64_t windowEnd;
-};
-
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
