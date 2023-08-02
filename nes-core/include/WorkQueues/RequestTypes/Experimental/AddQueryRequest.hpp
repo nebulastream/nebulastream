@@ -161,8 +161,9 @@ class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
+     * @return A vector of requests that need to be executed to roll back the changes made by the request.
      */
-    void rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
@@ -182,8 +183,9 @@ class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
+     * @return A vector of requests that need to be executed after the request logic is done.
      */
-    void executeRequestLogic(StorageHandler& storageHandler) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandler) override;
 
   private:
     WorkerRPCClientPtr workerRpcClient;
