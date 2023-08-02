@@ -33,7 +33,7 @@ class MultiThreadedTest : public Testing::NESBaseTest,
   public:
     const uint64_t numTuplesPerBuffer = 1;
     static constexpr auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    static constexpr auto dumpNone = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+    static constexpr auto dumpNone = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -213,7 +213,7 @@ std::ostream& operator<<(std::ostream& os, const KeyedResultRecord& record) {
     return os;
 }
 
-TEST_P(MultiThreadedTest, testNonKeyedEventTimeWindowAggregation) {
+TEST_P(MultiThreadedTest, testNonKeyedEventTimeTumblingWindowAggregation) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))
@@ -247,7 +247,44 @@ TEST_P(MultiThreadedTest, testNonKeyedEventTimeWindowAggregation) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testKeyedEventTimeWindowAggregation) {
+TEST_P(MultiThreadedTest, testNonKeyedEventTimeSlidingWindowAggregation) {
+
+    const auto inputSchema = Schema::create()
+                                 ->addField(createField("test1$value", BasicType::UINT64))
+                                 ->addField(createField("test1$id", BasicType::UINT64))
+                                 ->addField(createField("test1$timestamp", BasicType::UINT64));
+    const auto outputSchema = Schema::create()
+                                  ->addField(createField("test1$start", BasicType::UINT64))
+                                  ->addField(createField("test1$end", BasicType::UINT64))
+                                  ->addField(createField("test1$timestamp", BasicType::UINT64));
+
+    const std::string fileNameBuffers("window.csv");
+    const std::vector<NonKeyedResultRecord> expectedTuples = {
+        {1000, 2000, 3},    {1500, 2500, 6},    {2000, 3000, 6},    {2500, 3500, 12},   {3000, 4000, 12},   {3500, 4500, 4},
+        {4000, 5000, 4},    {4500, 5500, 5},    {5000, 6000, 5},    {5500, 6500, 6},    {6000, 7000, 6},    {6500, 7500, 7},
+        {7000, 8000, 7},    {7500, 8500, 8},    {8000, 9000, 8},    {8500, 9500, 9},    {9000, 10000, 9},   {9500, 10500, 10},
+        {10000, 11000, 10}, {10500, 11500, 11}, {11000, 12000, 11}, {11500, 12500, 12}, {12000, 13000, 12}, {12500, 13500, 13},
+        {13000, 14000, 13}, {13500, 14500, 14}, {14000, 15000, 14}, {14500, 15500, 15}, {15000, 16000, 15}, {15500, 16500, 16},
+        {16000, 17000, 16}, {16500, 17500, 17}, {17000, 18000, 17}, {17500, 18500, 18}, {18000, 19000, 18}, {18500, 19500, 19},
+        {19000, 20000, 19}, {19500, 20500, 20}, {20000, 21000, 20}, {20500, 21500, 21}, {21000, 22000, 21}};
+
+    // Creating sink, source, and the query
+    const auto testSink = executionEngine->createCollectSink<NonKeyedResultRecord>(outputSchema);
+    const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
+    const auto query = TestQuery::from(testSourceDescriptor)
+                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000), Milliseconds(500)))
+                           .apply(Sum(Attribute("value")))
+                           .sink(testSinkDescriptor);
+    // Running the query
+    const auto resultRecords =
+        runQuery<NonKeyedResultRecord>({{inputSchema, fileNameBuffers}}, expectedTuples.size(), testSink, query);
+
+    // Checking for correctness
+    EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
+}
+
+TEST_P(MultiThreadedTest, testKeyedEventTimeTumblingWindowAggregation) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))
@@ -284,7 +321,7 @@ TEST_P(MultiThreadedTest, testKeyedEventTimeWindowAggregation) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeWindows) {
+TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeTumblingWindows) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))
@@ -320,7 +357,7 @@ TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeWindows) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
+TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeTumblingWindows) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))

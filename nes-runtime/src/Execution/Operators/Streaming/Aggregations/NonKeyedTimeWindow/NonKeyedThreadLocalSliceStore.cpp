@@ -25,6 +25,7 @@ NonKeyedThreadLocalSliceStore::NonKeyedThreadLocalSliceStore(uint64_t entrySize,
     : ThreadLocalSliceStore(windowSize, windowSlide), entrySize(entrySize), defaultState(defaultState) {}
 
 GlobalSlicePtr NonKeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
+    NES_DEBUG("Allocate Slices {}-{}", startTs, endTs);
     return std::make_unique<NonKeyedSlice>(entrySize, startTs, endTs, defaultState);
 }
 

@@ -38,7 +38,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
     ctx.setWatermarkTs(windowEnd);
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber);
-    auto windowState = Nautilus::FunctionCall("getNonKeyedSliceState", getGlobalSliceState, globalSlice);
+    auto windowState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
