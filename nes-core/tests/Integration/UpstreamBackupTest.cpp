@@ -78,6 +78,10 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     WorkerConfigurationPtr workerConfig1;
     WorkerConfigurationPtr workerConfig2;
     WorkerConfigurationPtr workerConfig3;
+    WorkerConfigurationPtr workerConfig4;
+    WorkerConfigurationPtr workerConfig5;
+    WorkerConfigurationPtr workerConfig6;
+    WorkerConfigurationPtr workerConfig7;
     CSVSourceTypePtr csvSourceTypeInfinite;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
@@ -165,6 +169,70 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig3->mtbfValue = 15000;
         workerConfig3->launchTime = 1652692028;
         workerConfig3->ingestionRate = 900;
+
+        workerConfig4 = WorkerConfiguration::create();
+        workerConfig4->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig4->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig4->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig4->enableStatisticOutput = true;
+        workerConfig4->numberOfBuffersToProduce = 5000000;
+        workerConfig4->numWorkerThreads = 4;
+        workerConfig4->numberOfBuffersPerEpoch = 100;
+        workerConfig4->bufferSizeInBytes = 131072;
+        workerConfig4->numberOfSlots = 2;
+        workerConfig4->memoryCapacity = 350;
+        workerConfig4->networkCapacity = 100;
+        workerConfig4->mtbfValue = 15000;
+        workerConfig4->launchTime = 1652692028;
+        workerConfig4->ingestionRate = 900;
+
+        workerConfig5 = WorkerConfiguration::create();
+        workerConfig5->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig5->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig5->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig5->enableStatisticOutput = true;
+        workerConfig5->numberOfBuffersToProduce = 5000000;
+        workerConfig5->numWorkerThreads = 4;
+        workerConfig5->numberOfBuffersPerEpoch = 100;
+        workerConfig5->bufferSizeInBytes = 131072;
+        workerConfig5->numberOfSlots = 2;
+        workerConfig5->memoryCapacity = 350;
+        workerConfig5->networkCapacity = 100;
+        workerConfig5->mtbfValue = 15000;
+        workerConfig5->launchTime = 1652692028;
+        workerConfig5->ingestionRate = 900;
+
+        workerConfig6 = WorkerConfiguration::create();
+        workerConfig6->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig6->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig6->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig6->enableStatisticOutput = true;
+        workerConfig6->numberOfBuffersToProduce = 5000000;
+        workerConfig6->numWorkerThreads = 4;
+        workerConfig6->numberOfBuffersPerEpoch = 100;
+        workerConfig6->bufferSizeInBytes = 131072;
+        workerConfig6->numberOfSlots = 2;
+        workerConfig6->memoryCapacity = 350;
+        workerConfig6->networkCapacity = 100;
+        workerConfig6->mtbfValue = 15000;
+        workerConfig6->launchTime = 1652692028;
+        workerConfig6->ingestionRate = 900;
+
+        workerConfig7 = WorkerConfiguration::create();
+        workerConfig7->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig7->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig7->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig7->enableStatisticOutput = true;
+        workerConfig7->numberOfBuffersToProduce = 5000000;
+        workerConfig7->numWorkerThreads = 4;
+        workerConfig7->numberOfBuffersPerEpoch = 100;
+        workerConfig7->bufferSizeInBytes = 131072;
+        workerConfig7->numberOfSlots = 2;
+        workerConfig7->memoryCapacity = 350;
+        workerConfig7->networkCapacity = 100;
+        workerConfig7->mtbfValue = 15000;
+        workerConfig7->launchTime = 1652692028;
+        workerConfig7->ingestionRate = 900;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -388,32 +456,30 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
-//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart3);
-//    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-//
-//    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart4 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart4);
-//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
-//
-//    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart5 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart5);
-//    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-//
-//    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart6);
-//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
-//
-
-
-    workerConfig3->lambdaSource = 1;
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(std::move(workerConfig5));
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk6 = std::make_shared<NesWorker>(std::move(workerConfig6));
+    bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart6);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    workerConfig7->lambdaSource = 1;
+    NesWorkerPtr wrk7 = std::make_shared<NesWorker>(std::move(workerConfig7));
+    bool retStart7 = wrk7->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart7);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -422,31 +488,29 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
-    crd->getTopologyManagerService()->removeParent(3, 1);
     crd->getTopologyManagerService()->removeParent(4, 1);
-//    crd->getTopologyManagerService()->removeParent(5, 1);
-//    crd->getTopologyManagerService()->removeParent(6, 1);
-//    crd->getTopologyManagerService()->removeParent(7, 1);
-//    crd->getTopologyManagerService()->removeParent(8, 1);
-    crd->getTopologyManagerService()->addParent(3, 2);
-    crd->getTopologyManagerService()->addParent(4, 3);
-//    crd->getTopologyManagerService()->addParent(5, 4);
-//    crd->getTopologyManagerService()->addParent(6, 5);
-//    crd->getTopologyManagerService()->addParent(7, 6);
-//    crd->getTopologyManagerService()->addParent(8, 7);
+    crd->getTopologyManagerService()->removeParent(5, 1);
+    crd->getTopologyManagerService()->removeParent(6, 1);
+    crd->getTopologyManagerService()->removeParent(7, 1);
+    crd->getTopologyManagerService()->removeParent(8, 1);
+    crd->getTopologyManagerService()->addParent(4, 2);
+    crd->getTopologyManagerService()->addParent(5, 2);
+    crd->getTopologyManagerService()->addParent(6, 2);
+    crd->getTopologyManagerService()->addParent(7, 3);
+    crd->getTopologyManagerService()->addParent(8, 3);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
                    "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
-    string query1 = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
-                   "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
+//    string query1 = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
+//                   "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp",
-                                                                    FaultToleranceType::EXACTLY_ONCE,
+                                                                    FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY,
                                                                     FaultTolerancePlacement::NONE);
 
