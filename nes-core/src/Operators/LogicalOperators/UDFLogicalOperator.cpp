@@ -18,8 +18,8 @@
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -63,8 +63,7 @@ bool UDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeI
 Catalogs::UDF::UDFDescriptorPtr UDFLogicalOperator::getUDFDescriptor() const { return udfDescriptor; }
 
 bool UDFLogicalOperator::equal(const NodePtr& other) const {
-    return other->instanceOf<UDFLogicalOperator>()
-        && *udfDescriptor == *other->as<UDFLogicalOperator>()->udfDescriptor;
+    return other->instanceOf<UDFLogicalOperator>() && *udfDescriptor == *other->as<UDFLogicalOperator>()->udfDescriptor;
 }
 
 bool UDFLogicalOperator::isIdentical(const NodePtr& other) const {

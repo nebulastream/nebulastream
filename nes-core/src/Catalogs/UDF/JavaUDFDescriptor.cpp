@@ -28,8 +28,8 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
                                      const SchemaPtr outputSchema,
                                      const std::string& inputClassName,
                                      const std::string& outputClassName)
-    : UDFDescriptor(methodName, inputSchema, outputSchema), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
-      inputClassName(inputClassName), outputClassName(outputClassName) {
+    : UDFDescriptor(methodName, inputSchema, outputSchema), className(className), serializedInstance(serializedInstance),
+      byteCodeList(byteCodeList), inputClassName(inputClassName), outputClassName(outputClassName) {
 
     if (className.empty()) {
         throw UDFException("The class name of a Java UDF must not be empty");
@@ -81,24 +81,24 @@ std::stringstream JavaUDFDescriptor::generateInferStringSignature() {
     // Compute hashed value of the UDF byte code list.
     auto stringHash = std::hash<std::string>{};
     auto& byteCodeList = getByteCodeList();
-    auto byteCodeListHash = std::accumulate(
-        byteCodeList.begin(),
-        byteCodeList.end(),
-        byteCodeList.size(),
-        [&stringHash, &charArrayHashHelper](std::size_t h, jni::JavaUDFByteCodeList::value_type v) {
-            /* It is not possible to hash unordered_map directly in C++, this will be
+    auto byteCodeListHash =
+        std::accumulate(byteCodeList.begin(),
+                        byteCodeList.end(),
+                        byteCodeList.size(),
+                        [&stringHash, &charArrayHashHelper](std::size_t h, jni::JavaUDFByteCodeList::value_type v) {
+                            /* It is not possible to hash unordered_map directly in C++, this will be
                                      * investigated in issue #3584
                                      */
 
-            auto& className = v.first;
-            h = h * 31 + stringHash(className);
-            auto& byteCode = v.second;
-            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
-            return h;
-        });
+                            auto& className = v.first;
+                            h = h * 31 + stringHash(className);
+                            auto& byteCode = v.second;
+                            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
+                            return h;
+                        });
 
-    signatureStream << "JAVA_UDF(" << className << "." << getMethodName()
-                    << ", instance=" << instanceHash << ", byteCode=" << byteCodeListHash << ")";
+    signatureStream << "JAVA_UDF(" << className << "." << getMethodName() << ", instance=" << instanceHash
+                    << ", byteCode=" << byteCodeListHash << ")";
 
     return signatureStream;
 }

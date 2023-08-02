@@ -1508,8 +1508,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode =
-        std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
     auto descriptor = LogicalSourceDescriptor::create("logicalSource");
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
@@ -1549,8 +1548,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode =
-        std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);
@@ -1598,15 +1596,13 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode1 =
-        std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode1 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
     auto javaUdfDescriptor2 =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode2 =
-        std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode2 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);

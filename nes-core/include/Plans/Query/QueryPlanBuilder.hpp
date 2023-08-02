@@ -92,8 +92,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor,
-                                               NES::QueryPlanPtr queryPlan);
+    static NES::QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans

@@ -17,22 +17,22 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalFlatMapUDFOperator::PhysicalFlatMapUDFOperator(OperatorId id,
-                                                               const SchemaPtr& inputSchema,
-                                                               const SchemaPtr& outputSchema,
-                                                               const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
+                                                       const SchemaPtr& inputSchema,
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       udfDescriptor(std::move(udfDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(const SchemaPtr& inputSchema,
-                                                           const SchemaPtr& outputSchema,
-                                                           const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
+                                                       const SchemaPtr& inputSchema,
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
     return std::make_shared<PhysicalFlatMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
 }
 

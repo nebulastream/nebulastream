@@ -157,6 +157,6 @@ class LowerPhysicalToNautilusOperators {
 
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;
-    };
+};
 }// namespace NES::QueryCompilation
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

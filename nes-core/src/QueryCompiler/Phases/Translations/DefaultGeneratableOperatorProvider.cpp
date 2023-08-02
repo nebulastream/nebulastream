@@ -154,8 +154,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerBatchJoinProbe(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         return;
-    }
-    else {
+    } else {
         throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
     }
 }

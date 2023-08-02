@@ -81,7 +81,6 @@ class PythonUDFDescriptorBuilder {
     std::string functionString;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
-
 };
 
 }// namespace NES::Catalogs::UDF

@@ -24,15 +24,15 @@ PhysicalMapUDFOperator::PhysicalMapUDFOperator(OperatorId id,
       udfDescriptor(std::move(udfDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalMapUDFOperator::create(const SchemaPtr& inputSchema,
-                                                       const SchemaPtr& outputSchema,
-                                                       const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
+                                                   const SchemaPtr& outputSchema,
+                                                   const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalMapUDFOperator::create(OperatorId id,
-                                                       const SchemaPtr& inputSchema,
-                                                       const SchemaPtr& outputSchema,
-                                                       const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
+                                                   const SchemaPtr& inputSchema,
+                                                   const SchemaPtr& outputSchema,
+                                                   const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
     return std::make_shared<PhysicalMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
 }
 
