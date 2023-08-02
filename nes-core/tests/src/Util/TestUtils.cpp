@@ -731,7 +731,6 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
     }
 
     return retBuffer;
-    // return Runtime::MemoryLayouts::DynamicTupleBuffer(schema, retBuffer);
 }
 
 };// namespace TestUtils
