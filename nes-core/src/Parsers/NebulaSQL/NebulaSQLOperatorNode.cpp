@@ -15,26 +15,20 @@
 #include <Parsers/NebulaSQL/NebulaSQLOperatorNode.hpp>
 
 namespace NES::Parsers {
-
-NebulaSQLOperatorNode::NebulaSQLOperatorNode(int32_t id) : id(id) {}
-
-int32_t NebulaSQLOperatorNode::getId() const { return id; }
+// creates an instance of the Operator Node (for as AST Tree node) with a unique identifier
+NebulaSQLOperatorNode::NebulaSQLOperatorNode(int32_t id) { this->id = id; }
+//Getter and Setter
+int32_t NebulaSQLOperatorNode::getId() const { return this->id; }
 void NebulaSQLOperatorNode::setId(int32_t id) { this->id = id; }
-
-const std::string& NebulaSQLOperatorNode::getOperatorName() const { return operatorName; }
+const std::string& NebulaSQLOperatorNode::getOperatorName() const { return this->operatorName; }
 void NebulaSQLOperatorNode::setOperatorName(const std::string& operatorName) { this->operatorName = operatorName; }
-
-const std::pair<int32_t, int32_t>& NebulaSQLOperatorNode::getMinMax() const { return minMax; }
+int32_t NebulaSQLOperatorNode::getRightChildId() const { return this->rightChildId; }
+void NebulaSQLOperatorNode::setRightChildId(int32_t rightChildId) { this->rightChildId = rightChildId; }
+int32_t NebulaSQLOperatorNode::getLeftChildId() const { return this->leftChildId; }
+void NebulaSQLOperatorNode::setLeftChildId(int32_t leftChildId) { this->leftChildId = leftChildId; }
+const std::pair<int32_t, int32_t>& NebulaSQLOperatorNode::getMinMax() const { return this->minMax; }
 void NebulaSQLOperatorNode::setMinMax(const std::pair<int32_t, int32_t>& minMax) { this->minMax = minMax; }
-
-int32_t NebulaSQLOperatorNode::getParentNodeId() const { return parentNodeId; }
+int32_t NebulaSQLOperatorNode::getParentNodeId() const { return this->parentNodeId; }
 void NebulaSQLOperatorNode::setParentNodeId(int32_t parentNodeId) { this->parentNodeId = parentNodeId; }
 
-void NebulaSQLOperatorNode::addChild(std::shared_ptr<NebulaSQLOperatorNode> child) {
-    children.push_back(child);
-}
-
-std::vector<std::shared_ptr<NebulaSQLOperatorNode>>& NebulaSQLOperatorNode::getChildren() {
-    return children;
-}
 }// namespace NES::Parsers
