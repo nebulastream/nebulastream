@@ -58,4 +58,6 @@ std::vector<AbstractRequestPtr> AbstractRequest::execute(StorageHandler& storage
 void AbstractRequest::preExecution(StorageHandler& storageHandle) {
     storageHandle.acquireResources(requestId, requiredResources);
 }
+
+std::future<AbstractRequestResponsePtr> AbstractRequest::makeFuture() { return responsePromise.get_future(); }
 }// namespace NES

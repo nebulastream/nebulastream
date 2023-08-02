@@ -13,14 +13,17 @@
 */
 #ifndef NES_ASYNCREQUESTEXECUTOR_HPP
 #define NES_ASYNCREQUESTEXECUTOR_HPP
+#include <Util/ThreadNaming.hpp>
+#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 #include <deque>
 #include <future>
 #include <memory>
+#include <numeric>
 #include <vector>
-#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
-#include <Util/ThreadNaming.hpp>
 
 namespace NES {
+constexpr uint64_t INVALID_REQUEST_ID = 0;
 class StorageHandler;
 namespace Experimental {
     //class AbstractRequest;
@@ -33,9 +36,25 @@ namespace Experimental {
 
     template <ConceptStorageHandler T>
     class AsyncRequestExecutor {
+
+        //define an empty request type that does nothing and is used only for flushing the executor
+        class FlushRequest : public AbstractRequest {
+          public:
+            FlushRequest() : AbstractRequest(INVALID_REQUEST_ID, {}, 0, {}) {}
+            std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { return {}; }
+            std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
+          protected:
+            void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+            void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+            void postExecution(StorageHandler&) override {}
+        };
+
+      public:
         //AsyncRequestExecutor(uint32_t numOfThreads, StorageHandlerPtr storageHandler);
-        AsyncRequestExecutor(uint32_t numOfThreads, T storageHandler);
+        AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures);
         std::future<AbstractRequestResponsePtr> runAsync(AbstractRequestPtr request);
+        bool destroy();
+        ~AsyncRequestExecutor();
 
       private:
         /// the inner thread routine that executes async tasks
@@ -46,6 +65,7 @@ namespace Experimental {
         std::atomic<bool> running;
         std::vector<std::future<bool>> completionFutures;
         std::deque<AbstractRequestPtr> asyncRequestQueue;
+        uint32_t numOfThreads;
         //StorageHandlerPtr storageHandler;
         T storageHandler;
         //todo: would we need that?
@@ -53,7 +73,7 @@ namespace Experimental {
     };
 
     template <ConceptStorageHandler T>
-    NES::Experimental::AsyncRequestExecutor<T>::AsyncRequestExecutor(uint32_t numOfThreads, T storageHandler) : running(true), storageHandler(std::move(storageHandler)) {
+    NES::Experimental::AsyncRequestExecutor<T>::AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures) : running(true), numOfThreads(numOfThreads), storageHandler(T(storageDataStructures)) {
         for (uint32_t i = 0; i < numOfThreads; ++i) {
             std::promise<bool> promise;
             completionFutures.emplace_back(promise.get_future());
@@ -84,33 +104,65 @@ namespace Experimental {
                 asyncRequestQueue.pop_front();
                 lock.unlock();
 
-                //todo: call error handling inside execute or here?
-
-                //todo: make execute function accept ref to const ptr instead of the ref here?
-                //todo: to avaid the abstract type trouble, we either need to use a template or make execute accept pointers
-
-                //todo: add return type
-                //todo: queue new functions
+                //execute request logic
                 std::vector<AbstractRequestPtr> nextRequests = abstractRequest->execute(storageHandler);
 
-
-                //todo: allow execute to return follow up reqeust or execute the follow up as part of execute?
+                //queue follow up requests
+                for (auto followUpRequest : nextRequests) {
+                    runAsync(std::move(followUpRequest));
+                }
             } else {
                 break;
             }
         }
     }
+
 template <ConceptStorageHandler T>
 std::future<AbstractRequestResponsePtr> NES::Experimental::AsyncRequestExecutor<T>::runAsync(AbstractRequestPtr request) {
     if (!running) {
             NES_THROW_RUNTIME_ERROR("Cannot execute request, Async request executor is not runnign");
     }
+    auto future = request->makeFuture();
     {
             std::unique_lock lock(workMutex);
             asyncRequestQueue.emplace_back(std::move(request));
             cv.notify_all();
     }
+    return future;
 }
+
+template <ConceptStorageHandler T>
+bool NES::Experimental::AsyncRequestExecutor<T>::destroy() {
+    bool expected = true;
+    if (running.compare_exchange_strong(expected, false)) {
+           try {
+                {
+                    std::unique_lock lock(workMutex);
+                    for (uint32_t i = 0; i < numOfThreads; ++i) {
+                        asyncRequestQueue.emplace_back(std::make_shared<FlushRequest>());
+                    }
+                    cv.notify_all();
+                }
+               auto result = std::accumulate(completionFutures.begin(), completionFutures.end(), true, [](bool acc, auto& future) {
+                    return acc && future.get();
+               });
+               NES_ASSERT(result, "Cannot shut down AsyncRequestExecutor");
+               {
+                    std::unique_lock lock(workMutex);
+                    asyncRequestQueue.clear();
+               }
+               return result;
+           } catch (std::exception const& ex) {
+               NES_ASSERT(false, "Cannot shut down AsyncRequestExecutor");
+           }
+    }
+    return false;
+}
+template <ConceptStorageHandler T>
+NES::Experimental::AsyncRequestExecutor<T>::~AsyncRequestExecutor() {
+    destroy();
+}
+
     template <typename T>
     using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<T>>;
 }
