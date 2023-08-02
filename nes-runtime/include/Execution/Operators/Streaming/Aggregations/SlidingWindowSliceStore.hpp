@@ -22,6 +22,7 @@
 #include <list>
 #include <memory>
 #include <vector>
+#include <set>
 
 namespace NES::Runtime::Execution::Operators {
 
