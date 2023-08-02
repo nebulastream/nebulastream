@@ -50,7 +50,7 @@ class IRGraph {
         bool debug = true;
     };
     IRGraph(Flags flags = Flags());
-    ~IRGraph();
+    ~IRGraph() = default;
     std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
     std::shared_ptr<Operations::FunctionOperation> getRootOperation();
     std::string toString();

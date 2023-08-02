@@ -22,7 +22,7 @@ namespace NES::Nautilus::IR::Operations {
 class BasicBlockArgument : public Operation {
   public:
     explicit BasicBlockArgument(const std::string identifier, Types::StampPtr stamp);
-    ~BasicBlockArgument() override;
+    ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
 };
