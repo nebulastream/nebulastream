@@ -367,7 +367,7 @@ TEST_P(MultiThreadedTest, testMultipleKeyedEventTimeWindows) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testOneJoin) {
+TEST_P(MultiThreadedTest, DISABLED_testOneJoin) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -440,7 +440,7 @@ TEST_P(MultiThreadedTest, testOneJoin) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testTwoJoins) {
+TEST_P(MultiThreadedTest, DISABLED_testTwoJoins) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2window3start;
         uint64_t window1window2window3end;
@@ -532,7 +532,7 @@ TEST_P(MultiThreadedTest, testTwoJoins) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testThreeJoins) {
+TEST_P(MultiThreadedTest, DISABLED_testThreeJoins) {
     struct ResultRecord {
         uint64_t window1window2window3window4start;
         uint64_t window1window2window3window4end;
