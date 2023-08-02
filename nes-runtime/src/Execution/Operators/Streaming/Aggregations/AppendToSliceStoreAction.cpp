@@ -73,7 +73,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
         auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
         NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
-        auto task = buffer.getBuffer<SliceMergeTask<Slice>>();
+        auto task = new (buffer.getBuffer()) SliceMergeTask<Slice>();
         task->startSlice = windowStart;
         task->endSlice = windowEnd;
         task->slices = slicesForWindow;
@@ -100,7 +100,7 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
             NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
             auto buffer = bufferProvider->getBufferBlocking();
-            auto task = buffer.getBuffer<SliceMergeTask<Slice>>();
+            auto task = new (buffer.getBuffer()) SliceMergeTask<Slice>();
             task->startSlice = windowStart;
             task->endSlice = windowEnd;
             task->slices = slicesForWindow;
