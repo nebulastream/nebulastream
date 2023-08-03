@@ -17,6 +17,7 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <atomic>
 #include <future>
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <thread>
 namespace NES::Testing {

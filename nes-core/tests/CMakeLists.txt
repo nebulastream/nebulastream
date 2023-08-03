@@ -563,18 +563,11 @@ add_nes_integration_test(join-deployment-test "Integration/JoinDeploymentTest.cp
 add_nes_integration_test(window-deployment-test "Integration/WindowDeploymentTest.cpp")
 
 
-### windowDeploymentTest ###
-add_nes_integration_test(thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalTumblingWindowTests.cpp")
-
-
-add_nes_integration_test(thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalGlobalTumblingWindowTests.cpp")
-
-
+### window integration tests ###
+add_nes_integration_test(keyed-tumbling-window-tests "Integration/Windowing/TumblingWindow/KeyedTumblingWindowTests.cpp")
+add_nes_integration_test(non-keyed-tumbling-window-tests "Integration/Windowing/TumblingWindow/NotKeyedlTumblingWindowTests.cpp")
 add_nes_integration_test(thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalKeyedSlidingWindowTests.cpp")
-
-
 add_nes_integration_test(thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalGlobalSlidingWindowTests.cpp")
-
 
 ### concurrent window deployment test ###
 add_nes_integration_test(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
