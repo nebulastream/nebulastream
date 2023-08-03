@@ -67,8 +67,8 @@ class DummyRequest : public AbstractRequest {
         std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
             std::vector<std::shared_ptr<AbstractRequest>> newRequests;
             auto response = std::make_shared<DummyConcatResponse>(responseValue);
-            for (uint32_t i = responseValue; i >= min; --i) {
-                auto newRequest = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue - i, min);
+            for (uint32_t i = responseValue - 1; i >= min; --i) {
+                auto newRequest = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, i, min);
                 response->futures.push_back(newRequest->makeFuture());
                 newRequests.push_back(newRequest);
             }
@@ -125,7 +125,7 @@ TEST_P(AsyncRequestExecutorTest, submitRequest) {
 }
 
 TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
-        constexpr uint32_t responseValue = 11;
+        constexpr uint32_t responseValue = 12;
         constexpr uint32_t min = 10;
         try {
             auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue, min);
@@ -133,14 +133,17 @@ TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
             executor->runAsync(request);
             auto responsePtr = std::static_pointer_cast<DummyConcatResponse>(future.get());
             ASSERT_EQ(responsePtr->number, responseValue);
-//            ASSERT_EQ(responsePtr->futures.size(), 2);
-//            for (auto& f : responsePtr->futures) {
-//                auto r = std::static_pointer_cast<DummyConcatResponse>(future.get());
-//                if (r->number == responseValue - 1) {
-//                    ASSERT_EQ(r->futures)
-//                }
-//
-//            }
+            ASSERT_EQ(responsePtr->futures.size(), 2);
+            for (auto& f : responsePtr->futures) {
+                auto r = std::static_pointer_cast<DummyConcatResponse>(f.get());
+                if (r->number == responseValue - 1) {
+                    ASSERT_EQ(r->futures.size(), 1);
+                    ASSERT_EQ(std::static_pointer_cast<DummyConcatResponse>(r->futures.front().get())->number, responseValue - 2);
+                } else {
+                    ASSERT_EQ(r->number, responseValue - 2);
+                    ASSERT_EQ(r->futures.size(), 0);
+                }
+            }
         } catch (std::exception const& ex) {
             NES_DEBUG("{}", ex.what());
             FAIL();
