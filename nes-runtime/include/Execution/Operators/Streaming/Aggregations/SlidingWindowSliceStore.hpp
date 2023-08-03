@@ -62,7 +62,7 @@ class SlidingWindowSliceStore {
      * @param oldTs
      * @return set of windows
      */
-    std::list<std::tuple<uint64_t, uint64_t>> collectAllWindows(uint64_t oldTs);
+    std::set<std::tuple<uint64_t, uint64_t>> collectAllWindows(uint64_t oldTs);
 
     /**
      * @brief Collect slices  that are part of a window

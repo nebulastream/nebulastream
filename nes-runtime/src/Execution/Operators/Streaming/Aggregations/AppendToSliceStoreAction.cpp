@@ -71,6 +71,9 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
     auto bufferProvider = wctx.getBufferProvider();
     for (const auto& [windowStart, windowEnd] : windows) {
         auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
+        if(slicesForWindow.empty()){
+            continue;
+        }
         NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
         auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
@@ -97,6 +100,9 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
         auto bufferProvider = ctx->getBufferManager();
         for (const auto& [windowStart, windowEnd] : windows) {
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
+            if(slicesForWindow.empty()){
+                continue;
+            }
             NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
             auto buffer = bufferProvider->getBufferBlocking();
             auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
