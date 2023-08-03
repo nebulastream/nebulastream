@@ -87,9 +87,8 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -130,9 +129,8 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -175,9 +173,9 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        crd->getSourceCatalogService()
+            ->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");

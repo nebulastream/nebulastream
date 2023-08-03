@@ -62,12 +62,13 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     remove(outputFilePath.c_str());
 
     // elegant project test schema
-    std::string testSchema = R"(Schema::create()->addField("camera_id", BasicType::UINT64)
-                                                ->addField("timestamp", BasicType::UINT64)
-                                                ->addField("rows", BasicType::UINT64)
-                                                ->addField("cols", BasicType::UINT64)
-                                                ->addField("type", BasicType::UINT64)
-                                                ->addField("data", BasicType::TEXT);)";// TEXT is the variable length field
+    auto testSchema = Schema::create()
+                          ->addField("camera_id", BasicType::UINT64)
+                          ->addField("timestamp", BasicType::UINT64)
+                          ->addField("rows", BasicType::UINT64)
+                          ->addField("cols", BasicType::UINT64)
+                          ->addField("type", BasicType::UINT64)
+                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -104,10 +105,12 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     // register query
-    std::string queryString = R"(Query::from("variable_length").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("variable_length").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
 
