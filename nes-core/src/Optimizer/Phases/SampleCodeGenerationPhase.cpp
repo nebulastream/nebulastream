@@ -15,12 +15,6 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
-#include <QueryCompiler/Operators/ExecutableOperator.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Util/DumpHelper.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
@@ -28,6 +22,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -36,7 +31,12 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
 

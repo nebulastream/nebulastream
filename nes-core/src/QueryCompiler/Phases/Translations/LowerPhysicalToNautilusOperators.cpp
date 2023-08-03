@@ -113,8 +113,7 @@ std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperato
 LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators()
     : expressionProvider(std::make_unique<ExpressionProvider>()) {}
 
-PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan,
-                                                             size_t bufferSize) {
+PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline, bufferSize);

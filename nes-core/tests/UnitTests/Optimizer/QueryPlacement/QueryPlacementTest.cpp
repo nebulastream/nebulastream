@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -36,6 +35,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -206,7 +206,6 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     }
 }
 
-
 /* Test query placement with elegant strategy  */
 TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
 
@@ -224,13 +223,12 @@ TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto sampleCodeGenerationPhase =  Optimizer::SampleCodeGenerationPhase::create();
+    auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
     queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
-
 }
 
 /* Test query placement with top down strategy  */
