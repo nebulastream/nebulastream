@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.179](https://github.com/nebulastream/nebulastream/tree/v0.5.179) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.178...v0.5.179)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate TestHarness UtilTests to Nautilus [\#4075](https://github.com/nebulastream/nebulastream/issues/4075)
+- \[TASK\] Rewrite to TumblingWindowExecutionTest [\#3449](https://github.com/nebulastream/nebulastream/issues/3449)
+
 ## [v0.5.178](https://github.com/nebulastream/nebulastream/tree/v0.5.178) (2023-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.177...v0.5.178)
