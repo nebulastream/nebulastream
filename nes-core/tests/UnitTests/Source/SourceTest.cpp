@@ -367,6 +367,7 @@ class AdaptiveCSVSourceProxy : public CSVSource {
                             0,
                             numSourceLocalBuffers,
                             GatheringMode::ADAPTIVE_MODE,
+                            "AdaptiveCSVSourceProxy",
                             successors){
             ON_CALL(*this, close()).WillByDefault(Return());
             ON_CALL(*this, emitWorkFromSource(_)).WillByDefault(Return());

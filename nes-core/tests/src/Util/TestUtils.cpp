@@ -84,6 +84,10 @@ namespace TestUtils {
     return "--physicalSources." + FILE_PATH_CONFIG + "=" + filePath;
 }
 
+[[nodiscard]] std::string gatheringMode(GatheringMode gatheringMode) {
+    return "--physicalSources." + SOURCE_GATHERING_MODE_CONFIG + "=" + std::string(magic_enum::enum_name(gatheringMode));
+}
+
 [[nodiscard]] std::string dataPort(uint64_t dataPort) { return "--" + DATA_PORT_CONFIG + "=" + std::to_string(dataPort); }
 
 [[nodiscard]] std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {

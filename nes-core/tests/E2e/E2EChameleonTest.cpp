@@ -45,7 +45,7 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
               "BasicType::FLOAT64))->addField(createField(\\\"payload\\\", "
               "BasicType::FLOAT64))->addField(createField(\\\"timestamp\\\", BasicType::FLOAT64));\"}";
     schema << endl;
-    NES_INFO("schema submit=" << schema.str());
+    NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto workerConf = {TestUtils::rpcPort(0),
@@ -72,13 +72,13 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
     ss << R"(;","placement" : "BottomUp"})";
     ss << endl;
-    NES_INFO("string submit=" << ss.str());
+    NES_INFO("string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
-    NES_INFO("Query ID: " << queryId);
+    NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));

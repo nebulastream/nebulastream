@@ -13,8 +13,8 @@
 */
 
 #include <NesBaseTest.hpp>
+#include <Util/Common.hpp>
 #include <Util/PocketFFT/PocketFFT.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>

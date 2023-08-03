@@ -209,9 +209,9 @@ template<typename T>
  */
 [[nodiscard]] std::string csvSourceFilePath(std::string filePath);
 
-[[nodiscard]] std::string gatheringMode(GatheringMode gatheringMode) {
-    return "--physicalSources." + SOURCE_GATHERING_MODE_CONFIG + "=" + std::string(magic_enum::enum_name(gatheringMode));
-}
+[[nodiscard]] std::string gatheringMode(GatheringMode gatheringMode);
+
+[[nodiscard]] std::string dataPort(uint64_t dataPort);
 
 /**
  * @brief Creates the command line argument for the number of tuples of tuples to produce per buffer
