@@ -41,6 +41,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <z3++.h>
@@ -107,12 +108,12 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    auto storageHandler = TwoPhaseLockingStorageHandler(globalExecutionPlan,
+    auto storageHandler = TwoPhaseLockingStorageHandler({globalExecutionPlan,
                                                         topology,
                                                         queryCatalogService,
                                                         globalQueryPlan,
                                                         sourceCatalog,
-                                                        udfCatalog);
+                                                        udfCatalog});
 
     //Create new entry in query catalog service
     queryCatalogService->createNewEntry("query string", queryPlan, "TopDown");
@@ -121,14 +122,12 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Create add request
     std::promise<NES::Experimental::AddQueryResponse> promise;
-    auto addQueryRequest = NES::Experimental::AddQueryRequest::create(requestId,
-                                                                      queryPlan,
+    auto addQueryRequest = NES::Experimental::AddQueryRequest::create(queryPlan,
                                                                       TEST_PLACEMENT_STRATEGY,
                                                                       ZERO_RETRIES,
                                                                       workerRpcClient,
                                                                       coordinatorConfiguration,
-                                                                      z3Context,
-                                                                      std::move(promise));
+                                                                      z3Context);
 
     // Execute add request until deployment phase
     try {

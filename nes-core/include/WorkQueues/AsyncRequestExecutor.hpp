@@ -23,7 +23,8 @@
 #include <vector>
 
 namespace NES {
-constexpr uint64_t INVALID_REQUEST_ID = 0;
+constexpr RequestId INVALID_REQUEST_ID = 0;
+constexpr RequestId MAX_REQUEST_ID = INT_MAX;
 class StorageHandler;
 namespace Experimental {
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
@@ -148,8 +149,7 @@ bool NES::Experimental::AsyncRequestExecutor<T>::runAsync(AbstractRequestPtr req
     }
     std::unique_lock lock(workMutex);
     request->setId(nextFreeRequestId);
-    //todo: will this ever run long enough to overflow a uint64_t?
-    nextFreeRequestId++;
+    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
     asyncRequestQueue.emplace_back(std::move(request));
     cv.notify_all();
     return true;

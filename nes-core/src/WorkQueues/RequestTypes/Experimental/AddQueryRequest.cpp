@@ -41,55 +41,47 @@
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <string>
 #include <utility>
 
 namespace NES::Experimental {
-AddQueryRequest::AddQueryRequest(const RequestId requestId,
-                                 const QueryPlanPtr& queryPlan,
+AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  Optimizer::PlacementStrategy queryPlacementStrategy,
                                  uint8_t maxRetries,
                                  NES::WorkerRPCClientPtr workerRpcClient,
                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                 z3::ContextPtr z3Context,
-                                 std::promise<AddQueryResponse> responsePromise)
-    : AbstractRequest(requestId,
-                      {ResourceType::QueryCatalogService,
+                                 z3::ContextPtr z3Context)
+    : AbstractRequest({ResourceType::QueryCatalogService,
                        ResourceType::GlobalExecutionPlan,
                        ResourceType::Topology,
                        ResourceType::GlobalQueryPlan,
                        ResourceType::UdfCatalog,
                        ResourceType::SourceCatalog},
-                      maxRetries,
-                      std::move(responsePromise)),
-      workerRpcClient(workerRpcClient), queryId(queryPlan->getQueryId()), coordinatorConfiguration(coordinatorConfiguration),
+                      maxRetries),
+      workerRpcClient(std::move(workerRpcClient)), queryId(queryPlan->getQueryId()), coordinatorConfiguration(std::move(coordinatorConfiguration)),
       queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), z3Context(std::move(z3Context)) {}
 
-std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const RequestId requestId,
-                                                         const QueryPlanPtr& queryPlan,
+std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                                          Optimizer::PlacementStrategy queryPlacementStrategy,
                                                          uint8_t maxRetries,
                                                          NES::WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                         z3::ContextPtr z3Context,
-                                                         std::promise<AddQueryResponse> responsePromise) {
-    return std::make_shared<AddQueryRequest>(requestId,
-                                             queryPlan,
+                                                         z3::ContextPtr z3Context) {
+    return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
                                              maxRetries,
                                              std::move(workerRpcClient),
                                              coordinatorConfiguration,
-                                             std::move(z3Context),
-                                             std::move(responsePromise));
+                                             std::move(z3Context));
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                         [[maybe_unused]] StorageHandler& storageHandler) {}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex,
-                                                          [[maybe_unused]] StorageHandler& storageHandle) {
-    return {};
-}
+std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] const RequestExecutionException& ex,
+                                                          [[maybe_unused]] StorageHandler& storageHandle) { return {}; }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                          [[maybe_unused]] StorageHandler& storageHandler) {
