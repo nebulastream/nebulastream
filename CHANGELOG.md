@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.181](https://github.com/nebulastream/nebulastream/tree/v0.5.181) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.180...v0.5.181)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Count aggregation from the Java client causes runtime error [\#3429](https://github.com/nebulastream/nebulastream/issues/3429)
+
 ## [v0.5.180](https://github.com/nebulastream/nebulastream/tree/v0.5.180) (2023-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.179...v0.5.180)
