@@ -13,11 +13,11 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <Util/Experimental/PocketFFT.hpp>
+#include <Util/PocketFFT/PocketFFT.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <gtest/gtest.h>
-#include <complex>
 #include <cmath>
+#include <complex>
+#include <gtest/gtest.h>
 #include <vector>
 
 namespace NES {

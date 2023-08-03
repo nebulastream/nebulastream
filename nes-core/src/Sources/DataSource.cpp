@@ -23,11 +23,11 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -476,7 +476,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
 }
 
 void DataSource::runningRoutineAdaptiveGatheringInterval() {
-    NES_TRACE2("Running in Adaptive Mode");
+    NES_TRACE("Running in Adaptive Mode");
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
@@ -510,7 +510,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
 
                 if (this->gatheringInterval.count() != 0) {
                     auto numOfTuples = buf.getNumberOfTuples();
-                    NES_TRACE2("DataSource num of tuples = ", numOfTuples);
+                    NES_TRACE("DataSource num of tuples = ", numOfTuples);
                     auto records = buf.getBuffer<Sensors::SingleSensor>();
                     double currentIntervalInSeconds = this->gatheringInterval.count() / 1000.;
                     for (uint64_t i = 0; i < numOfTuples; ++i) {
@@ -525,19 +525,19 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     }
                     totalIntervalInseconds /= this->lastValuesBuf.size();
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
-                    NES_TRACE2("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
+                    NES_TRACE("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
                     auto toVec = this->lastValuesBuf.toVector();
                     std::string numbers = "";
                     for (double item : toVec) {
                         numbers.append(std::to_string(item) + ", ");
                     }
-                    std::tuple<bool, double> res = Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
-                    NES_TRACE2("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
+                    std::tuple<bool, double> res = NES::Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
+                    NES_TRACE("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
                     if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
-                        NES_TRACE2("DataSource setSlowestInterval to {}ms", std::get<1>(res));
+                        NES_TRACE("DataSource setSlowestInterval to {}ms", std::get<1>(res));
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
                     }
-                    NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
+                    NES_TRACE("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
                     this->kFilter->updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter->getNewGatheringInterval();
                     NES_TRACE("DataSource new sourceGatheringInterval = {}ms", this->gatheringInterval.count());
@@ -574,8 +574,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                       numberOfBuffersToProduce);
             running = false;
         }
-        NES_DEBUG("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
-    }
+        NES_TRACE("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);

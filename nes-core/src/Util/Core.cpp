@@ -22,22 +22,19 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Experimental/PocketFFT.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <random>
-#include <vector>
-#include <tuple>
 
 namespace NES {
 
@@ -222,102 +219,5 @@ std::string Util::trim(const std::string& str) {
     size_t end = str.find_last_not_of(" \t\n\r");
     return str.substr(start, end - start + 1);
 }
-
-std::vector<std::complex<double>> Util::fft(const std::vector<double>& lastWindowValues) {
-    pocketfft::shape_t shape{lastWindowValues.size()};
-    pocketfft::stride_t stride(1);  // always 1D shape
-    pocketfft::stride_t stride_out(1);  // always 1D shape
-    pocketfft::shape_t axes;
-    size_t axis = 0;
-    stride[0] = sizeof(double);
-    stride_out[0] = 2 * sizeof(double);
-    for (size_t i=0; i<shape.size(); ++i) {
-        axes.push_back(i);
-    }
-    std::vector<std::complex<double>> r2cRes(lastWindowValues.size());
-    pocketfft::r2c(shape, stride, stride_out, axis, pocketfft::FORWARD, lastWindowValues.data(), r2cRes.data(), 1.);
-    pocketfft::detail::ndarr<std::complex<double>> ares(r2cRes.data(), shape, stride_out);
-    pocketfft::detail::rev_iter iter(ares, axes);
-    while(iter.remaining()>0) {
-        auto v = ares[iter.ofs()];
-        ares[iter.rev_ofs()] = conj(v);
-        iter.advance();
-    }
-    return r2cRes;
-}
-
-std::vector<double> Util::fftfreq(const int n, const double d) {
-    double val = 1.0 / (n * d);
-    std::vector<double> results(n);
-    int N = (n - 1) / 2 + 1;
-    std::vector<int> p1(N);
-    std::iota(p1.begin(), p1.end(), 0);
-    std::vector<int> p2(n - N);
-    std::iota(p2.begin(), p2.end(), -(n / 2));
-    std::copy(p1.begin(), p1.end(), results.begin());
-    std::copy(p2.begin(), p2.end(), results.begin() + N);
-    std::transform(results.begin(), results.end(), results.begin(), [val](double x) {
-        return x * val;
-    });
-    return results;
-}
-
-std::vector<double> Util::psd(const std::vector<std::complex<double>>& fftValues) {
-    std::vector<double> psdVec(fftValues.size());
-    std::transform(fftValues.begin(), fftValues.end(), psdVec.begin(),
-                   [](std::complex<double> z) { return std::norm(z); });
-    return psdVec;
-}
-
-double Util::totalEnergy(const std::vector<std::complex<double>>& fftValues) {
-    double fftSum = std::accumulate(fftValues.begin(), fftValues.end(), 0.0,
-                                    [](double acc, std::complex<double> z) {
-                                        return acc + std::norm(z);}
-                                    );
-    return fftSum / fftValues.size();
-}
-
-std::tuple<bool, int> Util::is_aliased_and_nyq_freq(const std::vector<double>& psd_array, const double total_energy) {
-    double cutoff_percent = (total_energy * 99.0) / 100.0;
-    double current_level = 0;
-    uint64_t bin_idx = 0;
-    while (current_level < cutoff_percent && bin_idx < psd_array.size()) {
-        current_level += psd_array[bin_idx];
-        ++bin_idx;
-    }
-    return std::make_tuple(bin_idx == psd_array.size(), bin_idx - 1);
-};
-
-
-std::tuple<bool, double> Util::computeNyquistAndEnergy(const std::vector<double>& inputSignal, double intervalInSeconds) {
-    // Copy the vals
-    std::vector<double> currentSignal = inputSignal;
-    double frequency = 1./intervalInSeconds;
-    double currentNyq = 1./intervalInSeconds;
-
-    // Calculate the mean of the elements
-    double mean = std::accumulate(currentSignal.begin(), currentSignal.end(), 0.0) / inputSignal.size();
-    // Detrend the mean from all elements
-    std::transform(currentSignal.begin(), currentSignal.end(), currentSignal.begin(), [mean](double x){ return x - mean; });
-
-    // Perform 1D FFT on the detrended values
-    auto sensorFft = Util::fft(currentSignal);
-    // Compute corresponding frequencies
-    auto sensorFftFreq = Util::fftfreq(inputSignal.size(), frequency);
-    // Get the psd of the FFT
-    auto psd = Util::psd(sensorFft);
-    // Get energy of incoming signal
-    auto E_fft = Util::totalEnergy(sensorFft);
-    // Get isAliased, proposed new rated idx in psd
-    auto aliasingResult = Util::is_aliased_and_nyq_freq(psd, E_fft);
-    auto isAliased = std::get<0>(aliasingResult);
-    auto nyqIdx = std::get<1>(aliasingResult);
-    if (!isAliased && E_fft > 0.) {
-        // Use 2x the proposed nyquist rate
-        currentNyq = 2 * sensorFftFreq[nyqIdx];
-    }
-
-    return std::make_tuple(currentNyq < frequency, 1./currentNyq);
-};
 
 }// namespace NES

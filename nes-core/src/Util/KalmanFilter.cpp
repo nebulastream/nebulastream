@@ -194,7 +194,7 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
 }
 
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    NES_DEBUG2("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
+    NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
     this->valueVector = Eigen::VectorXd(1); // TODO: remove, only for tests that don't initialize it
     if (!!tupleBuffer) {
         auto numOfTuples = tupleBuffer.getNumberOfTuples();
@@ -237,7 +237,7 @@ void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gathe
 }
 
 void KalmanFilter::setSlowestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
-    NES_DEBUG2("KalmanFilter::setSlowestInterval: {}ms to {}ms", this->slowestInterval.count(), gatheringIntervalInMillis.count());
+    NES_DEBUG("KalmanFilter::setSlowestInterval: {}ms to {}ms", this->slowestInterval.count(), gatheringIntervalInMillis.count());
     this->slowestInterval = gatheringIntervalInMillis;
     if (this->slowestInterval < this->fastestInterval) {
         this->fastestInterval = 3 * this->slowestInterval;

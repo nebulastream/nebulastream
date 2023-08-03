@@ -15,12 +15,6 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 
-#include <Common/Identifiers.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <algorithm>
-#include <any>
 #include <complex>
 #include <functional>
 #include <memory>
@@ -247,6 +241,13 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 }
 
 /**
+* @brief hashes the key with murmur hash
+ * @param key
+ * @return calculated hash
+ */
+uint64_t murmurHash(uint64_t key);
+
+/**
 * @brief Performs fft on a vector
 * @return true/false for now
 */
@@ -287,6 +288,5 @@ std::tuple<bool, int> is_aliased_and_nyq_freq(const std::vector<double>& psd_arr
 std::tuple<bool, double> computeNyquistAndEnergy(const std::vector<double>& inputSignal, double intervalInSeconds);
 
 };// namespace Util
-}// namespace NES
 
 #endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

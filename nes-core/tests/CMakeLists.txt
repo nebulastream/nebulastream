@@ -737,7 +737,7 @@ set_tests_properties(e2e-monitoring-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BI
 add_dependencies(e2e-monitoring-test nesCoordinator nesWorker)
 
 add_executable(e2e-chameleon-test "E2e/E2EChameleonTest.cpp")
-target_link_libraries(e2e-chameleon-test nes-tests)
+target_link_libraries(e2e-chameleon-test nes-core-test-util)
 add_test(NAME e2e-chameleon-test COMMAND e2e-chameleon-test)
 set_tests_properties(e2e-chameleon-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-chameleon-test nesCoordinator nesWorker)
