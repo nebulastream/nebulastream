@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICESTORE_HPP_
 
 #include <list>
+#include <set>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {

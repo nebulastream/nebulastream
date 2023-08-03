@@ -15,6 +15,10 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Common/Identifiers.hpp>
+#include <vector>
+#include <map>
+#include <tuple>
 
 namespace NES::Runtime {
 class AbstractBufferProvider;
