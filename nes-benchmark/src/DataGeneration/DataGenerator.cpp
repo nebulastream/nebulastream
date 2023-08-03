@@ -20,6 +20,7 @@
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
+#include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -75,6 +76,8 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<YSBDataGenerator>();
     } else if (type == "SmartGrid") {
         return std::make_unique<SmartGridDataGenerator>();
+    } else if (type == "LinearRoad") {
+        return std::make_unique<LinearRoadDataGenerator>();
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }

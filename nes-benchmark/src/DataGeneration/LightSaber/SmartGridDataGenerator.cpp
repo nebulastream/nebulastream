@@ -72,6 +72,7 @@ SchemaPtr SmartGridDataGenerator::getSchema() {
         ->addField("household", BasicType::INT16)
         ->addField("house", BasicType::INT16);
 }
+
 std::string SmartGridDataGenerator::toString() {
     std::ostringstream oss;
     oss << getName();

@@ -7,16 +7,19 @@ numberOfWorkerThreads: 1,2,4,8,16
 numberOfSources: 1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersInGlobalBufferManager: 8196
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 1048576
 #bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
-dataGenerator: LinearRoad
-numberOfPreAllocatedBuffer: 1000
-logicalStreamName: lrb
+numberOfPreAllocatedBuffer: 100
+
+logicalSources:
+  - name: lrb
+    type: LinearRoad
+
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: linearroadbenchmark2.csv

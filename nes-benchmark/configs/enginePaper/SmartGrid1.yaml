@@ -7,7 +7,7 @@ numberOfWorkerThreads: 1,2,4,8,16
 numberOfSources: 1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 16384
+numberOfBuffersInGlobalBufferManager: 8192
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 1048576
@@ -19,7 +19,7 @@ logicalSources:
 
 ##benchmark parameter for the entire run
 dataGenerator: SmartGrid
-numberOfPreAllocatedBuffer: 10
+numberOfPreAllocatedBuffer: 100
 logicalStreamName: sg
 dataProvider: Internal
 dataProviderMode: ZeroCopy
