@@ -16,6 +16,9 @@
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief The KeyedWindowEmitAction emits non-keyed slices as individual windows.
+ */
 class NonKeyedWindowEmitAction : public SliceMergingAction {
   public:
     NonKeyedWindowEmitAction(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,

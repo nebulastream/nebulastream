@@ -64,14 +64,14 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
     // the watermark has changed get the lock to trigger
     std::lock_guard<std::mutex> lock(triggerMutex);
     // update currentWatermark, such that other threads to have to acquire the lock
-    NES_DEBUG("Trigger sliding windows between {}-{}", lastTriggerWatermark, currentWatermark);
+    NES_TRACE("Trigger sliding windows between {}-{}", lastTriggerWatermark, currentWatermark);
 
     auto windows = sliceStore->collectWindows(lastTriggerWatermark, currentWatermark);
     // collect all slices that end <= watermark from all thread local slice stores.
     auto bufferProvider = wctx.getBufferProvider();
     for (const auto& [windowStart, windowEnd] : windows) {
         auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
-        NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
+        NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
         auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
         task->startSlice = windowStart;
@@ -97,7 +97,7 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
         auto bufferProvider = ctx->getBufferManager();
         for (const auto& [windowStart, windowEnd] : windows) {
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
-            NES_DEBUG("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
+            NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
             auto buffer = bufferProvider->getBufferBlocking();
             auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
             task->startSlice = windowStart;
