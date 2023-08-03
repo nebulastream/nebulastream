@@ -424,23 +424,132 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             if (int(operatorID) == sourceOpId && (j == 0)){
                 placementVariable.insert(std::make_pair(variableID, P_IJ));
                 NES_INFO("in source-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+                sum_i = sum_i + P_IJ;
+                // add to node utilization
+                int slots;
+                if (!operatorNode->hasProperty("cost")) {
+                    slots = getDefaultOperatorCost(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("cost");
+                    slots = std::any_cast<int>(prop);
+                }
+
+                auto iterator = nodeUtilizationMap.find(topologyID);
+                if (iterator != nodeUtilizationMap.end()) {
+                    iterator->second = iterator->second + slots * P_IJ;
+                } else {
+                    // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                    nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+                }
+
+                // add distance to root (positive part of distance equation)
+                double M = nodeMileageMap[topologyID];
+                D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
             }
             if (int(operatorID) == watermarkOpId && (j == 0 || j == 1)){
                 placementVariable.insert(std::make_pair(variableID, P_IJ));
                 NES_INFO("in watermark-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+                sum_i = sum_i + P_IJ;
+                // add to node utilization
+                int slots;
+                if (!operatorNode->hasProperty("cost")) {
+                    slots = getDefaultOperatorCost(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("cost");
+                    slots = std::any_cast<int>(prop);
+                }
+
+                auto iterator = nodeUtilizationMap.find(topologyID);
+                if (iterator != nodeUtilizationMap.end()) {
+                    iterator->second = iterator->second + slots * P_IJ;
+                } else {
+                    // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                    nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+                }
+
+                // add distance to root (positive part of distance equation)
+                double M = nodeMileageMap[topologyID];
+                D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
             }
             if (int(operatorID) == windowOpId && (j == 1 || j == 2)){
                 placementVariable.insert(std::make_pair(variableID, P_IJ));
                 NES_INFO("in window-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
+                sum_i = sum_i + P_IJ;
+                // add to node utilization
+                int slots;
+                if (!operatorNode->hasProperty("cost")) {
+                    slots = getDefaultOperatorCost(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("cost");
+                    slots = std::any_cast<int>(prop);
+                }
+
+                auto iterator = nodeUtilizationMap.find(topologyID);
+                if (iterator != nodeUtilizationMap.end()) {
+                    iterator->second = iterator->second + slots * P_IJ;
+                } else {
+                    // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                    nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+                }
+
+                // add distance to root (positive part of distance equation)
+                double M = nodeMileageMap[topologyID];
+                D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
             }
             if (int(operatorID) == sinkOpId && j == 2){
                 placementVariable.insert(std::make_pair(variableID, P_IJ));
                 NES_INFO("in sink-if with variableID = {} and topologyD = {} and operatorID={}", variableID, topologyID, operatorID);
-            }
-            //placementVariable.insert(std::make_pair(variableID, P_IJ));
-            sum_i = sum_i + P_IJ;
+                sum_i = sum_i + P_IJ;
+                // add to node utilization
+                int slots;
+                if (!operatorNode->hasProperty("cost")) {
+                    slots = getDefaultOperatorCost(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("cost");
+                    slots = std::any_cast<int>(prop);
+                }
 
+                auto iterator = nodeUtilizationMap.find(topologyID);
+                if (iterator != nodeUtilizationMap.end()) {
+                    iterator->second = iterator->second + slots * P_IJ;
+                } else {
+                    // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                    nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+                }
+
+                // add distance to root (positive part of distance equation)
+                double M = nodeMileageMap[topologyID];
+                D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
+            }
+            else if (int(operatorID) != windowOpId && int(operatorID) != watermarkOpId && int(operatorID) != sinkOpId && int(operatorID) != sourceOpId){
+                placementVariable.insert(std::make_pair(variableID, P_IJ));
+                sum_i = sum_i + P_IJ;
+                // add to node utilization
+                int slots;
+                if (!operatorNode->hasProperty("cost")) {
+                    slots = getDefaultOperatorCost(operatorNode);
+                } else {
+                    std::any prop = operatorNode->getProperty("cost");
+                    slots = std::any_cast<int>(prop);
+                }
+
+                auto iterator = nodeUtilizationMap.find(topologyID);
+                if (iterator != nodeUtilizationMap.end()) {
+                    iterator->second = iterator->second + slots * P_IJ;
+                } else {
+                    // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                    nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+                }
+
+                // add distance to root (positive part of distance equation)
+                double M = nodeMileageMap[topologyID];
+                D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
+            }
+
+            //placementVariable.insert(std::make_pair(variableID, P_IJ));
+            //sum_i = sum_i + P_IJ;
             // add to node utilization
+            /*
             int slots;
             if (!operatorNode->hasProperty("cost")) {
                 slots = getDefaultOperatorCost(operatorNode);
@@ -459,7 +568,8 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
 
             // add distance to root (positive part of distance equation)
             double M = nodeMileageMap[topologyID];
-            D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
+            D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;*/
+
         }
         operatorDistanceMap.insert(std::make_pair(operatorID, D_i));
         // add constraint that operator is placed exactly once on topology path
