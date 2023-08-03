@@ -106,48 +106,36 @@ struct AddQueryResponse : public AbstractRequestResponse {
     SharedQueryId sharedQueryId;
 };
 
-class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
+class AddQueryRequest : public AbstractRequest {
   public:
     /**
      * @brief Constructor
-     * @param requestId: the id assigned to this request
-     * @param queryId: The id of the query that failed
-     * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      * @return a smart pointer to the newly created object
      */
-    AddQueryRequest(const RequestId requestId,
-                    const QueryPlanPtr& queryPlan,
+    AddQueryRequest(const QueryPlanPtr& queryPlan,
                     Optimizer::PlacementStrategy queryPlacementStrategy,
                     uint8_t maxRetries,
                     NES::WorkerRPCClientPtr workerRpcClient,
                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                    z3::ContextPtr z3Context,
-                    std::promise<AddQueryResponse> responsePromise);
+                    z3::ContextPtr z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
-     * @param requestId: the id assigned to this request
-     * @param queryId: The id of the query that failed
-     * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
-    static std::shared_ptr<AddQueryRequest> create(const RequestId requestId,
-                                                   const QueryPlanPtr& queryPlan,
+    static std::shared_ptr<AddQueryRequest> create(const QueryPlanPtr& queryPlan,
                                                    Optimizer::PlacementStrategy queryPlacementStrategy,
                                                    uint8_t maxRetries,
                                                    NES::WorkerRPCClientPtr workerRpcClient,
                                                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                   z3::ContextPtr z3Context,
-                                                   std::promise<AddQueryResponse> responsePromise);
+                                                   z3::ContextPtr z3Context);
 
   protected:
     /**
@@ -161,9 +149,9 @@ class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
-     * @return A vector of requests that need to be executed to roll back the changes made by the request.
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
@@ -183,7 +171,7 @@ class AddQueryRequest : public AbstractRequest<AddQueryResponse> {
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
-     * @return A vector of requests that need to be executed after the request logic is done.
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandler) override;
 
