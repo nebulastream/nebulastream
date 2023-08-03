@@ -13,14 +13,15 @@
 */
 #ifndef NES_ASYNCREQUESTEXECUTOR_HPP
 #define NES_ASYNCREQUESTEXECUTOR_HPP
-#include <Util/ThreadNaming.hpp>
-#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
-#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 #include <deque>
 #include <future>
 #include <memory>
 #include <numeric>
 #include <vector>
+#include <climits>
+#include <Util/ThreadNaming.hpp>
+#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES {
 constexpr RequestId INVALID_REQUEST_ID = 0;
