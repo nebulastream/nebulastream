@@ -9,19 +9,20 @@ numberOfWorkerThreads: 1,2,4,8,16
 numberOfSources: 1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersInGlobalBufferManager: 8196
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 1048576
 #bufferSizeInBytes: 131072
 
 # configure data source
-dataGenerator: ClusterMonitoring
-numberOfPreAllocatedBuffer: 1000
-logicalStreamName: cm
+numberOfPreAllocatedBuffer: 100
+
+logicalSources:
+  - name: cm
+    type: ClusterMonitoring
 dataProvider: Internal
 dataProviderMode: ZeroCopy
-
 
 query: 'Query::from("cm").window(SlidingWindow::of(EventTime(RecordCreationTs()), Seconds(60), Seconds(1))).apply(Sum(Attribute("cpu"))->as(Attribute("totalCpu"))).sink(NullOutputSinkDescriptor::create());'
 
