@@ -25,6 +25,7 @@
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -1062,7 +1063,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1161,7 +1162,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1252,7 +1253,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
