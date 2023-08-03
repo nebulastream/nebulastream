@@ -27,7 +27,7 @@ GlobalQueryPlan::GlobalQueryPlan() = default;
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
-bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
+void GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     if (inputQueryPlanId == INVALID_QUERY_ID) {
         throw Exceptions::RuntimeException("GlobalQueryPlan: Can not add query plan with invalid id.");
@@ -37,7 +37,6 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
                                            + " already present.");
     }
     queryPlansToAdd.emplace_back(queryPlan);
-    return true;
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {

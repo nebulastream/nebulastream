@@ -17,6 +17,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -89,7 +90,73 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                          [[maybe_unused]] StorageHandler& storageHandler) {
 
-    //todo: #4038 add error handling
+    std::vector<AbstractRequestPtr> failRequest;
+    try {
+        NES_TRACE("Error: {}", ex.what());
+        if (ex.instanceOf<Exceptions::QueryPlacementException>()) {
+            NES_ERROR("{}", ex.what());
+            std::promise<Experimental::FailQueryResponse> failPromise;
+            failRequest.push_back(FailQueryRequest::create(requestId,
+                                                           ex.getQueryId(),
+                                                           INVALID_QUERY_SUB_PLAN_ID,
+                                                           MAX_RETRIES_FOR_FAILURE,
+                                                           workerRpcClient,
+                                                           std::move(failPromise))
+                                      ->as<AbstractRequest<AbstractRequestResponse>>());
+        } else if (ex.instanceOf<QueryDeploymentException>() || ex.instanceOf<InvalidQueryException>()) {
+            //Happens if:
+            //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
+            //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
+            //2. QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
+            //3. QueryDeploymentException: Error in call to Elegant acceleration service with code
+            //4. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
+            std::promise<Experimental::FailQueryResponse> failPromise;
+            failRequest.push_back(FailQueryRequest::create(requestId,
+                                                           ex.getQueryId(),
+                                                           INVALID_QUERY_SUB_PLAN_ID,
+                                                           MAX_RETRIES_FOR_FAILURE,
+                                                           workerRpcClient,
+                                                           std::move(failPromise))
+                                      ->as<AbstractRequest<AbstractRequestResponse>>());
+        } else if (ex.instanceOf<TypeInferenceException>() || ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
+            // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
+            // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
+            // we do this as long as there are retries present, otherwise, we fail the query
+            NES_ERROR("{}", ex.what());
+            queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+        } else if (ex.instanceOf<Exceptions::QueryNotFoundException>()
+                   || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
+                   || ex.instanceOf<Exceptions::InvalidQueryStateException>()) {
+            //Happens if:
+            //1. could not obtain execution nodes by shared query id --> non-recoverable
+            //2. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
+            //3. Could not find topology node to release resources
+            //4. Could not find sqp in global query plan
+            //5. Could not remove query sub plan from execution node
+            //--> SQP is not running on any nodes:
+            //log the error to let the user know
+            //no other action necessary
+            NES_ERROR("{}", ex.what());
+        } else if (ex.instanceOf<Exceptions::RuntimeException>()) {
+            //todo: #3821 change to more specific exceptions
+            //1. Called from QueryUndeploymentPhase: GlobalQueryPlan: Unable to remove all child operators of the identified sink operator in the shared query plan
+            //2. Called from PlacementStrategyPhase: PlacementStrategyFactory: Unknown placement strategy
+            NES_ERROR("RuntimeException: {}", ex.what());
+        } else {
+            //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part, differentiate between deployment and undeployment phase
+            //RPC call errors:
+            //1. asynchronous call to worker to stop shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
+            //2. asynchronous call to worker to unregister shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR:
+            NES_ERROR("Unknown exception: {}", ex.what());
+        }
+    } catch (RequestExecutionException& e) {
+        if (retry()) {
+            handleError(e, storageHandler);
+        } else {
+            NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", e.what());
+        }
+    }
+    return failRequest;
 }
 
 void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHandler) {}
@@ -186,19 +253,27 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
 
         //18. Get the shared query plan id for the added query
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+            throw Exceptions::SharedQueryPlanNotFoundException("Could not find shared query id in global query plan. Shared query id is invalid.",
+                                                               sharedQueryId);
+        }
 
         //19. Get the shared query plan for the added query
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        if (!sharedQueryPlan) {
+            throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
+                                                               sharedQueryId);
+        }
 
         //20. If the shared query plan is newly created
         if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
 
             NES_DEBUG("Shared Query Plan is new.");
 
+            //todo: check these exceptions after merge and rebase of error handling for stop request
             //20.1 Perform placement of new shared query plan
             NES_DEBUG("Performing Operator placement for shared query plan");
-            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-            if (!placementSuccessful) {
+            if (!queryPlacementPhase->execute(sharedQueryPlan)) {
                 throw Exceptions::QueryPlacementException(sharedQueryId,
                                                           "Failed to perform query placement for "
                                                           "query plan with shared query id: "
@@ -222,8 +297,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
 
             //20.5 Perform placement of updated shared query plan
             NES_DEBUG("Performing Operator placement for shared query plan");
-            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
-            if (!placementSuccessful) {
+            if (!queryPlacementPhase->execute(sharedQueryPlan)) {
                 throw Exceptions::QueryPlacementException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "
                                                           "query plan with shared query id: "
