@@ -30,7 +30,7 @@ std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createDat
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/manufacturing_equipment/DEBS2012-small.txt");
+    std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/manufacturing-equipment/DEBS2012-small.txt");
     std::string line;
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
@@ -81,6 +81,12 @@ SchemaPtr ManufacturingEquipmentDataGenerator::getSchema() {
         ->addField("res", BasicType::UINT16)
         ->addField("bm05", BasicType::INT16)
         ->addField("bm06", BasicType::INT16);
+}
+
+std::string ManufacturingEquipmentDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
 }
 
 }// namespace NES::Benchmark::DataGeneration
