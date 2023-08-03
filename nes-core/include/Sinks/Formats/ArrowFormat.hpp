@@ -32,15 +32,15 @@ class ArrowFormat : public SinkFormat {
 
     /**
     * @brief method to write a TupleBuffer
-    * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
+    * @param a reference to input TupleBuffer
+    * @return vector of Tuple buffer containing the content of the tuple buffer
      */
     std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
-    * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
+    * @param a reference to input TupleBuffer
+    * @return vector of Tuple buffer containing the content of the tuple buffer
      */
     FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
 
@@ -51,14 +51,14 @@ class ArrowFormat : public SinkFormat {
     std::optional<Runtime::TupleBuffer> getSchema() override;
 
     /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
+    * @brief method to get the schema from the arrow format
+    * @return return the arrow schema
     */
     std::shared_ptr<arrow::Schema> getArrowSchema();
 
     /**
     * @brief method to get the arrow arrays from tuple buffer
-    * @param inputBuffer containing tuples
+    * @param a reference to input TupleBuffer
     * @return a vector of Arrow Arrays
     */
     std::vector<std::shared_ptr<arrow::Array>> getArrowArrays(Runtime::TupleBuffer& inputBuffer);

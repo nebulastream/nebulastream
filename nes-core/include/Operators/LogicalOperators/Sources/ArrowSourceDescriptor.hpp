@@ -26,7 +26,7 @@ namespace NES {
 class ArrowSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType,
-                                      std::string logicalSourceName, std::string physicalSourceName);
+                                      const std::string logicalSourceName, const std::string physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
 

@@ -473,6 +473,7 @@ DataSourcePtr createArrowSource(const SchemaPtr& schema,
                                 OperatorId operatorId,
                                 OriginId originId,
                                 size_t numSourceLocalBuffers,
+                                const std::string& physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<ArrowSource>(schema,
                                          bufferManager,
@@ -482,6 +483,7 @@ DataSourcePtr createArrowSource(const SchemaPtr& schema,
                                          originId,
                                          numSourceLocalBuffers,
                                          GatheringMode::INTERVAL_MODE,
+                                         physicalSourceName,
                                          successors);
 }
 #endif

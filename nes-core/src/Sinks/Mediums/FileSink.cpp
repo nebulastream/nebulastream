@@ -21,7 +21,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include "Sinks/Formats/ArrowFormat.hpp"
+#include <Sinks/Formats/ArrowFormat.hpp>
 
 namespace NES {
 

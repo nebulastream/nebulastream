@@ -186,6 +186,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  operatorId,
                                  originId,
                                  numSourceLocalBuffers,
+                                 sourceDescriptor->getPhysicalSourceName(),
                                  successors);
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
