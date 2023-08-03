@@ -101,6 +101,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
 
     // 3. combine thread local slices and append them to the global slice store
     combineThreadLocalSlices(globalHashTable, sliceMergeTask);
+    FunctionCall("freeKeyedSliceMergeTask", freeKeyedSliceMergeTask, sliceMergeTask);
 
     // 4. emit global slice when we have a tumbling window.
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, globalSlice);

@@ -296,10 +296,6 @@ class TupleBuffer {
 template<typename T>
 T* allocateWithin(TupleBuffer& buffer) {
     auto ptr = new (buffer.getBuffer()) T();
-    buffer.addRecycleCallback([](Runtime::detail::MemorySegment* segment, Runtime::BufferRecycler*){
-        auto ptr = (T*)segment->getPointer();
-        ptr->~T();
-    });
     buffer.setNumberOfTuples(1);
     return ptr;
 };
