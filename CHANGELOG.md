@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.178](https://github.com/nebulastream/nebulastream/tree/v0.5.178) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.177...v0.5.178)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Initial OpenCV integration [\#3150](https://github.com/nebulastream/nebulastream/issues/3150)
+
 ## [v0.5.177](https://github.com/nebulastream/nebulastream/tree/v0.5.177) (2023-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.176...v0.5.177)
