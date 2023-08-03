@@ -17,10 +17,21 @@
 
 #include <Parsers/NebulaSQL/NebulaSQLOperatorNode.hpp>
 #include <Parsers/NebulaSQL/gen/NebulaSQLBaseListener.h>
+#include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 
 namespace NES::Parsers {
+class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
+  public:
+
+    void enterSelectClause(NebulaSQLParser::SelectClauseContext *context) override;
+
+  private:
+    NebulaSQLHelper helper;
+};
+
+
 
 }// namespace NES::Parsers
 

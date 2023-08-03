@@ -18,4 +18,21 @@
 
 namespace NES::Parsers {
 
+void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext *context) {
+    for (auto namedExprContext : context->namedExpressionSeq()->namedExpression()) {
+        auto expressionText = namedExprContext->expression()->getText();
+        auto attribute = NES::Attribute(expressionText).getExpressionNode();
+        helper.addProjectionField(attribute);
+        // catach den alias
+        if (namedExprContext->name) {
+            std::string alias = namedExprContext->name->getText();
+            //Stream Name ändern?
+        }
+    }
+}
+
+
+}
+
+
 }// namespace NES::Parsers
