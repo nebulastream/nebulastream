@@ -85,8 +85,7 @@ namespace NES {
     }
     EXPECT_EQ(nearlyEqual, true);
   }
-
-
+  
   TEST_F(StatManagerTest, deleteStatTest) {
     statManager->createStat(*StatCollectorConfig);
     EXPECT_EQ(statManager->getStatCollectors().empty(), false);
