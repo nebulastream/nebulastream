@@ -50,7 +50,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
         : NautilusQueryCompiler(options, phaseFactory, sourceSharing) {}
 
     QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override {
-        NES_INFO2("Compile Query with Nautilus");
+        NES_INFO("Compile Query with Nautilus");
         try {
             Timer timer("DefaultQueryCompiler");
             auto queryId = request->getQueryPlan()->getQueryId();
@@ -60,7 +60,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
             auto dumpContext = DumpContext::create("QueryCompilation-" + query);
 
             timer.start();
-            NES_DEBUG2("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+            NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
             auto inputPlan = request->getQueryPlan();
             auto logicalQueryPlan = inputPlan->copy();
             dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
@@ -90,7 +90,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                 if (pipe->getQueryPlan()->getRootOperators()[0]->instanceOf<QueryCompilation::ExecutableOperator>()) {
                     auto executableOperator =
                         pipe->getQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
-                    NES_DEBUG2("executable pipeline id {}", pipe->getPipelineId());
+                    NES_DEBUG("executable pipeline id {}", pipe->getPipelineId());
                     auto stage = executableOperator->getExecutablePipelineStage();
                     auto cStage = std::dynamic_pointer_cast<Runtime::Execution::CompiledExecutablePipelineStage>(stage);
                     auto dumpHelper = DumpHelper::create("", false, false);

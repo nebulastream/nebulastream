@@ -279,7 +279,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
 void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getId(),
-                                                                                     mapJavaUDFOperator->getInputSchema(),
+                                                                                 mapUDFOperator->getInputSchema(),
                                                                                  mapUDFOperator->getOutputSchema(),
                                                                                  mapUDFOperator->getUDFDescriptor());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
@@ -289,7 +289,7 @@ void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const QueryPlanPtr&, c
 void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getId(),
-                                                                  flatMapJavaUDFOperator->getInputSchema(),
+                                                                                     flatMapUDFOperator->getInputSchema(),
                                                                                      flatMapUDFOperator->getOutputSchema(),
                                                                                      flatMapUDFOperator->getUDFDescriptor());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());

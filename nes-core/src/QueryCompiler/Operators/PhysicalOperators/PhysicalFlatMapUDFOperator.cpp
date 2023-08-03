@@ -38,7 +38,11 @@ PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,
 
 std::string PhysicalFlatMapUDFOperator::toString() const { return "PhysicalMapUDFOperator"; }
 
-OperatorNodePtr PhysicalFlatMapUDFOperator::copy() { return create(id, inputSchema, outputSchema, udfDescriptor); }
+OperatorNodePtr PhysicalFlatMapUDFOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, udfDescriptor);
+    result->addAllProperties(properties);
+    return result;
+}
 
 Catalogs::UDF::UDFDescriptorPtr PhysicalFlatMapUDFOperator::getUDFDescriptor() { return udfDescriptor; }
 }// namespace NES::QueryCompilation::PhysicalOperators
