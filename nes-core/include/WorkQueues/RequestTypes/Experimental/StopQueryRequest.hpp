@@ -172,7 +172,7 @@ class StopQueryRequest : public AbstractRequest<StopQueryResponse> {
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    uint8_t MAX_RETRIES_FOR_FAILURE = 1;
+    static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };
 }// namespace Experimental
 }// namespace NES
