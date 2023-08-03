@@ -40,8 +40,7 @@ class FailQueryRequest : public AbstractRequest {
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
-    FailQueryRequest(RequestId requestId,
-                     NES::QueryId queryId,
+    FailQueryRequest(NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
                      uint8_t maxRetries,
                      NES::WorkerRPCClientPtr workerRpcClient);
@@ -56,7 +55,7 @@ class FailQueryRequest : public AbstractRequest {
     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
     * @return a smart pointer to the newly created object
     */
-    static std::shared_ptr<FailQueryRequest> create(RequestId requestId, NES::QueryId queryId,
+    static std::shared_ptr<FailQueryRequest> create(NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
                      uint8_t maxRetries,
                      NES::WorkerRPCClientPtr workerRpcClient);

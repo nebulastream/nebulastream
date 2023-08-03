@@ -100,8 +100,7 @@ class StopQueryRequest : public AbstractRequest {
                      QueryId queryId,
                      size_t maxRetries,
                      WorkerRPCClientPtr workerRpcClient,
-                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                     std::promise<StopQueryResponse> responsePromise);
+                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
     /**
      * @brief creates a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
