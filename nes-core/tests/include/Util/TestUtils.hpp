@@ -605,8 +605,7 @@ template<typename T>
  * @param schemaSizeInByte
  * @return True if the buffers contain the same tuples
  */
-bool 
-checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
+bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
  * @brief Check if a outputfile is created

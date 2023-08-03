@@ -33,9 +33,9 @@
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
-#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
@@ -324,9 +324,9 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return watermarkOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
-                                                                        projectOperator->getInputSchema()->getFieldNames(), 
-                                                                        projectOperator->getOutputSchema()->getFieldNames());
+        auto projection =
+            std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(),
+                                                                     projectOperator->getOutputSchema()->getFieldNames());
         parentOperator->setChild(projection);
         return projection;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinProbeOperator>()) {
