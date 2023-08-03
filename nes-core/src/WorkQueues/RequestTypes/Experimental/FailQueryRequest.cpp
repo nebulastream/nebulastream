@@ -26,26 +26,22 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(const RequestId requestId,
-                                   const NES::QueryId queryId,
+FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest(requestId,
-                      {ResourceType::GlobalQueryPlan,
+    : AbstractRequest({ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
-std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
-                                                           NES::QueryId queryId,
+std::shared_ptr<FailQueryRequest> FailQueryRequest::create(NES::QueryId queryId,
                                                            NES::QuerySubPlanId failedSubPlanId,
                                                            uint8_t maxRetries,
                                                            NES::WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<FailQueryRequest>(requestId,
-                                              queryId,
+    return std::make_shared<FailQueryRequest>(queryId,
                                               failedSubPlanId,
                                               maxRetries,
                                               std::move(workerRpcClient));

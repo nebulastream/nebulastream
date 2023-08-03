@@ -29,11 +29,10 @@ class DummyResponse : public AbstractRequestResponse {
 
 class DummyRequest : public AbstractRequest {
   public:
-    DummyRequest(RequestId requestId,
-                 const std::vector<ResourceType>& requiredResources,
+    DummyRequest(const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
                  uint32_t responseValue)
-        : AbstractRequest(requestId, requiredResources, maxRetries), responseValue(responseValue) {};
+        : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue) {};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
@@ -50,35 +49,43 @@ class DummyRequest : public AbstractRequest {
     uint32_t responseValue;
 };
 
-//    class DummyConcatResponse : public AbstractRequestResponse {
-//    public:
-//        explicit DummyConcatResponse(uint32_t number) : number(number){};
-//        uint32_t number;
-//        std::optional<
-//    };
-//
-//    class DummyRequest : public AbstractRequest {
-//    public:
-//        DummyRequest(RequestId requestId,
-//                     const std::vector<ResourceType>& requiredResources,
-//                     uint8_t maxRetries,
-//                     uint32_t responseValue)
-//                : AbstractRequest(requestId, requiredResources, maxRetries), responseValue(responseValue) {};
-//
-//        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
-//            responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
-//            return {};
-//        }
-//
-//        std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
-//
-//    protected:
-//        void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-//        void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-//        void postExecution(StorageHandler&) override {}
-//    private:
-//        uint32_t responseValue;
-//    };
+    class DummyConcatResponse : public AbstractRequestResponse {
+    public:
+        explicit DummyConcatResponse(uint32_t number) : number(number) {};
+        explicit DummyConcatResponse(uint32_t number, std::vector<std::future<AbstractRequestResponsePtr>> futures) : number(number), futures(std::move(futures)) {};
+        uint32_t number;
+        std::vector<std::future<AbstractRequestResponsePtr>> futures;
+    };
+
+    class DummyConcatRequest : public AbstractRequest {
+    public:
+        DummyConcatRequest(const std::vector<ResourceType>& requiredResources,
+                     uint8_t maxRetries,
+                     uint32_t responseValue, uint32_t min)
+                : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue), min(min) {};
+
+        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+            std::vector<std::shared_ptr<AbstractRequest>> newRequests;
+            auto response = std::make_shared<DummyConcatResponse>(responseValue);
+            for (uint32_t i = responseValue; i >= min; --i) {
+                auto newRequest = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue - i, min);
+                response->futures.push_back(newRequest->makeFuture());
+                newRequests.push_back(newRequest);
+            }
+            responsePromise.set_value(response);
+            return newRequests;
+        }
+
+        std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
+
+    protected:
+        void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+        void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
+        void postExecution(StorageHandler&) override {}
+    private:
+        uint32_t responseValue;
+        uint32_t min;
+    };
 
 class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
   public:
@@ -105,16 +112,40 @@ TEST_P(AsyncRequestExecutorTest, startAndDestroy) {
 
 TEST_P(AsyncRequestExecutorTest, submitRequest) {
     constexpr uint32_t responseValue = 20;
-    constexpr uint32_t requestId = 1;
     try {
-        auto request = std::make_shared<DummyRequest>(requestId, std::vector<ResourceType>{}, 0, responseValue);
-        auto future = executor->runAsync(request);
+        auto request = std::make_shared<DummyRequest>(std::vector<ResourceType>{}, 0, responseValue);
+        auto future = request->makeFuture();
+        executor->runAsync(request);
         ASSERT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
         ASSERT_TRUE(executor->destroy());
     } catch (std::exception const& ex) {
         NES_DEBUG("{}", ex.what());
         FAIL();
     }
+}
+
+TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
+        constexpr uint32_t responseValue = 11;
+        constexpr uint32_t min = 10;
+        try {
+            auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue, min);
+            auto future = request->makeFuture();
+            executor->runAsync(request);
+            auto responsePtr = std::static_pointer_cast<DummyConcatResponse>(future.get());
+            ASSERT_EQ(responsePtr->number, responseValue);
+//            ASSERT_EQ(responsePtr->futures.size(), 2);
+//            for (auto& f : responsePtr->futures) {
+//                auto r = std::static_pointer_cast<DummyConcatResponse>(future.get());
+//                if (r->number == responseValue - 1) {
+//                    ASSERT_EQ(r->futures)
+//                }
+//
+//            }
+        } catch (std::exception const& ex) {
+            NES_DEBUG("{}", ex.what());
+            FAIL();
+        }
+        ASSERT_TRUE(executor->destroy());
 }
 
 INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestExecutorTest, ::testing::Values(1, 4, 8));

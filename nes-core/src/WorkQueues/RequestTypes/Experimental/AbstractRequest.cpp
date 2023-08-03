@@ -18,10 +18,9 @@
 namespace NES {
 
 //template<ConceptResponse ResponseType>
-AbstractRequest::AbstractRequest(RequestId requestId,
-                                 const std::vector<ResourceType>& requiredResources,
+AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources,
                                  const uint8_t maxRetries)
-    : requestId(requestId), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
+    : requestId(0), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
 //template<ConceptResponse ResponseType>
@@ -59,4 +58,5 @@ void AbstractRequest::preExecution(StorageHandler& storageHandle) {
 }
 
 std::future<AbstractRequestResponsePtr> AbstractRequest::makeFuture() { return responsePromise.get_future(); }
+void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
 }// namespace NES

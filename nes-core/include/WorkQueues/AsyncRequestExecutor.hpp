@@ -40,7 +40,7 @@ namespace Experimental {
         //define an empty request type that does nothing and is used only for flushing the executor
         class FlushRequest : public AbstractRequest {
           public:
-            FlushRequest() : AbstractRequest(INVALID_REQUEST_ID, {}, 0) {}
+            FlushRequest() : AbstractRequest({}, 0) {}
             std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { return {}; }
             std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
           protected:
@@ -52,7 +52,7 @@ namespace Experimental {
       public:
         //AsyncRequestExecutor(uint32_t numOfThreads, StorageHandlerPtr storageHandler);
         AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures);
-        std::future<AbstractRequestResponsePtr> runAsync(AbstractRequestPtr request);
+        bool runAsync(AbstractRequestPtr request);
         bool destroy();
         ~AsyncRequestExecutor();
 
@@ -66,6 +66,7 @@ namespace Experimental {
         std::vector<std::future<bool>> completionFutures;
         std::deque<AbstractRequestPtr> asyncRequestQueue;
         uint32_t numOfThreads;
+        RequestId nextFreeRequestId;
         //StorageHandlerPtr storageHandler;
         T storageHandler;
         //todo: would we need that?
@@ -73,7 +74,7 @@ namespace Experimental {
     };
 
     template <ConceptStorageHandler T>
-    NES::Experimental::AsyncRequestExecutor<T>::AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures) : running(true), numOfThreads(numOfThreads), storageHandler(T(storageDataStructures)) {
+    NES::Experimental::AsyncRequestExecutor<T>::AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures) : running(true), numOfThreads(numOfThreads), nextFreeRequestId(1), storageHandler(T(storageDataStructures)) {
         for (uint32_t i = 0; i < numOfThreads; ++i) {
             std::promise<bool> promise;
             completionFutures.emplace_back(promise.get_future());
@@ -118,17 +119,18 @@ namespace Experimental {
     }
 
 template <ConceptStorageHandler T>
-std::future<AbstractRequestResponsePtr> NES::Experimental::AsyncRequestExecutor<T>::runAsync(AbstractRequestPtr request) {
+bool NES::Experimental::AsyncRequestExecutor<T>::runAsync(AbstractRequestPtr request) {
     if (!running) {
-            NES_THROW_RUNTIME_ERROR("Cannot execute request, Async request executor is not runnign");
+            NES_WARNING("Cannot execute request, Async request executor is not runnign");
+            return false;
     }
-    auto future = request->makeFuture();
-    {
-            std::unique_lock lock(workMutex);
-            asyncRequestQueue.emplace_back(std::move(request));
-            cv.notify_all();
-    }
-    return future;
+    std::unique_lock lock(workMutex);
+    request->setId(nextFreeRequestId);
+    //todo: will this ever run long enough to overflow a uint64_t?
+    nextFreeRequestId++;
+    asyncRequestQueue.emplace_back(std::move(request));
+    cv.notify_all();
+    return true;
 }
 
 template <ConceptStorageHandler T>
