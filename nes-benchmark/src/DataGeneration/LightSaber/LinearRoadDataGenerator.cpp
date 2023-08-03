@@ -30,7 +30,7 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t num
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/lrb/lrb-data-small-ht.txt");
+    std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/lrb/lrb-data-small-ht.txt");
     std::string line;
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
@@ -71,6 +71,12 @@ SchemaPtr LinearRoadDataGenerator::getSchema() {
         ->addField("lane", BasicType::INT16)
         ->addField("direction", BasicType::INT16)
         ->addField("position", BasicType::INT16);
+}
+
+std::string LinearRoadDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
 }
 
 }// namespace NES::Benchmark::DataGeneration
