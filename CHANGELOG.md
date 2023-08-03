@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.177](https://github.com/nebulastream/nebulastream/tree/v0.5.177) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.176...v0.5.177)
+
+**Implemented enhancements:**
+
+- \[BUG\] Union support in Nautilus [\#4009](https://github.com/nebulastream/nebulastream/issues/4009)
+
 ## [v0.5.176](https://github.com/nebulastream/nebulastream/tree/v0.5.176) (2023-08-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.175...v0.5.176)
