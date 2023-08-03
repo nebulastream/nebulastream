@@ -12,15 +12,11 @@
     limitations under the License.
 */
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#pragma clang diagnostic pop
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,14 +30,14 @@ namespace NES {
 using namespace Configurations;
 
 /**
- * @brief In this test we assess the correctness of the thread local tumbling window
+ * @brief In this test we assess the correctness of the non keyed tumbling window
  */
-class SingleNodeThreadLocalNonKeyedTumblingWindowTests : public Testing::NESBaseTest {
+class NonKeyedTumblingWindowTests : public Testing::NESBaseTest {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SingleNodeThreadLocalNonKeyedTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalNonKeyedTumblingWindowTests test class.");
+        NES::Logger::setupLogging("NonKeyedTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup NonKeyedTumblingWindowTests test class.");
     }
 
     void SetUp() override {
@@ -50,7 +46,7 @@ class SingleNodeThreadLocalNonKeyedTumblingWindowTests : public Testing::NESBase
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
         workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+            QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
         this->numberOfGeneratedBuffers = 100;
     }
 
@@ -246,15 +242,16 @@ class DataGenerator {
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Sum(Attribute("value")));
 
     auto lambdaSource = createSimpleInputStream(1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -275,17 +272,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblin
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -301,17 +297,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleGlobalTumblin
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
+TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Sum(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -343,17 +338,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testMultipleGlobalTumbl
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
+TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream(100, 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -370,17 +364,14 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testSingleTumblingWindo
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Count()))";
+    auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Count());
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -412,17 +403,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowCount
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMin) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
+    auto query = Query::from("window")
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Min(Attribute("value"))))";
+            .apply(Min(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -454,17 +444,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMin) 
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMax) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Max(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Max(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -496,17 +485,16 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMax) 
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowAVG) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Avg(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Avg(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -538,23 +526,20 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowAVG) 
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
 
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(
-                Sum(Attribute("value"))->as(Attribute("sum_value")),
-                Count()->as(Attribute("count_value")),
-                Min(Attribute("value"))->as(Attribute("min_value")),
-                Max(Attribute("value"))->as(Attribute("max_value")),
-                Avg(Attribute("value"))->as(Attribute("avg_value"))
-                ))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Sum(Attribute("value"))->as(Attribute("sum_value")),
+                            Count()->as(Attribute("count_value")),
+                            Min(Attribute("value"))->as(Attribute("min_value")),
+                            Max(Attribute("value"))->as(Attribute("max_value")),
+                            Avg(Attribute("value"))->as(Attribute("avg_value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -595,22 +580,19 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMulti
  * In this case, we emulate that by using multi-averages on top of one value
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(
-                Avg(Attribute("value"))->as(Attribute("avg_value_3")),
-                Avg(Attribute("value"))->as(Attribute("avg_value_2")),
-                Avg(Attribute("value"))->as(Attribute("avg_value_1")),
-                Count()->as(Attribute("count_value"))
-                ))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Avg(Attribute("value"))->as(Attribute("avg_value_3")),
+                            Avg(Attribute("value"))->as(Attribute("avg_value_2")),
+                            Avg(Attribute("value"))->as(Attribute("avg_value_1")),
+                            Count()->as(Attribute("count_value")));
     auto dg = DataGenerator(this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
@@ -651,7 +633,7 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMulti
  * In this case, we emulate that by using multiple values
  * and the line count. We then calculate and compare them against each window.
  */
-TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
+TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndCount) {
     auto testSchema = Schema::create()
                           ->addField("value3", DataTypeFactory::createUInt64())
                           ->addField("value2", DataTypeFactory::createUInt64())
@@ -659,15 +641,12 @@ TEST_F(SingleNodeThreadLocalNonKeyedTumblingWindowTests, testTumblingWindowMulti
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(MultipleInputValues), testSchema->getSchemaSizeInBytes());
-    std::string query =
-        R"(Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(
-                Avg(Attribute("value1"))->as(Attribute("avg_value_1")),
-                Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
-                Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
-                Count()->as(Attribute("count_value"))
-                ))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Avg(Attribute("value1"))->as(Attribute("avg_value_1")),
+                            Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
+                            Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
+                            Count()->as(Attribute("count_value")));
     std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
                                                                      {1000, 2000, 1, 1, 1, 1000},
                                                                      {2000, 3000, 1, 1, 1, 1000},
