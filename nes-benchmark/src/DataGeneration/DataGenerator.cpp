@@ -19,6 +19,7 @@
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -72,7 +73,8 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
 
     } else if (NES::Util::toUpperCase(type) == "YSB" || type == "YSBKafka") {
         return std::make_unique<YSBDataGenerator>();
-
+    } else if (type == "SmartGrid") {
+        return std::make_unique<SmartGridDataGenerator>();
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }

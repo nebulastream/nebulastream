@@ -15,10 +15,11 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 #bufferSizeInBytes: 1048576
 bufferSizeInBytes: 131072
 
-# configure data source
-dataGenerator: NEBit
-numberOfPreAllocatedBuffer: 1000
-logicalStreamName: bit
+logicalSources:
+  - name: bit
+    type: NEBit
+
+
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 
