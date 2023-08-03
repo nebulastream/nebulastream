@@ -51,6 +51,7 @@ SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("Print tuple" << inputBuffer.getSequenceNumber());
+    std::cout << "Timestamp updated" << inputBuffer.getCreationTimestampInMS();
     workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     return true;
