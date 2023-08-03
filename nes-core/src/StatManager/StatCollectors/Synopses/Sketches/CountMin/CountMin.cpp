@@ -41,8 +41,10 @@ namespace NES {
     mClassOfHashingFunctions = ClassOfHashingFunctions;
   }
 
-  CountMin::CountMin(double error, double prob, const std::string& physicalSourceName, const std::string& field, time_t duration, time_t interval)
-      : Sketch((ceil(log(1.0 / prob))), (ceil(M_E/error)), physicalSourceName, field, duration, interval) {
+  CountMin::CountMin(const Configurations::StatManagerConfig& config)
+      : Sketch(config,
+               (ceil(log(1.0 / static_cast<double_t >(config.probability.getValue())))),
+               (ceil(M_E/static_cast<double_t >(config.error.getValue())))) {
 
     this->setClassOfHashFunctions(new H3(this->getDepth(), this->getWidth()));
 
@@ -57,44 +59,46 @@ namespace NES {
 
     this->setDataPointer(sketchPointer);
 
-    std::cout << "Sketch created" << std::endl;
+    NES_DEBUG("Sketch created");
   }
 
-  CountMin* CountMin::createCountMinWidthDepth(uint32_t depth,
-                                               uint32_t width,
-                                               Yaml::Node configNode) {
+//  CountMin* CountMin::createCountMinWidthDepth(const Configurations::StatManagerConfig& config,
+//                                               uint32_t depth,
+//                                               uint32_t width) {
+//
+//    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
+//    std::string field = configNode["field"].As<std::string>();
+//    auto key = configNode["key"].As<uint32_t>();
+//    auto duration = std::stoi(configNode["duration"].As<std::string>());
+//    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
+//
+//    double error = 1 / (std::exp(depth));
+//    double prob = std::exp(1 / width);
+//
+//    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
+//
+//    return sketch;
+//  }
+//
+//  CountMin* CountMin::createCountMinErrorProb(const Configurations::StatManagerConfig& config,
+//                                              double error,
+//                                              double prob) {
+//
+//    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
+//    std::string field = configNode["field"].As<std::string>();
+//    auto key = configNode["key"].As<uint32_t>();
+//    auto duration = std::stoi(configNode["duration"].As<std::string>());
+//    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
+//
+//    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
+//
+//    return sketch;
+//  }
 
-    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
-    std::string field = configNode["field"].As<std::string>();
-    auto key = configNode["key"].As<uint32_t>();
-    auto duration = std::stoi(configNode["duration"].As<std::string>());
-    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
-
-    double error = 1 / (std::exp(depth));
-    double prob = std::exp(1 / width);
-
-    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
-
-    return sketch;
-  }
-
-  CountMin* CountMin::createCountMinErrorProb(double error, double prob, Yaml::Node configNode) {
-
-    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
-    std::string field = configNode["field"].As<std::string>();
-    auto key = configNode["key"].As<uint32_t>();
-    auto duration = std::stoi(configNode["duration"].As<std::string>());
-    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
-
-    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
-
-    return sketch;
-  }
-
-/*  CountMin* CountMin::initialize(*//*const std::string& physicalSourceName,
+/*  CountMin* CountMin::initialize(const std::string& physicalSourceName,
       const std::string& field,
       time_t duration,
-      time_t interval,*//*
+      time_t interval,
       Yaml::Node configNode) {
 
     std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
@@ -121,11 +125,9 @@ namespace NES {
       auto error = (configNode["Attributes"][0]["Error"]).As<double_t>();
       auto prob = (configNode["Attributes"][0]["Prob"]).As<double_t>();
 
-      std::cout << "Trying to create a sketch" << std::endl;
       mySketchA = CountMin::createCountMinErrorProb(error, prob, physicalSourceName, field, duration, interval);
     } else {
-      std::cout << "trying to create a CM Sketch with too many parametrized arguments!" << std::endl;
-      std::cout << "Only pass either an error and a probability or a depth and a width!" << std::endl;
+      NES_DEBUG("Could not  create a CM Sketch. Potentially too many parametrized arguments!");
     }
     return mySketchA;
   }*/
@@ -143,17 +145,31 @@ namespace NES {
     }
   }
 
-  bool CountMin::equal(StatCollector* otherSketch) {
+  bool CountMin::equal(StatCollector* otherSketch, bool statCollection) {
 
     CountMin* leftCM;
     leftCM = dynamic_cast<CountMin*>(this);
     CountMin* rightCM;
     rightCM = dynamic_cast<CountMin*>(otherSketch);
 
+    // if the sketches don't have the same dimensions / (error/prob) guarantees, then they aren't equal
     if (leftCM->getWidth() != rightCM->getWidth() || leftCM->getDepth() != rightCM->getDepth()) {
       return false;
     }
 
+    // two sketches are only similar/equal, if they are built on fields that contain equal data
+    if (leftCM->getField() != rightCM->getField()) {
+      return false;
+    }
+
+    // if we are checking whether two sketches are equal within the context of statistics collection, then their duration and frequency also needs to be identical
+    if (statCollection == true) {
+      if ((leftCM->getDuration() != rightCM->getDuration()) || (leftCM->getFrequency() != rightCM->getFrequency())) {
+        return false;
+      }
+    }
+
+    // the hash-functions need to be initialized to the same seeds
     auto leftQ = leftCM->getClassOfHashFunctions()->getQ();
     auto rightQ = rightCM->getClassOfHashFunctions()->getQ();
 
@@ -165,10 +181,11 @@ namespace NES {
     return true;
   }
 
-  StatCollector* CountMin::merge(StatCollector* rightSketch) {
+  StatCollector* CountMin::merge(StatCollector* rightSketch, bool statCollection) {
 
-    if (!(this->equal(rightSketch))){
-      std::cout << "Cannot merge the two sketches, as they are not equal" << std::endl;
+    if (!(this->equal(rightSketch, statCollection))){
+      NES_DEBUG("Cannot merge the two sketches, as they are not equal");
+      return nullptr;
     }
 
     CountMin* leftCM;
@@ -180,7 +197,24 @@ namespace NES {
     double_t error = leftCM->getError();
     double_t prob = leftCM->getProb();
 
-    auto mergedCM = new CountMin(error, prob, "mergedSources", this->getField(), this->getDuration(), this->getFrequency());
+    auto cmSketchConfig = new Configurations::StatManagerConfig();
+
+    // TODO: come up with a better way for this;
+    // combinedStreamName
+    auto PSN1 = leftCM->getPhysicalSourceName();
+    auto PSN2 = rightCM->getPhysicalSourceName();
+
+    cmSketchConfig->physicalSourceName.setValue(PSN1+PSN2);
+    cmSketchConfig->field.setValue(leftCM->getField());
+    cmSketchConfig->statMethodName.setValue("FrequencyCM");
+    cmSketchConfig->duration.setValue(leftCM->getDuration());
+    cmSketchConfig->frequency.setValue(leftCM->getFrequency());
+    cmSketchConfig->error.setValue(error);
+    cmSketchConfig->probability.setValue(prob);
+    cmSketchConfig->depth.setValue(0);
+    cmSketchConfig->width.setValue(0);
+
+    auto mergedCM = new CountMin(*cmSketchConfig);
 
     uint32_t** leftSketchData = leftCM->getDataPointer();
     uint32_t** rightSketchData = rightCM->getDataPointer();
@@ -206,7 +240,7 @@ namespace NES {
     auto q = hashFunctions->getQ();
 
     for (uint32_t i = 0; i < this->getDepth(); i++){
-      uint32_t index = hashFunctions->hashH3(key, q + 32 * i);
+      uint32_t index = hashFunctions->hashH3(key, q + 32 * i) % this->getWidth();
       if (sketch[i][index] < min) {
         min = sketch[i][index];
       }

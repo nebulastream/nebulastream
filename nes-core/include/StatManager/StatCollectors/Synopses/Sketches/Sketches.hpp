@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HPP
 
 #include "StatManager/StatCollectors/StatCollector.hpp"
+#include <Configurations/StatManagerConfiguration.hpp>
 
 namespace NES {
 
@@ -23,13 +24,10 @@ namespace NES {
   public:
     [[nodiscard]]uint32_t getDepth() const;
     [[nodiscard]]uint32_t getWidth() const;
-    void setDepth(uint32_t depth);
-    void setWidth(uint32_t width);
-    Sketch(const uint32_t depth, const uint32_t width, const std::string& physicalSourceName,
-             const std::string& field, time_t duration, time_t frequency);
+    Sketch(const Configurations::StatManagerConfig& config, const uint32_t depth, const uint32_t width);
     void update(uint32_t key) override = 0;
-    StatCollector* merge(StatCollector* rightSketch) override = 0;
-    bool equal(StatCollector* otherSketch) override = 0;
+    bool equal(StatCollector* otherSketch, bool statCollection) override = 0;
+    StatCollector* merge(StatCollector* rightSketch, bool statCollection) override = 0;
   private:
     uint32_t depth;
     uint32_t width;
