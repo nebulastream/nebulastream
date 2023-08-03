@@ -35,8 +35,11 @@ namespace NES {
     return frequency;
   }
 
-  StatCollector::StatCollector(const std::string &physicalSourceName, const std::string &field, time_t duration, time_t frequency)
-  : physicalSourceName(physicalSourceName), field(field), duration(duration), frequency(frequency) {
+  StatCollector::StatCollector(const Configurations::StatManagerConfig config)
+  : physicalSourceName(static_cast<std::string>(config.physicalSourceName.getValue())),
+  field(static_cast<std::string>(config.field.getValue())),
+  duration(static_cast<time_t>(config.duration.getValue())),
+  frequency(static_cast<time_t>(config.frequency.getValue())) {
 
   }
 

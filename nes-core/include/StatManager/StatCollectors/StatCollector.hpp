@@ -18,7 +18,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <Util/yaml/Yaml.hpp>
+#include <Configurations/StatManagerConfiguration.hpp>
 
 namespace NES {
 
@@ -30,7 +30,7 @@ namespace NES {
     time_t getFrequency() const;
     std::vector<uint32_t>& getKeys();
     void addKey(uint32_t key);
-    StatCollector(const std::string& physicalSourceName, const std::string& field, time_t duration, time_t frequency);
+    StatCollector(const Configurations::StatManagerConfig config);
 //    static StatCollector* createStat(const std::string& physicalSourceName,
 //        const std::string& field,
 //        time_t duration,
@@ -38,8 +38,8 @@ namespace NES {
 //        Yaml::Node configNode
 //    );
     virtual void update(uint32_t key) = 0;
-    virtual StatCollector* merge(StatCollector* rightStatCollector) = 0;
-    virtual bool equal(StatCollector* rightStatCollector) = 0;
+    virtual bool equal(StatCollector* rightStatCollector, bool statCollection) = 0;
+    virtual StatCollector* merge(StatCollector* rightStatCollector, bool statCollection) = 0;
 //    virtual void update(uint64_t) = 0;
 //    virtual void destroy() = 0;
 
