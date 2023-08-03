@@ -14,11 +14,15 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
-#include <Execution/Aggregation/AggregationFunction.hpp>
-#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution::Operators {
-
+using namespace Nautilus;
+class ExecutableOperator;
+using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
+/**
+ * @brief A slice merge action that is called if two slices are merged.
+ */
 class SliceMergingAction {
   public:
     virtual void emitSlice(ExecutionContext& ctx,

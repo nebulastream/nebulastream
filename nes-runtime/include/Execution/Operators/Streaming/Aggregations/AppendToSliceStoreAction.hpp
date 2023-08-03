@@ -22,6 +22,11 @@
 namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
 
+/**
+ * @brief This is the operator handler for the AppendToSliceStoreAction.
+ * It maintains the SlidingWindowSliceStore<Slice> that stores all slices.
+ * @tparam Slice
+ */
 template<class Slice>
 class AppendToSliceStoreHandler : public OperatorHandler {
   public:
@@ -42,6 +47,10 @@ class AppendToSliceStoreHandler : public OperatorHandler {
     std::mutex triggerMutex;
 };
 
+/**
+ * @brief The AppendToSliceStoreAction appends slices to the slice store for sliding windows.
+ * @tparam Slice
+ */
 template<class Slice>
 class AppendToSliceStoreAction : public SliceMergingAction {
   public:

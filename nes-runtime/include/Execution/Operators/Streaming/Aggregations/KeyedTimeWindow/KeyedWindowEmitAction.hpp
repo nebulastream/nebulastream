@@ -14,8 +14,14 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDWINDOWEMITACTION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDWINDOWEMITACTION_HPP_
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief The KeyedWindowEmitAction emits keyed slices as individual windows.
+ * Each key will result in an independent tuple in the result data stream.
+ */
 class KeyedWindowEmitAction : public SliceMergingAction {
   public:
     KeyedWindowEmitAction(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
