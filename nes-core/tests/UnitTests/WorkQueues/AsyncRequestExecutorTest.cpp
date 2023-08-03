@@ -54,7 +54,7 @@ class DummyConcatRequest : public AbstractRequest {
         auto response = std::make_shared<DummyConcatResponse>(responseValue);
         for (uint32_t i = responseValue - 1; i >= min; --i) {
             auto newRequest = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, i, min);
-            response->futures.push_back(newRequest->makeFuture());
+            response->futures.push_back(newRequest->getFuture());
             newRequests.push_back(newRequest);
         }
         responsePromise.set_value(response);
@@ -96,7 +96,7 @@ class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public t
 };
 
 TEST_P(AsyncRequestExecutorTest, startAndDestroy) {
-    ASSERT_TRUE(executor->destroy());
+    ASSERT_TRUE(executor->stop());
 
     //it should not be possible to submit a request after destruction
     auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, 10, 10);
@@ -109,10 +109,11 @@ TEST_P(AsyncRequestExecutorTest, submitRequest) {
         //using the same value for response value and min value will create a single request with no follow up requests
         auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue, responseValue);
 
-        auto future = request->makeFuture();
-        executor->runAsync(request);
+        auto future = request->getFuture();
+        auto queryId = executor->runAsync(request);
+        ASSERT_NE(queryId, INVALID_REQUEST_ID);
         ASSERT_EQ(std::static_pointer_cast<DummyConcatResponse>(future.get())->number, responseValue);
-        ASSERT_TRUE(executor->destroy());
+        ASSERT_TRUE(executor->stop());
     } catch (std::exception const& ex) {
         NES_DEBUG("{}", ex.what());
         FAIL();
@@ -124,8 +125,9 @@ TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
     constexpr uint32_t min = 10;
     try {
         auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue, min);
-        auto future = request->makeFuture();
-        executor->runAsync(request);
+        auto future = request->getFuture();
+        auto queryId = executor->runAsync(request);
+        ASSERT_NE(queryId, INVALID_REQUEST_ID);
         auto responsePtr = std::static_pointer_cast<DummyConcatResponse>(future.get());
         ASSERT_EQ(responsePtr->number, responseValue);
 
@@ -147,7 +149,7 @@ TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
         NES_DEBUG("{}", ex.what());
         FAIL();
     }
-    ASSERT_TRUE(executor->destroy());
+    ASSERT_TRUE(executor->stop());
 }
 
 INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestExecutorTest, ::testing::Values(1, 4, 8));

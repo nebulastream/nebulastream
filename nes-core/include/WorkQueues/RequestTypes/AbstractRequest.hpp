@@ -93,7 +93,7 @@ class AbstractRequest {
      * @brief creates a future which will contain the response supplied by this request
      * @return a future containing a pointer to the response object
      */
-    std::future<AbstractRequestResponsePtr> makeFuture();
+    std::future<AbstractRequestResponsePtr> getFuture();
 
     /**
      * @brief set the id of this request. This has to be done before the request is executed.

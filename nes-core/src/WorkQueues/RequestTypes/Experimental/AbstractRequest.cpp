@@ -57,7 +57,7 @@ void AbstractRequest::preExecution(StorageHandler& storageHandle) {
     storageHandle.acquireResources(requestId, requiredResources);
 }
 
-std::future<AbstractRequestResponsePtr> AbstractRequest::makeFuture() { return responsePromise.get_future(); }
+std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
 
 void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
 }// namespace NES
