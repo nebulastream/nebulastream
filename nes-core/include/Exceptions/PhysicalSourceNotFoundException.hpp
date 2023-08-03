@@ -11,30 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+
 #include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
-
 namespace NES::Exceptions {
 
 /**
- * @brief This exception indicates, that no shared query plan with the given id could be found
+ * @brief This exception indicates, that a lookup for an execution node in the global execution plan failed
  */
-class SharedQueryPlanNotFoundException : public RequestExecutionException {
-
+class PhysicalSourceNotFoundException : public RequestExecutionException {
   public:
     /**
-     * @brief construct an exception containing a human readable message and a shared query id
+     * @brief construct an exception containing a human readable message
      * @param message: A string to indicate to the user what caused the exception
-     * @param id: the id of the sqp that was looked up but not found
      */
-    SharedQueryPlanNotFoundException(const std::string& message, SharedQueryId id);
+    explicit PhysicalSourceNotFoundException(const std::string& message);
 
-    [[nodiscard]] SharedQueryId getSharedQueryId() const;
-
-  private:
-    SharedQueryId id;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

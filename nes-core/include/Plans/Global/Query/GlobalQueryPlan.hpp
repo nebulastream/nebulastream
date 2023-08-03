@@ -56,9 +56,8 @@ class GlobalQueryPlan {
     /**
      * @brief Add query plan to the collection of query plans to be merged
      * @param queryPlan : new query plan to be merged.
-     * @return: true if successful else false
      */
-    bool addQueryPlan(const QueryPlanPtr& queryPlan);
+    void addQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Create a new shared query plan using the input query plan

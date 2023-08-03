@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -79,7 +80,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty()) {
-            throw Exceptions::RuntimeException(
+            throw Exceptions::PhysicalSourceNotFoundException(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
                 + logicalSourceName);
         }

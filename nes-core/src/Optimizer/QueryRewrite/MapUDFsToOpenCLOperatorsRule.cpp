@@ -14,6 +14,7 @@
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
@@ -42,8 +43,7 @@ QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
             //replace map java udf operator with open cl operator
             if (!mapJavaUDFOperator->replace(openCLOperator)) {
                 NES_ERROR("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
-                throw Exceptions::RuntimeException(
-                    "MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
+                throw UDFException("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");
             }
         }
     }
