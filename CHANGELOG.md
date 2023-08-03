@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.180](https://github.com/nebulastream/nebulastream/tree/v0.5.180) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.179...v0.5.180)
+
+**Implemented enhancements:**
+
+- \[TASK\] Compute C++ code for input query plan to be used by ELEGANT scheduler [\#3890](https://github.com/nebulastream/nebulastream/issues/3890)
+
 ## [v0.5.179](https://github.com/nebulastream/nebulastream/tree/v0.5.179) (2023-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.178...v0.5.179)
