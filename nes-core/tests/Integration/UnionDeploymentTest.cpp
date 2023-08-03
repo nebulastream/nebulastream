@@ -35,6 +35,7 @@ namespace NES {
 
 using namespace Configurations;
 
+// Todo: #4069 addresses re-writing this test using the TestHarness 
 class UnionDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
