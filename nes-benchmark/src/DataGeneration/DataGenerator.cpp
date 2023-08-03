@@ -18,6 +18,7 @@
 #include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
 #include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
 #include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
+#include <DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
@@ -81,6 +82,8 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<LinearRoadDataGenerator>();
     } else if (type == "ClusterMonitoring") {
         return std::make_unique<ClusterMonitoringDataGenerator>();
+    }else if (type == "ManufacturingEquipment") {
+        return std::make_unique<ManufacturingEquipmentDataGenerator>();
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }
