@@ -115,7 +115,6 @@ LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators()
 
 PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan,
                                                              size_t bufferSize) {
-   // auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline, bufferSize);
