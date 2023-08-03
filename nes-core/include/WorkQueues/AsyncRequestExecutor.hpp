@@ -80,7 +80,7 @@ class AsyncRequestExecutor {
     /**
      * @brief Submits a request to the executor to be executed when a thread picks it up
      * @param request the request to execute
-     * @return true if the executor is running, false otherwise
+     * @return the id that was assigned to the request
      */
     RequestId runAsync(AbstractRequestPtr request) {
         if (!running) {
