@@ -35,7 +35,7 @@ class SerialStorageHandler : public StorageHandler {
      * -udfCatalog
      * -lockManager
      */
-    SerialStorageHandler(StorageDataStructures storageDataStructures);
+    explicit SerialStorageHandler(StorageDataStructures storageDataStructures);
 
     /**
      * @brief factory to create a serial storage manager object

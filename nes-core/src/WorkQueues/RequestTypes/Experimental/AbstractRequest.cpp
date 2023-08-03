@@ -12,18 +12,17 @@
     limitations under the License.
 */
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
-#include <Exceptions/RequestExecutionException.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-namespace NES {
+#include <Util/Logger/Logger.hpp>
+#include <Common/Identifiers.hpp>
 
-//template<ConceptResponse ResponseType>
+namespace NES {
 AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources,
                                  const uint8_t maxRetries)
-    : requestId(0), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
+    : requestId(INVALID_REQUEST_ID), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
-//template<ConceptResponse ResponseType>
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
@@ -36,11 +35,12 @@ std::vector<AbstractRequestPtr> AbstractRequest::handleError(const RequestExecut
     return followUpRequests;
 }
 
-//template<ConceptResponse ResponseType>
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-//template<ConceptResponse ResponseType>
 std::vector<AbstractRequestPtr> AbstractRequest::execute(StorageHandler& storageHandle) {
+    if (requestId == INVALID_REQUEST_ID) {
+        NES_THROW_RUNTIME_ERROR("Trying to execute a request before its id has been set");
+    }
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);
 
@@ -58,5 +58,6 @@ void AbstractRequest::preExecution(StorageHandler& storageHandle) {
 }
 
 std::future<AbstractRequestResponsePtr> AbstractRequest::makeFuture() { return responsePromise.get_future(); }
+
 void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
 }// namespace NES

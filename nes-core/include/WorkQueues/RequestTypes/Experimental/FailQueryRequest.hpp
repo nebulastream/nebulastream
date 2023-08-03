@@ -25,7 +25,7 @@ using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
 
 //a response to the creator of the request
 struct FailQueryResponse : public AbstractRequestResponse {
-    FailQueryResponse(SharedQueryId sharedQueryId);
+    explicit FailQueryResponse(SharedQueryId sharedQueryId);
     SharedQueryId sharedQueryId;
 };
 
@@ -33,12 +33,10 @@ class FailQueryRequest : public AbstractRequest {
   public:
     /**
      * @brief Constructor
-     * @param requestId: the id assigned to this request
      * @param queryId: The id of the query that failed
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
-     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
     FailQueryRequest(NES::QueryId queryId,
                      NES::QuerySubPlanId failedSubPlanId,
@@ -47,12 +45,10 @@ class FailQueryRequest : public AbstractRequest {
 
     /**
     * @brief creates a new FailQueryRequest object
-    * @param requestId: the id assigned to this request
     * @param queryId: The id of the query that failed
     * @param failedSubPlanId: The id of the subplan that caused the failure
     * @param maxRetries: Maximum number of retry attempts for the request
     * @param workerRpcClient: The worker rpc client to be used during undeployment
-    * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
     * @return a smart pointer to the newly created object
     */
     static std::shared_ptr<FailQueryRequest> create(NES::QueryId queryId,
@@ -72,6 +68,7 @@ class FailQueryRequest : public AbstractRequest {
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
@@ -93,6 +90,7 @@ class FailQueryRequest : public AbstractRequest {
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandler) override;
 
