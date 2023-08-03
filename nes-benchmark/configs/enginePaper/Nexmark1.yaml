@@ -3,30 +3,23 @@
 benchmarkName: Nexmark1
 outputFile: nexmark1.csv
 
-#numberOfWorkerThreads: 1,2,3,4,5,6,7,8
-#numberOfSources: 1,1,1,1,2,2,2,2
 numberOfWorkerThreads: 1,2,4,8,16
-numberOfSources: 1
+numberOfSources: 1,2
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 65536
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
-#bufferSizeInBytes: 1048576
 bufferSizeInBytes: 131072
-
 
 logicalSources:
   - name: bit
     type: NEBit
 
 logicalStreamName: bit
-
 numberOfPreAllocatedBuffer: 1000
-
 dataProvider: Internal
 dataProviderMode: ZeroCopy
-
 
 query: 'Query::from("bit").map(Attribute("price") = Attribute("price") * 89 / 100).sink(NullOutputSinkDescriptor::create());'
 
