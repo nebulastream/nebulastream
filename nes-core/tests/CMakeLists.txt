@@ -336,10 +336,6 @@ add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
 
 
-# Lambda Source Integration tests
-add_nes_integration_test(lambda-source-integration-test "Integration/Source/LambdaSourceIntegrationTest.cpp")
-
-
 ### Pattern Query Plan Tests ###
 add_executable(pattern-query-plan-tests "UnitTests/Services/PatternParsingServiceTest.cpp")
 target_link_libraries(pattern-query-plan-tests nes-core-test-util)
@@ -599,25 +595,14 @@ add_nes_integration_test(complex-sequence-test "Integration/ComplexSequenceTest.
 ### unionDeploymentTest ###
 add_nes_integration_test(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 
-# TCPSourceIntegrationTest
-add_nes_integration_test(tcp-source-integration-test "Integration/Source/TCPSourceIntegrationTest.cpp")
-set_tests_properties(tcp-source-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
-
-### ContiniousSourceTest ###
-add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp")
 
 if (NES_USE_TF)
-### InferModelDeploymentTest ###
-add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
-endif()
+    ### InferModelDeploymentTest ###
+    add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
+endif ()
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
-
-
-### Catalog Remote Tests ###
-add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCatalogRemoteTest.cpp")
 
 
 ### WorkerCoordinatorStarter Tests ###
@@ -663,17 +648,25 @@ add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefined
 #add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
 #add_dependencies(nemo-integration-test nesCoordinator nesWorker)
 
-### MemorySourceIntegrationTest ###
-add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp")
-
-### VariableLengthIntegrationTest ###
-add_nes_integration_test(variable-length-integration-test "Integration/Source/VariableLengthIntegrationTest.cpp")
-
 ### StaticDataSourceIntegrationTest ###
 #add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
 
+### MemorySourceIntegrationTest ###
+### VariableLengthIntegrationTest ###
 ### BenchmarkSourceIntegrationTest ###
-add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp")
+# TCPSourceIntegrationTest
+### ContiniousSourceTest ###
+# Lambda Source Integration tests
+add_nes_integration_test(source-integration-tests
+        "Integration/Source/MemorySourceIntegrationTest.cpp"
+        "Integration/Source/VariableLengthIntegrationTest.cpp"
+        "Integration/Source/BenchmarkSourceIntegrationTest.cpp"
+        "Integration/Source/SourceCatalogRemoteTest.cpp"
+        "Integration/Source/TCPSourceIntegrationTest.cpp"
+        "Integration/Source/ContinuousSourceTest.cpp"
+        "Integration/Source/LambdaSourceIntegrationTest.cpp")
+set_tests_properties(source-integration-tests PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(source-integration-tests nesCoordinator nesWorker)
 
 
 ### TestHarnessUtilTest ###

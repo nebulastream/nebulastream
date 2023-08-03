@@ -104,10 +104,13 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query =
+        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -205,10 +208,13 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query =
+        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -314,10 +320,13 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query =
+        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

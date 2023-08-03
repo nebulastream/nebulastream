@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -55,19 +56,22 @@ class ContinuousSourceTest : public Testing::NESBaseTest {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
@@ -81,11 +85,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
+    auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -104,19 +110,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(3);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -131,11 +140,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
+    auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -154,19 +165,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -184,11 +198,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + "\")); ";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(outputFilePath));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -264,19 +279,22 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -295,11 +313,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString =
-        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + "\")); ";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(outputFilePath));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -375,21 +394,25 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string testSchema = "Schema::create()->addField(createField(\"val1\", BasicType::UINT64))->"
-                             "addField(createField(\"val2\", BasicType::UINT64))->"
-                             "addField(createField(\"val3\", BasicType::UINT64));";
+    auto testSchema = Schema::create()
+                          ->addField(createField("val1", BasicType::UINT64))
+                          ->addField(createField("val2", BasicType::UINT64))
+                          ->addField(createField("val3", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
@@ -413,9 +436,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString = R"(Query::from("testStream").filter(Attribute("val1") < 2).sink(PrintSinkDescriptor::create()); )";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("testStream").filter(Attribute("val1") < 2).sink(PrintSinkDescriptor::create());
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -435,6 +461,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -450,6 +478,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
@@ -476,10 +505,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    std::string queryString = R"(Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\")); ";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(outputFilePath));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -538,8 +569,9 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     csvSourceType->setNumberOfBuffersToProduce(numBufferToProduce);
     csvSourceType->setSkipHeader(false);
 
-    std::string queryWithFilterOperator = R"(Query::from("car"))";
+    auto queryWithFilterOperator = Query::from("car");
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
