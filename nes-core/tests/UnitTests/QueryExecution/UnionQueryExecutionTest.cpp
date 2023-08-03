@@ -20,7 +20,7 @@ using namespace NES;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
-                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+                                public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FilterQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -44,9 +44,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
     void createSchemaAndSink(const uint64_t numResultBuffers) {
-        schema = Schema::create()
-                ->addField("test$id", BasicType::INT64)
-                ->addField("test$one", BasicType::INT64);
+        schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
         expectedResultBuffers = numResultBuffers;
         testSink = executionEngine->createDataSink(schema, expectedResultBuffers);
         testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -79,8 +77,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), expectedResultBuffers);
 
         // Merge the result buffers, create a dynamic result buffer and check whether it contains the unified tuples.
-        auto mergedBuffer = 
-            TestUtils::mergeBuffers(testSink->resultBuffers, schema, executionEngine->getBufferManager());
+        auto mergedBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, schema, executionEngine->getBufferManager());
         return Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(mergedBuffer, schema);
     }
 
@@ -102,9 +99,9 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
                       .sink(testSinkDescriptor);
 
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    
+
     auto resultBuffer = runQuery(queryPlan);
-    
+
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 8);
     for (uint32_t recordIndex = 0u; recordIndex < 8u; ++recordIndex) {
         NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
@@ -120,16 +117,13 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
     auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
 
-    Query subQuery = TestQuery::from(testSourceDescriptor2)
-                        .filter(Attribute("test$id") > 3);
-    Query query = TestQuery::from(testSourceDescriptor1)
-                      .filter(Attribute("test$id") > 7)
-                      .unionWith(subQuery)
-                      .sink(testSinkDescriptor);
+    Query subQuery = TestQuery::from(testSourceDescriptor2).filter(Attribute("test$id") > 3);
+    Query query =
+        TestQuery::from(testSourceDescriptor1).filter(Attribute("test$id") > 7).unionWith(subQuery).sink(testSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     auto resultBuffer = runQuery(queryPlan);
-    
+
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 8);
     for (uint32_t recordIndex = 0u; recordIndex < 2u; ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex + 8);
@@ -148,11 +142,10 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
     auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
 
-    Query query = TestQuery::from(testSourceDescriptor1)
-                      .unionWith(TestQuery::from(testSourceDescriptor2))
-                      .sink(testSinkDescriptor);
+    Query query =
+        TestQuery::from(testSourceDescriptor1).unionWith(TestQuery::from(testSourceDescriptor2)).sink(testSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    
+
     auto resultBuffer = runQuery(queryPlan);
 
     for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
@@ -166,18 +159,16 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
     createSchemaAndSink(2);
-    auto schema2 = Schema::create()
-            ->addField("test2$id", BasicType::INT64)
-            ->addField("test2$one", BasicType::INT64);
+    auto schema2 = Schema::create()->addField("test2$id", BasicType::INT64)->addField("test2$one", BasicType::INT64);
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
     auto testSourceDescriptor2 = executionEngine->createDataSource(schema2);
 
     Query query = TestQuery::from(testSourceDescriptor1)
                       .unionWith(TestQuery::from(testSourceDescriptor2)
-                      .project(Attribute("test2$id").as("test$id"), Attribute("test2$one").as("test$one")))
+                                     .project(Attribute("test2$id").as("test$id"), Attribute("test2$one").as("test$one")))
                       .sink(testSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    
+
     auto resultBuffer = runQuery(queryPlan);
 
     for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
@@ -203,7 +194,7 @@ TEST_P(UnionQueryExecutionTest, DISABLED_unionOperatorWithoutResults) {
                       .filter(Attribute("test$id") > 9)
                       .sink(testSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    
+
     auto resultBuffer = runQuery(queryPlan);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 0u);
@@ -213,8 +204,7 @@ TEST_P(UnionQueryExecutionTest, DISABLED_unionOperatorWithoutResults) {
 
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
                         UnionQueryExecutionTest,
-                        ::testing::Values(
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<UnionQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });
