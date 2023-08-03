@@ -269,7 +269,6 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    //std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(nonExistentId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,
@@ -297,7 +296,6 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    //std::promise<AbstractRequestResponsePtr> promise;
     auto failQueryRequest = Experimental::FailQueryRequest::create(queryId,
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,

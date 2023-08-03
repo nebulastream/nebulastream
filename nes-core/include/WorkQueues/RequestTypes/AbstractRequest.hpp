@@ -34,10 +34,6 @@ class OptimizerConfiguration;
 struct AbstractRequestResponse {};
 using AbstractRequestResponsePtr = std::shared_ptr<AbstractRequestResponse>;
 
-//constrain template parameter to be a subclass of AbastractRequestResponse
-//template <typename T>
-//concept ConceptResponse = std::is_base_of<AbstractRequestResponse, T>::value;
-
 class StorageHandler;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -50,21 +46,6 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest<AbstractRequestRespon
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
  * other actions. Specific request types are implemented as subclasses of this request.
  */
-
-/*
- * A serial execution loop in the request executor will look like this:
- * for (auto request : requests) {
- *     try {
- *         request->execute(storageAccessHandle);
- *     } catch (std::exception& ex) {
- *         request->handleError(ex, storageAccessHandle);
- *         if (request->retry()) {
- *             //queue again
- *          }
- *      }
- * }
- */
-//template<ConceptResponse ResponseType>
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
@@ -72,10 +53,8 @@ class AbstractRequest {
   public:
     /**
      * @brief constructor
-     * @param requestId: the id of this request
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
-     * @param responsePromise: a promise used to send responses to the client that initiated the creation of this request
      */
     explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
@@ -83,6 +62,7 @@ class AbstractRequest {
      * @brief Acquires locks on the needed resources and executes the request logic
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> execute(StorageHandler& storageHandle);
 
@@ -90,6 +70,7 @@ class AbstractRequest {
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     virtual std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
@@ -97,7 +78,7 @@ class AbstractRequest {
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
-     * @return A list of requests that should be called because of failure
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> handleError(const RequestExecutionException& ex, StorageHandler& storageHandle);
 
@@ -108,8 +89,16 @@ class AbstractRequest {
      */
     bool retry();
 
+    /**
+     * @brief creates a future which will contain the response supplied by this request
+     * @return a future containing a pointer to the response object
+     */
     std::future<AbstractRequestResponsePtr> makeFuture();
 
+    /**
+     * @brief set the id of this request. This has to be done before the request is executed.
+     * @param requestId
+     */
     void setId(RequestId requestId);
 
     /**
@@ -167,7 +156,6 @@ class AbstractRequest {
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
-     * @param requiredResources: The resources required during the execution phase
      */
     virtual void postExecution(StorageHandler& storageHandle) = 0;
 
@@ -175,6 +163,7 @@ class AbstractRequest {
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     virtual std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandle) = 0;
 
