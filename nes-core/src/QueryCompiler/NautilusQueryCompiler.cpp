@@ -29,9 +29,9 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <utility>
