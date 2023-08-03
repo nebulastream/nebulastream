@@ -554,7 +554,6 @@ add_nes_integration_test(mqtt-sink-deployment-test "Integration/MQTTSinkDeployme
 ### RenameTest ###
 add_nes_integration_test(rename-test "Integration/RenameTest.cpp")
 
-
 ### JoinDeploymentTest ###
 add_nes_integration_test(join-deployment-test "Integration/JoinDeploymentTest.cpp")
 
@@ -645,6 +644,8 @@ add_nes_unit_test(metric-collector-test "UnitTests/Monitoring/MetricCollectorTes
 # MetricStoreTest
 add_nes_unit_test(metric-store-test "UnitTests/Monitoring/MetricStoreTest.cpp")
 
+# StatManager-Test
+add_nes_unit_test(StatManager-test "UnitTests/StatManager/StatManager-Tests.cpp")
 
 # UserDefinedMonitoringTest
 add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp")

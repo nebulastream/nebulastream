@@ -24,9 +24,9 @@ namespace NES {
     return this->width;
   }
 
-  Sketch::Sketch(const uint32_t depth, const uint32_t width, const std::string &physicalSourceName,
-                     const std::string &field, time_t duration, time_t frequency)
-                     : StatCollector(physicalSourceName, field, duration, frequency) , depth(depth), width(width) {
+  Sketch::Sketch(const Configurations::StatManagerConfig& config,
+                 const uint32_t depth, const uint32_t width)
+                     : StatCollector(config), depth(depth), width(width) {
 
   }
 

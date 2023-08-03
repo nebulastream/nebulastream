@@ -25,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <StatManager/StatManager.hpp>
 
 namespace grpc {
 class Server;
@@ -251,6 +252,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+    StatManager &getStatManager();
+
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -293,6 +296,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    StatManager StatManager;
+
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
