@@ -96,8 +96,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHan
                                                      + ". Please enter a valid query id.");
         }
         //mark single query for hard stop
-        auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
-        if (!markedForHardStopSuccessful) {
+        if (!queryCatalogService->checkAndMarkForHardStop(queryId)) {
             throw Exceptions::InvalidQueryStateException({QueryState::OPTIMIZING,
                                                           QueryState::REGISTERED,
                                                           QueryState::DEPLOYED,
@@ -127,7 +126,6 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHan
             globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             //Perform placement of updated shared query plan
-            auto queryPlan = sharedQueryPlan->getQueryPlan();
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
