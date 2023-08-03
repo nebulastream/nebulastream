@@ -15,8 +15,6 @@
 #include "StatManager/StatManager.hpp"
 #include "StatManager/StatCollectors/StatCollector.hpp"
 #include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
-#include <Util/yaml/Yaml.hpp>
-
 
 namespace NES {
 
@@ -24,11 +22,12 @@ namespace NES {
     return statCollectors;
   }
 
-  void StatManager::createStat (const std::string& physicalSourceName,
-                   const std::string& field,
-                   const std::string& statName,
-                   const time_t duration,
-                   const time_t frequency) {
+  void StatManager::createStat (const Configurations::StatManagerConfig& config) {
+
+    auto physicalSourceName = config.physicalSourceName.getValue();
+    auto field = config.field.getValue();
+    auto duration = static_cast<time_t>(config.duration.getValue());
+    auto frequency = static_cast<time_t>(config.frequency.getValue());
 
     bool found = 0;
 
@@ -40,48 +39,124 @@ namespace NES {
 
         found = 1;
 
-
         break;
       }
     }
 
-    // if the stat is not yet tracked, then create it
-    if(!found) {
+    auto statMethodName = config.statMethodName.getValue();
 
-      // create configNode
-      Yaml::Node configNode;
-      configNode["physicalSourceName"] = physicalSourceName;
-      configNode["field"] = field;
-      configNode["duration"] = std::to_string(duration);
-      configNode["frequency"] = std::to_string(frequency);
+//    // if the stat is not yet tracked, then create it
+//    if(!found) {
 
-      if (statName.compare("Frequency")) {
+    if (statMethodName.compare("FrequencyCM")) {
 
-        // create stat
-        auto cm = CountMin::createCountMinErrorProb(0.001, 0.001, configNode);
+      // get config values
+      auto error = static_cast<double>(config.error.getValue());
+      auto probability = static_cast<double>(config.probability.getValue());
+      auto depth = static_cast<uint32_t>(config.depth.getValue());
+      auto width = static_cast<uint32_t>(config.width.getValue());
 
-        // write stat to statVector
-        StatCollector* cmSketch = cm;
-        statCollectors.push_back(cmSketch);
+      // check that only error and probability or depth and width are set
+      if (((depth != 0 && width != 0) && (error == 0.0 && probability == 0.0)) ||
+          ((depth == 0 && width == 0) && (error != 0.0 && probability != 0.0))) {
 
-//      } else if (statName.compare("Distinct Keys")) {
+        // check if error and probability are set and within valid value ranges and if so, create a CM Sketch
+        if (error != 0.0 && probability != 0.0) {
 
-//      } else if (statName.compare("Quantile")) {
+          if (error <= 0 || error >= 1) {
 
-      } else {
-        std::cout << "statName is not defined!" << std::endl;
+            NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.")
+
+          } else if (probability <= 0 || probability >= 1) {
+
+            NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.");
+
+          } else {
+
+            // create stat
+            auto cm = new CountMin(config);
+
+            // write stat to statVector
+            StatCollector* cmSketch = cm;
+            statCollectors.push_back(cmSketch);
+          }
+
+
+
+        }
       }
-    }
 
+//      } else if (statMethodName.compare("Distinct Keys")) {
+
+//      } else if (statMethodName.compare("Quantile")) {
+
+    } else {
+      NES_DEBUG("statMethodName is not defined!");
+    }
   }
 
-//  double queryStat (const std::string& physicalSourceName,
-//                    const std::string& field,
-//                    const std::string& statName) {
+
+  double StatManager::queryStat (const Configurations::StatManagerConfig& config,
+                                 const uint32_t key) {
+
+    auto physicalSourceName = config.physicalSourceName.getValue();
+    auto field = config.field.getValue();
+    auto duration = static_cast<time_t>(config.duration.getValue());
+    auto frequency = static_cast<time_t>(config.frequency.getValue());
+
+    // check if the stat is already being tracked passively
+    for (const auto& collector : statCollectors) {
+      // could add a hashmap or something here that first checks if a statCollector can even generate the according statistic
+      if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
+          collector->getDuration() == duration && collector->getFrequency() == frequency) {
+
+        auto statMethodName = config.statMethodName.getValue();
+
+        if (statMethodName.compare("FrequencyCM")) {
+          auto cm = dynamic_cast<CountMin*>(collector);
+          return cm->pointQuery(key);
+        } else {
+          NES_DEBUG("No compatible combination of statistic and method for querying of statCollector!");
+        }
+      }
+    }
+    return -1.0;
+  }
+
+  void StatManager::deleteStat(const Configurations::StatManagerConfig& config) {
+
+    auto physicalSourceName = config.physicalSourceName.getValue();
+    auto field = config.field.getValue();
+    auto duration = static_cast<time_t>(config.duration.getValue());
+    auto frequency = static_cast<time_t>(config.frequency.getValue());
+    auto statMethodName = config.statMethodName.getValue();
+
+    for (auto it = statCollectors.begin(); it != statCollectors.end(); it++) {
+
+      auto collector = *it;
+
+      if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
+          collector->getDuration() == duration && collector->getFrequency() == frequency) {
+
+        if (statMethodName.compare("FrequencyCM")) {
+
+          statCollectors.erase(it);
+          return;
+
+//        } else if (statMethodName.compare("FrequencyRS")) {
 //
-//    return 0.0;
-//  }
+//        } else if (statMethodName.compare("QuantileDD")) {
 //
+          } else {
+            NES_DEBUG("Could not delete Statistic Object!");
+            return;
+        }
+      }
+    }
+    NES_DEBUG("Could not delete Statistic Object!");
+    return;
+  }
+
 //  void deleteStat (const std::string& physicalSourceName,
 //                   const std::string& field,
 //                   const std::string& statName) {
