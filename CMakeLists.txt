@@ -470,7 +470,7 @@ endif (NES_USE_MQTT)
 if (NES_USE_ARROW)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
 
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
         # explicitly find the brotli package from Arrow and include it
         find_package(unofficial-brotli REQUIRED)
         if(unofficial-brotli_FOUND)
