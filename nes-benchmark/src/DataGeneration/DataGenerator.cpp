@@ -15,12 +15,13 @@
 #include <API/Schema.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
+#include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
+#include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
+#include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
-#include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
-#include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -78,6 +79,8 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<SmartGridDataGenerator>();
     } else if (type == "LinearRoad") {
         return std::make_unique<LinearRoadDataGenerator>();
+    } else if (type == "ClusterMonitoring") {
+        return std::make_unique<ClusterMonitoringDataGenerator>();
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }

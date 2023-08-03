@@ -31,9 +31,7 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(siz
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::string filePath = "resources/datasets/google-cluster-data/";
-    //TODO fix path
-    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/google-cluster-data/google-cluster-data.txt");
+    std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/cluster-monitoring/google-cluster-data.txt");
 
     std::string line;
     std::vector<std::vector<std::string>> lines;
@@ -87,6 +85,12 @@ SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
         ->addField("ram", BasicType::FLOAT32)
         ->addField("disk", BasicType::FLOAT32)
         ->addField("constraints", BasicType::INT16);
+}
+
+std::string ClusterMonitoringDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
 }
 
 }// namespace NES::Benchmark::DataGeneration
