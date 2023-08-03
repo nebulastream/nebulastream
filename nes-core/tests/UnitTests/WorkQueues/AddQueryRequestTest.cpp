@@ -121,13 +121,13 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::REGISTERED);
 
     // Create add request
-    std::promise<NES::Experimental::AddQueryResponse> promise;
     auto addQueryRequest = NES::Experimental::AddQueryRequest::create(queryPlan,
                                                                       TEST_PLACEMENT_STRATEGY,
                                                                       ZERO_RETRIES,
                                                                       workerRpcClient,
                                                                       coordinatorConfiguration,
                                                                       z3Context);
+    addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase
     try {

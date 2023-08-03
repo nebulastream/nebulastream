@@ -223,7 +223,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
                                                                    INVALID_QUERY_SUB_PLAN_ID,
                                                                    maxRetries,
                                                                    workerRpcClient);
-    auto future = failQueryRequest->makeFuture();
+    auto future = failQueryRequest->getFuture();
     failQueryRequest->setId(requestId);
     TwoPhaseLockingStorageHandler storageHandler({globalExecutionPlan,
                                                  topology,

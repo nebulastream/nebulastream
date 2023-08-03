@@ -75,7 +75,7 @@ TEST_F(AbstractRequestTest, testPromise) {
     uint8_t maxRetries = 1;
     DummyRequest request(requiredResources, maxRetries,responseValue);
     request.setId(requestId);
-    auto future = request.makeFuture();
+    auto future = request.getFuture();
     auto thread = std::make_shared<std::thread>([&request]() {
         DummyStorageHandler storageHandler;
         request.executeRequestLogic(storageHandler);
