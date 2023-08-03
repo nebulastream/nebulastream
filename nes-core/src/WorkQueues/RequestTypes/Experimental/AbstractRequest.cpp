@@ -20,7 +20,7 @@
 namespace NES {
 AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources,
                                  const uint8_t maxRetries)
-    : requestId(INVALID_REQUEST_ID), responsePromise({}), maxRetries(maxRetries), actualRetries(0),
+    : requestId(INVALID_REQUEST_ID), responsePromise(), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
