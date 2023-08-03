@@ -411,8 +411,8 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-            .apply(Min(Attribute("value")));
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .apply(Min(Attribute("value")));
     auto dg = DataGenerator(100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
