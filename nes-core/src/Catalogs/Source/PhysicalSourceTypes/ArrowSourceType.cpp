@@ -160,7 +160,7 @@ void ArrowSourceType::setGatheringInterval(uint32_t sourceGatheringIntervalValue
     sourceGatheringInterval->setValue(sourceGatheringIntervalValue);
 }
 
-void ArrowSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
+void ArrowSourceType::setNumberOfBuffersToProduce(const uint32_t numberOfBuffersToProduceValue) {
     numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
 }
 

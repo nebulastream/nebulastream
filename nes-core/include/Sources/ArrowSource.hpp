@@ -59,6 +59,7 @@ class ArrowSource : public DataSource {
                          OriginId originId,
                          size_t numSourceLocalBuffers,
                          GatheringMode gatheringMode,
+                         const std::string& physicalSourceName,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

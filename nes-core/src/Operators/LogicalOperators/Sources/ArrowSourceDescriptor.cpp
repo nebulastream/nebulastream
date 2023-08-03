@@ -26,8 +26,8 @@ ArrowSourceDescriptor::ArrowSourceDescriptor(SchemaPtr schema,
 
 SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema,
                                                   ArrowSourceTypePtr arrowSourceType,
-                                                  std::string logicalSourceName,
-                                                  std::string physicalSourceName) {
+                                                  const std::string logicalSourceName,
+                                                  const std::string physicalSourceName) {
   return std::make_shared<ArrowSourceDescriptor>(
       ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), logicalSourceName, physicalSourceName));
 }

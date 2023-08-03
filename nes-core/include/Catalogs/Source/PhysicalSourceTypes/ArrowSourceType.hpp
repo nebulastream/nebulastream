@@ -62,7 +62,7 @@ class ArrowSourceType : public PhysicalSourceType {
 
     /**
      * Checks equality
-     * @param other mqttSourceType ot check equality for
+     * @param other arrowSourceType to check for equality
      * @return true if equal, false otherwise
      */
     bool equal(PhysicalSourceTypePtr const &other) override;
@@ -77,7 +77,7 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief Set file path, needed for: ArrowSource, BinarySource
      */
-    void setFilePath(std::string filePath);
+    void setFilePath(const std::string filePath);
 
     /**
      * @brief gets a ConfigurationOption object with sourceGatheringInterval
@@ -87,7 +87,7 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief set the value for sourceGatheringInterval with the appropriate data format
      */
-    void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
+    void setGatheringInterval(const uint32_t sourceGatheringIntervalValue);
 
     /**
      * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
@@ -97,7 +97,7 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief set the value for numberOfBuffersToProduce with the appropriate data format
      */
-    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+    void setNumberOfBuffersToProduce(const uint32_t numberOfBuffersToProduce);
 
     /**
      * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
@@ -124,7 +124,7 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
      */
-    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
+    void setNumberOfTuplesToProducePerBuffer(const uint32_t numberOfTuplesToProducePerBuffer);
 
 private:
     /**

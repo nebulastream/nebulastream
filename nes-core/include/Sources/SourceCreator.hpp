@@ -520,6 +520,7 @@ DataSourcePtr createArrowSource(const SchemaPtr& schema,
                                 OperatorId operatorId,
                                 OriginId originId,
                                 size_t numSourceLocalBuffers,
+                                const std::string& physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
