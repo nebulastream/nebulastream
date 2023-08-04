@@ -86,25 +86,25 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     // UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>((uint8_t) 1));
-        ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2));
-        ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>((uint32_t) 3));
-        ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
-        ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

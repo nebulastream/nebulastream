@@ -56,7 +56,6 @@ class MurMur3HashFunction : public HashFunction {
      * @return HashValue
      */
     HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
-
 };
 }// namespace NES::Nautilus::Interface
 
