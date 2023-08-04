@@ -33,9 +33,6 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <z3++.h>
-#include <iostream>
-#include <string>
-#include <cctype>
 
 namespace NES::Optimizer {
 
@@ -76,7 +73,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
 
         //2.1 Find all path between pinned upstream and downstream operators
-        std::vector<NodePtr> operatorPath;
+       // std::vector<NodePtr> operatorPath;
         operatorPath.push_back(pinnedUpStreamOperator);
         while (!operatorPath.back()->getParents().empty()) {
 
@@ -216,42 +213,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_DEBUG("ILPStrategy:model: {}", z3Model.to_string());
     NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
-    //get ID of watermark/window
-    /*
-    int watermarkOpID;
-    int windowOpID;
-    for (auto operatorNode : this->operatorMap){
-        if (operatorNode.second->toString().find("WINDOW") != std::string::npos){
-            NES_INFO("window found");
-            windowOpID = operatorNode.first;
-            NES_INFO("window op id is {}", windowOpID);
-        }
-        if (operatorNode.second->toString().find("WATERMARK") != std::string::npos){
-            NES_INFO("watermark found");
-            watermarkOpID = operatorNode.first;
-            NES_INFO("waterm op id is {}", watermarkOpID);
-        }
-    }
-    uint64_t watermarkTopologyNode = 0;
-    uint64_t windowTopologyNode = 0;
-    bool watermarkSet = false;
-    bool windowSet = false;*/
-
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
         if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
-
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
             LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
             TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
-            /*
-            if (!((windowSet || watermarkSet) && (watermarkTopologyNode > windowTopologyNode))){
-                NES_INFO("windowSet:{} and watermSet: {} and watermarkTNode: {} and windowTNode: {}", windowSet, watermarkSet, windowTopologyNode, watermarkTopologyNode);
-                NES_INFO("inside if with {}", operatorId);
-                if (watermarkSet) watermarkSet = !watermarkSet;
-                if (windowSet) windowSet = !windowSet;*/
 
             // collect the solution to operatorToTopologyNodeMap
             operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
@@ -264,7 +233,40 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
 
     // 8. Pin the operators based on ILP solution.
-    pinOperators(z3Model, placementVariables);
+    // changing: we pin operator by operator not all in one due to wrong order in window query
+    uint64_t currentOperatorId;
+    uint64_t lastTopologyId = topologyMap.size();
+    std::reverse(operatorPath.begin(), operatorPath.end());
+    for (auto elem : operatorPath){
+        NES_INFO("operator ID on map: {}", elem->toString());
+        currentOperatorId = extractId(elem);
+        for (const auto& placementMapping : placementVariables) {
+            auto key = placementMapping.first;
+            uint64_t operatorId = std::stoi(key.substr(0, key.find(KEY_SEPARATOR)));
+            uint64_t topologyNodeId = std::stoi(key.substr(key.find(KEY_SEPARATOR) + 1));
+
+            if (operatorId == currentOperatorId && z3Model.eval(placementMapping.second).get_numeral_int() == 1) {
+                //Pin the operator to the location identified by ILP algorithm
+                if (topologyNodeId <= lastTopologyId) {
+                    NES_INFO("Placing of operator with ID {} at topology node with id {}", operatorId, topologyNodeId);
+                    auto logicalOperator = operatorMap[operatorId];
+                    logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
+                    lastTopologyId = topologyNodeId;
+                   // break;
+                }
+                else {
+                    // TODO to be implemented: second best choice?!
+                    NES_INFO("Inside else with opId: {} and top Id: {} and last top Id: {}", operatorId, topologyNodeId, lastTopologyId);
+                    NES_INFO("diff: {}", topologyNodeId - lastTopologyId);
+                    auto logicalOperator = operatorMap[operatorId];
+                    logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId-(topologyNodeId - lastTopologyId));
+                    lastTopologyId = topologyNodeId-(topologyNodeId - lastTopologyId);
+                    NES_INFO("operatorId {} placed on {}", operatorId, lastTopologyId);
+                   // break;
+                }
+            }
+        }
+    }
 
     // 8. Perform operator placement.
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -285,6 +287,32 @@ std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOpe
         computeDistance(topologyNode, mileageMap);
     }
     return mileageMap;
+}
+
+int ILPStrategy::extractId(const NodePtr& operatorNode) {
+    const std::string& str = operatorNode->toString();
+    bool foundOpenParenthesis = false;
+    std::string numberString;
+
+    for (char c : str) {
+        if (c == '(') {
+            if (!foundOpenParenthesis) {
+                foundOpenParenthesis = true;
+            } else {
+                break; // Ignore numbers after the first open parenthesis
+            }
+        } else if (foundOpenParenthesis && std::isdigit(c)) {
+            numberString += c;
+        } else if (foundOpenParenthesis && !std::isspace(c)) {
+            break; // Stop extracting if a non-space character is encountered after the number
+        }
+    }
+    try {
+        return std::stoi(numberString); // Convert the extracted string to an integer
+    } catch (std::exception&) {
+        // Handle invalid number extraction, e.g., if no number was found or the number is out of range
+        return -1; // Return a sentinel value to indicate failure
+    }
 }
 
 void ILPStrategy::computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages) {
@@ -313,8 +341,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<OperatorId, z3::expr>& operatorDistanceMap,
                                  std::map<uint64_t, z3::expr>& nodeUtilizationMap,
                                  std::map<uint64_t, double>& nodeMileageMap) {
-    int m = 0;
-    bool leaveLoop = true;
+
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
@@ -339,8 +366,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
         // Fill the placement variable, utilization, and distance map
         auto sum_i = z3Context->int_val(0);
         auto D_i = z3Context->int_val(0);
-        for (uint64_t j = m; j < topologyNodePath.size(); j++) {
-            NES_INFO("j = {} operator ID = {} und topNodeId = {} m = {}", j, operatorID, topologyNodePath[j]->as<TopologyNode>()->getId(), m);
+        for (uint64_t j = 0; j < topologyNodePath.size(); j++) {
             TopologyNodePtr topologyNode = topologyNodePath[j]->as<TopologyNode>();
             uint64_t topologyID = topologyNode->getId();
 
@@ -376,14 +402,6 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             // add distance to root (positive part of distance equation)
             double M = nodeMileageMap[topologyID];
             D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
-
-            m = m+1;
-            if (leaveLoop) {
-                leaveLoop = !leaveLoop;
-                m = m-1;
-                break;
-            }
-            leaveLoop = !leaveLoop;
         }
         operatorDistanceMap.insert(std::make_pair(operatorID, D_i));
         // add constraint that operator is placed exactly once on topology path
@@ -393,7 +411,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
         NES_INFO("placement variables: {}", elem.second.to_string());
     }
 }
-
+/*
 bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables) {
 
     for (const auto& placementMapping : placementVariables) {
@@ -403,12 +421,13 @@ bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::exp
 
         if (z3Model.eval(placementMapping.second).get_numeral_int() == 1) {
             //Pin the operator to the location identified by ILP algorithm
+            NES_INFO("Placing of operator with ID {} at topology node with id {}", operatorId, topologyNodeId);
             auto logicalOperator = operatorMap[operatorId];
             logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
         }
     }
     return true;
-}
+}*/
 
 double ILPStrategy::getOverUtilizationCostWeight() { return this->overUtilizationCostWeight; }
 
