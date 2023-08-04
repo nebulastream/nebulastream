@@ -50,6 +50,8 @@ function(add_nes_unit_test)
 endfunction()
 
 function(add_nes_integration_test)
+    # create a test executable that may contain multiple source files.
+    # first param is TARGET_NAME
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
     if (NES_ENABLE_PRECOMPILED_HEADERS)
