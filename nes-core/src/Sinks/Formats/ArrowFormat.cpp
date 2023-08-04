@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_ARROW_BUILD
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -452,3 +453,4 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
 }
 
 }// namespace NES
+#endif //ENABLE_ARROW_BUILD
