@@ -96,11 +96,11 @@ class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public t
 };
 
 TEST_P(AsyncRequestExecutorTest, startAndDestroy) {
-    ASSERT_TRUE(executor->stop());
+    EXPECT_TRUE(executor->stop());
 
     //it should not be possible to submit a request after destruction
     auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, 10, 10);
-    ASSERT_FALSE(executor->runAsync(request));
+    EXPECT_FALSE(executor->runAsync(request));
 }
 
 TEST_P(AsyncRequestExecutorTest, submitRequest) {
@@ -111,9 +111,9 @@ TEST_P(AsyncRequestExecutorTest, submitRequest) {
 
         auto future = request->getFuture();
         auto queryId = executor->runAsync(request);
-        ASSERT_NE(queryId, INVALID_REQUEST_ID);
-        ASSERT_EQ(std::static_pointer_cast<DummyConcatResponse>(future.get())->number, responseValue);
-        ASSERT_TRUE(executor->stop());
+        EXPECT_NE(queryId, INVALID_REQUEST_ID);
+        EXPECT_EQ(std::static_pointer_cast<DummyConcatResponse>(future.get())->number, responseValue);
+        EXPECT_TRUE(executor->stop());
     } catch (std::exception const& ex) {
         NES_DEBUG("{}", ex.what());
         FAIL();
@@ -127,29 +127,29 @@ TEST_P(AsyncRequestExecutorTest, submitFollowUpRequest) {
         auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, responseValue, min);
         auto future = request->getFuture();
         auto queryId = executor->runAsync(request);
-        ASSERT_NE(queryId, INVALID_REQUEST_ID);
+        EXPECT_NE(queryId, INVALID_REQUEST_ID);
         auto responsePtr = std::static_pointer_cast<DummyConcatResponse>(future.get());
-        ASSERT_EQ(responsePtr->number, responseValue);
+        EXPECT_EQ(responsePtr->number, responseValue);
 
         //check that all follow up requests have been executed and producted the expected result
-        ASSERT_EQ(responsePtr->futures.size(), 2);
+        EXPECT_EQ(responsePtr->futures.size(), 2);
         for (auto& f : responsePtr->futures) {
             auto r = std::static_pointer_cast<DummyConcatResponse>(f.get());
             if (r->number == responseValue - 1) {
-                ASSERT_EQ(r->futures.size(), 1);
+                EXPECT_EQ(r->futures.size(), 1);
                 auto r2 = std::static_pointer_cast<DummyConcatResponse>(r->futures.front().get());
-                ASSERT_EQ(r2->number, responseValue - 2);
-                ASSERT_EQ(r2->futures.size(), 0);
+                EXPECT_EQ(r2->number, responseValue - 2);
+                EXPECT_EQ(r2->futures.size(), 0);
             } else {
-                ASSERT_EQ(r->number, responseValue - 2);
-                ASSERT_EQ(r->futures.size(), 0);
+                EXPECT_EQ(r->number, responseValue - 2);
+                EXPECT_EQ(r->futures.size(), 0);
             }
         }
     } catch (std::exception const& ex) {
         NES_DEBUG("{}", ex.what());
         FAIL();
     }
-    ASSERT_TRUE(executor->stop());
+    EXPECT_TRUE(executor->stop());
 }
 
 INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestExecutorTest, ::testing::Values(1, 4, 8));

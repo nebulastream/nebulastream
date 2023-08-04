@@ -81,6 +81,6 @@ TEST_F(AbstractRequestTest, testPromise) {
         request.executeRequestLogic(storageHandler);
     });
     thread->join();
-    ASSERT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
+    EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
 }// namespace NES
