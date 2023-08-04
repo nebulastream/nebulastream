@@ -383,7 +383,7 @@ bool NesWorker::connect() {
     }
     NES_DEBUG("NesWorker::registerWorker rpc register failed");
     connected = false;
-    return false;
+    return connected;
 }
 
 bool NesWorker::disconnect() {

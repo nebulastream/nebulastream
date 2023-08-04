@@ -375,10 +375,11 @@ class TestHarness {
     const QueryPlanPtr& getQueryPlan() const;
 
   private:
-    std::string getNextPhysicalSourceName();
 
+    std::string getNextPhysicalSourceName();
     uint32_t getNextTopologyId();
 
+    const std::chrono::seconds SETUP_TIMEOUT_IN_SEC = std::chrono::seconds(2);
     const std::string queryWithoutSinkStr;
     const QueryPtr queryWithoutSink;
     std::string coordinatorIPAddress;

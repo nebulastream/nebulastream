@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
 #include <type_traits>
@@ -56,7 +57,6 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
 
 TestHarness& TestHarness::enableNautilus() {
     useNautilus = true;
-
     return *this;
 }
 
@@ -293,6 +293,8 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     //Add all logical sources
     checkAndAddLogicalSources();
 
+    std::vector<TopologyNodeId> workerIds;
+
     for (auto& workerConf : testHarnessWorkerConfigurations) {
 
         //Fetch the worker configuration
@@ -328,6 +330,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
+        workerIds.emplace_back(nesWorker->getTopologyNodeId());
 
         //We are assuming that coordinator has a node id 1
         nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->parentId.getValue());
@@ -337,6 +340,17 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         workerConf->setQueryStatusListener(nesWorker);
     }
 
+    auto topologyManagerService = nesCoordinator->getTopologyManagerService();
+
+    auto start_timestamp = std::chrono::system_clock::now();
+
+    for (const auto& workerId : workerIds) {
+        while (!topologyManagerService->findNodeWithId(workerId)) {
+            if (std::chrono::system_clock::now() > start_timestamp + SETUP_TIMEOUT_IN_SEC) {
+                NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
+            }
+        }
+    }
     topologySetupDone = true;
     return *this;
 }
