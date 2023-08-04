@@ -27,8 +27,24 @@ class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
 
     void enterSelectClause(NebulaSQLParser::SelectClauseContext *context) override;
 
+    void enterFromClause(NebulaSQLParser::FromClauseContext *context) override;
+
+    void enterRelation(NebulaSQLParser::RelationContext *context) override;
+
+    void enterSinkClause(NebulaSQLParser::SinkClauseContext *context) override;
+
+
+
   private:
     NebulaSQLHelper helper;
+
+    int32_t sourceCounter = 0;
+    int32_t lastSeenSourcePtr = -1;
+    int32_t nodeId = 0;
+    bool inWhere = false;
+    bool leftFilter = true;
+    std::string currentLeftExp;
+    std::string currentRightExp;
 };
 
 

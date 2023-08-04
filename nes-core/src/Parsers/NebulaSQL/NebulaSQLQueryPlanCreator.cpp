@@ -18,7 +18,7 @@
 
 namespace NES::Parsers {
 
-void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext *context) {
+void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
     for (auto namedExprContext : context->namedExpressionSeq()->namedExpression()) {
         auto expressionText = namedExprContext->expression()->getText();
         auto attribute = NES::Attribute(expressionText).getExpressionNode();
@@ -30,6 +30,47 @@ void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseC
         }
     }
 }
+
+void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context){
+
+}
+
+void NebulaSQLQueryPlanCreator::enterRelation(NebulaSQLParser::RelationContext* context) {
+    if (context->relationPrimary()) {
+        auto relationPrimaryCtx = context->relationPrimary();
+        if (auto multipartIdentifierCtx = dynamic_cast<NebulaSQLParser::MultipartIdentifierContext*>(relationPrimaryCtx->children[0])) {
+            helper.addSource(std::make_pair(sourceCounter, multipartIdentifierCtx->getText()));
+            this->lastSeenSourcePtr = sourceCounter;
+            sourceCounter++;
+        }
+    }
+}
+void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext *context) {
+    if (context->sinkType()) {
+        auto sinkType = context->sinkType()->getText();
+        SinkDescriptorPtr sinkDescriptor;
+        if (sinkType == "Print") {
+            sinkDescriptor = NES::PrintSinkDescriptor::create();
+        }
+        if (sinkType == "File") {
+            sinkDescriptor = NES::FileSinkDescriptor::create(context->getText());
+        }
+        if (sinkType == "MQTT") {
+            sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+        }
+        if (sinkType == "Network") {
+            sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+        }
+        if (sinkType == "NullOutput") {
+            sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+        }
+        helper.addSink(sinkDescriptor);
+    }
+    }
+}
+
+
+
 
 
 }
