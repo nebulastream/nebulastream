@@ -58,7 +58,7 @@ option(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING OFF)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
-option(NES_USE_ARROW "Build with Apache Arrow support" ON)
+option(NES_USE_ARROW "Build with Apache Arrow support" OFF)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)

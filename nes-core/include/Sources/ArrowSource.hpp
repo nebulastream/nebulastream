@@ -110,7 +110,7 @@ class ArrowSource : public DataSource {
     ArrowParserPtr inputParser;
 
     // arrow related data structures and helper functions
-    // TODO: these should move to an ArrowWrapper when we support other formats from Arrow
+// TODO #4083: these should move to an ArrowWrapper when we support other formats from Arrow
     // Arrow status returns at every operation also do not play well currently
     std::shared_ptr<arrow::io::ReadableFile> inputFile;
     // A record batch in Arrow is two-dimensional data structure that is semantically a sequence
