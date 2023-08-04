@@ -63,6 +63,7 @@ FileSink::FileSink(SinkFormatPtr format,
         NES_ASSERT(outputFile.good(), "file not good");
     }
 
+#ifdef ENABLE_ARROW_BUILD
     if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
         // raise a warning if the file path does not have the streaming "arrows" extension some other system might
         // thus interpret the file differently with different extension
@@ -72,6 +73,7 @@ FileSink::FileSink(SinkFormatPtr format,
             NES_WARNING("FileSink: An arrow ipc file without '.arrows' extension created as a file sink.");
         }
     }
+#endif
 }
 
 FileSink::~FileSink() {
@@ -97,7 +99,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
         return writeDataToArrowFile(inputBuffer);
     }
-#endif
+#endif//ENABLE_ARROW_BUILD
     // otherwise call the regular function
     return writeDataToFile(inputBuffer);
 }
@@ -212,6 +214,6 @@ arrow::Status FileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStrea
     ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
     return arrow::Status::OK();
 }
-#endif
+#endif //ENABLE_ARROW_BUILD
 
 }// namespace NES
