@@ -56,13 +56,16 @@ class NebulaSQLHelper {
      */
     void addProjectionField(ExpressionNodePtr expressionNode);
 
+    void addSink(SinkDescriptorPtr sinkDescriptor);
+
+
   private:
     std::map<int32_t, std::string> sourceList;
     std::map<int32_t, NebulaSQLOperatorNode> operatorList;// contains the operators from the HELPER clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinkList; // INTO
-    std::pair<std::string, int32_t> window;// WITHIN
+    std::list<SinkDescriptorPtr> sinkList;
+    std::pair<std::string, int32_t> window;
 };
 
 }// namespace NES::Parsers

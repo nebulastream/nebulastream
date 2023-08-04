@@ -37,5 +37,6 @@ void NebulaSQLHelper::setWindow(const std::pair<std::string, int32_t>& window) {
 
 void NebulaSQLHelper::addSource(std::pair<int32_t, std::basic_string<char>> sourcePair) { this->sourceList.insert(sourcePair); }
 void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
+void NebulaSQLHelper::addSink(SinkDescriptorPtr sinkDescriptor) { this->sinkList.push_back(sinkDescriptor); }
 
 }// namespace NES::Parsers
