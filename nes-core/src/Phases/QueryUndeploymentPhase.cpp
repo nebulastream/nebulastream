@@ -140,8 +140,8 @@ void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId, const std::vec
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
-                   executionNode->getId(),
-                   rpcAddress);
+                  executionNode->getId(),
+                  rpcAddress);
         workerRPCClient->unregisterQueryAsync(rpcAddress, sharedQueryId, queueForExecutionNode);
         completionQueues[queueForExecutionNode] = 1;
         mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();

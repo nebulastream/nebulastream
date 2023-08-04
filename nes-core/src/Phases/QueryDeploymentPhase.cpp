@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>

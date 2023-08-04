@@ -87,7 +87,7 @@ void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionE
                                         [[maybe_unused]] StorageHandler& storageHandler) {}
 
 std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex,
-                               [[maybe_unused]] StorageHandler& storageHandle) {
+                                                          [[maybe_unused]] StorageHandler& storageHandle) {
     return {};
 }
 

@@ -34,7 +34,6 @@ class QueryDeploymentException : public Exceptions::RequestExecutionException {
      * @param message : the reason for failure
      */
     explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
-
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

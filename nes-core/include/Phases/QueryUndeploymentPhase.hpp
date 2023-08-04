@@ -80,8 +80,9 @@ class QueryUndeploymentPhase {
      * @param sharedQueryPlanStatus shared query plan status
      * @throws RPCQueryUndeploymentException: message, failedRpcExecutionNodeIds, RpcClientModes::Stop
      */
-    void
-    stopQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus sharedQueryPlanStatus);
+    void stopQuery(SharedQueryId sharedQueryId,
+                   const std::vector<ExecutionNodePtr>& executionNodes,
+                   SharedQueryPlanStatus sharedQueryPlanStatus);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
