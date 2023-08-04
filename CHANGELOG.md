@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.183](https://github.com/nebulastream/nebulastream/tree/v0.5.183) (2023-08-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.182...v0.5.183)
+
+**Implemented enhancements:**
+
+- \[TASK\] Error Handling for Stop Request [\#3724](https://github.com/nebulastream/nebulastream/issues/3724)
+
+## [v0.5.182](https://github.com/nebulastream/nebulastream/tree/v0.5.182) (2023-08-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.181...v0.5.182)
+
 ## [v0.5.181](https://github.com/nebulastream/nebulastream/tree/v0.5.181) (2023-08-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.180...v0.5.181)
