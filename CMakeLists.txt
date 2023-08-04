@@ -470,7 +470,7 @@ endif (NES_USE_MQTT)
 if (NES_USE_ARROW)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
 
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch"))
         # explicitly find the brotli package from Arrow and include it
         find_package(unofficial-brotli REQUIRED)
         if(unofficial-brotli_FOUND)
@@ -490,7 +490,7 @@ if (NES_USE_ARROW)
         set(LIBRARIES ${LIBRARIES} arrow_static)
         add_compile_definitions(ENABLE_ARROW_BUILD)
     else()
-        message(WARNING "ENABLE_ARROW_BUILD Not supported on this platform")
+        message(WARNING "ENABLE_ARROW_BUILD not supported on this platform")
     endif()
 endif (NES_USE_ARROW)
 
