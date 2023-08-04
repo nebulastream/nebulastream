@@ -81,6 +81,7 @@ class ILPStrategy : public BasePlacementStrategy {
     //map to hold operators to place
     std::map<OperatorId, LogicalOperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
+    std::vector<NodePtr> operatorPath;
 
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
