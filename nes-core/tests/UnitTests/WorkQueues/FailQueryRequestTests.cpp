@@ -235,12 +235,12 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         try {
             failQueryRequest->execute(storageHandler);
         } catch (Exceptions::RPCQueryUndeploymentException& e) {
-            ASSERT_EQ(e.getMode(), RpcClientModes::Stop);
+            EXPECT_EQ(e.getMode(), RpcClientModes::Stop);
             const auto failedCallNodeIds = e.getFailedExecutionNodeIds();
-            ASSERT_EQ(failedCallNodeIds.size(), 2);
-            ASSERT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootNode->getId()),
+            EXPECT_EQ(failedCallNodeIds.size(), 2);
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootNode->getId()),
                       failedCallNodeIds.cend());
-            ASSERT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), worker2->getId()),
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), worker2->getId()),
                       failedCallNodeIds.cend());
 
             //expect the query to be marked for failure and not failed, because the deployment did not succeed
@@ -255,7 +255,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         }
     });
     thread->join();
-    ASSERT_EQ(std::static_pointer_cast<Experimental::FailQueryResponse>(future.get())->sharedQueryId, sharedQueryId);
+    EXPECT_EQ(std::static_pointer_cast<Experimental::FailQueryResponse>(future.get())->sharedQueryId, sharedQueryId);
 }
 
 //test error handling if a fail query request is executed but no query with the supplied id exists
