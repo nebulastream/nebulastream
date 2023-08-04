@@ -18,6 +18,11 @@
 
 namespace NES::Parsers {
 
+QueryPlanPtr buildQuery() {
+    QueryPlanPtr queryPlan;
+    return queryPlan;
+}
+
 void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
     for (auto namedExprContext : context->namedExpressionSeq()->namedExpression()) {
         auto expressionText = namedExprContext->expression()->getText();
@@ -31,17 +36,12 @@ void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseC
     }
 }
 
-void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context){
-
-}
 
 void NebulaSQLQueryPlanCreator::enterRelation(NebulaSQLParser::RelationContext* context) {
     if (context->relationPrimary()) {
         auto relationPrimaryCtx = context->relationPrimary();
         if (auto multipartIdentifierCtx = dynamic_cast<NebulaSQLParser::MultipartIdentifierContext*>(relationPrimaryCtx->children[0])) {
-            helper.addSource(std::make_pair(sourceCounter, multipartIdentifierCtx->getText()));
-            this->lastSeenSourcePtr = sourceCounter;
-            sourceCounter++;
+            helper.addSource(multipartIdentifierCtx->getText());
         }
     }
 }
@@ -64,7 +64,7 @@ void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseConte
         if (sinkType == "NullOutput") {
             sinkDescriptor = NES::NullOutputSinkDescriptor::create();
         }
-        helper.addSink(sinkDescriptor);
+        helper.setSink(sinkDescriptor);
     }
     }
 }

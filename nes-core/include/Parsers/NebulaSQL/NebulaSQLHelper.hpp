@@ -28,46 +28,25 @@ namespace NES::Parsers {
  * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
  */
 class NebulaSQLHelper {
-  public:
-    //Constructors
-    NebulaSQLHelper() = default;
-    // Getter and Setter
-    const std::map<int32_t, std::string>& getSources() const;
-    void setSources(const std::map<int32_t, std::string>& sources);
-    const std::map<int32_t, NebulaSQLOperatorNode>& getOperatorList() const;
-    void setOperatorList(const std::map<int32_t, NebulaSQLOperatorNode>& operatorList);
-    const std::list<ExpressionNodePtr>& getExpressions() const;
-    void setExpressions(const std::list<ExpressionNodePtr>& expressions);
-    const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-    void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
-    const std::list<SinkDescriptorPtr>& getSinks() const;
-    void setSinks(const std::list<SinkDescriptorPtr>& sinks);
-    const std::pair<std::string, int>& getWindow() const;
-    void setWindow(const std::pair<std::string, int>& window);
+  private:
+    std::vector<ExpressionNodePtr> projectionFields;
+    std::vector<std::string> sources;
+    SinkDescriptorPtr sinkDescriptor;
 
-    /**
-     * @brief inserts a new source into the source map (FROM-Clause)
-     * @param sourcePair <K,V> containing the nodeId and the streamName
-     */
-    void addSource(std::pair<int32_t, std::basic_string<char>> sourcePair);
-    /**
-     * @brief inserts a new ExpressionItem (Projection Attribute) to the  list of specified output attributes
-     * @param expressionItem
-     */
+
+  public:
+    const std::vector<ExpressionNodePtr>& getProjectionFields() const;
     void addProjectionField(ExpressionNodePtr expressionNode);
 
-    void addSink(SinkDescriptorPtr sinkDescriptor);
+    const std::vector<std::string>& getSources() const;
+    void addSource(const std::string& source);
+
+    const SinkDescriptorPtr getSinkDescriptor() const;
+    void setSink(SinkDescriptorPtr sink);
 
 
-  private:
-    std::map<int32_t, std::string> sourceList;
-    std::map<int32_t, NebulaSQLOperatorNode> operatorList;// contains the operators from the HELPER clause
-    std::list<ExpressionNodePtr> expressionList;
-    std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinkList;
-    std::pair<std::string, int32_t> window;
+    // ... other methods for sinks, sources, etc. ...
 };
-
 }// namespace NES::Parsers
 
 #endif// NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLHELPER_HPP_
