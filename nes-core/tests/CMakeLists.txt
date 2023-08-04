@@ -515,16 +515,16 @@ add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/StorageHandle
 add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageHandles/UnlockDeleterTest.cpp")
 
 ### Fail Query Request Test ###
-add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/FailQueryRequestTests.cpp")
+add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/RequestTypes/FailQueryRequestTests.cpp")
+
+### Add Query Request Test ###
+add_nes_unit_test(add-query-request-test "UnitTests/WorkQueues/RequestTypes/AddQueryRequestTest.cpp")
+
+### Stop Query Request Test ###
+add_nes_unit_test(stop-query-request-test "UnitTests/WorkQueues/RequestTypes/StopQueryRequestTest.cpp")
 
 ### Abstract Request Test ###
 add_nes_unit_test(abstract-request-test "UnitTests/WorkQueues/AbstractRequestTest.cpp")
-
-### Add Query Request Test ###
-add_nes_unit_test(add-query-request-test "UnitTests/WorkQueues/AddQueryRequestTest.cpp")
-
-### Stop Query Request Test ###
-add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTest.cpp")
 
 ### Async Request Executor Test Test ###
 add_nes_unit_test(async-request-executor-test "UnitTests/WorkQueues/AsyncRequestExecutorTest.cpp")

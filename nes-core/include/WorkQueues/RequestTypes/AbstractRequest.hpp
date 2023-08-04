@@ -14,9 +14,9 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
+#include <future>
 #include <memory>
 #include <vector>
-#include <future>
 
 namespace NES {
 namespace Exceptions {
@@ -38,10 +38,6 @@ class StorageHandler;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-template<ConceptResponse ResponseType>
-class AbstractRequest;
-using AbstractRequestPtr = std::shared_ptr<AbstractRequest<AbstractRequestResponse>>;
-
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
  * other actions. Specific request types are implemented as subclasses of this request.
@@ -49,7 +45,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest<AbstractRequestRespon
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
-class AbstractRequest {
+class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   public:
     /**
      * @brief constructor
@@ -72,7 +68,7 @@ class AbstractRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    virtual std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
+    virtual std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
@@ -80,7 +76,7 @@ class AbstractRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> handleError(const RequestExecutionException& ex, StorageHandler& storageHandle);
+    std::vector<AbstractRequestPtr> handleError(RequestExecutionException& ex, StorageHandler& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the

@@ -86,7 +86,11 @@ jobs:
   #      - name: guard-check
   #        run: |
   #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
-  
+      - name: docker cleanup
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        run: |
+          docker rm -f ${{ github.run_id }}_preamble-check
+
   # Deactivate coverage report in #3564
   #  build-x64-linux-code-coverage:
   #    name: "Code Coverage Pipeline"
