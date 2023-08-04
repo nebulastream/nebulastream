@@ -57,6 +57,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
     uint64_t numberOfFields = schema->fields.size();
     auto numberOfTuples = inputBuffer.getNumberOfTuples();
 
+    // TODO #4082: add support for column layout
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, inputBuffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
 
