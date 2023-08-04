@@ -80,7 +80,7 @@ struct HyperLogLogDistinctCountApproximationValue : AggregationValue {
  */
 struct QuantileEstimationValue : AggregationValue {
     //TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
-    digestible::tdigest<float,unsigned> digest = digestible::tdigest(10);
+    digestible::tdigest<float, unsigned> digest = digestible::tdigest(10);
 };
 
 }// namespace NES::Runtime::Execution::Aggregation

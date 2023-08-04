@@ -18,11 +18,10 @@
 #include <Execution/Aggregation/Util/digestible.h>
 
 namespace NES::Runtime::Execution::Aggregation {
-QuantileEstimationAggregation::QuantileEstimationAggregation(
-    const PhysicalTypePtr& inputType,
-    const PhysicalTypePtr& finalType,
-    const Expressions::ExpressionPtr& inputExpression,
-    const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+QuantileEstimationAggregation::QuantileEstimationAggregation(const PhysicalTypePtr& inputType,
+                                                             const PhysicalTypePtr& finalType,
+                                                             const Expressions::ExpressionPtr& inputExpression,
+                                                             const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, finalType, inputExpression, resultFieldIdentifier) {}
 
 void insert(void* memrefPtr, float inputValue) {
@@ -50,11 +49,11 @@ void QuantileEstimationAggregation::lift(Nautilus::Value<Nautilus::MemRef> memre
         FunctionCall<>("insert", insert, memref, inputValue.as<Nautilus::UInt32>());
     } else if (inputValue->isType<Nautilus::UInt64>()) {
         FunctionCall<>("insert", insert, memref, inputValue.as<Nautilus::UInt64>());
-    }else if (inputValue->isType<Nautilus::Float>()) {
+    } else if (inputValue->isType<Nautilus::Float>()) {
         FunctionCall<>("insert", insert, memref, inputValue.as<Nautilus::Float>());
     } else if (inputValue->isType<Nautilus::Double>()) {
         FunctionCall<>("insert", insert, memref, inputValue.as<Nautilus::Double>());
-    }else {
+    } else {
         throw Exceptions::NotImplementedException("Type not implemented " + inputValue->getType()->toString());
     }
 }
@@ -66,13 +65,13 @@ void mergeTDigest(void* memref1Ptr, void* memref2Ptr) {
 }
 
 void QuantileEstimationAggregation::combine(Nautilus::Value<Nautilus::MemRef> memref1,
-                                                    Nautilus::Value<Nautilus::MemRef> memref2) {
+                                            Nautilus::Value<Nautilus::MemRef> memref2) {
     FunctionCall<>("mergeTDigest", mergeTDigest, memref1, memref2);
 }
 
 double estimateTDigest(void* memrefPtr) {
     QuantileEstimationValue* obj = static_cast<QuantileEstimationValue*>(memrefPtr);
-    obj->digest.merge(); // before querying the object a merge is required
+    obj->digest.merge();// before querying the object a merge is required
     return obj->digest.quantile(50.0);
     //TODO: here we can add any % once fixed issue #3889, right now we derive the median
 }

@@ -21,10 +21,10 @@
 #include <Execution/Aggregation/HyperLogLogDistinctCountApproximation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
+#include <Execution/Aggregation/QuantileEstimationAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Execution/Aggregation/QuantileEstimationAggregation.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -291,7 +291,8 @@ TEST_F(AggregationFunctionTest, HyperLogLogAggregationSimpleTest) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto distinctCountEstimation = Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
+    auto distinctCountEstimation =
+        Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
     auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
@@ -325,7 +326,8 @@ TEST_F(AggregationFunctionTest, HyperLogLogComplexTest) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto distinctCountEstimation = Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
+    auto distinctCountEstimation =
+        Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
     auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
     auto incomingValue4 = Nautilus::Value<Nautilus::Int64>(4_s64);
@@ -369,7 +371,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto outputType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
-    auto quantileEstimationAgg = Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
+    auto quantileEstimationAgg =
+        Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
     auto quantileEstimationValue = Aggregation::QuantileEstimationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
     auto incomingValue4 = Nautilus::Value<Nautilus::Int64>(4_s64);
@@ -412,7 +415,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
     // lower value in minAgg
     auto result = Record();
     quantileEstimationAgg.lower(memref, result);
-    double expResult = quantileEstimationValue.digest.min() + (50*quantileEstimationValue.digest.max()/100);
+    double expResult = quantileEstimationValue.digest.min() + (50 * quantileEstimationValue.digest.max() / 100);
     // the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) = 4.5 for this example
     EXPECT_TRUE((bool) (result.read("result") > (expResult * 0.9) && result.read("result") < (expResult * 1.1)));
     // Tdigest is an estimation the median thus we use 10% variance of the result
@@ -429,7 +432,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantileCombine) {
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto outputType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
-    auto quantileEstimationAgg = Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
+    auto quantileEstimationAgg =
+        Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
     auto quantileEstimationValue = Aggregation::QuantileEstimationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
     auto memref2 = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
@@ -469,11 +473,10 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantileCombine) {
     ASSERT_EQ(quantileEstimationValue.digest.max(), 10.0f);
     ASSERT_EQ(quantileEstimationValue.digest.size(), 10);
 
-
     // lower value in minAgg
     auto result = Record();
     quantileEstimationAgg.lower(memref, result);
-    double expResult = quantileEstimationValue.digest.min() + (50*quantileEstimationValue.digest.max()/100);
+    double expResult = quantileEstimationValue.digest.min() + (50 * quantileEstimationValue.digest.max() / 100);
     // the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) =  1+(50*10/100) = 6 for this example;
     // note that min is in one memref and max is in the other memref to test combine
     EXPECT_TRUE((bool) (result.read("result") > (expResult * 0.9) && result.read("result") < (expResult * 1.1)));

@@ -155,10 +155,10 @@ class HyperLogLog {
     }
 
   protected:
-    uint8_t b_;                 ///< register bit width
-    uint32_t m_;                ///< register size
-    double alphaMM_;            ///< alpha * m^2
-    std::vector<uint8_t> M_;    ///< registers
+    uint8_t b_;             ///< register bit width
+    uint32_t m_;            ///< register size
+    double alphaMM_;        ///< alpha * m^2
+    std::vector<uint8_t> M_;///< registers
 };
 }// namespace hll
 

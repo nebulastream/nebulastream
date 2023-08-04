@@ -30,7 +30,9 @@ namespace NES::Runtime::Execution::Aggregation {
 class HyperLogLogDistinctCountApproximation : public AggregationFunction {
 
   public:
-    HyperLogLogDistinctCountApproximation(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType, const Expressions::ExpressionPtr& inputExpression,
+    HyperLogLogDistinctCountApproximation(const PhysicalTypePtr& inputType,
+                                          const PhysicalTypePtr& finalType,
+                                          const Expressions::ExpressionPtr& inputExpression,
                                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
@@ -38,7 +40,6 @@ class HyperLogLogDistinctCountApproximation : public AggregationFunction {
     void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
     uint64_t getSize() override;
-
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
