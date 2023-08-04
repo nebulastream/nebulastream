@@ -60,8 +60,9 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::UdfCatalog,
                        ResourceType::SourceCatalog},
                       maxRetries),
-      workerRpcClient(std::move(workerRpcClient)), queryId(queryPlan->getQueryId()), coordinatorConfiguration(std::move(coordinatorConfiguration)),
-      queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), z3Context(std::move(z3Context)) {}
+      workerRpcClient(std::move(workerRpcClient)), queryId(queryPlan->getQueryId()),
+      coordinatorConfiguration(std::move(coordinatorConfiguration)), queryPlan(queryPlan),
+      queryPlacementStrategy(queryPlacementStrategy), z3Context(std::move(z3Context)) {}
 
 std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                                          Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -80,8 +81,10 @@ std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& que
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                         [[maybe_unused]] StorageHandler& storageHandler) {}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] const RequestExecutionException& ex,
-                                                          [[maybe_unused]] StorageHandler& storageHandle) { return {}; }
+std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex,
+                                                          [[maybe_unused]] StorageHandler& storageHandle) {
+    return {};
+}
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
                                          [[maybe_unused]] StorageHandler& storageHandler) {

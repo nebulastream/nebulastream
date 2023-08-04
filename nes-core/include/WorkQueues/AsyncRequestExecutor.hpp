@@ -45,7 +45,7 @@ class AsyncRequestExecutor {
       public:
         FlushRequest() : AbstractRequest({}, 0) {}
         std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { return {}; }
-        std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException&, StorageHandler&) override { return {}; }
+        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandler&) override { return {}; }
 
       protected:
         void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}

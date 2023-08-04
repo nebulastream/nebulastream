@@ -49,7 +49,7 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(NES::QueryId queryId,
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) { return {}; }
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) { return {}; }
 
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 

@@ -21,7 +21,7 @@
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES {
-static constexpr RequestId INVALID_REQUEST_ID = 0;
+
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures)
     : globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)), topology(std::move(storageDataStructures.topology)),
       queryCatalogService(std::move(storageDataStructures.queryCatalogService)), globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),

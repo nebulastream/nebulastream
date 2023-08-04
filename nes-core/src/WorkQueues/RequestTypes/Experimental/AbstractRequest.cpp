@@ -11,19 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Common/Identifiers.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/Identifiers.hpp>
 
 namespace NES {
-AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources,
-                                 const uint8_t maxRetries)
+AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
     : requestId(INVALID_REQUEST_ID), responsePromise(), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
-std::vector<AbstractRequestPtr> AbstractRequest::handleError(const RequestExecutionException& ex, StorageHandler& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 

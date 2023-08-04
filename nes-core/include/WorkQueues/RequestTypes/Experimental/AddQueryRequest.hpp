@@ -151,7 +151,7 @@ class AddQueryRequest : public AbstractRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(const RequestExecutionException& ex, StorageHandler& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back

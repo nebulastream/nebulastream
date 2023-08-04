@@ -96,11 +96,11 @@ class StopQueryRequest : public AbstractRequest {
      * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
      * @param coordinatorConfiguration The coordinator configuration
      */
-    StopQueryRequest(RequestId requestId,
-                     QueryId queryId,
-                     size_t maxRetries,
+    StopQueryRequest(QueryId queryId,
+                     uint8_t maxRetries,
                      WorkerRPCClientPtr workerRpcClient,
                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+
     /**
      * @brief creates a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
@@ -109,9 +109,8 @@ class StopQueryRequest : public AbstractRequest {
      * @param coordinatorConfiguration The coordinator configuration
      * @return a smart pointer to the newly created object
      */
-    static StopQueryRequestPtr create(const RequestId requestId,
-                                      const QueryId queryId,
-                                      const size_t maxRetries,
+    static StopQueryRequestPtr create(QueryId queryId,
+                                      uint8_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
@@ -128,6 +127,7 @@ class StopQueryRequest : public AbstractRequest {
      * @throws RequestExecutionException if resource acquisition fails
      */
     std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandle) override;
+
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
