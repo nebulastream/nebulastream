@@ -35,7 +35,6 @@ class QueryUndeploymentException : public RequestExecutionException {
     QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 
     [[nodiscard]] const char* what() const noexcept override;
-
 };
 }// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

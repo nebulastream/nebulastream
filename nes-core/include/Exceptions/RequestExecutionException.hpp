@@ -14,11 +14,11 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 
-#include <exception>
-#include <stdexcept>
-#include <memory>
-#include <string>
 #include <Common/Identifiers.hpp>
+#include <exception>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 namespace NES::Exceptions {
 

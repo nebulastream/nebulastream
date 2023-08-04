@@ -190,7 +190,8 @@ AbstractRequest<ResponseType>::AbstractRequest(RequestId requestId,
       requiredResources(requiredResources) {}
 
 template<ConceptResponse ResponseType>
-std::vector<AbstractRequestPtr> AbstractRequest<ResponseType>::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractRequest<ResponseType>::handleError(RequestExecutionException& ex,
+                                                                           StorageHandler& storageHandle) {
     std::vector<AbstractRequestPtr> remainingRequests = {};
 
     //error handling to be performed before rolling back

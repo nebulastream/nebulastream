@@ -50,8 +50,12 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     std::promise<Experimental::StopQueryResponse> promise;
-    auto stopQueryRequest =
-        Experimental::StopQueryRequest::create(requestId, queryId, retries, workerRPCClient, coordinatorConfiguration, std::move(promise));
+    auto stopQueryRequest = Experimental::StopQueryRequest::create(requestId,
+                                                                   queryId,
+                                                                   retries,
+                                                                   workerRPCClient,
+                                                                   coordinatorConfiguration,
+                                                                   std::move(promise));
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 }// namespace NES

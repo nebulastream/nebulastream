@@ -16,9 +16,9 @@
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_
 
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 
 namespace NES::Optimizer {
 class TypeInferencePhase;

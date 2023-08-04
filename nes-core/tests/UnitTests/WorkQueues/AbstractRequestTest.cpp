@@ -32,7 +32,8 @@ class DummyRequest : public AbstractRequest<DummyResponse> {
                  uint32_t responseValue)
         : AbstractRequest(requestId, requiredResources, maxRetries, std::move(responsePromise)), responseValue(responseValue){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { responsePromise.set_value(DummyResponse(responseValue));
+    std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+        responsePromise.set_value(DummyResponse(responseValue));
         return std::vector<std::shared_ptr<AbstractRequest<AbstractRequestResponse>>>();
     }
 

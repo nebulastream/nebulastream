@@ -128,8 +128,8 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-                                //3.2.2. Perform deployment of placed shared query plan
-                                queryDeploymentPhase->execute(sharedQueryPlan);
+                            //3.2.2. Perform deployment of placed shared query plan
+                            queryDeploymentPhase->execute(sharedQueryPlan);
 
                             //Update the shared query plan as deployed
                             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
@@ -155,10 +155,10 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-                                //3.3.3. Perform deployment of re-placed shared query plan
-                                queryDeploymentPhase->execute(sharedQueryPlan);
-                                //Update the shared query plan as deployed
-                                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+                            //3.3.3. Perform deployment of re-placed shared query plan
+                            queryDeploymentPhase->execute(sharedQueryPlan);
+                            //Update the shared query plan as deployed
+                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
 
                             // 3.4. Check if the shared query plan is empty and already running
                         } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
