@@ -17,26 +17,19 @@
 
 namespace NES::Parsers {
 
-//Getter and Setter for the map/list entries of each clause
-const std::map<int32_t, std::string>& NebulaSQLHelper::getSources() const { return this->sourceList; }
-void NebulaSQLHelper::setSources(const std::map<int32_t, std::string>& sources) { this->sourceList = sources; }
-const std::map<int32_t, NebulaSQLOperatorNode>& NebulaSQLHelper::getOperatorList() const { return this->operatorList; }
-void NebulaSQLHelper::setOperatorList(const std::map<int32_t, NebulaSQLOperatorNode>& operatorList) {
-    this->operatorList = operatorList;
-}
-const std::list<ExpressionNodePtr>& NebulaSQLHelper::getExpressions() const { return this->expressionList; }
-void NebulaSQLHelper::setExpressions(const std::list<ExpressionNodePtr>& expressions) { this->expressionList = expressions; }
 const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getProjectionFields() const { return this->projectionFields; }
-void NebulaSQLHelper::setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields) {
-    this->projectionFields = projectionFields;
-}
-const std::list<SinkDescriptorPtr>& NebulaSQLHelper::getSinks() const { return this->sinkList; }
-void NebulaSQLHelper::setSinks(const std::list<SinkDescriptorPtr>& sinks) { this->sinkList = sinks; }
-const std::pair<std::string, int32_t>& NebulaSQLHelper::getWindow() const { return this->window; }
-void NebulaSQLHelper::setWindow(const std::pair<std::string, int32_t>& window) { this->window = window; }
-
-void NebulaSQLHelper::addSource(std::pair<int32_t, std::basic_string<char>> sourcePair) { this->sourceList.insert(sourcePair); }
 void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
-void NebulaSQLHelper::addSink(SinkDescriptorPtr sinkDescriptor) { this->sinkList.push_back(sinkDescriptor); }
+
+const std::vector<std::string>& NebulaSQLHelper::getSources() const { return this->sources; }
+void NebulaSQLHelper::addSource(const std::string& source) {
+    this->sources.push_back(source);
+}
+
+const SinkDescriptorPtr NebulaSQLHelper::getSinkDescriptor() const {
+    return this->sinkDescriptor;
+}
+void NebulaSQLHelper::setSink(SinkDescriptorPtr sink) {
+    this->sinkDescriptor = sink;
+}
 
 }// namespace NES::Parsers
