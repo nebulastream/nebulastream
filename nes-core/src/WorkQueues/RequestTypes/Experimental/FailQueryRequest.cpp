@@ -91,7 +91,7 @@ std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequ
     }
 
     //no follow up requests
-    return std::vector<AbstractRequestPtr>();
+    return {};
 }
 
 FailQueryResponse::FailQueryResponse(SharedQueryId sharedQueryId) : sharedQueryId(sharedQueryId) {}
