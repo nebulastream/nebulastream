@@ -104,8 +104,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     remove(filePath.c_str());
 
     //register query
-    auto query =
-        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     "BottomUp",
@@ -208,8 +207,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     remove(filePath.c_str());
 
     //register query
-    auto query =
-        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     "BottomUp",
@@ -320,8 +318,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     remove(filePath.c_str());
 
     //register query
-    auto query =
-        Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath , "CSV_FORMAT", "APPEND"));
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     "BottomUp",
