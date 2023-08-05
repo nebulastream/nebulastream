@@ -41,10 +41,7 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(NES::QueryId queryId,
                                                            NES::QuerySubPlanId failedSubPlanId,
                                                            uint8_t maxRetries,
                                                            NES::WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<FailQueryRequest>(queryId,
-                                              failedSubPlanId,
-                                              maxRetries,
-                                              std::move(workerRpcClient));
+    return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries, std::move(workerRpcClient));
 }
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}

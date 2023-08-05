@@ -112,9 +112,10 @@ class AsyncRequestExecutor {
                     }
                     cv.notify_all();
                 }
-                auto result = std::accumulate(completionFutures.begin(), completionFutures.end(), true, [](bool acc, auto& future) {
-                  return acc && future.get();
-                });
+                auto result =
+                    std::accumulate(completionFutures.begin(), completionFutures.end(), true, [](bool acc, auto& future) {
+                        return acc && future.get();
+                    });
                 NES_ASSERT(result, "Cannot shut down AsyncRequestExecutor");
                 {
                     std::unique_lock lock(workMutex);
@@ -131,9 +132,7 @@ class AsyncRequestExecutor {
     /**
      * @brief destructor, calls destroy()
      */
-    ~AsyncRequestExecutor<T>() {
-        stop();
-    }
+    ~AsyncRequestExecutor<T>() { stop(); }
 
   private:
     /**

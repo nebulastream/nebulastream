@@ -14,10 +14,9 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_
 
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <atomic>
 #include <vector>
-#include <WorkQueues/StorageHandles/StorageHandler.hpp>
-
 
 namespace NES {
 struct StorageDataStructures;

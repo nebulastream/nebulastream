@@ -24,9 +24,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
-#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace z3 {
 class context;
@@ -51,11 +51,7 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     const uint8_t retries = 0;
     WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = Experimental::StopQueryRequest::create(
-                                                                   queryId,
-                                                                   retries,
-                                                                   workerRPCClient,
-                                                                   coordinatorConfiguration);
+    auto stopQueryRequest = Experimental::StopQueryRequest::create(queryId, retries, workerRPCClient, coordinatorConfiguration);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
 }// namespace NES

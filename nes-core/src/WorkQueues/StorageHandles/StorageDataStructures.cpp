@@ -14,12 +14,12 @@
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 namespace NES {
 StorageDataStructures::StorageDataStructures(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           QueryCatalogServicePtr queryCatalogService,
-                                           GlobalQueryPlanPtr globalQueryPlan,
-                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
-    : topology(std::move(topology)), queryCatalogService(std::move(queryCatalogService)),
-      sourceCatalog(std::move(sourceCatalog)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      globalQueryPlan(std::move(globalQueryPlan)), udfCatalog(std::move(udfCatalog)) {}
-}
+                                             TopologyPtr topology,
+                                             QueryCatalogServicePtr queryCatalogService,
+                                             GlobalQueryPlanPtr globalQueryPlan,
+                                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                             Catalogs::UDF::UDFCatalogPtr udfCatalog)
+    : topology(std::move(topology)), queryCatalogService(std::move(queryCatalogService)), sourceCatalog(std::move(sourceCatalog)),
+      globalExecutionPlan(std::move(globalExecutionPlan)), globalQueryPlan(std::move(globalQueryPlan)),
+      udfCatalog(std::move(udfCatalog)) {}
+}// namespace NES
