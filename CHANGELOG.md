@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.185](https://github.com/nebulastream/nebulastream/tree/v0.5.185) (2023-08-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.184...v0.5.185)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create coordinator side RequestExecutor [\#4033](https://github.com/nebulastream/nebulastream/issues/4033)
+
 ## [v0.5.184](https://github.com/nebulastream/nebulastream/tree/v0.5.184) (2023-08-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.183...v0.5.184)
