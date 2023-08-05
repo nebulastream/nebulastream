@@ -52,9 +52,9 @@ class FailQueryRequest : public AbstractRequest {
     * @return a smart pointer to the newly created object
     */
     static std::shared_ptr<FailQueryRequest> create(NES::QueryId queryId,
-                     NES::QuerySubPlanId failedSubPlanId,
-                     uint8_t maxRetries,
-                     NES::WorkerRPCClientPtr workerRpcClient);
+                                                    NES::QuerySubPlanId failedSubPlanId,
+                                                    uint8_t maxRetries,
+                                                    NES::WorkerRPCClientPtr workerRpcClient);
 
   protected:
     /**

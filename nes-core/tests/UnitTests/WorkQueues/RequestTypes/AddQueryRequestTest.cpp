@@ -40,8 +40,8 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <z3++.h>
@@ -108,12 +108,8 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    auto storageHandler = TwoPhaseLockingStorageHandler({globalExecutionPlan,
-                                                        topology,
-                                                        queryCatalogService,
-                                                        globalQueryPlan,
-                                                        sourceCatalog,
-                                                        udfCatalog});
+    auto storageHandler = TwoPhaseLockingStorageHandler(
+        {globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog});
 
     //Create new entry in query catalog service
     queryCatalogService->createNewEntry("query string", queryPlan, "TopDown");

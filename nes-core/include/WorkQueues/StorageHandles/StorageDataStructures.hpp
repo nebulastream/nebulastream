@@ -57,5 +57,5 @@ struct StorageDataStructures {
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}
+}// namespace NES
 #endif//NES_STORAGEDATASTRUCTURES_HPP

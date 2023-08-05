@@ -375,7 +375,6 @@ class TestHarness {
     const QueryPlanPtr& getQueryPlan() const;
 
   private:
-
     std::string getNextPhysicalSourceName();
     uint32_t getNextTopologyId();
 
