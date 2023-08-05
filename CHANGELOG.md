@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.184](https://github.com/nebulastream/nebulastream/tree/v0.5.184) (2023-08-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.183...v0.5.184)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reduce Source Integration Test Runtime [\#4080](https://github.com/nebulastream/nebulastream/issues/4080)
+
 ## [v0.5.183](https://github.com/nebulastream/nebulastream/tree/v0.5.183) (2023-08-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.182...v0.5.183)
