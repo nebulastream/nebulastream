@@ -71,7 +71,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
@@ -125,7 +126,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(3);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -180,7 +182,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -294,7 +297,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
@@ -412,7 +416,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
@@ -478,7 +483,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";

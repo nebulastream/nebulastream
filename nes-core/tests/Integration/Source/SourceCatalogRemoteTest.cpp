@@ -174,8 +174,7 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        crd->getSourceCatalogService()
-            ->registerLogicalSource("testSource", schema);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
