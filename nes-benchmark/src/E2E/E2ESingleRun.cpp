@@ -499,11 +499,11 @@ void E2ESingleRun::printQuerySubplanStatistics(uint64_t timestamp,
                                                std::ostream& outStream) {
     std::stringstream ss;
     ss << "time=" << timestamp << " subplan=" << subPlanStatistics->getSubQueryId() << " procTasks=" << processedTasks;
-    for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
-        for (auto& worker : pipe.second) {
-            ss << " pipeNo:" << pipe.first << " worker=" << worker.first << " tasks=" << worker.second;
-        }
-    }
+//    for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
+//        for (auto& worker : pipe.second) {
+//            ss << " pipeNo:" << pipe.first << " worker=" << worker.first << " tasks=" << worker.second;
+//        }
+//    }
     outStream << ss.str() << std::endl;
 }
 

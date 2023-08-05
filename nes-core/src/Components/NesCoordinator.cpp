@@ -38,6 +38,7 @@
 #include <grpcpp/server_builder.h>
 #include <memory>
 #include <thread>
+#include <Runtime/QueryStatistics.hpp>
 
 //GRPC Includes
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -51,6 +52,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 
+#include "Runtime/QueryStatistics.hpp"
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <Health.pb.h>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -248,7 +250,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
             while (isRunning) {
                 auto ts = std::chrono::system_clock::now();
                 auto timeNow = std::chrono::system_clock::to_time_t(ts);
-                auto stats = worker->getNodeEngine()->getQueryStatistics(false);
+                std::vector<Runtime::QueryStatistics> stats = worker->getNodeEngine()->getQueryStatistics(false);
                 for (auto& query : stats) {
                     statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
                                    << query.getQueryStatisticsAsString() << "\n";
@@ -376,11 +378,6 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
-}
-
-std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(bool withReset) {
-    NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
-    return worker->getNodeEngine()->getQueryStatistics(withReset);
 }
 
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }

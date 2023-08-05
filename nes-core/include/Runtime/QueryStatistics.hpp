@@ -129,12 +129,12 @@ class QueryStatistics {
      * @param pipelineId
      * @param workerId
     */
-    void incTasksPerPipelineId(uint64_t pipelineId, uint64_t workerId);
+    void incTasksPerPipelineId(uint64_t pipelineId);
 
     /**
     * @brief get pipeline id task map
     */
-    std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>& getPipelineIdToTaskMap();
+    //std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>& getPipelineIdToTaskMap();
 
     /**
      * @brief get sum of all latencies

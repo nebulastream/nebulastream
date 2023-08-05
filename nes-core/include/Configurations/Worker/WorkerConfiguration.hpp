@@ -174,7 +174,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Enables the statistic output
      */
-    BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
+    BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, true, "Enable statistic output"};
 
     /**
      * @brief Sets configuration properties for the query compiler.
