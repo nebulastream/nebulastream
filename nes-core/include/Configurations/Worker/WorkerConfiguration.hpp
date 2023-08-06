@@ -176,6 +176,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, true, "Enable statistic output"};
 
+    UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
+
     /**
      * @brief Sets configuration properties for the query compiler.
      */
@@ -237,6 +239,10 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
 
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
+
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 100, "Source gathering interval"};
+
     /**
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
@@ -296,6 +302,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &workerHealthCheckWaitTime,
                 &configPath,
                 &enableStatisticOutput,
+                &lambdaSource,
+                &numberOfBuffersToProduce,
+                &sourceGatheringInterval,
 #ifdef TFDEF
                 &isTensorflowSupported
 #endif
