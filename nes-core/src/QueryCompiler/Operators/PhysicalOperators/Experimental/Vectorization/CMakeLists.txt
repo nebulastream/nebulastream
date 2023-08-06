@@ -14,5 +14,6 @@
 add_source_files(
     nes-core
     PhysicalUnvectorizeOperator.cpp
+    PhysicalVectorizedPipelineOperator.cpp
     PhysicalVectorizeOperator.cpp
 )
