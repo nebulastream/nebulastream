@@ -15,7 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_VECTORIZE_HPP_
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,12 +29,13 @@ public:
      * @brief Constructor.
      * @param operatorHandlerIndex the index of the handler of this operator in the pipeline execution context.
      */
-    explicit Vectorize(uint64_t operatorHandlerIndex);
+    explicit Vectorize(uint64_t operatorHandlerIndex, std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     uint64_t operatorHandlerIndex;
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
 } // namespace NES::Runtime::Execution::Operators

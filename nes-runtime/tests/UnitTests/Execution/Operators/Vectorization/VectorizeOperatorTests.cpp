@@ -87,19 +87,19 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto stageBuffer = bm->getBufferBlocking();
-    auto stageBufferAddress = Value<MemRef>((int8_t*) std::addressof(stageBuffer));
+    auto stageBuffer = std::make_unique<TupleBuffer>(bm->getBufferBlocking());
     auto stageBufferMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     // Set the stage buffer capacity to half of the tuple buffer's capacity. Hence, the number of invocations should be two.
     auto stageBufferCapacity = dynamicBufferCapacity / 2;
-    auto handler = std::make_shared<StagingHandler>(std::move(stageBufferMemoryProviderPtr), stageBufferAddress, stageBufferCapacity);
+    auto handler = std::make_shared<StagingHandler>(std::move(stageBuffer), stageBufferCapacity);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
     auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto collectOperator = std::make_shared<VectorizedCollectOperator>(std::move(collectMemoryProviderPtr), projections);
-    auto vectorizeOperator = Vectorize(pipelineContext.getOperatorHandlers().size() - 1);
+    auto vectorizeMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto vectorizeOperator = Vectorize(pipelineContext.getOperatorHandlers().size() - 1, std::move(vectorizeMemoryProviderPtr));
     vectorizeOperator.setChild(collectOperator);
 
     auto bufferRef = Value<MemRef>((int8_t*) std::addressof(buffer));
