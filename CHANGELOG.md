@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.186](https://github.com/nebulastream/nebulastream/tree/v0.5.186) (2023-08-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.185...v0.5.186)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate Apache Arrow [\#3905](https://github.com/nebulastream/nebulastream/issues/3905)
+
 ## [v0.5.185](https://github.com/nebulastream/nebulastream/tree/v0.5.185) (2023-08-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.184...v0.5.185)
