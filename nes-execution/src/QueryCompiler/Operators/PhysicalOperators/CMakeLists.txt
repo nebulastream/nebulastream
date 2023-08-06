@@ -34,4 +34,5 @@ add_source_files(nes-execution
 
 add_subdirectory(Windowing)
 add_subdirectory(Joining)
+add_subdirectory(Experimental)
 
