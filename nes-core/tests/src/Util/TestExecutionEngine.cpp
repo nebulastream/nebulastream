@@ -21,15 +21,15 @@ namespace NES::Testing {
 TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
-                                         const QueryCompilation::StreamJoinStrategy& joinStrategy) {
+                                         const QueryCompilation::StreamJoinStrategy& joinStrategy,
+                                         const QueryCompilation::QueryCompilerOptions::WindowingStrategy& windowingStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
     workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
-    workerConfiguration->queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     workerConfiguration->numWorkerThreads = numWorkerThreads;
     workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * 10240;
