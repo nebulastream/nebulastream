@@ -127,12 +127,12 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
  * @param numberOfOrigins: number of origins of a given query
  * @return a data sink pointer
  */
-DataSinkPtr createArrowIPCFileSink(const SchemaPtr &schema,
+DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
                                    QueryId queryId,
                                    QuerySubPlanId querySubPlanId,
-                                   const Runtime::NodeEnginePtr &nodeEngine,
+                                   const Runtime::NodeEnginePtr& nodeEngine,
                                    uint32_t numOfProducers,
-                                   const std::string &filePath,
+                                   const std::string& filePath,
                                    bool append,
                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                    uint64_t numberOfOrigins = 1);

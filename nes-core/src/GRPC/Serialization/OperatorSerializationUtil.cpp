@@ -1159,7 +1159,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
     else if (sourceDescriptor.instanceOf<ArrowSourceDescriptor>()) {
         // serialize arrow source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                   "SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor");
+                  "SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor");
         auto arrowSourceDescriptor = sourceDescriptor.as<const ArrowSourceDescriptor>();
         // init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();

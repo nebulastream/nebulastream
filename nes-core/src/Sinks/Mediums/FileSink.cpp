@@ -14,6 +14,7 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Formats/ArrowFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,7 +22,6 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include <Sinks/Formats/ArrowFormat.hpp>
 
 namespace NES {
 
@@ -55,7 +55,7 @@ FileSink::FileSink(SinkFormatPtr format,
     NES_DEBUG("FileSink: open file= {}", filePath);
 
     // only open the file stream if it is not an arrow file
-    if(sinkFormat->getSinkFormat() != FormatTypes::ARROW_IPC_FORMAT) {
+    if (sinkFormat->getSinkFormat() != FormatTypes::ARROW_IPC_FORMAT) {
         if (!outputFile.is_open()) {
             outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
         }
@@ -69,7 +69,7 @@ FileSink::FileSink(SinkFormatPtr format,
         // thus interpret the file differently with different extension
         // the MIME types for arrow files are ".arrow" for file format, and ".arrows" for streaming file format
         // see https://arrow.apache.org/faq/
-        if(!(filePath.find(".arrows"))) {
+        if (!(filePath.find(".arrows"))) {
             NES_WARNING("FileSink: An arrow ipc file without '.arrows' extension created as a file sink.");
         }
     }
@@ -106,7 +106,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
 std::string FileSink::getFilePath() const { return filePath; }
 
-bool FileSink::writeDataToFile(Runtime::TupleBuffer &inputBuffer) {
+bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
     NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
               toString(),
@@ -126,7 +126,9 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer &inputBuffer) {
                 uint64_t idx = filePath.rfind('.');
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
-                NES_TRACE("FileSink::writeDataToFile: schema is ={} to file={}", sinkFormat->getSchemaPtr()->toString(), schemaFile);
+                NES_TRACE("FileSink::writeDataToFile: schema is ={} to file={}",
+                          sinkFormat->getSchemaPtr()->toString(),
+                          schemaFile);
                 outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
             } else {
                 outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
@@ -162,7 +164,7 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer &inputBuffer) {
 }
 
 #ifdef ENABLE_ARROW_BUILD
-bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer &inputBuffer) {
+bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
 
     // preliminary checks
@@ -185,7 +187,7 @@ bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer &inputBuffer) {
     std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter;
     arrow::Status openStatus = openArrowFile(outfileArrow, arrowSchema, arrowWriter);
 
-    if(!openStatus.ok()) {
+    if (!openStatus.ok()) {
         return false;
     }
 
@@ -193,7 +195,8 @@ bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer &inputBuffer) {
     std::vector<std::shared_ptr<arrow::Array>> arrowArrays = arrowFormat->getArrowArrays(inputBuffer);
 
     // make a record batch
-    std::shared_ptr<arrow::RecordBatch> recordBatch = arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
+    std::shared_ptr<arrow::RecordBatch> recordBatch =
+        arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
 
     // write the record batch
     auto write = arrowWriter->WriteRecordBatch(*recordBatch);
@@ -214,6 +217,6 @@ arrow::Status FileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStrea
     ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
     return arrow::Status::OK();
 }
-#endif //ENABLE_ARROW_BUILD
+#endif//ENABLE_ARROW_BUILD
 
 }// namespace NES

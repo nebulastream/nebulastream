@@ -15,9 +15,9 @@
 #ifdef ENABLE_ARROW_BUILD
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/ArrowFormat.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -293,7 +293,8 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                             auto indexInBuffer = buffer + offset + rowIndex * schema->getSchemaSizeInBytes();
 
                             // read the child buffer index from the tuple buffer
-                            Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                            Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
+                                *reinterpret_cast<uint32_t const*>(indexInBuffer);
 
                             // retrieve the child buffer from the tuple buffer
                             auto childTupleBuffer = inputBuffer.loadChildBuffer(childIdx);
@@ -361,7 +362,8 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
             }
         } catch (const std::exception& e) {
             NES_ERROR("ArrowFormat::getArrowArrays: Failed to convert the arrowArray to desired NES data type. "
-                      "Error: {}", e.what());
+                      "Error: {}",
+                      e.what());
         }
         offset += fieldSize;
     }
@@ -454,4 +456,4 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
 }
 
 }// namespace NES
-#endif //ENABLE_ARROW_BUILD
+#endif//ENABLE_ARROW_BUILD

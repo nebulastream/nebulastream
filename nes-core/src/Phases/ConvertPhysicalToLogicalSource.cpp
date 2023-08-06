@@ -124,7 +124,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Arrow File source");
             const ArrowSourcePtr arrowSourcePtr = std::dynamic_pointer_cast<ArrowSource>(dataSource);
             const SourceDescriptorPtr arrowSourceDescriptor =
-                    ArrowSourceDescriptor::create(arrowSourcePtr->getSchema(), arrowSourcePtr->getSourceConfig());
+                ArrowSourceDescriptor::create(arrowSourcePtr->getSchema(), arrowSourcePtr->getSourceConfig());
             return arrowSourceDescriptor;
         }
 #endif

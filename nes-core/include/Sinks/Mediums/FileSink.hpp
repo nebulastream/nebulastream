@@ -126,7 +126,6 @@ class FileSink : public SinkMedium {
                                 std::shared_ptr<arrow::Schema> arrowSchema,
                                 std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
 #endif
-
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

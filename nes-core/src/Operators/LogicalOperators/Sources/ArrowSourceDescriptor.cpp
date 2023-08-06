@@ -21,42 +21,36 @@ ArrowSourceDescriptor::ArrowSourceDescriptor(SchemaPtr schema,
                                              ArrowSourceTypePtr sourceConfig,
                                              std::string logicalSourceName,
                                              std::string physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName),
-      arrowSourceType(std::move(sourceConfig)) {}
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), arrowSourceType(std::move(sourceConfig)) {}
 
 SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema,
                                                   ArrowSourceTypePtr arrowSourceType,
                                                   const std::string logicalSourceName,
                                                   const std::string physicalSourceName) {
-  return std::make_shared<ArrowSourceDescriptor>(
-      ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), logicalSourceName, physicalSourceName));
+    return std::make_shared<ArrowSourceDescriptor>(
+        ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), logicalSourceName, physicalSourceName));
 }
 
 SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType) {
-  return std::make_shared<ArrowSourceDescriptor>(ArrowSourceDescriptor(std::move(schema),
-                                                                       std::move(arrowSourceType),
-                                                                       "",
-                                                                       ""));
+    return std::make_shared<ArrowSourceDescriptor>(ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), "", ""));
 }
 
 ArrowSourceTypePtr ArrowSourceDescriptor::getSourceConfig() const { return arrowSourceType; }
 
-bool ArrowSourceDescriptor::equal(SourceDescriptorPtr const &other) const {
-  if (!other->instanceOf<ArrowSourceDescriptor>()) {
-    return false;
-  }
-  auto otherSource = other->as<ArrowSourceDescriptor>();
-  return arrowSourceType->equal(otherSource->getSourceConfig());
+bool ArrowSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
+    if (!other->instanceOf<ArrowSourceDescriptor>()) {
+        return false;
+    }
+    auto otherSource = other->as<ArrowSourceDescriptor>();
+    return arrowSourceType->equal(otherSource->getSourceConfig());
 }
 
-std::string ArrowSourceDescriptor::toString() const {
-  return "ArrowSourceDescriptor(" + arrowSourceType->toString() + ")";
-}
+std::string ArrowSourceDescriptor::toString() const { return "ArrowSourceDescriptor(" + arrowSourceType->toString() + ")"; }
 
 SourceDescriptorPtr ArrowSourceDescriptor::copy() {
-  auto copy = ArrowSourceDescriptor::create(schema->copy(), arrowSourceType, logicalSourceName, physicalSourceName);
-  copy->setPhysicalSourceName(physicalSourceName);
-  return copy;
+    auto copy = ArrowSourceDescriptor::create(schema->copy(), arrowSourceType, logicalSourceName, physicalSourceName);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
 }
 
 }// namespace NES

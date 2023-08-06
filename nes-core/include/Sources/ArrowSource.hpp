@@ -72,7 +72,7 @@ class ArrowSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &);
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
 
     /**
      * @brief override the toString method for the Arrow source
@@ -95,7 +95,7 @@ class ArrowSource : public DataSource {
      * @brief getter for source config
      * @return arrowSourceType1
      */
-    const ArrowSourceTypePtr &getSourceConfig() const;
+    const ArrowSourceTypePtr& getSourceConfig() const;
 
   protected:
     bool fileEnded;
@@ -110,7 +110,7 @@ class ArrowSource : public DataSource {
     ArrowParserPtr inputParser;
 
     // arrow related data structures and helper functions
-// TODO #4083: these should move to an ArrowWrapper when we support other formats from Arrow
+    // TODO #4083: these should move to an ArrowWrapper when we support other formats from Arrow
     // Arrow status returns at every operation also do not play well currently
     std::shared_ptr<arrow::io::ReadableFile> inputFile;
     // A record batch in Arrow is two-dimensional data structure that is semantically a sequence
@@ -144,7 +144,7 @@ class ArrowSource : public DataSource {
      * @return returns true if success
      */
     void writeRecordBatchToTupleBuffer(uint64_t tupleCount,
-                                       Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
+                                       Runtime::MemoryLayouts::DynamicTupleBuffer& buffer,
                                        std::shared_ptr<arrow::RecordBatch> recordBatch);
 
     /**
@@ -157,7 +157,7 @@ class ArrowSource : public DataSource {
      */
     void writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                                       uint64_t schemaFieldIndex,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer &tupleBuffer,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const std::shared_ptr<arrow::Array> arrowArray);
 };
 

@@ -323,7 +323,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
 #endif
 #ifdef ENABLE_ARROW_BUILD
-            case SourceType::ARROW_SOURCE: {
+        case SourceType::ARROW_SOURCE: {
             auto arrowSourceType = physicalSourceType->as<ArrowSourceType>();
             return ArrowSourceDescriptor::create(schema, arrowSourceType);
         }
