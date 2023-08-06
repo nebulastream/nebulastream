@@ -29,11 +29,10 @@ class StagingHandler : public OperatorHandler {
 public:
     /**
      * @brief Constructor.
-     * @param memoryProvider the memory layout that describes the tuple buffer.
-     * @param tupleBufferAddress the memory address of the tuple buffer.
+     * @param tupleBuffer the tuple buffer.
      * @param stageBufferCapacity the maximum number of tuples to store in the tuple buffer.
      */
-    StagingHandler(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, const Value<MemRef>& tupleBufferAddress, uint64_t stageBufferCapacity);
+    StagingHandler(std::unique_ptr<TupleBuffer> tupleBuffer, uint64_t stageBufferCapacity);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
@@ -41,12 +40,6 @@ public:
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-
-    /**
-     * @brief Write a record to the tuple buffer. This method increases the number of tuples as well as the current write position by one.
-     * @param record the record to materialize
-     */
-    void addRecord(Record& record);
 
     /**
      * @brief Set the current write position to zero.
@@ -60,17 +53,25 @@ public:
     bool full() const;
 
     /**
-     * @brief Get the reference to the tuple buffer.
-     * @return Value<MemRef>
+     * @return Get a raw pointer to the tuple staging buffer.
      */
-    const Value<MemRef>& getTupleBufferReference() const;
+    TupleBuffer* getTupleBuffer() const;
+
+    /**
+     * @return Get the current offset for writing to the staging buffer.
+     */
+    uint64_t getCurrentWritePosition() const;
+
+    /**
+     * @return Increment the current write offset of the staging buffer.
+     */
+    void incrementWritePosition();
 
 private:
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    Value<MemRef> tupleBufferAddress;
+    std::unique_ptr<TupleBuffer> tupleBuffer;
     uint64_t stageBufferCapacity;
-    RecordBuffer recordBuffer;
-    Value<UInt64> currentWritePosition;
+    uint64_t currentWritePosition;
 };
 
 } // namespace NES::Runtime::Execution::Operators
