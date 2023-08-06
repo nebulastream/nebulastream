@@ -45,11 +45,13 @@ class LowerPhysicalToNautilusOperators {
   public:
     /**
      * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
+     * @param options the query compiler options
      */
     explicit LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options);
 
     /**
      * @brief Create a LowerPhysicalToGeneratableOperatorPhase
+     * @param options the query compiler options
      */
     static std::shared_ptr<LowerPhysicalToNautilusOperators> create(const QueryCompilation::QueryCompilerOptionsPtr& options);
 

@@ -11,15 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AddScanAndEmitPhase.cpp
-        PhaseFactory.cpp
-        DefaultPhaseFactory.cpp
-        BufferOptimizationPhase.cpp
-        NautilusCompilationPhase.cpp
-        )
-
-add_subdirectory(Pipelining)
-add_subdirectory(Translations)
-add_subdirectory(Experimental)
-
+add_subdirectory(Vectorization)
