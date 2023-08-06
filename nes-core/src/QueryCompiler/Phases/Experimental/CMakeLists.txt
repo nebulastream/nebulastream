@@ -11,17 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        AddScanAndEmitPhase.cpp
-        PhaseFactory.cpp
-        DefaultPhaseFactory.cpp
-        CodeGenerationPhase.cpp
-        BufferOptimizationPhase.cpp
-        PredicationOptimizationPhase.cpp
-        NautilusCompilationPhase.cpp
-        )
-
-add_subdirectory(Pipelining)
-add_subdirectory(Translations)
-add_subdirectory(Experimental)
-
+add_subdirectory(Vectorization)

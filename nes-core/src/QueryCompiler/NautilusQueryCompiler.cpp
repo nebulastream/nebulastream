@@ -22,6 +22,7 @@
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/Experimental/Vectorization/LowerPhysicalToVectorizedOperatorsPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
@@ -41,12 +42,18 @@ namespace NES::QueryCompilation {
 NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompilerOptionsPtr& options,
                                              const Phases::PhaseFactoryPtr& phaseFactory,
                                              bool sourceSharing)
-    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
-      lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options)),
-      compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options)),
-      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
-      pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
-      addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
+    : QueryCompiler(options)
+    , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
+    , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
+    , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
+    , lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing))
+    , pipeliningPhase(phaseFactory->createPipeliningPhase(options))
+    , addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options))
+    , lowerPhysicalToVectorizedOperatorsPhase(std::make_shared<Experimental::LowerPhysicalToVectorizedOperatorsPhase>(options))
+    , sourceSharing(sourceSharing)
+{
+
+}
 
 QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                                Phases::PhaseFactoryPtr const& phaseFactory,
@@ -83,6 +90,10 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
+
+        pipelinedQueryPlan = lowerPhysicalToVectorizedOperatorsPhase->apply(pipelinedQueryPlan);
+        timer.snapshot("AfterToVectorizedPhase");
+
         auto nodeEngine = request->getNodeEngine();
         auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
         pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
