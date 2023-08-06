@@ -25,8 +25,10 @@ namespace NES {
  */
 class ArrowSourceDescriptor : public SourceDescriptor {
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType,
-                                      const std::string logicalSourceName, const std::string physicalSourceName);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      ArrowSourceTypePtr arrowSourceType,
+                                      const std::string logicalSourceName,
+                                      const std::string physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
 
@@ -35,7 +37,7 @@ class ArrowSourceDescriptor : public SourceDescriptor {
      */
     ArrowSourceTypePtr getSourceConfig() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) const override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
     std::string toString() const override;
 

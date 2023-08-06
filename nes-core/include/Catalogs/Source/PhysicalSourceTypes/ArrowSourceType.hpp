@@ -65,7 +65,7 @@ class ArrowSourceType : public PhysicalSourceType {
      * @param other arrowSourceType to check for equality
      * @return true if equal, false otherwise
      */
-    bool equal(PhysicalSourceTypePtr const &other) override;
+    bool equal(PhysicalSourceTypePtr const& other) override;
 
     void reset() override;
 
@@ -102,8 +102,7 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
      */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>>
-    getNumberOfTuplesToProducePerBuffer() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief Get gathering mode
@@ -126,7 +125,7 @@ class ArrowSourceType : public PhysicalSourceType {
      */
     void setNumberOfTuplesToProducePerBuffer(const uint32_t numberOfTuplesToProducePerBuffer);
 
-private:
+  private:
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */

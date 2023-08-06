@@ -62,12 +62,11 @@ ArrowSource::ArrowSource(SchemaPtr schema,
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     struct Deleter {
-        void operator()(const char *ptr) { std::free(const_cast<char *>(ptr)); }
+        void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
-    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char *>(realpath(filePath.c_str(), nullptr)));
+    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
     if (path == nullptr) {
-        NES_THROW_RUNTIME_ERROR(
-                "ArrowSource::ArrowSource: Could not determine absolute pathname: " << filePath.c_str());
+        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource: Could not determine absolute pathname: " << filePath.c_str());
     }
 
     auto openFileStatus = openFile();
@@ -78,13 +77,13 @@ ArrowSource::ArrowSource(SchemaPtr schema,
 
     NES_DEBUG("ArrowSource: Opened Arrow IPC file {}", path.get());
     NES_DEBUG("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-               this->tupleSize,
-               this->gatheringInterval.count(),
-               this->numberOfBuffersToProduce,
-               this->numberOfTuplesToProducePerBuffer);
+              this->tupleSize,
+              this->gatheringInterval.count(),
+              this->numberOfBuffersToProduce,
+              this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr &field: schema->fields) {
+    for (const AttributeFieldPtr& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
@@ -104,16 +103,15 @@ std::optional<Runtime::TupleBuffer> ArrowSource::receiveData() {
 
 std::string ArrowSource::toString() const {
     std::stringstream ss;
-    ss << "ARROW_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq="
-       << this->gatheringInterval.count()
+    ss << "ARROW_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
        << "ms"
        << " numBuff=" << this->numberOfBuffersToProduce << ")";
     return ss.str();
 }
 
-void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer) {
+void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     // make sure that we have a batch to read
-    if(currentRecordBatch == nullptr) {
+    if (currentRecordBatch == nullptr) {
         readNextBatch();
     }
 
@@ -123,8 +121,7 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
         return;
     }
 
-    NES_TRACE("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(),
-               fileSize);
+    NES_TRACE("ArrowSource::fillBuffer: start at record_batch={} fileSize={}", currentRecordBatch->ToString(), fileSize);
 
     uint64_t generatedTuplesThisPass = 0;
 
@@ -159,10 +156,11 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
             readNextBatch();
 
             // only continue if the file has not ended
-            if(this->fileEnded == true) break;
+            if (this->fileEnded == true)
+                break;
 
             // case when we have to write the whole batch to the tuple buffer
-            if((tupleCount + currentRecordBatch->num_rows()) <= generatedTuplesThisPass) {
+            if ((tupleCount + currentRecordBatch->num_rows()) <= generatedTuplesThisPass) {
                 writeRecordBatchToTupleBuffer(tupleCount, buffer, currentRecordBatch);
                 tupleCount += currentRecordBatch->num_rows();
             }
@@ -189,17 +187,15 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer &buffer)
     buffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    NES_TRACE("ArrowSource::fillBuffer: reading finished read {} tuples",
-               tupleCount);
-    NES_TRACE("ArrowSource::fillBuffer: read produced buffer=  {}",
-               Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_TRACE("ArrowSource::fillBuffer: reading finished read {} tuples", tupleCount);
+    NES_TRACE("ArrowSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType ArrowSource::getType() const { return SourceType::ARROW_SOURCE; }
 
 std::string ArrowSource::getFilePath() const { return filePath; }
 
-const ArrowSourceTypePtr &ArrowSource::getSourceConfig() const { return arrowSourceType; }
+const ArrowSourceTypePtr& ArrowSource::getSourceConfig() const { return arrowSourceType; }
 
 arrow::Status ArrowSource::openFile() {
     // the macros initialize the file and recordBatchReader
@@ -216,19 +212,18 @@ void ArrowSource::readNextBatch() {
     auto readStatus = recordBatchStreamReader->ReadNext(&currentRecordBatch);
 
     // check if file has ended
-    if(currentRecordBatch == nullptr) {
+    if (currentRecordBatch == nullptr) {
         this->fileEnded = true;
         NES_TRACE("ArrowSource::readNextBatch: file has ended.");
         return;
     }
 
     // check if there was some error reading the batch
-    if(!readStatus.ok()) {
+    if (!readStatus.ok()) {
         NES_THROW_RUNTIME_ERROR("ArrowSource::fillBuffer: error reading recordBatch: " << readStatus.ToString());
     }
 
-    NES_TRACE("ArrowSource::readNextBatch: read the following record batch {}",
-               currentRecordBatch->ToString());
+    NES_TRACE("ArrowSource::readNextBatch: read the following record batch {}", currentRecordBatch->ToString());
 }
 
 // TODO move all logic below to Parser / Format?
@@ -236,7 +231,7 @@ void ArrowSource::readNextBatch() {
 // is(are) column-oriented. Instead of reconstructing each tuple due to high reconstruction cost, we instead retrieve
 // each column from the arrow RecordBatch and then write out the whole column in the tuple buffer.
 void ArrowSource::writeRecordBatchToTupleBuffer(uint64_t tupleCount,
-                                                Runtime::MemoryLayouts::DynamicTupleBuffer &buffer,
+                                                Runtime::MemoryLayouts::DynamicTupleBuffer& buffer,
                                                 std::shared_ptr<arrow::RecordBatch> recordBatch) {
     auto fields = schema->fields;
     uint64_t numberOfSchemaFields = schema->getSize();
@@ -254,7 +249,7 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                                                uint64_t schemaFieldIndex,
                                                Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                                const std::shared_ptr<arrow::Array> arrowArray) {
-    if(arrowArray == nullptr) {
+    if (arrowArray == nullptr) {
         NES_THROW_RUNTIME_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: arrowArray is null.");
     }
 
@@ -275,8 +270,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
             switch (basicPhysicalType->nativeType) {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT8,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT8 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT8 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int8_t type
                     auto values = std::static_pointer_cast<arrow::Int8Array>(arrowArray);
@@ -291,8 +287,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_16: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT16,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT16 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT16 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int16_t type
                     auto values = std::static_pointer_cast<arrow::Int16Array>(arrowArray);
@@ -307,8 +304,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_32: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT32,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT32 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT32 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int8_t type
                     auto values = std::static_pointer_cast<arrow::Int32Array>(arrowArray);
@@ -323,8 +321,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::INT_64: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::INT64,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT64 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent INT64 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the int64_t type
                     auto values = std::static_pointer_cast<arrow::Int64Array>(arrowArray);
@@ -339,8 +338,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_8: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT8,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT8 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT8 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint8_t type
                     auto values = std::static_pointer_cast<arrow::UInt8Array>(arrowArray);
@@ -355,8 +355,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT16,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT16 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT16 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint16_t type
                     auto values = std::static_pointer_cast<arrow::UInt16Array>(arrowArray);
@@ -371,8 +372,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_32: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT32,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT32 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT32 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint32_t type
                     auto values = std::static_pointer_cast<arrow::UInt32Array>(arrowArray);
@@ -387,8 +389,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_64: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::UINT64,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT64 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent UINT64 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the uint64_t type
                     auto values = std::static_pointer_cast<arrow::UInt64Array>(arrowArray);
@@ -403,8 +406,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::FLOAT: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::FLOAT,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the float type
                     auto values = std::static_pointer_cast<arrow::FloatArray>(arrowArray);
@@ -419,8 +423,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::DOUBLE: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::DOUBLE,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT64 data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent FLOAT64 data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the float64 type
                     auto values = std::static_pointer_cast<arrow::DoubleArray>(arrowArray);
@@ -440,8 +445,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::STRING,
-                       "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types. Type found"
-                       " in IPC file: " + arrowArray->type()->ToString());
+                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types. Type found"
+                                    " in IPC file: "
+                                        + arrowArray->type()->ToString());
 
                     // cast the arrow array to the string type
                     auto values = std::static_pointer_cast<arrow::StringArray>(arrowArray);
@@ -456,9 +462,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                         auto childTupleBuffer = allocateVariableLengthField(localBufferManager, totalSize);
 
                         NES_ASSERT2_FMT(
-                                childTupleBuffer.getBufferSize() >= totalSize,
-                                "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
-                                "sufficient space available. Required space: "
+                            childTupleBuffer.getBufferSize() >= totalSize,
+                            "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
+                            "sufficient space available. Required space: "
                                 << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
 
                         // write out the length and the variable-sized text to the child buffer
@@ -475,7 +481,9 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::BOOL,
                                     "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent BOOL data types. Type found"
-                                    " in file : " + arrowArray->type()->ToString() + ", and type id: " + std::to_string(arrowArray->type()->id()));
+                                    " in file : "
+                                        + arrowArray->type()->ToString()
+                                        + ", and type id: " + std::to_string(arrowArray->type()->id()));
 
                     // cast the arrow array to the boolean type
                     auto values = std::static_pointer_cast<arrow::BooleanArray>(arrowArray);
