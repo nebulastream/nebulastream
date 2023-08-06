@@ -42,7 +42,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
                                              const Phases::PhaseFactoryPtr& phaseFactory,
                                              bool sourceSharing)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
-      lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>()),
+      lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options)),
       compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),

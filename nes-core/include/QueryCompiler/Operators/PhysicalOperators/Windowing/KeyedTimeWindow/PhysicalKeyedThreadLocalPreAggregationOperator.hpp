@@ -18,7 +18,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 namespace NES::Runtime::Execution::Operators {
 class KeyedSlicePreAggregationHandler;
-}
+class KeyedBucketPreAggregationHandler;
+}// namespace NES::Runtime::Execution::Operators
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
@@ -28,7 +29,8 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     using WindowHandlerType = std::variant<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr,
-                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>;
+                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>,
+                                           std::shared_ptr<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>>;
     PhysicalKeyedThreadLocalPreAggregationOperator(OperatorId id,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,

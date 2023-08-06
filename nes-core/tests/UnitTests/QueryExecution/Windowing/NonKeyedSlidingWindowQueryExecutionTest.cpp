@@ -32,7 +32,7 @@ constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode:
 
 class NonKeyedSlidingWindowQueryExecutionTest
     : public Testing::TestWithErrorHandling,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::WindowingStrategy> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NonKeyedTumblingWindowQueryExecutionTest.cpp.log", NES::LogLevel::LOG_DEBUG);
@@ -41,8 +41,13 @@ class NonKeyedSlidingWindowQueryExecutionTest
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        auto windowStrategy = this->GetParam();
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+            dumpMode,
+            1,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            windowStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -103,7 +108,8 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testNonKeyedSlidingWindow,
                         NonKeyedSlidingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL,
+                                          QueryCompilation::QueryCompilerOptions::WindowingStrategy::BUCKET),
                         [](const testing::TestParamInfo<NonKeyedSlidingWindowQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

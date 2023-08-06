@@ -13,6 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
@@ -635,11 +637,21 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
 
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        keyedOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-                timeBasedWindowType->getSize().getTime(),
-                timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds());
+
+
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+            keyedOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+            keyedOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        }
     }
 
     return keyedOperatorHandlers;
@@ -670,11 +682,19 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
             std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
 
-        globalOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
-                timeBasedWindowType->getSize().getTime(),
-                timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds());
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+            globalOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+            globalOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        }
     }
 
     return globalOperatorHandlers;
@@ -690,7 +710,7 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                           windowOutputSchema,
@@ -727,7 +747,7 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalNonKeyedTumblingWindowSink::create(windowInputSchema,
                                                                              windowOutputSchema,
@@ -858,7 +878,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                                                 + windowDefinition->getWindowType()->toString());
             }
         }
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL
+            || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
