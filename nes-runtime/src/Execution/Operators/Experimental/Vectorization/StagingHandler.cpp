@@ -14,14 +14,14 @@
 
 #include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
 
+#include <Runtime/TupleBuffer.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
-StagingHandler::StagingHandler(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, const Value<MemRef>& tupleBufferAddress, uint64_t stageBufferCapacity)
-    : memoryProvider(std::move(memoryProvider))
-    , tupleBufferAddress(tupleBufferAddress)
+StagingHandler::StagingHandler(std::unique_ptr<TupleBuffer> tupleBuffer, uint64_t stageBufferCapacity)
+    : tupleBuffer(std::move(tupleBuffer))
     , stageBufferCapacity(stageBufferCapacity)
-    , recordBuffer(tupleBufferAddress)
-    , currentWritePosition((uint64_t) 0)
+    , currentWritePosition(0)
 {
 
 }
@@ -32,23 +32,26 @@ void StagingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runt
 void StagingHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
 }
 
-void StagingHandler::addRecord(Record& record) {
-    auto writeAddress = recordBuffer.getBuffer();
-    memoryProvider->write(currentWritePosition, writeAddress, record);
-    currentWritePosition = currentWritePosition + (uint64_t) 1;
-    recordBuffer.setNumRecords(currentWritePosition);
-}
-
 void StagingHandler::reset() {
-    currentWritePosition = (uint64_t) 0;
+    currentWritePosition = 0;
 }
 
 bool StagingHandler::full() const {
     return currentWritePosition >= stageBufferCapacity;
 }
 
-const Value<MemRef>& StagingHandler::getTupleBufferReference() const {
-    return tupleBufferAddress;
+TupleBuffer* StagingHandler::getTupleBuffer() const {
+    return tupleBuffer.get();
+}
+
+uint64_t StagingHandler::getCurrentWritePosition() const {
+    return currentWritePosition;
+}
+
+void StagingHandler::incrementWritePosition() {
+    // TODO Modification to the write position depends on the schema.
+    currentWritePosition = currentWritePosition + 1;
+    tupleBuffer->setNumberOfTuples(currentWritePosition);
 }
 
 } // namespace NES::Runtime::Execution::Operators
