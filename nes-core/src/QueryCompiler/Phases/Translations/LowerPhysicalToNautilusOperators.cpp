@@ -39,6 +39,10 @@
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
@@ -95,6 +99,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -113,12 +118,13 @@
 
 namespace NES::QueryCompilation {
 
-std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators::create() {
-    return std::make_shared<LowerPhysicalToNautilusOperators>();
+std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators::create(
+    const QueryCompilation::QueryCompilerOptionsPtr& options) {
+    return std::make_shared<LowerPhysicalToNautilusOperators>(options);
 }
 
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators()
-    : expressionProvider(std::make_unique<ExpressionProvider>()) {}
+LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options)
+    : options(options), expressionProvider(std::make_unique<ExpressionProvider>()) {}
 
 PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
@@ -561,7 +567,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow) {
+    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions,
             startTs,
@@ -622,7 +628,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow) {
+    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
             aggregationFunctions,
             startTs,
@@ -679,20 +685,34 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>();
-    auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>(
-        physicalGTLPAO->getWindowHandler());
-    operatorHandlers.emplace_back(handler);
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeFunction = lowerTimeFunction(timeWindow);
-    auto sliceMergingOperator =
-        std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(operatorHandlers.size() - 1,
-                                                                                     std::move(timeFunction),
-                                                                                     aggregationFunctions);
-    return sliceMergingOperator;
+
+    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>(
+            physicalGTLPAO->getWindowHandler());
+        operatorHandlers.emplace_back(handler);
+        auto slicePreAggregation =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(operatorHandlers.size() - 1,
+                                                                                         std::move(timeFunction),
+                                                                                         aggregationFunctions);
+        return slicePreAggregation;
+    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+
+        auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>>(
+            physicalGTLPAO->getWindowHandler());
+        operatorHandlers.emplace_back(handler);
+        auto bucketPreAggregation =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregation>(operatorHandlers.size() - 1,
+                                                                                          std::move(timeFunction),
+                                                                                          aggregationFunctions);
+        return bucketPreAggregation;
+    }
+    NES_NOT_IMPLEMENTED();
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
@@ -701,9 +721,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>();
-    auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>(
-        physicalGTLPAO->getWindowHandler());
-    operatorHandlers.emplace_back(handler);
+
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = windowDefinition->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
@@ -719,14 +737,33 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
-        operatorHandlers.size() - 1,
-        std::move(timeFunction),
-        keyReadExpressions,
-        keyDataTypes,
-        aggregationFunctions,
-        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-    return sliceMergingOperator;
+    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>(
+            physicalGTLPAO->getWindowHandler());
+        operatorHandlers.emplace_back(handler);
+        auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
+            operatorHandlers.size() - 1,
+            std::move(timeFunction),
+            keyReadExpressions,
+            keyDataTypes,
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        return sliceMergingOperator;
+    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>>(
+            physicalGTLPAO->getWindowHandler());
+        operatorHandlers.emplace_back(handler);
+        auto bucketPreAggregation = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregation>(
+            operatorHandlers.size() - 1,
+            std::move(timeFunction),
+            keyReadExpressions,
+            keyDataTypes,
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        return bucketPreAggregation;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

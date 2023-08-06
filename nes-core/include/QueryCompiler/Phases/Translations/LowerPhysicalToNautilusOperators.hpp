@@ -42,12 +42,12 @@ class LowerPhysicalToNautilusOperators {
     /**
      * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
      */
-    explicit LowerPhysicalToNautilusOperators();
+    explicit LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options);
 
     /**
      * @brief Create a LowerPhysicalToGeneratableOperatorPhase
      */
-    static std::shared_ptr<LowerPhysicalToNautilusOperators> create();
+    static std::shared_ptr<LowerPhysicalToNautilusOperators> create(const QueryCompilation::QueryCompilerOptionsPtr& options);
 
     /**
      * @brief Applies the phase on a pipelined query plan.
@@ -167,6 +167,7 @@ class LowerPhysicalToNautilusOperators {
 #endif
 
   private:
+    const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
 }// namespace NES::QueryCompilation

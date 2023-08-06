@@ -10,13 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(NonKeyedTimeWindow)
-add_subdirectory(KeyedTimeWindow)
-add_subdirectory(Buckets)
-
 add_source_files(nes-runtime
-        WindowProcessingException.cpp
-        SlidingWindowSliceStore.cpp
-        AppendToSliceStoreAction.cpp
-        AbstractSlicePreAggregationHandler.cpp
+        AbstractBucketPreAggregationHandler.cpp
+        NonKeyedBucketPreAggregation.cpp
+        NonKeyedBucketPreAggregationHandler.cpp
+        NonKeyedBucketStore.cpp
+        KeyedBucketStore.cpp
+        KeyedBucketPreAggregationHandler.cpp
+        KeyedBucketPreAggregation.cpp
 )

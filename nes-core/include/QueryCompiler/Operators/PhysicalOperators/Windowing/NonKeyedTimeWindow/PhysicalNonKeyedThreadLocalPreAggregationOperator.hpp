@@ -19,7 +19,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 class NonKeyedSlicePreAggregationHandler;
-}
+class NonKeyedBucketPreAggregationHandler;
+}// namespace NES::Runtime::Execution::Operators
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -30,7 +31,8 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalNonKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     using WindowHandlerType = std::variant<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandlerPtr,
-                                           std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>;
+                                           std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>,
+                                           std::shared_ptr<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>>;
     PhysicalNonKeyedThreadLocalPreAggregationOperator(OperatorId id,
                                                       SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,

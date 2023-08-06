@@ -85,7 +85,8 @@ class QueryCompilerOptions {
         // Applies default windowing strategy.
         DEFAULT,
         // Applies an experimental thread local implementation for window aggregations
-        THREAD_LOCAL
+        THREAD_LOCAL,
+        BUCKET
     };
 
     enum class OutputBufferOptimizationLevel : uint8_t {
