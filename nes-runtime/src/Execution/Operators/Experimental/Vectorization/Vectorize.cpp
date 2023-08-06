@@ -74,7 +74,7 @@ void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
         if (stageBufferFull) {
             auto tupleBufferRef = Nautilus::FunctionCall("getTupleBuffer", getTupleBuffer, globalOperatorHandler);
             auto recordBuffer = RecordBuffer(tupleBufferRef);
-            auto vectorizedChild = std::dynamic_pointer_cast<VectorizableOperator>(child);
+            auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
             vectorizedChild->execute(ctx, recordBuffer);
             Nautilus::FunctionCall("resetStageBuffer", resetStageBuffer, globalOperatorHandler);
         }
