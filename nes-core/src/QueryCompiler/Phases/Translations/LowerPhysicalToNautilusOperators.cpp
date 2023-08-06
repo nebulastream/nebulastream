@@ -28,6 +28,9 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
@@ -72,6 +75,8 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
@@ -456,6 +461,36 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return inferModel;
     }
 #endif
+    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalVectorizeOperator>()) {
+        auto schema = operatorNode->getOutputSchema();
+        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+
+        // TODO Get the capacity from a configuration option.
+        //      The actual size depends on the schema.
+        //      Hence, stageBufferSize needs to be calculated dynamically.
+        auto stageBufferSize = 1;
+        auto stageBuffer = std::make_unique<Runtime::TupleBuffer>(nodeEngine->getBufferManager()->getBufferBlocking());
+        auto stageBufferMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
+            std::move(stageBuffer),
+            stageBufferSize
+        );
+        operatorHandlers.push_back(handler);
+        uint64_t handlerIndex = operatorHandlers.size() - 1;
+
+        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto vectorize = std::make_shared<Runtime::Execution::Operators::Vectorize>(handlerIndex, std::move(memoryProvider));
+        parentOperator->setChild(vectorize);
+        return vectorize;
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
+        auto schema = operatorNode->getOutputSchema();
+        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
+        parentOperator->setChild(unvectorize);
+        return unvectorize;
+    }
     NES_NOT_IMPLEMENTED();
 }
 
