@@ -28,8 +28,8 @@
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -53,7 +53,6 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                  const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                  const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                                 const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration)
     : queryProcessorRunning(true), queryCatalogService(queryCatalogService), queryRequestQueue(std::move(queryRequestQueue)),
@@ -78,8 +77,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryDeploymentPhase =
-        QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
-    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+        QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
 }
 
 void RequestProcessorService::start() {

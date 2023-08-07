@@ -250,7 +250,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
     ReplicationServicePtr replicationService;
-    WorkerRPCClientPtr workerRpcClient;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;

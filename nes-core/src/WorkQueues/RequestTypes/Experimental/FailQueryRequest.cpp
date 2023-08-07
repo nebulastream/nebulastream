@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -23,25 +24,21 @@
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <utility>
 
 namespace NES::Experimental {
 FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
-                                   const uint8_t maxRetries,
-                                   NES::WorkerRPCClientPtr workerRpcClient)
+                                   const uint8_t maxRetries)
     : AbstractRequest({ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
                       maxRetries),
-      queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
+      queryId(queryId), querySubPlanId(failedSubPlanId) {}
 
-std::shared_ptr<FailQueryRequest> FailQueryRequest::create(NES::QueryId queryId,
-                                                           NES::QuerySubPlanId failedSubPlanId,
-                                                           uint8_t maxRetries,
-                                                           NES::WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries, std::move(workerRpcClient));
+std::shared_ptr<FailQueryRequest>
+FailQueryRequest::create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries) {
+    return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
 }
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
@@ -75,7 +72,7 @@ std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequ
 
     //undeploy queries
     try {
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,

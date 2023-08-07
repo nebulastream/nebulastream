@@ -47,11 +47,10 @@ class QueryUndeploymentPhase {
     /**
      * @brief Returns a smart pointer to the QueryUndeploymentPhase
      * @param globalExecutionPlan : global execution plan
-     * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryUndeploymentPhase
      */
     static QueryUndeploymentPhasePtr
-    create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
 
     /**
      * @brief method for stopping and undeploying the shared query with the given id
@@ -63,8 +62,7 @@ class QueryUndeploymentPhase {
 
   private:
     explicit QueryUndeploymentPhase(TopologyPtr topology,
-                                    GlobalExecutionPlanPtr globalExecutionPlan,
-                                    WorkerRPCClientPtr workerRpcClient);
+                                    GlobalExecutionPlanPtr globalExecutionPlan);
     /**
      * @brief method remove query from nodes
      * @param sharedQueryId : the id of the shared query plan

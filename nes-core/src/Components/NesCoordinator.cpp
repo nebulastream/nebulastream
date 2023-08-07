@@ -78,7 +78,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
-    workerRpcClient = WorkerRPCClient::create();
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -104,7 +103,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                              globalQueryPlan,
                                                                              sourceCatalog,
                                                                              udfCatalog,
-                                                                             workerRpcClient,
                                                                              queryRequestQueue,
                                                                              this->coordinatorConfiguration);
 
@@ -119,7 +117,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
     monitoringService =
-        std::make_shared<MonitoringService>(workerRpcClient, topology, queryService, queryCatalogService, enableMonitoring);
+        std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
@@ -219,7 +217,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
     healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
-                                                                         workerRpcClient,
                                                                          HEALTH_SERVICE_NAME,
                                                                          coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);

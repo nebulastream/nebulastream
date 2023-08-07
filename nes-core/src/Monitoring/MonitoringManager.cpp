@@ -45,31 +45,21 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
-                                     TopologyPtr topology,
-                                     QueryServicePtr queryService,
-                                     QueryCatalogServicePtr catalogService)
+MonitoringManager::MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr catalogService)
     : MonitoringManager(workerClient, topology, queryService, catalogService, true) {}
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
-                                     TopologyPtr topology,
+MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,
                                      QueryCatalogServicePtr catalogService,
                                      bool enableMonitoring)
-    : MonitoringManager(workerClient,
-                        topology,
-                        queryService,
-                        catalogService,
-                        std::make_shared<LatestEntriesMetricStore>(),
-                        enableMonitoring) {}
+    : MonitoringManager(topology, queryService, catalogService, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
-                                     TopologyPtr topology,
+MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,
                                      QueryCatalogServicePtr catalogService,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
-    : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring),
+    : metricStore(metricStore), workerClient(WorkerRPCClient::create()), topology(topology), enableMonitoring(enableMonitoring),
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->queryService = queryService;
     this->catalogService = catalogService;

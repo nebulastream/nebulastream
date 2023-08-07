@@ -53,13 +53,11 @@ class QueryDeploymentPhase {
     /**
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @param globalExecutionPlan : global execution plan
-     * @param workerRpcClient : rpc client to communicate with workers
      * @param queryCatalogService: query catalog service
      * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
     static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                          WorkerRPCClientPtr workerRpcClient,
                                           QueryCatalogServicePtr queryCatalogService,
                                           const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
@@ -72,7 +70,6 @@ class QueryDeploymentPhase {
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                  WorkerRPCClientPtr workerRpcClient,
                                   QueryCatalogServicePtr queryCatalogService,
                                   bool accelerateJavaUDFs,
                                   std::string accelerationServiceURL);

@@ -17,7 +17,7 @@
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -30,19 +30,14 @@
 
 namespace NES {
 
-QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology,
-                                               GlobalExecutionPlanPtr globalExecutionPlan,
-                                               WorkerRPCClientPtr workerRpcClient)
+QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan)
     : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      workerRPCClient(std::move(workerRpcClient)) {
+      workerRPCClient(WorkerRPCClient::create()) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
-                                                         GlobalExecutionPlanPtr globalExecutionPlan,
-                                                         WorkerRPCClientPtr workerRpcClient) {
-    return std::make_shared<QueryUndeploymentPhase>(
-        QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
+QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan) {
+    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan)));
 }
 
 void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
