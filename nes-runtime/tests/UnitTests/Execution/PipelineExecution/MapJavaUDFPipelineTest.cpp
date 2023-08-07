@@ -81,13 +81,13 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     }
 
     /**
- * Initializes the input buffer for numeric values.
- * @tparam T type of the numeric values
- * @param variableName name of the variable in the schema
- * @param bufferManager buffer manager
- * @param memoryLayout memory layout
- * @return input buffer
- */
+     * Initializes the input buffer for numeric values.
+     * @tparam T type of the numeric values
+     * @param variableName name of the variable in the schema
+     * @param bufferManager buffer manager
+     * @param memoryLayout memory layout
+     * @return input buffer
+     */
     template<typename T>
     auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
         auto buffer = bufferManager->getBufferBlocking();
@@ -100,15 +100,15 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     }
 
     /**
- * Initializes the map handler for the given pipeline.
- * @param className java class name of the udf
- * @param methodName method name of the udf
- * @param inputProxyName input proxy class name
- * @param outputProxyName output proxy class name
- * @param schema schema of the input and output tuples
- * @param testDataPath path to the test data containing the udf jar
- * @return operator handler
- */
+     * Initializes the map handler for the given pipeline.
+     * @param className java class name of the udf
+     * @param methodName method name of the udf
+     * @param inputProxyName input proxy class name
+     * @param outputProxyName output proxy class name
+     * @param schema schema of the input and output tuples
+     * @param testDataPath path to the test data containing the udf jar
+     * @return operator handler
+     */
     auto initMapHandler(std::string className,
                         std::string methodName,
                         std::string inputProxyName,
@@ -128,12 +128,12 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     }
 
     /**
- * Check the output buffer for numeric values.
- * @tparam T type of the numeric values
- * @param variableName name of the variable in the schema
- * @param pipelineContext pipeline context
- * @param memoryLayout memory layout
- */
+     * Check the output buffer for numeric values.
+     * @tparam T type of the numeric values
+     * @param variableName name of the variable in the schema
+     * @param pipelineContext pipeline context
+     * @param memoryLayout memory layout
+     */
     template<typename T>
     void checkBufferResult(std::string variableName, auto pipelineContext, auto memoryLayout) {
         ASSERT_EQ(pipelineContext.buffers.size(), 1);

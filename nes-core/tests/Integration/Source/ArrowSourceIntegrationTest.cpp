@@ -48,18 +48,19 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     remove(outputFilePath.c_str());
 
     // test schema with all data types
-    std::string testSchema = R"(Schema::create()->addField("field_boolean", BasicType::BOOLEAN)
-                                                ->addField("field_int8", BasicType::INT8)
-                                                ->addField("field_int16", BasicType::INT16)
-                                                ->addField("field_int32", BasicType::INT32)
-                                                ->addField("field_int64", BasicType::INT64)
-                                                ->addField("field_uint8", BasicType::UINT8)
-                                                ->addField("field_uint16", BasicType::UINT16)
-                                                ->addField("field_uint32", BasicType::UINT32)
-                                                ->addField("field_uint64", BasicType::UINT64)
-                                                ->addField("field_float", BasicType::FLOAT32)
-                                                ->addField("field_double", BasicType::FLOAT64)
-                                                ->addField("field_string", BasicType::TEXT);)";
+    auto testSchema = Schema::create()
+                          ->addField("field_boolean", BasicType::BOOLEAN)
+                          ->addField("field_int8", BasicType::INT8)
+                          ->addField("field_int16", BasicType::INT16)
+                          ->addField("field_int32", BasicType::INT32)
+                          ->addField("field_int64", BasicType::INT64)
+                          ->addField("field_uint8", BasicType::UINT8)
+                          ->addField("field_uint16", BasicType::UINT16)
+                          ->addField("field_uint32", BasicType::UINT32)
+                          ->addField("field_uint64", BasicType::UINT64)
+                          ->addField("field_float", BasicType::FLOAT32)
+                          ->addField("field_double", BasicType::FLOAT64)
+                          ->addField("field_string", BasicType::TEXT);
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -96,10 +97,13 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     // register query
-    std::string queryString =
-        R"(Query::from("arrow_data").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("arrow_data").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    "BottomUp",
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
 
