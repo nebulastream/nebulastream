@@ -159,10 +159,10 @@ QueryPlanPtr QueryParsingService::createQueryFromSQL(const std::string& queryCod
                                 "at least a source (FROM) and a sink (INTO)");
     } else {
         antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
-        Parsers::NebulaSQLLexer lexer(&input);
+        NebulaSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
-        Parsers::NebulaSQLParser parser(&tokens);
-        Parsers::NebulaSQLParser::QueryContext* tree = parser.query();
+        NebulaSQLParser parser(&tokens);
+        NebulaSQLParser::QueryContext* tree = parser.query();
         NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string {}", tree->toStringTree(&parser));
         NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
         Parsers::NebulaSQLQueryPlanCreator queryPlanCreator;

@@ -25,7 +25,7 @@
 
 namespace NES::Parsers {
 
-QueryPlanPtr buildQuery() {
+QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
     QueryPlanPtr queryPlan;
     return queryPlan;
 }
