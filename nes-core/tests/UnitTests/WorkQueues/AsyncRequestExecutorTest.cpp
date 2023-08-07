@@ -84,7 +84,7 @@ class AsyncRequestExecutorTest : public Testing::BaseUnitTest, public testing::W
   public:
     void SetUp() override {
         Base::SetUp();
-        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
         executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(GetParam(),
                                                                                                        storageDataStructures);
     }

@@ -93,8 +93,11 @@ class SerialStorageHandler : public StorageHandler {
      */
     UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
 
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
+
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

@@ -62,6 +62,9 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 
 enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
 
+class WorkerRPCClient;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
+
 class WorkerRPCClient {
   public:
     template<typename ReplayType>
@@ -79,37 +82,39 @@ class WorkerRPCClient {
         std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
     };
 
-    WorkerRPCClient() = default;
-
-    void AsyncCompleteRpc();
+    /**
+     * @brief Create instance of worker rpc client
+     * @return shared pointer to the worker RPC client
+     */
+    static WorkerRPCClientPtr create();
 
     /**
-        * @brief register a query
-        * @param address: address of node where query plan need to be registered
-        * @param query plan to register
-        * @return true if succeeded, else false
-        */
-    static bool registerQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+     * @brief register a query
+     * @param address: address of node where query plan need to be registered
+     * @param query plan to register
+     * @return true if succeeded, else false
+     */
+    bool registerQuery(const std::string& address, const QueryPlanPtr& queryPlan);
 
     /**
-    * @brief register a query asynchronously
-    * @param address: address of node where query plan need to be registered
-    * @param query plan to register
-    */
-    static void registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+     * @brief register a query asynchronously
+     * @param address: address of node where query plan need to be registered
+     * @param query plan to register
+     */
+    void registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query
      * @param queryId to unregister query
      * @return true if succeeded, else false
      */
-    static bool unregisterQuery(const std::string& address, QueryId queryId);
+    bool unregisterQuery(const std::string& address, QueryId queryId);
 
     /**
      * @brief ungregisters a query asynchronously
      * @param queryId to unregister query
      */
-    static void unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    void unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to start a already deployed query
@@ -117,14 +122,14 @@ class WorkerRPCClient {
      * @param queryId to start
      * @return bool indicating success
      */
-    static bool startQuery(const std::string& address, QueryId queryId);
+    bool startQuery(const std::string& address, QueryId queryId);
 
     /**
       * @brief method to start a already deployed query asynchronously
       * @note if query is not deploy, false is returned
       * @param queryId to start
       */
-    static void startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    void startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to stop a query
@@ -133,7 +138,7 @@ class WorkerRPCClient {
      * @param terminationType termination type of the query
      * @return bool indicating success
      */
-    static bool stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType);
+    bool stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
@@ -142,7 +147,7 @@ class WorkerRPCClient {
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
      */
-    static void stopQueryAsync(const std::string& address,
+    void stopQueryAsync(const std::string& address,
                                QueryId queryId,
                                Runtime::QueryTerminationType terminationType,
                                const CompletionQueuePtr& cq);
@@ -153,14 +158,14 @@ class WorkerRPCClient {
      * @param the monitoring plan
      * @return bool if successful
      */
-    static bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
+    bool registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param ipAddress
      * @return true if successful, else false
      */
-    static std::string requestMonitoringData(const std::string& address);
+    std::string requestMonitoringData(const std::string& address);
 
     /**
      * @brief Requests remote worker to start buffering data on a single NetworkSink identified by
@@ -171,7 +176,7 @@ class WorkerRPCClient {
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
@@ -183,7 +188,7 @@ class WorkerRPCClient {
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    static bool updateNetworkSink(const std::string& address,
+    bool updateNetworkSink(const std::string& address,
                                   uint64_t newNodeId,
                                   const std::string& newHostname,
                                   uint32_t newPort,
@@ -197,7 +202,7 @@ class WorkerRPCClient {
      * @return true if all calls returned
      * @throws RpcException: Creates RPC exception with failedRPCCalls and mode
      */
-    static void checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
+    void checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
     /**
      * @brief method to propagate new epoch timestamp to source
@@ -222,12 +227,11 @@ class WorkerRPCClient {
      * @param address: the ip address of the node
      * @return location representing the nodes location or invalid if no such location exists
      */
-    static NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
+    NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
   private:
+    WorkerRPCClient() = default;
 };
-using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
-
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

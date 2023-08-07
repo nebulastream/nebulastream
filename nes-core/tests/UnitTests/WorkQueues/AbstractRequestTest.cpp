@@ -59,6 +59,8 @@ class DummyStorageHandler : public StorageHandler {
     SourceCatalogHandle getSourceCatalogHandle(RequestId) override { return nullptr; };
 
     UDFCatalogHandle getUDFCatalogHandle(RequestId) override { return nullptr; };
+
+    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId) override { return nullptr; }
 };
 
 class AbstractRequestTest : public Testing::BaseUnitTest {

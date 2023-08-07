@@ -29,9 +29,11 @@ enum class ResourceType : uint8_t {
     GlobalExecutionPlan,
     GlobalQueryPlan,
     UdfCatalog,
+    CoordinatorConfiguration,
 };
 
 const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
+                                                    ResourceType::CoordinatorConfiguration,
                                                     ResourceType::QueryCatalogService,
                                                     ResourceType::SourceCatalog,
                                                     ResourceType::GlobalExecutionPlan,

@@ -49,7 +49,7 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     constexpr QueryId queryId = 1;
     constexpr RequestId requestId = 1;
     const uint8_t retries = 0;
-    WorkerRPCClientPtr workerRPCClient = std::make_shared<WorkerRPCClient>();
+    WorkerRPCClientPtr workerRPCClient = WorkerRPCClient::create();
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto stopQueryRequest = Experimental::StopQueryRequest::create(queryId, retries, workerRPCClient, coordinatorConfiguration);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");

@@ -116,6 +116,23 @@ class AddQueryRequest : public AbstractRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @return a smart pointer to the newly created object
      */
+    AddQueryRequest(const std::string& queryString,
+                    const Optimizer::PlacementStrategy queryPlacementStrategy,
+                    const FaultToleranceType faultTolerance,
+                    const LineageType lineage,
+                    uint8_t maxRetries,
+                    NES::WorkerRPCClientPtr workerRpcClient,
+                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+                    z3::ContextPtr z3Context);
+
+    /**
+     * @brief Constructor
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param workerRpcClient: The worker rpc client to be used during undeployment
+     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @return a smart pointer to the newly created object
+     */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     Optimizer::PlacementStrategy queryPlacementStrategy,
                     uint8_t maxRetries,

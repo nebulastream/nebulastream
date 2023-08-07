@@ -23,14 +23,15 @@
 namespace NES {
 
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures)
-    : globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
+    : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
       topology(std::move(storageDataStructures.topology)),
+      globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       queryCatalogService(std::move(storageDataStructures.queryCatalogService)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)),
-      globalExecutionPlanHolder(INVALID_REQUEST_ID), topologyHolder(INVALID_REQUEST_ID),
-      queryCatalogServiceHolder(INVALID_REQUEST_ID), globalQueryPlanHolder(INVALID_REQUEST_ID),
-      sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
+      coordinatorConfigurationHolder(INVALID_REQUEST_ID), topologyHolder(INVALID_REQUEST_ID),
+      globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogServiceHolder(INVALID_REQUEST_ID),
+      globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandler>
 TwoPhaseLockingStorageHandler::create(StorageDataStructures storageDataStructures) {
@@ -72,6 +73,7 @@ bool TwoPhaseLockingStorageHandler::isLockHolder(const RequestId requestId) {
 
 std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(const ResourceType resourceType) {
     switch (resourceType) {
+        case ResourceType::CoordinatorConfiguration: return coordinatorConfigurationHolder;
         case ResourceType::Topology: return topologyHolder;
         case ResourceType::QueryCatalogService: return queryCatalogServiceHolder;
         case ResourceType::SourceCatalog: return sourceCatalogHolder;
@@ -134,5 +136,13 @@ UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const Reques
                                                            ResourceType::UdfCatalog);
     }
     return udfCatalog;
+}
+
+CoordinatorConfigurationHandle TwoPhaseLockingStorageHandler::getCoordinatorConfiguration(RequestId requestId) {
+    if (coordinatorConfigurationHolder != requestId) {
+        throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
+                                                           ResourceType::CoordinatorConfiguration);
+    }
+    return coordinatorConfiguration;
 }
 }// namespace NES
