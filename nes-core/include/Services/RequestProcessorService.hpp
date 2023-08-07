@@ -94,7 +94,6 @@ class RequestProcessorService {
                                      const GlobalQueryPlanPtr& globalQueryPlan,
                                      const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                      const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                     const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 

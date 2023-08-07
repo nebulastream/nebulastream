@@ -18,7 +18,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -33,22 +33,19 @@
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           WorkerRPCClientPtr workerRpcClient,
                                            QueryCatalogServicePtr catalogService,
                                            bool accelerateJavaUDFs,
                                            std::string accelerationServiceURL)
-    : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)),
+    : workerRPCClient(WorkerRPCClient::create()), globalExecutionPlan(std::move(globalExecutionPlan)),
       queryCatalogService(std::move(catalogService)), accelerateJavaUDFs(accelerateJavaUDFs),
       accelerationServiceURL(std::move(accelerationServiceURL)) {}
 
 QueryDeploymentPhasePtr
 QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                             WorkerRPCClientPtr workerRpcClient,
                              QueryCatalogServicePtr catalogService,
                              const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
     return std::make_shared<QueryDeploymentPhase>(
         QueryDeploymentPhase(std::move(globalExecutionPlan),
-                             std::move(workerRpcClient),
                              std::move(catalogService),
                              coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs,
                              coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));

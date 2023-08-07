@@ -83,6 +83,7 @@ using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 struct StopQueryResponse : public AbstractRequestResponse {
     bool success;
 };
+
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
@@ -93,26 +94,16 @@ class StopQueryRequest : public AbstractRequest {
      * @brief Construct a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
      * @param maxRetries maximal number of retries to stop a query
-     * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
-     * @param coordinatorConfiguration The coordinator configuration
      */
-    StopQueryRequest(QueryId queryId,
-                     uint8_t maxRetries,
-                     WorkerRPCClientPtr workerRpcClient,
-                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+    StopQueryRequest(QueryId queryId, uint8_t maxRetries);
 
     /**
      * @brief creates a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
      * @param maxRetries maximal number of retries to stop a query
-     * @param workerRpcClient The worker rpc client to be used during undeployment and redeployment of the remaining shared query plan
-     * @param coordinatorConfiguration The coordinator configuration
      * @return a smart pointer to the newly created object
      */
-    static StopQueryRequestPtr create(QueryId queryId,
-                                      uint8_t maxRetries,
-                                      WorkerRPCClientPtr workerRpcClient,
-                                      Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+    static StopQueryRequestPtr create(QueryId queryId, uint8_t maxRetries);
 
     std::string toString();
 
@@ -157,7 +148,6 @@ class StopQueryRequest : public AbstractRequest {
     void postExecution(StorageHandler& storageHandler) override;
 
   private:
-    WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

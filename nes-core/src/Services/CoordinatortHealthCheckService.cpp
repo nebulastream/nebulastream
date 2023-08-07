@@ -22,10 +22,9 @@
 namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
-                                                             WorkerRPCClientPtr workerRPCClient,
                                                              std::string healthServiceName,
                                                              Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient),
+    : topologyManagerService(topologyManagerService), workerRPCClient(WorkerRPCClient::create()),
       coordinatorConfiguration(coordinatorConfiguration) {
     id = 9999;
     this->healthServiceName = healthServiceName;

@@ -37,15 +37,15 @@
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -62,9 +62,9 @@
 namespace NES::Experimental {
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  Optimizer::PlacementStrategy queryPlacementStrategy,
+                                 const FaultToleranceType faultTolerance,
+                                 const LineageType lineage,
                                  uint8_t maxRetries,
-                                 NES::WorkerRPCClientPtr workerRpcClient,
-                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                  z3::ContextPtr z3Context)
     : AbstractRequest({ResourceType::QueryCatalogService,
                        ResourceType::GlobalExecutionPlan,
@@ -73,21 +73,20 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::UdfCatalog,
                        ResourceType::SourceCatalog},
                       maxRetries),
-      workerRpcClient(std::move(workerRpcClient)), queryId(queryPlan->getQueryId()),
-      coordinatorConfiguration(std::move(coordinatorConfiguration)), queryPlan(queryPlan),
-      queryPlacementStrategy(queryPlacementStrategy), z3Context(std::move(z3Context)) {}
+      queryId(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
+      faultTolerance(faultTolerance), lineage(lineage), z3Context(std::move(z3Context)) {}
 
 std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                                          Optimizer::PlacementStrategy queryPlacementStrategy,
+                                                         const FaultToleranceType faultTolerance,
+                                                         const LineageType lineage,
                                                          uint8_t maxRetries,
-                                                         NES::WorkerRPCClientPtr workerRpcClient,
-                                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                                          z3::ContextPtr z3Context) {
     return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
+                                             faultTolerance,
+                                             lineage,
                                              maxRetries,
-                                             std::move(workerRpcClient),
-                                             coordinatorConfiguration,
                                              std::move(z3Context));
 }
 
@@ -142,31 +141,33 @@ void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHand
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     try {
         NES_DEBUG("Acquiring required resources.");
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
-        topology = storageHandler.getTopologyHandle(requestId);
-        queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
-        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
-        udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
-        sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
+        auto globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
+        auto topology = storageHandler.getTopologyHandle(requestId);
+        auto queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
+        auto globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
+        auto udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
+        auto sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
+        auto coordinatorConfiguration = storageHandler.getCoordinatorConfiguration(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        queryPlacementPhase =
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        auto queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
-        queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+        auto queryDeploymentPhase =
+            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-        queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
+        auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
-        sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
-        queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-        originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-        topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(this->topology, sourceCatalog, optimizerConfigurations);
-        signatureInferencePhase =
+        auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
+        auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+        auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+        auto topologySpecificQueryRewritePhase =
+            Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
+        auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-        memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
+        auto memoryLayoutSelectionPhase =
+            Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
 
         NES_DEBUG("Initializing request processing.");
         //1. Add the initial version of the query to the query catalog

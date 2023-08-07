@@ -110,48 +110,50 @@ class AddQueryRequest : public AbstractRequest {
   public:
     /**
      * @brief Constructor
+     * @param queryString: the query string
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
-     * @param workerRpcClient: The worker rpc client to be used during undeployment
-     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @return a smart pointer to the newly created object
      */
     AddQueryRequest(const std::string& queryString,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                     const FaultToleranceType faultTolerance,
                     const LineageType lineage,
                     uint8_t maxRetries,
-                    NES::WorkerRPCClientPtr workerRpcClient,
-                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                     z3::ContextPtr z3Context);
 
     /**
      * @brief Constructor
+     * @param queryPlan: the query plan
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
-     * @param workerRpcClient: The worker rpc client to be used during undeployment
-     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     * @return a smart pointer to the newly created object
      */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     Optimizer::PlacementStrategy queryPlacementStrategy,
+                    FaultToleranceType faultTolerance,
+                    LineageType lineage,
                     uint8_t maxRetries,
-                    NES::WorkerRPCClientPtr workerRpcClient,
-                    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                     z3::ContextPtr z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
+     * @param queryPlan: the query plan
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
-     * @param workerRpcClient: The worker rpc client to be used during undeployment
-     * @param coordinatorConfiguration: The coordinator configuration, needed for queryPlacement and DeploymentPhases
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     static std::shared_ptr<AddQueryRequest> create(const QueryPlanPtr& queryPlan,
                                                    Optimizer::PlacementStrategy queryPlacementStrategy,
+                                                   FaultToleranceType faultTolerance,
+                                                   LineageType lineage,
                                                    uint8_t maxRetries,
-                                                   NES::WorkerRPCClientPtr workerRpcClient,
-                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                                    z3::ContextPtr z3Context);
 
   protected:
@@ -193,28 +195,12 @@ class AddQueryRequest : public AbstractRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandler& storageHandler) override;
 
   private:
-    WorkerRPCClientPtr workerRpcClient;
     QueryId queryId;
-    GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    QueryCatalogServicePtr queryCatalogService;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    QueryDeploymentPhasePtr queryDeploymentPhase;
-    QueryUndeploymentPhasePtr queryUndeploymentPhase;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    std::string queryString;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
-    Optimizer::MemoryLayoutSelectionPhasePtr memoryLayoutSelectionPhase;
-    Optimizer::QueryRewritePhasePtr queryRewritePhase;
-    Optimizer::SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;
-    Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
-    Optimizer::TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
-    Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
-    Optimizer::QueryMergerPhasePtr queryMergerPhase;
+    FaultToleranceType faultTolerance;
+    LineageType lineage;
     z3::ContextPtr z3Context;
 };
 }// namespace Experimental

@@ -222,7 +222,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
 
     auto workerRpcClient = WorkerRPCClient::create();
     auto failQueryRequest =
-        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient);
+        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     auto future = failQueryRequest->getFuture();
     failQueryRequest->setId(requestId);
     TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
@@ -271,7 +271,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = WorkerRPCClient::create();
     auto failQueryRequest =
-        Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient);
+        Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
                                                   topology,
@@ -297,7 +297,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
 
     auto workerRpcClient = WorkerRPCClient::create();
     auto failQueryRequest =
-        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient);
+        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
                                                   topology,

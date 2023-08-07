@@ -25,4 +25,6 @@ add_source_files(nes-core
         OriginIdInferencePhase.cpp
         TypeInferencePhaseContext.cpp
         SampleCodeGenerationPhase.cpp
-        )
+        QueryDeploymentPhase.cpp
+        QueryUndeploymentPhase.cpp
+)

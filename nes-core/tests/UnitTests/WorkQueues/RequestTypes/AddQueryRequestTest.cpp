@@ -107,7 +107,6 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto workerRpcClient = WorkerRPCClient::create();
     auto storageHandler = TwoPhaseLockingStorageHandler({coordinatorConfiguration,
                                                          topology,
                                                          globalExecutionPlan,
@@ -125,7 +124,6 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     auto addQueryRequest = NES::Experimental::AddQueryRequest::create(queryPlan,
                                                                       TEST_PLACEMENT_STRATEGY,
                                                                       ZERO_RETRIES,
-                                                                      workerRpcClient,
                                                                       coordinatorConfiguration,
                                                                       z3Context);
     addQueryRequest->setId(requestId);

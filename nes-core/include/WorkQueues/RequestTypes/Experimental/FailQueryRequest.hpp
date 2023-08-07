@@ -36,25 +36,18 @@ class FailQueryRequest : public AbstractRequest {
      * @param queryId: The id of the query that failed
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
-     * @param workerRpcClient: The worker rpc client to be used during undeployment
      */
-    FailQueryRequest(NES::QueryId queryId,
-                     NES::QuerySubPlanId failedSubPlanId,
-                     uint8_t maxRetries,
-                     NES::WorkerRPCClientPtr workerRpcClient);
+    FailQueryRequest(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
 
     /**
     * @brief creates a new FailQueryRequest object
     * @param queryId: The id of the query that failed
     * @param failedSubPlanId: The id of the subplan that caused the failure
     * @param maxRetries: Maximum number of retry attempts for the request
-    * @param workerRpcClient: The worker rpc client to be used during undeployment
     * @return a smart pointer to the newly created object
     */
-    static std::shared_ptr<FailQueryRequest> create(NES::QueryId queryId,
-                                                    NES::QuerySubPlanId failedSubPlanId,
-                                                    uint8_t maxRetries,
-                                                    NES::WorkerRPCClientPtr workerRpcClient);
+    static std::shared_ptr<FailQueryRequest>
+    create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
 
   protected:
     /**
@@ -97,7 +90,6 @@ class FailQueryRequest : public AbstractRequest {
   private:
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    WorkerRPCClientPtr workerRpcClient;
     GlobalQueryPlanPtr globalQueryPlan;
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;

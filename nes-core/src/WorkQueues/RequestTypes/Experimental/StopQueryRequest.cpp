@@ -22,8 +22,8 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -38,9 +38,7 @@ namespace NES {
 
 namespace Experimental {
 StopQueryRequest::StopQueryRequest(QueryId queryId,
-                                   uint8_t maxRetries,
-                                   WorkerRPCClientPtr workerRpcClient,
-                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
+                                   uint8_t maxRetries)
     : AbstractRequest(
         {
             ResourceType::QueryCatalogService,
@@ -49,19 +47,14 @@ StopQueryRequest::StopQueryRequest(QueryId queryId,
             ResourceType::GlobalQueryPlan,
             ResourceType::UdfCatalog,
             ResourceType::SourceCatalog,
+            ResourceType::CoordinatorConfiguration
         },
-        maxRetries),
-      workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
-      coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
+        maxRetries), queryId(queryId) {}
 
 StopQueryRequestPtr StopQueryRequest::create(QueryId queryId,
-                                             uint8_t maxRetries,
-                                             WorkerRPCClientPtr workerRpcClient,
-                                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
+                                             uint8_t maxRetries) {
     return std::make_shared<StopQueryRequest>(queryId,
-                                              maxRetries,
-                                              std::move(workerRpcClient),
-                                              std::move(coordinatorConfiguration));
+                                              maxRetries);
 }
 
 std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
@@ -80,8 +73,8 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHan
         queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService, coordinatorConfiguration);
-        queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+        queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         NES_TRACE("Phases created. Stop request initialized.");
 
         if (queryId == INVALID_SHARED_QUERY_ID) {
@@ -171,7 +164,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionExcep
             NES_ERROR("{}", ex.what());
             std::promise<Experimental::FailQueryResponse> failPromise;
             failRequest.push_back(
-                FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE, workerRpcClient));
+                FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
         } else if (ex.instanceOf<QueryDeploymentException>() || ex.instanceOf<InvalidQueryException>()) {
             //Happens if:
             //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
@@ -181,7 +174,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionExcep
             //4. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
             std::promise<Experimental::FailQueryResponse> failPromise;
             failRequest.push_back(
-                FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE, workerRpcClient));
+                FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
         } else if (ex.instanceOf<TypeInferenceException>() || ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
             // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
             // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
