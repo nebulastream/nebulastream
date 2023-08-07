@@ -14,6 +14,13 @@
 
 #include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 
 
 namespace NES::Parsers {
@@ -35,7 +42,6 @@ void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseC
         }
     }
 }
-
 
 void NebulaSQLQueryPlanCreator::enterRelation(NebulaSQLParser::RelationContext* context) {
     if (context->relationPrimary()) {
@@ -66,14 +72,19 @@ void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseConte
         }
         helper.setSink(sinkDescriptor);
     }
+}
+
+void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) {
+    auto leftExpression = NES::Attribute(context->left->getText()).getExpressionNode();
+    auto rightExpression = NES::Attribute(context->right->getText()).getExpressionNode();
+    NES::ExpressionNodePtr expression;
+    if (context->op->getText() == "AND") {
+        expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
     }
+    else if (context->op->getText() == "OR") {
+    expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
 }
-
-
-
-
-
+    helper.addWhereClause(expression);
 }
-
 
 }// namespace NES::Parsers
