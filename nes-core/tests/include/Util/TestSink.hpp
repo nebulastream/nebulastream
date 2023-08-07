@@ -167,13 +167,36 @@ class CollectTestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
+    /**
+     * @brief Waits until numberOfRecords records are produced.
+     * 
+     * @param numberOfRecords: The number of records to produce until we stop waiting.
+     */
     void waitTillCompleted(size_t numberOfRecords) {
         std::unique_lock lock(m);
         cv.wait(lock, [&] {
             if (!running) {
                 return true;
             }
-            NES_DEBUG("Saw now {} tuples in waitTillCompleted and waits for {} tuples", this->results.size(), numberOfRecords);
+            NES_DEBUG("Saw {} tuples in waitTillCompleted and waits for {} tuples", this->results.size(), numberOfRecords);
+            return this->results.size() >= numberOfRecords;
+        });
+    }
+
+    /**
+     * @brief Either waits until numberOfRecords records are produced, or until the timeout is reached.
+     * 
+     * @param numberOfRecords: The number of records to produce until we stop waiting.
+     * @param timeoutInMilliseconds: Amount of time that needs to pass until we stop waiting.
+     */
+    void waitTillCompletedOrTimeout(size_t numberOfRecords, uint64_t timeoutInMilliseconds) {
+        // completed.get_future().wait_for(std::chrono::milliseconds(timeoutInMilliseconds)); 
+        std::unique_lock lock(m);
+        cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), [&] {
+            if (!running) {
+                return true;
+            }
+            NES_DEBUG("Saw {} tuples in waitTillCompletedOrTimeout and waits for {} tuples", this->results.size(), numberOfRecords);
             return this->results.size() >= numberOfRecords;
         });
     }
