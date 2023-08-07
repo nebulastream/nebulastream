@@ -31,9 +31,6 @@
 #include <utility>
 
 using namespace NES;
-using Runtime::TupleBuffer;
-
-//Todo: rename test class
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
@@ -61,143 +58,113 @@ class DemoCityQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    void createSchemaAndSink(const uint64_t numResultBuffers) {
-        schema = Schema::create()
-                ->addField("test$producerId", BasicType::INT64)
-                ->addField("test$producedPower", BasicType::INT64)
-                // ->addField("test$consumedPower", BasicType::INT64)
-                ->addField("test$timestamp", BasicType::UINT64);      
-        // schema = createSchema("test", {("producerId", BasicType::INT64), ("producedPower", BasicType::INT64)});
-        resultSchema = Schema::create()
-                ->addField("test$start", BasicType::UINT64)
-                ->addField("test$end", BasicType::UINT64)
-                ->addField("test$key", BasicType::INT64)
-                ->addField("test$leftId", BasicType::INT64);
-                // ->addField("test$leftValue", BasicType::INT64)
-                // ->addField("test$timestamp", BasicType::UINT64)
-                // ->addField("test$rightValue", BasicType::INT64)
-                // ->addField("test$rightValue", BasicType::INT64)
-                // ->addField("test$timestamp", BasicType::UINT64);
-                // ->addField("test$value2", BasicType::INT64);
-        expectedResultBuffers = numResultBuffers;
-        testSink = executionEngine->createDataSink(schema, expectedResultBuffers);
-        testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    }
+    template<typename InputRecord>
+    void generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan, 
+            const std::vector<SchemaPtr>& sourceSchemas, const uint64_t numInputTuples = 10) {
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t numInputTuples) {
-        for (uint64_t recordIndex = 0; recordIndex < numInputTuples; recordIndex++) {
-            buf[recordIndex][0].write<int64_t>(1);                      //id
-            buf[recordIndex][1].write<int64_t>(recordIndex * 2);        //producedPower
-            // buf[recordIndex][1].write<int64_t>(recordIndex * 2);        //producedPower
-            // buf[recordIndex][2].write<int64_t>(recordIndex);            //consumedPower
-            buf[recordIndex][2].write<uint64_t>(3600000 * recordIndex); //timestamps
+        for(size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
+            auto source = executionEngine->getDataSource(queryPlan, sourceSchemaIdx);
+            auto inputBuffer = executionEngine->getBuffer(sourceSchemas.at(sourceSchemaIdx));
+
+            // Get a pointer to the buffer and fill it with values.
+            auto bufferPtr = inputBuffer.getBuffer().getBuffer<InputRecord>();
+            for(uint64_t recordIndex = 0; recordIndex < numInputTuples; ++recordIndex) {
+                bufferPtr[recordIndex].producerId = 1;
+                bufferPtr[recordIndex].power = recordIndex;
+                bufferPtr[recordIndex].timestamp = 3600000 * recordIndex;
+            }
+            inputBuffer.setNumberOfTuples(numInputTuples);
+
+            source->emitBuffer(inputBuffer);
         }
-        buf.setNumberOfTuples(numInputTuples);
-    }
-
-    void fillBufferConsumer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t numInputTuples) {
-        for (uint64_t recordIndex = 0; recordIndex < numInputTuples; recordIndex++) {
-            buf[recordIndex][0].write<int64_t>(1);                      //id
-            buf[recordIndex][1].write<int64_t>(recordIndex);        //consumedPower
-            buf[recordIndex][2].write<uint64_t>(3600000 * recordIndex); //timestamps
-        }
-        buf.setNumberOfTuples(numInputTuples);
-    }
-
-    Runtime::MemoryLayouts::DynamicTupleBuffer 
-    runQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> queryPlan, const uint64_t numInputTuples = 10, 
-             uint64_t timeoutInMilliseconds = 500) {
-        // Setup first source and emit buffer
-        auto source1 = executionEngine->getDataSource(queryPlan, 0);
-        auto inputBuffer1 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer1, numInputTuples);
-        source1->emitBuffer(inputBuffer1);
-
-        // Setup first source and emit buffer
-        auto source2 = executionEngine->getDataSource(queryPlan, 1);
-        auto inputBuffer2 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer2, numInputTuples);
-        source1->emitBuffer(inputBuffer2);
-
-        // Setup second source and emit buffer
-        // auto source3 = executionEngine->getDataSource(queryPlan, 2);
-        // if(!schema2) {
-        //     auto inputBuffer3 = executionEngine->getBuffer(schema); 
-        //     fillBufferConsumer(inputBuffer3, numInputTuples);
-        //     source2->emitBuffer(inputBuffer3);
-        // } else {
-        //     auto inputBuffer3 = executionEngine->getBuffer(schema2); 
-        //     fillBufferConsumer(inputBuffer3, numInputTuples);
-        //     source2->emitBuffer(inputBuffer3);
-        // }
-
-        // Wait until the sink processed all tuples
-        testSink->waitTillCompletedOrTimeout(timeoutInMilliseconds);
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), expectedResultBuffers);
-
-        // Merge the result buffers, create a dynamic result buffer and check whether it contains the unified tuples.
-        auto mergedBuffer = 
-            TestUtils::mergeBuffers(testSink->resultBuffers, resultSchema, executionEngine->getBufferManager());
-        return Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(mergedBuffer, resultSchema);
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    SchemaPtr schema;
-    SchemaPtr resultSchema;
-    std::shared_ptr<TestSink> testSink;
-    uint64_t expectedResultBuffers;
     std::shared_ptr<TestUtils::TestSinkDescriptor> testSinkDescriptor;
 };
 
-/*
-Query::from("windTurbines")
-.unionWith(Query::from("solarPanels"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
-    .byKey(Attribute("producerId"))
-    .apply(Sum(Attribute("producedPower")))
-    .joinWith(Query::from("consumers")
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1))).byKey(Attribute("producerId"))
-        .apply(Sum(Attribute("consumedPower")))
-    )
-    .where(Attribute("producerId"))
-    .equalsTo(Attribute("producerId"))
-    .window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1)))
-.map(Attribute("DifferenceProducedConsumedPower") = Attribute("producedPower") - Attribute("consumedPower"))
-.project(Attribute("DifferenceProducedConsumedPower"), Attribute("producedPower"), Attribute("consumedPower"), Attribute("start").as("timestamp"))
-.sink(MQTTSinkDescriptor::create("ws://172.31.0.11:9001","energyConsumption", "user", 100, MQTTSinkDescriptor::TimeUnits::milliseconds,0, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, false, "frontend"));
-*/
 TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     // Setup test parameters.
-    constexpr uint64_t numResultBuffers = 2;
+    constexpr uint64_t numResultRecords = 12;
     constexpr uint64_t numInputTuples = 13;
-    constexpr uint64_t numResultTuples = 2;
-    constexpr uint64_t timeoutInMilliseconds = 500;
+    constexpr uint64_t timeoutInMilliseconds = 2000;
 
-    createSchemaAndSink(numResultBuffers);
-    auto windTurbines = executionEngine->createDataSource(schema);
-    auto solarPanels = executionEngine->createDataSource(schema);
+    // Declare the structure of the input records.
+    struct __attribute__((packed)) InputRecord {
+        int64_t producerId;
+        int64_t power;
+        uint64_t timestamp;
+    };
 
-    auto query = 
+    // Declare the structure of the result records.
+    struct __attribute__((packed)) ResultRecord {
+        int64_t difference;
+        int64_t produced;
+        int64_t consumed;
+        uint64_t start;
+    };
+
+    // Define the first two sources 'windTurbines' and 'solarPanels'.
+    const auto producerSchema = Schema::create()
+                ->addField("test$producerId", BasicType::INT64)
+                ->addField("test$producedPower", BasicType::INT64)
+                ->addField("test$timestamp", BasicType::UINT64);
+    const auto windTurbines = executionEngine->createDataSource(producerSchema);
+    const auto solarPanels = executionEngine->createDataSource(producerSchema);
+
+    // Define the third source 'consumers'.
+    const auto consumerSchema = Schema::create()
+                ->addField("test2$producerId", BasicType::INT64)
+                ->addField("test2$consumedPower", BasicType::INT64)
+                ->addField("test2$timestamp", BasicType::UINT64);    
+    const auto consumers = executionEngine->createDataSource(consumerSchema);
+    
+    // Define the sink.
+    const auto sinkSchema = Schema::create()
+                ->addField("test$difference", BasicType::INT64)
+                ->addField("test$produced", BasicType::INT64)
+                ->addField("test$consumed", BasicType::INT64)
+                ->addField("test$start", BasicType::UINT64);
+    const auto testSink = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
+    const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    // Define the demo query.
+    const auto query = 
         TestQuery::from(windTurbines)
         .unionWith(
             TestQuery::from(solarPanels)
         )
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
-            .byKey(Attribute("producerId"))
-            .apply(Sum(Attribute("producedPower")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
+        .byKey(Attribute("producerId"))
+        .apply(Sum(Attribute("producedPower")))
+        .joinWith(
+            TestQuery::from(consumers)
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL))).byKey(Attribute("producerId"))
+            .apply(Sum(Attribute("consumedPower")))
+        )
+        .where(Attribute("producerId"))
+        .equalsTo(Attribute("producerId"))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1)))
+        .map(Attribute("DifferenceProducedConsumedPower") = Attribute("producedPower") - Attribute("consumedPower"))
+        //Todo: #4068: Use 'Attribute("start").as("timestamp")' instead of 'Attribute("start")' 
+        //              -> Currently not possible, because renaming and reducing the number of fields leads to an error.
+        .project(Attribute("DifferenceProducedConsumedPower"), Attribute("producedPower"), Attribute("consumedPower"), Attribute("start"))
         .sink(testSinkDescriptor);
                       
-    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    // Submit the query, retrieve the query plan and run it.
+    const auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    generateAndEmitInputBuffers<InputRecord>(queryPlan, {producerSchema, producerSchema, consumerSchema}, numInputTuples);
 
-    auto resultBuffer = runQuery(queryPlan, numInputTuples, timeoutInMilliseconds);
+    // Wait until the sink processed all tuples or timeout is reached.
+    testSink->waitTillCompletedOrTimeout(numResultRecords, timeoutInMilliseconds);
+    const auto resultRecords = testSink->getResult();
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), numResultTuples);
-    for (uint64_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
-        NES_DEBUG("Start: {} Hours, at Index: {}", resultBuffer[recordIndex][0].read<uint64_t>() / 3600000, recordIndex); // / 3600000
-        NES_DEBUG("End: {} Hours, at Index: {}", resultBuffer[recordIndex][1].read<uint64_t>() / 3600000, recordIndex);
-        NES_DEBUG("Id: {}, at Index: {}", resultBuffer[recordIndex][2].read<int64_t>(), recordIndex);
-        NES_DEBUG("Power: {}, at Index: {}", resultBuffer[recordIndex][3].read<int64_t>(), recordIndex);
-        NES_DEBUG("--------------------------------------")
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
+    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).difference, recordIdx);
+        EXPECT_EQ(resultRecords.at(recordIdx).produced, recordIdx * 2);
+        EXPECT_EQ(resultRecords.at(recordIdx).consumed, recordIdx);
+        EXPECT_EQ(resultRecords.at(recordIdx).start, recordIdx * 3600000);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
