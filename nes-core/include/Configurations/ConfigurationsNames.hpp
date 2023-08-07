@@ -107,6 +107,9 @@ const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 
+// Vectorization options
+const std::string VECTORIZATION_ENABLED = "vectorize";
+
 // CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
 

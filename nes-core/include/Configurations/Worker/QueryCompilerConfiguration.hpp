@@ -133,6 +133,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     StringOption cudaSdkPath = {CUDA_SDK_PATH, "/usr/local/cuda", "Path to CUDA SDK."};
 
+    BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {
@@ -149,6 +151,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &cudaSdkPath,
             &maxHashTableSize,
             &joinStrategy,
+            &useVectorization,
         };
     }
 };
