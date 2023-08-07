@@ -318,6 +318,9 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
 
+    auto vectorizationOptions = queryCompilationOptions->getVectorizationOptions();
+    vectorizationOptions->useVectorization(queryCompilerConfiguration.useVectorization.getValue());
+
     return queryCompilationOptions;
 }
 
