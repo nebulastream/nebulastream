@@ -19,6 +19,13 @@
 #include <Parsers/NebulaSQL/gen/NebulaSQLBaseListener.h>
 #include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 
 
 namespace NES::Parsers {
@@ -32,7 +39,9 @@ class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
     void enterSelectClause(NebulaSQLParser::SelectClauseContext* context) override;
     void enterRelation(NebulaSQLParser::RelationContext* context) override;
     void enterSinkClause(NebulaSQLParser::SinkClauseContext* context) override;
-
+    void exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) override;
+    void exitLogicalNot(NebulaSQLParser::LogicalNotContext* context) override;
+    void exitPredicated(NebulaSQLParser::PredicatedContext* context) override;
 
 
 };
