@@ -49,6 +49,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
 
     QueryCompilerOptions::VectorizationOptionsPtr vectorizationOptions = std::make_shared<QueryCompilerOptions::VectorizationOptions>();
     vectorizationOptions->useVectorization(false);
+    vectorizationOptions->setStageBufferSize(4096);
     options.setVectorizationOptions(vectorizationOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
@@ -126,6 +127,14 @@ bool QueryCompilerOptions::VectorizationOptions::isUsingVectorization() const {
 
 void QueryCompilerOptions::VectorizationOptions::useVectorization(bool enable) {
     this->enabled = enable;
+}
+
+uint64_t QueryCompilerOptions::VectorizationOptions::getStageBufferSize() const {
+    return stageBufferSize;
+}
+
+void QueryCompilerOptions::VectorizationOptions::setStageBufferSize(uint64_t size) {
+    this->stageBufferSize = size;
 }
 
 }// namespace NES::QueryCompilation

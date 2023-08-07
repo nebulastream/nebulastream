@@ -181,8 +181,20 @@ class QueryCompilerOptions {
          */
         void useVectorization(bool enable);
 
+        /**
+         * @return The stage buffer size used for materializing tuples
+         */
+        uint64_t getStageBufferSize() const;
+
+        /**
+         * @brief Set the stage buffer size.
+         * @param size
+         */
+        void setStageBufferSize(uint64_t size);
+
     private:
         bool enabled;
+        uint64_t stageBufferSize;
     };
 
     using VectorizationOptionsPtr = std::shared_ptr<VectorizationOptions>;
