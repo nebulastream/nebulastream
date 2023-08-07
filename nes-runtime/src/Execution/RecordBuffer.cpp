@@ -79,4 +79,17 @@ Value<UInt64> RecordBuffer::getSequenceNr() {
                           tupleBufferRef);
 }
 
+Value<UInt64> RecordBuffer::getCreatingTs() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
+                   tupleBufferRef,
+                   creationTs);
+}
+
 }// namespace NES::Runtime::Execution

@@ -505,10 +505,10 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
+//    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
-//    string query1 = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
-//                   "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
+    string query = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
+                   "Seconds(1))).apply(Min(Attribute(\"timestamp1\"))).sink(NullOutputSinkDescriptor::create());";
 
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,

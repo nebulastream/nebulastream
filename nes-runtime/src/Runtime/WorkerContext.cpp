@@ -94,7 +94,7 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
         statisticsFile << "0" << millisec << ",";
     else
         statisticsFile << millisec << ",";
-    statisticsFile << value.count() - inputBuffer.getCreationTimestampInMS() << "\n";
+    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
     statisticsFile.flush();
 }
 

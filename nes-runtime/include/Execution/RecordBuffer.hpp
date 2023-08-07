@@ -71,6 +71,24 @@ class RecordBuffer {
     Value<UInt64> getSequenceNr();
     Value<UInt64> getWatermarkTs();
     void setWatermarkTs(Value<UInt64> watermarkTs);
+
+
+    /**
+     * @brief Get the creation timestamp of the underlying tuple buffer.
+     * The creation timestamp is the point in time when the tuple buffer was
+     * created.
+     *
+     * @return Value<UInt64> containing the creation timestamp of the tuple buffer.
+     */
+    Value<UInt64> getCreatingTs();
+
+    /**
+     * @brief Set the creation timestamp of the underlying tuple buffer.
+     * @param creationTs Value<UInt64> containing the creation timestamp to set
+     * for the tuple buffer.
+     */
+    void setCreationTs(const Value<UInt64>& creationTs);
+
     ~RecordBuffer() = default;
 
   private:
