@@ -14,6 +14,7 @@
 
 #ifndef NES_STORAGEDATASTRUCTURES_HPP
 #define NES_STORAGEDATASTRUCTURES_HPP
+
 #include <memory>
 
 namespace NES {
@@ -40,16 +41,23 @@ class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
 /**
  * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
  */
 struct StorageDataStructures {
-    StorageDataStructures(GlobalExecutionPlanPtr globalExecutionPlan,
+    StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                           TopologyPtr topology,
+                          GlobalExecutionPlanPtr globalExecutionPlan,
                           QueryCatalogServicePtr queryCatalogService,
                           GlobalQueryPlanPtr globalQueryPlan,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

@@ -20,8 +20,9 @@
 namespace NES {
 
 SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStructures)
-    : globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
+    : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
       topology(std::move(storageDataStructures.topology)),
+      globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       queryCatalogService(std::move(storageDataStructures.queryCatalogService)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
@@ -47,4 +48,8 @@ GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const Reque
 SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
 
 UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(const RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
+
+CoordinatorConfigurationHandle SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
+    return {&*coordinatorConfiguration, UnlockDeleter()};
+}
 }// namespace NES

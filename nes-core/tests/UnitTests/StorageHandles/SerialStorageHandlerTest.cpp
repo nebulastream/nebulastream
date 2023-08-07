@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
 #include <Topology/Topology.hpp>
 #include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
@@ -19,10 +19,14 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES {
 class SerialStorageHandlerTest : public Testing::BaseUnitTest {
@@ -36,6 +40,7 @@ class SerialStorageHandlerTest : public Testing::BaseUnitTest {
 TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     constexpr RequestId requestId = 1;
     //create access handle
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -43,8 +48,13 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto serialAccessHandle = SerialStorageHandler::create(
-        {globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog});
+    auto serialAccessHandle = SerialStorageHandler::create({coordinatorConfiguration,
+                                                            topology,
+                                                            globalExecutionPlan,
+                                                            queryCatalogService,
+                                                            globalQueryPlan,
+                                                            sourceCatalog,
+                                                            udfCatalog});
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());

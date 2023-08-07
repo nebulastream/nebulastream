@@ -27,6 +27,8 @@
 
 namespace NES {
 
+WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
+
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
@@ -445,9 +447,7 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
         auto geoLocation = waypoint.geolocation();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
-            return NES::Spatial::DataTypes::Experimental::Waypoint(
-                Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()),
-                timestamp);
+            return {Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()), timestamp};
         }
         //no valid timestamp to include
         return NES::Spatial::DataTypes::Experimental::Waypoint(

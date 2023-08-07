@@ -141,13 +141,15 @@ void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHand
 
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
     try {
+        NES_DEBUG("Acquiring required resources.");
         globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
         topology = storageHandler.getTopologyHandle(requestId);
         queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
         globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
         udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
         sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
-        NES_DEBUG("Locks acquired. Start creating phases.");
+
+        NES_DEBUG("Initializing various optimization phases.");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
@@ -165,8 +167,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
         signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
-        NES_INFO("Phases created. Add request initialized.");
 
+        NES_DEBUG("Initializing request processing.");
         //1. Add the initial version of the query to the query catalog
         queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
         NES_INFO("Request received for optimizing and deploying of the query {}", queryId);

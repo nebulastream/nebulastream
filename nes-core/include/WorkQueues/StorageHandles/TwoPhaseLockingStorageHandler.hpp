@@ -36,6 +36,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * -globalQueryPlan
      * -sourceCatalog
      * -udfCatalog
+     * -coordinatorConfiguration
      * -lockManager
      */
     explicit TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures);
@@ -49,6 +50,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * -globalQueryPlan
      * -sourceCatalog
      * -udfCatalog
+     * -coordinatorConfiguration
      * -lockManager
      * @return shared pointer to the two phase locking storage manager
      */
@@ -118,6 +120,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      */
     UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
 
+    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
+
   private:
     /**
      * @brief Locks the resource for the calling request and maintains the lock until resources are released on request of the request
@@ -142,15 +146,17 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     bool isLockHolder(RequestId requestId);
 
     //resource pointers
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
-    std::atomic<RequestId> globalExecutionPlanHolder;
+    std::atomic<RequestId> coordinatorConfigurationHolder;
     std::atomic<RequestId> topologyHolder;
+    std::atomic<RequestId> globalExecutionPlanHolder;
     std::atomic<RequestId> queryCatalogServiceHolder;
     std::atomic<RequestId> globalQueryPlanHolder;
     std::atomic<RequestId> sourceCatalogHolder;

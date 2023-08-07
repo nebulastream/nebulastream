@@ -78,7 +78,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
-    workerRpcClient = std::make_shared<WorkerRPCClient>();
+    workerRpcClient = WorkerRPCClient::create();
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();

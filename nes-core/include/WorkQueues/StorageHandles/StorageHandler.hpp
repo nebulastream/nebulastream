@@ -37,14 +37,21 @@ class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 using QueryCatalogServiceHandle = ResourceHandle<QueryCatalogService>;
 
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
-using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
+using CoordinatorConfigurationHandle = ResourceHandle<Configurations::CoordinatorConfiguration>;
 using GlobalExecutionPlanHandle = ResourceHandle<GlobalExecutionPlan>;
 
 class GlobalQueryPlan;
@@ -125,6 +132,13 @@ class StorageHandler {
      * @return a handle to the udf catalog.
      */
     virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) = 0;
+
+    /**
+     * @brief Get coordinator configuration
+     * @param requestId the id of the request which calls this function
+     * @return  a handle to the coordinator configuration
+     */
+    virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) = 0;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_

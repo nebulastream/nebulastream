@@ -758,7 +758,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
 
 TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 
-    WorkerRPCClientPtr client = std::make_shared<WorkerRPCClient>();
+    WorkerRPCClientPtr client = WorkerRPCClient::create();
     auto rpcPortWrk1 = getAvailablePort();
     auto rpcPortWrk2 = getAvailablePort();
     auto rpcPortWrk3 = getAvailablePort();

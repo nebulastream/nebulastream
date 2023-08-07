@@ -107,9 +107,14 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    auto storageHandler = TwoPhaseLockingStorageHandler(
-        {globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog});
+    auto workerRpcClient = WorkerRPCClient::create();
+    auto storageHandler = TwoPhaseLockingStorageHandler({coordinatorConfiguration,
+                                                         topology,
+                                                         globalExecutionPlan,
+                                                         queryCatalogService,
+                                                         globalQueryPlan,
+                                                         sourceCatalog,
+                                                         udfCatalog});
 
     //Create new entry in query catalog service
     queryCatalogService->createNewEntry("query string", queryPlan, "TopDown");
