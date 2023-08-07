@@ -51,6 +51,9 @@ class QueryParsingService {
     */
     QueryPlanPtr createPatternFromCodeString(const std::string& queryCodeSnippet);
 
+    QueryPlanPtr createQueryFromSQL(const std::string& queryCodeSnippet);
+
+
     /**
     *  @brief this function **executes** the code provided by the user and returns an schema Object
     *  @param query as a string
@@ -58,6 +61,8 @@ class QueryParsingService {
     *
     */
     SchemaPtr createSchemaFromCode(const std::string& schemaCodeSnippet);
+
+
 
   private:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
