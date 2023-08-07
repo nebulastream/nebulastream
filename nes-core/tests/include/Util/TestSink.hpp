@@ -26,6 +26,8 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <chrono>
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -112,12 +114,18 @@ class TestSink : public SinkMedium {
     void waitTillCompleted();
 
     /**
+     * @brief Waits in a blocking fashion until all the number of expected buffers have been received or
+     *        until the provided timeout is met.
+     */
+    void waitTillCompletedOrTimeout(uint64_t timeoutInMilliseconds);
+
+    /**
      * @brief Shuts this sink down
      */
     void shutdown() override;
 
     mutable std::recursive_mutex m;
-    uint64_t expectedBuffer;
+    uint64_t numExpectedResultBuffers;
 
     std::promise<uint64_t> completed;
     /// this vector must be cleanup by the test -- do not rely on the engine to clean it up for you!!

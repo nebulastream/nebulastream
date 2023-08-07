@@ -59,21 +59,22 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 
     Runtime::MemoryLayouts::DynamicTupleBuffer
-    runQuery(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan) {
+    runQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> queryPlan, const uint64_t numInputTuples = 10, 
+             uint64_t timeoutInMilliseconds = 500) {
         // Setup first source and emit buffer
         auto source1 = executionEngine->getDataSource(queryPlan, 0);
         auto inputBuffer1 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer1);
+        fillBuffer(inputBuffer1, numInputTuples);
         source1->emitBuffer(inputBuffer1);
 
         // Setup second source and emit buffer
         auto source2 = executionEngine->getDataSource(queryPlan, 1);
         auto inputBuffer2 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer2);
+        fillBuffer(inputBuffer2, numInputTuples);
         source2->emitBuffer(inputBuffer2);
 
         // Wait until the sink processed all tuples
-        testSink->waitTillCompleted();
+        testSink->waitTillCompletedOrTimeout(timeoutInMilliseconds);
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), expectedResultBuffers);
 
         // Merge the result buffers, create a dynamic result buffer and check whether it contains the unified tuples.
@@ -125,7 +126,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     auto resultBuffer = runQuery(queryPlan);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 8);
-    for (uint32_t recordIndex = 0u; recordIndex < 2u; ++recordIndex) {
+    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex + 8);
         EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
     }
@@ -148,7 +149,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
 
     auto resultBuffer = runQuery(queryPlan);
 
-    for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
+    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
         NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
         EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
@@ -171,7 +172,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualPro
 
     auto resultBuffer = runQuery(queryPlan);
 
-    for (uint32_t recordIndex = 0u; recordIndex < 20u; ++recordIndex) {
+    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
         NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
         EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
@@ -180,12 +181,8 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualPro
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
-//Todo: #4043: Currently, we cannot use the TestSink to check whether a query does not produce any results
-// -> If no tuples are produced (100% selectivity filter) or not enough result buffers are produced,
-//            'waitTillCompleted()' stalls indefinitely.
-// (-> could call writeData with a nullptr to signalize that no TupleBuffer was produced)
-TEST_P(UnionQueryExecutionTest, DISABLED_unionOperatorWithoutResults) {
-    createSchemaAndSink(2);
+TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
+    createSchemaAndSink(0);
     auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
     auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
 
@@ -195,7 +192,7 @@ TEST_P(UnionQueryExecutionTest, DISABLED_unionOperatorWithoutResults) {
                       .sink(testSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan);
+    auto resultBuffer = runQuery(queryPlan, 10, 500);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 0u);
 
