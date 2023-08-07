@@ -135,6 +135,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
     BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
 
+    UIntOption stageBufferSize = {VECTORIZATION_STAGE_BUFFER_SIZE, 4096, "Size of the stage buffer"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {
@@ -152,6 +154,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &maxHashTableSize,
             &joinStrategy,
             &useVectorization,
+            &stageBufferSize,
         };
     }
 };
