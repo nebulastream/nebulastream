@@ -32,6 +32,7 @@ class NebulaSQLHelper {
     std::vector<ExpressionNodePtr> projectionFields;
     std::vector<std::string> sources;
     SinkDescriptorPtr sinkDescriptor;
+    std::vector<ExpressionNodePtr> whereClauses;
 
 
   public:
@@ -44,8 +45,8 @@ class NebulaSQLHelper {
     const SinkDescriptorPtr getSinkDescriptor() const;
     void setSink(SinkDescriptorPtr sink);
 
-
-    // ... other methods for sinks, sources, etc. ...
+    const std::vector<ExpressionNodePtr>& getWhereClauses() const;
+    void addWhereClause(ExpressionNodePtr expression);
 };
 }// namespace NES::Parsers
 

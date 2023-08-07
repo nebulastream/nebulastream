@@ -32,4 +32,10 @@ void NebulaSQLHelper::setSink(SinkDescriptorPtr sink) {
     this->sinkDescriptor = sink;
 }
 
+const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getWhereClauses() const {
+    return whereClauses;
+}
+void NebulaSQLHelper::addWhereClause(ExpressionNodePtr expression) {
+    whereClauses.push_back(expression);
+}
 }// namespace NES::Parsers
