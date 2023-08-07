@@ -293,6 +293,13 @@ class TupleBuffer {
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
 
+/**
+ * @brief Allocates an object of T in the tuple buffer.
+ * Set the number of tuples to one.
+ * @tparam T
+ * @param buffer
+ * @return T+
+ */
 template<typename T>
 T* allocateWithin(TupleBuffer& buffer) {
     auto ptr = new (buffer.getBuffer()) T();
