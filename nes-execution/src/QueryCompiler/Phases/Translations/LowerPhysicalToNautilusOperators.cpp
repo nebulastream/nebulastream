@@ -83,6 +83,8 @@
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
@@ -423,8 +425,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
         auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
 
-        // TODO(#3991) Make this configurable.
-        auto stageBufferSize = 256;
+        auto stageBufferSize = options->getVectorizationOptions()->getStageBufferSize();
         auto schemaSize = schema->getSchemaSizeInBytes();
         auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
             stageBufferSize,
