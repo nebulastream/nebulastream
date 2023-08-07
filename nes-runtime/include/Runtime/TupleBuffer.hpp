@@ -108,6 +108,21 @@ class TupleBuffer {
                size_t length,
                std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
 
+    /**
+     * Wrap an object in a tuple buffer.
+     * The tuple buffer retrieves ownership and frees the object when the buffer is released.
+     * @param ownership to object
+     * @return TupleBuffer
+     */
+    template<class T>
+    [[nodiscard]] static TupleBuffer wrapPtr(std::unique_ptr<T> object) {
+        return wrapMemory((uint8_t*) object.release(),
+                          sizeof(typename std::unique_ptr<T>::pointer),
+                          [](detail::MemorySegment* segment, BufferRecycler*) {
+                              delete (typename std::unique_ptr<T>::pointer)(segment->getPointer());
+                          });
+    }
+
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
         : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {

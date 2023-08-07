@@ -42,6 +42,60 @@ concept IsValueType = std::is_base_of<BaseValue, T>::value;
 template<class T>
 concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
 
+template<typename P>
+struct ValueForPrimitive;
+
+template<>
+struct ValueForPrimitive<int8_t> {
+    using type = Int8;
+};
+
+template<>
+struct ValueForPrimitive<int16_t> {
+    using type = Int16;
+};
+
+template<>
+struct ValueForPrimitive<int32_t> {
+    using type = Int32;
+};
+
+template<>
+struct ValueForPrimitive<int64_t> {
+    using type = Int64;
+};
+
+template<>
+struct ValueForPrimitive<uint8_t> {
+    using type = UInt8;
+};
+
+template<>
+struct ValueForPrimitive<uint16_t> {
+    using type = UInt16;
+};
+
+template<>
+struct ValueForPrimitive<uint32_t> {
+    using type = UInt32;
+};
+
+template<>
+struct ValueForPrimitive<uint64_t> {
+    using type = UInt64;
+};
+
+template<>
+struct ValueForPrimitive<float> {
+    using type = Float;
+};
+
+template<>
+struct ValueForPrimitive<double> {
+    using type = Double;
+};
+
+
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherits from Any.
  * Value provides operator overloading and integrates with the tracing framework to track individual operations, e.g. ==, +, -.
