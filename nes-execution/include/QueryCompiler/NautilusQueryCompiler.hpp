@@ -24,6 +24,8 @@ using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
 namespace Experimental {
 class LowerPhysicalToVectorizedOperatorsPhase;
 using LowerPhysicalToVectorizedOperatorsPhasePtr = std::shared_ptr<LowerPhysicalToVectorizedOperatorsPhase>;
+class LowerVectorizedPipelineToKernelPhase;
+using LowerVectorizedPipelineToKernelPhasePtr = std::shared_ptr<LowerVectorizedPipelineToKernelPhase>;
 };
 
 /**
@@ -53,6 +55,7 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
     QueryCompilation::PipeliningPhasePtr pipeliningPhase;
     QueryCompilation::AddScanAndEmitPhasePtr addScanAndEmitPhase;
     QueryCompilation::Experimental::LowerPhysicalToVectorizedOperatorsPhasePtr lowerPhysicalToVectorizedOperatorsPhase;
+    QueryCompilation::Experimental::LowerVectorizedPipelineToKernelPhasePtr lowerVectorizedPipelineToKernelPhase;
     bool sourceSharing;
 };
 
