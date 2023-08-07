@@ -34,8 +34,7 @@ class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
     NebulaSQLHelper helper;
 
   public:
-    QueryPlanPtr buildQueryPlan();
-
+    QueryPlanPtr getQueryPlan() const;
     void enterSelectClause(NebulaSQLParser::SelectClauseContext* context) override;
     void enterRelation(NebulaSQLParser::RelationContext* context) override;
     void enterSinkClause(NebulaSQLParser::SinkClauseContext* context) override;

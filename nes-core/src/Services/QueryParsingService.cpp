@@ -22,6 +22,8 @@
 #include <Compiler/SourceCode.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
+#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
+#include <Parsers/NebulaSQL/gen/NebulaSQLLexer.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -150,5 +152,26 @@ QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string&
         return queryPlan;
     }
 }
+
+QueryPlanPtr QueryParsingService::createQueryFromSQL(const std::string& queryCodeSnippet) {
+    if (queryCodeSnippet.empty() || queryCodeSnippet.size() < 15) {
+        NES_THROW_RUNTIME_ERROR("QueryParsingService::createPatternFromCodeString: The query is too short, make sure you provide "
+                                "at least a source (FROM) and a sink (INTO)");
+    } else {
+        antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
+        NebulaSQLLexer lexer(&input);
+        antlr4::CommonTokenStream tokens(&lexer);
+        NebulaSQLParser parser(&tokens);
+        NebulaSQLParser::QueryContext* tree = parser.query();
+        NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string {}", tree->toStringTree(&parser));
+        NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
+        Parsers::NebulaSQLQueryPlanCreator queryPlanCreator;
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
+        auto queryPlan = queryPlanCreator.getQueryPlan();
+        NES_DEBUG("PatternParsingService: created the query from AST {}", queryPlan->toString());
+        return queryPlan;
+    }
+}
+
 
 }// namespace NES
