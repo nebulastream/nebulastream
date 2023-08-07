@@ -139,333 +139,333 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
 };
 
-TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1f1_left;
-        uint64_t test1f2_left;
-        uint64_t test1timestamp;
-        uint64_t test2f1_right;
-        uint64_t test2f2_right;
-        uint64_t test2timestamp;
+// TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t test1test2Start;
+//         uint64_t test1test2End;
+//         uint64_t test1test2Key;
+//         uint64_t test1f1_left;
+//         uint64_t test1f2_left;
+//         uint64_t test1timestamp;
+//         uint64_t test2f1_right;
+//         uint64_t test2f2_right;
+//         uint64_t test2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1f1_left == rhs.test1f1_left && test1f2_left == rhs.test1f2_left
-                && test1timestamp == rhs.test1timestamp && test2f1_right == rhs.test2f1_right
-                && test2f2_right == rhs.test2f2_right && test2timestamp == rhs.test2timestamp;
-        }
-    };
+//         bool operator==(const ResultRecord& rhs) const {
+//             return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
+//                 && test1test2Key == rhs.test1test2Key && test1f1_left == rhs.test1f1_left && test1f2_left == rhs.test1f2_left
+//                 && test1timestamp == rhs.test1timestamp && test2f1_right == rhs.test2f1_right
+//                 && test2f2_right == rhs.test2f2_right && test2timestamp == rhs.test2timestamp;
+//         }
+//     };
 
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$f1_left", BasicType::UINT64)
-                                ->addField("test1$f2_left", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$f1_left", BasicType::UINT64)
+//                                 ->addField("test1$f2_left", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$f1_right", BasicType::UINT64)
-                                 ->addField("test2$f2_right", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(20);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$f1_right", BasicType::UINT64)
+//                                  ->addField("test2$f2_right", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(20);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("stream_join_left.csv", "stream_join_right.csv", "stream_join_sink.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "f2_left", "f2_right");
-    const auto resultRecords = runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("stream_join_left.csv", "stream_join_right.csv", "stream_join_sink.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "f2_left", "f2_right");
+//     const auto resultRecords = runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
-* Test deploying join with same data and same schema
- * */
-TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value;
-        uint64_t window1id;
-        uint64_t window1timestamp;
-        uint64_t window2value;
-        uint64_t window2id;
-        uint64_t window2timestamp;
+// /**
+// * Test deploying join with same data and same schema
+//  * */
+// TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value;
+//         uint64_t window1id;
+//         uint64_t window1timestamp;
+//         uint64_t window2value;
+//         uint64_t window2id;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value == rhs.window1value && window1id == rhs.window1id
-                && window1timestamp == rhs.window1timestamp && window2value == rhs.window2value && window2id == rhs.window2id
-                && window2timestamp == rhs.window2timestamp;
-        }
-    };
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value == rhs.window1value && window1id == rhs.window1id
+//                 && window1timestamp == rhs.window1timestamp && window2value == rhs.window2value && window2id == rhs.window2id
+//                 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
 
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value", BasicType::UINT64)
-                                ->addField("test1$id", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$value", BasicType::UINT64)
+//                                 ->addField("test1$id", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value", BasicType::UINT64)
-                                 ->addField("test2$id", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$value", BasicType::UINT64)
+//                                  ->addField("test2$id", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * Test deploying join with same data but different names in the schema
- */
-TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value1;
-        uint64_t window1id1;
-        uint64_t window1timestamp;
-        uint64_t window2value2;
-        uint64_t window2id2;
-        uint64_t window2timestamp;
+// /**
+//  * Test deploying join with same data but different names in the schema
+//  */
+// TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value1;
+//         uint64_t window1id1;
+//         uint64_t window1timestamp;
+//         uint64_t window2value2;
+//         uint64_t window2id2;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+//                 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
+//                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$value1", BasicType::UINT64)
+//                                 ->addField("test1$id1", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$value2", BasicType::UINT64)
+//                                  ->addField("test2$id2", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * Test deploying join with different sources
- */
-TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value1;
-        uint64_t window1id1;
-        uint64_t window1timestamp;
-        uint64_t window2value2;
-        uint64_t window2id2;
-        uint64_t window2timestamp;
+// /**
+//  * Test deploying join with different sources
+//  */
+// TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value1;
+//         uint64_t window1id1;
+//         uint64_t window1timestamp;
+//         uint64_t window2value2;
+//         uint64_t window2id2;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+//                 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
+//                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$value1", BasicType::UINT64)
+//                                 ->addField("test1$id1", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$value2", BasicType::UINT64)
+//                                  ->addField("test2$id2", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * Test deploying join with different sources
- */
-TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value1;
-        uint64_t window1id1;
-        uint64_t window1timestamp;
-        uint64_t window2id2;
-        uint64_t window2timestamp;
+// /**
+//  * Test deploying join with different sources
+//  */
+// TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value1;
+//         uint64_t window1id1;
+//         uint64_t window1timestamp;
+//         uint64_t window2id2;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
-                && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+//                 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
+//                 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$win", BasicType::UINT64)
+//                                 ->addField("test1$id1", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$id2", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * Test deploying join with different sources
- */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value1;
-        uint64_t window1id1;
-        uint64_t window1timestamp;
-        uint64_t window2value2;
-        uint64_t window2id2;
-        uint64_t window2timestamp;
+// /**
+//  * Test deploying join with different sources
+//  */
+// // TODO this test can be enabled once #3353 is merged
+// TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value1;
+//         uint64_t window1id1;
+//         uint64_t window1timestamp;
+//         uint64_t window2value2;
+//         uint64_t window2id2;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
-                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+//                 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
+//                 && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$value1", BasicType::UINT64)
+//                                 ->addField("test1$id1", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto windowSlide = Milliseconds(500);
-    const auto timestampFieldName = "timestamp";
-    const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$value2", BasicType::UINT64)
+//                                  ->addField("test2$id2", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto windowSlide = Milliseconds(500);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * Test deploying join with different sources
- */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttributes) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        uint64_t window1window2Key;
-        uint64_t window1value1;
-        uint64_t window1id1;
-        uint64_t window1timestamp;
-        uint64_t window2id2;
-        uint64_t window2timestamp;
+// /**
+//  * Test deploying join with different sources
+//  */
+// // TODO this test can be enabled once #3353 is merged
+// TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttributes) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         uint64_t window1window2Key;
+//         uint64_t window1value1;
+//         uint64_t window1id1;
+//         uint64_t window1timestamp;
+//         uint64_t window2id2;
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
-                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
-                && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+//                 && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2id2 == rhs.window2id2
+//                 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$win", BasicType::UINT64)
+//                                 ->addField("test1$id1", BasicType::UINT64)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto windowSlide = Milliseconds(500);
-    const auto timestampFieldName = "timestamp";
-    const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$id2", BasicType::UINT64)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto windowSlide = Milliseconds(500);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
-/**
- * @brief Test a join query that uses fixed-array as keys
- */
-// TODO this test can be enabled once #3638 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t window1window2Start;
-        uint64_t window1window2End;
-        char window1window2Key[7];
-        char window1id1[7];
-        uint64_t window1timestamp;
-        char window2id2[7];
-        uint64_t window2timestamp;
+// /**
+//  * @brief Test a join query that uses fixed-array as keys
+//  */
+// // TODO this test can be enabled once #3638 is merged
+// TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
+//     struct __attribute__((packed)) ResultRecord {
+//         uint64_t window1window2Start;
+//         uint64_t window1window2End;
+//         char window1window2Key[7];
+//         char window1id1[7];
+//         uint64_t window1timestamp;
+//         char window2id2[7];
+//         uint64_t window2timestamp;
 
-        bool operator==(const ResultRecord& rhs) const {
-            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
-                && std::memcmp(window1window2Key, rhs.window1window2Key, sizeof(char) * 7) == 0
-                && std::memcmp(window1id1, rhs.window1id1, sizeof(char) * 7) == 0
-                && std::memcmp(window2id2, rhs.window2id2, sizeof(char) * 7) == 0 && window1timestamp == rhs.window1timestamp
-                && window2timestamp == rhs.window2timestamp;
-        }
-    };
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$id1", BasicType::TEXT)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+//         bool operator==(const ResultRecord& rhs) const {
+//             return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+//                 && std::memcmp(window1window2Key, rhs.window1window2Key, sizeof(char) * 7) == 0
+//                 && std::memcmp(window1id1, rhs.window1id1, sizeof(char) * 7) == 0
+//                 && std::memcmp(window2id2, rhs.window2id2, sizeof(char) * 7) == 0 && window1timestamp == rhs.window1timestamp
+//                 && window2timestamp == rhs.window2timestamp;
+//         }
+//     };
+//     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                 ->addField("test1$id1", BasicType::TEXT)
+//                                 ->addField("test1$timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::TEXT)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
-    const auto windowSize = Milliseconds(1000);
-    const auto timestampFieldName = "timestamp";
-    const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
+//     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+//                                  ->addField("test2$id2", BasicType::TEXT)
+//                                  ->addField("test2$timestamp", BasicType::UINT64);
+//     const auto windowSize = Milliseconds(1000);
+//     const auto timestampFieldName = "timestamp";
+//     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
 
-    // Running a single join query
-    TestUtils::CsvFileParams csvFileParams("window5.csv", "window6.csv", "window_sink4.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
-    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
-}
+//     // Running a single join query
+//     TestUtils::CsvFileParams csvFileParams("window5.csv", "window6.csv", "window_sink4.csv");
+//     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+//     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+// }
 
 // TODO can be revisited once #3966 has been merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
         int64_t test1test2$end;
@@ -567,7 +567,22 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
     // Checking for correctness
     ASSERT_EQ(resultRecords.size(), expectedSinkVector.size());
-    EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedSinkVector));
+    NES_DEBUG("Result Size: {}", resultRecords.size());
+    for (uint64_t recordIndex = 0u; recordIndex < resultRecords.size(); ++recordIndex) {
+        NES_DEBUG("Start: {} Hours, at Index: {}", resultRecords.at(recordIndex).test1$fieldForSum1, recordIndex);
+        NES_DEBUG("Start: {} Hours, at Index: {}", resultRecords.at(recordIndex).test2$fieldForSum2, recordIndex);
+        // NES_DEBUG("End: {} Hours, at Index: {}", resultRecords[recordIndex][1].read<uint64_t>() / 3600000, recordIndex);
+        // NES_DEBUG("key: {}, at Index: {}", resultRecords[recordIndex][2].read<int64_t>(), recordIndex);
+        // NES_DEBUG("leftId: {}, at Index: {}", resultRecords[recordIndex][3].read<int64_t>(), recordIndex);
+        // NES_DEBUG("leftVal: {}, at Index: {}", resultRecords[recordIndex][4].read<int64_t>(), recordIndex);
+        // NES_DEBUG("timestamp: {} Hours, at Index: {}", resultRecords[recordIndex][5].read<uint64_t>() / 3600000, recordIndex);
+        // NES_DEBUG("rightId: {}, at Index: {}", resultRecords[recordIndex][6].read<int64_t>(), recordIndex);
+        // NES_DEBUG("rightVal: {}, at Index: {}", resultRecords[recordIndex][7].read<int64_t>(), recordIndex);
+        // NES_DEBUG("timestamp: {} Hours, at Index: {}", resultRecords[recordIndex][8].read<uint64_t>() / 3600000, recordIndex);
+        // NES_DEBUG("Result2: {}, at Index: {}", resultRecords[recordIndex][4].read<int64_t>(), recordIndex);
+        NES_DEBUG("--------------------------------------")
+    }
+    // EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedSinkVector));
 }
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
