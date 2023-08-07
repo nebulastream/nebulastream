@@ -115,6 +115,9 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
+// Vectorization options
+const std::string VECTORIZATION_ENABLED = "vectorize";
+
 // CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
 

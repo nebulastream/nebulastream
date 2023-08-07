@@ -46,6 +46,10 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     hashOptions->setTotalSizeForDataStructures(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
     options.setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
     options.setHashJoinOptions(hashOptions);
+
+    QueryCompilerOptions::VectorizationOptionsPtr vectorizationOptions = std::make_shared<QueryCompilerOptions::VectorizationOptions>();
+    vectorizationOptions->useVectorization(false);
+    options.setVectorizationOptions(vectorizationOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 
@@ -121,5 +125,21 @@ void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(
 
 void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
 const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
+
+QueryCompilerOptions::VectorizationOptionsPtr QueryCompilerOptions::getVectorizationOptions() const {
+    return vectorizationOptions;
+}
+
+void QueryCompilerOptions::setVectorizationOptions(const QueryCompilerOptions::VectorizationOptionsPtr& options) {
+    this->vectorizationOptions = options;
+}
+
+bool QueryCompilerOptions::VectorizationOptions::isUsingVectorization() const {
+    return enabled;
+}
+
+void QueryCompilerOptions::VectorizationOptions::useVectorization(bool enable) {
+    this->enabled = enable;
+}
 
 }// namespace NES::QueryCompilation

@@ -100,6 +100,25 @@ class QueryCompilerOptions {
 
     using StreamHashJoinOptionsPtr = std::shared_ptr<StreamHashJoinOptions>;
 
+    class VectorizationOptions {
+    public:
+        /**
+         * @return Whether the query compiler should use compiler passes for enabling vectorized execution
+         */
+        bool isUsingVectorization() const;
+
+        /**
+         * @brief Specify if the query compiler should use vectorization
+         * @param enable
+         */
+        void useVectorization(bool enable);
+
+    private:
+        bool enabled;
+    };
+
+    using VectorizationOptionsPtr = std::shared_ptr<VectorizationOptions>;
+
     /**
      * @brief Creates the default options.
      * @return QueryCompilerOptionsPtr
@@ -189,6 +208,17 @@ class QueryCompilerOptions {
      */
     const std::string getCUDASdkPath() const;
 
+    /**
+     * @brief Return vectorization options
+     */
+    VectorizationOptionsPtr getVectorizationOptions() const;
+
+    /**
+     * @brief Set vectorization options
+     * @param options the vectorization options
+     */
+    void setVectorizationOptions(const VectorizationOptionsPtr& options);
+
   protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
@@ -202,6 +232,7 @@ class QueryCompilerOptions {
     StreamHashJoinOptionsPtr hashJoinOptions;
     std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
+    VectorizationOptionsPtr vectorizationOptions;
 };
 }// namespace NES::QueryCompilation
 
