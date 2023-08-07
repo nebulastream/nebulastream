@@ -473,14 +473,14 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
     auto keys = physicalSWS->getWindowDefinition()->getKeys();
     std::vector<std::string> resultKeyFields;
-    std::vector<PhysicalTypePtr> keyDataTypes;
+    std::vector<PhysicalTypePtr> resultKeyDataTypes;
     for (const auto& key : keys) {
         resultKeyFields.emplace_back(key->getFieldName());
-        keyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
+        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
     }
     uint64_t keySize = 0;
     uint64_t valueSize = 0;
-    for (auto& keyType : keyDataTypes) {
+    for (auto& keyType : resultKeyDataTypes) {
         keySize = keySize + keyType->size();
     }
     for (auto& function : aggregationFunctions) {
@@ -494,14 +494,14 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                                                                                keySize,
                                                                                valueSize,
                                                                                resultKeyFields,
-                                                                               keyDataTypes,
+                                                                               resultKeyDataTypes,
                                                                                physicalSWS->getWindowDefinition()->getOriginId());
     auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
     operatorHandlers.emplace_back(handler);
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
                                                                                                    aggregationFunctions,
                                                                                                    std::move(sliceMergingAction),
-                                                                                                   keyDataTypes,
+                                                                                                   resultKeyDataTypes,
                                                                                                    keySize,
                                                                                                    valueSize);
 
@@ -607,14 +607,14 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto keys = physicalGSMO->getWindowDefinition()->getKeys();
 
     std::vector<std::string> resultKeyFields;
-    std::vector<PhysicalTypePtr> keyDataTypes;
+    std::vector<PhysicalTypePtr> resultKeyDataTypes;
     for (const auto& key : keys) {
         resultKeyFields.emplace_back(key->getFieldName());
-        keyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
+        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
     }
     uint64_t keySize = 0;
     uint64_t valueSize = 0;
-    for (auto& keyType : keyDataTypes) {
+    for (auto& keyType : resultKeyDataTypes) {
         keySize = keySize + keyType->size();
     }
     for (auto& function : aggregationFunctions) {
@@ -632,7 +632,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize,
             valueSize,
             resultKeyFields,
-            keyDataTypes,
+            resultKeyDataTypes,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
         auto timeBasedWindowType =
@@ -650,7 +650,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
                                                                            aggregationFunctions,
                                                                            std::move(sliceMergingAction),
-                                                                           keyDataTypes,
+                                                                           resultKeyDataTypes,
                                                                            keySize,
                                                                            valueSize);
     pipeline.setRootOperator(sliceMergingOperator);

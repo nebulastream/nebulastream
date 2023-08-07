@@ -25,6 +25,15 @@ using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
  */
 class SliceMergingAction {
   public:
+    /**
+     * @brief Emits a slice after slice merging.
+     * @param ctx ExecutionContext
+     * @param child ExecuteOperatorPtr
+     * @param windowStart
+     * @param windowEnd
+     * @param sequenceNumber
+     * @param globalSlice
+     */
     virtual void emitSlice(ExecutionContext& ctx,
                            ExecuteOperatorPtr& child,
                            Value<UInt64>& windowStart,
