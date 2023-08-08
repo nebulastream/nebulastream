@@ -23,7 +23,7 @@ namespace NES {
 class SchemaSourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(const SchemaPtr&& schema) { return std::make_shared<SchemaSourceDescriptor>(schema); }
-    explicit SchemaSourceDescriptor(SchemaPtr schema) : SourceDescriptor(std::move(std::move(schema))) {}
+    explicit SchemaSourceDescriptor(SchemaPtr schema) : SourceDescriptor(std::move(schema)) {}
     std::string toString() const override { return "Schema Source Descriptor"; }
     bool equal(SourceDescriptorPtr const& other) const override { return other->getSchema()->equals(this->getSchema()); }
     ~SchemaSourceDescriptor() override = default;

@@ -27,10 +27,10 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <utility>
 
-using namespace NES;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
@@ -58,22 +58,19 @@ class DemoCityQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    template<typename InputRecord>
     void generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan, 
-            const std::vector<SchemaPtr>& sourceSchemas, const uint64_t numInputTuples = 10) {
+            const std::vector<SchemaPtr>& sourceSchemas, 
+            std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)>> inputDataGenerators) {
+        // Make sure that each source schema has one corresponding input data generator.
+        EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
+        // For each source schema, create a source and an input buffer. Fill the input buffer using the corresponding
+        // input data generator and finally use the source to emit the input buffer.
         for(size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
             auto source = executionEngine->getDataSource(queryPlan, sourceSchemaIdx);
             auto inputBuffer = executionEngine->getBuffer(sourceSchemas.at(sourceSchemaIdx));
 
-            // Get a pointer to the buffer and fill it with values.
-            auto bufferPtr = inputBuffer.getBuffer().getBuffer<InputRecord>();
-            for(uint64_t recordIndex = 0; recordIndex < numInputTuples; ++recordIndex) {
-                bufferPtr[recordIndex].producerId = 1;
-                bufferPtr[recordIndex].power = recordIndex;
-                bufferPtr[recordIndex].timestamp = 3600000 * recordIndex;
-            }
-            inputBuffer.setNumberOfTuples(numInputTuples);
+            inputDataGenerators.at(sourceSchemaIdx)(inputBuffer);
 
             source->emitBuffer(inputBuffer);
         }
@@ -84,17 +81,26 @@ class DemoCityQueryExecutionTest : public Testing::TestWithErrorHandling,
 };
 
 TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
-    // Setup test parameters.
+    //==---------------------------------------==//
+    //==-------- SETUP TEST PARAMETERS --------==//
+    //==---------------------------------------==//
+    constexpr uint64_t numInputRecords = 13;
     constexpr uint64_t numResultRecords = 12;
-    constexpr uint64_t numInputTuples = 13;
     constexpr uint64_t timeoutInMilliseconds = 2000;
+    constexpr uint64_t milliSecondsToHours = 3600000;
 
-    // Declare the structure of the input records.
-    struct __attribute__((packed)) InputRecord {
-        int64_t producerId;
-        int64_t power;
-        uint64_t timestamp;
+    // Define the input data generator functions.
+    std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)> windTurbineDataGenerator;
+    windTurbineDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+        for(size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
+            buffer[recordIdx][0].write<int64_t>(1);
+            buffer[recordIdx][1].write<int64_t>(recordIdx);
+            buffer[recordIdx][2].write<uint64_t>(milliSecondsToHours * recordIdx);
+        }
+        buffer.setNumberOfTuples(numInputRecords);
     };
+    auto solarPanelDataGenerator = windTurbineDataGenerator;
+    auto consumersDataGenerator = windTurbineDataGenerator;
 
     // Declare the structure of the result records.
     struct __attribute__((packed)) ResultRecord {
@@ -128,7 +134,9 @@ TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     const auto testSink = executionEngine->createCollectSink<ResultRecord>(sinkSchema);
     const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    // Define the demo query.
+    //==---------------------------------------==//
+    //==-------- DEFINE THE DEMO QUERY --------==//
+    //==---------------------------------------==//
     const auto query = 
         TestQuery::from(windTurbines)
         .unionWith(
@@ -151,20 +159,26 @@ TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
         .project(Attribute("DifferenceProducedConsumedPower"), Attribute("producedPower"), Attribute("consumedPower"), Attribute("start"))
         .sink(testSinkDescriptor);
                       
-    // Submit the query, retrieve the query plan and run it.
+    //==-------------------------------------------------------==//
+    //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
+    //==-------------------------------------------------------==//
     const auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    generateAndEmitInputBuffers<InputRecord>(queryPlan, {producerSchema, producerSchema, consumerSchema}, numInputTuples);
+    generateAndEmitInputBuffers(queryPlan, {producerSchema, producerSchema, consumerSchema}, 
+    {solarPanelDataGenerator, windTurbineDataGenerator, consumersDataGenerator});
 
-    // Wait until the sink processed all tuples or timeout is reached.
+    // Wait until the sink processed all records or timeout is reached.
     testSink->waitTillCompletedOrTimeout(numResultRecords, timeoutInMilliseconds);
     const auto resultRecords = testSink->getResult();
 
+    //==--------------------------------------==//
+    //==-------- COMPARE TEST RESULTS --------==//
+    //==--------------------------------------==//
     EXPECT_EQ(resultRecords.size(), numResultRecords);
     for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
         EXPECT_EQ(resultRecords.at(recordIdx).difference, recordIdx);
         EXPECT_EQ(resultRecords.at(recordIdx).produced, recordIdx * 2);
         EXPECT_EQ(resultRecords.at(recordIdx).consumed, recordIdx);
-        EXPECT_EQ(resultRecords.at(recordIdx).start, recordIdx * 3600000);
+        EXPECT_EQ(resultRecords.at(recordIdx).start, recordIdx * milliSecondsToHours);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));

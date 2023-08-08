@@ -22,6 +22,11 @@ constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode:
 class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
+    struct __attribute__((packed)) DefaultRecord {
+        int64_t id;
+        int64_t value;
+    };
+
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FilterQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FilterQueryExecutionTest: Setup FilterQueryExecutionTest test class.");
@@ -31,6 +36,19 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        
+        // Setup default parameters.
+        defaultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
+        defaultDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer, uint64_t numInputRecords) {
+            for(size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
+                buffer[recordIdx][0].write<int64_t>(recordIdx);
+                buffer[recordIdx][1].write<int64_t>(1);
+            }
+            buffer.setNumberOfTuples(numInputRecords);
+        };
+        defaultSource = executionEngine->createDataSource(defaultSchema);
+        defaultSink = executionEngine->createCollectSink<DefaultRecord>(defaultSchema);
+        defaultTestSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(defaultSink);
     }
 
     /* Will be called before a test is executed. */
@@ -43,159 +61,158 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    void createSchemaAndSink(const uint64_t numResultBuffers) {
-        schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
-        expectedResultBuffers = numResultBuffers;
-        testSink = executionEngine->createDataSink(schema, expectedResultBuffers);
-        testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    }
+    void generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan, 
+            const std::vector<SchemaPtr>& sourceSchemas, 
+            std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t)>> inputDataGenerators,
+            uint64_t numInputTuples = 10) {
+        // Make sure that each source schema has one corresponding input data generator.
+        EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t numberOfTuples = 10) {
-        for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
-            buf[recordIndex][0].write<int64_t>(recordIndex);
-            buf[recordIndex][1].write<int64_t>(1);
+        // For each source schema, create a source and an input buffer. Fill the input buffer using the corresponding
+        // input data generator and finally use the source to emit the input buffer.
+        for(size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
+            auto source = executionEngine->getDataSource(queryPlan, sourceSchemaIdx);
+            auto inputBuffer = executionEngine->getBuffer(sourceSchemas.at(sourceSchemaIdx));
+
+            inputDataGenerators.at(sourceSchemaIdx)(inputBuffer, numInputTuples);
+
+            source->emitBuffer(inputBuffer);
         }
-        buf.setNumberOfTuples(numberOfTuples);
     }
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer
-    runQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> queryPlan, const uint64_t numInputTuples = 10, 
-             uint64_t timeoutInMilliseconds = 500) {
-        // Setup first source and emit buffer
-        auto source1 = executionEngine->getDataSource(queryPlan, 0);
-        auto inputBuffer1 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer1, numInputTuples);
-        source1->emitBuffer(inputBuffer1);
-
-        // Setup second source and emit buffer
-        auto source2 = executionEngine->getDataSource(queryPlan, 1);
-        auto inputBuffer2 = executionEngine->getBuffer(schema);
-        fillBuffer(inputBuffer2, numInputTuples);
-        source2->emitBuffer(inputBuffer2);
-
-        // Wait until the sink processed all tuples
-        testSink->waitTillCompletedOrTimeout(timeoutInMilliseconds);
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), expectedResultBuffers);
-
-        // Merge the result buffers, create a dynamic result buffer and check whether it contains the unified tuples.
-        auto mergedBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, schema, executionEngine->getBufferManager());
-        return Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(mergedBuffer, schema);
-    }
-
+    SchemaPtr defaultSchema;
+    std::shared_ptr<SourceDescriptor> defaultSource;
+    std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t numInputRecords)> defaultDataGenerator;
+    std::shared_ptr<CollectTestSink<DefaultRecord>> defaultSink;
+    std::shared_ptr<NES::TestUtils::TestSinkDescriptor> defaultTestSinkDescriptor;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    SchemaPtr schema;
-    std::shared_ptr<TestSink> testSink;
-    uint64_t expectedResultBuffers;
-    std::shared_ptr<TestUtils::TestSinkDescriptor> testSinkDescriptor;
+    static constexpr uint64_t millisecondsToHours = 3600000;
+    static constexpr uint64_t defaultTimeoutInMilliseconds = 5000;
 };
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
-    createSchemaAndSink(2);
-    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
-    auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
+    // Setup test parameters.
+    constexpr uint64_t numInputRecords = 10;
+    constexpr uint64_t numResultRecords = 8;
 
-    Query query = TestQuery::from(testSourceDescriptor1)
-                      .unionWith(TestQuery::from(testSourceDescriptor2))
+    // Define query plan.
+    Query query = TestQuery::from(defaultSource)
+                      .unionWith(TestQuery::from(defaultSource))
                       .filter(Attribute("test$id") > 5)
-                      .sink(testSinkDescriptor);
-
+                      .sink(defaultTestSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan);
+    // Generate input and run query.
+    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
+    const auto resultRecords = defaultSink->getResult();
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 8);
-    for (uint32_t recordIndex = 0u; recordIndex < 8u; ++recordIndex) {
-        NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), (recordIndex % 4) + 6);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
+    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).id, (recordIdx % 4) + 6);
+        EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
-    createSchemaAndSink(2);
-    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
-    auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
+    // Setup test parameters.
+    constexpr uint64_t numInputRecords = 10;
+    constexpr uint64_t numResultRecords = 8;
 
-    Query subQuery = TestQuery::from(testSourceDescriptor2).filter(Attribute("test$id") > 3);
+    // Define query plan.
+    Query subQuery = TestQuery::from(defaultSource).filter(Attribute("test$id") > 3);
     Query query =
-        TestQuery::from(testSourceDescriptor1).filter(Attribute("test$id") > 7).unionWith(subQuery).sink(testSinkDescriptor);
+        TestQuery::from(defaultSource).filter(Attribute("test$id") > 7).unionWith(subQuery).sink(defaultTestSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan);
+    // Generate input and run query.
+    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
+    const auto resultRecords = defaultSink->getResult();
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 8);
-    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex + 8);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
-    }
-    for (uint32_t recordIndex = 2u; recordIndex < 8u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex + 2);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
+    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).id, (recordIdx + 4) % 6 + 4); //result ids: 8,9,4,5,6,7,8,9
+        EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
-    createSchemaAndSink(2);
-    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
-    auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
+    // Setup test parameters.
+    constexpr uint64_t numInputRecords = 10;
+    constexpr uint64_t numResultRecords = 10;
 
+    // Define query plan.
     Query query =
-        TestQuery::from(testSourceDescriptor1).unionWith(TestQuery::from(testSourceDescriptor2)).sink(testSinkDescriptor);
+        TestQuery::from(defaultSource).unionWith(TestQuery::from(defaultSource)).sink(defaultTestSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan);
+    // Generate input and run query.
+    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
+    const auto resultRecords = defaultSink->getResult();
 
-    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
-        NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
+    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).id, recordIdx % 10);
+        EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
-    createSchemaAndSink(2);
-    auto schema2 = Schema::create()->addField("test2$id", BasicType::INT64)->addField("test2$one", BasicType::INT64);
-    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
-    auto testSourceDescriptor2 = executionEngine->createDataSource(schema2);
+    // Setup test parameters.
+    constexpr uint64_t numInputRecords = 10;
+    constexpr uint64_t numResultRecords = 10;
 
-    Query query = TestQuery::from(testSourceDescriptor1)
-                      .unionWith(TestQuery::from(testSourceDescriptor2)
-                                     .project(Attribute("test2$id").as("test$id"), Attribute("test2$one").as("test$one")))
-                      .sink(testSinkDescriptor);
+    auto customSchema = Schema::create()->addField("custom$id", BasicType::INT64)->addField("custom$one", BasicType::INT64);
+    auto customSource = executionEngine->createDataSource(customSchema);
+
+    // Define query plan.
+    Query query = TestQuery::from(defaultSource)
+                      .unionWith(TestQuery::from(customSource)
+                                     .project(Attribute("custom$id").as("test$id"), Attribute("custom$one").as("test$one")))
+                      .sink(defaultTestSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan);
+    // Generate input and run query.
+    generateAndEmitInputBuffers(queryPlan, {defaultSchema, customSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
+    const auto resultRecords = defaultSink->getResult();
 
-    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
-        NES_DEBUG("Result: {} at Index: {}", resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex % 10);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1);
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
+    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).id, recordIdx % 10);
+        EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
-    createSchemaAndSink(0);
-    auto testSourceDescriptor1 = executionEngine->createDataSource(schema);
-    auto testSourceDescriptor2 = executionEngine->createDataSource(schema);
+    // Setup test parameters.
+    constexpr uint64_t numInputRecords = 10;
+    constexpr uint64_t numResultRecords = 0;
 
-    Query query = TestQuery::from(testSourceDescriptor1)
-                      .unionWith(TestQuery::from(testSourceDescriptor2))
+    // Define query plan.
+    Query query = TestQuery::from(defaultSource)
+                      .unionWith(TestQuery::from(defaultSource))
                       .filter(Attribute("test$id") > 9)
-                      .sink(testSinkDescriptor);
+                      .sink(defaultTestSinkDescriptor);
+
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
-    auto resultBuffer = runQuery(queryPlan, 10, 500);
+    // Generate input and run query.
+    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    defaultSink->waitTillCompleted(numResultRecords);
+    const auto resultRecords = defaultSink->getResult();
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 0u);
-
+    EXPECT_EQ(resultRecords.size(), numResultRecords);
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 

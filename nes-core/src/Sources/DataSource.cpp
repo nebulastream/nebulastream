@@ -75,7 +75,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
-    // TODO enable this exception -- currently many UTs are designed to assume empty executableSuccessors
+    // TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
     //    if (this->executableSuccessors.empty()) {
     //        throw Exceptions::RuntimeException("empty executable successors");
     //    }

@@ -66,7 +66,9 @@ std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& o
 std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
     return std::make_shared<TestUtils::TestSourceDescriptor>(
         inputSchema,
-        [&](OperatorId id,
+        // Capturing inputSchema here can lead to a corrupted schema. Thus, it is required as a lambda input parameter.
+        [&](SchemaPtr inputSchema,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr& nodeEngine,

@@ -19,6 +19,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -258,6 +259,7 @@ void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layout
 
 std::vector<std::string> Schema::getFieldNames() const {
     std::vector<std::string> fieldNames;
+    //Todo: 4049: size can be corrupted if schema gets corrupted (18446741141687656808 fields)
     for (const auto& attribute : fields) {
         fieldNames.emplace_back(attribute->getName());
     }
