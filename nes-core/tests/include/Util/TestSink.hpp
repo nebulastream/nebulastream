@@ -26,8 +26,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <chrono>
-#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace NES {
