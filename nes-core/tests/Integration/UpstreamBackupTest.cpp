@@ -508,7 +508,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     string query = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
-                   "Seconds(1))).apply(Min(Attribute(\"timestamp1\"))).sink(NullOutputSinkDescriptor::create());";
+                   "Seconds(1))).apply(Min(Attribute(\"timestamp1\"))).sink(PrintSinkDescriptor::create());";
 
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,

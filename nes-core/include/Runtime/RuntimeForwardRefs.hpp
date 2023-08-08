@@ -47,6 +47,9 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 class DataEmitter;
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
+class SinkFormat;
+using SinkFormatPtr = std::shared_ptr<SinkFormat>;
+
 namespace Runtime {
 
 enum class NumaAwarenessFlag { ENABLED, DISABLED };

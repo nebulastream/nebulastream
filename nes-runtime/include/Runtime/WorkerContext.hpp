@@ -89,7 +89,7 @@ class WorkerContext {
      */
     static WorkerContextBufferProviderRawPtr getBufferProviderTLS();
 
-    void printStatistics(Runtime::TupleBuffer& inputBuffer);
+    void printStatistics(Runtime::TupleBuffer& inputBuffer, std::string str = "");
 
     /**
      * @brief Returns the thread-local buffer provider

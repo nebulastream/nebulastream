@@ -43,7 +43,7 @@ PrintSink::~PrintSink() = default;
 
 SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
-bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
 
@@ -81,6 +81,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
             ret = ret + bufferAsChar[i];
         }
         NES_TRACE("PrintSink::getData: write buffer str= " << ret);
+        workerContext.printStatistics(inputBuffer, ret);
         outputStream << ret << std::endl;
     }
     updateWatermarkCallback(inputBuffer);

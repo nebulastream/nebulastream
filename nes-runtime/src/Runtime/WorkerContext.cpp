@@ -61,7 +61,7 @@ size_t WorkerContext::getStorageSize() {
     return size;
 }
 
-void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
+void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer, std::string str) {
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
     auto epoch = now_ms.time_since_epoch();
@@ -94,8 +94,28 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
         statisticsFile << "0" << millisec << ",";
     else
         statisticsFile << millisec << ",";
-    statisticsFile << value.count() - inputBuffer.getWatermark() << "\n";
-    statisticsFile.flush();
+    unsigned lastDelimPos = str.find_last_of("|");
+    unsigned firstDelimPos = str.find("|");
+    unsigned nextDelimPosition = firstDelimPos;
+    while (nextDelimPosition != lastDelimPos) {
+        std::cout << "firstDelimPos" << firstDelimPos;
+        firstDelimPos = nextDelimPosition;
+        nextDelimPosition = str.find_first_of("|", nextDelimPosition + 2);
+        std::cout << "nextDelimPosition" << nextDelimPosition;
+    }
+    if (!str.empty()) {
+        std::string creationTimestamp = str.substr(firstDelimPos + 1, nextDelimPosition - firstDelimPos - 1);
+        NES_TRACE("PrintSink::Converted timestamp " << creationTimestamp);
+        std::string::const_iterator it = creationTimestamp.begin();
+        while (it != creationTimestamp.end() && std::isdigit(*it)) ++it;
+        if (it == creationTimestamp.end()) {
+            statisticsFile << value.count() - std::atoll(creationTimestamp.c_str()) << "\n";
+            statisticsFile.flush();
+        }
+    }
+    else {
+        statisticsFile << value.count() - inputBuffer.getCreationTimestampInMS() << "\n";
+    }
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
