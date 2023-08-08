@@ -13,9 +13,9 @@
 */
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <NesBaseTest.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -29,9 +29,9 @@
 
 using namespace NES;
 /*
- * This test checks for the correctness of the SQL queries created by the NebulaSQL Parsing Service.
+ * This test checks for the correctness of the pattern queries created by the NESPL Parsing Service.
  */
-class SQLParsingServiceTest : public Testing::BaseUnitTest {
+class PatternParsingServiceTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */
@@ -49,12 +49,12 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan) {
     return queryPlanStr;
 }
 
-TEST(SQLParsingServiceTest, simpleSQL) {
-    //SQL string as received from the NES UI and create query plan from parsing service
+TEST_F(SQLParsingServiceTest, simplePattern) {
+    //pattern string as received from the NES UI and create query plan from parsing service
     std::string SQLString =
-        "SELECT * FROM default_logical WHERE default_logical.currentSpeed < default_logical.allowedSpeed INTO testSink;";
+        "SELECT * FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed INTO testSink;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(SQLString);
+    QueryPlanPtr patternPlan = SQLParsingService->createQueryFromSQL(SQLString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorNodePtr source =
@@ -68,5 +68,7 @@ TEST(SQLParsingServiceTest, simpleSQL) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //comparison of the expected and the actual generated query plan
-    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
+//   std::string patternString =
+//        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
