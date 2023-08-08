@@ -98,10 +98,8 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer, std::stri
     unsigned firstDelimPos = str.find("|");
     unsigned nextDelimPosition = firstDelimPos;
     while (nextDelimPosition != lastDelimPos) {
-        std::cout << "firstDelimPos" << firstDelimPos;
         firstDelimPos = nextDelimPosition;
         nextDelimPosition = str.find_first_of("|", nextDelimPosition + 2);
-        std::cout << "nextDelimPosition" << nextDelimPosition;
     }
     if (!str.empty()) {
         std::string creationTimestamp = str.substr(firstDelimPos + 1, nextDelimPosition - firstDelimPos - 1);
@@ -109,6 +107,7 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer, std::stri
         std::string::const_iterator it = creationTimestamp.begin();
         while (it != creationTimestamp.end() && std::isdigit(*it)) ++it;
         if (it == creationTimestamp.end()) {
+            std::cout << "Latency: " << value.count() - std::atoll(creationTimestamp.c_str());
             statisticsFile << value.count() - std::atoll(creationTimestamp.c_str()) << "\n";
             statisticsFile.flush();
         }

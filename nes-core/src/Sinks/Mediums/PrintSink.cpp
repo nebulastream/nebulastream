@@ -70,7 +70,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     } else {
         NES_DEBUG("PrintSink::getData: schema already written");
     }
-
+    std::cout << "Print tuple " << inputBuffer.getSequenceNumber();
     NES_TRACE("PrintSink::getData: write data");
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
