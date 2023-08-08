@@ -19,7 +19,6 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <utility>

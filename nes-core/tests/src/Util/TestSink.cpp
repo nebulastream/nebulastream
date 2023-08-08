@@ -14,8 +14,6 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestSink.hpp>
-#include <chrono>
-#include <cstdint>
 
 namespace NES {
 
