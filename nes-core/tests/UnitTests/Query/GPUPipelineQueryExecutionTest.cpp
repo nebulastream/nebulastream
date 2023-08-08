@@ -398,7 +398,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaSimple,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchemaSimple,
+            OperatorId id,
             OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -475,7 +476,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaMultipleFields,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchemaMultipleFields,
+            OperatorId id,
             OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -556,7 +558,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaColumnLayout,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchemaColumnLayout,
+            OperatorId id,
             OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -757,7 +760,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaWindowedAggregation,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchemaWindowedAggregation,
+            OperatorId id,
             OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
