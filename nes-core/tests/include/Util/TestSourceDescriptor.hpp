@@ -38,7 +38,8 @@ class TestSourceDescriptor : public SourceDescriptor {
      */
     TestSourceDescriptor(
         SchemaPtr schema,
-        std::function<DataSourcePtr(OperatorId,
+        std::function<DataSourcePtr(SchemaPtr schema,
+                                    OperatorId,
                                     OriginId,
                                     SourceDescriptorPtr,
                                     Runtime::NodeEnginePtr,
@@ -80,7 +81,8 @@ class TestSourceDescriptor : public SourceDescriptor {
     SourceDescriptorPtr copy() override;
 
   private:
-    std::function<DataSourcePtr(OperatorId,
+    std::function<DataSourcePtr(SchemaPtr schema,
+                                OperatorId,
                                 OriginId,
                                 SourceDescriptorPtr,
                                 Runtime::NodeEnginePtr,

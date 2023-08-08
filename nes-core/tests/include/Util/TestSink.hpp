@@ -34,6 +34,9 @@ namespace NES {
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
+/**
+ * @brief A sink for testing that can be part of a query plan and enables executing queries and producing results.
+ */
 class TestSink : public SinkMedium {
   public:
     /**
@@ -133,18 +136,34 @@ class TestSink : public SinkMedium {
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 };
 
+/**
+ * @brief A sink for testing that is instantiated using 'Type'. The CollectSink uses 'Type' as a template parameter for
+ * the TupleBuffer that it writes results into.
+ *
+ * @tparam Type: Used to determine the record layout (field types) of the TupleBuffer.
+ */
 template<class Type>
 class CollectTestSink : public SinkMedium {
   public:
+    /**
+     * @brief Construct a new Collect Test Sink object.
+     * 
+     * @param schema: Used to create an object of the parent class 'SinkMedium'.
+     * @param nodeEngine: Also used to create a SinkMedium. Is used to manage queries.
+     * @param numOfProducers: Also used to create a SinkMedium.
+     */
     CollectTestSink(const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers = 1)
         : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0) {
         auto bufferManager = nodeEngine->getBufferManager(0);
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only support for row layouts");
     };
 
-    static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
+    /**
+     * @brief Create factory function that calls the constructor of CollectTestSink and returns a shared pointer.
+     */
+    static std::shared_ptr<CollectTestSink<Type>>
+    create(const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
+        return std::make_shared<CollectTestSink<Type>>(schema, engine, numOfProducers);
     }
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
@@ -159,6 +178,11 @@ class CollectTestSink : public SinkMedium {
         return true;
     }
 
+    /**
+     * @brief Get the results vector using the template Type of the CollectSink class.
+     * 
+     * @return std::vector<Type>&: vector containing the results.
+     */
     std::vector<Type>& getResult() { return results; }
 
     void setup() override { running = true; };

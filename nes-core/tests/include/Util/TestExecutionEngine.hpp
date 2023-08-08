@@ -74,7 +74,7 @@ class TestExecutionEngine {
 
     template<class Type>
     auto createCollectSink(SchemaPtr outputSchema) {
-        return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine);
+        return CollectTestSink<Type>::create(outputSchema, nodeEngine);
     }
 
     std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);

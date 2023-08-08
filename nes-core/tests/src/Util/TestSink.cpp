@@ -47,17 +47,15 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     // Check whether the required amount of expected result buffers has been reached.
     if (resultBuffers.size() < numExpectedResultBuffers) {
-        // Todo: 
         NES_DEBUG("Already saw {} buffers and expects a total of {}", resultBuffers.size(), numExpectedResultBuffers);
     }
     else if (resultBuffers.size() == numExpectedResultBuffers) {
-        //Todo: #4043: this is never called if no data is written to the output
-        // completed.set_value(numExpectedResultBuffers);
+        completed.set_value(numExpectedResultBuffers);
     } 
-    // else if (resultBuffers.size() > numExpectedResultBuffers) {
-    //     NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), numExpectedResultBuffers);
-    //     EXPECT_TRUE(false);
-    // }
+    else if (resultBuffers.size() > numExpectedResultBuffers) {
+        NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), numExpectedResultBuffers);
+        EXPECT_TRUE(false);
+    }
     return true;
 }
 

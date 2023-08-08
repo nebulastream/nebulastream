@@ -15,7 +15,7 @@
 
 namespace NES::TestUtils {
 
-TestSinkDescriptor::TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
+TestSinkDescriptor::TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(dataSink)) {}
 
 DataSinkPtr TestSinkDescriptor::getSink() { return sink; }
 

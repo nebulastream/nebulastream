@@ -16,13 +16,14 @@ namespace NES::TestUtils {
 
 TestSourceDescriptor::TestSourceDescriptor(
     SchemaPtr schema,
-    std::function<DataSourcePtr(OperatorId,
+    std::function<DataSourcePtr(SchemaPtr schema,
+                                OperatorId,
                                 OriginId,
                                 SourceDescriptorPtr,
                                 Runtime::NodeEnginePtr,
                                 size_t,
                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
-    : SourceDescriptor(std::move(std::move(schema))), createSourceFunction(std::move(std::move(createSourceFunction))) {}
+    : SourceDescriptor(std::move(schema)), createSourceFunction(std::move(createSourceFunction)) {}
 
 DataSourcePtr TestSourceDescriptor::create(OperatorId operatorId,
                                            OriginId originId,
@@ -30,12 +31,13 @@ DataSourcePtr TestSourceDescriptor::create(OperatorId operatorId,
                                            Runtime::NodeEnginePtr nodeEngine,
                                            size_t numSourceLocalBuffers,
                                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    return createSourceFunction(operatorId,
+    return createSourceFunction(schema,
+                                operatorId,
                                 originId,
-                                std::move(std::move(sourceDescriptor)),
-                                std::move(std::move(nodeEngine)),
+                                std::move(sourceDescriptor),
+                                std::move(nodeEngine),
                                 numSourceLocalBuffers,
-                                std::move(std::move(successors)));
+                                std::move(successors));
 }
 
 std::string TestSourceDescriptor::toString() const { return std::string(); }

@@ -21,7 +21,7 @@
 namespace NES::TestUtils {
 
 TestSourceProvider::TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options)
-    : QueryCompilation::DefaultDataSourceProvider(std::move(std::move(options))) {}
+    : QueryCompilation::DefaultDataSourceProvider(std::move(options)) {}
 
 DataSourcePtr TestSourceProvider::lower(OperatorId operatorId,
                                         OriginId originId,
