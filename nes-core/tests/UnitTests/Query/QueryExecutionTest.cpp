@@ -369,20 +369,22 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            0,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()
                             ->addField("test$id", BasicType::INT64)
@@ -478,20 +480,22 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           originId,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            originId,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
@@ -566,39 +570,43 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                     ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           originId,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            originId,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     SchemaPtr schemaBuildSide =
         Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
-        [&](OperatorId id,
+        [&](SchemaPtr schemaBuildSide,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(schemaBuildSide,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           originId,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(schemaBuildSide,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            originId,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()
                             ->addField("probe$id1", BasicType::INT64)
@@ -758,39 +766,43 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                     ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,// dummy origin id
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            0,// dummy origin id
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     SchemaPtr schemaBuildSide =
         Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
-        [&](OperatorId id,
+        [&](SchemaPtr schemaBuildSide,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(schemaBuildSide,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,// dummy origin id
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(schemaBuildSide,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            0,// dummy origin id
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()
                             ->addField("probe$id1", BasicType::INT64)
@@ -891,20 +903,22 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            0,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()
                             ->addField("id", BasicType::INT64)
@@ -1003,20 +1017,22 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 2,
-                                        /*frequency*/ 0,
-                                        successors,
-                                        /*varyWatermark*/ true);
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 2,
+                                            /*frequency*/ 0,
+                                            successors,
+                                            /*varyWatermark*/ true);
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. add window operator:
@@ -1070,19 +1086,21 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 2,
-                                        /*frequency*/ 0,
-                                        std::move(successors));
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 2,
+                                            /*frequency*/ 0,
+                                            std::move(successors));
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -1157,22 +1175,24 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 2,
-                                        /*frequency*/ 0,
-                                        successors,
-                                        /*varyWatermark*/ true,
-                                        true,
-                                        30);
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 2,
+                                            /*frequency*/ 0,
+                                            successors,
+                                            /*varyWatermark*/ true,
+                                            true,
+                                            30);
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
@@ -1242,19 +1262,21 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 2,
-                                        /*frequency*/ 0,
-                                        std::move(successors));
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 2,
+                                            /*frequency*/ 0,
+                                            std::move(successors));
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -1312,19 +1334,21 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 3,
-                                        /*frequency*/ 0,
-                                        successors);
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 3,
+                                            /*frequency*/ 0,
+                                            successors);
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -1398,19 +1422,21 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return WindowSource::create(windowSchema,
-                                        nodeEngine->getBufferManager(),
-                                        nodeEngine->getQueryManager(),
-                                        /*bufferCnt*/ 2,
-                                        /*frequency*/ 0,
-                                        successors);
-        });
+                return WindowSource::create(windowSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            /*bufferCnt*/ 2,
+                                            /*frequency*/ 0,
+                                            successors);
+        }
+    );
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -1552,20 +1578,22 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
+                return createNonRunnableSource(testSchema,
+                                            nodeEngine->getBufferManager(),
+                                            nodeEngine->getQueryManager(),
+                                            id,
+                                            0,
+                                            numSourceLocalBuffers,
+                                            std::move(successors));
+        }
+    );
 
     auto outputSchema = Schema::create()
                             ->addField("id", BasicType::INT64)
