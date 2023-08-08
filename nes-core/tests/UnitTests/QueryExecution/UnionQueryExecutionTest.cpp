@@ -144,7 +144,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
-    constexpr uint64_t numResultRecords = 10;
+    constexpr uint64_t numResultRecords = 20;
 
     // Define query plan.
     Query query =
@@ -168,7 +168,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
 TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
-    constexpr uint64_t numResultRecords = 10;
+    constexpr uint64_t numResultRecords = 20;
 
     auto customSchema = Schema::create()->addField("custom$id", BasicType::INT64)->addField("custom$one", BasicType::INT64);
     auto customSource = executionEngine->createDataSource(customSchema);
