@@ -14,7 +14,9 @@
 
 add_source_files(
     nes-runtime
-    Segment.cpp
+    CPPCodeGenerator.cpp
+    Function.cpp
+    IfElseSegment.cpp
+    LabeledSegment.cpp
+    Statement.cpp
 )
-
-add_subdirectory(CPP)
