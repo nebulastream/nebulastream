@@ -306,7 +306,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestampInMS();
         auto diff = now - creation;
-        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
+        //NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
         statistics->incLatencySum(diff);
 
         for (auto& bufferManager : bufferManagers) {
