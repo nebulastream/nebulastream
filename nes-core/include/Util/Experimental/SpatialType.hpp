@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
 #define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
 
+#include <cstdint>
 #include <string>
 
 namespace NES::Spatial::Experimental {

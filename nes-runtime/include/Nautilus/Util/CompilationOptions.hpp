@@ -13,6 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
+#include <cstdint>
 #include <string>
 namespace NES::Nautilus {
 
