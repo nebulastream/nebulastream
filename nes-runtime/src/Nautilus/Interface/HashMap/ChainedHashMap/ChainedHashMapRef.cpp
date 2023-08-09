@@ -49,8 +49,8 @@ Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
     return getMember(ref, ChainedHashMap::Entry, hash).load<UInt64>();
 }
 
-bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) { return ref != 0; }
-bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) { return ref == 0; }
+bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) const { return ref != 0; }
+bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) const { return ref == 0; }
 
 ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,
@@ -68,7 +68,23 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash)
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash,
+                                                      const std::vector<Value<>>& keys) {
+    // find entry
+    auto entry = find(hash, keys);
+    // create new entry
+    entry = insert(hash);
+    // store keys
+    auto keyPtr = entry.getKeyPtr();
+    for (size_t i = 0; i < keys.size(); i++) {
+        auto &key = keys[i];
+        keyPtr.store(key);
+        keyPtr = keyPtr + keyDataTypes[i]->size();
+    }
+    return entry;
+}
+
+ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
     // find chain
     auto entry = findChain(hash);
     // iterate chain and search for the correct entry
@@ -90,11 +106,12 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
                                                             const std::vector<Value<>>& keys,
                                                             const std::function<void(EntryRef&)>& onInsert) {
     // find entry
-    auto entry = findOne(hash, keys);
+    auto entry = find(hash, keys);
     // if the entry is null, insert a new entry.
     if (entry == nullptr) {
         // create new entry
         entry = insert(hash);
+        // store keys
         auto keyPtr = entry.getKeyPtr();
         for (size_t i = 0; i < keys.size(); i++) {
             auto& key = keys[i];
@@ -122,6 +139,9 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
 }
 
 Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
+    if (entry == nullptr) {
+        return false;
+    }
     Value<Boolean> equals = true;
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
@@ -139,7 +159,6 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
 }
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() {
     auto currentSize = getCurrentSize();
-    auto entriesPerPage = getEntriesPerPage();
     return {*this, currentSize};
 }
 
