@@ -33,6 +33,7 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #define NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_
 
 #include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <map>

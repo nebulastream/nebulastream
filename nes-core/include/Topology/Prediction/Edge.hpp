@@ -13,6 +13,7 @@
 */
 #ifndef TOPOLOGY_PREDICTION_EDGE_HPP_
 #define TOPOLOGY_PREDICTION_EDGE_HPP_
+#include <cstdint>
 #include <string>
 
 namespace NES {
