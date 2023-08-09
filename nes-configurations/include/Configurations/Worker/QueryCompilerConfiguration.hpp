@@ -26,6 +26,7 @@
 #include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
+#include <Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 #include <iostream>
 #include <map>
@@ -144,7 +145,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
     BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
 
-    UIntOption stageBufferSize = {VECTORIZATION_STAGE_BUFFER_SIZE, 4096, "Size of the stage buffer"};
+    UIntOption stageBufferSize = {
+        VECTORIZATION_STAGE_BUFFER_SIZE,
+        NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
+        "Size of the stage buffer"
+    };
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

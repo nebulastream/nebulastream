@@ -49,7 +49,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
 
     QueryCompilerOptions::VectorizationOptionsPtr vectorizationOptions = std::make_shared<QueryCompilerOptions::VectorizationOptions>();
     vectorizationOptions->useVectorization(false);
-    vectorizationOptions->setStageBufferSize(4096);
+    vectorizationOptions->setStageBufferSize(NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE);
     options.setVectorizationOptions(vectorizationOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
