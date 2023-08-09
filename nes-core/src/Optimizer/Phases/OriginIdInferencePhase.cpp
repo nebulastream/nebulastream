@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/RuntimeException.hpp>
+#include <Exceptions/InvalidLogicalOperatorNodeException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -38,7 +38,7 @@ QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
         if (auto logicalOperator = rootOperators->as_if<LogicalOperatorNode>()) {
             logicalOperator->inferInputOrigins();
         } else {
-            throw Exceptions::RuntimeException(
+            throw Exceptions::InvalidLogicalOperatorNodeException(
                 "During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
         }
     }

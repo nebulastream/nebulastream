@@ -12,8 +12,21 @@
     limitations under the License.
 */
 
-#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_BLOCKINGOPERATOREXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_BLOCKINGOPERATOREXCEPTION_HPP_
 
-namespace NES {
-GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+#include <Exceptions/RequestExecutionException.hpp>
+#include <stdexcept>
+#include <string>
+
+namespace NES::Exceptions {
+/**
+ * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
+ */
+class BlockingOperatorException : public RequestExecutionException {
+  public:
+    explicit BlockingOperatorException(const std::string& message);
+};
 }// namespace NES
+
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
