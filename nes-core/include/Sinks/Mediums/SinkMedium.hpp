@@ -192,9 +192,9 @@ class SinkMedium : public Runtime::Reconfigurable {
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
-    uint64_t sentBuffer{0};// TODO check thread safety
-    uint64_t sentTuples{0};// TODO check thread safety
-    std::recursive_mutex writeMutex; // TODO remove the mutex
+    uint64_t sentBuffer{0};
+    uint64_t sentTuples{0};
+    std::recursive_mutex writeMutex;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
