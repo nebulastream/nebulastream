@@ -112,6 +112,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <cstddef>
+#include <span>
 #include <string_view>
 #include <utility>
 
@@ -1182,6 +1183,61 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
             }
         default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
     }
+}
+
+#ifdef TFDEF
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
+    auto model = inferModelOperator->getModel();
+
+    //Fetch the name of input fields
+    std::vector<std::string> inputFields;
+    for (const auto& inputField : inferModelOperator->getInputFields()) {
+        auto fieldAccessExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        inputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    //Fetch the name of output fields
+    std::vector<std::string> outputFields;
+    for (const auto& outputField : inferModelOperator->getOutputFields()) {
+        auto fieldAccessExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        outputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    //build the handler to invoke model during execution
+    auto handler = std::make_shared<Runtime::Execution::Operators::InferModelHandler>(model);
+    operatorHandlers.push_back(handler);
+    auto indexForThisHandler = operatorHandlers.size() - 1;
+
+    //build nautilus infer model operator
+    return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
+}
+#endif
+
+std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
+LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
+    if (operators.empty()) {
+        return std::nullopt;
+    }
+
+    auto op = operators.at(0);
+    if (operators.size() == 1) {
+        return op;
+    }
+
+    auto span = std::span{operators};
+    auto subspan = span.subspan(1, operators.size());
+    auto subvector = std::vector(subspan.begin(), subspan.end());
+    auto childOpOpt = buildNautilusOperatorPipeline(subvector);
+    if (childOpOpt) {
+        auto childOp = childOpOpt.value();
+        auto executableChildOp = std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(childOp);
+        op->setChild(executableChildOp);
+    }
+    return op;
 }
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
