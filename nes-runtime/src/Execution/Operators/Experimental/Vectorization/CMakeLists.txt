@@ -12,6 +12,7 @@
 
 add_source_files(
     nes-runtime
+    Kernel.cpp
     StagingHandler.cpp
     Unvectorize.cpp
     VectorizableOperator.cpp
