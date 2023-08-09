@@ -17,6 +17,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/ConstAddressOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
@@ -33,6 +34,7 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -592,6 +594,9 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
     } else if (auto* boolean = cast_if<Boolean>(valueRef.value.get())) {
         constOperation =
             std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
+    } else if (auto* memref = cast_if<MemRef>(valueRef.value.get())) {
+        constOperation =
+            std::make_shared<NES::Nautilus::IR::Operations::ConstAddressOperation>(resultIdentifier, memref->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }

@@ -68,6 +68,10 @@ std::unique_ptr<CodeGenerator> IRLoweringInterface::lowerOperation(const std::sh
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operation);
             return lowerBranch(branchOp, frame);
         }
+        case IR::Operations::Operation::OperationType::ConstAddressOp: {
+            auto constAddressOp = std::static_pointer_cast<IR::Operations::ConstAddressOperation>(operation);
+            return lowerConstAddress(constAddressOp, frame);
+        }
         case IR::Operations::Operation::OperationType::ConstBooleanOp: {
             auto constBooleanOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
             return lowerConstBoolean(constBooleanOp, frame);

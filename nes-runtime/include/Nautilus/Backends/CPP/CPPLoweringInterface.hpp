@@ -87,6 +87,7 @@ private:
     Code lowerBranch(const std::shared_ptr<IR::Operations::BranchOperation>& operation, RegisterFrame& frame) override;
     Code lowerCast(const std::shared_ptr<IR::Operations::CastOperation>& operation, RegisterFrame& frame) override;
     Code lowerCompare(const std::shared_ptr<IR::Operations::CompareOperation>& operation, RegisterFrame& frame) override;
+    Code lowerConstAddress(const std::shared_ptr<IR::Operations::ConstAddressOperation>& operation, RegisterFrame& frame) override;
     Code lowerConstBoolean(const std::shared_ptr<IR::Operations::ConstBooleanOperation>& operation, RegisterFrame& frame) override;
     Code lowerConstFloat(const std::shared_ptr<IR::Operations::ConstFloatOperation>& operation, RegisterFrame& frame) override;
     Code lowerConstInt(const std::shared_ptr<IR::Operations::ConstIntOperation>& operation, RegisterFrame& frame) override;

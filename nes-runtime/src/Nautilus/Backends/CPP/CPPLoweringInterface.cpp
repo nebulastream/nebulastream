@@ -249,6 +249,18 @@ CPPLoweringInterface::Code CPPLoweringInterface::lowerCompare(const std::shared_
     return lowerBinaryOperation<IR::Operations::CompareOperation>(operation, binaryOp, frame);
 }
 
+CPPLoweringInterface::Code CPPLoweringInterface::lowerConstAddress(const std::shared_ptr<IR::Operations::ConstAddressOperation>& operation, RegisterFrame& frame) {
+    auto var = getVariable(operation->getIdentifier());
+    auto type = getType(operation->getStamp());
+    frame.setValue(operation->getIdentifier(), var);
+    auto code = std::make_unique<CodeGen::Segment>();
+    auto decl = std::make_shared<CodeGen::CPP::Statement>(type + " " + var);
+    code->addToProlog(decl);
+    auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = reinterpret_cast<uint8_t*>({})", var, operation->getValue()));
+    code->add(stmt);
+    return std::move(code);
+}
+
 CPPLoweringInterface::Code CPPLoweringInterface::lowerConstBoolean(const std::shared_ptr<IR::Operations::ConstBooleanOperation>& operation, RegisterFrame& frame) {
     return lowerConstOperation<IR::Operations::ConstBooleanOperation>(operation, frame);
 }

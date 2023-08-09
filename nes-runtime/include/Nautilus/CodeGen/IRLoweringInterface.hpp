@@ -26,6 +26,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/ConstAddressOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
@@ -93,6 +94,8 @@ private:
     virtual std::unique_ptr<CodeGenerator> lowerCast(const std::shared_ptr<IR::Operations::CastOperation>& operation, RegisterFrame& frame) = 0;
 
     virtual std::unique_ptr<CodeGenerator> lowerCompare(const std::shared_ptr<IR::Operations::CompareOperation>& operation, RegisterFrame& frame) = 0;
+
+    virtual std::unique_ptr<CodeGenerator> lowerConstAddress(const std::shared_ptr<IR::Operations::ConstAddressOperation>& operation, RegisterFrame& frame) = 0;
 
     virtual std::unique_ptr<CodeGenerator> lowerConstBoolean(const std::shared_ptr<IR::Operations::ConstBooleanOperation>& operation, RegisterFrame& frame) = 0;
 

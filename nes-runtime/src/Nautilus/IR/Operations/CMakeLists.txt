@@ -29,4 +29,5 @@ add_source_files(nes-runtime
         CastOperation.cpp
         BranchOperation.cpp
         ConstBooleanOperation.cpp
+        ConstAddressOperation.cpp
         )
