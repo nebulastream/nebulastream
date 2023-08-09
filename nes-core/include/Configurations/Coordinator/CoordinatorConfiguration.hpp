@@ -81,6 +81,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
 
     /**
+     * @brief Indicates if new request execution module is to be used
+     */
+    BoolOption enableNewRequestExecutor = {ENABLE_NEW_REQUEST_EXECUTOR_CONFIG, false, "Enable New Request Executor"};
+
+    /**
      * @brief Enable reconfiguration of running query plans.
      */
     BoolOption enableQueryReconfiguration = {ENABLE_QUERY_RECONFIGURATION,

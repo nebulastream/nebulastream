@@ -43,7 +43,6 @@ class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 namespace Catalogs {
-
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -53,8 +52,15 @@ namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
-
 }// namespace Catalogs
+
+class StorageHandler;
+
+namespace Experimental {
+template<typename StorageHandler>
+class AsyncRequestExecutor;
+using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<StorageHandler>>;
+}// namespace Experimental
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
@@ -62,12 +68,14 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogServicePtr queryCatalogService,
-                          RequestQueuePtr queryRequestQueue,
-                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          QueryParsingServicePtr queryParsingService,
+    explicit QueryService(const QueryCatalogServicePtr& queryCatalogService,
+                          const RequestQueuePtr& queryRequestQueue,
+                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                          const QueryParsingServicePtr& queryParsingService,
+                          const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                          bool useNewRequestExecutor,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                          const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -131,6 +139,8 @@ class QueryService {
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     Configurations::OptimizerConfiguration optimizerConfiguration;
+    bool useNewRequestExecutor;
+    Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
 };
 
 };// namespace NES
