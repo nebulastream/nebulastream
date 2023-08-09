@@ -17,5 +17,6 @@
 
 add_source_files(
     nes-runtime
+    KernelCompiler.cpp
     KernelExecutable.cpp
 )
