@@ -44,7 +44,7 @@ namespace fmt {
 template<>
 struct formatter<NES::Network::ChannelId> : formatter<std::string> {
     auto format(const NES::Network::ChannelId& channel_id, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}:{}", channel_id.getThreadId(), channel_id.getNesPartition().toString());
+        return fmt::format_to(ctx.out(), "{}:{}", channel_id.getThreadId(), channel_id.getNesPartition().toString());
     }
 };
 }// namespace fmt

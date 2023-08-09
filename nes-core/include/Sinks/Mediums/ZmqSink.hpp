@@ -82,7 +82,7 @@ namespace fmt {
 template<>
 struct formatter<NES::ZmqSink> : formatter<std::string> {
     auto format(const NES::ZmqSink& zmq_sink, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{} {}", zmq_sink.getHost(), zmq_sink.getPort());
+        return fmt::format_to(ctx.out(), "{} {}", zmq_sink.getHost(), zmq_sink.getPort());
     }
 };
 }//namespace fmt

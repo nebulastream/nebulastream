@@ -109,7 +109,7 @@ template<>
 struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string> {
     auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx)
         -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
+        return fmt::format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
 }//namespace fmt

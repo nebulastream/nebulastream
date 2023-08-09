@@ -213,13 +213,13 @@ namespace fmt {
 template<>
 struct formatter<NES::TopologyNode> : formatter<std::string> {
     auto format(const NES::TopologyNode& topology_node, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(),
-                         "{} {} {} {} {}",
-                         topology_node.getId(),
-                         topology_node.getIpAddress(),
-                         topology_node.getGrpcPort(),
-                         topology_node.getDataPort(),
-                         topology_node.getAvailableResources());
+        return fmt::format_to(ctx.out(),
+                              "{} {} {} {} {}",
+                              topology_node.getId(),
+                              topology_node.getIpAddress(),
+                              topology_node.getGrpcPort(),
+                              topology_node.getDataPort(),
+                              topology_node.getAvailableResources());
     }
 };
 }//namespace fmt
