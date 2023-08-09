@@ -175,6 +175,14 @@ class ChainedHashMapRef {
      * @return EntryIterator
      */
     EntryIterator end();
+    /**
+     * @brief This function performs an insertion of a new entry to the hash map.
+     * If an entry with the same hash already exists we append it as the head of the chain.
+     * @param hash the hash of the keys derived with a specific hash function.
+     * @param keys a list of keys.
+     * @return EntryRef
+     */
+    EntryRef insert(const Value <UInt64> &hash, const std::vector<Value<>> &keys);
 
   private:
     Value<UInt64> getPageSize();
