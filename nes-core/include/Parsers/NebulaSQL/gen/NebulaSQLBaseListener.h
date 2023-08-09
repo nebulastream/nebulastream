@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -252,6 +252,24 @@ public:
 
   virtual void enterKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext * /*ctx*/) override { }
   virtual void exitKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext * /*ctx*/) override { }
+
+  virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
+  virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
+
+  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
+  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
+
+  virtual void enterSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext * /*ctx*/) override { }
+  virtual void exitSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext * /*ctx*/) override { }
+
+  virtual void enterQos(NebulaSQLParser::QosContext * /*ctx*/) override { }
+  virtual void exitQos(NebulaSQLParser::QosContext * /*ctx*/) override { }
+
+  virtual void enterSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext * /*ctx*/) override { }
+  virtual void exitSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext * /*ctx*/) override { }
+
+  virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
+  virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
 
   virtual void enterSortItem(NebulaSQLParser::SortItemContext * /*ctx*/) override { }
   virtual void exitSortItem(NebulaSQLParser::SortItemContext * /*ctx*/) override { }
