@@ -133,4 +133,21 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
     return partitionManager->addSubpartitionEventListener(nesPartition, nodeLocation, eventListener);
 }
 
+std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+                                                                                 const NesPartition& nesPartition,
+                                                                                 Runtime::BufferManagerPtr bufferManager,
+                                                                                 std::chrono::milliseconds waitTime,
+                                                                                 uint8_t retryTimes) {
+    NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
+    partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
+    return NetworkChannel::createAsync(server->getContext(),
+                                  nodeLocation.createZmqURI(),
+                                  nesPartition,
+                                  exchangeProtocol,
+                                  std::move(bufferManager),
+                                  senderHighWatermark,
+                                  waitTime,
+                                  retryTimes);
+}
+
 }// namespace NES::Network

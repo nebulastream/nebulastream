@@ -252,6 +252,62 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     ASSERT_EQ(true, true);
 }
 
+TEST_F(NetworkStackTest, startCloseChannelAsync) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            explicit InternalListener(std::promise<bool>& p) : completed(p) {}
+
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+
+          private:
+            std::promise<bool>& completed;
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
+        auto netManager = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr);
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread t([&netManager, &completed, &nesPartition] {
+          // register the incoming channel
+          auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
+                                                              netManager->getServerLocation(),
+                                                              std::make_shared<DataEmitterImpl>());
+          NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
+          auto v = completed.get_future().get();
+          netManager->unregisterSubpartitionConsumer(nesPartition);
+          ASSERT_EQ(v, true);
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+        auto senderChannelFuture =
+            netManager->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 3);
+        auto senderChannel = senderChannelFuture.get();
+        senderChannel->close(Runtime::QueryTerminationType::Graceful);
+        senderChannel.reset();
+        netManager->unregisterSubpartitionProducer(nesPartition);
+
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
 TEST_F(NetworkStackTest, startCloseMaxChannel) {
     try {
         // start zmqServer

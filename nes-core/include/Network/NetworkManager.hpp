@@ -25,6 +25,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <future>
 
 namespace NES::Network {
 
@@ -125,6 +126,22 @@ class NetworkManager {
      * @return the data network channel
      */
     NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                   const NesPartition& nesPartition,
+                                                   Runtime::BufferManagerPtr bufferManager,
+                                                   std::chrono::milliseconds waitTime,
+                                                   uint8_t retryTimes);
+
+    /**
+     * @brief This method is called on the sender side to asynchronously register a SubpartitionProducer. If the connection to
+     * the destination server is successful, a pointer to the DataChannel is returned, else nullptr is returned.
+     * The DataChannel is not thread safe!
+     * @param nodeLocation is the destination
+     * @param nesPartition indicates the partition
+     * @param waitTime time in seconds to wait until a retry is called
+     * @param retryTimes times to retry a connection
+     * @return a future containing the data network channel
+     */
+    std::future<NetworkChannelPtr> registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
                                                    const NesPartition& nesPartition,
                                                    Runtime::BufferManagerPtr bufferManager,
                                                    std::chrono::milliseconds waitTime,
