@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.188](https://github.com/nebulastream/nebulastream/tree/v0.5.188) (2023-08-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.187...v0.5.188)
+
+### Bug Fixes 🐛
+
+- \[BUG\] No sinks print results when fault tolerance is enabled [\#4097](https://github.com/nebulastream/nebulastream/issues/4097)
+
 ## [v0.5.187](https://github.com/nebulastream/nebulastream/tree/v0.5.187) (2023-08-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.186...v0.5.187)
