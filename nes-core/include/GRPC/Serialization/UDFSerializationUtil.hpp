@@ -16,8 +16,9 @@
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
-#include <JavaUdfDescriptorMessage.pb.h>
+#include <UDFDescriptorMessage.pb.h>
 
 namespace NES {
 
@@ -31,16 +32,24 @@ class UDFSerializationUtil {
      * @param javaUdfDescriptor The Java UDF descriptor that should be serialized.
      * @param javaUdfDescriptorMessage A mutable protobuf message into which the Java UDF descriptor is serialized.
      */
-    static void serializeJavaUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
-                                           JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
+    static void serializeJavaUDFDescriptor(const Catalogs::UDF::JavaUDFDescriptorPtr& udfDescriptor,
+                                           UDFDescriptorMessage& udfDescriptorMessage);
+
+    /**
+     * Serialize a Python UDF descriptor to a protobuf message.
+     * @param pythonUDFDescriptor The Python UDF descriptor that should be serialized.
+     * @param pythonUDFDescriptorMessage A mutable protobuf message into which the Python UDF descriptor is serialized.
+     */
+    static void serializePythonUDFDescriptor(const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor,
+                                             UDFDescriptorMessage& udfDescriptorMessage);
 
     /**
      * Deserialize a protobuf message representing a Java UDF descriptor.
      * @param javaUdfDescriptorMessage The Java UDF descriptor protobuf message.
      * @return A Java UDF descriptor that was deserialized from the protobuf message.
      */
-    static Catalogs::UDF::JavaUDFDescriptorPtr
-    deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
+    static Catalogs::UDF::UDFDescriptorPtr
+    deserializeUDFDescriptor(const UDFDescriptorMessage& udfDescriptorMessage);
 };
 
 }// namespace NES

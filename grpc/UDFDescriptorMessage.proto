@@ -14,6 +14,7 @@
 
 syntax = "proto3";
 import "SerializableSchema.proto";
+import "google/protobuf/any.proto";
 package NES;
 
 option java_package = "stream.nebula.protobuf";
@@ -34,4 +35,16 @@ message JavaUdfDescriptorMessage {
   string input_class_name = 7;
   string output_class_name = 8;
 }
+
+message PythonUDFDescriptorMessage {
+  string udf_method_name = 1;
+  string function_string = 2;
+  SerializableSchema inputSchema = 3;
+  SerializableSchema outputSchema = 4;
+}
+
+message UDFDescriptorMessage {
+  google.protobuf.Any descriptorMessage = 1;
+}
+
 
