@@ -29,4 +29,5 @@ add_source_files(nes-nautilus
         CastOperation.cpp
         BranchOperation.cpp
         ConstBooleanOperation.cpp
+        ConstAddressOperation.cpp
         )
