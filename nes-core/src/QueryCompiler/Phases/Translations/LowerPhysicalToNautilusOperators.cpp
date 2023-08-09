@@ -119,6 +119,7 @@
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <cstddef>
+#include <span>
 #include <string_view>
 #include <utility>
 
@@ -1132,6 +1133,29 @@ LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperator
     return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
 }
 #endif
+
+std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
+LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
+    if (operators.empty()) {
+        return std::nullopt;
+    }
+
+    auto op = operators.at(0);
+    if (operators.size() == 1) {
+        return op;
+    }
+
+    auto span = std::span{operators};
+    auto subspan = span.subspan(1, operators.size());
+    auto subvector = std::vector(subspan.begin(), subspan.end());
+    auto childOpOpt = buildNautilusOperatorPipeline(subvector);
+    if (childOpOpt) {
+        auto childOp = childOpOpt.value();
+        auto executableChildOp = std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(childOp);
+        op->setChild(executableChildOp);
+    }
+    return op;
+}
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 

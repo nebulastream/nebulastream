@@ -156,6 +156,9 @@ class LowerPhysicalToNautilusOperators {
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 
+    std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
+    buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators);
+
 #ifdef TFDEF
     /**
      * @brief Creates an executable operator for an inference operation
