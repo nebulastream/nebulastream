@@ -51,6 +51,7 @@ enum class MessageType : uint8_t {
 
 /// this enum defines the errors that can occur in the network stack logic
 enum class ErrorType : uint8_t {
+    //todo: what is the difference between partition not registereed and unknown?
     /// error raised when requesting a partition that is not registered
     PartitionNotRegisteredError,
     /// error raised when a data/event buffer arrives for a partition that is not known on the current node
@@ -133,6 +134,7 @@ class ClientAnnounceMessage : public ExchangeMessage {
 /**
  * @brief This message is sent back to a client when a server is ready to receive data.
  */
+ //todo: keep waiting for this message on the sink side
 class ServerReadyMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ServerReady;

@@ -58,6 +58,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), ErrorType::DeletedPartitionError));
             return Messages::ErrorMessage(msg.getChannelId(), ErrorType::DeletedPartitionError);
         }
+        //todo: insert case for NotFound here
     } else {
         // we got a connection from an event-only channel: it means there is/will be an event consumer attached to a partition producer
         if (auto status = partitionManager->getProducerRegistrationStatus(nesPartition);

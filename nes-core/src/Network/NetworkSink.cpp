@@ -66,13 +66,17 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWO
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context {} writing data", workerContext.getId());
+    //todo: remove buffering flag and replace it with combination of nullptr check for network channel and try retrieving future if channel is null
+    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+    // if (!channel && f.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { set channel in worker context = future.get(), future.reset};
+    // if channel and future are null -> fail query
+    // else
     if (reconnectBuffering) {
         NES_TRACE("context {} buffering data", workerContext.getId());
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         return true;
     }
 
-    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
@@ -114,8 +118,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
+            //todo: check here, if server ready message was returned, or if we need to keep trying
             auto channel =
                 networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
+            //todo: instead of the assert we need to make a retry here
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
@@ -148,6 +154,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ReconfigurationType::StartBuffering: {
+            //todo: throw error if no next descriptor in list ->
+            //todo: add ReconfigurationType::Reconnect
+            // 1. disconnect and connect to new 2. disconnect but undeploy completely 3. Update source descriptor
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
             if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
@@ -157,7 +166,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             if (reconnectBuffering) {
                 NES_DEBUG("Requested sink to buffer but it is already buffering")
             } else {
-                this->reconnectBuffering = true;
+                this->reconnectBuffering = true; //todo: instead of flag set channel to null or result promise
             }
             break;
         }

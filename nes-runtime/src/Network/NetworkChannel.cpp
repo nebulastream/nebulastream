@@ -84,6 +84,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 NES_THROW_RUNTIME_ERROR("OutputChannel: Message from server is corrupt!");
             }
 
+            //todo: introduce other options here
             switch (recvHeader->getMsgType()) {
                 case Messages::MessageType::ServerReady: {
                     zmq::message_t recvMsg;
@@ -109,6 +110,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
                     auto errorMsg = *errorEnvelope.data<Messages::ErrorMessage>();
+                    //todo: introduce unregistered, not founc here? we also want to return a nullptr then
                     if (errorMsg.isPartitionDeleted()) {
                         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
                             // for an event-only channel it's ok to get this message
