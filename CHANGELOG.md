@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.187](https://github.com/nebulastream/nebulastream/tree/v0.5.187) (2023-08-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.186...v0.5.187)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Windowed join query produces empty result in Nautilus [\#4058](https://github.com/nebulastream/nebulastream/issues/4058)
+- \[BUG\] Problems with Benchmark Configs & Runner [\#4028](https://github.com/nebulastream/nebulastream/issues/4028)
+
 ## [v0.5.186](https://github.com/nebulastream/nebulastream/tree/v0.5.186) (2023-08-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.185...v0.5.186)
