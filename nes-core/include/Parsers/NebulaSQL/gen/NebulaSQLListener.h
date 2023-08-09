@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -250,6 +250,24 @@ public:
 
   virtual void enterKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext *ctx) = 0;
   virtual void exitKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext *ctx) = 0;
+
+  virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
+  virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
+
+  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
+  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
+
+  virtual void enterSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext *ctx) = 0;
+  virtual void exitSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext *ctx) = 0;
+
+  virtual void enterQos(NebulaSQLParser::QosContext *ctx) = 0;
+  virtual void exitQos(NebulaSQLParser::QosContext *ctx) = 0;
+
+  virtual void enterSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext *ctx) = 0;
+  virtual void exitSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext *ctx) = 0;
+
+  virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
+  virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
 
   virtual void enterSortItem(NebulaSQLParser::SortItemContext *ctx) = 0;
   virtual void exitSortItem(NebulaSQLParser::SortItemContext *ctx) = 0;

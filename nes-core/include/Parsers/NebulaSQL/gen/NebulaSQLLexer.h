@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -27,18 +27,21 @@ public:
     WINDOW = 77, WITH = 78, TUMBLING = 79, SLIDING = 80, SIZE = 81, ADVANCE = 82, 
     MS = 83, SEC = 84, MIN = 85, HOUR = 86, DAY = 87, MAX = 88, AVG = 89, 
     SUM = 90, COUNT = 91, WATERMARK = 92, OFFSET = 93, CSV = 94, ZMQ = 95, 
-    KAFKA = 96, LOCALHOST = 97, EQ = 98, NSEQ = 99, NEQ = 100, NEQJ = 101, 
-    LT = 102, LTE = 103, GT = 104, GTE = 105, PLUS = 106, MINUS = 107, ASTERISK = 108, 
-    SLASH = 109, PERCENT = 110, TILDE = 111, AMPERSAND = 112, PIPE = 113, 
-    CONCAT_PIPE = 114, HAT = 115, STRING = 116, BIGINT_LITERAL = 117, SMALLINT_LITERAL = 118, 
-    TINYINT_LITERAL = 119, INTEGER_VALUE = 120, EXPONENT_VALUE = 121, DECIMAL_VALUE = 122, 
-    FLOAT_LITERAL = 123, DOUBLE_LITERAL = 124, BIGDECIMAL_LITERAL = 125, 
-    IDENTIFIER = 126, SIMPLE_COMMENT = 127, BRACKETED_COMMENT = 128, WS = 129, 
-    FOUR_OCTETS = 130, OCTET = 131, UNRECOGNIZED = 132
+    KAFKA = 96, FILE = 97, MQTT = 98, OPC = 99, PRINT = 100, LOCALHOST = 101, 
+    CSV_FORMAT = 102, NES_FORMAT = 103, TEXT_FORMAT = 104, AT_MOST_ONCE = 105, 
+    AT_LEAST_ONCE = 106, BOOLEAN_VALUE = 107, EQ = 108, NSEQ = 109, NEQ = 110, 
+    NEQJ = 111, LT = 112, LTE = 113, GT = 114, GTE = 115, PLUS = 116, MINUS = 117, 
+    ASTERISK = 118, SLASH = 119, PERCENT = 120, TILDE = 121, AMPERSAND = 122, 
+    PIPE = 123, CONCAT_PIPE = 124, HAT = 125, STRING = 126, BIGINT_LITERAL = 127, 
+    SMALLINT_LITERAL = 128, TINYINT_LITERAL = 129, INTEGER_VALUE = 130, 
+    EXPONENT_VALUE = 131, DECIMAL_VALUE = 132, FLOAT_LITERAL = 133, DOUBLE_LITERAL = 134, 
+    BIGDECIMAL_LITERAL = 135, IDENTIFIER = 136, SIMPLE_COMMENT = 137, BRACKETED_COMMENT = 138, 
+    WS = 139, FOUR_OCTETS = 140, OCTET = 141, UNRECOGNIZED = 142
   };
 
   explicit NebulaSQLLexer(antlr4::CharStream *input);
-  ~NebulaSQLLexer();
+
+  ~NebulaSQLLexer() override;
 
 
     /**
@@ -53,9 +56,9 @@ public:
      * by a space. 34.E2 is a valid decimal token because it is followed by symbol '+'
      * which is not a digit or letter or underscore.
      */
-    bool isValidDecimal() {
-      int nextChar = _input->LA(1);
-      if ((nextChar >= 'A' && nextChar <= 'Z') || (nextChar >= '0' && nextChar <= '9') ||
+    public boolean isValidDecimal() {
+      int nextChar = _input.LA(1);
+      if (nextChar >= 'A' && nextChar <= 'Z' || nextChar >= '0' && nextChar <= '9' ||
         nextChar == '_') {
         return false;
       } else {
@@ -64,14 +67,14 @@ public:
     }
 
     /**
-     * This method will be called when we see '/ *' and try to match it as a bracketed comment.
+     * This method will be called when we see '/*' and try to match it as a bracketed comment.
      * If the next character is '+', it should be parsed as hint later, and we cannot match
      * it as a bracketed comment.
      *
      * Returns true if the next character is '+'.
      */
-    bool isHint() {
-      int nextChar = _input->LA(1);
+    public boolean isHint() {
+      int nextChar = _input.LA(1);
       if (nextChar == '+') {
         return true;
       } else {
@@ -79,47 +82,39 @@ public:
       }
     }
 
-  virtual std::string getGrammarFileName() const override;
-  virtual const std::vector<std::string>& getRuleNames() const override;
 
-  virtual const std::vector<std::string>& getChannelNames() const override;
-  virtual const std::vector<std::string>& getModeNames() const override;
-  virtual const std::vector<std::string>& getTokenNames() const override; // deprecated, use vocabulary instead
-  virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
+  std::string getGrammarFileName() const override;
 
-  virtual const std::vector<uint16_t> getSerializedATN() const override;
-  virtual const antlr4::atn::ATN& getATN() const override;
+  const std::vector<std::string>& getRuleNames() const override;
 
-  virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+  const std::vector<std::string>& getChannelNames() const override;
+
+  const std::vector<std::string>& getModeNames() const override;
+
+  const antlr4::dfa::Vocabulary& getVocabulary() const override;
+
+  antlr4::atn::SerializedATNView getSerializedATN() const override;
+
+  const antlr4::atn::ATN& getATN() const override;
+
+  bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+
+  // By default the static state used to implement the lexer is lazily initialized during the first
+  // call to the constructor. You can call this function if you wish to initialize the static state
+  // ahead of time.
+  static void initialize();
 
 private:
-  static std::vector<antlr4::dfa::DFA> _decisionToDFA;
-  static antlr4::atn::PredictionContextCache _sharedContextCache;
-  static std::vector<std::string> _ruleNames;
-  static std::vector<std::string> _tokenNames;
-  static std::vector<std::string> _channelNames;
-  static std::vector<std::string> _modeNames;
-
-  static std::vector<std::string> _literalNames;
-  static std::vector<std::string> _symbolicNames;
-  static antlr4::dfa::Vocabulary _vocabulary;
-  static antlr4::atn::ATN _atn;
-  static std::vector<uint16_t> _serializedATN;
-
 
   // Individual action functions triggered by action() above.
 
   // Individual semantic predicate functions triggered by sempred() above.
-  bool EXPONENT_VALUESempred(size_t predicateIndex);
-  bool DECIMAL_VALUESempred(size_t predicateIndex);
-  bool FLOAT_LITERALSempred(size_t predicateIndex);
-  bool DOUBLE_LITERALSempred(size_t predicateIndex);
-  bool BIGDECIMAL_LITERALSempred(size_t predicateIndex);
-  bool BRACKETED_COMMENTSempred(size_t predicateIndex);
+  bool EXPONENT_VALUESempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
+  bool DECIMAL_VALUESempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
+  bool FLOAT_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
+  bool DOUBLE_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
+  bool BIGDECIMAL_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
+  bool BRACKETED_COMMENTSempred(antlr4::RuleContext *_localctx, size_t predicateIndex);
 
-  struct Initializer {
-    Initializer();
-  };
-  static Initializer _init;
 };
 
