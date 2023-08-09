@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -27,14 +27,16 @@ public:
     WINDOW = 77, WITH = 78, TUMBLING = 79, SLIDING = 80, SIZE = 81, ADVANCE = 82, 
     MS = 83, SEC = 84, MIN = 85, HOUR = 86, DAY = 87, MAX = 88, AVG = 89, 
     SUM = 90, COUNT = 91, WATERMARK = 92, OFFSET = 93, CSV = 94, ZMQ = 95, 
-    KAFKA = 96, LOCALHOST = 97, EQ = 98, NSEQ = 99, NEQ = 100, NEQJ = 101, 
-    LT = 102, LTE = 103, GT = 104, GTE = 105, PLUS = 106, MINUS = 107, ASTERISK = 108, 
-    SLASH = 109, PERCENT = 110, TILDE = 111, AMPERSAND = 112, PIPE = 113, 
-    CONCAT_PIPE = 114, HAT = 115, STRING = 116, BIGINT_LITERAL = 117, SMALLINT_LITERAL = 118, 
-    TINYINT_LITERAL = 119, INTEGER_VALUE = 120, EXPONENT_VALUE = 121, DECIMAL_VALUE = 122, 
-    FLOAT_LITERAL = 123, DOUBLE_LITERAL = 124, BIGDECIMAL_LITERAL = 125, 
-    IDENTIFIER = 126, SIMPLE_COMMENT = 127, BRACKETED_COMMENT = 128, WS = 129, 
-    FOUR_OCTETS = 130, OCTET = 131, UNRECOGNIZED = 132
+    KAFKA = 96, FILE = 97, MQTT = 98, OPC = 99, PRINT = 100, LOCALHOST = 101, 
+    CSV_FORMAT = 102, NES_FORMAT = 103, TEXT_FORMAT = 104, AT_MOST_ONCE = 105, 
+    AT_LEAST_ONCE = 106, BOOLEAN_VALUE = 107, EQ = 108, NSEQ = 109, NEQ = 110, 
+    NEQJ = 111, LT = 112, LTE = 113, GT = 114, GTE = 115, PLUS = 116, MINUS = 117, 
+    ASTERISK = 118, SLASH = 119, PERCENT = 120, TILDE = 121, AMPERSAND = 122, 
+    PIPE = 123, CONCAT_PIPE = 124, HAT = 125, STRING = 126, BIGINT_LITERAL = 127, 
+    SMALLINT_LITERAL = 128, TINYINT_LITERAL = 129, INTEGER_VALUE = 130, 
+    EXPONENT_VALUE = 131, DECIMAL_VALUE = 132, FLOAT_LITERAL = 133, DOUBLE_LITERAL = 134, 
+    BIGDECIMAL_LITERAL = 135, IDENTIFIER = 136, SIMPLE_COMMENT = 137, BRACKETED_COMMENT = 138, 
+    WS = 139, FOUR_OCTETS = 140, OCTET = 141, UNRECOGNIZED = 142
   };
 
   enum {
@@ -57,32 +59,41 @@ public:
     RuleSinkTypeZMQ = 52, RuleNullNotnull = 53, RuleZmqKeyword = 54, RuleStreamName = 55, 
     RuleHost = 56, RulePort = 57, RuleSinkTypeKafka = 58, RuleKafkaKeyword = 59, 
     RuleKafkaBroker = 60, RuleKafkaTopic = 61, RuleKafkaProducerTimout = 62, 
-    RuleSortItem = 63, RulePredicate = 64, RuleValueExpression = 65, RuleComparisonOperator = 66, 
-    RuleHint = 67, RuleHintStatement = 68, RulePrimaryExpression = 69, RuleQualifiedName = 70, 
-    RuleNumber = 71, RuleConstant = 72, RuleBooleanValue = 73, RuleStrictNonReserved = 74, 
-    RuleAnsiNonReserved = 75, RuleNonReserved = 76
+    RuleSinkTypeFile = 63, RuleFileFormat = 64, RuleSinkTypeMQTT = 65, RuleQos = 66, 
+    RuleSinkTypeOPC = 67, RuleSinkTypePrint = 68, RuleSortItem = 69, RulePredicate = 70, 
+    RuleValueExpression = 71, RuleComparisonOperator = 72, RuleHint = 73, 
+    RuleHintStatement = 74, RulePrimaryExpression = 75, RuleQualifiedName = 76, 
+    RuleNumber = 77, RuleConstant = 78, RuleBooleanValue = 79, RuleStrictNonReserved = 80, 
+    RuleAnsiNonReserved = 81, RuleNonReserved = 82
   };
 
   explicit NebulaSQLParser(antlr4::TokenStream *input);
-  ~NebulaSQLParser();
 
-  virtual std::string getGrammarFileName() const override;
-  virtual const antlr4::atn::ATN& getATN() const override { return _atn; };
-  virtual const std::vector<std::string>& getTokenNames() const override { return _tokenNames; }; // deprecated: use vocabulary instead.
-  virtual const std::vector<std::string>& getRuleNames() const override;
-  virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
+  NebulaSQLParser(antlr4::TokenStream *input, const antlr4::atn::ParserATNSimulatorOptions &options);
+
+  ~NebulaSQLParser() override;
+
+  std::string getGrammarFileName() const override;
+
+  const antlr4::atn::ATN& getATN() const override;
+
+  const std::vector<std::string>& getRuleNames() const override;
+
+  const antlr4::dfa::Vocabulary& getVocabulary() const override;
+
+  antlr4::atn::SerializedATNView getSerializedATN() const override;
 
 
     /**
      * When true, the behavior of keywords follows ANSI SQL standard.
      */
-    bool SQL_standard_keyword_behavior = false;
+    public boolean SQL_standard_keyword_behavior = false;
 
       /**
        * When false, a literal with an exponent would be converted into
        * double type rather than decimal type.
        */
-    bool legacy_exponent_literal_as_decimal_enabled = false;
+      public boolean legacy_exponent_literal_as_decimal_enabled = false;
 
 
   class SingleStatementContext;
@@ -148,6 +159,12 @@ public:
   class KafkaBrokerContext;
   class KafkaTopicContext;
   class KafkaProducerTimoutContext;
+  class SinkTypeFileContext;
+  class FileFormatContext;
+  class SinkTypeMQTTContext;
+  class QosContext;
+  class SinkTypeOPCContext;
+  class SinkTypePrintContext;
   class SortItemContext;
   class PredicateContext;
   class ValueExpressionContext;
@@ -333,8 +350,8 @@ public:
     QuerySpecificationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     SelectClauseContext *selectClause();
-    SinkClauseContext *sinkClause();
     FromClauseContext *fromClause();
+    SinkClauseContext *sinkClause();
     WhereClauseContext *whereClause();
     WindowedAggregationClauseContext *windowedAggregationClause();
     HavingClauseContext *havingClause();
@@ -1161,7 +1178,6 @@ public:
   public:
     SinkClauseContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *INSERT();
     antlr4::tree::TerminalNode *INTO();
     SinkTypeContext *sinkType();
     antlr4::tree::TerminalNode *AS();
@@ -1177,9 +1193,12 @@ public:
   public:
     SinkTypeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SinkTypeCSVContext *sinkTypeCSV();
     SinkTypeZMQContext *sinkTypeZMQ();
     SinkTypeKafkaContext *sinkTypeKafka();
+    SinkTypeFileContext *sinkTypeFile();
+    SinkTypeMQTTContext *sinkTypeMQTT();
+    SinkTypeOPCContext *sinkTypeOPC();
+    SinkTypePrintContext *sinkTypePrint();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1219,7 +1238,7 @@ public:
   class  SinkTypeZMQContext : public antlr4::ParserRuleContext {
   public:
     NebulaSQLParser::StreamNameContext *zmqStreamName = nullptr;
-    NebulaSQLParser::HostContext *zmqHost = nullptr;
+    NebulaSQLParser::HostContext *zmqHostLabel = nullptr;
     NebulaSQLParser::PortContext *zmqPort = nullptr;
     SinkTypeZMQContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
@@ -1372,6 +1391,114 @@ public:
   };
 
   KafkaProducerTimoutContext* kafkaProducerTimout();
+
+  class  SinkTypeFileContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *path = nullptr;
+    NebulaSQLParser::FileFormatContext *format = nullptr;
+    antlr4::Token *append = nullptr;
+    SinkTypeFileContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *FILE();
+    std::vector<antlr4::tree::TerminalNode *> STRING();
+    antlr4::tree::TerminalNode* STRING(size_t i);
+    FileFormatContext *fileFormat();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SinkTypeFileContext* sinkTypeFile();
+
+  class  FileFormatContext : public antlr4::ParserRuleContext {
+  public:
+    FileFormatContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *CSV_FORMAT();
+    antlr4::tree::TerminalNode *NES_FORMAT();
+    antlr4::tree::TerminalNode *TEXT_FORMAT();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  FileFormatContext* fileFormat();
+
+  class  SinkTypeMQTTContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *mqttHostLabel = nullptr;
+    antlr4::Token *topic = nullptr;
+    antlr4::Token *user = nullptr;
+    antlr4::Token *maxBufferedMSGs = nullptr;
+    NebulaSQLParser::TimeUnitContext *mqttTimeUnitLabel = nullptr;
+    antlr4::Token *messageDelay = nullptr;
+    NebulaSQLParser::QosContext *qualityOfService = nullptr;
+    antlr4::Token *asynchronousClient = nullptr;
+    SinkTypeMQTTContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *MQTT();
+    std::vector<antlr4::tree::TerminalNode *> STRING();
+    antlr4::tree::TerminalNode* STRING(size_t i);
+    std::vector<antlr4::tree::TerminalNode *> INTEGER_VALUE();
+    antlr4::tree::TerminalNode* INTEGER_VALUE(size_t i);
+    TimeUnitContext *timeUnit();
+    QosContext *qos();
+    antlr4::tree::TerminalNode *BOOLEAN_VALUE();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SinkTypeMQTTContext* sinkTypeMQTT();
+
+  class  QosContext : public antlr4::ParserRuleContext {
+  public:
+    QosContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *AT_MOST_ONCE();
+    antlr4::tree::TerminalNode *AT_LEAST_ONCE();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  QosContext* qos();
+
+  class  SinkTypeOPCContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *url = nullptr;
+    antlr4::Token *nodeId = nullptr;
+    antlr4::Token *user = nullptr;
+    antlr4::Token *password = nullptr;
+    SinkTypeOPCContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *OPC();
+    std::vector<antlr4::tree::TerminalNode *> STRING();
+    antlr4::tree::TerminalNode* STRING(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SinkTypeOPCContext* sinkTypeOPC();
+
+  class  SinkTypePrintContext : public antlr4::ParserRuleContext {
+  public:
+    SinkTypePrintContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *PRINT();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  SinkTypePrintContext* sinkTypePrint();
 
   class  SortItemContext : public antlr4::ParserRuleContext {
   public:
@@ -1984,7 +2111,8 @@ public:
   NonReservedContext* nonReserved();
 
 
-  virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+  bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+
   bool queryTermSempred(QueryTermContext *_localctx, size_t predicateIndex);
   bool identifierSempred(IdentifierContext *_localctx, size_t predicateIndex);
   bool strictIdentifierSempred(StrictIdentifierContext *_localctx, size_t predicateIndex);
@@ -1993,22 +2121,11 @@ public:
   bool primaryExpressionSempred(PrimaryExpressionContext *_localctx, size_t predicateIndex);
   bool numberSempred(NumberContext *_localctx, size_t predicateIndex);
 
+  // By default the static state used to implement the parser is lazily initialized during the first
+  // call to the constructor. You can call this function if you wish to initialize the static state
+  // ahead of time.
+  static void initialize();
+
 private:
-  static std::vector<antlr4::dfa::DFA> _decisionToDFA;
-  static antlr4::atn::PredictionContextCache _sharedContextCache;
-  static std::vector<std::string> _ruleNames;
-  static std::vector<std::string> _tokenNames;
-
-  static std::vector<std::string> _literalNames;
-  static std::vector<std::string> _symbolicNames;
-  static antlr4::dfa::Vocabulary _vocabulary;
-  static antlr4::atn::ATN _atn;
-  static std::vector<uint16_t> _serializedATN;
-
-
-  struct Initializer {
-    Initializer();
-  };
-  static Initializer _init;
 };
 

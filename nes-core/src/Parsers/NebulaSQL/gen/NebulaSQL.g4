@@ -77,7 +77,7 @@ queryPrimary
     | '(' query ')'                                                         #subquery
     ;
 
-querySpecification: sinkClause? selectClause fromClause? whereClause? windowedAggregationClause? havingClause?;
+querySpecification: selectClause fromClause whereClause? sinkClause windowedAggregationClause? havingClause?;
 
 
 fromClause: FROM relation (',' relation)*;
@@ -250,18 +250,22 @@ timestampParameter: IDENTIFIER;
 functionName:  AVG | MAX | MIN | SUM | COUNT
             ;
 
-sinkClause: INSERT INTO sinkType AS
+sinkClause: INTO sinkType AS?
         ;
 
-sinkType: sinkTypeCSV | sinkTypeZMQ | sinkTypeKafka
-        ;
+sinkType: sinkTypeZMQ
+        | sinkTypeKafka
+        | sinkTypeFile
+        | sinkTypeMQTT
+        | sinkTypeOPC
+        | sinkTypePrint;
 
 sinkTypeCSV: csvKeyword '(' path=STRING ')'
         ;
 
 csvKeyword: CSV;
 
-sinkTypeZMQ: zmqKeyword '(' zmqStreamName=streamName ',' zmqHost=host ',' zmqPort=port ')';
+sinkTypeZMQ: zmqKeyword '(' zmqStreamName=streamName ',' zmqHostLabel=host ',' zmqPort=port ')';
 
 nullNotnull
     : NOT? NULLTOKEN
@@ -284,6 +288,18 @@ kafkaBroker: IDENTIFIER;
 kafkaTopic: IDENTIFIER;
 
 kafkaProducerTimout: INTEGER_VALUE;
+
+// New Sinks
+sinkTypeFile: FILE '(' path=STRING ',' format=fileFormat ',' append=STRING ')';
+
+fileFormat: CSV_FORMAT | NES_FORMAT | TEXT_FORMAT;
+
+sinkTypeMQTT: MQTT '(' mqttHostLabel=STRING ',' topic=STRING ',' user=STRING ',' maxBufferedMSGs=INTEGER_VALUE ',' mqttTimeUnitLabel=timeUnit ',' messageDelay=INTEGER_VALUE ',' qualityOfService=qos ',' asynchronousClient=BOOLEAN_VALUE ')';
+qos: AT_MOST_ONCE | AT_LEAST_ONCE;
+
+sinkTypeOPC: OPC '(' url=STRING ',' nodeId=STRING ',' user=STRING ',' password=STRING ')';
+
+sinkTypePrint: PRINT;
 
 sortItem
     : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?
@@ -558,12 +574,22 @@ OFFSET: 'OFFSET' | 'offset';
 CSV: 'CSV' | 'csv';
 ZMQ: 'ZMQ' | 'zmq';
 KAFKA: 'KAFKA' | 'kafka';
+FILE: 'FILE';
+MQTT: 'MQTT';
+OPC: 'OPC';
+PRINT: 'PRINT';
 LOCALHOST: 'LOCALHOST' | 'localhost';
+CSV_FORMAT : 'CSV_FORMAT';
+NES_FORMAT : 'NES_FORMAT';
+TEXT_FORMAT : 'TEXT_FORMAT';
+AT_MOST_ONCE : 'AT_MOST_ONCE';
+AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 //--NebulaSQL-KEYWORD-LIST-END
 //****************************
 // End of the keywords list
 //****************************
 
+BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
 NSEQ: '<=>';
 NEQ : '<>';

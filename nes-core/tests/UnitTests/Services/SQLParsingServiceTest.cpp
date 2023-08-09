@@ -49,7 +49,7 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan) {
     return queryPlanStr;
 }
 
-TEST_F(SQLParsingServiceTest, simplePattern) {
+TEST(SQLParsingServiceTest, simpleSQL) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string SQLString =
         "SELECT * FROM default_logical AS A WHERE A.currentSpeed < A.allowedSpeed INTO testSink;";
