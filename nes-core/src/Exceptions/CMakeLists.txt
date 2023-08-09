@@ -42,4 +42,6 @@ add_source_files(nes-core
         StorageHandlerAcquireResourcesException.cpp
         AccessNonLockedResourceException.cpp
         PhysicalSourceNotFoundException.cpp
+        BlockingOperatorException.cpp
+        InvalidLogicalOperatorNodeException.cpp
 )

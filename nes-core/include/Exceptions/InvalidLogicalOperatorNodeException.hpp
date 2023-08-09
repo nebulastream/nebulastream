@@ -12,23 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDLOGICALOPERATORNODEEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDLOGICALOPERATORNODEEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
 
-namespace NES {
-
+namespace NES::Exceptions {
 /**
- * @brief This exception is thrown if some error occurred while performing update on Global query plan
+ * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
  */
-class GlobalQueryPlanUpdateException : public Exceptions::RequestExecutionException {
+class InvalidLogicalOperatorNodeException : public Exceptions::RequestExecutionException {
   public:
-    explicit GlobalQueryPlanUpdateException(const std::string& message);
+    explicit InvalidLogicalOperatorNodeException(const std::string& message);
 };
-
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_

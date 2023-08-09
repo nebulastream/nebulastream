@@ -15,6 +15,10 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Exceptions/BlockingOperatorException.hpp>
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
+#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Exceptions/InvalidLogicalOperatorNodeException.hpp>
 #include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/PhysicalSourceNotFoundException.hpp>
@@ -91,16 +95,24 @@ void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionE
 
 std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& ex,
                                                           [[maybe_unused]] StorageHandler& storageHandler) {
-    std::vector<AbstractRequestPtr> failRequest;
     try {
         NES_TRACE("Error: {}", ex.what());
         if (ex.instanceOf<Exceptions::QueryNotFoundException>()) {
             NES_ERROR("{}", ex.what());
         } else if (ex.instanceOf<Exceptions::InvalidQueryStateException>() || ex.instanceOf<MapEntryNotFoundException>()
                    || ex.instanceOf<TypeInferenceException>() || ex.instanceOf<SignatureComputationException>()
-                   || ex.instanceOf<Exceptions::PhysicalSourceNotFoundException>() || ex.instanceOf<Exceptions::SharedQueryPlanNotFoundException>()
-                   || ex.instanceOf<UDFException>()) {
+                   || ex.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
+                   || ex.instanceOf<Exceptions::SharedQueryPlanNotFoundException>() || ex.instanceOf<UDFException>()
+                   || ex.instanceOf<Exceptions::BlockingOperatorException>()
+                   || ex.instanceOf<Exceptions::InvalidLogicalOperatorNodeException>()
+                   || ex.instanceOf<GlobalQueryPlanUpdateException>()) {
             NES_ERROR("{}", ex.what());
+            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, "Query failed due to " + std::string(ex.what()));
+        } else if (ex.instanceOf<Exceptions::QueryPlacementException>()
+                   || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
+                   || ex.instanceOf<QueryDeploymentException>()) {
+            NES_ERROR("{}", ex.what());
+            globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
             queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, "Query failed due to " + std::string(ex.what()));
         } else {
             NES_ERROR("Unknown exception: {}", ex.what());
@@ -112,7 +124,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
             NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", e.what());
         }
     }
-    return failRequest;
+    return {};
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
@@ -225,51 +237,28 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
                                                                sharedQueryId);
         }
 
-        //20. If the shared query plan is newly created
-        if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
-
-            NES_DEBUG("Shared Query Plan is new.");
-
-            //todo: check these exceptions after merge and rebase of error handling for stop request
-            //20.1 Perform placement of new shared query plan
-            NES_DEBUG("Performing Operator placement for shared query plan");
-            if (!queryPlacementPhase->execute(sharedQueryPlan)) {
-                throw Exceptions::QueryPlacementException(sharedQueryId,
-                                                          "Failed to perform query placement for "
-                                                          "query plan with shared query id: "
-                                                              + std::to_string(sharedQueryId));
-            }
-
-            //20.2 Perform deployment of placed shared query plan
-            queryDeploymentPhase->execute(sharedQueryPlan);
-
-            //Update the shared query plan as deployed
-            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
-
-            //20.3 Check if the shared query plan was updated after addition or removal of operators
-        } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+        //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
+        if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
 
             NES_DEBUG("Shared Query Plan is non empty and an older version is already "
                       "running.");
-
-            //20.4 First undeploy the running shared query plan with the shared query plan id
+            //20.1 First undeploy the running shared query plan with the shared query plan id
             queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
-
-            //20.5 Perform placement of updated shared query plan
-            NES_DEBUG("Performing Operator placement for shared query plan");
-            if (!queryPlacementPhase->execute(sharedQueryPlan)) {
-                throw Exceptions::QueryPlacementException(sharedQueryId,
-                                                          "QueryProcessingService: Failed to perform query placement for "
-                                                          "query plan with shared query id: "
-                                                              + std::to_string(sharedQueryId));
-            }
-
-            //20.6 Perform deployment of re-placed shared query plan
-            queryDeploymentPhase->execute(sharedQueryPlan);
-
-            //Update the shared query plan as deployed
-            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
         }
+        //21. Perform placement of updated shared query plan
+        NES_DEBUG("Performing Operator placement for shared query plan");
+        if (!queryPlacementPhase->execute(sharedQueryPlan)) {
+            throw Exceptions::QueryPlacementException(sharedQueryId,
+                                                      "QueryProcessingService: Failed to perform query placement for "
+                                                      "query plan with shared query id: "
+                                                          + std::to_string(sharedQueryId));
+        }
+
+        //22. Perform deployment of re-placed shared query plan
+        queryDeploymentPhase->execute(sharedQueryPlan);
+
+        //23. Update the shared query plan as deployed
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
     } catch (RequestExecutionException& e) {
         handleError(e, storageHandler);
     }

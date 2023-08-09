@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/QueryNotFoundException.hpp>
+#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -30,11 +32,11 @@ GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQue
 void GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     if (inputQueryPlanId == INVALID_QUERY_ID) {
-        throw Exceptions::RuntimeException("GlobalQueryPlan: Can not add query plan with invalid id.");
+        throw Exceptions::QueryNotFoundException("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
     if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
-        throw Exceptions::RuntimeException("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
-                                           + " already present.");
+        throw GlobalQueryPlanUpdateException("GlobalQueryPlan: Query plan with id "
+                                                           + std::to_string(inputQueryPlanId) + " already present.");
     }
     queryPlansToAdd.emplace_back(queryPlan);
 }

@@ -18,7 +18,7 @@
 namespace NES {
 
 UDFException::UDFException(const std::string& message)
-    : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace()), message(message) {
+    : Exceptions::RequestExecutionException(message), message(message) {
     NES_ERROR("{}", message);
 }
 

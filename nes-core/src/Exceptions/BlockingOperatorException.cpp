@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Exceptions/BlockingOperatorException.hpp>
 
-namespace NES {
-GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+namespace NES::Exceptions {
+BlockingOperatorException::BlockingOperatorException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
 }// namespace NES
