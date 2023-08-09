@@ -19,6 +19,7 @@
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <stdint.h>
+
 namespace NES {
 
 /**
@@ -26,7 +27,7 @@ namespace NES {
  */
 class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService
+    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
                                   std::string healthServiceName,
                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 

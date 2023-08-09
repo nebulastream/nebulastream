@@ -46,7 +46,7 @@
 
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr catalogService)
-    : MonitoringManager(workerClient, topology, queryService, catalogService, true) {}
+    : MonitoringManager(topology, queryService, catalogService, true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,

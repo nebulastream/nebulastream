@@ -55,6 +55,8 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
+    FaultToleranceType TEST_FAULT_TOLERANCE_TYPE = FaultToleranceType::AT_LEAST_ONCE;
+    LineageType TEST_LINEAGE_TYPE = LineageType::IN_MEMORY;
     uint8_t ZERO_RETRIES = 0;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
@@ -123,8 +125,9 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     // Create add request
     auto addQueryRequest = NES::Experimental::AddQueryRequest::create(queryPlan,
                                                                       TEST_PLACEMENT_STRATEGY,
+                                                                      TEST_FAULT_TOLERANCE_TYPE,
+                                                                      TEST_LINEAGE_TYPE,
                                                                       ZERO_RETRIES,
-                                                                      coordinatorConfiguration,
                                                                       z3Context);
     addQueryRequest->setId(requestId);
 
