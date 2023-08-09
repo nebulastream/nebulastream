@@ -69,6 +69,7 @@
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -76,6 +77,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalKernelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
@@ -489,6 +491,15 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
         parentOperator->setChild(unvectorize);
         return unvectorize;
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
+        auto kernelOpt = lowerKernel(operatorNode);
+        if (!kernelOpt) {
+            NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
+            return nullptr;
+        }
+        auto kernel = kernelOpt.value();
+        parentOperator->setChild(kernel);
+        return kernel;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -1133,6 +1144,34 @@ LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperator
     return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
 }
 #endif
+
+std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
+LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator) {
+    auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
+
+    auto physicalVectorizedPipeline = physicalKernel->getVectorizedPipeline();
+    auto nodes = physicalVectorizedPipeline->getPipelineOperators();
+    std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>> operators;
+    for (const auto& node : nodes) {
+        // TODO Lower physical vectorizable operators to Nautilus operators
+    }
+
+    auto vectorizedPipelineOpt = buildNautilusOperatorPipeline(operators);
+    if (!vectorizedPipelineOpt) {
+        NES_ERROR("Failed to build a Nautilus operator pipeline");
+        return std::nullopt;
+    }
+
+    auto vectorizedPipeline = vectorizedPipelineOpt.value();
+
+    auto executionTrace = Nautilus::Backends::KernelCompiler::createTraceFromNautilusOperator(vectorizedPipeline);
+
+    NES_NOT_IMPLEMENTED();
+    // TODO Compile the execution trace to a kernel
+    auto kernelExecutable = nullptr;
+
+    return std::make_shared<Runtime::Execution::Operators::Kernel>(std::move(kernelExecutable));
+}
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
 LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
