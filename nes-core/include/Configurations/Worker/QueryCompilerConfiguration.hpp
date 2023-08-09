@@ -18,6 +18,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -135,7 +136,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
     BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
 
-    UIntOption stageBufferSize = {VECTORIZATION_STAGE_BUFFER_SIZE, 4096, "Size of the stage buffer"};
+    UIntOption stageBufferSize = {
+        VECTORIZATION_STAGE_BUFFER_SIZE,
+        NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
+        "Size of the stage buffer"
+    };
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
