@@ -18,6 +18,7 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Experimental/Vectorization/Kernel.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -155,6 +156,9 @@ class LowerPhysicalToNautilusOperators {
      */
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
+
+    std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
+    lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
     buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators);
