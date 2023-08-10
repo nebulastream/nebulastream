@@ -17,37 +17,31 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <math.h>
 #include "StatManager/StatCollectors/StatCollector.hpp"
-#include <Configurations/StatManagerConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
+
+  class CountMin;
+  using CountMinPtr = std::unique_ptr<CountMin>;
 
   class StatManager {
   private:
-    std::vector<NES::StatCollector*> statCollectors {};
+    std::vector<std::unique_ptr<StatCollector>> statCollectors {};
 
   public:
     virtual ~StatManager() = default;
 
-    std::vector<NES::StatCollector*>& getStatCollectors();
+    std::vector<std::unique_ptr<StatCollector>> getStatCollectors();
 
-//    void createStat();
+    void createStat(const StatCollectorConfig& config);
 
-    void createStat(const Configurations::StatManagerConfig& config);
-
-    double queryStat(const Configurations::StatManagerConfig& config,
+    double queryStat(const StatCollectorConfig& config,
                      const uint32_t key);
 
-    void deleteStat(const Configurations::StatManagerConfig& config);
-
-//    void deleteStat(const std::string& physicalStreamName);
-
-//    void deleteStat(const std::string& physicalStreamName,
-//                    const std::string& field);
-
-//    void deleteStat(const std::string& physicalStreamName,
-//                    const std::string& field,
-//                    const std::string& statName);
+    void deleteStat(const StatCollectorConfig& config);
   };
 
 }

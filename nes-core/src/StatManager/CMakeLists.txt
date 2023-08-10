@@ -14,3 +14,4 @@ add_source_files(nes-core
         StatManager.cpp
 )
 add_subdirectory(StatCollectors)
+add_subdirectory(Util)

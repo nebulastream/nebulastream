@@ -12,22 +12,23 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include "StatManager/StatManager.hpp"
 #include "StatManager/StatCollectors/StatCollector.hpp"
 #include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
-  std::vector<NES::StatCollector*>& StatManager::getStatCollectors() {
-    return statCollectors;
+  std::vector<std::unique_ptr<StatCollector>> StatManager::getStatCollectors() {
+    return std::move(statCollectors);
   }
 
-  void StatManager::createStat (const Configurations::StatManagerConfig& config) {
+  void StatManager::createStat (const StatCollectorConfig& config) {
 
-    auto physicalSourceName = config.physicalSourceName.getValue();
-    auto field = config.field.getValue();
-    auto duration = static_cast<time_t>(config.duration.getValue());
-    auto frequency = static_cast<time_t>(config.frequency.getValue());
+    auto physicalSourceName = config.getPhysicalSourceName();
+    auto field = config.getField();
+    auto duration = config.getDuration();
+    auto frequency = config.getFrequency();
 
     bool found = 0;
 
@@ -43,7 +44,7 @@ namespace NES {
       }
     }
 
-    auto statMethodName = config.statMethodName.getValue();
+    auto statMethodName = config.getStatMethodName();
 
 //    // if the stat is not yet tracked, then create it
 //    if(!found) {
@@ -51,10 +52,10 @@ namespace NES {
     if (statMethodName.compare("FrequencyCM")) {
 
       // get config values
-      auto error = static_cast<double>(config.error.getValue());
-      auto probability = static_cast<double>(config.probability.getValue());
-      auto depth = static_cast<uint32_t>(config.depth.getValue());
-      auto width = static_cast<uint32_t>(config.width.getValue());
+      auto error = static_cast<double>(config.getError());
+      auto probability = static_cast<double>(config.getProbability());
+      auto depth = static_cast<uint32_t>(config.getDepth());
+      auto width = static_cast<uint32_t>(config.getWidth());
 
       // check that only error and probability or depth and width are set
       if (((depth != 0 && width != 0) && (error == 0.0 && probability == 0.0)) ||
@@ -65,7 +66,7 @@ namespace NES {
 
           if (error <= 0 || error >= 1) {
 
-            NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.")
+            NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.");
 
           } else if (probability <= 0 || probability >= 1) {
 
@@ -74,15 +75,11 @@ namespace NES {
           } else {
 
             // create stat
-            auto cm = new CountMin(config);
+            CountMinPtr cm = std::make_unique<CountMin>(config);
 
-            // write stat to statVector
-            StatCollector* cmSketch = cm;
-            statCollectors.push_back(cmSketch);
+            statCollectors.push_back(std::move(cm));
+
           }
-
-
-
         }
       }
 
@@ -96,13 +93,13 @@ namespace NES {
   }
 
 
-  double StatManager::queryStat (const Configurations::StatManagerConfig& config,
+  double StatManager::queryStat (const StatCollectorConfig& config,
                                  const uint32_t key) {
 
-    auto physicalSourceName = config.physicalSourceName.getValue();
-    auto field = config.field.getValue();
-    auto duration = static_cast<time_t>(config.duration.getValue());
-    auto frequency = static_cast<time_t>(config.frequency.getValue());
+    auto physicalSourceName = config.getPhysicalSourceName();
+    auto field = config.getField();
+    auto duration = static_cast<time_t>(config.getDuration());
+    auto frequency = static_cast<time_t>(config.getFrequency());
 
     // check if the stat is already being tracked passively
     for (const auto& collector : statCollectors) {
@@ -110,10 +107,10 @@ namespace NES {
       if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
           collector->getDuration() == duration && collector->getFrequency() == frequency) {
 
-        auto statMethodName = config.statMethodName.getValue();
+        auto statMethodName = config.getStatMethodName();
 
         if (statMethodName.compare("FrequencyCM")) {
-          auto cm = dynamic_cast<CountMin*>(collector);
+          auto cm = dynamic_cast<CountMin*>(collector.get());
           return cm->pointQuery(key);
         } else {
           NES_DEBUG("No compatible combination of statistic and method for querying of statCollector!");
@@ -123,17 +120,17 @@ namespace NES {
     return -1.0;
   }
 
-  void StatManager::deleteStat(const Configurations::StatManagerConfig& config) {
+  void StatManager::deleteStat(const StatCollectorConfig& config) {
 
-    auto physicalSourceName = config.physicalSourceName.getValue();
-    auto field = config.field.getValue();
-    auto duration = static_cast<time_t>(config.duration.getValue());
-    auto frequency = static_cast<time_t>(config.frequency.getValue());
-    auto statMethodName = config.statMethodName.getValue();
+    auto physicalSourceName = config.getPhysicalSourceName();
+    auto field = config.getField();
+    auto duration = config.getDuration();
+    auto frequency = config.getFrequency();
+    auto statMethodName = config.getStatMethodName();
 
     for (auto it = statCollectors.begin(); it != statCollectors.end(); it++) {
 
-      auto collector = *it;
+      auto& collector = *it;
 
       if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
           collector->getDuration() == duration && collector->getFrequency() == frequency) {
@@ -156,12 +153,4 @@ namespace NES {
     NES_DEBUG("Could not delete Statistic Object!");
     return;
   }
-
-//  void deleteStat (const std::string& physicalSourceName,
-//                   const std::string& field,
-//                   const std::string& statName) {
-//
-//  }
-
-} // NES
-
+} // NES::Experimental::Statistics
