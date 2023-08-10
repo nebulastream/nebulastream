@@ -17,7 +17,6 @@ add_source_files(nes-core
         BufferSequenceNumber.cpp
         KalmanFilter.cpp
         SpatialUtils.cpp
-        hashing.cpp
         )
 if (NES_USE_MQTT)
     add_source_files(nes-core
