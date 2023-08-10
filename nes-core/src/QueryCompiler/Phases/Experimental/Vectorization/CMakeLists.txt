@@ -13,6 +13,7 @@
 
 add_source_files(
     nes-core
+    FuseVectorizedPipelinesPhase.cpp
     LowerPhysicalToVectorizedOperatorsPhase.cpp
     LowerVectorizedPipelineToKernelPhase.cpp
 )
