@@ -250,4 +250,47 @@ TEST_F(ChainedHashMapTest, insertChain) {
     }
 }
 
+TEST_F(ChainedHashMapTest, KeyEntryIterator) {
+    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator), 64);
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto keyDataTypes = {integerType};
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), keyDataTypes, 8, 8);
+
+    constexpr int64_t TEST_KEY = 7;
+    Value<Int64> key = TEST_KEY;
+    auto hash = hf->calculate(key);
+
+    // Insert entries
+    for (int64_t i = 0; i < 1000; i++) {
+        auto entry = hashMapRef.insert(hash, {key});
+        Value<Int64> value = (int64_t) i;
+        entry.getValuePtr().store(value);
+    }
+
+    // Use KeyEntryIterator and update values
+    for (auto iter = hashMapRef.findAll(hash, {key}); iter != nullptr; ++iter) {
+        auto value = (*iter).getValuePtr().load<Int64>();
+        (*iter).getValuePtr().store(value + 42_s64);
+    }
+
+    // Test result
+    std::vector<int64_t> resultVals;
+    for (const auto& entry : hashMapRef) {
+        auto k = entry.getKeyPtr().load<Int64>();
+        auto key = k.value.get()->getValue();
+        // Keys should be TEST_KEY
+        ASSERT_TRUE(key == TEST_KEY);
+        auto value = entry.getValuePtr().load<Int64>();
+        resultVals.emplace_back(value.value.get()->getValue());
+    }
+
+    // All values should be updated
+    for (int i = 0; i < 1000; i++) {
+        if (!std::binary_search(resultVals.begin(), resultVals.end(), i + 42)) {
+            ASSERT_TRUE(false);
+        }
+    }
+}
+
 }// namespace NES::Nautilus::Interface
