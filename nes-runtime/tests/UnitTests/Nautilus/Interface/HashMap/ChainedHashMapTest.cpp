@@ -209,8 +209,8 @@ TEST_F(ChainedHashMapTest, entryIterator) {
     for (uint64_t i = 0; i < 1000; i++) {
         Value<Int64> key = (int64_t) i;
         auto hash = hf->calculate(key);
-        auto entry1 = hashMapRef.findOne(hash, {key});
-        auto value = entry1.getValuePtr().load<Int64>();
+        auto entry = hashMapRef.find(hash, {key});
+        auto value = entry.getValuePtr().load<Int64>();
         ASSERT_EQ(value, (int64_t) i + 42);
     }
 }
