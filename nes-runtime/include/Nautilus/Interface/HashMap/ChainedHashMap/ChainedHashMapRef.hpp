@@ -103,6 +103,24 @@ class ChainedHashMapRef {
     };
 
     /**
+     * @brief Iterator over all entries in the hash map with a specific key.
+     */
+    class KeyEntryIterator {
+    public:
+        KeyEntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& hash, const std::vector<Value<>> keys, const Value<UInt64>& currentIndex);
+        KeyEntryIterator& operator++();
+        bool operator==(KeyEntryIterator other) const;
+        bool operator==(std::nullptr_t) const;
+        EntryRef operator*() const;
+
+    private:
+        ChainedHashMapRef &hashTableRef;
+        Value<UInt64> currentIndex;
+        std::vector<Value<>> keys;
+        EntryRef currentEntry;
+    };
+
+    /**
      * @brief Constructor to create a new nautilus wrapper for the hash map.
      * @param hashTableRef reference to the hash map.
      * @param keyDataTypes data types to the keys.
@@ -123,6 +141,16 @@ class ChainedHashMapRef {
      * @return EntryRef
      */
     EntryRef find(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+
+    /**
+     * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
+     * It returns an KeyEntryIterator which allows to iterate through all found entries.
+     * @note the hash has to be derived by the keys using the same hash function as when it was inserted the first time.
+     * @param hash the hash of the keys derived with a specific hash function.
+     * @param keys a list of keys.
+     * @return KeyEntryIterator
+     */
+    KeyEntryIterator findAll(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
