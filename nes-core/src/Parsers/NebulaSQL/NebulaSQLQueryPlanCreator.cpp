@@ -64,10 +64,29 @@ void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseConte
             sinkDescriptor = NES::FileSinkDescriptor::create(context->getText());
         }
         if (sinkType == "MQTT") {
-            sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+            auto mqttContext = context->sinkType()->sinkTypeMQTT();
+            std::string host = mqttContext->mqttHostLabel->getText();
+            std::string topic = mqttContext->topic->getText();
+            std::string user = mqttContext->user->getText();
+            int maxBufferedMSGs = std::stoi(mqttContext->maxBufferedMSGs->getText());
+            std::string timeUnit = mqttContext->mqttTimeUnitLabel->getText();
+            int messageDelay = std::stoi(mqttContext->messageDelay->getText());
+            std::string qos = mqttContext->qualityOfService->getText();
+            bool asynchronousClient = mqttContext->asynchronousClient->getText() == "true";
+            sinkDescriptor = NES::MQTTSinkDescriptor::create(host,topic,user,maxBufferedMSGs,timeUnit,messageDelay,qos,asynchronousClient);
         }
-        if (sinkType == "Network") {
-            sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+        if (sinkType == "ZMQ") {
+            auto zmqContext = context->sinkType()->sinkTypeZMQ();
+            std::string host = zmqContext->host()->getText();
+            int port = std::stoi(zmqContext->port()->getText());
+            sinkDescriptor = NES::ZmqSinkDescriptor::create(host,port);
+        }
+        if (sinkType == "Kafka") {
+            //sinkDescriptor = NES::KafkaSinkDescriptor::create();
+        }
+        if (sinkType == "OPC") {
+            //sinkDescriptor = NES::OPCSinkDescriptor::create();
+            //gibt es nicht?
         }
         if (sinkType == "NullOutput") {
             sinkDescriptor = NES::NullOutputSinkDescriptor::create();
