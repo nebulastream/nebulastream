@@ -11,25 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_UTIL_HASHING_HPP
-#define NES_CORE_INCLUDE_UTIL_HASHING_HPP
 
+#ifndef NES_CORE_INCLUDE_STATMANAGER_UTIL_UTIL_HPP
+#define NES_CORE_INCLUDE_STATMANAGER_UTIL_UTIL_HPP
 
 #include <cstdint>
-#include <vector>
+#include <cmath>
 
 namespace NES::Experimental::Statistics {
 
-  class H3 {
-    public:
-      uint32_t hashH3(uint32_t key, uint32_t* q);
-      uint32_t* getQ();
-      H3(uint32_t depth, uint32_t width);
-
-    private:
-      std::vector<uint32_t> mQ;
-  };
+  uint32_t roundUpToNextPowerOf2(uint32_t x);
+  uint64_t roundUpToNextPowerOf2(uint64_t x);
+  bool isPowerOfTwo(uint32_t n);
+  double_t logBaseN(double_t x, double_t base);
 
 } // NES::Experimental::Statistics
 
-#endif //NES_CORE_INCLUDE_UTIL_HASHING_HPP
+#endif //NES_CORE_INCLUDE_STATMANAGER_UTIL_UTIL_HPP

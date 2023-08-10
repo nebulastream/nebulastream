@@ -28,7 +28,7 @@ namespace NES::Experimental::Statistics {
     Sketch(const StatCollectorConfig& config, const uint32_t depth, const uint32_t width);
     void update(uint32_t key) override = 0;
     bool equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override = 0;
-    std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) override = 0;
+    std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override = 0;
   private:
     uint32_t depth;
     uint32_t width;

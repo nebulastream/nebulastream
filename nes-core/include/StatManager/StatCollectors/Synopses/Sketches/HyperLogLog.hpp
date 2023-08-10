@@ -11,40 +11,45 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
-#define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
+#ifndef NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HYPERLOGLOG_HPP
+#define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HYPERLOGLOG_HPP
 
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include "StatManager/StatCollectors/StatCollector.hpp"
-#include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
-#include "StatManager/Util/Hashing.hpp"
+#include <StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp>
+#include <StatManager/Util/Hashing.hpp>
 
 namespace NES::Experimental::Statistics {
 
-  class CountMin : public Sketch {
+  class HyperLogLog : public Sketch {
 
-    using CountMinPtr = std::unique_ptr<CountMin>;
+    using HyperLogLogPtr = std::unique_ptr<HyperLogLog>;
 
     public:
       [[nodiscard]] double getError() const;
-      [[nodiscard]] double getProb() const;
-      uint32_t** getDataPointer();
-      void setDataPointer(uint32_t** DataPointer);
+      [[nodiscard]] uint16_t getB() const;
+      void setAlphaM(double_t alpha_m);
+      double_t getAlphaM() const;
+      uint32_t getNumZeroBuckets() const;
+      uint32_t* getDataPointer();
+      void setDataPointer(uint32_t* DataPointer);
       H3* getClassOfHashFunctions();
       void setClassOfHashFunctions(H3* ClassOfHashingFunctions);
-      CountMin(const StatCollectorConfig& config);
+      HyperLogLog(const StatCollectorConfig& config);
       void update(uint32_t key) override;
       bool equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override;
       std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override;
-      uint32_t pointQuery(uint32_t key);
+      double_t countDistinctQuery();
 
     private:
-      double mError;
-      double mProb;
-      uint32_t** mDataPointer;
+      double_t mError;
+      uint16_t b;                     // the number of bits dividing the hash as according to the paper
+      double_t alphaM;                // the bias correction constant
+      uint32_t numZeroBuckets;
+      uint32_t* mDataPointer;
       H3* mClassOfHashingFunctions;
-    };
+  };
 
 } // NES::Experimental::Statistics
 
-#endif //NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
+#endif //NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HYPERLOGLOG_HPP

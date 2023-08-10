@@ -34,7 +34,7 @@ namespace NES::Experimental::Statistics {
       StatCollector(const StatCollectorConfig config);
       virtual void update(uint32_t key) = 0;
       virtual bool equal(const std::unique_ptr<StatCollector>& rightStatCollector, bool statCollection) = 0;
-      virtual std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightStatCollector, bool statCollection) = 0;
+      virtual std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector>& rightStatCollector, bool statCollection) = 0;
 
     private:
       const std::string physicalSourceName;

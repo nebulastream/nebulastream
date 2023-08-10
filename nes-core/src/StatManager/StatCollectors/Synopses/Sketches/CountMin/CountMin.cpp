@@ -44,8 +44,8 @@ namespace NES::Experimental::Statistics {
 
   CountMin::CountMin(const StatCollectorConfig& config)
       : Sketch(config,
-               ((uint32_t) ceil(log(1.0 / static_cast<double_t >(config.getProbability())))),
-               ((uint32_t) ceil(M_E/static_cast<double_t >(config.getError())))), mError(config.getError()),
+               ((uint32_t) ceil(log(1.0 /  config.getProbability()))),
+               ((uint32_t) ceil(M_E/ config.getError()))), mError(config.getError()),
                mProb(config.getProbability()), mDataPointer(nullptr), mClassOfHashingFunctions(nullptr) {
 
     this->setClassOfHashFunctions(new H3(this->getDepth(), this->getWidth()));
@@ -111,7 +111,7 @@ namespace NES::Experimental::Statistics {
     return true;
   }
 
-  std::unique_ptr<StatCollector> CountMin::merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) {
+  std::unique_ptr<StatCollector> CountMin::merge(std::unique_ptr<StatCollector>& rightSketch, bool statCollection) {
 
     if (!(this->equal(rightSketch, statCollection))) {
       NES_DEBUG("Cannot merge the two sketches, as they are not equal");
@@ -126,18 +126,14 @@ namespace NES::Experimental::Statistics {
       return nullptr;
     }
 
-    double_t error = leftCM->getError();
-    double_t prob = leftCM->getProb();
-
     // TODO: come up with a better way for this;
     // combinedStreamName
     auto PSN1 = leftCM->getPhysicalSourceName();
     auto PSN2 = rightCM->getPhysicalSourceName();
     auto cmSketchConfig = new StatCollectorConfig(PSN1 + PSN2, leftCM->getField(), "FrequencyCM", leftCM->getDuration(),
-                                     leftCM->getFrequency(), error, prob, 0, 0);
+                                     leftCM->getFrequency(), leftCM->getError(), leftCM->getProb(), 0, 0);
 
     CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
-//    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
 
     uint32_t** leftSketchData = leftCM->getDataPointer();
     uint32_t** rightSketchData = rightCM->getDataPointer();
