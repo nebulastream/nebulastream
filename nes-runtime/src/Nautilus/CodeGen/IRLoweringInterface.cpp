@@ -68,6 +68,10 @@ std::unique_ptr<CodeGenerator> IRLoweringInterface::lowerOperation(const std::sh
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operation);
             return lowerBranch(branchOp, frame);
         }
+        case IR::Operations::Operation::OperationType::BuiltinVariableOp: {
+            auto builtinVariableOp = std::static_pointer_cast<IR::Operations::BuiltInVariableOperation>(operation);
+            return lowerBuiltInVariable(builtinVariableOp, frame);
+        }
         case IR::Operations::Operation::OperationType::ConstAddressOp: {
             auto constAddressOp = std::static_pointer_cast<IR::Operations::ConstAddressOperation>(operation);
             return lowerConstAddress(constAddressOp, frame);
