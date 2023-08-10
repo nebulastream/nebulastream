@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
