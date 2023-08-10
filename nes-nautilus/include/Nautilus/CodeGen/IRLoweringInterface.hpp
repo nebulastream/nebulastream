@@ -25,6 +25,7 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/BuiltInVariableOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstAddressOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
@@ -90,6 +91,8 @@ private:
     virtual std::unique_ptr<CodeGenerator> lowerBitwiseXor(const std::shared_ptr<IR::Operations::BitWiseXorOperation>& operation, RegisterFrame& frame) = 0;
 
     virtual std::unique_ptr<CodeGenerator> lowerBranch(const std::shared_ptr<IR::Operations::BranchOperation>& operation, RegisterFrame& frame) = 0;
+
+    virtual std::unique_ptr<CodeGenerator> lowerBuiltInVariable(const std::shared_ptr<IR::Operations::BuiltInVariableOperation>& operation, RegisterFrame& frame) = 0;
 
     virtual std::unique_ptr<CodeGenerator> lowerCast(const std::shared_ptr<IR::Operations::CastOperation>& operation, RegisterFrame& frame) = 0;
 
