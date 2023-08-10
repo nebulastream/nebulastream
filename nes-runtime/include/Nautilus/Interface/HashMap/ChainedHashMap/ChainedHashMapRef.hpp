@@ -67,13 +67,13 @@ class ChainedHashMapRef {
          * @brief Returns true if the next entry is not null.
          * @return bool
          */
-        bool operator!=(std::nullptr_t rhs);
+        bool operator!=(std::nullptr_t rhs) const;
 
         /**
          * @brief Returns true if the next entry is null.
          * @return bool
          */
-        bool operator==(std::nullptr_t rhs);
+        bool operator==(std::nullptr_t rhs) const;
 
       private:
         mutable Value<MemRef> ref;
@@ -123,6 +123,7 @@ class ChainedHashMapRef {
      * @return EntryRef
      */
     EntryRef findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
+    EntryRef find(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
