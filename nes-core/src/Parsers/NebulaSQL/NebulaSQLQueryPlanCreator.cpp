@@ -82,10 +82,20 @@ void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseConte
             sinkDescriptor = NES::ZmqSinkDescriptor::create(host,port);
         }
         if (sinkType == "Kafka") {
-            //sinkDescriptor = NES::KafkaSinkDescriptor::create();
+            auto kafkaContext = context->sinkType()->sinkTypeKafka();
+            std::string sinkFormat = kafkaContext->kafkaKeyword()->getText();
+            std::string broker = kafkaContext->broker->getText();
+            std::string topic = kafkaContext->topic->getText();
+            uint64_t timeout = std::stoull(kafkaContext->timeout->getText());
+            sinkDescriptor = NES::KafkaSinkDescriptor::create(sinkFormat,broker,topic,timeout);
         }
         if (sinkType == "OPC") {
-            //sinkDescriptor = NES::OPCSinkDescriptor::create();
+            auto opcContext = context->sinkType()->sinkTypeOPC();
+            std::string url = opcContext->url->getText();
+            std::string nodeId = opcContext->nodeId->getText();
+            std::string user = opcContext->user->getText();
+            std::string password = opcContext->password->getText();
+            //sinkDescriptor = NES::OPCSinkDescriptor::create(url,nodeId,user,password);
             //gibt es nicht?
         }
         if (sinkType == "NullOutput") {
