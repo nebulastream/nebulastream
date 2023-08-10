@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.189](https://github.com/nebulastream/nebulastream/tree/v0.5.189) (2023-08-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.188...v0.5.189)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Issues when compiling with `libstdc++` [\#4103](https://github.com/nebulastream/nebulastream/issues/4103)
+
 ## [v0.5.188](https://github.com/nebulastream/nebulastream/tree/v0.5.188) (2023-08-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.187...v0.5.188)
