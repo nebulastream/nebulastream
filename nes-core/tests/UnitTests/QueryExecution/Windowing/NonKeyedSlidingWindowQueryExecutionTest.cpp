@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <NesBaseTest.hpp>
@@ -69,7 +68,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(30);
 }
 
-TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleTumblingWindow) {
+TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 

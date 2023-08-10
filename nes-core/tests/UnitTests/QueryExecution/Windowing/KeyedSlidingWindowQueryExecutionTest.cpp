@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <NesBaseTest.hpp>
@@ -70,7 +69,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(30);
 }
 
-TEST_P(KeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
+TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -79,7 +78,7 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
                           ->addField("test$startTs", BasicType::UINT64)
                           ->addField("test$endTs", BasicType::UINT64)
                           ->addField("test$key", BasicType::INT64)
-                          ->addField("test$value", BasicType::INT64);
+                          ->addField("test$sum", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto testSink = executionEngine->createDataSink(sinkSchema, 4);
@@ -104,18 +103,23 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3u);
+    // compare result for key 0
     EXPECT_EQ(resultBuffer[0]["test$startTs"].read<uint64_t>(), 0);
     EXPECT_EQ(resultBuffer[0]["test$endTs"].read<uint64_t>(), 10);
     EXPECT_EQ(resultBuffer[0]["test$key"].read<int64_t>(), 0);
-    EXPECT_EQ(resultBuffer[0]["test$value"].read<int64_t>(), 4);
+    EXPECT_EQ(resultBuffer[0]["test$sum"].read<int64_t>(), 4);
+
+    // compare result for key 1
     EXPECT_EQ(resultBuffer[1]["test$startTs"].read<uint64_t>(), 0);
     EXPECT_EQ(resultBuffer[1]["test$endTs"].read<uint64_t>(), 10);
     EXPECT_EQ(resultBuffer[1]["test$key"].read<int64_t>(), 1);
-    EXPECT_EQ(resultBuffer[1]["test$value"].read<int64_t>(), 3);
+    EXPECT_EQ(resultBuffer[1]["test$sum"].read<int64_t>(), 3);
+
+    // compare result for key 2
     EXPECT_EQ(resultBuffer[2]["test$startTs"].read<uint64_t>(), 0);
     EXPECT_EQ(resultBuffer[2]["test$endTs"].read<uint64_t>(), 10);
     EXPECT_EQ(resultBuffer[2]["test$key"].read<int64_t>(), 2);
-    EXPECT_EQ(resultBuffer[2]["test$value"].read<int64_t>(), 3);
+    EXPECT_EQ(resultBuffer[2]["test$sum"].read<int64_t>(), 3);
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);

@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,6 +22,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <chrono>
 #include <gmock/gmock-matchers.h>
+#include <gtest/gtest.h>
 #include <iostream>
 
 namespace NES {
@@ -33,7 +32,7 @@ class MultiThreadedTest : public Testing::NESBaseTest,
   public:
     const uint64_t numTuplesPerBuffer = 1;
     static constexpr auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    static constexpr auto dumpNone = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+    static constexpr auto dumpNone = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 

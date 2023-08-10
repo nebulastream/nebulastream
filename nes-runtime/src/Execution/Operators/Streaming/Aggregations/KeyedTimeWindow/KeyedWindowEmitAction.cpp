@@ -19,7 +19,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getGlobalSliceState(void* combinedSlice);
 void* getKeyedSliceState(void* gs);
 
 void deleteSlice(void* gs) {
