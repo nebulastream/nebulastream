@@ -122,7 +122,6 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
     EntryRef find(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
 
     /**
@@ -176,6 +175,7 @@ class ChainedHashMapRef {
      * @return EntryIterator
      */
     EntryIterator end();
+
     /**
      * @brief This function performs an insertion of a new entry to the hash map.
      * If an entry with the same hash already exists we append it as the head of the chain.
