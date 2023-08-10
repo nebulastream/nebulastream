@@ -48,7 +48,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), connectAsync(true) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -83,6 +83,9 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
             insertIntoStorageCallback(inputBuffer, workerContext);
         }
         return success;
+    } else if (connectAsync) {
+        auto newChannel = workerContext.getNetworkChannelFuture(nesPartition.getOperatorId());
+
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
