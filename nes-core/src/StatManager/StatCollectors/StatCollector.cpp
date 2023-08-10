@@ -13,11 +13,8 @@
 */
 
 #include "StatManager/StatCollectors/StatCollector.hpp"
-//#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/ddsketch.hpp"
-//#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/hyperLogLog.hpp"
-//#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/reservoirSample.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   const std::string& StatCollector::getPhysicalSourceName() const {
     return physicalSourceName;
@@ -35,13 +32,13 @@ namespace NES {
     return frequency;
   }
 
-  StatCollector::StatCollector(const Configurations::StatManagerConfig config)
-  : physicalSourceName(static_cast<std::string>(config.physicalSourceName.getValue())),
-  field(static_cast<std::string>(config.field.getValue())),
-  duration(static_cast<time_t>(config.duration.getValue())),
-  frequency(static_cast<time_t>(config.frequency.getValue())) {
+  StatCollector::StatCollector(const StatCollectorConfig config)
+    : physicalSourceName(static_cast<std::string>(config.getPhysicalSourceName())),
+      field(static_cast<std::string>(config.getField())),
+      duration(static_cast<time_t>(config.getDuration())),
+      frequency(static_cast<time_t>(config.getFrequency())) {
 
   }
 
 
-} // NES
+} // NES::Experimental::Statistics

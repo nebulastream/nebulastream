@@ -14,7 +14,7 @@
 
 #include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   uint32_t Sketch::getDepth() const {
     return this->depth;
@@ -24,10 +24,10 @@ namespace NES {
     return this->width;
   }
 
-  Sketch::Sketch(const Configurations::StatManagerConfig& config,
+  Sketch::Sketch(const StatCollectorConfig& config,
                  const uint32_t depth, const uint32_t width)
                      : StatCollector(config), depth(depth), width(width) {
 
   }
 
-} // NES
+} // NES::Experimental::Statistics

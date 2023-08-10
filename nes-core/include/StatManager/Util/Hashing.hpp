@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   class H3 {
     public:
@@ -30,6 +30,6 @@ namespace NES {
       std::vector<uint32_t> mQ;
   };
 
-} // NES
+} // NES::Experimental::Statistics
 
 #endif //NES_CORE_INCLUDE_UTIL_HASHING_HPP

@@ -14,48 +14,37 @@
 #ifndef NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
 
-#include <Configurations/StatManagerConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include "StatManager/StatCollectors/StatCollector.hpp"
 #include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
-#include "Util/hashing.hpp"
+#include "StatManager/Util/Hashing.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   class CountMin : public Sketch {
 
-  public:
-    [[nodiscard]] double getError() const;
-    [[nodiscard]] double getProb() const;
-    uint32_t** getDataPointer();
-    void setDataPointer(uint32_t** DataPointer);
-    H3* getClassOfHashFunctions();
-    void setClassOfHashFunctions(H3* ClassOfHashingFunctions);
-    CountMin(const Configurations::StatManagerConfig& config);
-//    static CountMin* createCountMinWidthDepth(const Configurations::StatManagerConfig& config,
-//                                              uint32_t depth,
-//                                              uint32_t width);
-//    static CountMin* createCountMinErrorProb(const Configurations::StatManagerConfig& config,
-//                                             double error,
-//                                             double prob);
-    /*static CountMin* initialize(*//*const std::string& physicalSourcePtr,
-        const std::string& field,
-        time_t duration,
-        time_t interval,*//*
-        Yaml::Node configNode);*/
-    void update(uint32_t key) override;
-    bool equal(StatCollector* otherSketch, bool statCollection = false) override;
-    StatCollector* merge(StatCollector* rightSketch, bool statCollection = false) override;
-    uint32_t pointQuery(uint32_t key);
-    // uint32_t rangeQuery();
-    // uint32_t innerProductQuery();
+    using CountMinPtr = std::unique_ptr<CountMin>;
 
-  private:
-    double mError;
-    double mProb;
-    uint32_t** mDataPointer;
-    H3* mClassOfHashingFunctions;
-  };
+    public:
+      [[nodiscard]] double getError() const;
+      [[nodiscard]] double getProb() const;
+      uint32_t** getDataPointer();
+      void setDataPointer(uint32_t** DataPointer);
+      H3* getClassOfHashFunctions();
+      void setClassOfHashFunctions(H3* ClassOfHashingFunctions);
+      CountMin(const StatCollectorConfig& config);
+      void update(uint32_t key) override;
+      bool equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override;
+      std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) override;
+      uint32_t pointQuery(uint32_t key);
 
-} // NES
+    private:
+      double mError;
+      double mProb;
+      uint32_t** mDataPointer;
+      H3* mClassOfHashingFunctions;
+    };
+
+} // NES::Experimental::Statistics
 
 #endif //NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
