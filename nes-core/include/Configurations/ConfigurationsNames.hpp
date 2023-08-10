@@ -211,16 +211,5 @@ const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
-// Statistic Configurations
-const std::string STATISTICS_CONFIG_PHYSICAL_SOURCE_NAME = "physicalSourceName";
-const std::string STATISTICS_CONFIG_FIELD = "fieldName";
-const std::string STATISTICS_CONFIG_STAT_METHOD_NAME = "StatisticsMethodName";
-const std::string STATISTICS_CONFIG_DURATION = "StatDuration";
-const std::string STATISTICS_CONFIG_FREQUENCY = "StatFrequency";
-const std::string STATISTICS_CONFIG_ERROR = "StatError";
-const std::string STATISTICS_CONFIG_PROBABILITY = "StatProbability";
-const std::string STATISTICS_CONFIG_DEPTH = "StatDepth";
-const std::string STATISTICS_CONFIG_WIDTH = "StatWidth";
-
 }// namespace NES::Configurations
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

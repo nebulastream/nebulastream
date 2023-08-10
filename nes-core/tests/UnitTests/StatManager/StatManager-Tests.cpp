@@ -20,7 +20,7 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/StatManagerConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -29,8 +29,6 @@
 #include <Util/TestUtils.hpp>
 
 namespace NES {
-
-  using namespace Configurations;
 
   class StatManagerTest : public Testing::NESBaseTest {
   public:
@@ -43,8 +41,8 @@ namespace NES {
     /* Will be called before a test is executed. */
     void SetUp() override {
       Testing::NESBaseTest::SetUp();
-      statManager = new StatManager();
-      statManagerConfig = new StatManagerConfig();
+      statManager = new NES::Experimental::Statistics::StatManager();
+      StatCollectorConfig = new NES::Experimental::Statistics::StatCollectorConfig();
       NES_INFO("Setup StatManagerTest test case.");
     }
 
@@ -57,32 +55,32 @@ namespace NES {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StatManagerTest class."); }
 
-    StatManager *statManager;
-    StatManagerConfig *statManagerConfig;
+    NES::Experimental::Statistics::StatManager *statManager;
+    NES::Experimental::Statistics::StatCollectorConfig *StatCollectorConfig;
   };
 
   TEST_F(StatManagerTest, createStatTest) {
-    statManager->createStat(*statManagerConfig);
+    statManager->createStat(*StatCollectorConfig);
     auto statCollectors = statManager->getStatCollectors();
 
     EXPECT_EQ(statCollectors.empty(), false);
   }
 
   TEST_F(StatManagerTest, queryStatTest) {
-    statManager->createStat(*statManagerConfig);
+    statManager->createStat(*StatCollectorConfig);
     auto statCollectors = statManager->getStatCollectors();
-    auto cm = statCollectors.at(0);
+    auto& cm = statCollectors.at(0);
 
     for (uint32_t i = 0; i < 1000000; i++) {
       cm->update(i);
     }
 
-    bool nearlyEqual = 1;
+    bool nearlyEqual = true;
     for (uint32_t i = 0; i < 32 * 1024; i++) {
 
-      auto stat = statManager->queryStat(*statManagerConfig, i);
-      if (stat < 29 && stat > 32) {
-        nearlyEqual = 0;
+      auto stat = statManager->queryStat(*StatCollectorConfig, i);
+      if (stat < 29 || stat > 32) {
+        nearlyEqual = false;
       }
     }
     EXPECT_EQ(nearlyEqual, true);
@@ -90,10 +88,10 @@ namespace NES {
 
 
   TEST_F(StatManagerTest, deleteStatTest) {
-    statManager->createStat(*statManagerConfig);
+    statManager->createStat(*StatCollectorConfig);
     EXPECT_EQ(statManager->getStatCollectors().empty(), false);
 
-    statManager->deleteStat(*statManagerConfig);
+    statManager->deleteStat(*StatCollectorConfig);
     EXPECT_EQ(statManager->getStatCollectors().empty(), true);
   }
 }
