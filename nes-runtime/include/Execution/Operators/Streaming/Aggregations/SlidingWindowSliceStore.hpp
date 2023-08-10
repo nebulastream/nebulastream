@@ -17,6 +17,7 @@
 #include <list>
 #include <set>
 #include <memory>
+#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
 
