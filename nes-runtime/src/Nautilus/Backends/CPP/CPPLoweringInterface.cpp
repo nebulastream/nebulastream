@@ -187,6 +187,10 @@ CPPLoweringInterface::Code CPPLoweringInterface::lowerBranch(const std::shared_p
     return std::move(code);
 }
 
+CPPLoweringInterface::Code CPPLoweringInterface::lowerBuiltInVariable(const std::shared_ptr<IR::Operations::BuiltInVariableOperation>& operation, RegisterFrame& frame) {
+    return lowerConstOperation<IR::Operations::BuiltInVariableOperation>(operation, frame);
+}
+
 CPPLoweringInterface::Code CPPLoweringInterface::lowerCast(const std::shared_ptr<IR::Operations::CastOperation>& operation, RegisterFrame& frame) {
     auto input = frame.getValue(operation->getInput()->getIdentifier());
     auto var = getVariable(operation->getIdentifier());
