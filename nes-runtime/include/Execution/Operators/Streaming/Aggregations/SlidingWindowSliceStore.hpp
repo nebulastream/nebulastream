@@ -18,6 +18,7 @@
 #include <set>
 #include <memory>
 #include <vector>
+#include <mutex>
 
 namespace NES::Runtime::Execution::Operators {
 
