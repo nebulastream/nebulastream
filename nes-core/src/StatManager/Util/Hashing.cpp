@@ -13,9 +13,9 @@
 */
 
 #include <random>
-#include "Util/hashing.hpp"
+#include "StatManager/Util/Hashing.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   uint32_t* H3::getQ() {
     return mQ.data();
@@ -68,4 +68,4 @@ namespace NES {
     return (res << 1) - 1;
   }
 
-} // NES
+} // NES::Experimental::Statistics

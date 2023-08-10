@@ -14,25 +14,26 @@
 #ifndef NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HPP
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HPP
 
+#include <memory>
 #include "StatManager/StatCollectors/StatCollector.hpp"
-#include <Configurations/StatManagerConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   class Sketch : public StatCollector {
 
   public:
     [[nodiscard]]uint32_t getDepth() const;
     [[nodiscard]]uint32_t getWidth() const;
-    Sketch(const Configurations::StatManagerConfig& config, const uint32_t depth, const uint32_t width);
+    Sketch(const StatCollectorConfig& config, const uint32_t depth, const uint32_t width);
     void update(uint32_t key) override = 0;
-    bool equal(StatCollector* otherSketch, bool statCollection) override = 0;
-    StatCollector* merge(StatCollector* rightSketch, bool statCollection) override = 0;
+    bool equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override = 0;
+    std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) override = 0;
   private:
     uint32_t depth;
     uint32_t width;
   };
 
-} // NES
+} // NES::Experimental::Statistics
 
 #endif //NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HPP

@@ -14,9 +14,10 @@
 
 #include <cstring>
 #include <cmath>
+#include <Util/Logger/Logger.hpp>
 #include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
   double CountMin::getError() const {
     return mError;
@@ -41,10 +42,11 @@ namespace NES {
     mClassOfHashingFunctions = ClassOfHashingFunctions;
   }
 
-  CountMin::CountMin(const Configurations::StatManagerConfig& config)
+  CountMin::CountMin(const StatCollectorConfig& config)
       : Sketch(config,
-               (ceil(log(1.0 / static_cast<double_t >(config.probability.getValue())))),
-               (ceil(M_E/static_cast<double_t >(config.error.getValue())))) {
+               ((uint32_t) ceil(log(1.0 / static_cast<double_t >(config.getProbability())))),
+               ((uint32_t) ceil(M_E/static_cast<double_t >(config.getError())))), mError(config.getError()),
+               mProb(config.getProbability()), mDataPointer(nullptr), mClassOfHashingFunctions(nullptr) {
 
     this->setClassOfHashFunctions(new H3(this->getDepth(), this->getWidth()));
 
@@ -62,76 +64,6 @@ namespace NES {
     NES_DEBUG("Sketch created");
   }
 
-//  CountMin* CountMin::createCountMinWidthDepth(const Configurations::StatManagerConfig& config,
-//                                               uint32_t depth,
-//                                               uint32_t width) {
-//
-//    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
-//    std::string field = configNode["field"].As<std::string>();
-//    auto key = configNode["key"].As<uint32_t>();
-//    auto duration = std::stoi(configNode["duration"].As<std::string>());
-//    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
-//
-//    double error = 1 / (std::exp(depth));
-//    double prob = std::exp(1 / width);
-//
-//    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
-//
-//    return sketch;
-//  }
-//
-//  CountMin* CountMin::createCountMinErrorProb(const Configurations::StatManagerConfig& config,
-//                                              double error,
-//                                              double prob) {
-//
-//    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
-//    std::string field = configNode["field"].As<std::string>();
-//    auto key = configNode["key"].As<uint32_t>();
-//    auto duration = std::stoi(configNode["duration"].As<std::string>());
-//    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
-//
-//    auto sketch = new CountMin(error, prob, physicalSourceName, field, duration, frequency);
-//
-//    return sketch;
-//  }
-
-/*  CountMin* CountMin::initialize(const std::string& physicalSourceName,
-      const std::string& field,
-      time_t duration,
-      time_t interval,
-      Yaml::Node configNode) {
-
-    std::string physicalSourceName = configNode["physicalSourceName"].As<std::string>();
-    std::string field = configNode["field"].As<std::string>();
-    auto key = configNode["key"].As<uint32_t>();
-    auto duration = std::stoi(configNode["duration"].As<std::string>());
-    auto frequency = std::stoi(configNode["frequency"].As<std::string>());
-
-    CountMin* mySketchA;
-    if ((configNode["Attributes"][0]["Error"]).IsNone()
-        && (configNode["Attributes"][0]["Prob"]).IsNone()
-        && !((configNode["Attributes"][0]["Depth"]).IsNone())
-        && !((configNode["Attributes"][0]["Width"]).IsNone())) {
-
-      auto depth = (configNode["Attributes"][0]["Depth"]).As<uint32_t>();
-      auto width = (configNode["Attributes"][0]["Width"]).As<uint32_t>();
-      mySketchA = CountMin::createCountMinWidthDepth(depth, width, physicalSourceName, field, duration, interval);
-
-    } else if (!((configNode["Attributes"][0]["Error"]).IsNone())
-               && !((configNode["Attributes"][0]["Prob"]).IsNone())
-               && (configNode["Attributes"][0]["Depth"]).IsNone()
-               && (configNode["Attributes"][0]["Width"]).IsNone()) {
-
-      auto error = (configNode["Attributes"][0]["Error"]).As<double_t>();
-      auto prob = (configNode["Attributes"][0]["Prob"]).As<double_t>();
-
-      mySketchA = CountMin::createCountMinErrorProb(error, prob, physicalSourceName, field, duration, interval);
-    } else {
-      NES_DEBUG("Could not  create a CM Sketch. Potentially too many parametrized arguments!");
-    }
-    return mySketchA;
-  }*/
-
   void CountMin::update(uint32_t key) {
 
     H3* hashFunctions = this->getClassOfHashFunctions();
@@ -145,12 +77,10 @@ namespace NES {
     }
   }
 
-  bool CountMin::equal(StatCollector* otherSketch, bool statCollection) {
+  bool CountMin::equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) {
 
-    CountMin* leftCM;
-    leftCM = dynamic_cast<CountMin*>(this);
-    CountMin* rightCM;
-    rightCM = dynamic_cast<CountMin*>(otherSketch);
+    auto leftCM = dynamic_cast<CountMin*>(this);
+    auto rightCM = dynamic_cast<CountMin*>(rightSketch.get());
 
     // if the sketches don't have the same dimensions / (error/prob) guarantees, then they aren't equal
     if (leftCM->getWidth() != rightCM->getWidth() || leftCM->getDepth() != rightCM->getDepth()) {
@@ -163,7 +93,7 @@ namespace NES {
     }
 
     // if we are checking whether two sketches are equal within the context of statistics collection, then their duration and frequency also needs to be identical
-    if (statCollection == true) {
+    if (statCollection) {
       if ((leftCM->getDuration() != rightCM->getDuration()) || (leftCM->getFrequency() != rightCM->getFrequency())) {
         return false;
       }
@@ -181,53 +111,45 @@ namespace NES {
     return true;
   }
 
-  StatCollector* CountMin::merge(StatCollector* rightSketch, bool statCollection) {
+  std::unique_ptr<StatCollector> CountMin::merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) {
 
-    if (!(this->equal(rightSketch, statCollection))){
+    if (!(this->equal(rightSketch, statCollection))) {
       NES_DEBUG("Cannot merge the two sketches, as they are not equal");
       return nullptr;
     }
 
-    CountMin* leftCM;
-    leftCM = dynamic_cast<CountMin*>(this);
+    auto leftCM = dynamic_cast<CountMin*>(this);
+    auto rightCM = dynamic_cast<CountMin*>(rightSketch.get());
 
-    CountMin* rightCM;
-    rightCM = dynamic_cast<CountMin*>(rightSketch);
+    if (leftCM == nullptr || rightCM == nullptr) {
+      NES_DEBUG("Cast of StatCollector to CountMin Sketch was not possible!");
+      return nullptr;
+    }
 
     double_t error = leftCM->getError();
     double_t prob = leftCM->getProb();
-
-    auto cmSketchConfig = new Configurations::StatManagerConfig();
 
     // TODO: come up with a better way for this;
     // combinedStreamName
     auto PSN1 = leftCM->getPhysicalSourceName();
     auto PSN2 = rightCM->getPhysicalSourceName();
+    auto cmSketchConfig = new StatCollectorConfig(PSN1 + PSN2, leftCM->getField(), "FrequencyCM", leftCM->getDuration(),
+                                     leftCM->getFrequency(), error, prob, 0, 0);
 
-    cmSketchConfig->physicalSourceName.setValue(PSN1+PSN2);
-    cmSketchConfig->field.setValue(leftCM->getField());
-    cmSketchConfig->statMethodName.setValue("FrequencyCM");
-    cmSketchConfig->duration.setValue(leftCM->getDuration());
-    cmSketchConfig->frequency.setValue(leftCM->getFrequency());
-    cmSketchConfig->error.setValue(error);
-    cmSketchConfig->probability.setValue(prob);
-    cmSketchConfig->depth.setValue(0);
-    cmSketchConfig->width.setValue(0);
-
-    auto mergedCM = new CountMin(*cmSketchConfig);
+    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
+//    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
 
     uint32_t** leftSketchData = leftCM->getDataPointer();
     uint32_t** rightSketchData = rightCM->getDataPointer();
-    uint32_t** mergedSketchData = mergedCM->getDataPointer();
+    uint32_t** mergedSketchData = mergedSketch->getDataPointer();
 
     for (uint32_t i = 0; i < leftCM->getDepth(); i++) {
-      for (uint32_t j = 0; j < leftCM->getDepth(); j++) {
+      for (uint32_t j = 0; j < leftCM->getWidth(); j++) {
         mergedSketchData[i][j] = leftSketchData[i][j] + rightSketchData[i][j];
       }
     }
 
-    Sketch* mergedSketch = mergedCM;
-    return mergedSketch;
+    return std::move(mergedSketch);
   }
 
   uint32_t CountMin::pointQuery(uint32_t key) {
@@ -247,4 +169,4 @@ namespace NES {
     }
     return min;
   }
-} // NES
+} // NES::Experimental::Statistics
