@@ -85,6 +85,7 @@ private:
     Code lowerBitwiseRightShift(const std::shared_ptr<IR::Operations::BitWiseRightShiftOperation>& operation, RegisterFrame& frame) override;
     Code lowerBitwiseXor(const std::shared_ptr<IR::Operations::BitWiseXorOperation>& operation, RegisterFrame& frame) override;
     Code lowerBranch(const std::shared_ptr<IR::Operations::BranchOperation>& operation, RegisterFrame& frame) override;
+    Code lowerBuiltInVariable(const std::shared_ptr<IR::Operations::BuiltInVariableOperation>& operation, RegisterFrame& frame) override;
     Code lowerCast(const std::shared_ptr<IR::Operations::CastOperation>& operation, RegisterFrame& frame) override;
     Code lowerCompare(const std::shared_ptr<IR::Operations::CompareOperation>& operation, RegisterFrame& frame) override;
     Code lowerConstAddress(const std::shared_ptr<IR::Operations::ConstAddressOperation>& operation, RegisterFrame& frame) override;
