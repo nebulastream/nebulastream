@@ -22,6 +22,7 @@
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/Experimental/Vectorization/FuseVectorizedPipelinesPhase.hpp>
 #include <QueryCompiler/Phases/Experimental/Vectorization/LowerPhysicalToVectorizedOperatorsPhase.hpp>
 #include <QueryCompiler/Phases/Experimental/Vectorization/LowerVectorizedPipelineToKernelPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
@@ -52,6 +53,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
     , addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options))
     , lowerPhysicalToVectorizedOperatorsPhase(std::make_shared<Experimental::LowerPhysicalToVectorizedOperatorsPhase>(options))
     , lowerVectorizedPipelineToKernelPhase(std::make_shared<Experimental::LowerVectorizedPipelineToKernelPhase>(options))
+    , fuseVectorizedPipelinesPhase(std::make_shared<Experimental::FuseVectorizedPipelinesPhase>(options))
     , sourceSharing(sourceSharing)
 {
 
@@ -95,6 +97,9 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
 
         pipelinedQueryPlan = lowerPhysicalToVectorizedOperatorsPhase->apply(pipelinedQueryPlan);
         timer.snapshot("AfterToVectorizedPhase");
+
+        pipelinedQueryPlan = fuseVectorizedPipelinesPhase->apply(pipelinedQueryPlan);
+        timer.snapshot("AfterFusingVectorizedPipelinesPhase");
 
         pipelinedQueryPlan = lowerVectorizedPipelineToKernelPhase->apply(pipelinedQueryPlan);
         timer.snapshot("AfterVectorizedToKernelPhase");
