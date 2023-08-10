@@ -70,10 +70,8 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash)
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash,
                                                       const std::vector<Value<>>& keys) {
-    // find entry
-    auto entry = find(hash, keys);
     // create new entry
-    entry = insert(hash);
+    auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
