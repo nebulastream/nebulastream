@@ -398,6 +398,7 @@ void DataSource::runningRoutineWithIngestionRate() {
                   nextPeriodStartTime,
                   curTime);
     }//end of while
+    NES_DEBUG("DataSource {} call close", operatorId);
     close();
     NES_DEBUG("DataSource {} end running", operatorId);
 }
@@ -467,7 +468,8 @@ void DataSource::runningRoutineWithGatheringInterval() {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
-    close();
+    NES_DEBUG("DataSource {} call close", operatorId);
+    NES_DEBUG("DataSource {} call close", operatorId);
 
     NES_DEBUG("DataSource {} end running", operatorId);
 }
@@ -550,6 +552,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         std::this_thread::sleep_for(gatheringInterval);
     }
 
+    NES_DEBUG("DataSource {} call close", operatorId);
     close();
     NES_DEBUG("DataSource {} end running", operatorId);
 }
