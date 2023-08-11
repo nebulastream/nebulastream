@@ -61,7 +61,7 @@ void* createShortObject(int16_t value) { return jni::createShort(value); }
 
 void* createByteObject(int8_t value) { return jni::createByte(value); }
 
-void* createStringObject(TextValue* value) { return jni::createString(value->c_str()); }
+void* createStringObject(TextValue* value) { return jni::createString({value->c_str(), value->length()}); }
 
 bool getBooleanObjectValue(void* object) { return jni::getBooleanValue((jobject) object); }
 
@@ -113,10 +113,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
         value = (T) jni::getEnv()->GetByteField(pojo, id);
     } else if constexpr (std::is_same<T, TextValue*>::value) {
         auto jstr = (jstring) jni::getEnv()->GetObjectField(pojo, id);
-        auto size = jni::getEnv()->GetStringUTFLength((jstring) jstr);
-        value = TextValue::create(size);
-        auto resultText = jni::getEnv()->GetStringUTFChars(jstr, 0);
-        std::memcpy(value->str(), resultText, size);
+        return getStringObjectValue(jstr);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
@@ -188,8 +185,8 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
         jni::getEnv()->SetByteField(pojo, id, (jbyte) value);
     } else if constexpr (std::is_same<T, const TextValue*>::value) {
         const TextValue* sourceString = value;
-        jstring string = jni::getEnv()->NewStringUTF(sourceString->c_str());
-        jni::getEnv()->SetObjectField(pojo, id, (jstring) string);
+        auto string = jni::createString({value->c_str(), value->length()});
+        jni::getEnv()->SetObjectField(pojo, id, string);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
