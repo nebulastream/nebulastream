@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.190](https://github.com/nebulastream/nebulastream/tree/v0.5.190) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.189...v0.5.190)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus add sliding window support [\#3998](https://github.com/nebulastream/nebulastream/issues/3998)
+
 ## [v0.5.189](https://github.com/nebulastream/nebulastream/tree/v0.5.189) (2023-08-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.188...v0.5.189)
