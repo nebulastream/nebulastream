@@ -15,5 +15,5 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 
