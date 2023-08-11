@@ -195,7 +195,7 @@ class CollectTestSink : public SinkMedium {
      * @param numberOfRecords: The number of records to produce until we stop waiting.
      */
     void waitTillCompleted(size_t numberOfRecords) {
-        waitTillCompletedOrTimeout(numberOfRecords, -1);
+        waitTillCompletedOrTimeout(numberOfRecords, 0);
     }
 
     /**
@@ -229,9 +229,10 @@ class CollectTestSink : public SinkMedium {
         };
 
         // If the timeout is valid, use wait_for, else simply wait for the expected number of records.
-        if(timeoutInMilliseconds >= 0) {
+        if(timeoutInMilliseconds > 0) {
             cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), waitForExpectedNumberOfRecords);
         } else {
+            NES_DEBUG("Waiting for condition");
             cv.wait(lock, waitForExpectedNumberOfRecords);
         }
     }
