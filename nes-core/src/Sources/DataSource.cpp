@@ -469,7 +469,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
         }
     }
     NES_DEBUG("DataSource {} call close", operatorId);
-    NES_DEBUG("DataSource {} call close", operatorId);
+    close();
 
     NES_DEBUG("DataSource {} end running", operatorId);
 }
