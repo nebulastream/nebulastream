@@ -214,15 +214,15 @@ OpenCLManager::OpenCLManager() {
                          availableProcessors);
                 this->devices.emplace_back(platformId,
                                            device,
-                                           platformVendor,
-                                           platformName,
-                                           deviceName,
-                                           doubleFPSupport,
-                                           maxWorkItems,
-                                           deviceAddressBits,
-                                           deviceType,
-                                           deviceExtensions,
-                                           availableProcessors);
+                                           OpenCLDeviceInfo(platformVendor,
+                                                            platformName,
+                                                            deviceName,
+                                                            doubleFPSupport,
+                                                            maxWorkItems,
+                                                            deviceAddressBits,
+                                                            deviceType,
+                                                            deviceExtensions,
+                                                            availableProcessors));
             }
         }
     } catch (OpenCLInitializationException e) {
@@ -235,8 +235,6 @@ OpenCLManager::OpenCLManager() {
 OpenCLManager::OpenCLManager() { NES_DEBUG("OpenCL support was disabled at build time"); }
 #endif// ENABLE_OPENCL
 
-const std::vector<OpenCLDeviceInfo>& OpenCLManager::getDevices() const {
-    return devices;
-}
+const std::vector<WorkerOpenCLDeviceInfo>& OpenCLManager::getDevices() const { return devices; }
 
 }// namespace NES::Runtime

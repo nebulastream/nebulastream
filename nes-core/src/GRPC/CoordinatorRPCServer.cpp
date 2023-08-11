@@ -28,30 +28,38 @@
 #include <Services/ReplicationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <utility>
 
 using namespace NES;
 
 // Helper method to deserialize information about the OpenCL devices of a worker.
-nlohmann::json deserializeOpenCLDeviceInfo(const uint64_t workerId,
-                                           const google::protobuf::RepeatedPtrField<OpenCLDeviceInfo>& serializedDeviceInfo) {
-    nlohmann::json devices = nlohmann::json::array();
-    for (const auto& deviceInfo : serializedDeviceInfo) {
-        nlohmann::json device;
-        device["deviceName"] = deviceInfo.devicename();
-        device["doubleFPSupport"] = deviceInfo.doublefpsupport();
-        device["maxWorkItemSizes"] = nlohmann::json::array();
-        for (const auto& maxWorkItemSize : deviceInfo.maxworkitems()) {
-            device["maxWorkItemSizes"].push_back(maxWorkItemSize);
+void deserializeOpenCLDeviceInfo(std::any& property,
+                                 const google::protobuf::RepeatedPtrField<SerializedOpenCLDeviceInfo>& serializedDeviceInfos) {
+    std::vector<NES::Runtime::OpenCLDeviceInfo> devices;
+    for (const auto& serializedDeviceInfo : serializedDeviceInfos) {
+        if (serializedDeviceInfo.maxworkitems_size() != 3) {
+            NES_WARNING("OpenCL device {} {} {} has invalid number of maxWorkItems: {}; skipping.",
+                        serializedDeviceInfo.platformvendor(), serializedDeviceInfo.platformname(),
+                        serializedDeviceInfo.devicename(), serializedDeviceInfo.maxworkitems_size());
+            continue;
         }
-        device["deviceAddressBits"] = deviceInfo.deviceaddressbits();
-        device["deviceType"] = deviceInfo.devicetype();
-        device["deviceExtensions"] = deviceInfo.deviceextensions();
-        device["availableProcessors"] = deviceInfo.availableprocessors();
-        NES_DEBUG("Deserialized OpenCL device information for worker {}: {}", workerId, device.dump());
-        devices.push_back(device);
+        std::array<size_t, 3> maxWorkItems {
+            serializedDeviceInfo.maxworkitems(0),
+            serializedDeviceInfo.maxworkitems(1),
+            serializedDeviceInfo.maxworkitems(2)
+        };
+        devices.emplace_back(serializedDeviceInfo.platformvendor(),
+                             serializedDeviceInfo.platformname(),
+                             serializedDeviceInfo.devicename(),
+                             serializedDeviceInfo.doublefpsupport(),
+                             maxWorkItems,
+                             serializedDeviceInfo.deviceaddressbits(),
+                             serializedDeviceInfo.devicetype(),
+                             serializedDeviceInfo.deviceextensions(),
+                             serializedDeviceInfo.availableprocessors());
     }
-    return devices;
+    property = devices;
 }
 
 CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
@@ -85,7 +93,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
-    workerProperties[NES::Worker::Configuration::OPENCL_DEVICES] = deserializeOpenCLDeviceInfo(configWorkerId, registrationRequest->opencldevices());
+    deserializeOpenCLDeviceInfo(workerProperties[NES::Worker::Configuration::OPENCL_DEVICES],
+                                registrationRequest->opencldevices());
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     TopologyNodeId workerId =

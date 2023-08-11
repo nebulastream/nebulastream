@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #ifdef ENABLE_OPENCL
 #ifdef __APPLE__
@@ -35,13 +36,11 @@ using cl_device_id = unsigned;
 namespace NES::Runtime {
 
 /**
- * Data structure to hold the information needed by the ELEGANT Acceleration Service to compile a kernel for an OpenCL device.
+ * Data structure to hold the information needed by the ELEGANT Planner and Acceleration Service to compile a kernel for an OpenCL device.
  */
 struct OpenCLDeviceInfo {
   public:
-    OpenCLDeviceInfo(const cl_platform_id platformId,
-                     const cl_device_id deviceId,
-                     const std::string& platformVendor,
+    OpenCLDeviceInfo(const std::string& platformVendor,
                      const std::string& platformName,
                      const std::string& deviceName,
                      bool doubleFPSupport,
@@ -50,7 +49,7 @@ struct OpenCLDeviceInfo {
                      const std::string& deviceType,
                      const std::string& deviceExtensions,
                      unsigned availableProcessors)
-        : platformId(platformId), deviceId(deviceId), platformVendor(platformVendor), platformName(platformName),
+        : platformVendor(platformVendor), platformName(platformName),
           deviceName(deviceName), doubleFPSupport(doubleFPSupport), maxWorkItems(maxWorkItems),
           deviceAddressBits(deviceAddressBits), deviceType(deviceType), deviceExtensions(deviceExtensions),
           availableProcessors(availableProcessors) {}
@@ -59,8 +58,6 @@ struct OpenCLDeviceInfo {
     constexpr static unsigned GRID_DIMENSIONS = 3;
 
   public:
-    cl_platform_id platformId;
-    cl_device_id deviceId;
     std::string platformVendor;
     std::string platformName;
     std::string deviceName;
@@ -72,6 +69,25 @@ struct OpenCLDeviceInfo {
     unsigned availableProcessors;
 };
 
+// TODO: Just declare the methods here and define in CPP file?
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo, platformVendor, platformName, deviceName, doubleFPSupport, maxWorkItems, deviceAddressBits, deviceType, deviceExtensions, availableProcessors);
+
+
+/**
+ * Data structure to hold the information about the available OpenCL devices in a worker.
+ *
+ * In contrast to OpenCLDeviceInfo, this struct also holds the OpenCL platform ID and device ID to access the device using the OpenCL API.
+ */
+struct WorkerOpenCLDeviceInfo {
+  public:
+    WorkerOpenCLDeviceInfo(const cl_platform_id platformId, const cl_device_id deviceId, const OpenCLDeviceInfo& deviceInfo)
+        : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo) {}
+  public:
+    const cl_platform_id platformId;
+    const cl_device_id deviceId;
+    const OpenCLDeviceInfo deviceInfo;
+};
+
 /**
  * Retrieve and store information about installed OpenCL devices.
  */
@@ -79,10 +95,10 @@ class OpenCLManager {
   public:
     OpenCLManager();
 
-    const std::vector<OpenCLDeviceInfo>& getDevices() const;
+    const std::vector<WorkerOpenCLDeviceInfo>& getDevices() const;
 
   private:
-    std::vector<OpenCLDeviceInfo> devices;
+    std::vector<WorkerOpenCLDeviceInfo> devices;
 };
 
 }// namespace NES::Runtime
