@@ -36,11 +36,11 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
-        
+
         // Setup default parameters.
         defaultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
         defaultDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer, uint64_t numInputRecords) {
-            for(size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
+            for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
                 buffer[recordIdx][0].write<int64_t>(recordIdx);
                 buffer[recordIdx][1].write<int64_t>(1);
             }
@@ -61,16 +61,17 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    void generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan, 
-            const std::vector<SchemaPtr>& sourceSchemas, 
-            std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t)>> inputDataGenerators,
-            uint64_t numInputTuples = 10) {
+    void generateAndEmitInputBuffers(
+        const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
+        const std::vector<SchemaPtr>& sourceSchemas,
+        std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t)>> inputDataGenerators,
+        uint64_t numInputTuples = 10) {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
         // For each source schema, create a source and an input buffer. Fill the input buffer using the corresponding
         // input data generator and finally use the source to emit the input buffer.
-        for(size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
+        for (size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
             auto source = executionEngine->getDataSource(queryPlan, sourceSchemaIdx);
             auto inputBuffer = executionEngine->getBuffer(sourceSchemas.at(sourceSchemaIdx));
 
@@ -103,12 +104,15 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     // Generate input and run query.
-    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    generateAndEmitInputBuffers(queryPlan,
+                                {defaultSchema, defaultSchema},
+                                {defaultDataGenerator, defaultDataGenerator},
+                                numInputRecords);
     defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
     const auto resultRecords = defaultSink->getResult();
 
     EXPECT_EQ(resultRecords.size(), numResultRecords);
-    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
         EXPECT_EQ(resultRecords.at(recordIdx).id, (recordIdx % 4) + 6);
         EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
@@ -128,13 +132,16 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     // Generate input and run query.
-    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    generateAndEmitInputBuffers(queryPlan,
+                                {defaultSchema, defaultSchema},
+                                {defaultDataGenerator, defaultDataGenerator},
+                                numInputRecords);
     defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
     const auto resultRecords = defaultSink->getResult();
 
     EXPECT_EQ(resultRecords.size(), numResultRecords);
-    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
-        EXPECT_EQ(resultRecords.at(recordIdx).id, (recordIdx + 4) % 6 + 4); //result ids: 8,9,4,5,6,7,8,9
+    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+        EXPECT_EQ(resultRecords.at(recordIdx).id, (recordIdx + 4) % 6 + 4);//result ids: 8,9,4,5,6,7,8,9
         EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
 
@@ -147,17 +154,19 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     constexpr uint64_t numResultRecords = 20;
 
     // Define query plan.
-    Query query =
-        TestQuery::from(defaultSource).unionWith(TestQuery::from(defaultSource)).sink(defaultTestSinkDescriptor);
+    Query query = TestQuery::from(defaultSource).unionWith(TestQuery::from(defaultSource)).sink(defaultTestSinkDescriptor);
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     // Generate input and run query.
-    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    generateAndEmitInputBuffers(queryPlan,
+                                {defaultSchema, defaultSchema},
+                                {defaultDataGenerator, defaultDataGenerator},
+                                numInputRecords);
     defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
     const auto resultRecords = defaultSink->getResult();
 
     EXPECT_EQ(resultRecords.size(), numResultRecords);
-    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
         EXPECT_EQ(resultRecords.at(recordIdx).id, recordIdx % 10);
         EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
@@ -181,12 +190,15 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualPro
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     // Generate input and run query.
-    generateAndEmitInputBuffers(queryPlan, {defaultSchema, customSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    generateAndEmitInputBuffers(queryPlan,
+                                {defaultSchema, customSchema},
+                                {defaultDataGenerator, defaultDataGenerator},
+                                numInputRecords);
     defaultSink->waitTillCompletedOrTimeout(numResultRecords, defaultTimeoutInMilliseconds);
     const auto resultRecords = defaultSink->getResult();
 
     EXPECT_EQ(resultRecords.size(), numResultRecords);
-    for(size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
         EXPECT_EQ(resultRecords.at(recordIdx).id, recordIdx % 10);
         EXPECT_EQ(resultRecords.at(recordIdx).value, 1);
     }
@@ -208,7 +220,10 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
 
     // Generate input and run query.
-    generateAndEmitInputBuffers(queryPlan, {defaultSchema, defaultSchema}, {defaultDataGenerator, defaultDataGenerator}, numInputRecords);
+    generateAndEmitInputBuffers(queryPlan,
+                                {defaultSchema, defaultSchema},
+                                {defaultDataGenerator, defaultDataGenerator},
+                                numInputRecords);
     defaultSink->waitTillCompleted(numResultRecords);
     const auto resultRecords = defaultSink->getResult();
 
