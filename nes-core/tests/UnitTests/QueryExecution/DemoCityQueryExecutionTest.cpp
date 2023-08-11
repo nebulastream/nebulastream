@@ -11,12 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
-#include "Operators/LogicalOperators/Sources/SourceDescriptor.hpp"
-#include "Plans/Query/QueryPlan.hpp"
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
 #include "Util/TestQuery.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -58,6 +52,8 @@ class DemoCityQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
+    /* Generates an input buffer for each source schema, using the inputDataGenerators, creates a source and emits the 
+       buffer using the newly created source. */
     void generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan, 
             const std::vector<SchemaPtr>& sourceSchemas, 
             std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)>> inputDataGenerators) {

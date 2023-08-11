@@ -195,14 +195,7 @@ class CollectTestSink : public SinkMedium {
      * @param numberOfRecords: The number of records to produce until we stop waiting.
      */
     void waitTillCompleted(size_t numberOfRecords) {
-        std::unique_lock lock(m);
-        cv.wait(lock, [&] {
-            if (!running) {
-                return true;
-            }
-            NES_DEBUG("Saw {} tuples in waitTillCompleted and waits for {} tuples", this->results.size(), numberOfRecords);
-            return this->results.size() >= numberOfRecords;
-        });
+        waitTillCompletedOrTimeout(numberOfRecords, -1);
     }
 
     /**
@@ -212,15 +205,35 @@ class CollectTestSink : public SinkMedium {
      * @param timeoutInMilliseconds: Amount of time that needs to pass until we stop waiting.
      */
     void waitTillCompletedOrTimeout(size_t numberOfRecords, uint64_t timeoutInMilliseconds) {
-        // completed.get_future().wait_for(std::chrono::milliseconds(timeoutInMilliseconds)); 
         std::unique_lock lock(m);
-        cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), [&] {
+
+        // Create lambda function that only returns true , if a specific number of records have been processed.
+        auto waitForExpectedNumberOfRecords = [&] {
+            bool isFinished = false;
             if (!running) {
-                return true;
+                isFinished = true;
             }
-            NES_DEBUG("Saw {} tuples in waitTillCompletedOrTimeout and waits for {} tuples", this->results.size(), numberOfRecords);
-            return this->results.size() >= numberOfRecords;
-        });
+            if (this->results.size() < numberOfRecords) {
+                NES_DEBUG("Already saw {} records and expects a total of {}.", this->results.size(), numberOfRecords);
+            }
+            else if (this->results.size() == numberOfRecords) {
+                NES_DEBUG("Saw exactly as many records ({}) as expected ({}).", this->results.size(), numberOfRecords);
+                isFinished = true;
+            } 
+            else if (this->results.size() > numberOfRecords) {
+                NES_ERROR("Number of result tuples {} and expected number of tuples {} do not match.", this->results.size(), numberOfRecords);
+                EXPECT_TRUE(false);
+                isFinished = true;
+            }
+            return isFinished;
+        };
+
+        // If the timeout is valid, use wait_for, else simply wait for the expected number of records.
+        if(timeoutInMilliseconds >= 0) {
+            cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), waitForExpectedNumberOfRecords);
+        } else {
+            cv.wait(lock, waitForExpectedNumberOfRecords);
+        }
     }
 
   public:
