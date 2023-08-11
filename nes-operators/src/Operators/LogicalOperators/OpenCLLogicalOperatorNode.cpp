@@ -56,9 +56,9 @@ const std::string& OpenCLLogicalOperatorNode::getOpenClCode() const { return ope
 
 void OpenCLLogicalOperatorNode::setOpenClCode(const std::string& openClCode) { openCLCode = openClCode; }
 
-const std::string& OpenCLLogicalOperatorNode::getDeviceId() const { return deviceId; }
+size_t OpenCLLogicalOperatorNode::getDeviceId() const { return deviceId; }
 
-void OpenCLLogicalOperatorNode::setDeviceId(const std::string& deviceId) { OpenCLLogicalOperatorNode::deviceId = deviceId; }
+void OpenCLLogicalOperatorNode::setDeviceId(const size_t deviceId) { OpenCLLogicalOperatorNode::deviceId = deviceId; }
 
 Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const {
     return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);

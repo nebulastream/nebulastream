@@ -50,9 +50,9 @@ class OpenCLLogicalOperatorNode : public UDFLogicalOperator {
 
     void setOpenClCode(const std::string& openClCode);
 
-    [[nodiscard]] const std::string& getDeviceId() const;
+    [[nodiscard]] size_t getDeviceId() const;
 
-    void setDeviceId(const std::string& deviceId);
+    void setDeviceId(const size_t deviceId);
 
     /**
      * Getter for the Java UDF descriptor.
@@ -62,7 +62,7 @@ class OpenCLLogicalOperatorNode : public UDFLogicalOperator {
 
   private:
     std::string openCLCode;
-    std::string deviceId;
+    size_t deviceId;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_

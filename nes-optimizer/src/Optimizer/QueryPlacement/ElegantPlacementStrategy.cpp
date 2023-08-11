@@ -24,6 +24,8 @@
 #include <cpr/api.h>
 #include <queue>
 #include <utility>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Runtime/OpenCLManager.hpp>
 
 namespace NES::Optimizer {
 
@@ -129,7 +131,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
                 operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
 
                 if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
-                    std::string deviceId = placement[DEVICE_ID_KEY];
+                    size_t deviceId = placement[DEVICE_ID_KEY];
                     operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
                 }
 
@@ -218,18 +220,7 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
         // Add properties for current topology node
         currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
         currentNodeJsonValue[NODE_TYPE_KEY] = "stationary";// always set to stationary
-
-        std::vector<nlohmann::json> devices = {};
-        //TODO: a node can have multiple devices. At this point it is not clear how these information will come to us.
-        // should be handled as part of issue #3853
-        nlohmann::json currentNodeOpenCLJsonValue{};
-        currentNodeOpenCLJsonValue[DEVICE_ID_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_ID"));
-        currentNodeOpenCLJsonValue[DEVICE_TYPE_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_TYPE"));
-        currentNodeOpenCLJsonValue[DEVICE_NAME_KEY] = std::any_cast<std::string>(currentNode->getNodeProperty("DEVICE_NAME"));
-        currentNodeOpenCLJsonValue[MEMORY_KEY] = std::any_cast<uint64_t>(currentNode->getNodeProperty("DEVICE_MEMORY"));
-        devices.push_back(currentNodeOpenCLJsonValue);
-
-        currentNodeJsonValue[DEVICES_KEY] = devices;
+        currentNodeJsonValue[DEVICES_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(currentNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES));
 
         auto children = currentNode->getChildren();
         for (const auto& child : children) {

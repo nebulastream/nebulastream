@@ -579,7 +579,7 @@ message SerializableOperator{
      */
     message OpenCLOperatorDetails {
         JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-        string deviceId = 2;
+        uint64 deviceId = 2;
         string openCLCode = 3;
     }
 
