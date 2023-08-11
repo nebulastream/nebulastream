@@ -13,9 +13,9 @@
 */
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDWINDOWEMITACTION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDWINDOWEMITACTION_HPP_
-#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
-#include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -39,6 +39,7 @@ class KeyedWindowEmitAction : public SliceMergingAction {
                    Value<UInt64>& windowEnd,
                    Value<UInt64>& sequenceNumber,
                    Value<MemRef>& globalSlice) const override;
+
   private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::string startTsFieldName;

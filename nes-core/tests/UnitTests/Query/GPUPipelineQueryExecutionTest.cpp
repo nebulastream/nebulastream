@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

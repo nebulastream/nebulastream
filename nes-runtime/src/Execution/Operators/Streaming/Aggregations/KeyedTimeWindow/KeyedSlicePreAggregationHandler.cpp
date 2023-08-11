@@ -27,9 +27,7 @@ namespace NES::Runtime::Execution::Operators {
 KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                  uint64_t windowSlide,
                                                                  const std::vector<OriginId>& origins)
-    : AbstractSlicePreAggregationHandler<KeyedSlice,  KeyedThreadLocalSliceStore>(windowSize,
-                                                                                        windowSlide,
-                                                                                        origins) {}
+    : AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>(windowSize, windowSlide, origins) {}
 
 void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                             uint64_t keySize,

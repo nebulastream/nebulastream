@@ -23,9 +23,7 @@ namespace NES::Runtime::Execution::Operators {
 NonKeyedSlicePreAggregationHandler::NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
                                                                        uint64_t windowSlide,
                                                                        const std::vector<OriginId>& origins)
-    : AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>(windowSize,
-                                                                                              windowSlide,
-                                                                                              origins) {}
+    : AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>(windowSize, windowSlide, origins) {}
 
 void NonKeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
     defaultState = std::make_unique<State>(entrySize);

@@ -278,6 +278,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
 
     void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer->getPointer(); }
     virtual ~DataSourceProxy() = default;
+
   private:
     FRIEND_TEST(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);

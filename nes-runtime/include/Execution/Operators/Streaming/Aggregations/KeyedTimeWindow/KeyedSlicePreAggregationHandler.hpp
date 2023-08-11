@@ -43,9 +43,7 @@ class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandle
      * @param origins the set of origins, which can produce data for the window operator
      * @param weakSliceStagingPtr access to the slice staging.
      */
-    KeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                    uint64_t windowSlide,
-                                    const std::vector<OriginId>& origins);
+    KeyedSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
 
     /**
      * @brief Initializes the thread local state for the window operator

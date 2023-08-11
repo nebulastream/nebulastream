@@ -32,6 +32,7 @@ class NonKeyedWindowEmitAction : public SliceMergingAction {
                    Value<UInt64>& windowEnd,
                    Value<UInt64>& sequenceNumber,
                    Value<MemRef>& globalSlice) const override;
+
   private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::string startTsFieldName;
