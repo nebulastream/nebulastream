@@ -162,7 +162,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     name: ${{ matrix.osversion }} ${{ matrix.arch }}
     needs: [ pre-build-checks ]
-    timeout-minutes: 60
+    timeout-minutes: 40
     runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
     strategy:
       fail-fast: false
@@ -243,7 +243,7 @@ jobs:
       matrix:
         arch: [ "ARM64", "X64" ]
     needs: [ pre-build-checks ]
-    timeout-minutes: 60
+    timeout-minutes: 40
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3

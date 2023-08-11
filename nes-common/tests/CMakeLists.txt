@@ -34,5 +34,5 @@ endif ()
 ### Thread Naming Test ###
 add_nes_common_test(nes-common-tests "UnitTests/Util/ThreadNamingTest.cpp" "UnitTests/Util/NonBlockingMonotonicSeqQueueTest.cpp")
 
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 

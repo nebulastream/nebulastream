@@ -725,6 +725,6 @@ add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-que
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)
 
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 
 
