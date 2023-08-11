@@ -57,7 +57,8 @@ void deserializeOpenCLDeviceInfo(std::any& property,
                              serializedDeviceInfo.deviceaddressbits(),
                              serializedDeviceInfo.devicetype(),
                              serializedDeviceInfo.deviceextensions(),
-                             serializedDeviceInfo.availableprocessors());
+                             serializedDeviceInfo.availableprocessors(),
+                             serializedDeviceInfo.globalmemory());
     }
     property = devices;
 }

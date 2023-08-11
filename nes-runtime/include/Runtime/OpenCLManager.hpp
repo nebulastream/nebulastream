@@ -48,11 +48,12 @@ struct OpenCLDeviceInfo {
                      unsigned deviceAddressBits,
                      const std::string& deviceType,
                      const std::string& deviceExtensions,
-                     unsigned availableProcessors)
+                     unsigned availableProcessors,
+                     unsigned long globalMemory)
         : platformVendor(platformVendor), platformName(platformName),
           deviceName(deviceName), doubleFPSupport(doubleFPSupport), maxWorkItems(maxWorkItems),
           deviceAddressBits(deviceAddressBits), deviceType(deviceType), deviceExtensions(deviceExtensions),
-          availableProcessors(availableProcessors) {}
+          availableProcessors(availableProcessors), globalMemory(globalMemory) {}
 
   public:
     constexpr static unsigned GRID_DIMENSIONS = 3;
@@ -67,6 +68,7 @@ struct OpenCLDeviceInfo {
     std::string deviceType;
     std::string deviceExtensions;
     unsigned availableProcessors;
+    unsigned long globalMemory;
 };
 
 // TODO: Just declare the methods here and define in CPP file?
