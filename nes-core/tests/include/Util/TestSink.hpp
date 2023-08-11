@@ -194,9 +194,7 @@ class CollectTestSink : public SinkMedium {
      * 
      * @param numberOfRecords: The number of records to produce until we stop waiting.
      */
-    void waitTillCompleted(size_t numberOfRecords) {
-        waitTillCompletedOrTimeout(numberOfRecords, 0);
-    }
+    void waitTillCompleted(size_t numberOfRecords) { waitTillCompletedOrTimeout(numberOfRecords, 0); }
 
     /**
      * @brief Either waits until numberOfRecords records are produced, or until the timeout is reached.
@@ -215,13 +213,13 @@ class CollectTestSink : public SinkMedium {
             }
             if (this->results.size() < numberOfRecords) {
                 NES_DEBUG("Already saw {} records and expects a total of {}.", this->results.size(), numberOfRecords);
-            }
-            else if (this->results.size() == numberOfRecords) {
+            } else if (this->results.size() == numberOfRecords) {
                 NES_DEBUG("Saw exactly as many records ({}) as expected ({}).", this->results.size(), numberOfRecords);
                 isFinished = true;
-            } 
-            else if (this->results.size() > numberOfRecords) {
-                NES_ERROR("Number of result tuples {} and expected number of tuples {} do not match.", this->results.size(), numberOfRecords);
+            } else if (this->results.size() > numberOfRecords) {
+                NES_ERROR("Number of result tuples {} and expected number of tuples {} do not match.",
+                          this->results.size(),
+                          numberOfRecords);
                 EXPECT_TRUE(false);
                 isFinished = true;
             }
@@ -229,7 +227,7 @@ class CollectTestSink : public SinkMedium {
         };
 
         // If the timeout is valid, use wait_for, else simply wait for the expected number of records.
-        if(timeoutInMilliseconds > 0) {
+        if (timeoutInMilliseconds > 0) {
             cv.wait_for(lock, std::chrono::milliseconds(timeoutInMilliseconds), waitForExpectedNumberOfRecords);
         } else {
             NES_DEBUG("Waiting for condition");

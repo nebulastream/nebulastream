@@ -46,11 +46,9 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // Check whether the required amount of expected result buffers has been reached.
     if (resultBuffers.size() < numExpectedResultBuffers) {
         NES_DEBUG("Already saw {} buffers and expects a total of {}", resultBuffers.size(), numExpectedResultBuffers);
-    }
-    else if (resultBuffers.size() == numExpectedResultBuffers) {
+    } else if (resultBuffers.size() == numExpectedResultBuffers) {
         completed.set_value(numExpectedResultBuffers);
-    } 
-    else if (resultBuffers.size() > numExpectedResultBuffers) {
+    } else if (resultBuffers.size() > numExpectedResultBuffers) {
         NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), numExpectedResultBuffers);
         EXPECT_TRUE(false);
     }
@@ -84,12 +82,10 @@ void TestSink::cleanupBuffers() {
     resultBuffers.clear();
 }
 
-void TestSink::waitTillCompleted() {
-    completed.get_future().wait(); 
-}
+void TestSink::waitTillCompleted() { completed.get_future().wait(); }
 
 void TestSink::waitTillCompletedOrTimeout(uint64_t timeoutInMilliseconds) {
-    completed.get_future().wait_for(std::chrono::milliseconds(timeoutInMilliseconds)); 
+    completed.get_future().wait_for(std::chrono::milliseconds(timeoutInMilliseconds));
 }
 
 void TestSink::shutdown() { cleanupBuffers(); }
