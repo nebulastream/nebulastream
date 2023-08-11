@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <list>
+#include <map>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {
