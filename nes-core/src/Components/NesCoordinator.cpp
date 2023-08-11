@@ -238,6 +238,17 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
 
+    SchemaPtr inputSchema = Schema::create()
+                                ->addField("a", DataTypeFactory::createUInt64())
+                                ->addField("b", DataTypeFactory::createUInt64())
+                                ->addField("c", DataTypeFactory::createUInt64())
+                                ->addField("d", DataTypeFactory::createUInt64())
+                                ->addField("e", DataTypeFactory::createUInt64())
+                                ->addField("f", DataTypeFactory::createUInt64())
+                                ->addField("timestamp1", DataTypeFactory::createUInt64())
+                                ->addField("timestamp2", DataTypeFactory::createUInt64());
+    sourceCatalogService->registerLogicalSource("A", inputSchema);
+
     statisticOutputThread = std::make_shared<std::thread>(([this]() {
         NES_DEBUG("NesWorker: start statistic collection");
         std::ofstream statisticsFile;
