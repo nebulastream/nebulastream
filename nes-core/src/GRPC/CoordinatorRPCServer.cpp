@@ -32,6 +32,28 @@
 
 using namespace NES;
 
+// Helper method to deserialize information about the OpenCL devices of a worker.
+nlohmann::json deserializeOpenCLDeviceInfo(const uint64_t workerId,
+                                           const google::protobuf::RepeatedPtrField<OpenCLDeviceInfo>& serializedDeviceInfo) {
+    nlohmann::json devices = nlohmann::json::array();
+    for (const auto& deviceInfo : serializedDeviceInfo) {
+        nlohmann::json device;
+        device["deviceName"] = deviceInfo.devicename();
+        device["doubleFPSupport"] = deviceInfo.doublefpsupport();
+        device["maxWorkItemSizes"] = nlohmann::json::array();
+        for (const auto& maxWorkItemSize : deviceInfo.maxworkitems()) {
+            device["maxWorkItemSizes"].push_back(maxWorkItemSize);
+        }
+        device["deviceAddressBits"] = deviceInfo.deviceaddressbits();
+        device["deviceType"] = deviceInfo.devicetype();
+        device["deviceExtensions"] = deviceInfo.deviceextensions();
+        device["availableProcessors"] = deviceInfo.availableprocessors();
+        NES_DEBUG("Deserialized OpenCL device information for worker {}: {}", workerId, device.dump());
+        devices.push_back(device);
+    }
+    return devices;
+}
+
 CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
@@ -63,6 +85,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
+    workerProperties[NES::Worker::Configuration::OPENCL_DEVICES] = deserializeOpenCLDeviceInfo(configWorkerId, registrationRequest->opencldevices());
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     TopologyNodeId workerId =
