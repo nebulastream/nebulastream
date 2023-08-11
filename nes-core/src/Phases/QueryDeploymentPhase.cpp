@@ -29,6 +29,8 @@
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <utility>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Runtime/OpenCLManager.hpp>
 
 namespace NES {
 
@@ -140,25 +142,8 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     // FIXME: pick a naming + id scheme for deviceName
                     //3. Fetch the topology node and compute the topology node payload
                     nlohmann::json payload;
-                    nlohmann::json deviceInfo;
-                    deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
-                    deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] =
-                        std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
-                    nlohmann::json maxWorkItems{};
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] =
-                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] =
-                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
-                    maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] =
-                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
-                    deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
-                    deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] =
-                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
-                    deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] =
-                        std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
-                    deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] =
-                        std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
-                    payload[DEVICE_INFO_KEY] = deviceInfo;
+                    payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
+                        topologyNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
 
                     //4. Extract the Java UDF metadata
                     auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
@@ -180,8 +165,8 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     jni::JavaByteCode javaByteCode = classByteCode->second;
 
                     //5. Prepare the multi-part message
-                    cpr::Part part1 = {"firstPayload", to_string(payload)};
-                    cpr::Part part2 = {"secondPayload", &javaByteCode[0]};
+                    cpr::Part part1 = {"jsonFile", to_string(payload)};
+                    cpr::Part part2 = {"codeFile", &javaByteCode[0]};
                     cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
 
                     //6. Make Acceleration Service Call
