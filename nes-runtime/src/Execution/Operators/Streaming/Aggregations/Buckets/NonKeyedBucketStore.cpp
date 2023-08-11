@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {
 
 NonKeyedBucketStore::NonKeyedBucketStore(uint64_t entrySize,
-                                                             uint64_t windowSize,
-                                                             uint64_t windowSlide,
-                                                             const std::unique_ptr<State>& defaultState)
+                                         uint64_t windowSize,
+                                         uint64_t windowSlide,
+                                         const std::unique_ptr<State>& defaultState)
     : BucketStore<NonKeyedSlice>(windowSize, windowSlide), entrySize(entrySize), defaultState(defaultState) {}
 
 GlobalSlicePtr NonKeyedBucketStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {

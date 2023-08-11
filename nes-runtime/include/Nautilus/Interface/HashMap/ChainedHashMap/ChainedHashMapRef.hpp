@@ -13,8 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
-#include <functional>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <functional>
 namespace NES {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;

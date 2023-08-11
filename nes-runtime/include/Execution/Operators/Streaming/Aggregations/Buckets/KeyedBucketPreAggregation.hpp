@@ -14,10 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDSLICEPREAGGREGATION_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDSLICEPREAGGREGATION_HPP_
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
 namespace NES::Runtime::Execution::Operators {
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
@@ -31,11 +31,11 @@ class KeyedBucketPreAggregation : public ExecutableOperator {
     * @brief Creates a NonKeyedBucketPreAggregation operator
     */
     KeyedBucketPreAggregation(uint64_t operatorHandlerIndex,
-                             TimeFunctionPtr timeFunction,
-                             const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                             const std::vector<PhysicalTypePtr>& keyDataTypes,
-                             const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                             const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+                              TimeFunctionPtr timeFunction,
+                              const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+                              const std::vector<PhysicalTypePtr>& keyDataTypes,
+                              const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                              const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;

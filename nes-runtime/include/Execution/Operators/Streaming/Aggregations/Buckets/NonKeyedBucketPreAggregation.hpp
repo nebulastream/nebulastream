@@ -30,8 +30,8 @@ class NonKeyedBucketPreAggregation : public ExecutableOperator {
     * @brief Creates a NonKeyedBucketPreAggregation operator
     */
     NonKeyedBucketPreAggregation(uint64_t operatorHandlerIndex,
-                                TimeFunctionPtr timeFunction,
-                                const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+                                 TimeFunctionPtr timeFunction,
+                                 const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;

@@ -40,8 +40,6 @@ class BucketStore {
     explicit BucketStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide){};
     virtual ~BucketStore() = default;
 
-
-
     /**
      * @brief Lookup all buckets that capture a specific timestamp ts
      * @param ts
@@ -66,7 +64,7 @@ class BucketStore {
             lastStart = timestamp - remainder;
         }
         // iterate over all windows that cover the ts
-        for (int64_t start = lastStart; start >=0 && start > timestamp - windowSize; start -= windowSlide) {
+        for (int64_t start = lastStart; start >= 0 && start > timestamp - windowSize; start -= windowSlide) {
             auto bucketRef = buckets.find(start);
             if (bucketRef == buckets.end()) {
                 auto bucket = allocateNewSlice(start, start + windowSize);
