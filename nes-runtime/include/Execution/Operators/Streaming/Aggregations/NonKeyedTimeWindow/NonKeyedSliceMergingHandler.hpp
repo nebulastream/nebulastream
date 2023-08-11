@@ -43,7 +43,6 @@ class NonKeyedSliceMergingHandler : public OperatorHandler {
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-
     /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask

@@ -43,7 +43,9 @@ std::shared_ptr<PhysicalKeyedSlidingWindowSink> PhysicalKeyedSlidingWindowSink::
 
 std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
 Windowing::LogicalWindowDefinitionPtr PhysicalKeyedSlidingWindowSink::getWindowDefinition() { return windowDefinition; }
-OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition); }
+OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() {
+    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition);
+}
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

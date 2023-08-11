@@ -14,11 +14,11 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Common/Identifiers.hpp>
-#include <vector>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <map>
 #include <tuple>
+#include <vector>
 
 namespace NES::Runtime {
 class AbstractBufferProvider;
@@ -61,14 +61,11 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
      * @param sequenceNumber
      * @param watermarkTs
      */
-    void trigger(WorkerContext& wctx,
-                 PipelineExecutionContext& ctx,
-                 OriginId originId,
-                 uint64_t sequenceNumber,
-                 uint64_t watermarkTs);
+    void
+    trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, uint64_t sequenceNumber, uint64_t watermarkTs);
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t);
-    void stop(QueryTerminationType queryTerminationType,PipelineExecutionContextPtr ctx);
+    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
     ~AbstractSlicePreAggregationHandler();
 
   protected:

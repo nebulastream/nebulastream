@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -21,7 +22,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <API/QueryAPI.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -126,7 +126,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    auto  query = Query::from("test");
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //id=2
@@ -503,8 +503,10 @@ TEST_F(DeepHierarchyTopologyTest, testDistributedWindowThreeLevel) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
-    auto query =
-        Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")));
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
@@ -610,8 +612,10 @@ TEST_F(DeepHierarchyTopologyTest, testDistributedWindowThreeLevelNemoPlacement) 
     }
 
     uint64_t i = 0;
-    auto query =
-        Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")));
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
@@ -778,10 +782,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     csvSourceType->setNumberOfBuffersToProduce(3);
 
     auto query = Query::from("window")
-        .filter(Attribute("id") < 15)
-        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
-        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
-        .filter(Attribute("id") < 10).window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value")));
+                     .filter(Attribute("id") < 15)
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .filter(Attribute("id") < 10)
+                     .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
+                     .apply(Sum(Attribute("value")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)

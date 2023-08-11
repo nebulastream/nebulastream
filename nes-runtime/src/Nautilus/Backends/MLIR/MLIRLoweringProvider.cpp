@@ -166,7 +166,7 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-MLIRLoweringProvider::~MLIRLoweringProvider(){
+MLIRLoweringProvider::~MLIRLoweringProvider() {
     NES_DEBUG("~MLIRLoweringProvider");
     delete globalInsertPoint;
 }

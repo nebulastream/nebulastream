@@ -39,9 +39,7 @@ class NonKeyedSlicePreAggregationHandler
      * @param windowDefinition logical window definition
      * @param origins the set of origins, which can produce data for the window operator
      */
-    NonKeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                       uint64_t windowSlide,
-                                       const std::vector<OriginId>& origins);
+    NonKeyedSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
 
     /**
      * @brief Initializes the thread local state for the window operator
