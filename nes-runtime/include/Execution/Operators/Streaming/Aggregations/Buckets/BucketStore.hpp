@@ -39,14 +39,21 @@ class BucketStore {
     explicit BucketStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide){};
     virtual ~BucketStore() = default;
 
+
+
+    /**
+     * @brief Lookup all buckets that capture a specific timestamp ts
+     * @param ts
+     * @return std::vector<SliceType*>*
+     */
     std::vector<SliceType*>* findBucketsByTs(uint64_t ts) {
         if (ts < lastWatermarkTs) {
             throw WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
                                             + std::to_string(lastWatermarkTs));
         }
         // get a read lock
-        auto foundBuckets = new std::vector<SliceType*>();
-
+        std::lock_guard<std::mutex> lock(mutex);
+        localResultVector.clear();
         int64_t timestamp = ts;
 
         int64_t remainder = (timestamp) % windowSize;
@@ -57,21 +64,28 @@ class BucketStore {
         } else {
             lastStart = timestamp - remainder;
         }
+        // iterate over all windows that cover the ts
         for (int64_t start = lastStart; start >=0 && start > timestamp - windowSize; start -= windowSlide) {
             auto bucketRef = buckets.find(start);
             if (bucketRef == buckets.end()) {
                 auto bucket = allocateNewSlice(start, start + windowSize);
-                foundBuckets->emplace_back(bucket.get());
+                localResultVector.emplace_back(bucket.get());
                 buckets.emplace(start, std::move(bucket));
             } else {
                 auto& bucket = bucketRef->second;
-                foundBuckets->emplace_back(bucket.get());
+                localResultVector.emplace_back(bucket.get());
             }
         }
-        return foundBuckets;
+        return &localResultVector;
     }
 
+    /**
+     * @brief Extracts all buckets from the bucket store that end before timestamp
+     * @param ts
+     * @return
+     */
     std::list<std::shared_ptr<SliceType>> extractBucketsUntilTs(uint64_t ts) {
+        std::lock_guard<std::mutex> lock(mutex);
         // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         std::list<std::shared_ptr<SliceType>> resultBuckets;
         for (auto i = buckets.begin(), last = buckets.end(); i != last && i->first + windowSize <= ts;) {
@@ -109,10 +123,13 @@ class BucketStore {
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
   private:
+    // use int64_t here because window could start at negative start points.
     int64_t windowSize;
     int64_t windowSlide;
     std::map<uint64_t, SliceTypePtr> buckets;
     std::atomic<uint64_t> lastWatermarkTs = 0;
+    std::vector<SliceType*> localResultVector;
+    std::mutex mutex;
 };
 }// namespace NES::Runtime::Execution::Operators
 
