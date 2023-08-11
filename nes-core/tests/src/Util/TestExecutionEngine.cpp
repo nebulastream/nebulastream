@@ -78,7 +78,8 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
                                            id,
                                            originId,
                                            numSourceLocalBuffers,
-                                           successors);
+                                           successors,
+                                           Runtime::QueryTerminationType::Graceful);
         });
 }
 

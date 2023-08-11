@@ -24,7 +24,8 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                                              OperatorId operatorId,
                                              OriginId originId,
                                              size_t numSourceLocalBuffers,
-                                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+                                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                             NES::Runtime::QueryTerminationType type)
     : DefaultSource(schema,
                     bufferManager,
                     queryManager,
@@ -34,7 +35,7 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                     originId,
                     numSourceLocalBuffers,
                     successors) {
-    wasGracefullyStopped = NES::Runtime::QueryTerminationType::HardStop;
+    wasGracefullyStopped = type;
 }
 
 void NonRunnableDataSource::runningRoutine() {
@@ -67,7 +68,8 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
-                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                      NES::Runtime::QueryTerminationType terminationType) {
     return std::make_shared<NonRunnableDataSource>(schema,
                                                    bufferManager,
                                                    queryManager,
@@ -76,7 +78,8 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                                    operatorId,
                                                    originId,
                                                    numSourceLocalBuffers,
-                                                   successors);
+                                                   successors,
+                                                   terminationType);
 }
 
 }// namespace NES::Testing
