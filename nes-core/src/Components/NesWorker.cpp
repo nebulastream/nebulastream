@@ -305,7 +305,7 @@ bool NesWorker::stop(bool) {
 
 void serializeOpenCLDeviceInfo(const NES::Runtime::OpenCLDeviceInfo& deviceInfo,
                                unsigned deviceIndex,
-                               ::OpenCLDeviceInfo* serializedDeviceInfo) {
+                               ::SerializedOpenCLDeviceInfo* serializedDeviceInfo) {
     serializedDeviceInfo->set_deviceid(deviceIndex);
     serializedDeviceInfo->set_platformvendor(deviceInfo.platformVendor);
     serializedDeviceInfo->set_platformname(deviceInfo.platformName);
@@ -338,7 +338,7 @@ bool NesWorker::connect() {
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
     for (auto i = 0u; i < nodeEngine->getOpenCLManager()->getDevices().size(); ++i) {
-        serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i], i, registrationRequest.add_opencldevices());
+        serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i].deviceInfo, i, registrationRequest.add_opencldevices());
     }
 
     if (locationProvider) {

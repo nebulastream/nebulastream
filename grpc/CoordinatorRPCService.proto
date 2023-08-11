@@ -71,7 +71,7 @@ service CoordinatorRPCService {
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 }
 
-message OpenCLDeviceInfo {
+message SerializedOpenCLDeviceInfo {
   uint32 deviceId = 1;
   string platformVendor = 2;
   string platformName = 3;
@@ -95,7 +95,7 @@ message RegisterWorkerRequest {
   bool tfSupported = 8;
   bool javaUDFSupported = 9;
   uint64 workerId = 10;
-  repeated OpenCLDeviceInfo openCLDevices = 11;
+  repeated SerializedOpenCLDeviceInfo openCLDevices = 11;
 }
 
 message RegisterWorkerReply {
