@@ -937,6 +937,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
+    mDataSource.reset();
 }
 
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
