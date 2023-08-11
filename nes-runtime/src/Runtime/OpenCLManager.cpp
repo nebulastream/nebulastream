@@ -198,9 +198,12 @@ OpenCLManager::OpenCLManager() {
                 auto doubleFPSupport = retrieveOpenCLDoubleFPSupport(device);
                 auto maxWorkItems = retrieveOpenCLMaxWorkItems(device);
                 auto deviceType = retrieveOpenCLDeviceType(device);
+                auto globalMemory = retrieveOpenCLDeviceInfo<cl_ulong, unsigned long>(device,
+                                                                                      CL_DEVICE_GLOBAL_MEM_SIZE,
+                                                                                      "CL_DEVICE_GLOBAL_MEM_SIZE");
                 NES_INFO("Found OpenCL device: [platformVendor={}, platformName={}, deviceName={}, doubleFPSupport={}, "
                          "maxWorkItems=({}, {}, {}), deviceAddressBits={}, deviceType={}, deviceExtensions={}, "
-                         "availableProcessors={}]",
+                         "availableProcessors={}, globalMemory={}]",
                          platformVendor,
                          platformName,
                          deviceName,
@@ -211,7 +214,8 @@ OpenCLManager::OpenCLManager() {
                          deviceAddressBits,
                          deviceType,
                          deviceExtensions,
-                         availableProcessors);
+                         availableProcessors,
+                         globalMemory);
                 this->devices.emplace_back(platformId,
                                            device,
                                            OpenCLDeviceInfo(platformVendor,
@@ -222,7 +226,8 @@ OpenCLManager::OpenCLManager() {
                                                             deviceAddressBits,
                                                             deviceType,
                                                             deviceExtensions,
-                                                            availableProcessors));
+                                                            availableProcessors,
+                                                            globalMemory));
             }
         }
     } catch (OpenCLInitializationException e) {

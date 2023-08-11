@@ -82,6 +82,7 @@ message SerializedOpenCLDeviceInfo {
   string deviceType = 8;
   string deviceExtensions = 9;
   uint32 availableProcessors = 10;
+  uint64 globalMemory = 11;
 }
 
 message RegisterWorkerRequest {

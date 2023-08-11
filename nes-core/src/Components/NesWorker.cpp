@@ -318,6 +318,7 @@ void serializeOpenCLDeviceInfo(const NES::Runtime::OpenCLDeviceInfo& deviceInfo,
     serializedDeviceInfo->set_devicetype(deviceInfo.deviceType);
     serializedDeviceInfo->set_deviceextensions(deviceInfo.deviceExtensions);
     serializedDeviceInfo->set_availableprocessors(deviceInfo.availableProcessors);
+    serializedDeviceInfo->set_globalmemory(deviceInfo.globalMemory);
 }
 
 bool NesWorker::connect() {
