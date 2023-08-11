@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.192](https://github.com/nebulastream/nebulastream/tree/v0.5.192) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.191...v0.5.192)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement Bucket Windowing [\#4086](https://github.com/nebulastream/nebulastream/issues/4086)
+- \[TASK\] Refactor and Migrate sliding window aggregation tests [\#4072](https://github.com/nebulastream/nebulastream/issues/4072)
+
 ## [v0.5.191](https://github.com/nebulastream/nebulastream/tree/v0.5.191) (2023-08-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.190...v0.5.191)
