@@ -638,7 +638,6 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
 
-
         if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
             keyedOperatorHandlers.preAggregationWindowHandler =
                 std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
@@ -651,9 +650,10 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
                     timeBasedWindowType->getSize().getTime(),
                     timeBasedWindowType->getSlide().getTime(),
                     windowOperator->getInputOriginIds());
+        } else {
+            NES_NOT_IMPLEMENTED();
         }
     }
-
     return keyedOperatorHandlers;
 }
 
@@ -694,9 +694,10 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
                     timeBasedWindowType->getSize().getTime(),
                     timeBasedWindowType->getSlide().getTime(),
                     windowOperator->getInputOriginIds());
+        } else {
+            NES_NOT_IMPLEMENTED();
         }
     }
-
     return globalOperatorHandlers;
 }
 
@@ -710,7 +711,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                           windowOutputSchema,
@@ -747,7 +749,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalNonKeyedTumblingWindowSink::create(windowInputSchema,
                                                                              windowOutputSchema,

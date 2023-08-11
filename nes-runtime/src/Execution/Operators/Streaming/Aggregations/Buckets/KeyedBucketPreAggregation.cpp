@@ -15,7 +15,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -34,7 +34,7 @@ void* getKeyedBucketStore(void* op, uint64_t workerId) {
 }
 
 void* findKeyedBucketsByTs(void* ss, uint64_t ts) {
-    auto sliceStore = static_cast<NonKeyedBucketStore*>(ss);
+    auto sliceStore = static_cast<KeyedBucketStore*>(ss);
     return sliceStore->findBucketsByTs(ts);
 }
 
