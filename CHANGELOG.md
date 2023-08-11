@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.191](https://github.com/nebulastream/nebulastream/tree/v0.5.191) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.190...v0.5.191)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Working Test for Demo City Query [\#4057](https://github.com/nebulastream/nebulastream/issues/4057)
+
+### Bug Fixes 🐛
+
+- \[BUG\] TestSink: waitTillCompleted Stalls Indefinitely if no TupleBuffers are Produced [\#4043](https://github.com/nebulastream/nebulastream/issues/4043)
+
 ## [v0.5.190](https://github.com/nebulastream/nebulastream/tree/v0.5.190) (2023-08-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.189...v0.5.190)
