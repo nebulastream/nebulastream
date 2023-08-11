@@ -175,7 +175,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
-    ~DataSource() NES_NOEXCEPT(false) override;
+    virtual ~DataSource() NES_NOEXCEPT(false) override;
 
     /**
      * @brief Get number of buffers to be processed
