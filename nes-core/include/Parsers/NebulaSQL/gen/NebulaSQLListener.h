@@ -1,5 +1,5 @@
 
-// Generated from NebulaSQL.g4 by ANTLR 4.12.0
+// Generated from /Users/sumalvico/CLionProjects/nebulastream/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -211,12 +211,6 @@ public:
 
   virtual void enterSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
   virtual void exitSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
-
-  virtual void enterSinkTypeCSV(NebulaSQLParser::SinkTypeCSVContext *ctx) = 0;
-  virtual void exitSinkTypeCSV(NebulaSQLParser::SinkTypeCSVContext *ctx) = 0;
-
-  virtual void enterCsvKeyword(NebulaSQLParser::CsvKeywordContext *ctx) = 0;
-  virtual void exitCsvKeyword(NebulaSQLParser::CsvKeywordContext *ctx) = 0;
 
   virtual void enterSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext *ctx) = 0;
   virtual void exitSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext *ctx) = 0;
