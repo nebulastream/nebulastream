@@ -85,6 +85,12 @@ class TextValue final : public BaseVariableSizeType {
     [[nodiscard]] const char* c_str() const;
 
     /**
+     * @brief Returns a nullterminated copy of the string
+     * @return std::string_view
+     */
+    [[nodiscard]] std::string strn_copy() const;
+
+    /**
      * @brief Retrieves the underling buffer of this text value.
      * @return Runtime::TupleBuffer
      */

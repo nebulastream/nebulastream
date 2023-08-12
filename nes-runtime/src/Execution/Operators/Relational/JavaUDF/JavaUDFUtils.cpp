@@ -61,7 +61,7 @@ void* createShortObject(int16_t value) { return jni::createShort(value); }
 
 void* createByteObject(int8_t value) { return jni::createByte(value); }
 
-void* createStringObject(TextValue* value) { return jni::createString({value->c_str(), value->length()}); }
+void* createStringObject(TextValue* value) { return jni::createString(value->strn_copy()); }
 
 bool getBooleanObjectValue(void* object) { return jni::getBooleanValue((jobject) object); }
 
@@ -184,8 +184,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     } else if constexpr (std::is_same<T, int8_t>::value) {
         jni::getEnv()->SetByteField(pojo, id, (jbyte) value);
     } else if constexpr (std::is_same<T, const TextValue*>::value) {
-        const TextValue* sourceString = value;
-        auto string = jni::createString({value->c_str(), value->length()});
+        auto string = jni::createString(value->strn_copy());
         jni::getEnv()->SetObjectField(pojo, id, string);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));

@@ -239,13 +239,11 @@ TEST_F(TextTypeTest, c_strDoesNotReturnGarbageDataAfterEndOfString) {
     // The c_str returned by the text value is 10 chars long instead of 5,
     // because the buffer does not contain \0 after the 5th char.
     const char* expected = "12345";
-    const char* actual = textValue->c_str();
+    auto actual = textValue->strn_copy();
     NES_DEBUG("expected = {}, actual = {}", expected, actual);
-    EXPECT_EQ(strcmp(expected, actual), 0);
-    // Need to release the buffer twice because TextValue::create retains it
-    // This currently does not work because of https://github.com/nebulastream/nebulastream/issues/4112
-    tupleBuffer.release();
-    tupleBuffer.release();
+    EXPECT_EQ(strcmp(expected, actual.data()), 0);
+    // call the destructor on the text value to free the underling tuple buffer.
+    textValue->~TextValue();
 }
 
 }// namespace NES::Nautilus

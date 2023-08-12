@@ -56,6 +56,15 @@ TextValue* TextValue::load(Runtime::TupleBuffer& buffer) {
     return reinterpret_cast<TextValue*>(buffer.getBuffer());
 }
 
+std::string TextValue::strn_copy() const {
+    // We have to ensure that the string is null terminated.
+    // To this end, we use the strndup function.
+    char* nullTerminatedString = strndup(c_str(), length());
+    auto resultString = std::string(nullTerminatedString);
+    free(nullTerminatedString);
+    return resultString;
+}
+
 Runtime::TupleBuffer TextValue::getBuffer() const { return Runtime::TupleBuffer::reinterpretAsTupleBuffer((void*) this); }
 
 TextValue::~TextValue() {
