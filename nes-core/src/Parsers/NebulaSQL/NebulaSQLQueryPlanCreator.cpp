@@ -21,6 +21,9 @@
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 
 
 namespace NES::Parsers {
@@ -28,7 +31,8 @@ namespace NES::Parsers {
 QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
     QueryPlanPtr queryPlan;
     queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSources().at(0));
-
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    queryPlan->appendOperatorAsNewRoot(sink);
     return queryPlan;
 }
 
