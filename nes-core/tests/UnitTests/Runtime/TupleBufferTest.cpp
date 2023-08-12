@@ -115,4 +115,15 @@ TEST_F(TupleBufferTest, testCopyAndSwap) {
     }
 }
 
+TEST_F(TupleBufferTest, retainAndRelease) {
+    auto buffer = bufferManager->getBufferBlocking();
+    EXPECT_EQ(buffer.getReferenceCounter(), 1);
+    buffer.retain();
+    EXPECT_EQ(buffer.getReferenceCounter(), 2);
+    buffer.release();
+    EXPECT_EQ(buffer.getReferenceCounter(), 1);
+    buffer.release();
+    EXPECT_EQ(buffer.getReferenceCounter(), 0);
+}
+
 }// namespace NES
