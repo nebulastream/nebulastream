@@ -1,5 +1,5 @@
 
-// Generated from NebulaSQL.g4 by ANTLR 4.12.0
+// Generated from /Users/sumalvico/CLionProjects/nebulastream/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.12.0
 
 #pragma once
 
@@ -26,17 +26,17 @@ public:
     UNKNOWN = 71, USE = 72, USING = 73, VALUES = 74, WHEN = 75, WHERE = 76, 
     WINDOW = 77, WITH = 78, TUMBLING = 79, SLIDING = 80, SIZE = 81, ADVANCE = 82, 
     MS = 83, SEC = 84, MIN = 85, HOUR = 86, DAY = 87, MAX = 88, AVG = 89, 
-    SUM = 90, COUNT = 91, WATERMARK = 92, OFFSET = 93, CSV = 94, ZMQ = 95, 
-    KAFKA = 96, FILE = 97, MQTT = 98, OPC = 99, PRINT = 100, LOCALHOST = 101, 
-    CSV_FORMAT = 102, NES_FORMAT = 103, TEXT_FORMAT = 104, AT_MOST_ONCE = 105, 
-    AT_LEAST_ONCE = 106, BOOLEAN_VALUE = 107, EQ = 108, NSEQ = 109, NEQ = 110, 
-    NEQJ = 111, LT = 112, LTE = 113, GT = 114, GTE = 115, PLUS = 116, MINUS = 117, 
-    ASTERISK = 118, SLASH = 119, PERCENT = 120, TILDE = 121, AMPERSAND = 122, 
-    PIPE = 123, CONCAT_PIPE = 124, HAT = 125, STRING = 126, BIGINT_LITERAL = 127, 
-    SMALLINT_LITERAL = 128, TINYINT_LITERAL = 129, INTEGER_VALUE = 130, 
-    EXPONENT_VALUE = 131, DECIMAL_VALUE = 132, FLOAT_LITERAL = 133, DOUBLE_LITERAL = 134, 
-    BIGDECIMAL_LITERAL = 135, IDENTIFIER = 136, SIMPLE_COMMENT = 137, BRACKETED_COMMENT = 138, 
-    WS = 139, FOUR_OCTETS = 140, OCTET = 141, UNRECOGNIZED = 142
+    SUM = 90, COUNT = 91, WATERMARK = 92, OFFSET = 93, ZMQ = 94, KAFKA = 95, 
+    FILE = 96, MQTT = 97, OPC = 98, PRINT = 99, LOCALHOST = 100, CSV_FORMAT = 101, 
+    NES_FORMAT = 102, TEXT_FORMAT = 103, AT_MOST_ONCE = 104, AT_LEAST_ONCE = 105, 
+    BOOLEAN_VALUE = 106, EQ = 107, NSEQ = 108, NEQ = 109, NEQJ = 110, LT = 111, 
+    LTE = 112, GT = 113, GTE = 114, PLUS = 115, MINUS = 116, ASTERISK = 117, 
+    SLASH = 118, PERCENT = 119, TILDE = 120, AMPERSAND = 121, PIPE = 122, 
+    CONCAT_PIPE = 123, HAT = 124, STRING = 125, BIGINT_LITERAL = 126, SMALLINT_LITERAL = 127, 
+    TINYINT_LITERAL = 128, INTEGER_VALUE = 129, EXPONENT_VALUE = 130, DECIMAL_VALUE = 131, 
+    FLOAT_LITERAL = 132, DOUBLE_LITERAL = 133, BIGDECIMAL_LITERAL = 134, 
+    IDENTIFIER = 135, SIMPLE_COMMENT = 136, BRACKETED_COMMENT = 137, WS = 138, 
+    FOUR_OCTETS = 139, OCTET = 140, UNRECOGNIZED = 141
   };
 
   enum {
@@ -55,16 +55,16 @@ public:
     RuleWatermarkClause = 38, RuleWatermarkParameters = 39, RuleWindowSpec = 40, 
     RuleTimeWindow = 41, RuleCountWindow = 42, RuleSizeParameter = 43, RuleAdvancebyParameter = 44, 
     RuleTimeUnit = 45, RuleTimestampParameter = 46, RuleFunctionName = 47, 
-    RuleSinkClause = 48, RuleSinkType = 49, RuleSinkTypeCSV = 50, RuleCsvKeyword = 51, 
-    RuleSinkTypeZMQ = 52, RuleNullNotnull = 53, RuleZmqKeyword = 54, RuleStreamName = 55, 
-    RuleHost = 56, RulePort = 57, RuleSinkTypeKafka = 58, RuleKafkaKeyword = 59, 
-    RuleKafkaBroker = 60, RuleKafkaTopic = 61, RuleKafkaProducerTimout = 62, 
-    RuleSinkTypeFile = 63, RuleFileFormat = 64, RuleSinkTypeMQTT = 65, RuleQos = 66, 
-    RuleSinkTypeOPC = 67, RuleSinkTypePrint = 68, RuleSortItem = 69, RulePredicate = 70, 
-    RuleValueExpression = 71, RuleComparisonOperator = 72, RuleHint = 73, 
-    RuleHintStatement = 74, RulePrimaryExpression = 75, RuleQualifiedName = 76, 
-    RuleNumber = 77, RuleConstant = 78, RuleBooleanValue = 79, RuleStrictNonReserved = 80, 
-    RuleAnsiNonReserved = 81, RuleNonReserved = 82
+    RuleSinkClause = 48, RuleSinkType = 49, RuleSinkTypeZMQ = 50, RuleNullNotnull = 51, 
+    RuleZmqKeyword = 52, RuleStreamName = 53, RuleHost = 54, RulePort = 55, 
+    RuleSinkTypeKafka = 56, RuleKafkaKeyword = 57, RuleKafkaBroker = 58, 
+    RuleKafkaTopic = 59, RuleKafkaProducerTimout = 60, RuleSinkTypeFile = 61, 
+    RuleFileFormat = 62, RuleSinkTypeMQTT = 63, RuleQos = 64, RuleSinkTypeOPC = 65, 
+    RuleSinkTypePrint = 66, RuleSortItem = 67, RulePredicate = 68, RuleValueExpression = 69, 
+    RuleComparisonOperator = 70, RuleHint = 71, RuleHintStatement = 72, 
+    RulePrimaryExpression = 73, RuleQualifiedName = 74, RuleNumber = 75, 
+    RuleConstant = 76, RuleBooleanValue = 77, RuleStrictNonReserved = 78, 
+    RuleAnsiNonReserved = 79, RuleNonReserved = 80
   };
 
   explicit NebulaSQLParser(antlr4::TokenStream *input);
@@ -146,8 +146,6 @@ public:
   class FunctionNameContext;
   class SinkClauseContext;
   class SinkTypeContext;
-  class SinkTypeCSVContext;
-  class CsvKeywordContext;
   class SinkTypeZMQContext;
   class NullNotnullContext;
   class ZmqKeywordContext;
@@ -1206,34 +1204,6 @@ public:
   };
 
   SinkTypeContext* sinkType();
-
-  class  SinkTypeCSVContext : public antlr4::ParserRuleContext {
-  public:
-    antlr4::Token *path = nullptr;
-    SinkTypeCSVContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    CsvKeywordContext *csvKeyword();
-    antlr4::tree::TerminalNode *STRING();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeCSVContext* sinkTypeCSV();
-
-  class  CsvKeywordContext : public antlr4::ParserRuleContext {
-  public:
-    CsvKeywordContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *CSV();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  CsvKeywordContext* csvKeyword();
 
   class  SinkTypeZMQContext : public antlr4::ParserRuleContext {
   public:

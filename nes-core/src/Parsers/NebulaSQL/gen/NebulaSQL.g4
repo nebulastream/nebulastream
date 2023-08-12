@@ -260,10 +260,6 @@ sinkType: sinkTypeZMQ
         | sinkTypeOPC
         | sinkTypePrint;
 
-sinkTypeCSV: csvKeyword '(' path=STRING ')'
-        ;
-
-csvKeyword: CSV;
 
 sinkTypeZMQ: zmqKeyword '(' zmqStreamName=streamName ',' zmqHostLabel=host ',' zmqPort=port ')';
 
@@ -571,7 +567,6 @@ SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
-CSV: 'CSV' | 'csv';
 ZMQ: 'ZMQ' | 'zmq';
 KAFKA: 'KAFKA' | 'kafka';
 FILE: 'FILE';
