@@ -21,6 +21,7 @@
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+#include <Runtime/TupleBuffer.hpp>
 namespace NES::Nautilus {
 
 class TextTypeTest : public Testing::NESBaseTest {
@@ -35,7 +36,7 @@ class TextTypeTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
@@ -225,6 +226,26 @@ TEST_F(TextTypeTest, likeTestFalse) {
     auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) false);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, c_strDoesNotReturnGarbageDataAfterEndOfString) {
+    // Create a tupleBuffer with a string that is 10 chars long
+    const char* buf = "1234567890";
+    auto tupleBuffer = bm->getBufferBlocking();
+    *tupleBuffer.getBuffer<uint32_t>() = std::strlen(buf) + 1;
+    std::strncpy(tupleBuffer.getBuffer<char>() + sizeof(uint32_t), buf, std::strlen(buf) + 1);
+    // Create a text value from this string that's only 5 chars long
+    auto textValue = NES::Nautilus::TextValue::create(tupleBuffer, 5_u32);
+    // The c_str returned by the text value is 10 chars long instead of 5,
+    // because the buffer does not contain \0 after the 5th char.
+    const char* expected = "12345";
+    const char* actual = textValue->c_str();
+    NES_DEBUG("expected = {}, actual = {}", expected, actual);
+    EXPECT_EQ(strcmp(expected, actual), 0);
+    // Need to release the buffer twice because TextValue::create retains it
+    // This currently does not work because of https://github.com/nebulastream/nebulastream/issues/4112
+    tupleBuffer.release();
+    tupleBuffer.release();
 }
 
 }// namespace NES::Nautilus
