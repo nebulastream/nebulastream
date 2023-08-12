@@ -192,12 +192,11 @@ class TupleBuffer {
 
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     inline void release() noexcept {
-        if (controlBlock) {
-            controlBlock->release();
+        if (controlBlock && controlBlock->release()) {
+            controlBlock = nullptr;
+            ptr = nullptr;
+            size = 0;
         }
-        controlBlock = nullptr;
-        ptr = nullptr;
-        size = 0;
     }
 
     inline uint8_t* getBuffer() noexcept { return getBuffer<uint8_t>(); }
