@@ -71,21 +71,33 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     // if (!channel && f.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { set channel in worker context = future.get(), future.reset};
     // if channel and future are null -> fail query
     // else
-    if (reconnectBuffering) {
-        NES_TRACE("context {} buffering data", workerContext.getId());
-        workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-        return true;
+
+    if (connectAsync && !channel && networkChannelFuture.valid()) {
+        //todo: keeping this in the workercontext is impractical because that way its not easy to check if the future has been fullfilled yet
+        //todo: nullptr could mean no channel established or still waiting
+        //auto newChannel = workerContext.getNetworkChannelFuture(nesPartition.getOperatorId());
+
+        if (networkChannelFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            //if the connection has been established, store the new network channel
+            auto channelUniquePtr = networkChannelFuture.get();
+            channel = channelUniquePtr.get();
+            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channelUniquePtr));
+            //todo: do we need to perform some other operation on future here?
+        } else {
+            //if no connection could be established, store the incoming tuples
+            NES_TRACE("context {} buffering data", workerContext.getId());
+            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
+            return true;
+        }
     }
 
+    //todo: extract function and make the whole thing if else
     if (channel) {
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
         }
         return success;
-    } else if (connectAsync) {
-        auto newChannel = workerContext.getNetworkChannelFuture(nesPartition.getOperatorId());
-
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
@@ -121,10 +133,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
-            //todo: check here, if server ready message was returned, or if we need to keep trying
             auto channel =
                 networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
-            //todo: instead of the assert we need to make a retry here
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
@@ -166,9 +176,14 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
-            if (reconnectBuffering) {
-                NES_DEBUG("Requested sink to buffer but it is already buffering")
+
+            //todo: this case will only be called if a planned reconnect happens, in case of connection loss, the buffering needs to be triggered elsewhere
+            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+            if (!channel) {
+                NES_DEBUG("Requested buffering for already disconnected sink");
+                //todo: what to do in this case?
             } else {
+
                 this->reconnectBuffering = true; //todo: instead of flag set channel to null or result promise
             }
             break;
@@ -244,5 +259,11 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
+
+void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext) {
+    auto channelFuture =
+        networkManager->registerSubpartitionProducerAsync(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
+    workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
+}
 
 }// namespace NES::Network

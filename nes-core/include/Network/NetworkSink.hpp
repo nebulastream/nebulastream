@@ -124,6 +124,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     Runtime::NodeEnginePtr getNodeEngine();
 
+    void connectToChannelAsync(Runtime::WorkerContext& workerContext);
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
@@ -139,6 +141,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     const bool connectAsync;
+    std::future<NetworkChannelPtr> networkChannelFuture;
     //std::atomic<bool> reconnectBuffering;
 };
 
