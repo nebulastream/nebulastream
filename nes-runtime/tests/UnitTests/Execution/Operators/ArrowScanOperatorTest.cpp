@@ -64,8 +64,7 @@ TEST_F(ArrowScanOperatorTest, scanArrowBufferFromCSV) {
 
     arrow::io::IOContext io_context = arrow::io::default_io_context();
     std::shared_ptr<arrow::io::InputStream> input =
-        arrow::io::ReadableFile::Open(std::string(TEST_DATA_DIRECTORY) + "window.csv")
-            .ValueOrDie();
+        arrow::io::ReadableFile::Open(std::string(TEST_DATA_DIRECTORY) + "window.csv").ValueOrDie();
 
     auto read_options = arrow::csv::ReadOptions::Defaults();
     auto parse_options = arrow::csv::ParseOptions::Defaults();

@@ -14,8 +14,8 @@
 
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
+#include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -101,8 +101,7 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
 
     arrow::io::IOContext io_context = arrow::io::default_io_context();
     std::shared_ptr<arrow::io::InputStream> input =
-        arrow::io::ReadableFile::Open(std::string(TEST_DATA_DIRECTORY) + "arrow_test.arrow")
-            .ValueOrDie();
+        arrow::io::ReadableFile::Open(std::string(TEST_DATA_DIRECTORY) + "arrow_test.arrow").ValueOrDie();
     auto recordBatchStreamReader = arrow::ipc::RecordBatchStreamReader::Open(input).ValueUnsafe();
     for (auto batch : MakeIteratorFromReader(recordBatchStreamReader)) {
         auto wrapper = std::make_unique<Operators::RecordBufferWrapper>(batch.MoveValueUnsafe());

@@ -95,7 +95,6 @@ struct ValueForPrimitive<double> {
     using type = Double;
 };
 
-
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherits from Any.
  * Value provides operator overloading and integrates with the tracing framework to track individual operations, e.g. ==, +, -.
