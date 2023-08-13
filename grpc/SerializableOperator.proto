@@ -594,7 +594,7 @@ message SerializableOperator{
       Information to serialize a Open CL operator with a UDF.
      */
     message OpenCLOperatorDetails {
-      JavaUdfDescriptorMessage javaUDFDescriptor = 1;
+      UDFDescriptorMessage udfDescriptor = 1;
         string deviceId = 2;
         string openCLCode = 3;
     }

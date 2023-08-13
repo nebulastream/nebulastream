@@ -18,42 +18,42 @@
 
 namespace NES {
 
-void UDFSerializationUtil::serializeJavaUDFDescriptor(const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor,
+void UDFSerializationUtil::serializeUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                                       UDFDescriptorMessage& udfDescriptorMessage) {
-
-    JavaUdfDescriptorMessage javaUDFDescriptorMessage;
-    // Serialize UDF class name and method name.
-    javaUDFDescriptorMessage.set_udf_class_name(javaUDFDescriptor->getClassName());
-    javaUDFDescriptorMessage.set_udf_method_name(javaUDFDescriptor->getMethodName());
-    // Serialize UDF instance.
-    javaUDFDescriptorMessage.set_serialized_instance(javaUDFDescriptor->getSerializedInstance().data(),
-                                                     javaUDFDescriptor->getSerializedInstance().size());
-    // Serialize bytecode of dependent classes.
-    for (const auto& [className, byteCode] : javaUDFDescriptor->getByteCodeList()) {
-        auto* javaClass = javaUDFDescriptorMessage.add_classes();
-        javaClass->set_class_name(className);
-        javaClass->set_byte_code(byteCode.data(), byteCode.size());
+    if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
+        auto javaUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+        JavaUdfDescriptorMessage javaUDFDescriptorMessage;
+        // Serialize UDF class name and method name.
+        javaUDFDescriptorMessage.set_udf_class_name(javaUDFDescriptor->getClassName());
+        javaUDFDescriptorMessage.set_udf_method_name(javaUDFDescriptor->getMethodName());
+        // Serialize UDF instance.
+        javaUDFDescriptorMessage.set_serialized_instance(javaUDFDescriptor->getSerializedInstance().data(),
+                                                         javaUDFDescriptor->getSerializedInstance().size());
+        // Serialize bytecode of dependent classes.
+        for (const auto& [className, byteCode] : javaUDFDescriptor->getByteCodeList()) {
+            auto* javaClass = javaUDFDescriptorMessage.add_classes();
+            javaClass->set_class_name(className);
+            javaClass->set_byte_code(byteCode.data(), byteCode.size());
+        }
+        // Serialize the input and output schema.
+        SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getInputSchema(), javaUDFDescriptorMessage.mutable_inputschema());
+        SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getOutputSchema(),
+                                                 javaUDFDescriptorMessage.mutable_outputschema());
+        // Serialize the input and output class names.
+        javaUDFDescriptorMessage.set_input_class_name(javaUDFDescriptor->getInputClassName());
+        javaUDFDescriptorMessage.set_output_class_name(javaUDFDescriptor->getOutputClassName());
+        udfDescriptorMessage.mutable_descriptormessage()->PackFrom(javaUDFDescriptorMessage);
+    } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>()) {
+        auto pythonUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
+        PythonUDFDescriptorMessage pythonUDFDescriptorMessage;
+        // Serialize UDF name and the string of the python function
+        pythonUDFDescriptorMessage.set_udf_method_name(pythonUDFDescriptor->getMethodName());
+        pythonUDFDescriptorMessage.set_function_string(pythonUDFDescriptor->getFunctionString());
+        // Serialize the input and output schema.
+        SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getInputSchema(), pythonUDFDescriptorMessage.mutable_inputschema());
+        SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getOutputSchema(), pythonUDFDescriptorMessage.mutable_outputschema());
+        udfDescriptorMessage.mutable_descriptormessage()->PackFrom(pythonUDFDescriptorMessage);
     }
-    // Serialize the input and output schema.
-    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getInputSchema(), javaUDFDescriptorMessage.mutable_inputschema());
-    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getOutputSchema(),
-                                             javaUDFDescriptorMessage.mutable_outputschema());
-    // Serialize the input and output class names.
-    javaUDFDescriptorMessage.set_input_class_name(javaUDFDescriptor->getInputClassName());
-    javaUDFDescriptorMessage.set_output_class_name(javaUDFDescriptor->getOutputClassName());
-    udfDescriptorMessage.mutable_descriptormessage()->PackFrom(javaUDFDescriptorMessage);
-}
-
-void UDFSerializationUtil::serializePythonUDFDescriptor(const Catalogs::UDF::PythonUDFDescriptorPtr& pythonUDFDescriptor,
-                                                        UDFDescriptorMessage& udfDescriptorMessage) {
-    PythonUDFDescriptorMessage pythonUDFDescriptorMessage;
-    // Serialize UDF name and the string of the python function
-    pythonUDFDescriptorMessage.set_udf_method_name(pythonUDFDescriptor->getMethodName());
-    pythonUDFDescriptorMessage.set_function_string(pythonUDFDescriptor->getFunctionString());
-    // Serialize the input and output schema.
-    SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getInputSchema(), pythonUDFDescriptorMessage.mutable_inputschema());
-    SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getOutputSchema(), pythonUDFDescriptorMessage.mutable_outputschema());
-    udfDescriptorMessage.mutable_descriptormessage()->PackFrom(pythonUDFDescriptorMessage);
 }
 
 Catalogs::UDF::UDFDescriptorPtr

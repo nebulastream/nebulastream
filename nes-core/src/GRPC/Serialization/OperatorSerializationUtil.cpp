@@ -193,13 +193,13 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
 
     } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
         // Serialize Map Java UDF operator
-        serializeJavaUDFOperator<MapUDFLogicalOperatorNode, SerializableOperator_MapJavaUdfDetails>(
+        serializeUDFOperator<MapUDFLogicalOperatorNode, SerializableOperator_MapUDFDetails>(
             *operatorNode->as<MapUDFLogicalOperatorNode>(),
             serializedOperator);
 
     } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
         // Serialize FlatMap Java UDF operator
-        serializeJavaUDFOperator<FlatMapUDFLogicalOperatorNode, SerializableOperator_FlatMapJavaUdfDetails>(
+        serializeUDFOperator<FlatMapUDFLogicalOperatorNode, SerializableOperator_FlatMapUDFDetails>(
             *operatorNode->as<FlatMapUDFLogicalOperatorNode>(),
             serializedOperator);
 
@@ -364,17 +364,17 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&renameDetails);
         operatorNode = LogicalOperatorFactory::createRenameSourceOperator(renameDetails.newsourcename());
 
-    } else if (details.Is<SerializableOperator_MapJavaUdfDetails>()) {
+    } else if (details.Is<SerializableOperator_MapUDFDetails>()) {
         NES_TRACE("Deserialize Map Java UDF operator.");
-        auto mapJavaUDFDetails = SerializableOperator_MapJavaUdfDetails();
+        auto mapJavaUDFDetails = SerializableOperator_MapUDFDetails();
         details.UnpackTo(&mapJavaUDFDetails);
-        operatorNode = deserializeMapJavaUDFOperator(mapJavaUDFDetails);
+        operatorNode = deserializeMapUDFOperator(mapJavaUDFDetails);
 
-    } else if (details.Is<SerializableOperator_FlatMapJavaUdfDetails>()) {
+    } else if (details.Is<SerializableOperator_FlatMapUDFDetails>()) {
         NES_TRACE("Deserialize FlatMap Java UDF operator.");
-        auto flatMapJavaUDFDetails = SerializableOperator_FlatMapJavaUdfDetails();
+        auto flatMapJavaUDFDetails = SerializableOperator_FlatMapUDFDetails();
         details.UnpackTo(&flatMapJavaUDFDetails);
-        operatorNode = deserializeFlatMapJavaUDFOperator(flatMapJavaUDFDetails);
+        operatorNode = deserializeFlatMapUDFOperator(flatMapJavaUDFDetails);
 
     } else if (details.Is<SerializableOperator_OpenCLOperatorDetails>()) {
         NES_TRACE("Deserialize Open CL operator.");
@@ -2006,32 +2006,32 @@ OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOpe
 }
 
 template<typename T, typename D>
-void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperatorNode, SerializableOperator& serializedOperator) {
-    NES_TRACE("OperatorSerializationUtil:: serialize {}", javaUdfOperatorNode.toString());
-    auto javaUdfDetails = D();
-    UDFSerializationUtil::serializeJavaUDFDescriptor(javaUdfOperatorNode.getUDFDescriptor(),
-                                                     *javaUdfDetails.mutable_javaudfdescriptor());
-    serializedOperator.mutable_details()->PackFrom(javaUdfDetails);
+void OperatorSerializationUtil::serializeUDFOperator(const T& mapUDFOperatorNode, SerializableOperator& serializedOperator) {
+    NES_TRACE("OperatorSerializationUtil:: serialize {}", mapUDFOperatorNode.toString());
+    auto udfDetails = D();
+    UDFSerializationUtil::serializeUDFDescriptor(mapUDFOperatorNode.getUDFDescriptor(),
+                                                     *udfDetails.mutable_udfdescriptor());
+    serializedOperator.mutable_details()->PackFrom(udfDetails);
 }
 
 LogicalUnaryOperatorNodePtr
-OperatorSerializationUtil::deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
-    auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(mapJavaUdfDetails.javaudfdescriptor());
-    return LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
+OperatorSerializationUtil::deserializeMapUDFOperator(const SerializableOperator_MapUDFDetails& mapUDFDetails) {
+    auto udfDescriptor = UDFSerializationUtil::deserializeUDFDescriptor(mapUDFDetails.udfdescriptor());
+    return LogicalOperatorFactory::createMapUDFLogicalOperator(udfDescriptor);
 }
 
-LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeFlatMapJavaUDFOperator(
-    const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUdfDetails) {
-    auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(flatMapJavaUdfDetails.javaudfdescriptor());
-    return LogicalOperatorFactory::createFlatMapUDFLogicalOperator(javaUDFDescriptor);
+LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeFlatMapUDFOperator(
+    const SerializableOperator_FlatMapUDFDetails& flatMapUDFDetails) {
+    auto udfDescriptor = UDFSerializationUtil::deserializeUDFDescriptor(flatMapUDFDetails.udfdescriptor());
+    return LogicalOperatorFactory::createFlatMapUDFLogicalOperator(udfDescriptor);
 }
 
 void OperatorSerializationUtil::serializeOpenCLOperator(const OpenCLLogicalOperatorNode& openCLLogicalOperatorNode,
                                                         SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize to OpenCLLogicalOperatorNode");
     auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
-    UDFSerializationUtil::serializeJavaUDFDescriptor(openCLLogicalOperatorNode.getJavaUDFDescriptor(),
-                                                     *openCLDetails.mutable_javaudfdescriptor());
+    UDFSerializationUtil::serializeUDFDescriptor(openCLLogicalOperatorNode.getJavaUDFDescriptor(),
+                                                     *openCLDetails.mutable_udfdescriptor());
     openCLDetails.set_deviceid(openCLLogicalOperatorNode.getDeviceId());
     openCLDetails.set_openclcode(openCLLogicalOperatorNode.getOpenClCode());
     serializedOperator.mutable_details()->PackFrom(openCLDetails);
@@ -2039,7 +2039,8 @@ void OperatorSerializationUtil::serializeOpenCLOperator(const OpenCLLogicalOpera
 
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails) {
-    auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(openCLDetails.javaudfdescriptor());
+    auto udfDescriptor = UDFSerializationUtil::deserializeUDFDescriptor(openCLDetails.udfdescriptor());
+    auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
     auto openCLOperator = LogicalOperatorFactory::createOpenCLLogicalOperator(javaUDFDescriptor)->as<OpenCLLogicalOperatorNode>();
     openCLOperator->setDeviceId(openCLDetails.deviceid());
     openCLOperator->setOpenClCode(openCLDetails.openclcode());

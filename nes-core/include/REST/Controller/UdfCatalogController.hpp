@@ -99,13 +99,7 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG("Returning UDF descriptor to REST client for UDF: {}", udfName);
                 response.set_found(true);
-                if (udfDescriptor->instanceOf<JavaUDFDescriptor>()) {
-                    auto javaUDFDescriptor = UDFDescriptor::as<JavaUDFDescriptor>(udfDescriptor);
-                    UDFSerializationUtil::serializeJavaUDFDescriptor(javaUDFDescriptor, *response.mutable_udfdescriptor());
-                } else if (udfDescriptor->instanceOf<PythonUDFDescriptor>()) {
-                    auto pythonUDFDescriptor = UDFDescriptor::as<PythonUDFDescriptor>(udfDescriptor);
-                    UDFSerializationUtil::serializePythonUDFDescriptor(pythonUDFDescriptor, *response.mutable_udfdescriptor());
-                }
+                UDFSerializationUtil::serializeUDFDescriptor(udfDescriptor, *response.mutable_udfdescriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
             }
         } catch (...) {

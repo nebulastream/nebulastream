@@ -69,8 +69,8 @@ class UDFCatalogControllerTest : public Testing::BaseIntegrationTest {
         }
     }
 
-    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const cpr::Response& response) {
-        GetJavaUdfDescriptorResponse udfResponse;
+    [[nodiscard]] static GetUDFDescriptorResponse extractGetUDFDescriptorResponse(const cpr::Response& response) {
+        GetUDFDescriptorResponse udfResponse;
         udfResponse.ParseFromString(response.text);
         return udfResponse;
     }
@@ -119,9 +119,11 @@ TEST_F(UDFCatalogControllerTest, getUdfDescriptorReturnsUdf) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // extract protobuf message from string response
-    GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
+    GetUDFDescriptorResponse udfResponse = extractGetUDFDescriptorResponse(response);
     // from protobuf message, get the java udf descriptor
-    auto descriptor = udfResponse.java_udf_descriptor();
+    auto udfDescriptor = udfResponse.udfdescriptor();
+    JavaUdfDescriptorMessage descriptor;
+    udfDescriptor.descriptormessage().UnpackTo(&descriptor);
     // and compare udf descriptor with the one registered to the coordinator earlier
     ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptor.udf_class_name());
     ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptor.udf_method_name());
@@ -150,8 +152,8 @@ TEST_F(UDFCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and compare contents of response
     // extract protobuf message from string response
-    GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
-    ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
+    GetUDFDescriptorResponse udfResponse = extractGetUDFDescriptorResponse(response);
+    ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_udfdescriptor());
     stopCoordinator();
 }
 
@@ -182,7 +184,9 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
 
     // given a REST message containing a wrongly formed Java UDF (bytecode list is empty)
     auto javaUdfRequest = ProtobufMessageFactory::createDefaultRegisterJavaUdfRequest();
-    javaUdfRequest.mutable_java_udf_descriptor()->clear_classes();
+    JavaUdfDescriptorMessage descriptor;
+    javaUdfRequest.mutable_udfdescriptor()->mutable_descriptormessage()->UnpackTo(&descriptor);
+    descriptor.clear_classes();
 
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerJavaUdf"},
                                  cpr::Header{{"Content-Type", "text/plain"}},
@@ -227,7 +231,8 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
     // get udf catalog entry
     auto descriptorFromCoordinator = UDF::UDFDescriptor::as<UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf"));
     //extract the udf descriptor from the udf post request
-    JavaUdfDescriptorMessage descriptorFromPostRequest = javaUdfRequest.java_udf_descriptor();
+    JavaUdfDescriptorMessage descriptorFromPostRequest;
+    javaUdfRequest.udfdescriptor().descriptormessage().UnpackTo(&descriptorFromPostRequest);
     //and compare its fields to the java udf catalog entry now found in the coordinator
     ASSERT_EQ(descriptorFromCoordinator->getClassName(), descriptorFromPostRequest.udf_class_name());
     ASSERT_EQ(descriptorFromCoordinator->getMethodName(), descriptorFromPostRequest.udf_method_name());
