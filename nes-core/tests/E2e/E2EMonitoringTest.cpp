@@ -35,12 +35,10 @@ using std::cout;
 using std::endl;
 namespace NES {
 
-uint16_t timeout = 15;
-
 class E2EMonitoringTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
-
+    uint16_t timeout = 15;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2EMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2EMonitoringTest test class.");

@@ -66,7 +66,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     NES_INFO("GrpcNotifyQueryFailureTest: Start worker");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     auto srcConf1 = CSVSourceType::create();
-    srcConf1->setFilePath("../tests/test_data/window.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
     auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
@@ -136,7 +136,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto srcConf1 = CSVSourceType::create();
-    srcConf1->setFilePath("../tests/test_data/window.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
     auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);

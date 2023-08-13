@@ -55,7 +55,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/PythonUDFTestData";
+    std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "PythonUDFTestData";
 };
 
 /**

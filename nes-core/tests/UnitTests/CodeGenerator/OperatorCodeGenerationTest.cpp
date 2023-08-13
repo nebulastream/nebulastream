@@ -944,7 +944,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
     auto inferModelOperatorHandler =
-        InferModel::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+        InferModel::InferModelOperatorHandler::create(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     context->registerOperatorHandler(inferModelOperatorHandler);
 
     auto inputSchema = source->getSchema();
@@ -969,7 +969,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto prediction0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
     auto prediction1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
     auto predection2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
-    auto op = LogicalOperatorFactory::createInferModelOperator(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+    auto op = LogicalOperatorFactory::createInferModelOperator(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
                                                                {valF, valF, valF, valF},
                                                                {prediction0, prediction1, predection2});
     auto imop = op->as<InferModel::InferModelLogicalOperatorNode>();

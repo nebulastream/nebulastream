@@ -93,7 +93,7 @@ class UpstreamBackupTest : public Testing::BaseIntegrationTest {
                                                 GatheringMode::INGESTION_RATE_MODE);
 
         csvSourceTypeFinite = CSVSourceType::create();
-        csvSourceTypeFinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+        csvSourceTypeFinite->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
         csvSourceTypeFinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers - 1);
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 

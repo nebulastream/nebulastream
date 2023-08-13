@@ -27,10 +27,9 @@
 using namespace std;
 namespace NES {
 
-uint16_t timeout = 5u;
-
 class E2ECoordinatorMultiWorkerTest : public Testing::BaseIntegrationTest {
   public:
+    uint16_t timeout = 5;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
@@ -61,7 +60,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream1"),
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -75,7 +74,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::parentId(2),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -90,7 +89,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::parentId(3),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -130,7 +129,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream1"),
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -142,7 +141,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -212,7 +211,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::dataPort(0),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv"),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv"),
                                 TestUtils::physicalSourceName("test_stream1"),
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
@@ -225,7 +224,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::dataPort(0),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv"),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv"),
                                 TestUtils::physicalSourceName("test_stream2"),
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
@@ -310,7 +309,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                            TestUtils::physicalSourceName("test_stream_1"),
                                            TestUtils::logicalSourceName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),
@@ -322,7 +321,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                            TestUtils::physicalSourceName("test_stream_2"),
                                            TestUtils::logicalSourceName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),

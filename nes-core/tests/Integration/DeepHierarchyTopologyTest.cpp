@@ -416,7 +416,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "testCSV.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
 
     auto query = Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3"));
@@ -499,7 +499,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
@@ -594,7 +594,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
@@ -777,7 +777,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType->setNumberOfBuffersToProduce(3);
 

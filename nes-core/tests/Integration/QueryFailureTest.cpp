@@ -57,7 +57,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NES_DEBUG("QueryFailureTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "malformed_csv_test.csv");
     csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType->setNumberOfBuffersToProduce(6);
@@ -107,7 +107,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "malformed_csv_test.csv");
     csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType->setNumberOfBuffersToProduce(6);

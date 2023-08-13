@@ -299,7 +299,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("iris")
         .inferModel(")"
-        + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
+        + std::filesystem::path(TEST_DATA_DIRECTORY) / R"(iris_95acc.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
                 {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
         .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||

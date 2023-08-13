@@ -95,7 +95,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/window.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(2);
     auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
@@ -109,7 +109,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NES_INFO("AndOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(2);
     auto windowSource2 = PhysicalSource::create("Win2", "test_stream2", srcConf1);
@@ -180,7 +180,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
     auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
@@ -194,7 +194,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
     auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
@@ -272,13 +272,13 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     // Add source 1
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(12);
     srcConf1->setNumberOfBuffersToProduce(5);
     auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
     workerConfig1->physicalSources.add(windowSource1);
     // Add source 2
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(12);
     srcConf2->setNumberOfBuffersToProduce(5);
     auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
@@ -359,7 +359,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
     auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
@@ -373,7 +373,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     NES_INFO("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
     auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
@@ -462,7 +462,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(12);
     srcConf1->setNumberOfBuffersToProduce(5);
     auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
@@ -476,7 +476,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NES_INFO("AndOperatorTest:  Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(12);
     srcConf2->setNumberOfBuffersToProduce(5);
     auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
@@ -490,7 +490,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NES_INFO("AndOperatorTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
-    srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf3->setNumberOfTuplesToProducePerBuffer(12);
     srcConf3->setNumberOfBuffersToProduce(5);
     auto windowSource3 = PhysicalSource::create("QnV", "test_stream_QnV", srcConf3);

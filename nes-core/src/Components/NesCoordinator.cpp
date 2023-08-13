@@ -233,7 +233,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               allowedOrigin);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
-        restServer->start();//this call is blocking
+        auto result = restServer->start();//this call is blocking
+        if(!result){
+            NES_THROW_RUNTIME_ERROR("Error while staring rest server!");
+        }
     }));
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");

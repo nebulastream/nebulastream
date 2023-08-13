@@ -53,10 +53,9 @@ BinarySourceTypePtr BinarySourceType::create() { return std::make_shared<BinaryS
 
 BinarySourceType::BinarySourceType()
     : PhysicalSourceType(SourceType::BINARY_SOURCE),
-      filePath(Configurations::ConfigurationOption<std::string>::create(
-          Configurations::FILE_PATH_CONFIG,
-          "../tests/test_data/QnV_short.csv",//FIXME: What should we do about these things?
-          "file path, needed for: CSVSource, BinarySource")) {
+      filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
+                                                                        "",
+                                                                        "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
 

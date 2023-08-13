@@ -188,12 +188,12 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    std::filesystem::copy(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+    std::filesystem::copy(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
                           "/tmp/iris_95acc.tflite",
                           std::filesystem::copy_options::overwrite_existing);
 
     auto query = Query::from(logicalSourceName)
-                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
                                  {Attribute("iris0", BasicType::FLOAT32),
                                   Attribute("iris1", BasicType::FLOAT32),

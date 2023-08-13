@@ -81,7 +81,7 @@ TEST_F(InferModelOperatorTest, testInferModelForBoolInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler = std::make_shared<InferModelHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto handler = std::make_shared<InferModelHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -145,7 +145,7 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler = std::make_shared<InferModelHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto handler = std::make_shared<InferModelHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -244,7 +244,7 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler = std::make_shared<InferModelHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto handler = std::make_shared<InferModelHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));

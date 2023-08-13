@@ -519,10 +519,10 @@ class SourceTest : public Testing::BaseIntegrationTest {
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
-        this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
-        this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
-        this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
-        this->path_to_decimals_file = std::string(TEST_DATA_DIRECTORY) + "decimals.csv";
+        this->path_to_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100.csv";
+        this->path_to_file_head = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100-head.csv";
+        this->path_to_bin_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100.bin";
+        this->path_to_decimals_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "decimals.csv";
         this->schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -1490,7 +1490,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                ->addField("uint8", BasicType::UINT8)
                                ->addField("int8", BasicType::INT8);
 
-    std::string path_to_int_file = std::string(TEST_DATA_DIRECTORY) + "every-int.csv";
+    std::string path_to_int_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-int.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(path_to_int_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file not looping
@@ -1550,7 +1550,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
     SchemaPtr float_schema = Schema::create()->addField("float64", BasicType::FLOAT64)->addField("float32", BasicType::FLOAT32);
-    std::string path_to_float_file = std::string(TEST_DATA_DIRECTORY) + "every-float.csv";
+    std::string path_to_float_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-float.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(path_to_float_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file is not going to loop
@@ -1587,7 +1587,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                 ->addField("falsey", BasicType::BOOLEAN)
                                 ->addField("truthy", BasicType::BOOLEAN);
 
-    std::string path_to_bool_file = std::string(TEST_DATA_DIRECTORY) + "every-boolean.csv";
+    std::string path_to_bool_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-boolean.csv";
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(path_to_bool_file);

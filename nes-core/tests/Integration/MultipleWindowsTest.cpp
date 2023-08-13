@@ -64,7 +64,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -138,7 +138,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -153,7 +153,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
@@ -236,7 +236,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -320,7 +320,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -335,7 +335,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType2->setNumberOfBuffersToProduce(1);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
@@ -422,7 +422,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -514,7 +514,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -529,7 +529,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
@@ -616,7 +616,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -746,7 +746,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
@@ -765,7 +765,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig3->coordinatorPort = port;
     workerConfig3->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
-    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType3->setGatheringInterval(1);
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
@@ -906,7 +906,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig2->coordinatorPort = port;
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
@@ -925,7 +925,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig3->coordinatorPort = port;
     workerConfig3->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
-    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType3->setGatheringInterval(1);
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);

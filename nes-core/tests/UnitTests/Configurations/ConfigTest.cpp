@@ -68,7 +68,7 @@ class ConfigTest : public Testing::BaseIntegrationTest {
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyCoordinator.yaml");
+    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyCoordinator.yaml");
     EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
@@ -155,7 +155,7 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml");
 
     EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
@@ -178,7 +178,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerWithPhysicalSources.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "workerWithPhysicalSources.yaml");
 
     EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
@@ -205,7 +205,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 
 TEST_F(ConfigTest, testWorkerYAMLFileFixedLocationNode) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    auto yamlPath = std::string(TEST_DATA_DIRECTORY) + "fixedLocationNode.yaml";
+    auto yamlPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "fixedLocationNode.yaml";
     std::ofstream outFile(yamlPath);
     outFile << "fieldNodeLocationCoordinates: \"23.88,-3.4\"" << std::endl << "nodeSpatialType: FIXED_LOCATION" << std::endl;
     workerConfigPtr->overwriteConfigWithYAMLFileInput(yamlPath);
@@ -393,7 +393,7 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInp
 TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerWithAdaptiveCSVSource.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "workerWithAdaptiveCSVSource.yaml");
     EXPECT_TRUE(workerConfigPtr->physicalSources.size() == 1);
 
     auto csvSourceType = workerConfigPtr->physicalSources.getValues()[0].getValue()->getPhysicalSourceType()->as<CSVSourceType>();

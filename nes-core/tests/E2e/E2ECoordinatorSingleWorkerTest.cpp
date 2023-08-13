@@ -24,13 +24,11 @@
 #include <string>
 
 using namespace std;
-//#define _XPLATSTR(x) _XPLATSTR(x)
 namespace NES {
-
-uint16_t timeout = 5;
 
 class E2ECoordinatorSingleWorkerTest : public Testing::BaseIntegrationTest {
   public:
+    uint16_t timeout = 5;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
@@ -350,7 +348,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -414,7 +412,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -480,7 +478,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),

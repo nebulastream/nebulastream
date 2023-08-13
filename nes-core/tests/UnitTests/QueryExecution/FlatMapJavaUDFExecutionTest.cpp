@@ -53,7 +53,7 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_DEBUG("FlatMapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
+    std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData/";
 };
 
 constexpr auto NUMBER_OF_RECORDS = 10;

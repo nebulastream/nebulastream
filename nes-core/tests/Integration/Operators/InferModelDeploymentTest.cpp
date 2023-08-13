@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -140,15 +141,19 @@ TEST_F(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes)
                           ->addField("target", DataTypeFactory::createUInt64());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_short_bool.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_short_bool.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setSkipHeader(false);
 
     //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
-    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+    auto query = Query::from("irisData")
+                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
+                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
+                     .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
@@ -193,15 +198,19 @@ TEST_P(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeployment) {
     auto irisSchema = std::get<1>(GetParam());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + std::get<2>(GetParam()));
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / std::get<2>(GetParam()));
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setSkipHeader(false);
 
     //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
-    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+    auto query = Query::from("irisData")
+                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "(iris_95acc.tflite",
+                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
+                     .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)

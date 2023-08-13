@@ -79,7 +79,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
 
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
 
@@ -121,7 +121,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
 TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
 
@@ -161,7 +161,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
 TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     NES_INFO("FilterPushDownTest: Start testSameResultsForPushDownBelowMapWithNewField");
 
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
 

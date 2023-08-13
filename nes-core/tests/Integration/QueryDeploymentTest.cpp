@@ -725,7 +725,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
@@ -784,7 +784,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
@@ -842,7 +842,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
@@ -1095,7 +1095,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1);
@@ -1104,7 +1104,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     workerConfig1->physicalSources.add(physicalSource1);
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(1);
@@ -1191,7 +1191,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(100);
@@ -1200,7 +1200,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     workerConfig1->physicalSources.add(physicalSource1);
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(100);
@@ -1390,7 +1390,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
     csvSourceType->setSkipHeader(false);
@@ -1462,7 +1462,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(100);
@@ -1471,7 +1471,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     workerConfig1->physicalSources.add(physicalSource1);
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(100);
@@ -1558,7 +1558,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
     csvSourceType->setSkipHeader(true);
@@ -1633,14 +1633,14 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setGatheringInterval(1);
@@ -1718,13 +1718,13 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setSkipHeader(false);
@@ -1807,13 +1807,13 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setSkipHeader(false);
 
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setSkipHeader(false);
@@ -1910,7 +1910,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
@@ -1925,7 +1925,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType3 = CSVSourceType::create();
-    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
@@ -1940,7 +1940,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType4 = CSVSourceType::create();
-    csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType4->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
@@ -2060,7 +2060,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
@@ -2075,7 +2075,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
-    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
@@ -2090,7 +2090,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = port;
     auto csvSourceType4 = CSVSourceType::create();
-    csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType4->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);

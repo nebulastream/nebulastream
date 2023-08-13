@@ -80,7 +80,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     //register physical source
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
@@ -153,7 +153,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical source
@@ -240,7 +240,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical source
@@ -322,7 +322,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical source
@@ -402,7 +402,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical stream
@@ -484,7 +484,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     worker1Configuration->coordinatorPort = port;
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical source

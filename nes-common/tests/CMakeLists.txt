@@ -31,8 +31,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-test-util REUSE_FROM nes-common)
 endif ()
 
-### Thread Naming Test ###
-add_nes_common_test(nes-common-tests "UnitTests/Util/ThreadNamingTest.cpp" "UnitTests/Util/NonBlockingMonotonicSeqQueueTest.cpp")
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
-
+add_subdirectory(UnitTests)

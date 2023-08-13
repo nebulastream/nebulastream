@@ -69,7 +69,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::BaseUnitTest {
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType->setGatheringInterval(1000);
@@ -87,7 +87,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingTCPLogicalToPhysicalSou
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhysicalSource) {
-    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
+    std::string filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath);
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);

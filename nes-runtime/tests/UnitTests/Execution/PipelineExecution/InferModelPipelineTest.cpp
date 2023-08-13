@@ -132,7 +132,7 @@ TEST_P(InferModelPipelineTest, thresholdWindowWithSum) {
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto handler = std::make_shared<Operators::InferModelHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    auto handler = std::make_shared<Operators::InferModelHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
