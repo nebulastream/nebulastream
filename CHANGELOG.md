@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.193](https://github.com/nebulastream/nebulastream/tree/v0.5.193) (2023-08-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.192...v0.5.193)
+
+**Implemented enhancements:**
+
+- \[TASK\] Zero-Copy Arrow Scan [\#4092](https://github.com/nebulastream/nebulastream/issues/4092)
+
 ## [v0.5.192](https://github.com/nebulastream/nebulastream/tree/v0.5.192) (2023-08-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.191...v0.5.192)
