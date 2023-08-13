@@ -624,7 +624,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "long_running.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "long_running.csv");
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(numBufferToProduce);

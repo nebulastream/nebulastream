@@ -93,7 +93,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("Win1", "test_stream", csvSourceType1);
@@ -107,7 +107,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("Win2", "test_stream", csvSourceType2);
@@ -184,7 +184,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType1->setNumberOfBuffersToProduce(5);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
@@ -198,7 +198,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType2->setNumberOfBuffersToProduce(5);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
@@ -281,7 +281,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType1->setNumberOfBuffersToProduce(5);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
@@ -295,7 +295,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType2->setNumberOfBuffersToProduce(5);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
@@ -379,7 +379,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(20);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
@@ -393,7 +393,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(20);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
@@ -483,7 +483,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType1->setNumberOfBuffersToProduce(5);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream1", csvSourceType1);
@@ -497,7 +497,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType2->setNumberOfBuffersToProduce(5);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream2", csvSourceType2);
@@ -511,7 +511,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
-    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(12);
     csvSourceType3->setNumberOfBuffersToProduce(5);
     auto physicalSource3 = PhysicalSource::create("QnV", "test_stream", csvSourceType3);

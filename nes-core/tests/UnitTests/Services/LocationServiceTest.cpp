@@ -43,7 +43,7 @@ class LocationServiceTest : public Testing::BaseIntegrationTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Set up LocationServiceTest test class.")
-        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
     }
@@ -254,7 +254,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart3);

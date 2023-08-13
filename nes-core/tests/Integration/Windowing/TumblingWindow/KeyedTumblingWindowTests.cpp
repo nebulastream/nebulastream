@@ -227,7 +227,7 @@ TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
                      .apply(Sum(Attribute("value")));
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);

@@ -13,6 +13,7 @@
 
 include(ExternalProject)
 add_subdirectory(Util)
+include(GoogleTest)
 
 # Copy Test Data
 file(COPY testData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -31,18 +32,9 @@ FetchContent_MakeAvailable(tpch-dbgen)
 target_compile_options(tpch-dbgen PUBLIC "-Wno-deprecated-non-prototype")
 
 function(add_nes_runtime_test)
-    add_executable(${ARGN})
+    add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} PRIVATE nes-runtime-test-util)
-    if (NES_ENABLE_PRECOMPILED_HEADERS)
-        target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
-    endif ()
-    if (CODE_COVERAGE)
-        target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes-runtime-test-util EXCLUDE tests/*)
-        message(STATUS "Added cc test ${TARGET_NAME}")
-    endif ()
-    gtest_add_tests(TARGET ${TARGET_NAME})
-    message(STATUS "Added ut test ${TARGET_NAME}")
+    target_link_libraries(${TARGET_NAME} nes-runtime-test-util)
 endfunction()
 
 add_subdirectory(UnitTests)

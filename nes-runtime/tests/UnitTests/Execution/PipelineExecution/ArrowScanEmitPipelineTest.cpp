@@ -101,7 +101,7 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
 
     arrow::io::IOContext io_context = arrow::io::default_io_context();
     std::shared_ptr<arrow::io::InputStream> input =
-        arrow::io::ReadableFile::Open(std::string(TEST_DATA_DIRECTORY) + "arrow_test.arrow").ValueOrDie();
+        arrow::io::ReadableFile::Open(std::filesystem::path(TEST_DATA_DIRECTORY) / "arrow_test.arrow").ValueOrDie();
     auto recordBatchStreamReader = arrow::ipc::RecordBatchStreamReader::Open(input).ValueUnsafe();
     for (auto batch : MakeIteratorFromReader(recordBatchStreamReader)) {
         auto wrapper = std::make_unique<Operators::RecordBufferWrapper>(batch.MoveValueUnsafe());

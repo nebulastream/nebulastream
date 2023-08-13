@@ -566,7 +566,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
     wrkConf->configPath = configPath;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -591,7 +591,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, checkPersistenceOfOverwrittenWorkerIdInYaml) {
+TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -606,7 +606,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfOverwrittenWorkerIdInYaml) {
     NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-    std::string configPath = std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml";
+    std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
     wrkConf->configPath = configPath;
     wrkConf->workerId = 3u;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

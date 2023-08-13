@@ -43,7 +43,7 @@ class ArrowSourceIntegrationTest : public Testing::BaseIntegrationTest {
 TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     std::string inputFileName = "arrow_test.arrow";
     std::string outputFileName = "testArrowSource.csv";
-    std::string inputFilePath = std::string(TEST_DATA_DIRECTORY) + inputFileName;
+    std::string inputFilePath = std::filesystem::path(TEST_DATA_DIRECTORY) / inputFileName;
     std::string outputFilePath = getTestResourceFolder() / outputFileName;
     remove(outputFilePath.c_str());
 

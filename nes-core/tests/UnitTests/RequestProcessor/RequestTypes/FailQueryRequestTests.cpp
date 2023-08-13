@@ -58,7 +58,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
     static void TearDownTestCase() {
-        auto inputSequence = std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv";
+        auto inputSequence = std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv";
         remove(inputSequence.c_str());
     }
 

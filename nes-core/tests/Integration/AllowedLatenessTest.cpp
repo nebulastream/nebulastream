@@ -47,7 +47,7 @@ class AllowedLatenessTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         // window-out-of-order.csv contains 12 rows
         outOfOrderConf = CSVSourceType::create();
-        outOfOrderConf->setFilePath("../tests/test_data/window-out-of-order.csv");
+        outOfOrderConf->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
         outOfOrderConf->setGatheringInterval(1);
         outOfOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         outOfOrderConf->setNumberOfBuffersToProduce(6);
@@ -55,7 +55,7 @@ class AllowedLatenessTest : public Testing::BaseIntegrationTest {
 
         inOrderConf = CSVSourceType::create();
         // window-out-of-order.csv contains 12 rows
-        inOrderConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-in-order.csv");
+        inOrderConf->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-in-order.csv");
         inOrderConf->setGatheringInterval(1);
         inOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         inOrderConf->setNumberOfBuffersToProduce(6);

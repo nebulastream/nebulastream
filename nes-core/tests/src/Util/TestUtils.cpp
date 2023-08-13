@@ -802,8 +802,8 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromCsv(const std::string
                                                                const std::string& delimiter) {
     std::vector<Runtime::TupleBuffer> allBuffers;
 
-    auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
-    NES_DEBUG("read file={}", fullPath);
+    auto fullPath = std::filesystem::path(TEST_DATA_DIRECTORY) / csvFileName;
+    NES_DEBUG("read file={}", fullPath.string());
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
     std::ifstream inputFile(fullPath);
     return fillBufferFromStream(inputFile, schema, bufferManager, numTuplesPerBuffer, delimiter);
@@ -847,7 +847,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
 
 CSVSourceTypePtr TestUtils::createSourceConfig(const string& fileName) {
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + fileName);
+    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / fileName);
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(0);

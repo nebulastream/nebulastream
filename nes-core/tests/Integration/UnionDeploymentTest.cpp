@@ -616,7 +616,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     workerConfig1->queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -631,7 +631,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     workerConfig2->queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->physicalSources.add(physicalSource2);
@@ -775,7 +775,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -790,7 +790,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->physicalSources.add(physicalSource2);
@@ -906,7 +906,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     workerConfig1->queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -919,7 +919,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->physicalSources.add(physicalSource2);

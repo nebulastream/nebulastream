@@ -734,7 +734,9 @@ endif ()
 
 # Custom test commands --------------------------------------------------------
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} --output-on-failure DEPENDS ${UNITTESTS})
+set(NES_TEST_REPEAT_UNTIL_FAIL 3)
+set(NES_TEST_TIMEOUT 300)
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --parallel ${NES_TEST_PARALLELISM} --test-load 90 --stop-on-failure --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)

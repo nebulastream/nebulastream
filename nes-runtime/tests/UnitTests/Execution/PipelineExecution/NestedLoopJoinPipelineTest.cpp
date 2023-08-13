@@ -264,9 +264,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink.csv");
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink.csv");
 
     ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
                                 fileNameBuffersRight,
@@ -308,9 +308,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink2.csv");
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink2.csv");
 
     ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
                                 fileNameBuffersRight,
@@ -351,9 +351,9 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
-    const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
-    const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink3.csv");
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window3.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_sink3.csv");
     ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
                                 fileNameBuffersRight,
                                 fileNameBuffersSink,

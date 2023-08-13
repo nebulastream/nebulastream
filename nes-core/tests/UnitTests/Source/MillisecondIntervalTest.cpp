@@ -111,7 +111,7 @@ class MillisecondIntervalTest : public Testing::BaseIntegrationTest {
         wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-        path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
+        path_to_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100.csv";
 
         NES_INFO("Setup MillisecondIntervalTest class.");
     }

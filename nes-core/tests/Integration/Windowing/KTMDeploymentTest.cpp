@@ -89,7 +89,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     // create source
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm.csv");
+    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(1);

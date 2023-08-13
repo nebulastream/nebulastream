@@ -63,16 +63,16 @@ class LocationIntegrationTests : public Testing::BaseIntegrationTest {
         waypoints.push_back({{2.574709862890394, 13.419206057808077}, 1000000000});
         waypoints.push_back({{2.61756571840606, 13.505980882863446}, 2000000000});
         waypoints.push_back({{2.67219559419452, 13.591124924963108}, 3000000000});
-        auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+        auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
         remove(csvPath.c_str());
         writeWaypointsToCsv(csvPath, waypoints);
 
-        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
 
 #ifdef S2DEF
-        auto interpolatedCsv = std::string(TEST_DATA_DIRECTORY) + "path1.csv";
+        auto interpolatedCsv = std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv";
         remove(interpolatedCsv.c_str());
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypointsToInterpolate;
         waypointsToInterpolate.push_back({{52.58210307572243, 12.987507417206261}, 0});
@@ -84,11 +84,12 @@ class LocationIntegrationTests : public Testing::BaseIntegrationTest {
         writeWaypointsToCsv(interpolatedCsv, interpolatedPath);
 #endif
 
-        auto inputSequence = std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv";
+        auto inputSequence = std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv";
         std::ofstream inputSequenceStream(inputSequence);
         for (int i = 1; i < 100000; ++i) {
             inputSequenceStream << std::to_string(i) << std::endl;
         }
+        inputSequenceStream.flush();
         inputSequenceStream.close();
         ASSERT_FALSE(inputSequenceStream.fail());
     }
@@ -184,13 +185,13 @@ class LocationIntegrationTests : public Testing::BaseIntegrationTest {
 
     static void TearDownTestCase() {
         NES_INFO("Tear down LocationIntegrationTests class.");
-        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
         remove(singleLocationPath.c_str());
-        std::string testLocationsPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+        std::string testLocationsPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
         remove(testLocationsPath.c_str());
-        auto interpolatedCsv = std::string(TEST_DATA_DIRECTORY) + "path1.csv";
+        auto interpolatedCsv = std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv";
         remove(interpolatedCsv.c_str());
-        auto inputSequence = std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv";
+        auto inputSequence = std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv";
         remove(inputSequence.c_str());
     }
 };
@@ -324,7 +325,7 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart1);
@@ -435,7 +436,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -519,7 +520,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -603,7 +604,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     Timestamp offset = 400000000;
     auto currTime = getTimestamp();
@@ -689,7 +690,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+    auto csvPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
     Timestamp offset = -100000000;
     auto currTime = getTimestamp();
@@ -772,7 +773,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart1);
@@ -911,7 +912,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1005,7 +1006,7 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1070,7 +1071,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create();
-    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
@@ -1171,7 +1172,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     wrkConf1->numWorkerThreads.setValue(4);
 
     auto stype = CSVSourceType::create();
-    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
@@ -1357,7 +1358,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create();
-    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
@@ -1374,7 +1375,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

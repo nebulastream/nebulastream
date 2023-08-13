@@ -67,7 +67,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(4);
     // register physical source with 4 buffers, each contains 3 tuples (12 tuples in total)
@@ -154,7 +154,7 @@ TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedTumblingW
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     //Add Source To Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
     auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
@@ -261,7 +261,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     //Add Source to Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
     auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
@@ -350,7 +350,7 @@ TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedSlidingWi
     workerConfig1->coordinatorPort = port;
     //Add Source to Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
     auto windowSource1 = PhysicalSource::create("window", "test_stream", sourceConfig);

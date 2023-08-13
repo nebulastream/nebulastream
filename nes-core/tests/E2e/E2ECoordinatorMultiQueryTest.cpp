@@ -26,10 +26,9 @@
 
 namespace NES {
 
-uint16_t timeout = 5;
-
 class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest {
   public:
+    uint16_t timeout = 5;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
@@ -244,7 +243,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("QnV"),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                           TestUtils::sourceGatheringInterval(1000),
@@ -350,7 +349,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceGatheringInterval(1000),
@@ -455,7 +454,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
+                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::sourceGatheringInterval(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
