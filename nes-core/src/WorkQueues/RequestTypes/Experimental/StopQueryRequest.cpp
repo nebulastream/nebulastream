@@ -57,17 +57,17 @@ StopQueryRequestPtr StopQueryRequest::create(QueryId queryId,
                                               maxRetries);
 }
 
-std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
+std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHandlerPtr storageHandler) {
     NES_TRACE("Start Stop Request logic.");
     std::vector<AbstractRequestPtr> failureRequests = {};
     try {
         NES_TRACE("Acquire Resources.");
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
-        topology = storageHandler.getTopologyHandle(requestId);
-        queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
-        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
-        udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
-        sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
+        globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
+        topology = storageHandler->getTopologyHandle(requestId);
+        queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
+        udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
@@ -144,19 +144,19 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHan
     return failureRequests;
 }
 
-void StopQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE("Release locks."); }
+void StopQueryRequest::postExecution([[maybe_unused]] StorageHandlerPtr storageHandler) { NES_TRACE("Release locks."); }
 
 std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
-void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandlerPtr storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandlerPtr storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex, StorageHandler& storageHandler) {
+std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex, StorageHandlerPtr storageHandler) {
     std::vector<AbstractRequestPtr> failRequest;
     try {
         NES_TRACE("Error: {}", ex.what());

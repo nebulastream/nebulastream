@@ -41,22 +41,22 @@ FailQueryRequest::create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlan
     return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
 }
 
-void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
+void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandlerPtr) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) { return {}; }
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandlerPtr) { return {}; }
 
-void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
+void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandlerPtr) {
 
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
+void FailQueryRequest::postExecution(NES::StorageHandlerPtr storageHandler) { storageHandler->releaseResources(queryId); }
 
-std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
-    globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
-    globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle(requestId);
-    queryCatalogService = storageHandle.getQueryCatalogServiceHandle(requestId);
-    topology = storageHandle.getTopologyHandle(requestId);
+std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandlerPtr storageHandle) {
+    globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
+    globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
+    queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
+    topology = storageHandle->getTopologyHandle(requestId);
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)

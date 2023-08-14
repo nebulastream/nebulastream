@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
@@ -91,10 +90,10 @@ std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& que
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
-                                        [[maybe_unused]] StorageHandler& storageHandler) {}
+                                        [[maybe_unused]] StorageHandlerPtr storageHandler) {}
 
 std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& exception,
-                                                          [[maybe_unused]] StorageHandler& storageHandler) {
+                                                          [[maybe_unused]] StorageHandlerPtr storageHandler) {
     try {
         NES_TRACE("Error: {}", exception.what());
         if (exception.instanceOf<Exceptions::QueryNotFoundException>()) {
@@ -109,6 +108,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
                    || exception.instanceOf<Exceptions::InvalidLogicalOperatorException>()
                    || exception.instanceOf<GlobalQueryPlanUpdateException>()) {
             NES_ERROR("{}", exception.what());
+            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
             queryCatalogService->updateQueryStatus(queryId,
                                                    QueryState::FAILED,
                                                    "Query failed due to " + std::string(exception.what()));
@@ -116,7 +116,9 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
                    || exception.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
                    || exception.instanceOf<QueryDeploymentException>()) {
             NES_ERROR("{}", exception.what());
+            auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
             globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
             queryCatalogService->updateQueryStatus(queryId,
                                                    QueryState::FAILED,
                                                    "Query failed due to " + std::string(exception.what()));
@@ -134,20 +136,20 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& exception,
-                                         [[maybe_unused]] StorageHandler& storageHandler) {}
+                                         [[maybe_unused]] StorageHandlerPtr storageHandler) {}
 
-void AddQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHandler) {}
+void AddQueryRequest::postExecution([[maybe_unused]] StorageHandlerPtr storageHandler) {}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
+std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandlerPtr storageHandler) {
     try {
         NES_DEBUG("Acquiring required resources.");
-        auto globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
-        auto topology = storageHandler.getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
-        auto globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
-        auto udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
-        auto sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
-        auto coordinatorConfiguration = storageHandler.getCoordinatorConfiguration(requestId);
+        auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
+        auto topology = storageHandler->getTopologyHandle(requestId);
+        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
+        auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
+        auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
+        auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
