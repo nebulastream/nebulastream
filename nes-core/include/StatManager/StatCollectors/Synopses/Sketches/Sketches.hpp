@@ -15,8 +15,7 @@
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_HPP
 
 #include <memory>
-#include "StatManager/StatCollectors/StatCollector.hpp"
-#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 
@@ -27,8 +26,8 @@ namespace NES::Experimental::Statistics {
     [[nodiscard]]uint32_t getWidth() const;
     Sketch(const StatCollectorConfig& config, const uint32_t depth, const uint32_t width);
     void update(uint32_t key) override = 0;
-    bool equal(const std::unique_ptr<StatCollector>& rightSketch, bool statCollection) override = 0;
-    std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightSketch, bool statCollection) override = 0;
+    bool equal(const StatCollectorPtr& rightSketch, bool statCollection) override = 0;
+    StatCollectorPtr merge(StatCollectorPtr rightSketch, bool statCollection) override = 0;
   private:
     uint32_t depth;
     uint32_t width;

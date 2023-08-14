@@ -13,7 +13,7 @@
 */
 
 #include <random>
-#include "StatManager/Util/Hashing.hpp"
+#include <StatManager/Util/Hashing.hpp>
 
 namespace NES::Experimental::Statistics {
 
