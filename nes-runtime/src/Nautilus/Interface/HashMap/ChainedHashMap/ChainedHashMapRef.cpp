@@ -108,14 +108,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
     // if the entry is null, insert a new entry.
     if (entry == nullptr) {
         // create new entry
-        entry = insert(hash);
-        // store keys
-        auto keyPtr = entry.getKeyPtr();
-        for (size_t i = 0; i < keys.size(); i++) {
-            auto& key = keys[i];
-            keyPtr.store(key);
-            keyPtr = keyPtr + keyDataTypes[i]->size();
-        }
+        entry = insert(hash, keys);
         // call on insert lambda function to insert default values
         onInsert(entry);
     }
