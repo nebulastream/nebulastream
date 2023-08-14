@@ -21,6 +21,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
+#include <future>
 
 namespace NES {
 namespace Network {
@@ -127,6 +128,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     void connectToChannelAsync(Runtime::WorkerContext& workerContext);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+
+    void establishConnection();
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;

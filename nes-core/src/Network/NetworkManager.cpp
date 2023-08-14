@@ -14,8 +14,11 @@
 
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Network {
@@ -137,17 +140,35 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
                                                                                  const NesPartition& nesPartition,
                                                                                  Runtime::BufferManagerPtr bufferManager,
                                                                                  std::chrono::milliseconds waitTime,
-                                                                                 uint8_t retryTimes) {
+                                                                                 uint8_t retryTimes, Runtime::ReconfigurationMessage reconfigurationMessage, Runtime::QueryManagerPtr queryManager) {
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
-    return NetworkChannel::createAsync(server->getContext(),
-                                  nodeLocation.createZmqURI(),
-                                  nesPartition,
-                                  exchangeProtocol,
-                                  std::move(bufferManager),
-                                  senderHighWatermark,
-                                  waitTime,
-                                  retryTimes);
+
+    std::promise<NetworkChannelPtr> promise;
+    auto future = promise.get_future();
+    std::thread thread([zmqContext = server->getContext(),
+                        nodeLocation,
+                        nesPartition,
+                        protocol = exchangeProtocol,
+                        bufferManager,
+                        highWaterMark = senderHighWatermark,
+                        waitTime,
+                        retryTimes,
+                        promise = std::move(promise), queryManager, reconfigurationMessage]() mutable {
+        auto channel = NetworkChannel::create(zmqContext,
+                                              nodeLocation.createZmqURI(),
+                                              nesPartition,
+                                              protocol,
+                                              std::move(bufferManager),
+                                              highWaterMark,
+                                              waitTime,
+                                              retryTimes);
+        promise.set_value(std::move(channel));
+        //networkSink->establishConnection();
+        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
+    });
+    thread.detach();
+    return future;
 }
 
 }// namespace NES::Network

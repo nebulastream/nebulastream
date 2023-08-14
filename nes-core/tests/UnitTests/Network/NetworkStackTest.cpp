@@ -29,8 +29,10 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Core.hpp>
@@ -282,20 +284,62 @@ TEST_F(NetworkStackTest, startCloseChannelAsync) {
             void emitWork(TupleBuffer&) override {}
         };
 
+        class DummyQueryManager : public Runtime::AbstractQueryManager {
+          public:
+            DummyQueryManager() : Runtime::AbstractQueryManager(nullptr, {}, 0, 0, std::make_shared<Runtime::HardwareManager>(), nullptr, 0, {}){}
+            //DummyQueryManager() {};
+            ExecutionResult processNextTask(bool,Runtime::WorkerContext&) override { return {}; }
+            void addWorkForNextPipeline(TupleBuffer&,
+                                        Runtime::Execution::SuccessorExecutablePipeline,
+                                        uint32_t = 0) override{}
+            void poisonWorkers() override{}
+            bool addReconfigurationMessage(QueryId,
+                                           QuerySubPlanId,
+                                           const Runtime::ReconfigurationMessage&,
+                                           bool = false) override {
+                return true;
+            }
+
+          private:
+            bool addReconfigurationMessage(QueryId,
+                                           QuerySubPlanId,
+                                           TupleBuffer&&,
+                                           bool = false) override {
+                return true;
+            }
+            uint64_t getNumberOfTasksInWorkerQueues() const override { return 0; }
+            bool startThreadPool(uint64_t) override { return true; }
+            ExecutionResult terminateLoop(Runtime::WorkerContext&) override {return {};}
+        };
+
+        std::shared_ptr<Runtime::AbstractQueryManager> queryManager = std::make_shared<DummyQueryManager>();
+
         std::thread t([&netManager, &completed, &nesPartition] {
-          // register the incoming channel
-          auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
-                                                              netManager->getServerLocation(),
-                                                              std::make_shared<DataEmitterImpl>());
-          NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
-          auto v = completed.get_future().get();
-          netManager->unregisterSubpartitionConsumer(nesPartition);
-          ASSERT_EQ(v, true);
+            // register the incoming channel
+            auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
+                                                                netManager->getServerLocation(),
+                                                                std::make_shared<DataEmitterImpl>());
+            NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
+            auto v = completed.get_future().get();
+            netManager->unregisterSubpartitionConsumer(nesPartition);
+            ASSERT_EQ(v, true);
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
-        auto senderChannelFuture =
-            netManager->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 3);
+        auto queryId = 1;
+        auto querySubPlanId = 1;
+        auto numOfProducers = 1;
+        auto reconf = Runtime::ReconfigurationMessage(queryId,
+                                                      querySubPlanId,
+                                                      Runtime::ReconfigurationType::Initialize,
+                                                      nullptr,
+                                                      std::make_any<uint32_t>(numOfProducers));
+        auto senderChannelFuture = netManager->registerSubpartitionProducerAsync(nodeLocation,
+                                                                                 nesPartition,
+                                                                                 buffMgr,
+                                                                                 std::chrono::seconds(1),
+                                                                                 3,
+                                                                                 reconf, queryManager);
         auto senderChannel = senderChannelFuture.get();
         senderChannel->close(Runtime::QueryTerminationType::Graceful);
         senderChannel.reset();

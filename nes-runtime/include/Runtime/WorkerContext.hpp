@@ -50,7 +50,7 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelsFutures;
+    //std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelsFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
@@ -134,7 +134,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel);
+    //void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -202,7 +202,7 @@ class WorkerContext {
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
+    //Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
     /**
      * @brief retrieve a registered output channel
