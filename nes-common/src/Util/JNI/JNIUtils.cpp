@@ -85,11 +85,7 @@ jobject createByte(int8_t value) { return createObjectType(value, "java/lang/Byt
 
 jstring createString(const std::string_view& value) {
     auto env = getEnv();
-    // We have to ensure that the string is null terminated.
-    // To this end, we use the strndup function.
-    char* nullTerminatedString = strndup(value.data(), value.size());
-    jstring string = env->NewStringUTF(nullTerminatedString);
-    free(nullTerminatedString);
+    jstring string = env->NewStringUTF(value.data());
     return static_cast<jstring>(getEnv()->NewGlobalRef((jobject) string));
 }
 
