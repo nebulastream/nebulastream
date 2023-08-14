@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.194](https://github.com/nebulastream/nebulastream/tree/v0.5.194) (2023-08-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.193...v0.5.194)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Conversion from TEXT field to Java String creates random garbage content at the end [\#4111](https://github.com/nebulastream/nebulastream/issues/4111)
+
 ## [v0.5.193](https://github.com/nebulastream/nebulastream/tree/v0.5.193) (2023-08-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.192...v0.5.193)
