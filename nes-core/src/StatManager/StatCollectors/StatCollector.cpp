@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "StatManager/StatCollectors/StatCollector.hpp"
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 

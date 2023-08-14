@@ -19,22 +19,20 @@
 #include <vector>
 #include <memory>
 #include <math.h>
-#include "StatManager/StatCollectors/StatCollector.hpp"
-#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 
-  class CountMin;
-  using CountMinPtr = std::unique_ptr<CountMin>;
+  class StatCollectorConfig;
 
   class StatManager {
   private:
     std::vector<std::unique_ptr<StatCollector>> statCollectors {};
 
   public:
-    virtual ~StatManager() = default;
+    ~StatManager() = default;
 
-    std::vector<std::unique_ptr<StatCollector>> getStatCollectors();
+    std::vector<std::unique_ptr<StatCollector>>& getStatCollectors();
 
     void createStat(const StatCollectorConfig& config);
 

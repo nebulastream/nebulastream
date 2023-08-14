@@ -13,15 +13,15 @@
 */
 
 #include <Util/Logger/Logger.hpp>
-#include "StatManager/StatManager.hpp"
-#include "StatManager/StatCollectors/StatCollector.hpp"
-#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
+#include <StatManager/StatManager.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
+#include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 
 namespace NES::Experimental::Statistics {
 
-  std::vector<std::unique_ptr<StatCollector>> StatManager::getStatCollectors() {
-    return std::move(statCollectors);
-  }
+	std::vector<std::unique_ptr<StatCollector>>& StatManager::getStatCollectors() {
+		return statCollectors;
+	}
 
   void StatManager::createStat (const StatCollectorConfig& config) {
 
@@ -74,7 +74,7 @@ namespace NES::Experimental::Statistics {
           } else {
 
             // create stat
-            CountMinPtr cm = std::make_unique<CountMin>(config);
+            std::unique_ptr<CountMin> cm = std::make_unique<CountMin>(config);
 
             statCollectors.push_back(std::move(cm));
 
@@ -152,4 +152,5 @@ namespace NES::Experimental::Statistics {
     NES_DEBUG("Could not delete Statistic Object!");
     return;
   }
+
 } // NES::Experimental::Statistics

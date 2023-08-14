@@ -19,12 +19,16 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 
 namespace NES::Experimental::Statistics {
 
+  class StatCollectorConfig;
+
   class StatCollector {
     public:
+
+      using StatCollectorPtr = std::unique_ptr<StatCollector>;
+
       virtual ~StatCollector() = default;
 
       [[nodiscard]] const std::string& getPhysicalSourceName() const;
@@ -33,8 +37,8 @@ namespace NES::Experimental::Statistics {
       [[nodiscard]] time_t getFrequency() const;
       StatCollector(const StatCollectorConfig config);
       virtual void update(uint32_t key) = 0;
-      virtual bool equal(const std::unique_ptr<StatCollector>& rightStatCollector, bool statCollection) = 0;
-      virtual std::unique_ptr<StatCollector> merge(std::unique_ptr<StatCollector> rightStatCollector, bool statCollection) = 0;
+      virtual bool equal(const StatCollectorPtr& rightStatCollector, bool statCollection) = 0;
+      virtual StatCollectorPtr merge(StatCollectorPtr rightStatCollector, bool statCollection) = 0;
 
     private:
       const std::string physicalSourceName;
