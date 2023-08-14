@@ -55,7 +55,6 @@ uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
 }
 
 void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
-    std::unique_lock lock(writeMutex);
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
