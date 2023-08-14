@@ -145,7 +145,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     const bool connectAsync;
     std::future<NetworkChannelPtr> networkChannelFuture;
-    //std::atomic<bool> reconnectBuffering;
+    std::atomic<bool> reconnectBuffering;
 };
 
 }// namespace Network

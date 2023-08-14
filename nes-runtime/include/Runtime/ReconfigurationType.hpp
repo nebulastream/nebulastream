@@ -35,7 +35,6 @@ enum class ReconfigurationType : uint8_t {
     StartBuffering,
     /// stop buffering data
     StopBuffering,
-    ConnectionEstablished
 };
 }
 
