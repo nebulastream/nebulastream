@@ -28,8 +28,9 @@ Nautilus::Interface::PagedVector* BatchJoinHandler::getThreadLocalState(uint64_t
 void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                              uint64_t entrySize,
                              uint64_t keySize,
-                             uint64_t valueSize) {
-    this->keySize = keySize;
+                             uint64_t valueSize,
+                             bool markBool = false) {
+    this->keySize = keySize + (markBool ? 1 : 0);
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();

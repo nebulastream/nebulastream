@@ -47,8 +47,13 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
      * @param entrySize Size of the aggregated values in memory
      * @param keySize Size of the key values in memory
      * @param valueSize Size of the value values in memory
+     * @param markBool If true, we init extra space at the key for a bool to mark seen entries in the hash map (used for semi/anti-joins)
      */
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize, uint64_t keySize, uint64_t valueSize);
+    void setup(Runtime::Execution::PipelineExecutionContext& ctx,
+               uint64_t entrySize,
+               uint64_t keySize,
+               uint64_t valueSize,
+               bool markBool);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,

@@ -32,39 +32,35 @@ SemiBatchJoinProbe::SemiBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
                                const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
                                const std::vector<PhysicalTypePtr>& valueDataTypes,
-                               std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
-                                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers)
-    : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)),
-                             buildFieldIdentifiers(buildFieldIdentifiers){}
+                                       std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
+    : AbstractBatchJoinProbe(operatorHandlerIndex,
+                             keyExpressions,
+                             keyDataTypes,
+                             probeFieldIdentifiers,
+                             valueDataTypes,
+                             std::move(hashFunction)) {
+    // Add space for boolean to enable marking occurrences in the hash map
+    keySize = keySize + 1;
+}
+
+void SemiBatchJoinProbe::mark(Interface::ChainedHashMapRef::EntryRef entry) const {
+    auto mark = Value<Boolean>(false);
+    auto keyPtr = entry.getKeyPtr();
+    for (size_t i = 0; i < keyDataTypes.size(); i++) {
+        keyPtr = keyPtr + keyDataTypes[i]->size();
+    }
+    keyPtr.store(mark);
+}
 
 void SemiBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    // 1. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
-        keyValues.emplace_back(exp->execute(record));
-    }
+    // Get matches iterator
+    // In contrast to the inner join, we do not emit the probe side tuples.
+    // But we need to make sure that we do not emit the same tuple twice.
+    auto entry = findMatches(ctx, record);
 
-    // 3. load the reference to the global hash map.
-    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
-    auto& hashMap = state->hashMap;
-
-    // 4. calculate hash
-    auto hash = hashFunction->calculate(keyValues);
-
-    // 5. lookup the key in the hashmap
-    auto entry = hashMap.find(hash, keyValues);
-
-    // 6. check if join matches
-    if(entry != nullptr) {
-        // For the semi join and the
-        // In contrast to the inner join, for the semi join want to return
-        // Here we need to override the record's data
-        auto valuePtr = entry.getValuePtr();
-        for (size_t i = 0; i < buildFieldIdentifiers.size(); i++) {
-            auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-            record.write(buildFieldIdentifiers[i], value);
-            valuePtr = valuePtr + valueDataTypes[i]->size();
-        }
+    // Check if a match was found
+    for (; entry != nullptr; ++entry) {
+        mark(*entry);
         this->child->execute(ctx, record);
     }
 }

@@ -42,12 +42,15 @@ class SemiBatchJoinProbe : public AbstractBatchJoinProbe {
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
                    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
                    const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
-                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers);
+                       std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
   private:
-    const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers;
+    /**
+     * @brief Marks the entry as matched.
+     * @param entry entry to mark.
+     */
+    void mark(Interface::ChainedHashMapRef::EntryRef entry) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_SEMIBATCHJOINPROBE_HPP_
