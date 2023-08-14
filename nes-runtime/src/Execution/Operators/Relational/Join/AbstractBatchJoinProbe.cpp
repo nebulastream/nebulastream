@@ -56,12 +56,30 @@ void AbstractBatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the hash map
     auto state = Nautilus::FunctionCall("getProbeHashMapProxy", getProbeHashMapProxy, globalOperatorHandler);
-    auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
     auto chainedHM = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
     // 3. store the reference to the hash map in the local operator state.
     auto globalHashMap = std::make_unique<LocalJoinProbeState>(chainedHM);
     ctx.setLocalOperatorState(this, std::move(globalHashMap));
     ExecutableOperator::open(ctx, rb);
+}
+
+Interface::ChainedHashMapRef::KeyEntryIterator AbstractBatchJoinProbe::findMatches(NES::Runtime::Execution::ExecutionContext& ctx,
+                                                                                   NES::Nautilus::Record& record) const {
+    // 1. derive key values
+    std::vector<Value<>> keyValues;
+    for (const auto& exp : keyExpressions) {
+        keyValues.emplace_back(exp->execute(record));
+    }
+
+    // 3. load the reference to the global hash map.
+    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
+    auto& hashMap = state->hashMap;
+
+    // 4. calculate hash
+    auto hash = hashFunction->calculate(keyValues);
+
+    // 5. lookup the key in the hashmap
+    return hashMap.findAll(hash, keyValues);
 }
 
 }// namespace NES::Runtime::Execution::Operators

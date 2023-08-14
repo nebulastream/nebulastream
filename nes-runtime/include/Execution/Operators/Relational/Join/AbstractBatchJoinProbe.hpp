@@ -57,6 +57,15 @@ class AbstractBatchJoinProbe : public ExecutableOperator {
     };
 
   protected:
+    /**
+     * @brief Finds the matching entry in the hash map.
+     * @param ctx
+     * @param record
+     * @return KeyEntryIterator
+     */
+    Interface::ChainedHashMapRef::KeyEntryIterator findMatches(NES::Runtime::Execution::ExecutionContext& ctx,
+                                                               NES::Nautilus::Record& record) const;
+
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;

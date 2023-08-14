@@ -35,26 +35,13 @@ OuterBatchJoinProbe::OuterBatchJoinProbe(uint64_t operatorHandlerIndex,
     : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)) {}
 
 void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    // 1. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
-        keyValues.emplace_back(exp->execute(record));
-    }
+    // Get matches iterator
+    auto entry = findMatches(ctx, record);
 
-    // 3. load the reference to the global hash map.
-    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
-    auto& hashMap = state->hashMap;
-
-    // 4. calculate hash
-    auto hash = hashFunction->calculate(keyValues);
-
-    // 5. lookup the key in the hashmap
-    auto entry = hashMap.find(hash, keyValues);
-
-    // 6. check if join matches
+    // Check if a match was found
     if (entry != nullptr) {
-        // No Match: build record with NULL
-        auto valuePtr = entry.getValuePtr();
+        // No match: build record with NULL values
+        auto valuePtr = (*entry).getValuePtr();
         for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
             // For now, we use '0' as NULL, but in the future we need a holistic approach for this
             // See issue #4064
@@ -63,14 +50,16 @@ void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
         }
         this->child->execute(ctx, record);
     } else {
-        // Match: build record
-        auto valuePtr = entry.getValuePtr();
-        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
-            auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-            record.write(probeFieldIdentifiers[i], value);
-            valuePtr = valuePtr + valueDataTypes[i]->size();
+        // Matches: build records
+        for (; entry != nullptr; ++entry) {
+            auto valuePtr = (*entry).getValuePtr();
+            for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
+                auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
+                record.write(probeFieldIdentifiers[i], value);
+                valuePtr = valuePtr + valueDataTypes[i]->size();
+            }
+            this->child->execute(ctx, record);
         }
-        this->child->execute(ctx, record);
     }
 }
 

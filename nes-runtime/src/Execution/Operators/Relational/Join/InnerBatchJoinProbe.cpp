@@ -35,27 +35,14 @@ InnerBatchJoinProbe::InnerBatchJoinProbe(uint64_t operatorHandlerIndex,
     : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)) {}
 
 void InnerBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    // 1. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
-        keyValues.emplace_back(exp->execute(record));
-    }
+    // Get matches iterator
+    auto entry = findMatches(ctx, record);
 
-    // 3. load the reference to the global hash map.
-    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
-    auto& hashMap = state->hashMap;
-
-    // 4. calculate hash
-    auto hash = hashFunction->calculate(keyValues);
-
-    // 5. lookup the key in the hashmap
-    auto entry = hashMap.find(hash, keyValues);
-
-    // 6. check if join matches
-    if (entry != nullptr) {
-        // 7. Create result record
-        // 7.1 load values from the probe side and store them in the record.
-        auto valuePtr = entry.getValuePtr();
+    // Iterate through matches from build hash table
+    for (; entry != nullptr; ++entry) {
+        // Create result record
+        // load values from the probe side and store them in the record.
+        auto valuePtr = (*entry).getValuePtr();
         for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
             record.write(probeFieldIdentifiers[i], value);
