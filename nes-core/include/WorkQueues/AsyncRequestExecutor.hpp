@@ -29,8 +29,8 @@
 #include <vector>
 
 namespace NES {
-constexpr RequestId INVALID_REQUEST_ID = 0;
-constexpr RequestId MAX_REQUEST_ID = INT_MAX;
+
+static constexpr RequestId MAX_REQUEST_ID = INT_MAX;
 class StorageHandler;
 
 namespace Experimental {
@@ -59,6 +59,7 @@ class AsyncRequestExecutor {
      * @brief constructor
      * @param numOfThreads the number of threads to be spawned by the executor
      * @param storageDataStructures a struct containing pointers to the data structures on which the requests operate
+     * @param storageHandlerType: the type of storage handler to be used while processing requests
      */
     AsyncRequestExecutor(uint32_t numOfThreads,
                          const StorageDataStructures& storageDataStructures,

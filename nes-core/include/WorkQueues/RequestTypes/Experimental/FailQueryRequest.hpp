@@ -25,7 +25,7 @@ using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
 
 //a response to the creator of the request
 struct FailQueryResponse : public AbstractRequestResponse {
-    explicit FailQueryResponse(SharedQueryId sharedQueryId);
+    explicit FailQueryResponse(SharedQueryId sharedQueryId) : sharedQueryId(sharedQueryId){};
     SharedQueryId sharedQueryId;
 };
 

@@ -42,6 +42,9 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -103,43 +106,15 @@ namespace Experimental {
 
 //a response to the creator of the request
 struct AddQueryResponse : public AbstractRequestResponse {
-    SharedQueryId sharedQueryId;
+    explicit AddQueryResponse(QueryId queryId) : queryId(queryId){};
+    QueryId queryId;
 };
+
+class AddQueryRequest;
+using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
 
 class AddQueryRequest : public AbstractRequest {
   public:
-    /**
-     * @brief Constructor
-     * @param queryString: the query string
-     * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     */
-    AddQueryRequest(const std::string& queryString,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const FaultToleranceType faultTolerance,
-                    const LineageType lineage,
-                    uint8_t maxRetries,
-                    z3::ContextPtr z3Context);
-
-    /**
-     * @brief Constructor
-     * @param queryPlan: the query plan
-     * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
-     * @param maxRetries: Maximum number of retry attempts for the request
-     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
-     */
-    AddQueryRequest(const QueryPlanPtr& queryPlan,
-                    Optimizer::PlacementStrategy queryPlacementStrategy,
-                    FaultToleranceType faultTolerance,
-                    LineageType lineage,
-                    uint8_t maxRetries,
-                    z3::ContextPtr z3Context);
-
     /**
      * @brief creates a new AddQueryRequest object
      * @param queryPlan: the query plan
@@ -149,12 +124,30 @@ class AddQueryRequest : public AbstractRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
-    static std::shared_ptr<AddQueryRequest> create(const QueryPlanPtr& queryPlan,
-                                                   Optimizer::PlacementStrategy queryPlacementStrategy,
-                                                   FaultToleranceType faultTolerance,
-                                                   LineageType lineage,
-                                                   uint8_t maxRetries,
-                                                   z3::ContextPtr z3Context);
+    static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
+                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                     const FaultToleranceType faultTolerance,
+                                     const LineageType lineage,
+                                     const uint8_t maxRetries,
+                                     const z3::ContextPtr& z3Context);
+
+    /**
+     * @brief creates a new AddQueryRequest object
+     * @param queryPlan: the query plan
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param queryParsingService: parsing string query
+     */
+    static AddQueryRequestPtr create(const std::string& queryPlan,
+                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                     const FaultToleranceType faultTolerance,
+                                     const LineageType lineage,
+                                     const uint8_t maxRetries,
+                                     const z3::ContextPtr& z3Context,
+                                     const QueryParsingServicePtr& queryParsingService);
 
   protected:
     /**
@@ -195,13 +188,47 @@ class AddQueryRequest : public AbstractRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandlerPtr storageHandler) override;
 
   private:
-    QueryId queryId;
+    /**
+     * @brief Constructor
+     * @param queryString: the query string
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param queryParsingService: parsing string queries
+     */
+    AddQueryRequest(const std::string& queryString,
+                    const Optimizer::PlacementStrategy queryPlacementStrategy,
+                    const FaultToleranceType faultTolerance,
+                    const LineageType lineage,
+                    const uint8_t maxRetries,
+                    const z3::ContextPtr& z3Context,
+                    const QueryParsingServicePtr& queryParsingService);
+
+    /**
+     * @brief Constructor
+     * @param queryPlan: the query plan
+     * @param queryPlacementStrategy: the placement strategy
+     * @param faultTolerance: the fault tolerance aspect of the query
+     * @param lineage: the lineage property of the query
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     */
+    AddQueryRequest(const QueryPlanPtr& queryPlan,
+                    const Optimizer::PlacementStrategy queryPlacementStrategy,
+                    const FaultToleranceType faultTolerance,
+                    const LineageType lineage,
+                    const uint8_t maxRetries,
+                    const z3::ContextPtr& z3Context);
+
     std::string queryString;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
     FaultToleranceType faultTolerance;
     LineageType lineage;
     z3::ContextPtr z3Context;
+    QueryParsingServicePtr queryParsingService;
 };
 }// namespace Experimental
 }// namespace NES

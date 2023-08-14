@@ -18,7 +18,7 @@
 namespace NES {
 
 FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId, std::string failureReason)
-    : queryId(sharedQueryId), failureReason(std::move(failureReason)) {}
+    : sharedQueryId(sharedQueryId), failureReason(std::move(failureReason)) {}
 
 FailQueryRequestPtr FailQueryRequest::create(const SharedQueryId sharedQueryId, std::string failureReason) {
     return std::make_shared<FailQueryRequest>(FailQueryRequest(sharedQueryId, std::move(failureReason)));
@@ -27,10 +27,11 @@ FailQueryRequestPtr FailQueryRequest::create(const SharedQueryId sharedQueryId, 
 std::string FailQueryRequest::getFailureReason() { return failureReason; }
 
 std::string FailQueryRequest::toString() {
-    return "FailQueryRequest { Shared Query Plan Id: " + std::to_string(queryId) + ", Failure Reason: " + failureReason + "}";
+    return "FailQueryRequest { Shared Query Plan Id: " + std::to_string(sharedQueryId) + ", Failure Reason: " + failureReason
+        + "}";
 }
 
-uint64_t FailQueryRequest::getQueryId() const { return queryId; }
+uint64_t FailQueryRequest::getSharedQueryId() const { return sharedQueryId; }
 
 RequestType FailQueryRequest::getRequestType() { return RequestType::FailQuery; }
 

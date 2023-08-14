@@ -50,7 +50,7 @@ std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
 
 QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString,
                                                   const QueryPlanPtr& queryPlan,
-                                                  const std::string& placementStrategyName) {
+                                                  const Optimizer::PlacementStrategy placementStrategyName) {
     QueryId queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id {}", queryId);
     QueryCatalogEntryPtr queryCatalogEntry =

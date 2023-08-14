@@ -22,10 +22,10 @@ namespace NES::Catalogs::Query {
 
 QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
-                                     std::string queryPlacementStrategy,
+                                     Optimizer::PlacementStrategy queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
                                      QueryState queryStatus)
-    : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
+    : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(queryPlacementStrategy),
       inputQueryPlan(std::move(inputQueryPlan)), queryState(queryStatus) {}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
@@ -63,11 +63,11 @@ void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {
 
 std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
-const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
-
-Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
-    return magic_enum::enum_cast<Optimizer::PlacementStrategy>(queryPlacementStrategy).value();
+const std::string QueryCatalogEntry::getQueryPlacementStrategyAsString() const {
+    return std::string(magic_enum::enum_name(queryPlacementStrategy));
 }
+
+Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() { return queryPlacementStrategy; }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
     std::unique_lock lock(mutex);
