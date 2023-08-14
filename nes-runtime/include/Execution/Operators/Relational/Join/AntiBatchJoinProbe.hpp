@@ -25,6 +25,7 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Anti batch join probe operator.
  * The operator receives input records and uses their key to probe a global hash table.
+ * @Note: For now this probe operator needs to be followed by the distinct operator to support the right semantics.
  */
 class AntiBatchJoinProbe : public AbstractBatchJoinProbe {
   public:

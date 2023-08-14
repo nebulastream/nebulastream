@@ -35,25 +35,12 @@ AntiBatchJoinProbe::AntiBatchJoinProbe(uint64_t operatorHandlerIndex,
     : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)) {}
 
 void AntiBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    // 1. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
-        keyValues.emplace_back(exp->execute(record));
-    }
+    // Get matches iterator
+    auto entry = findMatches(ctx, record);
 
-    // 3. load the reference to the global hash map.
-    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
-    auto& hashMap = state->hashMap;
-
-    // 4. calculate hash
-    auto hash = hashFunction->calculate(keyValues);
-
-    // 5. lookup the key in the hashmap
-    auto entry = hashMap.find(hash, keyValues);
-
-    // 6. check if join matches
+    // Emit if no match was found
     if (entry == nullptr) {
-        // Here we should only emit when we know we haven't emitted the same tuple already
+        // Emitted records could be duplicates, thus we need a distinct operator afterward
         this->child->execute(ctx, record);
     }
 }
