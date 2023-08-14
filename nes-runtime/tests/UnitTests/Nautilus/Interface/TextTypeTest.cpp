@@ -16,12 +16,12 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <Runtime/TupleBuffer.hpp>
 namespace NES::Nautilus {
 
 class TextTypeTest : public Testing::NESBaseTest {
