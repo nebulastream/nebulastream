@@ -13,9 +13,14 @@
 */
 #ifndef NES_ASYNCREQUESTEXECUTOR_HPP
 #define NES_ASYNCREQUESTEXECUTOR_HPP
+
+#include <Util/Logger/Logger.hpp>
+#include <Util/StorageHandlerType.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <climits>
 #include <deque>
 #include <future>
@@ -27,30 +32,26 @@ namespace NES {
 constexpr RequestId INVALID_REQUEST_ID = 0;
 constexpr RequestId MAX_REQUEST_ID = INT_MAX;
 class StorageHandler;
+
 namespace Experimental {
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
-
-template<typename T>
-concept ConceptStorageHandler = std::is_base_of<StorageHandler, T>::value;
 
 /**
  * @brief This class asynchronously processes request to be executed by the coordinator. Requests can spawn new requests
  * if the logic requires follow up actions.
- * @tparam T the type of storage handler to be used for concurrency control of data access
  */
-template<ConceptStorageHandler T>
 class AsyncRequestExecutor {
     //define an empty request type that does nothing and is used only for flushing the executor
     class FlushRequest : public AbstractRequest {
       public:
         FlushRequest() : AbstractRequest({}, 0) {}
-        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override { return {}; }
-        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandler&) override { return {}; }
+        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandlerPtr) override { return {}; }
+        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandlerPtr) override { return {}; }
 
       protected:
-        void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-        void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-        void postExecution(StorageHandler&) override {}
+        void preRollbackHandle(const RequestExecutionException&, StorageHandlerPtr) override {}
+        void postRollbackHandle(const RequestExecutionException&, StorageHandlerPtr) override {}
+        void postExecution(StorageHandlerPtr) override {}
     };
 
   public:
@@ -59,8 +60,19 @@ class AsyncRequestExecutor {
      * @param numOfThreads the number of threads to be spawned by the executor
      * @param storageDataStructures a struct containing pointers to the data structures on which the requests operate
      */
-    AsyncRequestExecutor(uint32_t numOfThreads, StorageDataStructures storageDataStructures)
-        : running(true), numOfThreads(numOfThreads), nextFreeRequestId(1), storageHandler(T(storageDataStructures)) {
+    AsyncRequestExecutor(uint32_t numOfThreads,
+                         const StorageDataStructures& storageDataStructures,
+                         StorageHandlerType storageHandlerType)
+        : running(true), numOfThreads(numOfThreads), nextFreeRequestId(1) {
+
+        switch (storageHandlerType) {
+            case StorageHandlerType::SerialHandler: storageHandler = SerialStorageHandler::create(storageDataStructures); break;
+            case StorageHandlerType::TwoPhaseLocking:
+                storageHandler = TwoPhaseLockingStorageHandler::create(storageDataStructures);
+                break;
+            default: NES_THROW_RUNTIME_ERROR("Unknown storage type supplied. Failed to initialize request executor.");
+        }
+
         for (uint32_t i = 0; i < numOfThreads; ++i) {
             std::promise<bool> promise;
             completionFutures.emplace_back(promise.get_future());
@@ -132,7 +144,7 @@ class AsyncRequestExecutor {
     /**
      * @brief destructor, calls destroy()
      */
-    ~AsyncRequestExecutor<T>() { stop(); }
+    ~AsyncRequestExecutor() { stop(); }
 
   private:
     /**
@@ -170,11 +182,10 @@ class AsyncRequestExecutor {
     std::deque<AbstractRequestPtr> asyncRequestQueue;
     uint32_t numOfThreads;
     RequestId nextFreeRequestId;
-    T storageHandler;
+    StorageHandlerPtr storageHandler;
 };
 
-template<typename T>
-using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<T>>;
+using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor>;
 }// namespace Experimental
 }// namespace NES
 #endif//NES_ASYNCREQUESTEXECUTOR_HPP

@@ -96,49 +96,49 @@ class StorageHandler {
      * @param requestId The id of the request which calls this function
      * @return a handle to the global execution plan.
      */
-    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) = 0;
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable topology handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the topology
      */
-    virtual TopologyHandle getTopologyHandle(RequestId requestId) = 0;
+    virtual TopologyHandle getTopologyHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable query catalog handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) = 0;
+    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable global query plan handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the global query plan.
      */
-    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) = 0;
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable source catalog handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the source catalog.
      */
-    virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) = 0;
+    virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable udf catalog handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the udf catalog.
      */
-    virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) = 0;
+    virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId);
 
     /**
      * @brief Get coordinator configuration
      * @param requestId the id of the request which calls this function
      * @return  a handle to the coordinator configuration
      */
-    virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) = 0;
+    virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId);
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_

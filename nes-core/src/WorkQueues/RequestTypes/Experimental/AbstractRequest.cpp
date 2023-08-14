@@ -22,7 +22,7 @@ AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResour
     : requestId(INVALID_REQUEST_ID), responsePromise(), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
-std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionException& ex, StorageHandler& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionException& ex, StorageHandlerPtr storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 
@@ -36,7 +36,7 @@ std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionExc
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-std::vector<AbstractRequestPtr> AbstractRequest::execute(StorageHandler& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractRequest::execute(StorageHandlerPtr storageHandle) {
     if (requestId == INVALID_REQUEST_ID) {
         NES_THROW_RUNTIME_ERROR("Trying to execute a request before its id has been set");
     }
@@ -52,8 +52,8 @@ std::vector<AbstractRequestPtr> AbstractRequest::execute(StorageHandler& storage
 }
 
 //template<ConceptResponse ResponseType>
-void AbstractRequest::preExecution(StorageHandler& storageHandle) {
-    storageHandle.acquireResources(requestId, requiredResources);
+void AbstractRequest::preExecution(StorageHandlerPtr storageHandle) {
+    storageHandle->acquireResources(requestId, requiredResources);
 }
 
 std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }

@@ -37,6 +37,7 @@
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 
 namespace NES {
 
@@ -47,7 +48,7 @@ QueryService::QueryService(const QueryCatalogServicePtr& queryCatalogService,
                            const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                            bool useNewRequestExecutor,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor)
+                           const std::shared_ptr<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>& asyncRequestExecutor)
     : queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue),
       optimizerConfiguration(optimizerConfiguration), useNewRequestExecutor(useNewRequestExecutor),
       asyncRequestExecutor(asyncRequestExecutor) {
@@ -151,6 +152,8 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             throw exc;
         }
         throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
+    } else {
+        asyncRequestExecutor->runAsync();
     }
 }
 
@@ -174,7 +177,7 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
     if (!useNewRequestExecutor) {
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
         return queryRequestQueue->add(request);
-    }else
+    } else
 }
 
 void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {

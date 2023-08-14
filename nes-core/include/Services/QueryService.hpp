@@ -18,6 +18,7 @@
 #include <API/Query.hpp>
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <future>
 
 namespace NES::Optimizer {
@@ -54,12 +55,12 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 }// namespace Catalogs
 
-class StorageHandler;
+class TwoPhaseLockingStorageHandler;
 
 namespace Experimental {
-template<typename StorageHandler>
+template<typename TwoPhaseLockingStorageHandler>
 class AsyncRequestExecutor;
-using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<StorageHandler>>;
+using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>;
 }// namespace Experimental
 
 /**
@@ -75,7 +76,7 @@ class QueryService {
                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                           bool useNewRequestExecutor,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor);
+                          const std::shared_ptr<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>& asyncRequestExecutor);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -140,7 +141,7 @@ class QueryService {
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     Configurations::OptimizerConfiguration optimizerConfiguration;
     bool useNewRequestExecutor;
-    Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
+    std::shared_ptr<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>> asyncRequestExecutor;
 };
 
 };// namespace NES
