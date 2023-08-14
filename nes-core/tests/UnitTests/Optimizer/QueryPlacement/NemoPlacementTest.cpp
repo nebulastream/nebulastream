@@ -229,7 +229,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
 };
 
 /* Test query placement with bottom up strategy  */
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyNoMerge) {
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
@@ -260,7 +260,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyNoMerge) {
 }
 
 /* Test query placement with bottom up strategy  */
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyMerge) {
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
@@ -290,7 +290,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyMerge) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementThreeLevelsTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
     setupTopologyAndSourceCatalog(3, 10, 10);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
@@ -330,7 +330,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementThreeLevelsTopology) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
     setupTopologyAndSourceCatalog(4, 2, 1);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
@@ -375,7 +375,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsDenseTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
     setupTopologyAndSourceCatalog(4, 3, 3);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
