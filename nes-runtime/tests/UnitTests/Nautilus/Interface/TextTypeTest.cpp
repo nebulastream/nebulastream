@@ -228,7 +228,7 @@ TEST_F(TextTypeTest, likeTestFalse) {
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
 }
 
-TEST_F(TextTypeTest, c_strDoesNotReturnGarbageDataAfterEndOfString) {
+TEST_F(TextTypeTest, extractStringValueFromTupleBuffer) {
     // Create a tupleBuffer with a string that is 10 chars long
     const char* buf = "1234567890";
     auto tupleBuffer = bm->getBufferBlocking();
@@ -236,8 +236,7 @@ TEST_F(TextTypeTest, c_strDoesNotReturnGarbageDataAfterEndOfString) {
     std::strncpy(tupleBuffer.getBuffer<char>() + sizeof(uint32_t), buf, std::strlen(buf) + 1);
     // Create a text value from this string that's only 5 chars long
     auto textValue = NES::Nautilus::TextValue::create(tupleBuffer, 5_u32);
-    // The c_str returned by the text value is 10 chars long instead of 5,
-    // because the buffer does not contain \0 after the 5th char.
+    // Call strn_copy to create a null terminated string of the text value.
     const char* expected = "12345";
     auto actual = textValue->strn_copy();
     NES_DEBUG("expected = {}, actual = {}", expected, actual);
