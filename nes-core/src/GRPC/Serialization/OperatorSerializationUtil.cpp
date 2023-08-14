@@ -192,16 +192,14 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializedOperator.mutable_details()->PackFrom(renameDetails);
 
     } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
-        // Serialize Map Java UDF operator
+        // Serialize Map UDF operator
         serializeUDFOperator<MapUDFLogicalOperatorNode, SerializableOperator_MapUDFDetails>(
-            *operatorNode->as<MapUDFLogicalOperatorNode>(),
-            serializedOperator);
+            *operatorNode->as<MapUDFLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
-        // Serialize FlatMap Java UDF operator
+        // Serialize FlatMap UDF operator
         serializeUDFOperator<FlatMapUDFLogicalOperatorNode, SerializableOperator_FlatMapUDFDetails>(
-            *operatorNode->as<FlatMapUDFLogicalOperatorNode>(),
-            serializedOperator);
+            *operatorNode->as<FlatMapUDFLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<OpenCLLogicalOperatorNode>()) {
         // Serialize map udf operator
@@ -365,16 +363,16 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         operatorNode = LogicalOperatorFactory::createRenameSourceOperator(renameDetails.newsourcename());
 
     } else if (details.Is<SerializableOperator_MapUDFDetails>()) {
-        NES_TRACE("Deserialize Map Java UDF operator.");
-        auto mapJavaUDFDetails = SerializableOperator_MapUDFDetails();
-        details.UnpackTo(&mapJavaUDFDetails);
-        operatorNode = deserializeMapUDFOperator(mapJavaUDFDetails);
+        NES_TRACE("Deserialize Map UDF operator.");
+        auto mapUDFDetails = SerializableOperator_MapUDFDetails();
+        details.UnpackTo(&mapUDFDetails);
+        operatorNode = deserializeMapUDFOperator(mapUDFDetails);
 
     } else if (details.Is<SerializableOperator_FlatMapUDFDetails>()) {
-        NES_TRACE("Deserialize FlatMap Java UDF operator.");
-        auto flatMapJavaUDFDetails = SerializableOperator_FlatMapUDFDetails();
-        details.UnpackTo(&flatMapJavaUDFDetails);
-        operatorNode = deserializeFlatMapUDFOperator(flatMapJavaUDFDetails);
+        NES_TRACE("Deserialize FlatMap UDF operator.");
+        auto flatMapUDFDetails = SerializableOperator_FlatMapUDFDetails();
+        details.UnpackTo(&flatMapUDFDetails);
+        operatorNode = deserializeFlatMapUDFOperator(flatMapUDFDetails);
 
     } else if (details.Is<SerializableOperator_OpenCLOperatorDetails>()) {
         NES_TRACE("Deserialize Open CL operator.");
