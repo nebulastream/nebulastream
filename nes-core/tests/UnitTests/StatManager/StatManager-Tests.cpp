@@ -14,19 +14,11 @@
 
 #include <fstream>
 #include <NesBaseTest.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "StatManager/StatManager.hpp"
-
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <StatManager/StatManager.hpp>
+#include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/TestUtils.hpp>
 
 namespace NES {
 
@@ -61,29 +53,47 @@ namespace NES {
 
   TEST_F(StatManagerTest, createStatTest) {
     statManager->createStat(*StatCollectorConfig);
-    auto statCollectors = statManager->getStatCollectors();
+    auto& statCollectors = statManager->getStatCollectors();
 
     EXPECT_EQ(statCollectors.empty(), false);
   }
 
   TEST_F(StatManagerTest, queryStatTest) {
     statManager->createStat(*StatCollectorConfig);
-    auto statCollectors = statManager->getStatCollectors();
-    auto& cm = statCollectors.at(0);
+    auto& statCollectors = statManager->getStatCollectors();
+    auto& cmStatCollector = statCollectors.at(0);
+    auto cm = dynamic_cast<Experimental::Statistics::CountMin*>(cmStatCollector.get());
+    auto h3 = cm->getClassOfHashFunctions();
+    auto q = h3->getQ();
+    auto sketchPointer = cm->getDataPointer();
 
-    for (uint32_t i = 0; i < 1000000; i++) {
-      cm->update(i);
-    }
+    bool correctCounterIncremented = true;
+    std::vector<uint32_t> indexes(cm->getDepth(), 0);
+    std::vector<uint32_t> previousResults(cm->getDepth(), 0);
 
-    bool nearlyEqual = true;
-    for (uint32_t i = 0; i < 32 * 1024; i++) {
+    // increment counter for keys 1 to 1000
+    for (uint32_t i = 0; i < 1000; i++) {
+      uint32_t hash = 0;
 
-      auto stat = statManager->queryStat(*StatCollectorConfig, i);
-      if (stat < 29 || stat > 32) {
-        nearlyEqual = false;
+      // save which counters have to be incremented and what the previous value was in the sketch
+      for (uint32_t j = 0; j < cm->getDepth(); j++) {
+        hash = (h3->hashH3(i + 1, q + (j * 32))) % cm->getWidth();
+        previousResults[j] = sketchPointer[j][hash];
+        indexes[j] = hash;
+      }
+
+      // actually update the counter
+      cmStatCollector->update(i + 1);
+
+      // check if the value was actually incremented
+      for (uint32_t j = 0; j < cm->getDepth(); j++) {
+        uint32_t newResult = sketchPointer[j][indexes[j]];
+        if (newResult != previousResults[j] + 1) {
+          correctCounterIncremented = false;
+        }
       }
     }
-    EXPECT_EQ(nearlyEqual, true);
+    EXPECT_EQ(correctCounterIncremented, true);
   }
   
   TEST_F(StatManagerTest, deleteStatTest) {

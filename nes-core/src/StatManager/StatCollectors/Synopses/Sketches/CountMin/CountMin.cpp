@@ -15,7 +15,7 @@
 #include <cstring>
 #include <cmath>
 #include <Util/Logger/Logger.hpp>
-#include "StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp"
+#include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 
 namespace NES::Experimental::Statistics {
 
@@ -136,7 +136,7 @@ namespace NES::Experimental::Statistics {
     auto cmSketchConfig = new StatCollectorConfig(PSN1 + PSN2, leftCM->getField(), "FrequencyCM", leftCM->getDuration(),
                                      leftCM->getFrequency(), error, prob, 0, 0);
 
-    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
+    std::unique_ptr<CountMin> mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
 //    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
 
     uint32_t** leftSketchData = leftCM->getDataPointer();

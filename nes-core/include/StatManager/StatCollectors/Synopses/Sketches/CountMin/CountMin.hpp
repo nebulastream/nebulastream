@@ -15,15 +15,13 @@
 #define NES_CORE_INCLUDE_STATMANAGER_STATCOLLECTORS_SYNOPSES_SKETCHES_COUNTMIN_COUNTMIN_HPP
 
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
-#include "StatManager/StatCollectors/StatCollector.hpp"
-#include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
-#include "StatManager/Util/Hashing.hpp"
+#include <StatManager/StatCollectors/StatCollector.hpp>
+#include <StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp>
+#include <StatManager/Util/Hashing.hpp>
 
 namespace NES::Experimental::Statistics {
 
   class CountMin : public Sketch {
-
-    using CountMinPtr = std::unique_ptr<CountMin>;
 
     public:
       [[nodiscard]] double getError() const;

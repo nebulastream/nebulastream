@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
-#include "StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp"
+#include <StatManager/StatCollectors/Synopses/Sketches/Sketches.hpp>
+#include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 
