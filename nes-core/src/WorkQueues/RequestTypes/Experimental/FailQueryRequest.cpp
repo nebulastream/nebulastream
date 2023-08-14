@@ -87,6 +87,4 @@ std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequ
     //no follow up requests
     return {};
 }
-
-FailQueryResponse::FailQueryResponse(SharedQueryId sharedQueryId) : sharedQueryId(sharedQueryId) {}
 }// namespace NES::Experimental

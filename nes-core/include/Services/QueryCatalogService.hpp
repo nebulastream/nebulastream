@@ -53,7 +53,7 @@ class QueryCatalogService {
      * @return query catalog entry or nullptr
      */
     Catalogs::Query::QueryCatalogEntryPtr
-    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
+    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, const Optimizer::PlacementStrategy placementStrategyName);
 
     /**
      * Add sub query meta data to the query

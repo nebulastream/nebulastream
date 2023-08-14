@@ -18,18 +18,21 @@
 #include <API/Query.hpp>
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <future>
 
-namespace NES::Optimizer {
+namespace z3 {
+class Context;
+using ContextPtr = std::shared_ptr<context>;
+}// namespace z3
+
+namespace NES {
+namespace Optimizer {
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
-}// namespace NES::Optimizer
-
-namespace NES {
+}// namespace Optimizer
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
@@ -55,12 +58,9 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 }// namespace Catalogs
 
-class TwoPhaseLockingStorageHandler;
-
 namespace Experimental {
-template<typename TwoPhaseLockingStorageHandler>
 class AsyncRequestExecutor;
-using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>;
+using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor>;
 }// namespace Experimental
 
 /**
@@ -69,19 +69,20 @@ using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor<TwoPhaseLoc
 class QueryService {
 
   public:
-    explicit QueryService(const QueryCatalogServicePtr& queryCatalogService,
+    explicit QueryService(bool useNewRequestExecutor,
+                          Configurations::OptimizerConfiguration optimizerConfiguration,
+                          const QueryCatalogServicePtr& queryCatalogService,
                           const RequestQueuePtr& queryRequestQueue,
                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                           const QueryParsingServicePtr& queryParsingService,
                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                          bool useNewRequestExecutor,
-                          Configurations::OptimizerConfiguration optimizerConfiguration,
-                          const std::shared_ptr<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>& asyncRequestExecutor);
+                          const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
+                          const z3::ContextPtr& z3Context);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
-     * @param placementStrategyName : name of the placement strategy to be used.
+     * @param placementStrategy : name of the placement strategy to be used.
      * @param faultTolerance : fault-tolerance guarantee for the given query.
      * @param lineage : lineage type for the given query.
      * @return queryId : query id of the valid input query.
@@ -89,7 +90,7 @@ class QueryService {
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                                            const std::string& placementStrategyName,
+                                            const Optimizer::PlacementStrategy placementStrategy,
                                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
                                             const LineageType lineage = LineageType::NONE);
 
@@ -97,14 +98,14 @@ class QueryService {
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
-     * @param placementStrategyName : Name of the placement strategy
+     * @param placementStrategy : Name of the placement strategy
      * @param faultTolerance : fault-tolerance guarantee for the given query.
      * @param lineage : lineage type for the given query.
      * @return query id
      */
     QueryId addQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
-                            const std::string& placementStrategyName,
+                            const Optimizer::PlacementStrategy placementStrategy,
                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
                             const LineageType lineage = LineageType::NONE);
 
@@ -123,10 +124,11 @@ class QueryService {
      * @warning: this method is primarily designed to be called only by the system.
      *
      * @param sharedQueryId : shared query plan id of the shared query plan to be stopped.
+     * @param querySubPlanId: id of the subquery plan that failed
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
-    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason);
+    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, const std::string& failureReason);
 
   private:
     /**
@@ -135,13 +137,15 @@ class QueryService {
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
+    bool useNewRequestExecutor;
+    Configurations::OptimizerConfiguration optimizerConfiguration;
     QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    Configurations::OptimizerConfiguration optimizerConfiguration;
-    bool useNewRequestExecutor;
-    std::shared_ptr<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>> asyncRequestExecutor;
+    Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
+    z3::ContextPtr z3Context;
+    QueryParsingServicePtr queryParsingService;
 };
 
 };// namespace NES

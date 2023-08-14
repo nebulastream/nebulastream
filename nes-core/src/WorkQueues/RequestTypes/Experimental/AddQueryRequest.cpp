@@ -45,11 +45,15 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
@@ -59,12 +63,14 @@
 #include <utility>
 
 namespace NES::Experimental {
-AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
-                                 Optimizer::PlacementStrategy queryPlacementStrategy,
+
+AddQueryRequest::AddQueryRequest(const std::string& queryString,
+                                 const Optimizer::PlacementStrategy queryPlacementStrategy,
                                  const FaultToleranceType faultTolerance,
                                  const LineageType lineage,
-                                 uint8_t maxRetries,
-                                 z3::ContextPtr z3Context)
+                                 const uint8_t maxRetries,
+                                 const z3::ContextPtr& z3Context,
+                                 const QueryParsingServicePtr& queryParsingService)
     : AbstractRequest({ResourceType::QueryCatalogService,
                        ResourceType::GlobalExecutionPlan,
                        ResourceType::Topology,
@@ -72,21 +78,44 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::UdfCatalog,
                        ResourceType::SourceCatalog},
                       maxRetries),
-      queryId(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      faultTolerance(faultTolerance), lineage(lineage), z3Context(std::move(z3Context)) {}
+      queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
+      faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(queryParsingService) {}
 
-std::shared_ptr<AddQueryRequest> AddQueryRequest::create(const QueryPlanPtr& queryPlan,
-                                                         Optimizer::PlacementStrategy queryPlacementStrategy,
-                                                         const FaultToleranceType faultTolerance,
-                                                         const LineageType lineage,
-                                                         uint8_t maxRetries,
-                                                         z3::ContextPtr z3Context) {
-    return std::make_shared<AddQueryRequest>(queryPlan,
-                                             queryPlacementStrategy,
-                                             faultTolerance,
-                                             lineage,
-                                             maxRetries,
-                                             std::move(z3Context));
+AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
+                                 const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                 const FaultToleranceType faultTolerance,
+                                 const LineageType lineage,
+                                 const uint8_t maxRetries,
+                                 const z3::ContextPtr& z3Context)
+    : AbstractRequest({ResourceType::QueryCatalogService,
+                       ResourceType::GlobalExecutionPlan,
+                       ResourceType::Topology,
+                       ResourceType::GlobalQueryPlan,
+                       ResourceType::UdfCatalog,
+                       ResourceType::SourceCatalog},
+                      maxRetries),
+      queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), faultTolerance(faultTolerance),
+      lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
+
+AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
+                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                           const FaultToleranceType faultTolerance,
+                                           const LineageType lineage,
+                                           const uint8_t maxRetries,
+                                           const z3::ContextPtr& z3Context,
+                                           const QueryParsingServicePtr& queryParsingService) {
+    return std::make_shared<AddQueryRequest>(
+        AddQueryRequest(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context, queryParsingService));
+}
+
+AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
+                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                           const FaultToleranceType faultTolerance,
+                                           const LineageType lineage,
+                                           const uint8_t maxRetries,
+                                           const z3::ContextPtr& z3Context) {
+    return std::make_shared<AddQueryRequest>(
+        AddQueryRequest(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context));
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
@@ -143,6 +172,7 @@ void AddQueryRequest::postExecution([[maybe_unused]] StorageHandlerPtr storageHa
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandlerPtr storageHandler) {
     try {
         NES_DEBUG("Acquiring required resources.");
+        // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
         auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
@@ -152,6 +182,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
         auto coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
 
         NES_DEBUG("Initializing various optimization phases.");
+        // Initialize all necessary phases
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         auto queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
@@ -170,11 +201,40 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHand
             Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
         auto memoryLayoutSelectionPhase =
             Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
+        auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
+        auto semanticQueryValidation =
+            Optimizer::SemanticQueryValidation::create(sourceCatalog,
+                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation,
+                                                       udfCatalog);
 
-        NES_DEBUG("Initializing request processing.");
+        // Compile and perform syntactic check if necessary
+        if (!queryString.empty() && !queryPlan) {
+            // Checking the syntactic validity and compiling the query string to an object
+            queryPlan = syntacticQueryValidation->validate(queryString);
+        } else if (queryPlan && queryString.empty()) {
+            queryString = queryPlan->toString();
+        } else {
+            //FIXME: error handling
+        }
+
+        // Set unique identifier and additional properties to the query
+        auto queryId = PlanIdGenerator::getNextQueryId();
+        queryPlan->setQueryId(queryId);
+        queryPlan->setPlacementStrategy(queryPlacementStrategy);
+        queryPlan->setFaultToleranceType(faultTolerance);
+        queryPlan->setLineageType(lineage);
+
+        // Perform semantic validation
+        semanticQueryValidation->validate(queryPlan);
+
+        // respond to the calling service with the query id
+        responsePromise.set_value(std::make_shared<AddQueryResponse>(queryId));
+
+        // Create a new entry in the query catalog
+        queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
+
         //1. Add the initial version of the query to the query catalog
         queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
-        NES_INFO("Request received for optimizing and deploying of the query {}", queryId);
 
         //2. Set query status as Optimizing
         queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");

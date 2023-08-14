@@ -109,7 +109,7 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto storageHandler = TwoPhaseLockingStorageHandler({coordinatorConfiguration,
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                          topology,
                                                          globalExecutionPlan,
                                                          queryCatalogService,
@@ -118,7 +118,7 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
                                                          udfCatalog});
 
     //Create new entry in query catalog service
-    queryCatalogService->createNewEntry("query string", queryPlan, "TopDown");
+    queryCatalogService->createNewEntry("query string", queryPlan, Optimizer::PlacementStrategy::TopDown);
 
     EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::REGISTERED);
 

@@ -264,7 +264,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 }
             }
             std::string* queryString = protobufMessage->mutable_querystring();
-            std::string placementStrategy = context->at("placement").value();
+            auto placementStrategy =
+                magic_enum::enum_cast<Optimizer::PlacementStrategy>(context->at("placement").value()).value();
             auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
             auto lineageType = magic_enum::enum_cast<LineageType>(lineageString).value();
             QueryId queryId =
