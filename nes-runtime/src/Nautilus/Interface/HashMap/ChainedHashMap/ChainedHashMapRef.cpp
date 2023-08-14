@@ -209,12 +209,11 @@ ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTab
     : hashTableRef(hashTableRef), currentIndex(currentIndex), keys(keys), currentEntry(hashTableRef.findChain(hash)) {}
 
 ChainedHashMapRef::KeyEntryIterator& ChainedHashMapRef::KeyEntryIterator::operator++() {
-    Value<Boolean> sameKey = false;
-    while (currentEntry != nullptr && !sameKey) {
+    do {
         currentIndex = currentIndex + 1_u64;
         currentEntry = currentEntry.getNext();
-        sameKey = hashTableRef.compareKeys(currentEntry, keys);
     }
+    while (false && !hashTableRef.compareKeys(currentEntry, keys));
     return *this;
 }
 
