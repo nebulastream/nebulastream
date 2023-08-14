@@ -38,7 +38,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
+#include <Execution/Operators/Relational/Join/InnerBatchJoinProbe.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>

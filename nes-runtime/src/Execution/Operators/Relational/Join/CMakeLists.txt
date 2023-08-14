@@ -14,5 +14,9 @@
 add_source_files(nes-runtime
         BatchJoinBuild.cpp
         BatchJoinHandler.cpp
-        BatchJoinProbe.cpp
+        AbstractBatchJoinProbe.cpp
+        InnerBatchJoinProbe.cpp
+        AntiBatchJoinProbe.cpp
+        OuterBatchJoinProbe.cpp
+        SemiBatchJoinProbe.cpp
         )

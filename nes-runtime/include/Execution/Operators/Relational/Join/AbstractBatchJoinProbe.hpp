@@ -17,17 +17,20 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Batch join probe operator.
+ * @brief Abstract batch join probe operator.
  * The operator receives input records and uses their key to probe a global hash table.
  */
-class BatchJoinProbe : public ExecutableOperator {
+class AbstractBatchJoinProbe : public ExecutableOperator {
   public:
     /**
-     * @brief Creates a batch join probe operator.
+     * @brief Creates an abstract batch join probe operator.
      * @param operatorHandlerIndex index of the operator handler.
      * @param keyExpressions expressions that extract the key fields from the input record.
      * @param keyDataTypes data types of the key fields.
@@ -35,7 +38,7 @@ class BatchJoinProbe : public ExecutableOperator {
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
      */
-    BatchJoinProbe(uint64_t operatorHandlerIndex,
+    AbstractBatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
                    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
@@ -43,9 +46,17 @@ class BatchJoinProbe : public ExecutableOperator {
                    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+    /**
+     * @brief Local join probe state containing the hash map.
+     */
+    class LocalJoinProbeState : public Operators::OperatorState {
+      public:
+        explicit LocalJoinProbeState(Interface::ChainedHashMapRef hashMap) : hashMap(std::move(hashMap)){};
+        Interface::ChainedHashMapRef hashMap;
+    };
+
+  protected:
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;

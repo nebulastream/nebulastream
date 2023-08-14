@@ -15,12 +15,10 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
+#include <Execution/Operators/Relational/Join/AbstractBatchJoinProbe.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <utility>
 
@@ -31,14 +29,7 @@ void* getProbeHashMapProxy(void* op) {
     return handler->getGlobalHashMap();
 }
 
-class LocalJoinProbeState : public Operators::OperatorState {
-  public:
-    explicit LocalJoinProbeState(Interface::ChainedHashMapRef hashMap) : hashMap(std::move(hashMap)){};
-
-    Interface::ChainedHashMapRef hashMap;
-};
-
-BatchJoinProbe::BatchJoinProbe(uint64_t operatorHandlerIndex,
+AbstractBatchJoinProbe::AbstractBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
                                const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
@@ -56,11 +47,11 @@ BatchJoinProbe::BatchJoinProbe(uint64_t operatorHandlerIndex,
     }
 }
 
-void BatchJoinProbe::setup(ExecutionContext& executionCtx) const { ExecutableOperator::setup(executionCtx); }
+void AbstractBatchJoinProbe::setup(ExecutionContext& executionCtx) const { ExecutableOperator::setup(executionCtx); }
 
-void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+void AbstractBatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the global probe hash table.
+    // We use this here to load the global probe hash table.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the hash map
@@ -71,37 +62,6 @@ void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto globalHashMap = std::make_unique<LocalJoinProbeState>(chainedHM);
     ctx.setLocalOperatorState(this, std::move(globalHashMap));
     ExecutableOperator::open(ctx, rb);
-}
-
-void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-    // 1. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
-        keyValues.emplace_back(exp->execute(record));
-    }
-
-    // 3. load the reference to the global hash map.
-    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
-    auto& hashMap = state->hashMap;
-
-    // 4. calculate hash
-    auto hash = hashFunction->calculate(keyValues);
-
-    // 5. lookup the key in the hashmap
-    auto entry = hashMap.find(hash, keyValues);
-
-    // 6. check if join partner was found
-    if (entry != nullptr) {
-        // 7. Create result record
-        // 7.1 load values from the probe side and store them in the record.
-        auto valuePtr = entry.getValuePtr();
-        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
-            auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-            record.write(probeFieldIdentifiers[i], value);
-            valuePtr = valuePtr + valueDataTypes[i]->size();
-        }
-        this->child->execute(ctx, record);
-    }
 }
 
 }// namespace NES::Runtime::Execution::Operators

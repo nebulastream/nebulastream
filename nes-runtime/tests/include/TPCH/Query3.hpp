@@ -36,7 +36,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
+#include <Execution/Operators/Relational/Join/InnerBatchJoinProbe.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -139,7 +139,7 @@ class TPCH_Query3 {
                                                                        "o_orderkey",
                                                                        "o_orderdate",
                                                                        "o_shippriority"};
-        auto customersJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+        auto customersJoinProbe = std::make_shared<InnerBatchJoinProbe>(0 /*handler index*/,
                                                                    ordersProbeKeys,
                                                                    std::vector<PhysicalTypePtr>{integerType},
                                                                    std::vector<Record::RecordFieldIdentifier>(),
@@ -208,7 +208,7 @@ class TPCH_Query3 {
 
         std::vector<Record::RecordFieldIdentifier> orderProbeFieldNames = {"o_shippriority", "o_orderdate"};
 
-        auto lineitemJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+        auto lineitemJoinProbe = std::make_shared<InnerBatchJoinProbe>(0 /*handler index*/,
                                                                   lineitemProbeKeys,
                                                                   std::vector<PhysicalTypePtr>{integerType},
                                                                   orderProbeFieldNames,
