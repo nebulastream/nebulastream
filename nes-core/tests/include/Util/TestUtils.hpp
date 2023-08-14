@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include "Runtime/TupleBuffer.hpp"
+#include <Runtime/TupleBuffer.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -762,7 +762,6 @@ inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
 CSVSourceTypePtr createSourceConfig(const std::string& fileName);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
-
 };// namespace TestUtils
 
 class DummyQueryListener : public AbstractQueryStatusListener {
@@ -790,6 +789,16 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  * @param waypoints a vector of waypoints to be written to the file
  */
 void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints);
+
+/**
+ * This function counts the number of times the search string appears within the
+ * target string. It uses the std::string::find() method to locate occurrences.
+ *
+ * @param searchString The string to search for.
+ * @param targetString The string in which to search for occurrences.
+ * @return The number of occurrences of the search string within the target string.
+ */
+uint64_t countOccurrences(const std::string& searchString, const std::string& targetString);
 
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

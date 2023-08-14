@@ -84,7 +84,7 @@ nlohmann::json MonitoringAgent::getMetricsAsJson() {
             metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
         }
     }
-    NES_INFO("MonitoringAgent: Metrics collected {}", metricsJson);
+    NES_INFO("MonitoringAgent: Metrics collected {}", metricsJson.dump());
 
     return metricsJson;
 }

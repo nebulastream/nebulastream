@@ -68,7 +68,7 @@ TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     metricStore->addMetrics(nodeId, std::make_shared<Monitoring::Metric>(myString));
 
     Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics).dump());
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 1);
 
@@ -90,7 +90,7 @@ TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
     metricStore->addMetrics(nodeId, networkMetrics);
 
     auto storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics).dump());
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 2);
 

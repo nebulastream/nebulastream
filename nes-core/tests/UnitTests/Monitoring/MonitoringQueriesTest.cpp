@@ -162,7 +162,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
 
         auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
 
-        // test disk metrics
+        // test metrics
         for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
             Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
             ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),

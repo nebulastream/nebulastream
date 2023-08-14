@@ -137,21 +137,8 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
     // memory metrics
     try {
         NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
-
-        if (access(metricLocations[0].c_str(), F_OK) != -1) {
-            std::string memLine;
-            std::ifstream memoryLoc(metricLocations[0]);
-            std::string memoryStr((std::istreambuf_iterator<char>(memoryLoc)), std::istreambuf_iterator<char>());
-
-            // check if a limit is set for the given cgroup, the smaller value is the available RAM
-            uint64_t systemMem = LinuxSystemResourcesReader::readMemoryStats().TOTAL_RAM;
-            uint64_t limitMem = std::stoull(memoryStr);// TODO: lets coordinator crash on macOS-Intel as memoryStr="". #2307
-            output.totalMemoryBytes = std::min(limitMem, systemMem);
-        } else {
-            NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");
-            output.totalMemoryBytes = 0;
-        }
-
+        uint64_t systemMem = LinuxSystemResourcesReader::readMemoryStats().TOTAL_RAM;
+        output.totalMemoryBytes = systemMem;
     } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static memory metrics {}", e.what());
     }
@@ -170,7 +157,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 
             output.cpuPeriodUS = std::stoll(periodStr);
         } else {
-            NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_period_us not available");
+            NES_WARNING("LinuxSystemResourcesReader: File for cpu.cfs_period_us not available");
             output.cpuPeriodUS = 0;
         }
 
@@ -181,7 +168,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 
             output.cpuQuotaUS = std::stoll(quotaStr);
         } else {
-            NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
+            NES_WARNING("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
             output.cpuQuotaUS = 0;
         }
     } catch (const Exceptions::RuntimeException& e) {

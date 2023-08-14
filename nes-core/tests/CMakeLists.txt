@@ -647,14 +647,8 @@ add_nes_unit_test(metric-store-test "UnitTests/Monitoring/MetricStoreTest.cpp")
 add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp")
 
 
-# MonitoringIntegrationTest TODO disabled until issue #3237 is fixed
-#add_nes_integration_test(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
-#set_tests_properties(monitoring-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-#add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
-
-# NemoIntegrationTest disabled until issue #3254 is fixed
-#add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
-#add_dependencies(nemo-integration-test nesCoordinator nesWorker)
+# NemoIntegrationTest
+add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
 
 ### StaticDataSourceIntegrationTest ###
 #add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
@@ -725,6 +719,10 @@ add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-que
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)
 
+add_executable(e2e-monitoring-test "E2e/E2EMonitoringTest.cpp")
+target_link_libraries(e2e-monitoring-test nes-core-test-util)
+add_test(NAME e2e-monitoring-test COMMAND e2e-monitoring-test)
+set_tests_properties(e2e-monitoring-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(e2e-monitoring-test nesCoordinator nesWorker)
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
-
-

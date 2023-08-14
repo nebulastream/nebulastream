@@ -18,7 +18,6 @@
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestSinkDescriptor.hpp>
-#include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES::Runtime::Execution {
