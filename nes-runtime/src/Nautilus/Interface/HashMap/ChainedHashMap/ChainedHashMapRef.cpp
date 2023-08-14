@@ -130,9 +130,6 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
 }
 
 Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
-    if (entry == nullptr) {
-        return false;
-    }
     Value<Boolean> equals = true;
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
