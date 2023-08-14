@@ -25,19 +25,6 @@ struct StorageDataStructures;
 class SerialStorageHandler : public StorageHandler {
   public:
     /**
-     * @brief constructor
-     * @param storageDataStructures a struct containing pointers to the following data structures:
-     * -globalExecutionPlan
-     * -topology
-     * -queryCatalogService
-     * -globalQueryPlan
-     * -sourceCatalog
-     * -udfCatalog
-     * -lockManager
-     */
-    explicit SerialStorageHandler(StorageDataStructures storageDataStructures);
-
-    /**
      * @brief factory to create a serial storage manager object
      * @param storageDataStructures a struct containing pointers to the following data structures:
      * -globalExecutionPlan
@@ -49,7 +36,7 @@ class SerialStorageHandler : public StorageHandler {
      * -lockManager
      * @return shared pointer to the serial storage manager
      */
-    static std::shared_ptr<SerialStorageHandler> create(StorageDataStructures storageDataStructures);
+    static StorageHandlerPtr create(const StorageDataStructures& storageDataStructures);
 
     /**
      * @brief Obtain a mutable topology handle.
@@ -93,7 +80,26 @@ class SerialStorageHandler : public StorageHandler {
      */
     UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
 
+    /**
+     * @brief Obtain a mutable Coordinator configuration
+     * @param requestId The id of the request making the call
+     * @return a handle to the coordinator configuration
+     */
     CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
+
+  private:
+    /**
+     * @brief constructor
+     * @param storageDataStructures a struct containing pointers to the following data structures:
+     * -globalExecutionPlan
+     * -topology
+     * -queryCatalogService
+     * -globalQueryPlan
+     * -sourceCatalog
+     * -udfCatalog
+     * -lockManager
+     */
+    explicit SerialStorageHandler(StorageDataStructures storageDataStructures);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;

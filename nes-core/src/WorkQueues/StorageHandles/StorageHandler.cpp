@@ -11,9 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
+
 namespace NES {
+
 void StorageHandler::acquireResources(const RequestId, const std::vector<ResourceType>&) {}
 
 void StorageHandler::releaseResources(const RequestId) {}
+
+GlobalExecutionPlanHandle StorageHandler::getGlobalExecutionPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+TopologyHandle StorageHandler::getTopologyHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+QueryCatalogServiceHandle StorageHandler::getQueryCatalogServiceHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+GlobalQueryPlanHandle StorageHandler::getGlobalQueryPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+SourceCatalogHandle StorageHandler::getSourceCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+UDFCatalogHandle StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
+
 }// namespace NES

@@ -27,8 +27,8 @@ SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStru
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
 
-std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
-    return std::make_shared<SerialStorageHandler>(storageDataStructures);
+StorageHandlerPtr SerialStorageHandler::create(const StorageDataStructures& storageDataStructures) {
+    return std::make_shared<SerialStorageHandler>(SerialStorageHandler(storageDataStructures));
 }
 
 GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {
