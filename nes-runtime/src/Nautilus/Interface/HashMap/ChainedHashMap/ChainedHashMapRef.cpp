@@ -205,7 +205,7 @@ Value<UInt64> ChainedHashMapRef::getEntriesPerPage() {
 }
 
 ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& hash,
-                                                      const std::vector<Value<>> keys, const Value<UInt64>& currentIndex)
+                                                      const std::vector<Value<>>& keys, const Value<UInt64>& currentIndex)
     : hashTableRef(hashTableRef), currentIndex(currentIndex), keys(keys), currentEntry(hashTableRef.findChain(hash)) {}
 
 ChainedHashMapRef::KeyEntryIterator& ChainedHashMapRef::KeyEntryIterator::operator++() {
