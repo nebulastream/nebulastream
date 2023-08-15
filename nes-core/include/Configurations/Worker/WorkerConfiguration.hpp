@@ -132,6 +132,13 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
                                                          64,
                                                          "Number buffers in source local buffer pool."};
+
+    /**
+     * @brief Configures the wait time for collecting metrics in the monitoring streams.
+     * Monitoring has to be enabled for it to work.
+     */
+    UIntOption monitoringWaitTime = {MONITORING_WAIT_TIME, 1000, "Sampling period of metrics (ms)."};
+
     /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
@@ -283,6 +290,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queuePinList,
                 &numaAwareness,
                 &enableMonitoring,
+                &monitoringWaitTime,
                 &queryCompiler,
                 &physicalSources,
                 &locationCoordinates,

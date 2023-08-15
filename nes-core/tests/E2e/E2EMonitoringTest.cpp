@@ -158,6 +158,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
+                                           TestUtils::monitoringWaitTime(500),
                                            TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
@@ -165,6 +166,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
+                                           TestUtils::monitoringWaitTime(500),
                                            TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
