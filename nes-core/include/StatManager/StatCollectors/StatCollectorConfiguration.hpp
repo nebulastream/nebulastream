@@ -115,7 +115,7 @@ namespace NES::Experimental::Statistics {
       StatCollectorConfig(const std::string& physicalSourceName = "defaultPhysicalSourceName", const std::string& fieldName = "defaultFieldName",
                                            const std::string& methodName = "defaultStatMethodName", uint32_t dur = 1, uint32_t freq = 100,
                                            double_t err = 0.0001, double_t prob = 0.0001, uint32_t dep = 0, uint32_t wid = 0)
-        : physicalSourceName(sourceName), field(fieldName), statMethodName(methodName),
+        : physicalSourceName(physicalSourceName), field(fieldName), statMethodName(methodName),
           duration(dur), frequency(freq), error(err), probability(prob),
           depth(dep), width(wid) {
       }
