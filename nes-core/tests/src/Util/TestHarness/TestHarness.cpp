@@ -33,10 +33,10 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), performDistributedWindowOptimization(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
-      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
-      testHarnessResourcePath(testHarnessResourcePath) {}
+      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false),
+      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
+      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false),
+      topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness::TestHarness(Query queryWithoutSink,
                          uint16_t restPort,
@@ -46,7 +46,7 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(""), queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
       coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNautilus(false),
-      performDistributedWindowOptimization(false), memSrcFrequency(memSrcFrequency),
+      performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
       memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
       joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
       testHarnessResourcePath(testHarnessResourcePath) {}
@@ -64,6 +64,11 @@ TestHarness& TestHarness::enableNautilus() {
 
 TestHarness& TestHarness::enableDistributedWindowOptimization() {
     performDistributedWindowOptimization = true;
+    return *this;
+}
+
+TestHarness& TestHarness::enableNewRequestExecutor() {
+    useNewRequestExecutor = true;
     return *this;
 }
 
@@ -282,6 +287,11 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
+
+    if (useNewRequestExecutor) {
+        coordinatorConfiguration->enableNewRequestExecutor = true;
+    }
+
     if (useNautilus) {
         coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;

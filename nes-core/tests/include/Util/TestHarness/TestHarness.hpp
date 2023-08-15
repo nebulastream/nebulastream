@@ -111,6 +111,12 @@ class TestHarness {
     TestHarness& enableDistributedWindowOptimization();
 
     /**
+     * @brief Enable new request executor
+     * @return self
+     */
+    TestHarness& enableNewRequestExecutor();
+
+    /**
      * @brief Sets the join strategy
      * @param joinStrategy
      * @return Self
@@ -391,6 +397,7 @@ class TestHarness {
     uint16_t rpcPort;
     bool useNautilus;
     bool performDistributedWindowOptimization;
+    bool useNewRequestExecutor;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
     uint64_t bufferSize;
