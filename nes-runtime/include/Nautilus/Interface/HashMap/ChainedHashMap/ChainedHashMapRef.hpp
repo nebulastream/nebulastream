@@ -106,15 +106,18 @@ class ChainedHashMapRef {
      * @brief Iterator over all entries in the hash map with a specific key.
      */
     class KeyEntryIterator {
-    public:
-        KeyEntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& hash, const std::vector<Value<>>& keys, const Value<UInt64>& currentIndex);
+      public:
+        KeyEntryIterator(ChainedHashMapRef& hashTableRef,
+                         const Value<UInt64>& hash,
+                         const std::vector<Value<>>& keys,
+                         const Value<UInt64>& currentIndex);
         KeyEntryIterator& operator++();
         bool operator==(KeyEntryIterator other) const;
         bool operator==(std::nullptr_t) const;
         EntryRef operator*() const;
 
-    private:
-        ChainedHashMapRef &hashTableRef;
+      private:
+        ChainedHashMapRef& hashTableRef;
         Value<UInt64> currentIndex;
         std::vector<Value<>> keys;
         EntryRef currentEntry;
