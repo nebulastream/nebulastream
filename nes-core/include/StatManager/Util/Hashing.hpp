@@ -20,10 +20,30 @@
 
 namespace NES::Experimental::Statistics {
 
+  /**
+   * @brief a class which implements the family of H3 hashing functions
+   */
   class H3 {
-    public:
+  public:
+      /**
+       * @brief produces a H3 hash value given a seed array q
+       * @param key the key to be hashed
+       * @param q a pointer to a seed array q
+       * @return a hash value for the key
+       */
       uint32_t hashH3(uint32_t key, uint32_t* q);
+
+      /**
+       * @brief returns a pointer to the seed array of the H3 object
+       * @return mQ
+       */
       uint32_t* getQ();
+
+      /**
+       * @brief the constructor to create a family of hash functions
+       * @param depth the number of hash functions for the H3 object
+       * @param width the hashing interval will be [0, width - 1]
+       */
       H3(uint32_t depth, uint32_t width);
 
     private:
