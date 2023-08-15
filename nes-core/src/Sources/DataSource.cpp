@@ -362,7 +362,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         //next point in time when to start producing again
-        nextPeriodStartTime = uint64_t(startPeriod + (1));
+        nextPeriodStartTime = uint64_t(startPeriod + (10));
         NES_TRACE("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
                                                       << " nextPeriodStartTime=" << nextPeriodStartTime);
 
