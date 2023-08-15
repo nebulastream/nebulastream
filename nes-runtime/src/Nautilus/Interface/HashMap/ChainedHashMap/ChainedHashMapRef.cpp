@@ -97,7 +97,6 @@ ChainedHashMapRef::KeyEntryIterator ChainedHashMapRef::findAll(const Value<UInt6
     return {*this, hash, keys, 0_u64};
 }
 
-
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
     return findOrCreate(hash, keys, [](const EntryRef&) {
         // nop
@@ -204,8 +203,10 @@ Value<UInt64> ChainedHashMapRef::getEntriesPerPage() {
     return getMember(this->hashTableRef, ChainedHashMap, entriesPerPage).load<UInt64>();
 }
 
-ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& hash,
-                                                      const std::vector<Value<>>& keys, const Value<UInt64>& currentIndex)
+ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTableRef,
+                                                      const Value<UInt64>& hash,
+                                                      const std::vector<Value<>>& keys,
+                                                      const Value<UInt64>& currentIndex)
     : hashTableRef(hashTableRef), currentIndex(currentIndex), keys(keys), currentEntry(hashTableRef.findChain(hash)) {}
 
 ChainedHashMapRef::KeyEntryIterator& ChainedHashMapRef::KeyEntryIterator::operator++() {
@@ -221,11 +222,7 @@ bool ChainedHashMapRef::KeyEntryIterator::operator==(KeyEntryIterator other) con
     return currentEntry == nullptr && other.currentEntry == nullptr;
 }
 
-bool ChainedHashMapRef::KeyEntryIterator::operator==(std::nullptr_t)const {
-    return currentEntry == nullptr;
-}
+bool ChainedHashMapRef::KeyEntryIterator::operator==(std::nullptr_t) const { return currentEntry == nullptr; }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::KeyEntryIterator::operator*() const {
-    return currentEntry;
-}
+ChainedHashMapRef::EntryRef ChainedHashMapRef::KeyEntryIterator::operator*() const { return currentEntry; }
 }// namespace NES::Nautilus::Interface
