@@ -46,7 +46,6 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
     static CSVSourceTypePtr createCSVSourceType(std::string inputPath) {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::move(inputPath));
-        csvSourceType->setGatheringInterval(1);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
         csvSourceType->setNumberOfBuffersToProduce(1);
         csvSourceType->setSkipHeader(false);
