@@ -647,7 +647,7 @@ add_nes_unit_test(metric-collector-test "UnitTests/Monitoring/MetricCollectorTes
 add_nes_unit_test(metric-store-test "UnitTests/Monitoring/MetricStoreTest.cpp")
 
 # StatManager-Test
-add_nes_unit_test(StatManager-test "UnitTests/StatManager/StatManager-Tests.cpp")
+add_nes_unit_test(StatManager-test "UnitTests/StatManager/StatManagerTest.cpp")
 
 # UserDefinedMonitoringTest
 add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp")
