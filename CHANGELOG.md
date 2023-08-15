@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.196](https://github.com/nebulastream/nebulastream/tree/v0.5.196) (2023-08-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.195...v0.5.196)
+
+**Implemented enhancements:**
+
+- \[TASK\] Key Iterator for ChainedHashMap [\#4079](https://github.com/nebulastream/nebulastream/issues/4079)
+
+### Query Optimizer 🔧
+
+- \[Feature\] Define an interface for User/System requests of different type [\#3381](https://github.com/nebulastream/nebulastream/issues/3381)
+
 ## [v0.5.195](https://github.com/nebulastream/nebulastream/tree/v0.5.195) (2023-08-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.194...v0.5.195)
