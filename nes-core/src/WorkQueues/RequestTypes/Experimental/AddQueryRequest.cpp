@@ -77,7 +77,8 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                        ResourceType::Topology,
                        ResourceType::GlobalQueryPlan,
                        ResourceType::UdfCatalog,
-                       ResourceType::SourceCatalog},
+                       ResourceType::SourceCatalog,
+                       ResourceType::CoordinatorConfiguration},
                       maxRetries),
       queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(queryParsingService) {}
@@ -93,7 +94,8 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::Topology,
                        ResourceType::GlobalQueryPlan,
                        ResourceType::UdfCatalog,
-                       ResourceType::SourceCatalog},
+                       ResourceType::SourceCatalog,
+                       ResourceType::CoordinatorConfiguration},
                       maxRetries),
       queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), faultTolerance(faultTolerance),
       lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
@@ -336,7 +338,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
-    } catch (RequestExecutionException& exception) {
+    } catch (RequestExecutionException exception) {
+        NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(exception, storageHandler);
     }
     return {};

@@ -101,6 +101,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .validate()
@@ -127,6 +128,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .validate()
@@ -153,6 +155,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .validate()
@@ -179,6 +182,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate()
@@ -204,6 +208,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_10ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate()
@@ -230,6 +235,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate()
@@ -256,6 +262,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_0ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -282,6 +289,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_10ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -310,6 +318,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -343,6 +352,7 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_FT_OO_0ms) {
     };
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -375,6 +385,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_10ms) {
     };
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -403,6 +414,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_250ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -440,6 +452,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
@@ -476,6 +489,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
@@ -517,6 +531,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
     };
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
@@ -558,6 +573,7 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_0ms) {
     };
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
@@ -598,6 +614,7 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_10ms) {
     };
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
@@ -634,6 +651,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_250ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3

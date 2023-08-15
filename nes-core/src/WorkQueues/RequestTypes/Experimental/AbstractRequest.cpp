@@ -23,6 +23,7 @@ AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResour
       requiredResources(requiredResources) {}
 
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) {
+
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 
