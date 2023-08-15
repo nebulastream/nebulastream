@@ -183,7 +183,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef insert(const Value <UInt64> &hash, const std::vector<Value<>> &keys);
+    EntryRef insert(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
 
   private:
     Value<UInt64> getPageSize();
