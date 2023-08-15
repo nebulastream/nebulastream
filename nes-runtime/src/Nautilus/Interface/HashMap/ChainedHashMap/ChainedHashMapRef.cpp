@@ -68,14 +68,13 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash)
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash,
-                                                      const std::vector<Value<>>& keys) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
     // create new entry
     auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
-        auto &key = keys[i];
+        auto& key = keys[i];
         keyPtr.store(key);
         keyPtr = keyPtr + keyDataTypes[i]->size();
     }
