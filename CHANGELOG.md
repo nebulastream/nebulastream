@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.195](https://github.com/nebulastream/nebulastream/tree/v0.5.195) (2023-08-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.194...v0.5.195)
+
+**Implemented enhancements:**
+
+- \[TASK\] Insert for ChainedHashMap that is able to append to the chain [\#4099](https://github.com/nebulastream/nebulastream/issues/4099)
+
 ## [v0.5.194](https://github.com/nebulastream/nebulastream/tree/v0.5.194) (2023-08-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.193...v0.5.194)
