@@ -292,7 +292,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -396,7 +396,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -500,7 +500,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -604,7 +604,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -708,7 +708,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -812,7 +812,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -916,7 +916,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -1020,7 +1020,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);

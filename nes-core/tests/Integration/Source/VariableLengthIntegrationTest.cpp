@@ -108,7 +108,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     auto query = Query::from("variable_length").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);

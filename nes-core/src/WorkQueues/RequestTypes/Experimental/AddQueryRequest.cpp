@@ -56,6 +56,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
@@ -104,8 +105,13 @@ AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context,
                                            const QueryParsingServicePtr& queryParsingService) {
-    return std::make_shared<AddQueryRequest>(
-        AddQueryRequest(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context, queryParsingService));
+    return std::make_shared<AddQueryRequest>(queryPlan,
+                                             queryPlacementStrategy,
+                                             faultTolerance,
+                                             lineage,
+                                             maxRetries,
+                                             z3Context,
+                                             queryParsingService);
 }
 
 AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
@@ -114,15 +120,14 @@ AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                            const LineageType lineage,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context) {
-    return std::make_shared<AddQueryRequest>(
-        AddQueryRequest(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context));
+    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context);
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
-                                        [[maybe_unused]] StorageHandlerPtr storageHandler) {}
+                                        [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& exception,
-                                                          [[maybe_unused]] StorageHandlerPtr storageHandler) {
+                                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {
     try {
         NES_TRACE("Error: {}", exception.what());
         if (exception.instanceOf<Exceptions::QueryNotFoundException>()) {
@@ -165,11 +170,11 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& exception,
-                                         [[maybe_unused]] StorageHandlerPtr storageHandler) {}
+                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-void AddQueryRequest::postExecution([[maybe_unused]] StorageHandlerPtr storageHandler) {}
+void AddQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(StorageHandlerPtr storageHandler) {
+std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {
         NES_DEBUG("Acquiring required resources.");
         // Acquire all necessary resources

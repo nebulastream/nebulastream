@@ -117,35 +117,35 @@ class StopQueryRequest : public AbstractRequest {
      * @throws QueryPlacementException if the query placement phase fails
      * @throws RequestExecutionException if resource acquisition fails
      */
-    std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandlerPtr storageHandle) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandlerPtr storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandler) override;
+    void preRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandler) override;
+    void postRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      * @param requiredResources: The resources required during the execution phase
      */
-    void postExecution(StorageHandlerPtr storageHandler) override;
+    void postExecution(const StorageHandlerPtr& storageHandler) override;
 
   private:
     QueryId queryId;

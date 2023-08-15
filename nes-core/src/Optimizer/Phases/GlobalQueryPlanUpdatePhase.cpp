@@ -135,9 +135,9 @@ void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const StopQueryRequestP
 }
 
 void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const FailQueryRequestPtr& failQueryRequest) {
-    QueryId queryId = failQueryRequest->getQueryId();
-    NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
-    globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+    SharedQueryId sharedQueryId = failQueryRequest->getSharedQueryId();
+    NES_INFO("QueryProcessingService: Request received for stopping the query {}", sharedQueryId);
+    globalQueryPlan->removeQuery(sharedQueryId, RequestType::FailQuery);
 }
 
 void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr& addQueryRequest) {

@@ -319,7 +319,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::TopDown, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
 
     string query2 =
@@ -328,7 +328,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::TopDown, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
     start.set_value(true);
@@ -501,7 +501,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
         + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::TopDown, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
 
     string query2 =
@@ -510,7 +510,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
         + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::TopDown, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
     start.set_value(true);
@@ -737,7 +737,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -794,7 +794,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -850,7 +850,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -938,7 +938,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     EXPECT_THROW(
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY),
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY),
         InvalidQueryException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
@@ -997,11 +997,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     string query1 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
@@ -1111,12 +1111,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     string query1 =
         R"(Query::from("stream1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     string query2 =
         R"(Query::from("stream2").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
@@ -1203,12 +1203,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     string query1 =
         R"(Query::from("stream1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     string query2 =
         R"(Query::from("stream2").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
@@ -1280,11 +1280,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     string query1 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
@@ -1466,12 +1466,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     string query1 =
         R"(Query::from("stream1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     string query2 =
         R"(Query::from("stream2").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
@@ -1931,7 +1931,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -2079,7 +2079,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

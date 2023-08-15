@@ -25,11 +25,11 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -53,18 +53,14 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                  const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                  const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                                 RequestQueuePtr queryRequestQueue,
-                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration)
-    : queryProcessorRunning(true), queryCatalogService(queryCatalogService), queryRequestQueue(std::move(queryRequestQueue)),
-      globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog) {
+                                                 const RequestQueuePtr& queryRequestQueue,
+                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
+                                                 const z3::ContextPtr& z3Context)
+    : queryProcessorRunning(true), queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue),
+      globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog), z3Context(z3Context) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    z3::config cfg;
-    cfg.set("timeout", 1000);
-    cfg.set("model", false);
-    cfg.set("type_check", false);
-    z3Context = std::make_shared<z3::context>(cfg);
     queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                queryCatalogService,
@@ -76,8 +72,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                globalExecutionPlan);
     queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryDeploymentPhase =
-        QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+    queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
 }
 
@@ -197,7 +192,7 @@ void RequestProcessorService::start() {
                         queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
                     } else if (queryRequest->instanceOf<FailQueryRequest>()) {
                         auto failQueryRequest = queryRequest->as<FailQueryRequest>();
-                        auto sharedQueryPlanId = failQueryRequest->getQueryId();
+                        auto sharedQueryPlanId = failQueryRequest->getSharedQueryId();
                         auto failureReason = failQueryRequest->getFailureReason();
                         auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
                         for (const auto& queryId : queryIds) {

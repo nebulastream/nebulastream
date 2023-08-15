@@ -41,7 +41,7 @@ void GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     queryPlansToAdd.emplace_back(queryPlan);
 }
 
-void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
+void GlobalQueryPlan::removeQuery(uint64_t queryId, RequestType requestType) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
 
     if (RequestType::FailQuery == requestType) {

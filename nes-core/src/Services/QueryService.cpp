@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -28,7 +29,6 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
@@ -41,7 +41,7 @@
 
 namespace NES {
 
-QueryService::QueryService(bool useNewRequestExecutor,
+QueryService::QueryService(bool enableNewRequestExecutor,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
                            const QueryCatalogServicePtr& queryCatalogService,
                            const RequestQueuePtr& queryRequestQueue,
@@ -50,7 +50,7 @@ QueryService::QueryService(bool useNewRequestExecutor,
                            const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                            const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
                            const z3::ContextPtr& z3Context)
-    : useNewRequestExecutor(useNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
+    : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
       queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
       z3Context(z3Context), queryParsingService(queryParsingService) {
     NES_DEBUG("QueryService()");
@@ -65,7 +65,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
                                                       const FaultToleranceType faultTolerance,
                                                       const LineageType lineage) {
 
-    if (!useNewRequestExecutor) {
+    if (!enableNewRequestExecutor) {
         NES_INFO("QueryService: Validating and registering the user query.");
         QueryId queryId = PlanIdGenerator::getNextQueryId();
         try {
@@ -117,7 +117,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const FaultToleranceType faultTolerance,
                                       const LineageType lineage) {
 
-    if (!useNewRequestExecutor) {
+    if (!enableNewRequestExecutor) {
         QueryId queryId = PlanIdGenerator::getNextQueryId();
         auto promise = std::make_shared<std::promise<QueryId>>();
         try {
@@ -160,7 +160,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
 
 bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
-    if (!useNewRequestExecutor) {
+    if (!enableNewRequestExecutor) {
         //Check and mark query for hard stop
         bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
 
@@ -181,7 +181,7 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
                                                     QuerySubPlanId querySubPlanId,
                                                     const std::string& failureReason) {
 
-    if (!useNewRequestExecutor) {
+    if (!enableNewRequestExecutor) {
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
         return queryRequestQueue->add(request);
     } else {

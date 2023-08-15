@@ -107,7 +107,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -210,7 +210,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -321,7 +321,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);

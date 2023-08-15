@@ -48,6 +48,8 @@ const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string MONITORING_WAIT_TIME = "monitoringWaitTime";
 const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
+const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "requestExecutorThread";
+const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 

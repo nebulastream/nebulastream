@@ -36,23 +36,22 @@ FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId) {}
 
-std::shared_ptr<FailQueryRequest>
-FailQueryRequest::create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries) {
+FailQueryRequestPtr FailQueryRequest::create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries) {
     return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
 }
 
-void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandlerPtr) {}
+void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, StorageHandlerPtr) { return {}; }
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, const StorageHandlerPtr&) { return {}; }
 
-void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandlerPtr) {
+void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {
 
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandlerPtr storageHandler) { storageHandler->releaseResources(queryId); }
+void FailQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(queryId); }
 
-std::vector<AbstractRequestPtr> NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandlerPtr storageHandle) {
+std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
     queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);

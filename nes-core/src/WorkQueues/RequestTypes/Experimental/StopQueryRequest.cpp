@@ -57,7 +57,7 @@ StopQueryRequestPtr StopQueryRequest::create(QueryId queryId,
                                               maxRetries);
 }
 
-std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHandlerPtr storageHandler) {
+std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     NES_TRACE("Start Stop Request logic.");
     std::vector<AbstractRequestPtr> failureRequests = {};
     try {
@@ -144,19 +144,19 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(StorageHan
     return failureRequests;
 }
 
-void StopQueryRequest::postExecution([[maybe_unused]] StorageHandlerPtr storageHandler) { NES_TRACE("Release locks."); }
+void StopQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) { NES_TRACE("Release locks."); }
 
 std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
-void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandlerPtr storageHandle) {
+void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] const StorageHandlerPtr& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] StorageHandlerPtr storageHandle) {
+void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex, [[maybe_unused]] const StorageHandlerPtr& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
 }
 
-std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex, StorageHandlerPtr storageHandler) {
+std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) {
     std::vector<AbstractRequestPtr> failRequest;
     try {
         NES_TRACE("Error: {}", ex.what());

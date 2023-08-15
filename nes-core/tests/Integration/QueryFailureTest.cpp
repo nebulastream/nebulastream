@@ -80,7 +80,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query);
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
@@ -129,7 +129,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     string query1 =
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query1);
-    QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
+    QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -137,7 +137,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_INFO("QueryFailureTest: Submit query");
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
@@ -210,7 +210,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
     QueryId queryId =
-        queryService->addQueryRequest("", query.getQueryPlan(), "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->addQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 

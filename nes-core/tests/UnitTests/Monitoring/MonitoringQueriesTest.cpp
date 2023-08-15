@@ -136,7 +136,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
         QueryId queryId =
-            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+            queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

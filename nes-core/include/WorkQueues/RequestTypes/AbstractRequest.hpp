@@ -62,7 +62,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> execute(StorageHandlerPtr storageHandle);
+    std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -70,7 +70,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    virtual std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandlerPtr storageHandle) = 0;
+    virtual std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
@@ -78,7 +78,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> handleError(RequestExecutionException& ex, StorageHandlerPtr storageHandle);
+    std::vector<AbstractRequestPtr> handleError(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -136,26 +136,26 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void preRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandle) = 0;
+    virtual void preRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void postRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandle) = 0;
+    virtual void postRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void preExecution(StorageHandlerPtr storageHandle);
+    virtual void preExecution(const StorageHandlerPtr& storageHandle);
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void postExecution(StorageHandlerPtr storageHandle) = 0;
+    virtual void postExecution(const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Executes the request logic.
@@ -163,7 +163,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    virtual std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandlerPtr storageHandle) = 0;
+    virtual std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
 
   protected:
     RequestId requestId;

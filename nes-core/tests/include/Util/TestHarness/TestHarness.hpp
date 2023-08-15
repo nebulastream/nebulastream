@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
+#include <API/Query.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -287,6 +288,7 @@ class TestHarness {
         remove(filePath.c_str());
 
         //register query
+        auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
         auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
         QueryId queryId = INVALID_QUERY_ID;
@@ -295,15 +297,13 @@ class TestHarness {
             // we can remove this, once we just use Query
             std::string queryString =
                 queryWithoutSinkStr + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-            queryId = queryService->validateAndQueueAddQueryRequest(queryString,
-                                                                    std::move(placementStrategyName),
-                                                                    faultToleranceMode,
-                                                                    lineageMode);
+            queryId =
+                queryService->validateAndQueueAddQueryRequest(queryString, placementStrategy, faultToleranceMode, lineageMode);
         } else if (queryWithoutSink.get() != nullptr) {
             auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "NES_FORMAT", "APPEND"));
             queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    std::move(placementStrategyName),
+                                                    placementStrategy,
                                                     faultToleranceMode,
                                                     lineageMode);
         } else {

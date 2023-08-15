@@ -29,17 +29,17 @@ class DummyRequest : public AbstractRequest {
     DummyRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, uint32_t responseValue)
         : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+    std::vector<AbstractRequestPtr> executeRequestLogic(const NES::StorageHandlerPtr&) override {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
         return {};
     }
 
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandler&) override { return {}; }
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, const StorageHandlerPtr&) override { return {}; }
 
   protected:
-    void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-    void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-    void postExecution(StorageHandler&) override {}
+    void preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+    void postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+    void postExecution(const StorageHandlerPtr&) override {}
 
   private:
     uint32_t responseValue;
@@ -77,7 +77,7 @@ TEST_F(AbstractRequestTest, testPromise) {
     request.setId(requestId);
     auto future = request.getFuture();
     auto thread = std::make_shared<std::thread>([&request]() {
-        DummyStorageHandler storageHandler;
+        std::shared_ptr<DummyStorageHandler> storageHandler;
         request.executeRequestLogic(storageHandler);
     });
     thread->join();

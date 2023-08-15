@@ -49,7 +49,7 @@ class DummyConcatRequest : public AbstractRequest {
                        uint32_t min)
         : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue), min(min){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandler&) override {
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
         std::vector<std::shared_ptr<AbstractRequest>> newRequests;
         auto response = std::make_shared<DummyConcatResponse>(responseValue);
         for (uint32_t i = responseValue - 1; i >= min; --i) {
@@ -61,12 +61,12 @@ class DummyConcatRequest : public AbstractRequest {
         return newRequests;
     }
 
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandler&) override { return {}; }
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, const StorageHandlerPtr&) override { return {}; }
 
   protected:
-    void preRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-    void postRollbackHandle(const RequestExecutionException&, StorageHandler&) override {}
-    void postExecution(StorageHandler&) override {}
+    void preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+    void postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+    void postExecution(const StorageHandlerPtr&) override {}
 
   private:
     uint32_t responseValue;
@@ -79,14 +79,15 @@ class AsyncRequestExecutorTest : public Testing::BaseUnitTest, public testing::W
     using Base = Testing::BaseUnitTest;
 
   protected:
-    Experimental::AsyncRequestExecutorPtr<TwoPhaseLockingStorageHandler> executor{nullptr};
+    Experimental::AsyncRequestExecutorPtr executor{nullptr};
 
   public:
     void SetUp() override {
         Base::SetUp();
-        StorageDataStructures storageDataStructures = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-        executor = std::make_shared<Experimental::AsyncRequestExecutor<TwoPhaseLockingStorageHandler>>(GetParam(),
-                                                                                                       storageDataStructures);
+        auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+        coordinatorConfig->requestExecutorThreads = GetParam();
+        StorageDataStructures storageDataStructures = {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+        executor = std::make_shared<Experimental::AsyncRequestExecutor>(storageDataStructures);
     }
 
     void TearDown() override {

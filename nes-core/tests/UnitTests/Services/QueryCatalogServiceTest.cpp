@@ -64,7 +64,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -83,7 +83,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -104,7 +104,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -136,7 +136,7 @@ TEST_F(QueryCatalogServiceTest, testPrintQuery) {
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryServiceCatalog = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -153,7 +153,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryWithMultipleSinks) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -182,7 +182,7 @@ TEST_F(QueryCatalogServiceTest, getAllQueriesAfterQueryRegistration) {
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -202,7 +202,7 @@ TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
     queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
 
     //Assert

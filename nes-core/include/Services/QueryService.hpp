@@ -15,9 +15,11 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
-#include <API/Query.hpp>
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/LineageType.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <future>
 
 namespace z3 {
@@ -69,14 +71,14 @@ using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor>;
 class QueryService {
 
   public:
-    explicit QueryService(bool useNewRequestExecutor,
+    explicit QueryService(bool enableNewRequestExecutor,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
                           const QueryCatalogServicePtr& queryCatalogService,
                           const RequestQueuePtr& queryRequestQueue,
                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                           const QueryParsingServicePtr& queryParsingService,
                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                          const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
+                          const NES::Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
                           const z3::ContextPtr& z3Context);
 
     /**
@@ -128,7 +130,9 @@ class QueryService {
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
-    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, const std::string& failureReason);
+    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
+                                          QuerySubPlanId querySubPlanId,
+                                          const std::string& failureReason);
 
   private:
     /**
@@ -137,13 +141,13 @@ class QueryService {
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
-    bool useNewRequestExecutor;
+    bool enableNewRequestExecutor;
     Configurations::OptimizerConfiguration optimizerConfiguration;
     QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
+    NES::Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
 };
