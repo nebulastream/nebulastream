@@ -21,6 +21,7 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <REST/ServerTypes.hpp>
+#include <Util/StorageHandlerType.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -84,6 +85,18 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Indicates if new request execution module is to be used
      */
     BoolOption enableNewRequestExecutor = {ENABLE_NEW_REQUEST_EXECUTOR_CONFIG, false, "Enable New Request Executor"};
+
+    /**
+     * @brief Indicates the number of request executor threads
+     */
+    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG, 1, "Number of request executor thread"};
+
+    /**
+     * @brief Storage handler for request executor
+     */
+    EnumOption<StorageHandlerType> storageHandlerType = {STORAGE_HANDLER_TYPE_CONFIG,
+                                                         StorageHandlerType::TwoPhaseLocking,
+                                                         "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     /**
      * @brief Enable reconfiguration of running query plans.

@@ -118,13 +118,12 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
             + R"(", "CSV_FORMAT", "APPEND"));)";
         const auto placementStrategy = Optimizer::PlacementStrategy::BottomUp;
-        const auto placementStratedyName = "BottomUp";
         queryId = 1;
         const auto lineage = LineageType::IN_MEMORY;
         auto queryPlan = syntacticQueryValidation->validate(query);
         queryPlan->setQueryId(queryId);
         queryPlan->setLineageType(lineage);
-        queryCatalogService->createNewEntry(query, queryPlan, placementStratedyName);
+        queryCatalogService->createNewEntry(query, queryPlan, placementStrategy);
         const auto runRequest = AddQueryRequest::create(queryPlan, placementStrategy);
 
         globalQueryPlanUpdatePhase->execute({runRequest});
@@ -225,7 +224,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
         Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     auto future = failQueryRequest->getFuture();
     failQueryRequest->setId(requestId);
-    TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                   topology,
                                                   globalExecutionPlan,
                                                   queryCatalogService,
@@ -273,7 +272,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     auto failQueryRequest =
         Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
-    TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                   topology,
                                                   globalExecutionPlan,
                                                   queryCatalogService,
@@ -299,7 +298,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto failQueryRequest =
         Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
-    TwoPhaseLockingStorageHandler storageHandler({coordinatorConfiguration,
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                   topology,
                                                   globalExecutionPlan,
                                                   queryCatalogService,

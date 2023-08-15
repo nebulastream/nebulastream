@@ -46,8 +46,7 @@ class FailQueryRequest : public AbstractRequest {
     * @param maxRetries: Maximum number of retry attempts for the request
     * @return a smart pointer to the newly created object
     */
-    static std::shared_ptr<FailQueryRequest>
-    create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
+    static FailQueryRequestPtr create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
 
   protected:
     /**
@@ -55,7 +54,7 @@ class FailQueryRequest : public AbstractRequest {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandler) override;
+    void preRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -63,21 +62,21 @@ class FailQueryRequest : public AbstractRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, StorageHandlerPtr storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(const RequestExecutionException& ex, StorageHandlerPtr storageHandler) override;
+    void postRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      * @param requiredResources: The resources required during the execution phase
      */
-    void postExecution(StorageHandlerPtr storageHandler) override;
+    void postExecution(const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Executes the request logic.
@@ -85,7 +84,7 @@ class FailQueryRequest : public AbstractRequest {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> executeRequestLogic(StorageHandlerPtr storageHandler) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
 
   private:
     QueryId queryId;

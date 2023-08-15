@@ -101,7 +101,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
         + outputFilePath + R"(")).selectionPolicy("Single_Output"); )";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -177,7 +177,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
         + outputFilePath + "\")); ";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -257,7 +257,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
         + outputFilePath + "\")); ";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -336,7 +336,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
         + outputFilePath + "\")); ";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -412,7 +412,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
         + outputFilePath + "\")); ";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -491,7 +491,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
         + outputFilePath + "\")); ";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

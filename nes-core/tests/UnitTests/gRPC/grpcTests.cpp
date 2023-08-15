@@ -86,7 +86,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     string query =
         R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     QueryId subQueryId = 1;

@@ -14,6 +14,8 @@
 #ifndef NES_ASYNCREQUESTEXECUTOR_HPP
 #define NES_ASYNCREQUESTEXECUTOR_HPP
 
+#include <Common/Identifiers.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StorageHandlerType.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -45,27 +47,24 @@ class AsyncRequestExecutor {
     class FlushRequest : public AbstractRequest {
       public:
         FlushRequest() : AbstractRequest({}, 0) {}
-        std::vector<AbstractRequestPtr> executeRequestLogic(NES::StorageHandlerPtr) override { return {}; }
-        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, StorageHandlerPtr) override { return {}; }
+        std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
+        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, const StorageHandlerPtr&) override { return {}; }
 
       protected:
-        void preRollbackHandle(const RequestExecutionException&, StorageHandlerPtr) override {}
-        void postRollbackHandle(const RequestExecutionException&, StorageHandlerPtr) override {}
-        void postExecution(StorageHandlerPtr) override {}
+        void preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+        void postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+        void postExecution(const StorageHandlerPtr&) override {}
     };
 
   public:
     /**
      * @brief constructor
-     * @param numOfThreads the number of threads to be spawned by the executor
      * @param storageDataStructures a struct containing pointers to the data structures on which the requests operate
-     * @param storageHandlerType: the type of storage handler to be used while processing requests
      */
-    AsyncRequestExecutor(uint32_t numOfThreads,
-                         const StorageDataStructures& storageDataStructures,
-                         StorageHandlerType storageHandlerType)
-        : running(true), numOfThreads(numOfThreads), nextFreeRequestId(1) {
+    AsyncRequestExecutor(const StorageDataStructures& storageDataStructures) : running(true), nextFreeRequestId(1) {
 
+        numOfThreads = storageDataStructures.coordinatorConfiguration->requestExecutorThreads.getValue();
+        auto storageHandlerType = storageDataStructures.coordinatorConfiguration->storageHandlerType.getValue();
         switch (storageHandlerType) {
             case StorageHandlerType::SerialHandler: storageHandler = SerialStorageHandler::create(storageDataStructures); break;
             case StorageHandlerType::TwoPhaseLocking:

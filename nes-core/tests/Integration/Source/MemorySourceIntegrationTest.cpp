@@ -101,7 +101,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -204,7 +204,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -310,7 +310,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);

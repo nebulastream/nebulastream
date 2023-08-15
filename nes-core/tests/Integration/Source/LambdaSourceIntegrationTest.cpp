@@ -116,7 +116,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                  query.getQueryPlan(),
-                                                 "BottomUp",
+                                                 Optimizer::PlacementStrategy::BottomUp,
                                                  FaultToleranceType::NONE,
                                                  LineageType::IN_MEMORY);
 
@@ -205,13 +205,13 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 = queryService->addQueryRequest(query1.getQueryPlan()->toString(),
                                                   query1.getQueryPlan(),
-                                                  "BottomUp",
+                                                  Optimizer::PlacementStrategy::BottomUp,
                                                   FaultToleranceType::NONE,
                                                   LineageType::IN_MEMORY);
 
     auto queryId2 = queryService->addQueryRequest(query2.getQueryPlan()->toString(),
                                                   query2.getQueryPlan(),
-                                                  "BottomUp",
+                                                  Optimizer::PlacementStrategy::BottomUp,
                                                   FaultToleranceType::NONE,
                                                   LineageType::IN_MEMORY);
 
@@ -294,7 +294,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                  query.getQueryPlan(),
-                                                 "BottomUp",
+                                                 Optimizer::PlacementStrategy::BottomUp,
                                                  FaultToleranceType::NONE,
                                                  LineageType::IN_MEMORY);
 

@@ -16,25 +16,20 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
-#include <Views/MaterializedView.hpp>
-#include <gmock/gmock.h>
+#include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
+
 namespace NES {
 class MaterializedViewTest : public Testing::BaseIntegrationTest {
   public:
@@ -83,7 +78,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     Query query = Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(1));
     auto queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(1);
-    auto queryId = queryService->addQueryRequest("", queryPlan, "BottomUp");
+    auto queryId = queryService->addQueryRequest("", queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("MaterializedViewTupleViewSinkTest: queryId {}", queryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -136,7 +131,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     Query adhoc_query = Query::from("stream").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
     adhoc_queryPlan->setQueryId(1);
-    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
+    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("MaterializedViewTupleBufferSourceTest: queryId {}", adhocQueryId);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -197,7 +192,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
         Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
     auto maintenance_queryPlan = maintenance_query.getQueryPlan();
     maintenance_queryPlan->setQueryId(1);
-    auto maintenanceQueryId = queryService->addQueryRequest("", maintenance_queryPlan, "BottomUp");
+    auto maintenanceQueryId = queryService->addQueryRequest("", maintenance_queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId {}", maintenanceQueryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -206,7 +201,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     Query adhoc_query = Query::from("stream2").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
     adhoc_queryPlan->setQueryId(2);
-    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
+    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId {}", adhocQueryId);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalogService));

@@ -34,10 +34,12 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
 #include <memory>
 #include <thread>
+#include <z3++.h>
 
 //GRPC Includes
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -97,6 +99,12 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
+    z3::config cfg;
+    cfg.set("timeout", 1000);
+    cfg.set("model", false);
+    cfg.set("type_check", false);
+    auto z3Context = std::make_shared<z3::context>(cfg);
+
     queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                                              topology,
                                                                              queryCatalogService,
@@ -104,20 +112,33 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                              sourceCatalog,
                                                                              udfCatalog,
                                                                              queryRequestQueue,
-                                                                             this->coordinatorConfiguration);
+                                                                             this->coordinatorConfiguration,
+                                                                             z3Context);
 
-    queryService = std::make_shared<QueryService>(queryCatalogService,
+    StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
+                                                   topology,
+                                                   globalExecutionPlan,
+                                                   queryCatalogService,
+                                                   globalQueryPlan,
+                                                   sourceCatalog,
+                                                   udfCatalog};
+
+    auto asyncRequestExecutor = std::make_shared<Experimental::AsyncRequestExecutor>(storageDataStructures);
+    bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
+    queryService = std::make_shared<QueryService>(enableNewRequestExecutor,
+                                                  this->coordinatorConfiguration->optimizer,
+                                                  queryCatalogService,
                                                   queryRequestQueue,
                                                   sourceCatalog,
                                                   queryParsingService,
-                                                  this->coordinatorConfiguration->optimizer,
-                                                  udfCatalog);
+                                                  udfCatalog,
+                                                  asyncRequestExecutor,
+                                                  z3Context);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
-    monitoringService =
-        std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
+    monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
@@ -216,9 +237,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
-                                                                         HEALTH_SERVICE_NAME,
-                                                                         coordinatorConfiguration);
+    healthCheckService =
+        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
