@@ -285,6 +285,13 @@ template<typename T>
  */
 [[nodiscard]] std::string enableMonitoring(bool prefix = false);
 
+/**
+ * @brief Creates the command line argument if to set monitoring wait time
+ * @param prefix
+ * @return Command line argument
+ */
+[[nodiscard]] std::string monitoringWaitTime(uint64_t monitoringWaitTime);
+
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization();
 
