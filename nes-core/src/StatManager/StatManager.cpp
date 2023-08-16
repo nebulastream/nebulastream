@@ -16,10 +16,11 @@
 #include <StatManager/StatManager.hpp>
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 
-	std::vector<std::unique_ptr<StatCollector>>& StatManager::getStatCollectors() {
+	std::vector<StatCollectorPtr>& StatManager::getStatCollectors() {
 		return statCollectors;
 	}
 
