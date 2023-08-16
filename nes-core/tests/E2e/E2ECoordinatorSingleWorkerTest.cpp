@@ -778,7 +778,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
-         TestUtils::enableNautilus(),
+         TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
          TestUtils::enableThreadLocalWindowing()});
@@ -869,7 +869,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
-         TestUtils::enableNautilus(),
+         TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
          TestUtils::enableThreadLocalWindowing()});

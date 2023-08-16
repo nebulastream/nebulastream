@@ -66,7 +66,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     auto query = R"(Query::from("truck").unionWith(Query::from("car")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  //                                  .enableNautilus() Enabled once #4009 is fixed
+                                  //                                  .enableNautilusWorker() Enabled once #4009 is fixed
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("truck")
@@ -109,7 +109,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     auto query = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  //                                  .enableNautilus() Enabled once #4009 is fixed
+                                  //                                  .enableNautilusWorker() Enabled once #4009 is fixed
                                   .addLogicalSource("car", testSchema)
                                   .addLogicalSource("truck", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")

@@ -146,7 +146,11 @@ namespace TestUtils {
                         prefix);
 }
 
-std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+[[nodiscard]] std::string enableNautilusWorker() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+
+[[nodiscard]] std::string enableNautilusCoordinator() {
+    return "--worker.queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER";
+}
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags

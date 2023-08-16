@@ -49,11 +49,14 @@ class E2EMonitoringTest : public Testing::NESBaseTest {
 
 TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
+                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -61,6 +64,7 @@ TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -74,11 +78,14 @@ TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
 
 TEST_F(E2EMonitoringTest, requestAllMetricsViaRest) {
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
+                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -86,6 +93,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsViaRest) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -110,11 +118,14 @@ TEST_F(E2EMonitoringTest, requestAllMetricsViaRest) {
 
 TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest) {
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
+                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -122,6 +133,7 @@ TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
@@ -150,23 +162,25 @@ TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest) {
 TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
     auto expectedMonitoringStreams = Monitoring::MonitoringPlan::defaultPlan()->getMetricTypes();
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
+                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
-                                           TestUtils::monitoringWaitTime(500),
                                            TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::enableNautilusWorker(),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::enableMonitoring(),
-                                           TestUtils::monitoringWaitTime(500),
                                            TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
