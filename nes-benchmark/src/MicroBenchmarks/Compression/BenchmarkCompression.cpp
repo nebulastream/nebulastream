@@ -1,6 +1,7 @@
 #include "API/Schema.hpp"
 #include "DataGeneration/ByteDataGenerator.hpp"
 #include "DataGeneration/DefaultDataGenerator.hpp"
+#include "DataGeneration/data/TextDataSet.hpp"
 #include <Exceptions/ErrorListener.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -13,6 +14,7 @@
 #include <chrono>
 #include <fstream>
 #include <gmock/gmock-matchers.h>
+#include <memory>
 #include <nlohmann/json.hpp>
 
 using namespace NES::Benchmark::DataGeneration;
@@ -38,6 +40,55 @@ class ErrorHandler : public NES::Exceptions::ErrorListener {
     }
 };
 
+template<typename... Args>
+class BenchmarkCompression2 {
+  public:
+    BenchmarkCompression2(const size_t numBuffers,
+                          const size_t bufferSize,
+                          ByteDataGenerator<Args...>& dataGenerator,
+                          const std::shared_ptr<MemoryLayout>& memoryLayout,
+                          CompressionMode cm,
+                          const Args&... tupleArgs) {
+        NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
+        auto listener = std::make_shared<ErrorHandler>();
+        NES::Exceptions::installGlobalErrorListener(listener);
+
+        this->numBuffers = numBuffers;
+        NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, numBuffers);
+
+        // create data
+        dataGenerator.setBufferManager(bufferManager);
+        auto tmpBuffers = dataGenerator.createData(numBuffers, bufferSize, tupleArgs...);// TODO
+
+        buffers.reserve(numBuffers);
+        for (const auto& tmpBuffer : tmpBuffers) {
+            buffers.emplace_back(memoryLayout, tmpBuffer, cm);
+        }
+    }
+
+    size_t getNumberOfBuffers() { return numBuffers; }
+    std::tuple<size_t, double> compress(CompressionAlgorithm ca) {
+        double totalCompressionRatio = 0;
+        size_t totalBufferSize = 0;
+        for (auto& buffer : buffers) {
+            buffer.compress(ca);
+            //std::cout << buffer.getCompressionRatio() << std::endl;
+            totalCompressionRatio += buffer.getCompressionRatio();
+            totalBufferSize += buffer.getTotalCompressedSize();
+        }
+        return std::make_tuple(totalBufferSize, totalCompressionRatio);
+    }
+    void decompress() {
+        for (auto& buffer : buffers) {
+            buffer.decompress();
+        }
+    }
+
+  private:
+    size_t numBuffers{};
+    std::vector<CompressedDynamicTupleBuffer> buffers;
+};
+
 class BenchmarkCompression {
   public:
     BenchmarkCompression(size_t numBuffers,
@@ -45,6 +96,13 @@ class BenchmarkCompression {
                          DataGenerator& dataGenerator,
                          const std::shared_ptr<MemoryLayout>& memoryLayout,
                          CompressionMode cm);
+    template<typename... Args>
+    BenchmarkCompression(const size_t numBuffers,
+                         const size_t bufferSize,
+                         ByteDataGenerator<Args...>& dataGenerator,
+                         const std::shared_ptr<MemoryLayout>& memoryLayout,
+                         CompressionMode cm,
+                         const Args&... tupleArgs);
     size_t getNumberOfBuffers() const;
     std::tuple<size_t, double> compress(CompressionAlgorithm ca);
     void decompress();
@@ -68,6 +126,29 @@ BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
     // create data
     dataGenerator.setBufferManager(bufferManager);
     auto tmpBuffers = dataGenerator.createData(numBuffers, bufferSize);
+
+    buffers.reserve(numBuffers);
+    for (const auto& tmpBuffer : tmpBuffers) {
+        buffers.emplace_back(memoryLayout, tmpBuffer, cm);
+    }
+}
+template<typename... Args>
+BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
+                                           const size_t bufferSize,
+                                           ByteDataGenerator<Args...>& dataGenerator,
+                                           const std::shared_ptr<MemoryLayout>& memoryLayout,
+                                           CompressionMode cm,
+                                           const Args&... tupleArgs) {
+    NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
+    auto listener = std::make_shared<ErrorHandler>();
+    NES::Exceptions::installGlobalErrorListener(listener);
+
+    this->numBuffers = numBuffers;
+    NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, numBuffers);
+
+    // create data
+    dataGenerator.setBufferManager(bufferManager);
+    auto tmpBuffers = dataGenerator.createData(numBuffers, bufferSize, std::forward<Args>(tupleArgs)...);
 
     buffers.reserve(numBuffers);
     for (const auto& tmpBuffer : tmpBuffers) {
@@ -140,10 +221,18 @@ void BM_RepeatingValues(benchmark::State& state, Args&&... args) {
         + std::string(getCompressionAlgorithmName(compressionAlgorithm)) + ".json";
     std::ofstream o(file_name);
     o << std::setw(2) << arguments << std::endl;
-
-    RepeatingValues distribution = RepeatingValues(numRepeats, sigma, changeProbability);
-    distribution.seed = seed;
-    ByteDataGenerator dataGenerator = ByteDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
+    auto distribution = std::make_shared<RepeatingValues>(numRepeats, sigma, changeProbability);
+    distribution->seed = seed;
+    DoubleParameter p1 = DoubleParameter(5.5234, 99.00004, distribution.get());
+    DoubleParameter p2 = DoubleParameter(5.5234, 99.00004, distribution.get());
+    DoubleParameter p3 = DoubleParameter(5.5234, 99.00004, distribution.get());
+    /*
+auto p1 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
+auto p2 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
+auto p3 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
+     */
+    ByteDataGenerator dataGenerator =
+        ByteDataGenerator<DoubleParameter, DoubleParameter, DoubleParameter>(memoryLayoutType, p1, p2, p3);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -154,7 +243,14 @@ void BM_RepeatingValues(benchmark::State& state, Args&&... args) {
     double compressionTime = 0;
     double decompressionTime = 0;
     for (auto _ : state) {// TODO refactor?
-        auto bench = BenchmarkCompression(numBuffers, bufferSize, dataGenerator, memoryLayout, compressionMode);
+        auto bench = BenchmarkCompression2<DoubleParameter, DoubleParameter, DoubleParameter>(numBuffers,
+                                                                                              bufferSize,
+                                                                                              dataGenerator,
+                                                                                              memoryLayout,
+                                                                                              compressionMode,
+                                                                                              p1,
+                                                                                              p2,
+                                                                                              p3);
         try {
             auto start = std::chrono::high_resolution_clock::now();
             auto res = bench.compress(compressionAlgorithm);
@@ -186,6 +282,110 @@ void BM_RepeatingValues(benchmark::State& state, Args&&... args) {
     }
 }
 
+template<class... Args>
+void BM_RepeatingValuesText(benchmark::State& state, Args&&... args) {
+    // parse arguments
+    std::tuple args_tuple = std::make_tuple(std::move(args)...);
+    MemoryLayout_ memoryLayout_ = std::get<0>(args_tuple);
+    NES::Schema::MemoryLayoutType memoryLayoutType;
+    switch (memoryLayout_) {
+        case MemoryLayout_::ROW: {
+            memoryLayoutType = NES::Schema::MemoryLayoutType::ROW_LAYOUT;
+            break;
+        }
+        case MemoryLayout_::COLUMN: {
+            memoryLayoutType = NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
+            break;
+        }
+    }
+    CompressionMode compressionMode = std::get<1>(args_tuple);
+    CompressionAlgorithm compressionAlgorithm = std::get<2>(args_tuple);
+    size_t seed = std::get<3>(args_tuple);
+    size_t numBuffers = std::get<4>(args_tuple);
+    size_t bufferSize = std::get<5>(args_tuple);
+    size_t numCols = std::get<6>(args_tuple);
+    size_t minValue = std::get<7>(args_tuple);
+    size_t maxValue = std::get<8>(args_tuple);
+    int numRepeats = std::get<9>(args_tuple);
+    uint8_t sigma = std::get<10>(args_tuple);
+    double changeProbability = std::get<11>(args_tuple);
+    // write arguments to json
+    nlohmann::json arguments = {{"Distribution", "RepeatingValues"},
+                                {"MemoryLayout", getMemoryLayoutName(memoryLayout_)},
+                                {"CompressionMode", getCompressionModeName(compressionMode)},
+                                {"CompressionAlgorithm", getCompressionAlgorithmName(compressionAlgorithm)},
+                                {"Seed", seed},
+                                {"NumBuffers", numBuffers},
+                                {"BufferSize", bufferSize},
+                                {"NumCols", numCols},
+                                {"MinValue", minValue},
+                                {"MaxValue", maxValue},
+                                {"NumRepeats", numRepeats},
+                                {"Sigma", sigma},
+                                {"ChangeProbability", changeProbability}};
+    std::string file_name = "args_repeating_values_" + std::string(getMemoryLayoutName(memoryLayout_)) + "_"
+        + std::string(getCompressionModeName(compressionMode)) + "_"
+        + std::string(getCompressionAlgorithmName(compressionAlgorithm)) + ".json";
+    std::ofstream o(file_name);
+    o << std::setw(2) << arguments << std::endl;
+
+    auto distribution = std::make_shared<RepeatingValues>(numRepeats, sigma, changeProbability);
+    distribution->seed = seed;
+    TextParameter p1 = TextParameter(0, 185, 13, distribution.get());
+    TextParameter p2 = TextParameter(0, 185, 13, distribution.get());
+    TextParameter p3 = TextParameter(0, 185, 13, distribution.get());
+    ByteDataGenerator dataGenerator =
+        ByteDataGenerator<TextParameter, TextParameter, TextParameter>(memoryLayoutType, p1, p2, p3);
+    std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
+    if (memoryLayout_ == MemoryLayout_::COLUMN)
+        memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
+
+    bool failed = false;
+    size_t compressedSize = 0;
+    double compressionRatio = 0;
+    double compressionTime = 0;
+    double decompressionTime = 0;
+    for (auto _ : state) {// TODO refactor?
+        auto bench = BenchmarkCompression2<TextParameter, TextParameter, TextParameter>(numBuffers,
+                                                                                        bufferSize,
+                                                                                        dataGenerator,
+                                                                                        memoryLayout,
+                                                                                        compressionMode,
+                                                                                        p1,
+                                                                                        p2,
+                                                                                        p3);
+        try {
+            auto start = std::chrono::high_resolution_clock::now();
+            auto res = bench.compress(compressionAlgorithm);
+            auto end = std::chrono::high_resolution_clock::now();
+            compressionTime += std::chrono::duration<double, std::milli>(end - start).count();
+            compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
+            compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
+
+            start = std::chrono::high_resolution_clock::now();
+            bench.decompress();
+            end = std::chrono::high_resolution_clock::now();
+            decompressionTime += std::chrono::duration<double, std::milli>(end - start).count();
+        } catch (NES::Exceptions::RuntimeException const& err) {
+            // compressed size might be larger than original
+            EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
+            failed = true;
+        }
+    }
+    if (failed) {
+        state.counters["CompressedSize"] = 0;
+        state.counters["CompressionRatio"] = 0;
+        state.counters["CompressionTime"] = 0;
+        state.counters["DecompressionTime"] = 0;
+    } else {
+        state.counters["CompressedSize"] = (double) compressedSize / (double) state.iterations();
+        state.counters["CompressionRatio"] = compressionRatio / (double) state.iterations();
+        state.counters["CompressionTime"] = compressionTime / (double) state.iterations();
+        state.counters["DecompressionTime"] = decompressionTime / (double) state.iterations();
+    }
+}
+
+/*
 template<class... Args>
 void BM_Uniform(benchmark::State& state, Args&&... args) {
     // parse arguments
@@ -428,14 +628,15 @@ void BM_Zipf(benchmark::State& state, Args&&... args) {
     state.counters["CompressionTime"] = compressionTime / (double) state.iterations();
     state.counters["DecompressionTime"] = decompressionTime / (double) state.iterations();
 }
-
+*/
 // ------------------------------------------------------------
 // Benchmark Parameters
 // have to be changed by hand (except compression algorithm) ...
 // ------------------------------------------------------------
 // TODO? use environment variables for all variables?
 size_t NUM_BENCHMARK_ITERATIONS = 10;
-auto COMPRESSION_ALGORITHM = getCompressionAlgorithmByName(std::getenv("CA"));
+auto COMPRESSION_ALGORITHM = CompressionAlgorithm::LZ4;// TODO
+//auto COMPRESSION_ALGORITHM = getCompressionAlgorithmByName(std::getenv("CA"));
 size_t SEED_VALUE = 42;
 bool SORT = true;
 size_t NUM_BUFFERS = 1;
@@ -457,7 +658,7 @@ double ZIPF_ALPHA = 0.15;
 // ------------------------------------------------------------
 // Repeating Values distribution
 // ------------------------------------------------------------
-BENCHMARK_CAPTURE(BM_RepeatingValues,
+BENCHMARK_CAPTURE(BM_RepeatingValuesText,
                   BM_RepeatingValuesRowHori,
                   MemoryLayout_::ROW,
                   CompressionMode::HORIZONTAL,
@@ -474,6 +675,7 @@ BENCHMARK_CAPTURE(BM_RepeatingValues,
     ->UseManualTime()
     ->Iterations(NUM_BENCHMARK_ITERATIONS);
 
+/*
 BENCHMARK_CAPTURE(BM_RepeatingValues,
                   BM_RepeatingValuesColHori,
                   MemoryLayout_::COLUMN,
@@ -507,7 +709,9 @@ BENCHMARK_CAPTURE(BM_RepeatingValues,
                   REPEATING_VALUES_CHANGE_PROBABILITY)
     ->UseManualTime()
     ->Iterations(NUM_BENCHMARK_ITERATIONS);
+*/
 
+/*
 // ------------------------------------------------------------
 // Uniform distribution
 // ------------------------------------------------------------
@@ -659,4 +863,5 @@ BENCHMARK_CAPTURE(BM_Zipf,
     ->Iterations(NUM_BENCHMARK_ITERATIONS);
 
 // ------------------------------------------------------------
+ */
 BENCHMARK_MAIN();
