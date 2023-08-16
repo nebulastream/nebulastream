@@ -356,7 +356,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(3),
                                           TestUtils::sourceGatheringInterval(1),
-                                          TestUtils::enableThreadLocalWindowing()});
+                                          TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -781,7 +781,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
          TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
-         TestUtils::enableThreadLocalWindowing()});
+         TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     //TODO : without logicalStreamName$Attribute (qualified att names) the Nautilus query fails with the error: attr. does not exits
@@ -872,7 +872,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
          TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
-         TestUtils::enableThreadLocalWindowing()});
+         TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;

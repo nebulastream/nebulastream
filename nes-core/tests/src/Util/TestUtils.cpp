@@ -140,9 +140,9 @@ namespace TestUtils {
     return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
 }
 
-[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix) {
+[[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-                        std::string{"THREAD_LOCAL"},
+                        std::string{"SLICING"},
                         prefix);
 }
 

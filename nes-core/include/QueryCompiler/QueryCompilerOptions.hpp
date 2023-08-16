@@ -82,11 +82,12 @@ class QueryCompilerOptions {
     };
 
     enum class WindowingStrategy : uint8_t {
-        // Applies default windowing strategy.
-        DEFAULT,
-        // Applies an experimental thread local implementation for window aggregations
-        THREAD_LOCAL,
-        BUCKET
+        // This is the legacy window strategy from the old query compiler
+        LEGACY,
+        // Applies slicing window computations. This is the default on nautilus.
+        SLICING,
+        // Applies bucketing as an alternative to slicing.
+        BUCKETING
     };
 
     enum class OutputBufferOptimizationLevel : uint8_t {

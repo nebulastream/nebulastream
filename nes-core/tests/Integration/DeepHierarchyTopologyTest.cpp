@@ -607,7 +607,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
     for (uint64_t i = 0; i < workerNo; i++) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->queryCompiler.windowingStrategy.setValue(
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
         workerConfigs.emplace_back(workerConfig);
     }
 

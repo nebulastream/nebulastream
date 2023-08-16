@@ -564,7 +564,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions,
             startTs,
@@ -625,7 +625,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    if (isTumblingWindow || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
             aggregationFunctions,
             startTs,
@@ -688,7 +688,7 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeFunction = lowerTimeFunction(timeWindow);
 
-    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
         auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>(
             physicalGTLPAO->getWindowHandler());
         operatorHandlers.emplace_back(handler);
@@ -697,7 +697,7 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
                                                                                          std::move(timeFunction),
                                                                                          aggregationFunctions);
         return slicePreAggregation;
-    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
 
         auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>>(
@@ -734,7 +734,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+    if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
         auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>(
             physicalGTLPAO->getWindowHandler());
         operatorHandlers.emplace_back(handler);
@@ -746,7 +746,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
             aggregationFunctions,
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         return sliceMergingOperator;
-    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+    } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>>(
             physicalGTLPAO->getWindowHandler());
         operatorHandlers.emplace_back(handler);
