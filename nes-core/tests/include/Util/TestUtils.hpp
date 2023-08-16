@@ -14,7 +14,6 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include <Runtime/TupleBuffer.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -26,6 +25,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/StdInt.hpp>
@@ -326,7 +326,13 @@ template<typename T>
  * @brief Enables the usage of Nautilus
  * @return Command line argument
  */
-std::string enableNautilus();
+[[nodiscard]] std::string enableNautilusWorker();
+
+/**
+ * @brief Enables the usage of Nautilus at the coordinator
+ * @return Command line argument
+ */
+[[nodiscard]] std::string enableNautilusCoordinator();
 
 /**
  * @brief start a new instance of a nes coordinator with a set of configuration flags
