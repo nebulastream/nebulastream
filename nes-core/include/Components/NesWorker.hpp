@@ -25,7 +25,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <StatManager/StatManager.hpp>
 
 namespace grpc {
 class Server;
@@ -33,6 +32,11 @@ class ServerCompletionQueue;
 };// namespace grpc
 
 namespace NES {
+
+namespace Experimental::Statistics {
+  class StatManager;
+  using StatManagerPtr = std::unique_ptr<StatManager>;
+}
 
 namespace Spatial::Index::Experimental {
 class Location;
@@ -294,7 +298,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
-    NES::Experimental::Statistics::StatManager statManager;
+    NES::Experimental::Statistics::StatManagerPtr statManager;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

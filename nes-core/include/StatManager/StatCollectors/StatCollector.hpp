@@ -24,13 +24,15 @@ namespace NES::Experimental::Statistics {
 
   class StatCollectorConfig;
 
+  class StatCollector;
+  using StatCollectorPtr = std::unique_ptr<StatCollector>;
+
   /**
    * @brief this class implements the interface for StatCollectors, meaning arbitrary objects which can generate statistics
    */
   class StatCollector {
     public:
 
-      using StatCollectorPtr = std::unique_ptr<StatCollector>;
 
       virtual ~StatCollector() = default;
 
