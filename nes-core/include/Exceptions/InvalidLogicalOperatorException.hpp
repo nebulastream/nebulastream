@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_BLOCKINGOPERATOREXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_BLOCKINGOPERATOREXCEPTION_HPP_
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDLOGICALOPERATOREXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDLOGICALOPERATOREXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
@@ -21,11 +21,11 @@
 
 namespace NES::Exceptions {
 /**
- * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
+ * @brief This Exception is thrown if a logical operator node is found to have invalid format or has a logical error.
  */
-class BlockingOperatorException : public RequestExecutionException {
+class InvalidLogicalOperatorException : public Exceptions::RequestExecutionException {
   public:
-    explicit BlockingOperatorException(const std::string& message);
+    explicit InvalidLogicalOperatorException(const std::string& message);
 };
 }// namespace NES
 

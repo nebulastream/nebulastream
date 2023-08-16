@@ -19,7 +19,7 @@
 namespace NES::Exceptions {
 
 /**
- * @brief This exception indicates, that a lookup for an execution node in the global execution plan failed
+ * @brief This exception indicates, that a physical source was not found
  */
 class PhysicalSourceNotFoundException : public RequestExecutionException {
   public:

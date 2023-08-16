@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidLogicalOperatorNodeException.hpp>
+#include <Exceptions/InvalidLogicalOperatorException.hpp>
 
 namespace NES::Exceptions {
-InvalidLogicalOperatorNodeException::InvalidLogicalOperatorNodeException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+InvalidLogicalOperatorException::InvalidLogicalOperatorException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
 }// namespace NES

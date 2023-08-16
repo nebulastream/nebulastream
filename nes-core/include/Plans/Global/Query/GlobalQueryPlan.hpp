@@ -56,6 +56,8 @@ class GlobalQueryPlan {
     /**
      * @brief Add query plan to the collection of query plans to be merged
      * @param queryPlan : new query plan to be merged.
+     * @throws: QueryNotFoundException if the given query plan's id was invalid; GlobalQueryPlanUpdateException if the given
+     * query plan was already added
      */
     void addQueryPlan(const QueryPlanPtr& queryPlan);
 
