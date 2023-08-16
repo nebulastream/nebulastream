@@ -273,6 +273,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
 QueryCompilation::QueryCompilerOptionsPtr
 NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration) {
+    auto queryCompilerType = queryCompilerConfiguration.queryCompilerType;
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
     // set compilation mode
@@ -284,8 +285,15 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     // set output buffer optimization level
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
-    // sets the windowing strategy
-    queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
+    if (queryCompilerType == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER
+        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::QueryCompilerOptions::WindowingStrategy::DEFAULT) {
+        // sets THREAD_LOCAL windowing strategy as the default if nautilus is active.
+        NES_WARNING("The Default window strategy is not supported by Nautilus. Switch to THREAD_LOCAL!")
+        queryCompilationOptions->setWindowingStrategy(QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
+    } else {
+        // sets the windowing strategy
+        queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
+    }
 
     // sets the query compiler
     queryCompilationOptions->setQueryCompiler(queryCompilerConfiguration.queryCompilerType);
