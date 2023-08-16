@@ -25,7 +25,6 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Anti batch join probe operator.
  * The operator receives input records and uses their key to probe a global hash table.
- * @Note: For now this probe operator needs to be followed by the distinct operator to support the right semantics.
  */
 class AntiBatchJoinProbe : public AbstractBatchJoinProbe {
   public:
@@ -37,15 +36,25 @@ class AntiBatchJoinProbe : public AbstractBatchJoinProbe {
      * @param probeFieldIdentifiers record identifier of the value field in the probe table
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
+     * @param resultFieldIdentifiers record identifier of the result fields
      */
     AntiBatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
                    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
                    const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+                       std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+                       const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void terminate(NES::Runtime::Execution::ExecutionContext& executionCtx) const override;
+
+  private:
+    static void mark(const Interface::ChainedHashMapRef::EntryRef& entry);
+    static bool isMarked(const Interface::ChainedHashMapRef::EntryRef& entry);
+    void writeEntryIntoRecord(const Interface::ChainedHashMapRef::EntryRef& entry, NES::Nautilus::Record& record) const;
+
+    const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_ANTIBATCHJOINPROBE_HPP_
