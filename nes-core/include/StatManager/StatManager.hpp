@@ -19,20 +19,22 @@
 #include <vector>
 #include <memory>
 #include <math.h>
-#include <StatManager/StatCollectors/StatCollector.hpp>
 
 namespace NES::Experimental::Statistics {
 
   class StatCollectorConfig;
 
+  class StatCollector;
+  using StatCollectorPtr = std::unique_ptr<StatCollector>;
+
   class StatManager {
   private:
-    std::vector<std::unique_ptr<StatCollector>> statCollectors {};
+    std::vector<StatCollectorPtr> statCollectors {};
 
   public:
     ~StatManager() = default;
 
-    std::vector<std::unique_ptr<StatCollector>>& getStatCollectors();
+    std::vector<StatCollectorPtr>& getStatCollectors();
 
     void createStat(const StatCollectorConfig& config);
 

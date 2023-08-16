@@ -43,7 +43,8 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
-
+#include <StatManager/StatManager.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 #include <utility>
 
 using namespace std;
@@ -60,7 +61,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
-          workerConfig->mobilityConfiguration)) {
+          workerConfig->mobilityConfiguration)), statManager(std::make_unique<NES::Experimental::Statistics::StatManager>()) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
