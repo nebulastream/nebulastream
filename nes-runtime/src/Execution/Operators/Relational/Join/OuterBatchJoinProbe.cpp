@@ -31,8 +31,15 @@ OuterBatchJoinProbe::OuterBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
                                const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
                                const std::vector<PhysicalTypePtr>& valueDataTypes,
-                               std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
-    : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)) {}
+                                         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+                                         const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers)
+    : AbstractBatchJoinProbe(operatorHandlerIndex,
+                             keyExpressions,
+                             keyDataTypes,
+                             probeFieldIdentifiers,
+                             valueDataTypes,
+                             std::move(hashFunction)),
+      resultRecordFieldIdentifiers(resultRecordFieldIdentifiers) {}
 
 void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     // Get matches iterator
@@ -52,6 +59,7 @@ void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
     } else {
         // Matches: build records
         for (; entry != nullptr; ++entry) {
+            mark(*entry);
             auto valuePtr = (*entry).getValuePtr();
             for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
                 auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
@@ -61,6 +69,55 @@ void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
             this->child->execute(ctx, record);
         }
     }
+}
+
+void OuterBatchJoinProbe::mark(const Interface::ChainedHashMapRef::EntryRef& entry) {
+    entry.getKeyPtr().store(Value<Boolean>(true));
+}
+
+bool OuterBatchJoinProbe::isMarked(const Interface::ChainedHashMapRef::EntryRef& entry) {
+    return entry.getKeyPtr().load<Boolean>();
+}
+
+void OuterBatchJoinProbe::writeEntryIntoRecord(const Interface::ChainedHashMapRef::EntryRef& entry,
+                                               NES::Nautilus::Record& record) const {
+    auto keyPtr = entry.getKeyPtr();
+    // skip the mark boolean
+    keyPtr = keyPtr + 1;
+    // write the key
+    auto KeyPtr = entry.getKeyPtr();
+    for (size_t i = 0; i < keyDataTypes.size(); i++) {
+        auto key = MemRefUtils::loadValue(KeyPtr, keyDataTypes[i]);
+        record.write(resultRecordFieldIdentifiers[i], key);
+        KeyPtr = KeyPtr + keyDataTypes[i]->size();
+    }
+    // write the value
+    auto valuePtr = entry.getValuePtr();
+    for (size_t i = 0; i < valueDataTypes.size(); i++) {
+        auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
+        record.write(resultRecordFieldIdentifiers[i + keyDataTypes.size()], value);
+        valuePtr = valuePtr + valueDataTypes[i]->size();
+    }
+    // write nulls
+    for (size_t i = keyDataTypes.size() + valueDataTypes.size(); i < resultRecordFieldIdentifiers.size(); i++) {
+        record.write(resultRecordFieldIdentifiers[i], 0);
+    }
+}
+
+void OuterBatchJoinProbe::terminate(NES::Runtime::Execution::ExecutionContext& executionCtx) const {
+    // for now, this execution is very slow as we do not create code for the termination
+
+    // emit all unseen entries
+    auto state = reinterpret_cast<LocalJoinProbeState*>(executionCtx.getLocalState(this));
+    auto& hashMap = state->hashMap;
+    for (auto entry : hashMap) {
+        if (!isMarked(entry)) {
+            auto record = Record();
+            writeEntryIntoRecord(entry, record);
+            child->execute(executionCtx, record);
+        }
+    }
+    child->terminate(executionCtx);
 }
 
 }// namespace NES::Runtime::Execution::Operators

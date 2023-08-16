@@ -36,15 +36,25 @@ class OuterBatchJoinProbe : public AbstractBatchJoinProbe {
      * @param probeFieldIdentifiers record identifier of the value field in the probe table
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
+     * @param resultFieldIdentifiers record identifier of the result fields
      */
     OuterBatchJoinProbe(uint64_t operatorHandlerIndex,
-                   const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                   const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+                        const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+                        const std::vector<PhysicalTypePtr>& keyDataTypes,
+                        const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
+                        const std::vector<PhysicalTypePtr>& valueDataTypes,
+                        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+                        const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void terminate(ExecutionContext& ctx) const override;
+
+  private:
+    static void mark(const Interface::ChainedHashMapRef::EntryRef& entry);
+    static bool isMarked(const Interface::ChainedHashMapRef::EntryRef& entry);
+    void writeEntryIntoRecord(const Interface::ChainedHashMapRef::EntryRef& entry, NES::Nautilus::Record& record) const;
+
+    const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_ANTIBATCHJOINPROBE_HPP_
