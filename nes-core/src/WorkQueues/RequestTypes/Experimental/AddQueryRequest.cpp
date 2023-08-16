@@ -28,6 +28,7 @@
 #include <Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -101,6 +102,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
             NES_ERROR("{}", exception.what());
         } else if (exception.instanceOf<Exceptions::InvalidQueryStateException>()
                    || exception.instanceOf<MapEntryNotFoundException>() || exception.instanceOf<TypeInferenceException>()
+                   || exception.instanceOf<Exceptions::LogicalSourceNotFoundException>()
                    || exception.instanceOf<SignatureComputationException>()
                    || exception.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
                    || exception.instanceOf<Exceptions::SharedQueryPlanNotFoundException>() || exception.instanceOf<UDFException>()
