@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/BlockingOperatorException.hpp>
+#include <Exceptions/InvalidNodeException.hpp>
 
 namespace NES::Exceptions {
-BlockingOperatorException::BlockingOperatorException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+InvalidNodeException::InvalidNodeException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
 }// namespace NES
