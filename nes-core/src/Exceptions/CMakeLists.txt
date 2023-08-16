@@ -44,4 +44,5 @@ add_source_files(nes-core
         PhysicalSourceNotFoundException.cpp
         BlockingOperatorException.cpp
         InvalidLogicalOperatorNodeException.cpp
+        LogicalSourceNotFoundException.cpp
 )

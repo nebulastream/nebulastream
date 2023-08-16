@@ -72,6 +72,7 @@ class TypeInferencePhase {
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
      * @throws TypeInferenceException if inferring the data types into the query failed
+     * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
