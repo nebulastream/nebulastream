@@ -96,9 +96,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::WindowingStrategy> windowingStrategy = {
         QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::DEFAULT,
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::LEGACY,
         "Indicates the windowingStrategy "
-        "[DEFAULT|THREAD_LOCAL]. "};
+        "[LEGACY|SLICING|BUCKETING]. "};
 
     /**
      * @brief Enables compilation cache

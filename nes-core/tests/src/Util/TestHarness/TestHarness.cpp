@@ -302,7 +302,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         // Only this is currently supported in Nautilus
         coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -324,7 +324,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
             // Only this is currently supported in Nautilus
             workerConfiguration->queryCompiler.windowingStrategy =
-                QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+                QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 

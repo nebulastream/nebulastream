@@ -316,11 +316,11 @@ template<typename T>
 [[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val);
 
 /**
- * @brief Creates the command line argument if to enable thread local windowing
+ * @brief Creates the command line argument if to enable slicing windowing
  * @param prefix
  * @return Command line argument
  */
-[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false);
+[[nodiscard]] std::string enableSlicingWindowing(bool prefix = false);
 
 /**
  * @brief Enables the usage of Nautilus

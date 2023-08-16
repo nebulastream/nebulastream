@@ -638,13 +638,13 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
 
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
             keyedOperatorHandlers.preAggregationWindowHandler =
                 std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
                     timeBasedWindowType->getSize().getTime(),
                     timeBasedWindowType->getSlide().getTime(),
                     windowOperator->getInputOriginIds());
-        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
             keyedOperatorHandlers.preAggregationWindowHandler =
                 std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
                     timeBasedWindowType->getSize().getTime(),
@@ -682,13 +682,13 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
             std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
 
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
             globalOperatorHandlers.preAggregationWindowHandler =
                 std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
                     timeBasedWindowType->getSize().getTime(),
                     timeBasedWindowType->getSlide().getTime(),
                     windowOperator->getInputOriginIds());
-        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
             globalOperatorHandlers.preAggregationWindowHandler =
                 std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
                     timeBasedWindowType->getSize().getTime(),
@@ -712,7 +712,7 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
     if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
-        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                           windowOutputSchema,
@@ -750,7 +750,7 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
     if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
-        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalNonKeyedTumblingWindowSink::create(windowInputSchema,
                                                                              windowOutputSchema,
@@ -881,8 +881,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                                                 + windowDefinition->getWindowType()->toString());
             }
         }
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL
-            || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKET) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING
+            || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
