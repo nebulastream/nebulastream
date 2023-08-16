@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.197](https://github.com/nebulastream/nebulastream/tree/v0.5.197) (2023-08-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.196...v0.5.197)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Wrong window strategy for Nautilus [\#4134](https://github.com/nebulastream/nebulastream/issues/4134)
+
+### Query Optimizer 🔧
+
+- Handle removal of queries from the shared query plans [\#2496](https://github.com/nebulastream/nebulastream/issues/2496)
+
 ## [v0.5.196](https://github.com/nebulastream/nebulastream/tree/v0.5.196) (2023-08-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.195...v0.5.196)
@@ -219,10 +231,6 @@
 ## [v0.5.170](https://github.com/nebulastream/nebulastream/tree/v0.5.170) (2023-07-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.169...v0.5.170)
-
-### Bug Fixes 🐛
-
-- \[BUG\] Enable Multithreaded Window Tests [\#3966](https://github.com/nebulastream/nebulastream/issues/3966)
 
 ## [v0.5.169](https://github.com/nebulastream/nebulastream/tree/v0.5.169) (2023-07-31)
 
