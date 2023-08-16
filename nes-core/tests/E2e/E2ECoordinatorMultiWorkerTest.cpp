@@ -388,8 +388,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                                                     // The next two options disable distributed windowing.
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
                                                     TestUtils::setDistributedWindowCombinerThreshold(1000),
-                                                    // Enable THREAD_LOCAL on the coordinator.
-                                                    TestUtils::enableThreadLocalWindowing(true)});
+                                                    // Enable SLICING on the coordinator.
+                                                    TestUtils::enableSlicingWindowing(true)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     NES_DEBUG("Configure a schema that consists of a timestamp, a grouping key and a value.");
@@ -421,14 +421,14 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                                                                TestUtils::physicalSourceName("test_source_1"),
                                                                TestUtils::logicalSourceName("test_source"),
                                                                TestUtils::numberOfTuplesToProducePerBuffer(10),
-                                                               TestUtils::enableThreadLocalWindowing()};
+                                                               TestUtils::enableSlicingWindowing()};
     std::initializer_list<std::string> workerConfiguration2 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                                                TestUtils::sourceType(SourceType::CSV_SOURCE),
                                                                TestUtils::csvSourceFilePath(inputCsvPath),
                                                                TestUtils::physicalSourceName("test_source_2"),
                                                                TestUtils::logicalSourceName("test_source"),
                                                                TestUtils::numberOfTuplesToProducePerBuffer(10),
-                                                               TestUtils::enableThreadLocalWindowing()};
+                                                               TestUtils::enableSlicingWindowing()};
     auto worker1 = TestUtils::startWorker(workerConfiguration1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     auto worker2 = TestUtils::startWorker(workerConfiguration2);
