@@ -37,7 +37,7 @@ add_subdirectory(src)
 get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 
 # Add nes-benchmark library
-add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES} include/DataGeneration/ByteDataGenerator.hpp src/DataGeneration/ByteDataGenerator.cpp)
+add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES} include/DataGeneration/GenericDataGenerator.hpp)
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
 add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 

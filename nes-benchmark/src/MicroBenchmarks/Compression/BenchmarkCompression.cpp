@@ -1,7 +1,6 @@
 #include "API/Schema.hpp"
-#include "DataGeneration/ByteDataGenerator.hpp"
 #include "DataGeneration/DefaultDataGenerator.hpp"
-#include "DataGeneration/data/TextDataSet.hpp"
+#include "DataGeneration/GenericDataGenerator.hpp"
 #include <Exceptions/ErrorListener.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -45,7 +44,7 @@ class BenchmarkCompression2 {
   public:
     BenchmarkCompression2(const size_t numBuffers,
                           const size_t bufferSize,
-                          ByteDataGenerator<Args...>& dataGenerator,
+                          GenericDataGenerator<Args...>& dataGenerator,
                           const std::shared_ptr<MemoryLayout>& memoryLayout,
                           CompressionMode cm,
                           const Args&... tupleArgs) {
@@ -99,7 +98,7 @@ class BenchmarkCompression {
     template<typename... Args>
     BenchmarkCompression(const size_t numBuffers,
                          const size_t bufferSize,
-                         ByteDataGenerator<Args...>& dataGenerator,
+                         GenericDataGenerator<Args...>& dataGenerator,
                          const std::shared_ptr<MemoryLayout>& memoryLayout,
                          CompressionMode cm,
                          const Args&... tupleArgs);
@@ -135,7 +134,7 @@ BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
 template<typename... Args>
 BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
                                            const size_t bufferSize,
-                                           ByteDataGenerator<Args...>& dataGenerator,
+                                           GenericDataGenerator<Args...>& dataGenerator,
                                            const std::shared_ptr<MemoryLayout>& memoryLayout,
                                            CompressionMode cm,
                                            const Args&... tupleArgs) {
@@ -231,8 +230,8 @@ auto p1 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
 auto p2 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
 auto p3 = std::make_shared<DoubleParameter>(5.5234, 99.00004, distribution);
      */
-    ByteDataGenerator dataGenerator =
-        ByteDataGenerator<DoubleParameter, DoubleParameter, DoubleParameter>(memoryLayoutType, p1, p2, p3);
+    GenericDataGenerator dataGenerator =
+        GenericDataGenerator<DoubleParameter, DoubleParameter, DoubleParameter>(memoryLayoutType, p1, p2, p3);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -329,13 +328,18 @@ void BM_RepeatingValuesText(benchmark::State& state, Args&&... args) {
     std::ofstream o(file_name);
     o << std::setw(2) << arguments << std::endl;
 
-    auto distribution = std::make_shared<RepeatingValues>(numRepeats, sigma, changeProbability);
-    distribution->seed = seed;
-    TextParameter p1 = TextParameter(0, 185, 13, distribution.get());
-    TextParameter p2 = TextParameter(0, 185, 13, distribution.get());
-    TextParameter p3 = TextParameter(0, 185, 13, distribution.get());
-    ByteDataGenerator dataGenerator =
-        ByteDataGenerator<TextParameter, TextParameter, TextParameter>(memoryLayoutType, p1, p2, p3);
+    std::vector<std::shared_ptr<RepeatingValues>> distributions;
+    for (size_t i = 0; i < numCols; i++) {
+        auto distribution = std::make_shared<RepeatingValues>(numRepeats, sigma, changeProbability);
+        distribution->seed = seed + i;
+        distributions.push_back(distribution);
+    }
+    // TODO dynamic fixedCharLength
+    TextParameter p1 = TextParameter(minValue, maxValue, 13, distributions[0].get());
+    TextParameter p2 = TextParameter(minValue, maxValue, 13, distributions[1].get());
+    TextParameter p3 = TextParameter(minValue, maxValue, 13, distributions[2].get());
+    GenericDataGenerator dataGenerator =
+        GenericDataGenerator<TextParameter, TextParameter, TextParameter>(memoryLayoutType, p1, p2, p3);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -432,7 +436,7 @@ void BM_Uniform(benchmark::State& state, Args&&... args) {
     Uniform distribution = Uniform();
     distribution.seed = seed;
     distribution.sort = sort;
-    ByteDataGenerator dataGenerator = ByteDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
+    GenericDataGenerator dataGenerator = GenericDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -514,7 +518,7 @@ void BM_Binomial(benchmark::State& state, Args&&... args) {
     Binomial distribution = Binomial(probability);
     distribution.seed = seed;
     distribution.sort = sort;
-    ByteDataGenerator dataGenerator = ByteDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
+    GenericDataGenerator dataGenerator = GenericDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -595,7 +599,7 @@ void BM_Zipf(benchmark::State& state, Args&&... args) {
     Zipf distribution = Zipf(alpha);
     distribution.seed = seed;
     distribution.sort = sort;
-    ByteDataGenerator dataGenerator = ByteDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
+    GenericDataGenerator dataGenerator = GenericDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
     std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
     if (memoryLayout_ == MemoryLayout_::COLUMN)
         memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
@@ -634,20 +638,20 @@ void BM_Zipf(benchmark::State& state, Args&&... args) {
 // have to be changed by hand (except compression algorithm) ...
 // ------------------------------------------------------------
 // TODO? use environment variables for all variables?
-size_t NUM_BENCHMARK_ITERATIONS = 10;
+size_t NUM_BENCHMARK_ITERATIONS = 1;
 auto COMPRESSION_ALGORITHM = CompressionAlgorithm::LZ4;// TODO
 //auto COMPRESSION_ALGORITHM = getCompressionAlgorithmByName(std::getenv("CA"));
 size_t SEED_VALUE = 42;
 bool SORT = true;
 size_t NUM_BUFFERS = 1;
-size_t BUFFER_SIZE = 4096;
-size_t NUM_COLS = 4;
-size_t MIN_VALUE = 48;
-size_t MAX_VALUE = 57;
+size_t BUFFER_SIZE = 300;
+size_t NUM_COLS = 3;
+size_t MIN_VALUE = 0;
+size_t MAX_VALUE = 150;
 
-int REPEATING_VALUES_NUM_REPEATS = 10;
-uint8_t REPEATING_VALUES_SIGMA = 5;
-double REPEATING_VALUES_CHANGE_PROBABILITY = 0.1;
+int REPEATING_VALUES_NUM_REPEATS = 3;
+uint8_t REPEATING_VALUES_SIGMA = 3;
+double REPEATING_VALUES_CHANGE_PROBABILITY = 0.9;
 
 double BINOMIAL_PROBABILITY = 0.5;
 
