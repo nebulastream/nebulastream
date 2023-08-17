@@ -129,17 +129,21 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Indicates the windowingStrategy"
         "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
-    /**
-     * @brief Sets the path to the locally installed CUDA SDK.
-     */
-    StringOption cudaSdkPath = {CUDA_SDK_PATH, "/usr/local/cuda", "Path to CUDA SDK."};
-
     BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
 
     UIntOption stageBufferSize = {
         VECTORIZATION_STAGE_BUFFER_SIZE,
         NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
         "Size of the stage buffer"
+    };
+
+    /**
+     * @brief Sets the path to the locally installed CUDA SDK.
+     */
+    StringOption cudaSdkPath = {
+        CUDA_SDK_PATH,
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_SDK_PATH,
+        "Path to the CUDA SDK"
     };
 
   private:
@@ -155,11 +159,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &numberOfPartitions,
             &pageSize,
             &preAllocPageCnt,
-            &cudaSdkPath,
             &maxHashTableSize,
             &joinStrategy,
             &useVectorization,
             &stageBufferSize,
+            &cudaSdkPath,
         };
     }
 };

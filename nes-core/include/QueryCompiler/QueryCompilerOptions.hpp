@@ -192,9 +192,21 @@ class QueryCompilerOptions {
          */
         void setStageBufferSize(uint64_t size);
 
+        /**
+        * @brief Set the path to the CUDA SDK
+        * @param cudaSdkPath the CUDA SDK path
+        */
+        void setCUDASdkPath(const std::string& cudaSdkPath);
+
+        /**
+        * @brief Get the path to the CUDA SDK
+        */
+        const std::string getCUDASdkPath() const;
+
     private:
         bool enabled;
         uint64_t stageBufferSize;
+        std::string cudaSdkPath;
     };
 
     using VectorizationOptionsPtr = std::shared_ptr<VectorizationOptions>;
@@ -278,17 +290,6 @@ class QueryCompilerOptions {
     void setDumpMode(DumpMode dumpMode);
 
     /**
-     * @brief Set the path to the CUDA SDK
-     * @param cudaSdkPath the CUDA SDK path
-     */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
-
-    /**
-     * @brief Get the path to the CUDA SDK
-     */
-    const std::string getCUDASdkPath() const;
-
-    /**
      * @brief Return vectorization options
      */
     VectorizationOptionsPtr getVectorizationOptions() const;
@@ -310,7 +311,6 @@ class QueryCompilerOptions {
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
-    std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
     VectorizationOptionsPtr vectorizationOptions;
 };
