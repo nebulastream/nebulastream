@@ -1180,8 +1180,6 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
 
     auto vectorizedPipeline = vectorizedPipelineOpt.value();
 
-    auto executionTrace = Nautilus::Backends::KernelCompiler::createTraceFromNautilusOperator(vectorizedPipeline);
-
     NES_NOT_IMPLEMENTED();
     // TODO Compile the execution trace to a kernel
     auto kernelExecutable = nullptr;
