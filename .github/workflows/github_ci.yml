@@ -21,6 +21,7 @@ on:
       - reopened
     branches:
       - master
+      - feature/**
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
