@@ -70,6 +70,8 @@
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
+#include <Nautilus/Backends/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -120,6 +122,7 @@
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Util/DumpHelper.hpp>
 #include <cstddef>
 #include <span>
 #include <string_view>
@@ -1180,10 +1183,23 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
 
     auto vectorizedPipeline = vectorizedPipelineOpt.value();
 
-    NES_NOT_IMPLEMENTED();
-    // TODO Compile the execution trace to a kernel
-    auto kernelExecutable = nullptr;
+    auto cudaEnabled = options->getVectorizationOptions()->isUsingCUDA();
+    if (!cudaEnabled) {
+        NES_ERROR("Kernel compilation was requested but CUDA is not enabled");
+        return std::nullopt;
+    }
 
+    auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler("cudaKernelWrapper");
+    auto compileOptions = Nautilus::CompilationOptions();
+    compileOptions.setIdentifier("CUDAKernelCompilation");
+    auto dumpToFile = options->getDumpMode() == QueryCompilerOptions::DumpMode::FILE;
+    auto dumpToConsole = options->getDumpMode() == QueryCompilerOptions::DumpMode::CONSOLE;
+    auto dumpToBoth = options->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
+    compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
+    compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
+    auto dumpHelper = DumpHelper::create(compileOptions.getIdentifier(), compileOptions.isDumpToConsole(), compileOptions.isDumpToFile());
+    auto kernelExecutable = cudaKernelCompiler.compile(vectorizedPipeline, compileOptions, dumpHelper);
     return std::make_shared<Runtime::Execution::Operators::Kernel>(std::move(kernelExecutable), *schemaSizeIt);
 }
 
