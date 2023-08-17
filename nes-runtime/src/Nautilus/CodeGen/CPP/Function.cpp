@@ -21,8 +21,9 @@
 
 namespace NES::Nautilus::CodeGen::CPP {
 
-Function::Function(std::string type, std::string name, std::vector<std::string> parameters)
-    : type(std::move(type))
+Function::Function(std::vector<std::string> specifiers, std::string type, std::string name, std::vector<std::string> parameters)
+    : specifiers(std::move(specifiers))
+    , type(std::move(type))
     , name(std::move(name))
     , parameters(std::move(parameters))
 {
@@ -55,6 +56,11 @@ void Function::addSegment(const std::shared_ptr<Segment>& segment) {
 }
 
 std::string Function::getSignature() const {
+    std::string specs;
+    for (const auto& spec : specifiers) {
+        specs += spec + " ";
+    }
+
     std::string params;
     for (size_t i = 0; i < parameters.size(); i++) {
         if (i != 0) {
@@ -62,7 +68,7 @@ std::string Function::getSignature() const {
         }
         params += parameters[i] + " ";
     }
-    return fmt::format("{} {}({})", type, name, params);
+    return fmt::format("{} {} {}({})", specs, type, name, params);
 }
 
 } // namespace NES::Nautilus::CodeGen::CPP
