@@ -25,6 +25,8 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <folly/MPMCQueue.h>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace grpc {
 class Server;
@@ -32,6 +34,52 @@ class ServerCompletionQueue;
 };// namespace grpc
 
 namespace NES {
+
+class TupleBufferHolder {
+  public:
+    /**
+         * @brief default constructor
+         */
+    TupleBufferHolder() = default;
+
+    /**
+         * @brief constructor via an reference to the buffer to be hold
+         * @param ref
+         */
+    TupleBufferHolder(const Runtime::TupleBuffer& ref) : bufferToHold(ref) {}
+
+    /**
+         * @brief constructor via the lvalue of a buffer to hold
+         * @param ref
+         */
+    TupleBufferHolder(Runtime::TupleBuffer&& ref) : bufferToHold(std::move(ref)) {}
+
+    TupleBufferHolder(const TupleBufferHolder& rhs) : bufferToHold(rhs.bufferToHold) {}
+
+    TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
+
+    /**
+         * @brief equal sign operator via a reference
+         * @param other
+         * @return
+         */
+    TupleBufferHolder& operator=(const TupleBufferHolder& other) {
+        bufferToHold = other.bufferToHold;
+        return *this;
+    }
+
+    /**
+         * @brief
+         * @param other
+         * @return
+         */
+    TupleBufferHolder& operator=(TupleBufferHolder&& other) {
+        bufferToHold = std::move(other.bufferToHold);
+        return *this;
+    }
+
+    Runtime::TupleBuffer bufferToHold;
+};
 
 namespace Spatial::Index::Experimental {
 class Location;
@@ -72,7 +120,7 @@ static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
 
 class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
                   public Exceptions::ErrorListener,
-                  public AbstractQueryStatusListener {
+                  public AbstractQueryStatusListener{
     using inherited0 = detail::virtual_enable_shared_from_this<NesWorker>;
     using inherited1 = ErrorListener;
 
@@ -295,6 +343,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    std::thread generatorThread;
+    folly::MPMCQueue<TupleBufferHolder> bufferQueue;
+    std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
+    std::shared_ptr<Runtime::BufferManager> bufferManager;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

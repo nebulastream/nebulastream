@@ -49,7 +49,6 @@
 #include <iomanip>
 
 #include <utility>
-
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -130,6 +129,86 @@ uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 uint64_t NesWorker::getNumberOfBuffersPerEpoch() { return numberOfBuffersPerEpoch; }
 
+void generateAsync(bool* started,
+                   uint64_t workingTimeDeltaInMillSeconds,
+                   size_t ingestionRatePerSecond,
+                   folly::MPMCQueue<TupleBufferHolder>& bufferQueue,
+                   std::vector<Runtime::TupleBuffer>& preAllocatedBuffers,
+                   size_t numberOfTuplesToProduce) {
+    while (*started) {
+        std::cout << "proudce" << std::endl;
+        auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
+        auto buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec;
+        NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
+
+        auto lastSecond = 0L;
+        auto runningOverAllCount = 0L;
+        auto ingestionRateIndex = 0L;
+
+        //        started = true;
+
+        // continue producing buffers as long as the generator is running
+        while (started) {
+            // get the timestamp of the current period
+            std::cout << "produce buffer" << std::endl;
+            auto periodStartTime =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                    .count();
+            auto buffersProcessedCount = 0;
+
+            // produce the required number of buffers for the current period
+            while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
+                auto currentSecond =
+                    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+                // get the buffer to produce
+                auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
+                auto preallocatedBuffer = preAllocatedBuffers[bufferIndex];
+
+                // create a buffer holder and write it to the queue
+                TupleBufferHolder bufferHolder;
+                bufferHolder.bufferToHold = preallocatedBuffer;
+                preallocatedBuffer.setNumberOfTuples(numberOfTuplesToProduce);
+                preallocatedBuffer.setCreationTimestampInMS(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                        .count());
+
+                if (!bufferQueue.write(std::move(bufferHolder))) {
+                    NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
+                }
+
+                // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
+                if (lastSecond != currentSecond) {
+                    if ((buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec) == 0) {
+                        buffersToProducePerWorkingTimeDelta = 1;
+                    }
+
+                    lastSecond = currentSecond;
+                    ingestionRateIndex++;
+                }
+
+                buffersProcessedCount++;
+            }
+
+            // get the current time and wait until the next period start time
+            size_t currentTime =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                    .count();
+            auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
+
+            if (nextPeriodStartTime < currentTime) {
+                NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
+            }
+
+            while (currentTime < nextPeriodStartTime) {
+                currentTime =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                        .count();
+            }
+        }
+    }
+};
+
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "
               << blocking << " coordinatorIp=" << workerConfig->coordinatorIp.getValue() << " coordinatorPort="
@@ -142,36 +221,25 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
-    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct Record {
-            uint64_t a;
-            uint64_t b;
-            uint64_t c;
-            uint64_t d;
-            uint64_t e;
-            uint64_t f;
-//            uint64_t g;
-//            uint64_t h;
-//            uint64_t i;
-//            uint64_t j;
-//            uint64_t k;
-//            uint64_t l;
-//            uint64_t m;
-//            uint64_t n;
-//            uint64_t o;
-//            uint64_t p;
-//            uint64_t q;
-//            uint64_t r;
-//            uint64_t s;
-//            uint64_t t;
-//            uint64_t u;
-//            uint64_t v;
-//            uint64_t w;
-//            uint64_t x;
-            uint64_t timestamp1;
-            uint64_t timestamp2;
-        };
+    bool* started = new bool(false);
+    auto preAllocatedBufferCnt = 100;
+    bufferManager = std::make_shared<Runtime::BufferManager>();
+    struct Record {
+        uint64_t a;
+        uint64_t b;
+        uint64_t c;
+        uint64_t d;
+        uint64_t e;
+        uint64_t f;
+        uint64_t timestamp1;
+        uint64_t timestamp2;
+    };
 
+    auto numberOfTuplesToProduce = bufferManager->getBufferSize() / sizeof(Record);
+
+    for (auto i = 0; i < preAllocatedBufferCnt; i++) {
+
+        auto buffer = bufferManager->getBufferBlocking();
         auto* records = buffer.getBuffer<Record>();
         auto now = std::chrono::system_clock::now();
         auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
@@ -184,102 +252,42 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].d = u % 4;
             records[u].e = u % 5;
             records[u].f = u % 6;
-//            records[u].g = u % 7;
-//            records[u].h = u % 8;
-//            records[u].i = u % 9;
-//            records[u].j = u % 10;
-//            records[u].k = u % 11;
-//            records[u].l = u % 12;
-//            records[u].m = u % 13;
-//            records[u].n = u % 14;
-//            records[u].o = u % 15;
-//            records[u].p = u % 16;
-//            records[u].q = u % 17;
-//            records[u].r = u % 18;
-//            records[u].s = u % 19;
-//            records[u].t = u % 20;
-//            records[u].w = u % 21;
-//            records[u].x = u % 22;
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
+        preAllocatedBuffers.push_back(buffer);
+    }
+
+    auto numberOfBuffersToSpawnOverall = 1000;
+    auto ingestionRatePerSecond = 100;
+    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(numberOfBuffersToSpawnOverall);
+
+    auto readerFunc = [this, &started](NES::Runtime::TupleBuffer&, uint64_t) {
+        NES::TupleBufferHolder bufferHolder;
+        auto res = false;
+
+        if (!started) {
+            *started = true;
+        }
+        std::cout << "try to read buffer" << std::endl;
+        bufferQueue.blockingRead(bufferHolder);
+        return bufferHolder.bufferToHold;
     };
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1),
+
+    auto constexpr workingTimeDeltaInMillSeconds = 10;
+    generatorThread = std::thread([&] {
+        generateAsync(started, workingTimeDeltaInMillSeconds, ingestionRatePerSecond, bufferQueue, preAllocatedBuffers, numberOfTuplesToProduce);
+    });
+
+    //TODO somewhere you have to do generatorThread.join()and also clear the bufferManager
+
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(readerFunc),
                                                       workerConfig->numberOfBuffersToProduce,
                                                       workerConfig->sourceGatheringInterval,
                                                       GatheringMode::INGESTION_RATE_MODE);
-    switch (workerConfig->lambdaSource) {
-        case 1: {
-            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 2: {
-            auto physicalSource1 = PhysicalSource::create("A", "A2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 3: {
-            auto physicalSource1 = PhysicalSource::create("A", "A3", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 4: {
-            auto physicalSource1 = PhysicalSource::create("A", "A4", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 5: {
-            auto physicalSource1 = PhysicalSource::create("A", "A5", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 6: {
-            auto physicalSource1 = PhysicalSource::create("A", "A6", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            break;
-        }
-        case 7: {
-            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
-            break;
-        }
-        case 8: {
-            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
-            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
-            break;
-        }
-        case 9: {
-            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
-            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource3);
-            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource3);
-            break;
-        }
-        case 10: {
-            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
-            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource3);
-            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource4);
-            auto physicalSource5 = PhysicalSource::create("A", "A5", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource5);
-            break;
-        }
-    }
+    auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+    workerConfig->physicalSources.add(physicalSource1);
+
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring.getValue());
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
