@@ -28,11 +28,12 @@ class Function : public CodeGenerator {
 public:
     /**
      * @brief Constructor.
-     * @param type the return type of the function (this also includes modifiers such as `extern "C"` for now)
+     * @param specifiers the function specifiers (e.g. `extern "C"`)
+     * @param type the return type of the function
      * @param name the function name
      * @param parameters the list of parameters with each entry defining the type and name (e.g. `int foo`)
      */
-    Function(std::string type, std::string name, std::vector<std::string> parameters);
+    Function(std::vector<std::string> specifiers, std::string type, std::string name, std::vector<std::string> parameters);
 
     [[nodiscard]] std::string toString() const override;
 
@@ -47,6 +48,7 @@ public:
     [[nodiscard]] std::string getSignature() const;
 
 private:
+    std::vector<std::string> specifiers;
     std::string type;
     std::string name;
     std::vector<std::string> parameters;
