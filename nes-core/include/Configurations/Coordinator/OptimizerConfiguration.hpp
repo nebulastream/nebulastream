@@ -85,7 +85,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * To this end, the optimizer will create pre-aggregation operators that are located close to the data source.
      */
     BoolOption performDistributedWindowOptimization = {PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
-                                                       true,
+                                                       true, // TODO this has to be set to true, otherwise the Nemo tests fail #4150
                                                        "Enables the distribution of window aggregations."};
 
     /**

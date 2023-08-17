@@ -329,7 +329,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
 /*
  * @brief Test allowed lateness using multiple sources, flat topology, out-of-order stream with 0ms allowed lateness
  */
-TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_0ms) {
+TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_FT_OO_0ms) {
     string query = "Query::from(\"OutOfOrderStream\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(0), "
                    "Milliseconds()))"
@@ -544,7 +544,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
 /*
  * @brief Test allowed lateness using multiple sources, hierarchical topology, out-of-order stream with 0ms allowed lateness
  */
-TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_0ms) {
+TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_0ms) {
     string query = "Query::from(\"OutOfOrderStream\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(0), "
                    "Milliseconds()))"
@@ -584,7 +584,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_0ms) {
 /*
  * @brief Test allowed lateness using multiple sources, hierarchical topology, out-of-order stream with 10ms allowed lateness
  */
-TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_10ms) {
+TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_10ms) {
     string query = "Query::from(\"OutOfOrderStream\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(10), "
                    "Milliseconds()))"

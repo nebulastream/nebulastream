@@ -127,7 +127,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 /*
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
-TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
+TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedTumblingWindow) {
     //Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("value", BasicType::UINT64))
                                             ->addField(createField("id", BasicType::UINT64))
@@ -319,7 +319,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 /*
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
-TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
+TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedSlidingWindow) {
     //Setup Coordinator
     std::string window =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))

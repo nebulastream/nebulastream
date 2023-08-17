@@ -46,29 +46,20 @@ DistributeWindowRulePtr DistributedWindowRule::create(Configurations::OptimizerC
 QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("DistributedWindowRule: Apply DistributedWindowRule.");
     NES_DEBUG("DistributedWindowRule::apply: plan before replace {}", queryPlan->toString());
-    if (!performDistributedWindowOptimization) {
-        return queryPlan;
-    }
-    auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
-    if (!windowOps.empty()) {
-        /**
-         * @end
-         */
-        NES_DEBUG("DistributedWindowRule::apply: found {} window operators", windowOps.size());
-        for (auto& windowOp : windowOps) {
-            NES_DEBUG("DistributedWindowRule::apply: window operator {}", windowOp->toString());
 
-            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
-                && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
-                createDistributedWindowOperator(windowOp, queryPlan);
-            } else {
-                createCentralWindowOperator(windowOp);
-                NES_DEBUG("DistributedWindowRule::apply: central op\n{}", queryPlan->toString());
-            }
+    auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
+    NES_DEBUG("DistributedWindowRule::apply: found {} window operators", windowOps.size());
+    for (auto& windowOp : windowOps) {
+        NES_DEBUG("DistributedWindowRule::apply: window operator {}", windowOp->toString());
+        if (performDistributedWindowOptimization && windowOp->getChildren().size() >= windowDistributionChildrenThreshold
+            && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
+            createDistributedWindowOperator(windowOp, queryPlan);
+        } else {
+            createCentralWindowOperator(windowOp);
+            NES_DEBUG("DistributedWindowRule::apply: central op\n{}", queryPlan->toString());
         }
-    } else {
-        NES_DEBUG("DistributedWindowRule::apply: no window operator in query");
     }
+
     NES_DEBUG("DistributedWindowRule::apply: plan after replace {}", queryPlan->toString());
     return queryPlan;
 }

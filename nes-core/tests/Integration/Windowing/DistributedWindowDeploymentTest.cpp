@@ -44,7 +44,7 @@ using namespace Configurations;
 
 static uint64_t workerThreads = 4;
 
-class ConcurrentWindowDeploymentTest : public Testing::NESBaseTest {
+class DistributedWindowDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -55,21 +55,21 @@ class ConcurrentWindowDeploymentTest : public Testing::NESBaseTest {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
+TEST_F(DistributedWindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_INFO("ConcurrentWindowDeploymentTest: Start coordinator");
+    NES_INFO("DistributedWindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", BasicType::UINT64)->addField("ysb$page_id", BasicType::UINT64)->addField("ysb$campaign_id", BasicType::UINT64)->addField("ysb$ad_type", BasicType::UINT64)->addField("ysb$event_type", BasicType::UINT64)->addField("ysb$current_ms", BasicType::UINT64)->addField("ysb$ip", BasicType::UINT64)->addField("ysb$d1", BasicType::UINT64)->addField("ysb$d2", BasicType::UINT64)->addField("ysb$d3", BasicType::UINT32)->addField("ysb$d4", BasicType::UINT16);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
-    NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("DistributedWindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("ConcurrentWindowDeploymentTest: Start worker 1");
+    NES_DEBUG("DistributedWindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->numWorkerThreads = workerThreads;
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
@@ -190,7 +190,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
 }
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2258
-TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -265,7 +265,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
 }
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2234
-TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTimeUnit) {
+TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTimeUnit) {
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -343,7 +343,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -430,7 +430,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
+TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -529,7 +529,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
+TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -629,7 +629,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
 /**
  * @brief test distributed sliding window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
+TEST_F(DistributedWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -740,7 +740,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -821,7 +821,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowE
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -905,7 +905,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1006,7 +1006,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWin
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
+TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1104,7 +1104,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
+TEST_F(DistributedWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1171,7 +1171,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
+TEST_F(DistributedWindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1240,7 +1240,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
+TEST_F(DistributedWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1310,7 +1310,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
+TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1401,7 +1401,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest,
+TEST_F(DistributedWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -1558,7 +1558,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest,
+TEST_F(DistributedWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -1717,7 +1717,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
 /*
  * @brief Test if the avg aggregation can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
         double value1;
@@ -1768,7 +1768,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation)
 /*
  * @brief Test if the max aggregation can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -1818,7 +1818,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation)
 /*
  * @brief Test if the max aggregation of negative values can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
     struct Car {
         int32_t key;
         int32_t value;
@@ -1867,7 +1867,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
 /*
  * @brief Test if the max aggregation with uint64 data type can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
     struct Car {
         uint64_t key;
         uint64_t value;
@@ -1920,7 +1920,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
 /*
  * @brief Test if the min aggregation can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -1969,7 +1969,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMinAggregation)
 /*
  * @brief Test if the min aggregation with float data type can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     struct Car {
         uint32_t key;
         float value;
@@ -2018,7 +2018,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggrega
 /*
  * @brief Test if the Count aggregation can be deployed
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
+TEST_F(DistributedWindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     struct Car {
         uint64_t key;
         uint64_t value;
@@ -2070,7 +2070,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
+TEST_F(DistributedWindowDeploymentTest, DISABLED_testLongWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
