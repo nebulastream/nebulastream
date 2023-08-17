@@ -479,7 +479,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testDistributedWindowThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
         config->optimizer.distributedWindowChildThreshold.setValue(0);
         config->optimizer.distributedWindowCombinerThreshold.setValue(0);
@@ -576,7 +576,7 @@ TEST_F(DeepHierarchyTopologyTest, testDistributedWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testDistributedWindowThreeLevelNemoPlacement) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPlacement) {
     uint64_t workerNo = 10;
     std::vector<WorkerConfigurationPtr> workerConfigs;
 

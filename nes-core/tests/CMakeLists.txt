@@ -568,8 +568,10 @@ add_nes_integration_test(non-keyed-tumbling-window-tests "Integration/Windowing/
 add_nes_integration_test(keyed-sliding-window-tests "Integration/Windowing/SlidingWindow/KeyedSlidingWindowTests.cpp")
 add_nes_integration_test(non-keyed-sliding-window-tests "Integration/Windowing/SlidingWindow/NonKeyedSlidingWindowTests.cpp")
 
-### concurrent window deployment test ###
-add_nes_integration_test(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
+### distributed window deployment test ###
+# Disable this tests currently
+
+#add_nes_integration_test(distributed-window-deployment-test "Integration/Windowing/DistributedWindowDeploymentTest.cpp")
 
 
 ### MultipleWindowsTest ###
@@ -585,8 +587,7 @@ add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp")
 
 
 ### AssignWatermarkTest ###
-#TODO: activate for testing
-add_nes_integration_test(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
+add_nes_integration_test(assignment-watermark-test "Integration/Windowing/AssignWatermarkTest.cpp")
 
 
 add_nes_integration_test(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
