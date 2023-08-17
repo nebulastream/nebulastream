@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidNodeException.hpp>
+#include <Exceptions/OperatorNotFoundException.hpp>
 
 namespace NES::Exceptions {
-InvalidNodeException::InvalidNodeException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+OperatorNotFoundException::OperatorNotFoundException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
 }// namespace NES

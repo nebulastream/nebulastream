@@ -23,9 +23,9 @@ namespace NES::Exceptions {
 /**
  * @brief This Exception is thrown if we obtain an invalid node, e.g. nullptr, or cannot find a node
  */
-class InvalidNodeException : public RequestExecutionException {
+class OperatorNotFoundException : public RequestExecutionException {
   public:
-    explicit InvalidNodeException(const std::string& message);
+    explicit OperatorNotFoundException(const std::string& message);
 };
 }// namespace NES
 

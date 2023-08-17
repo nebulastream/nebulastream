@@ -15,7 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Exceptions/InvalidNodeException.hpp>
+#include <Exceptions/OperatorNotFoundException.hpp>
 #include <Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
@@ -131,7 +131,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator) {
-                            throw Exceptions::InvalidNodeException(
+                            throw Exceptions::OperatorNotFoundException(
                                 "LogicalSourceExpansionRule: Unable to find blocking operator with id "
                                 + std::to_string(blockingParentId));
                         }
