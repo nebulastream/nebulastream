@@ -28,15 +28,16 @@ namespace NES::Runtime::Execution::Operators {
 
 StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                              const OriginId outputOriginId,
-                                                             size_t windowSize,
-                                                             size_t sizeOfRecordLeft,
-                                                             size_t sizeOfRecordRight,
-                                                             size_t totalSizeForDataStructures,
-                                                             size_t pageSize,
-                                                             size_t preAllocPageSizeCnt,
-                                                             size_t numPartitions,
+                                                             uint64_t windowSize,
+                                                             uint64_t windowSlide,
+                                                             uint64_t sizeOfRecordLeft,
+                                                             uint64_t sizeOfRecordRight,
+                                                             uint64_t totalSizeForDataStructures,
+                                                             uint64_t pageSize,
+                                                             uint64_t preAllocPageSizeCnt,
+                                                             uint64_t numPartitions,
                                                              QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
@@ -50,51 +51,65 @@ void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecution
     NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
-void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
+void StreamHashJoinOperatorHandler::triggerSlices(TriggerableWindows& idsToBeTriggered,
                                                    WorkerContext* workerCtx,
                                                    PipelineExecutionContext* pipelineCtx) {
-    //for every window
-    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
-        //for every partition within the window create one task
-        //get current window
-        auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
-        NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
-        auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(currentWindow->get());
-        auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(QueryCompilation::JoinBuildSideType::Left);
-        auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(QueryCompilation::JoinBuildSideType::Right);
+    /**
+     * We expect the idsToBeTriggered to be sorted.
+     * Otherwise, it can happen that the buffer <seq 2, ts 1000> gets processed after <seq 1, ts 20000>, which will lead to wrong results upstream
+     * Also, we have to set the seq number in order of the slice end timestamps.
+     * Furthermore, we expect the sliceIdentifier to be the sliceEnd.
+     */
+    for (const auto& [windowId, sliceIdsForWindow] : idsToBeTriggered.windowIdToTriggerableSlices) {
+        // for every left and right slice id combination
+        for (auto& [curSliceLeft, curSliceRight] : getSlicesLeftRightForWindow(windowId)) {
 
-        for (auto i = 0UL; i < getNumPartitions(); ++i) {
-            //for local we have to merge the tables first
-            if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
-                //push actual bucket from local to global hash table for left side
+            // Retrieving the left and right hash table
+            auto leftHashSlice = std::dynamic_pointer_cast<StreamHashJoinWindow>(curSliceLeft);
+            auto rightHashSlice = std::dynamic_pointer_cast<StreamHashJoinWindow>(curSliceRight);
+            auto& sharedJoinHashTableLeft = leftHashSlice->getMergingHashTable(QueryCompilation::JoinBuildSideType::Left);
+            auto& sharedJoinHashTableRight = rightHashSlice->getMergingHashTable(QueryCompilation::JoinBuildSideType::Right);
 
-                //page before merging:
+            for (auto i = 0UL; i < getNumPartitions(); ++i) {
+                //for local, we have to merge the tables first
+                if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+                    //push actual bucket from local to global hash table for left side
 
-                auto localHashTableLeft = hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Left, workerCtx->getId());
-                sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
+                    //page before merging:
+                    auto localHashTableLeft = leftHashSlice->getHashTable(QueryCompilation::JoinBuildSideType::Left, workerCtx->getId());
+                    sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
-                //push actual bucket from local to global hash table for right side
-                auto localHashTableRight =
-                    hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
-                sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+                    //push actual bucket from local to global hash table for right side
+                    auto localHashTableRight = rightHashSlice->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
+                    sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+                }
+
+                //create task for current window and current partition
+                auto buffer = workerCtx->allocateTupleBuffer();
+                auto bufferAs = buffer.getBuffer<JoinPartitionIdSliceIdWindow>();
+                bufferAs->partitionId = i;
+                bufferAs->sliceIdentifierLeft = curSliceLeft->getSliceIdentifier();
+                bufferAs->sliceIdentifierRight = curSliceRight->getSliceIdentifier();
+                bufferAs->windowInfo = sliceIdsForWindow.windowInfo;
+                buffer.setNumberOfTuples(1);
+
+                // As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
+                // As we have a global watermark that is larger than the slice end, we can set the watermarkTs to be the slice end.
+                buffer.setOriginId(getOutputOriginId());
+                buffer.setSequenceNumber(getNextSequenceNumber());
+                buffer.setWatermark(std::min(curSliceLeft->getSliceEnd(), curSliceRight->getSliceEnd()));
+
+                pipelineCtx->dispatchBuffer(buffer);
+                NES_DEBUG("Emitted windowIdentifier {}", windowId);
             }
-
-            //create task for current window and current partition
-            auto buffer = workerCtx->allocateTupleBuffer();
-            auto bufferAs = buffer.getBuffer<JoinPartitionIdTWindowIdentifier>();
-            bufferAs->partitionId = i;
-            bufferAs->windowIdentifier = windowIdentifier;
-            buffer.setNumberOfTuples(1);
-            pipelineCtx->dispatchBuffer(buffer);
-            NES_TRACE("Emitted windowIdentifier {}", windowIdentifier);
         }
     }
 }
 
-uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier,
+uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInSlice(uint64_t sliceIdentifier,
                                                                   uint64_t workerId,
                                                                   QueryCompilation::JoinBuildSideType joinBuildSide) {
-    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    const auto window = getSliceBySliceIdentifier(sliceIdentifier);
     if (window.has_value()) {
         auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(window.value().get());
         return hashWindow->getNumberOfTuplesOfWorker(joinBuildSide, workerId);
@@ -105,18 +120,20 @@ uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windo
 
 StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& inputOrigins,
                                                                        const OriginId outputOriginId,
-                                                                       size_t windowSize,
-                                                                       size_t sizeOfRecordLeft,
-                                                                       size_t sizeOfRecordRight,
-                                                                       size_t totalSizeForDataStructures,
-                                                                       size_t pageSize,
-                                                                       size_t preAllocPageSizeCnt,
-                                                                       size_t numPartitions,
+                                                                       uint64_t windowSize,
+                                                                       uint64_t windowSlide,
+                                                                       uint64_t sizeOfRecordLeft,
+                                                                       uint64_t sizeOfRecordRight,
+                                                                       uint64_t totalSizeForDataStructures,
+                                                                       uint64_t pageSize,
+                                                                       uint64_t preAllocPageSizeCnt,
+                                                                       uint64_t numPartitions,
                                                                        QueryCompilation::StreamJoinStrategy joinStrategy) {
 
     return std::make_shared<StreamHashJoinOperatorHandler>(inputOrigins,
                                                            outputOriginId,
                                                            windowSize,
+                                                           windowSlide,
                                                            sizeOfRecordLeft,
                                                            sizeOfRecordRight,
                                                            totalSizeForDataStructures,

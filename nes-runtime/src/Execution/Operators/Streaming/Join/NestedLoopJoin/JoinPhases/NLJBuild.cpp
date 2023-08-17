@@ -18,6 +18,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
@@ -30,6 +31,18 @@
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
+
+uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
+    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
+    auto* nljWindow = static_cast<NLJSlice*>(ptrNljSlice);
+    return nljWindow->getSliceStart();
+}
+
+uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
+    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
+    auto* nljWindow = static_cast<NLJSlice*>(ptrNljSlice);
+    return nljWindow->getSliceEnd();
+}
 
 void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -47,22 +60,22 @@ void* getCurrentWindowProxy(void* ptrOpHandler) {
     return opHandler->getCurrentWindowOrCreate();
 }
 
-void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
+void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    return opHandler->getWindowByTimestampOrCreateIt(timestamp).get();
+    return opHandler->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
-void triggerWindowsProxy(std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+void triggerWindowsProxy(TriggerableWindows& sliceIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
 
-    if (!windowIdentifiersToBeTriggered.empty()) {
-        opHandler->triggerWindows(windowIdentifiersToBeTriggered, nullptr, pipelineCtx);
+    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
+        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, nullptr, pipelineCtx);
     }
 }
 
@@ -72,14 +85,14 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
 
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-    NES_DEBUG("Triggering all windows for pipelineId {}!", pipelineCtx->getPipelineID());
+    NES_DEBUG("Triggering all slices for pipelineId {}!", pipelineCtx->getPipelineID());
 
-    auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
-    triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
+    auto sliceIdentifiersToBeTriggered = opHandler->triggerAllSlices();
+    triggerWindowsProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 /**
- * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
+ * @brief Updates the sliceState of all slices and emits buffers, if the slices can be emitted
  */
 void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
                                          void* ptrPipelineCtx,
@@ -98,8 +111,8 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
-    triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
+    auto sliceIdentifiersToBeTriggered = opHandler->checkSlicesTrigger(minWatermark, sequenceNumber, originId);
+    triggerWindowsProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
@@ -108,19 +121,19 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                     Nautilus::Value<Nautilus::UInt64>& workerId) const {
     NES_DEBUG("Updating LocalJoinState!");
 
-    // Retrieving the window of the current watermark, as we expect that more tuples will be inserted into this window
-    localJoinState->windowReference =
-        Nautilus::FunctionCall("getNLJWindowRefProxy", getNLJWindowRefProxy, operatorHandlerMemRef, timestamp);
+    // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
+    localJoinState->sliceReference =
+        Nautilus::FunctionCall("getNLJSliceRefProxy", getNLJSliceRefProxy, operatorHandlerMemRef, timestamp);
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
-                                                       localJoinState->windowReference,
+                                                       localJoinState->sliceReference,
                                                        workerId,
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
     localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
-    localJoinState->windowStart =
-        Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, localJoinState->windowReference);
-    localJoinState->windowEnd =
-        Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, localJoinState->windowReference);
+    localJoinState->sliceStart =
+        Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
+    localJoinState->sliceEnd =
+        Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 }
 
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -129,8 +142,8 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
-    if (!(localJoinState->windowStart <= timestampVal && timestampVal < localJoinState->windowEnd)) {
-        // We have to get the window for the current timestamp
+    if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd)) {
+        // We have to get the slice for the current timestamp
         auto workerId = ctx.getWorkerId();
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, workerId);
     }
@@ -160,27 +173,27 @@ void NLJBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     auto workerId = ctx.getWorkerId();
-    auto windowReference = Nautilus::FunctionCall("getCurrentWindowProxy", getCurrentWindowProxy, opHandlerMemRef);
+    auto sliceReference = Nautilus::FunctionCall("getCurrentWindowProxy", getCurrentWindowProxy, opHandlerMemRef);
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
-                                                       windowReference,
+                                                       sliceReference,
                                                        workerId,
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
-    auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
+    auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, pagedVectorRef);
 
-    // Getting the current window start and end
-    localJoinState->windowStart =
-        Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, localJoinState->windowReference);
-    localJoinState->windowEnd =
-        Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, localJoinState->windowReference);
+    // Getting the current slice start and end
+    localJoinState->sliceStart =
+        Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
+    localJoinState->sliceEnd =
+        Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 
     // Storing the local state
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
-    // Update the watermark for the nlj operator and trigger windows
+    // Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkWindowsTriggerProxyForNLJBuild",
                            checkWindowsTriggerProxyForNLJBuild,
@@ -193,7 +206,7 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
 }
 
 void NLJBuild::terminate(ExecutionContext& ctx) const {
-    // Trigger all windows, as the query has ended
+    // Trigger all slices, as the query has ended
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("triggerAllWindowsProxy", triggerAllWindowsProxy, operatorHandlerMemRef, ctx.getPipelineContext());
 }

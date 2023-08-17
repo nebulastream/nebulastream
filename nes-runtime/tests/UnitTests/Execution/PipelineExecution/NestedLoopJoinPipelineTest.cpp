@@ -174,6 +174,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                                         rightEntrySize,
                                                                         leftPageSize,
                                                                         rightPageSize,
+                                                                        windowSize,
                                                                         windowSize);
 
         // Building the pipeline

@@ -16,7 +16,7 @@
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -30,22 +30,51 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getNLJWindowRef(void* ptrOpHandler, uint64_t windowIdentifier) {
+void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_INFO("windowIdentifier: {}", windowIdentifier);
+    NES_INFO("sliceIdentifier: {}", sliceIdentifier);
     const auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto window = opHandler->getWindowByWindowIdentifier(windowIdentifier);
-    if (window.has_value()) {
-        return window.value().get();
+    auto slice = opHandler->getSliceBySliceIdentifier(sliceIdentifier);
+    if (slice.has_value()) {
+        return slice.value().get();
     }
     // For now this is fine. We should handle this as part of issue #4016
     return nullptr;
 }
 
-void deleteWindowProxyForNestedLoopJoin(void* ptrOpHandler, uint64_t windowIdentifier) {
+uint64_t getNLJWindowStartProxy(void* ptrNLJWindowTriggerTask) {
+    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
+    return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->windowInfo.windowStart;
+}
+
+uint64_t getNLJWindowEndProxy(void* ptrNLJWindowTriggerTask) {
+    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
+    return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->windowInfo.windowEnd;
+}
+
+uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSideInt) {
+    NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
+    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
+
+    if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
+        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->leftSliceIdentifier;
+    } else if (joinBuildSide == QueryCompilation::JoinBuildSideType::Right) {
+        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->rightSliceIdentifier;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+void deleteAllSlices(void* ptrOpHandler, uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    opHandler->deleteSlices(watermarkTs, sequenceNumber, originId);
+}
+
+void deleteSliceProxyForNestedLoopJoin(void* ptrOpHandler, uint64_t sliceIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    opHandler->deleteWindow(windowIdentifier);
+    opHandler->deleteSlice(sliceIdentifier);
 }
 
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
@@ -53,34 +82,39 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setOrigin(recordBuffer.getOriginId());
-
     Operator::open(ctx, recordBuffer);
 
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto windowIdentifier = recordBuffer.getBuffer().load<UInt64>();
-    // During triggering the window, we append all pages of all local copies to a single PagedVector located at position 0
-    Value<UInt64> workerIdForPagedVectors(0_u64);
-    auto windowReference = Nautilus::FunctionCall("getNLJWindowRef", getNLJWindowRef, operatorHandlerMemRef, windowIdentifier);
-    auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
+    // Getting all needed info from the recordBuffer
+    const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
+    const Value<UInt64> sliceIdLeft = Nautilus::FunctionCall("getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
+                                                       Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const Value<UInt64> sliceIdRight = Nautilus::FunctionCall("getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
+                                                     Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, nljWindowTriggerTaskRef);
+    const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
+
+    // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
+    const Value<UInt64> workerIdForPagedVectors(0_u64);
+
+    // Getting the left and right paged vector
+    const auto sliceRefLeft = Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef,
+                                                     sliceIdLeft);
+    const auto sliceRefRight = Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef,
+                                                      sliceIdRight);
+    const auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                      getNLJPagedVectorProxy,
-                                                     windowReference,
+                                                     sliceRefLeft,
                                                      workerIdForPagedVectors,
                                                      Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
+    const auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                       getNLJPagedVectorProxy,
-                                                      windowReference,
+                                                      sliceRefRight,
                                                       workerIdForPagedVectors,
                                                       Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
     Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
-
-    Value<UInt64> windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, windowReference);
-    Value<UInt64> windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, windowReference);
-
-    // As we know that the tuples are lying one after the other (row layout), we can ignore the buffer size
-    auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);
-    auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema);
 
     Nautilus::Value<UInt64> zeroVal(0_u64);
     for (auto leftRecordMemRef : leftPagedVector) {
@@ -113,13 +147,19 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             }
         }
     }
-
-    // Once we are done with this window, we can delete it to free up space
-    Nautilus::FunctionCall("deleteWindowProxyForNestedLoopJoin",
-                           deleteWindowProxyForNestedLoopJoin,
-                           operatorHandlerMemRef,
-                           windowIdentifier);
 }
+
+void NLJProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    // Update the watermark for the nlj probe and delete all slices that can be deleted
+    const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("deleteAllSlices", deleteAllSlices, operatorHandlerMemRef,
+                           ctx.getWatermarkTs(), ctx.getSequenceNumber(), ctx.getOriginId());
+
+    // Now close for all children
+    Operator::close(ctx, recordBuffer);
+}
+
+
 
 NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const SchemaPtr& leftSchema,
@@ -133,8 +173,10 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const std::string& windowEndFieldName,
                    const std::string& windowKeyFieldName)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema),
-      leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize), joinFieldNameLeft(joinFieldNameLeft),
-      joinFieldNameRight(joinFieldNameRight), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
+      leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
+      leftMemProvider(MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema)),
+      rightMemProvider(MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema)),
+      joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
+      windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
       windowKeyFieldName(windowKeyFieldName) {}
-
 }// namespace NES::Runtime::Execution::Operators

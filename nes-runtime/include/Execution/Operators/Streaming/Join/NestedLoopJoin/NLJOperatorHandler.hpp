@@ -26,7 +26,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This operator handler stores multiple windows (NLJWindow) with each window containing the left and right stream tuples.
+ * @brief This operator handler stores multiple slices (NLJWindow) with each slice containing the left and right stream tuples.
  * This class provides the two join phases (NLJBuild and NLJProbe) with methods for performing a nested loop join.
  */
 class NLJOperatorHandler;
@@ -48,7 +48,8 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                                 uint64_t sizeOfTupleInByteRight,
                                 uint64_t sizePageLeft,
                                 uint64_t sizePageRight,
-                                uint64_t windowSize);
+                                uint64_t windowSize,
+                                uint64_t windowSlide);
 
     ~NLJOperatorHandler() = default;
     /**
@@ -78,11 +79,11 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
 
     /**
      * @brief method to trigger the finished windows
-     * @param windowIdentifiersToBeTriggered
+     * @param sliceIdentifiersToBeTriggered
      * @param workerCtx
      * @param pipelineCtx
      */
-    void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
+    void triggerSlices(TriggerableWindows& sliceIdentifiersToBeTriggered,
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
@@ -92,14 +93,15 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                                         const uint64_t sizeOfTupleInByteRight,
                                         const uint64_t sizePageLeft,
                                         const uint64_t sizePageRight,
-                                        const size_t windowSize);
+                                        const uint64_t windowSize,
+                                        const uint64_t windowSlide);
 
     /**
-     * @brief Returns the current window, by current we mean the last added window to the list. If no window exists,
-     * a window with the timestamp 0 will be created
-     * @return StreamWindow*
+     * @brief Returns the current window, by current we mean the last added window to the list. If no slice exists,
+     * a slice with the timestamp 0 will be created
+     * @return StreamSlice*
      */
-    StreamWindow* getCurrentWindowOrCreate();
+    StreamSlice* getCurrentWindowOrCreate();
 
     /**
      * @brief Returns the page size of the left PagedVector
@@ -126,20 +128,6 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
  * @return void*
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
-
-/**
- * @brief Proxy function for returning the start timestamp of this window
- * @param ptrNljWindow
- * @return uint64_t
- */
-uint64_t getNLJWindowStartProxy(void* ptrNljWindow);
-
-/**
- * @brief Proxy function for returning the end timestamp of this window
- * @param ptrNljWindow
- * @return uint64_t
- */
-uint64_t getNLJWindowEndProxy(void* ptrNljWindow);
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

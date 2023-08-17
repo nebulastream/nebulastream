@@ -15,114 +15,105 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <numeric>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 
-StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
-    auto windowsWriteLocked = windows.wlock();
-    for (auto& curWindow : *windowsWriteLocked) {
-        if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
-            return curWindow;
+StreamSlicePtr StreamJoinOperatorHandler::getSliceByTimestampOrCreateIt(uint64_t timestamp) {
+    auto [slicesWriteLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
+    for (auto& curSlice : *slicesWriteLocked) {
+        if (curSlice->getSliceStart() <= timestamp && timestamp < curSlice->getSliceEnd()) {
+            return curSlice;
         }
     }
 
-    auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
-    auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
+    auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
+    auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
 
     //TODO create a factory class for stream join windows #3900
-    StreamWindowPtr newWindow;
+    StreamSlicePtr newSlice;
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN) {
         auto* nljOpHandler = dynamic_cast<NLJOperatorHandler*>(this);
-        NES_DEBUG("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
-        newWindow = std::make_unique<NLJWindow>(windowStart,
-                                                windowEnd,
-                                                numberOfWorkerThreads,
-                                                sizeOfRecordLeft,
-                                                nljOpHandler->getLeftPageSize(),
-                                                sizeOfRecordRight,
-                                                nljOpHandler->getRightPageSize());
+        NES_DEBUG("Create NLJ slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
+        newSlice = std::make_unique<NLJSlice>(sliceStart,
+                                              sliceEnd,
+                                              numberOfWorkerThreads,
+                                              sizeOfRecordLeft,
+                                              nljOpHandler->getLeftPageSize(),
+                                              sizeOfRecordRight,
+                                              nljOpHandler->getRightPageSize());
     } else {
         auto* ptr = dynamic_cast<StreamHashJoinOperatorHandler*>(this);
-        newWindow = std::make_shared<StreamHashJoinWindow>(numberOfWorkerThreads,
-                                                           windowStart,
-                                                           windowEnd,
-                                                           sizeOfRecordLeft,
-                                                           sizeOfRecordRight,
-                                                           ptr->getTotalSizeForDataStructures(),
-                                                           ptr->getPageSize(),
-                                                           ptr->getPreAllocPageSizeCnt(),
-                                                           ptr->getNumPartitions(),
-                                                           joinStrategy);
-        NES_DEBUG("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
+        newSlice = std::make_shared<StreamHashJoinWindow>(numberOfWorkerThreads,
+                                                          sliceStart,
+                                                          sliceEnd,
+                                                          sizeOfRecordLeft,
+                                                          sizeOfRecordRight,
+                                                          ptr->getTotalSizeForDataStructures(),
+                                                          ptr->getPageSize(),
+                                                          ptr->getPreAllocPageSizeCnt(),
+                                                          ptr->getNumPartitions(),
+                                                          joinStrategy);
+        NES_DEBUG("Create Hash slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
     }
 
-    windowsWriteLocked->emplace_back(newWindow);
-    return newWindow;
+    slicesWriteLocked->emplace_back(newSlice);
+
+    // For all possible slices in their respective windows, reset the state
+    for (auto& windowInfo : getAllWindowsForSlice(*newSlice)) {
+        NES_DEBUG("reset the state for window {}", windowInfo.toString());
+        windowSliceIdToStateLocked->insert({WindowSliceIdKey(newSlice->getSliceIdentifier(), windowInfo.windowId),
+                                            StreamSlice::SliceState::BOTH_SIDES_FILLING});
+    }
+    return newSlice;
 }
 
-void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
-    NES_DEBUG("StreamJoinOperatorHandler trying to delete window with id={}", windowIdentifier);
+void StreamJoinOperatorHandler::deleteSlice(uint64_t sliceIdentifier) {
+    NES_DEBUG("StreamJoinOperatorHandler trying to delete slice with id={}", sliceIdentifier);
     {
-        auto windowsLocked = windows.wlock();
-        for (auto it = windowsLocked->begin(); it != windowsLocked->end(); ++it) {
-            const auto curWindow = *it;
-            if (curWindow->getWindowIdentifier() == windowIdentifier) {
-                windowsLocked->erase(it);
+        auto slicesLocked = slices.wlock();
+        for (auto it = slicesLocked->begin(); it != slicesLocked->end(); ++it) {
+            const auto curSlice = *it;
+            if (curSlice->getSliceIdentifier() == sliceIdentifier) {
+                slicesLocked->erase(it);
                 return;
             }
         }
     }
 }
 
-StreamWindowPtr StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt(uint64_t timestamp) {
-    {
-        auto windowsLocked = windows.rlock();
-        for (auto& curWindow : *windowsLocked) {
-            if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
-                return curWindow;
-            }
-        }
-    }
-    return createNewWindow(timestamp);
-}
+uint64_t StreamJoinOperatorHandler::getNumberOfSlices() { return slices.rlock()->size(); }
 
-uint64_t StreamJoinOperatorHandler::getNumberOfWindows() { return windows.rlock()->size(); }
-
-std::optional<StreamWindowPtr> StreamJoinOperatorHandler::getWindowByWindowIdentifier(uint64_t windowIdentifier) {
+std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {
     {
-        auto windowsLocked = windows.rlock();
-        for (auto& curWindow : *windowsLocked) {
-            if (curWindow->getWindowIdentifier() == windowIdentifier) {
-                return curWindow;
+        auto slicesLocked = slices.rlock();
+        for (auto& curSlice : *slicesLocked) {
+            if (curSlice->getSliceIdentifier() == sliceIdentifier) {
+                return curSlice;
             }
         }
     }
     return std::nullopt;
 }
 
-std::pair<uint64_t, uint64_t> StreamJoinOperatorHandler::getWindowStartEnd(uint64_t windowIdentifier) {
-    const auto& window = getWindowByWindowIdentifier(windowIdentifier);
-    if (window.has_value()) {
-        return {window.value()->getWindowStart(), window.value()->getWindowEnd()};
-    }
-    return {};
-}
-
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
+                                                     const uint64_t windowSlide,
                                                      const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                      uint64_t sizeOfRecordLeft,
                                                      uint64_t sizeOfRecordRight)
-    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize),
-      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)), joinStrategy(joinStrategy),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
+    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide),
+      watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
+      watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
+      outputOriginId(outputOriginId), sequenceNumber(1), joinStrategy(joinStrategy), sizeOfRecordLeft(sizeOfRecordLeft),
       sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
@@ -150,7 +141,7 @@ void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uin
     workerIdToWatermarkMap[workerId] = watermark;
 }
 
-OperatorId StreamJoinOperatorHandler::getOutputOriginId() const { return outputOriginId; }
+OriginId StreamJoinOperatorHandler::getOutputOriginId() const { return outputOriginId; }
 
 uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     auto minVal =
@@ -160,54 +151,125 @@ uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     return minVal == workerIdToWatermarkMap.end() ? -1 : minVal->second;
 }
 
-std::vector<uint64_t> StreamJoinOperatorHandler::triggerAllWindows() {
-    std::vector<uint64_t> windowIdentifiers;
+TriggerableWindows StreamJoinOperatorHandler::triggerAllSlices() {
+    TriggerableWindows sliceIdentifiers;
     {
-        // Getting a lock and then iterating over all windows. For each window, we change the state to ONCE_SEEN_DURING_TERMINATION.
-        // If this was already the state, the window has been seen by both sides during termination, and we can emit it to the probe
-        auto windowsLocked = windows.rlock();
-        for (auto& window : *windowsLocked) {
+        // Getting a lock and then iterating over all slices. For each slice, we change the state to ONCE_SEEN_DURING_TERMINATION.
+        // If this was already the state, the slice has been seen by both sides during termination, and we can emit it to the probe
+        auto [slicesLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
+        for (auto& slice : *slicesLocked) {
+            for (auto& windowInfo : getAllWindowsForSlice(*slice)) {
+                const auto windowId = windowInfo.windowId;
+                auto& sliceState = windowSliceIdToStateLocked->at(WindowSliceIdKey(slice->getSliceIdentifier(), windowId));
 
-            if (window->shouldTriggerDuringTerminate() && window->getNumberOfTuplesLeft() > 0
-                && window->getNumberOfTuplesRight() > 0) {
-                windowIdentifiers.emplace_back(window->getWindowIdentifier());
-                NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
-                          window->getWindowIdentifier(),
-                          window->getNumberOfTuplesLeft(),
-                          window->getNumberOfTuplesRight());
+                if (sliceState == StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION) {
+                    sliceState = StreamSlice::SliceState::EMITTED_TO_PROBE;
+                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].add(slice);
+                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].windowInfo = windowInfo;
+                } else if (sliceState == StreamSlice::SliceState::BOTH_SIDES_FILLING) {
+                    sliceState = StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION;
+                }
             }
         }
     }
-    return windowIdentifiers;
+    return sliceIdentifiers;
 }
 
-std::vector<uint64_t> StreamJoinOperatorHandler::checkWindowsTrigger(const uint64_t watermarkTs,
-                                                                     const uint64_t sequenceNumber,
-                                                                     const OriginId originId) {
-    // The watermark processor handles the minimal watermark across both streams
-    uint64_t newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
+void StreamJoinOperatorHandler::deleteSlices(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
+    uint64_t newGlobalWaterMarkProbe = watermarkProcessorProbe->updateWatermark(watermarkTs, sequenceNumber, originId);
+    NES_DEBUG("newGlobalWaterMarkProbe {} watermarkTs {} sequenceNumber {} originid {}",
+              newGlobalWaterMarkProbe, watermarkTs, sequenceNumber, originId);
 
-    std::vector<uint64_t> triggerableWindowIdentifiers;
+    auto slicesLocked = slices.wlock();
+    for (auto it = slicesLocked->begin(); it != slicesLocked->end(); ++it) {
+        auto& curSlice = *it;
+        if (curSlice->getSliceStart() + sliceAssigner.getWindowSize() < newGlobalWaterMarkProbe) {
+            // We can delete this slice
+            NES_DEBUG("Deleting slice: {}", curSlice->toString());
+            it = slicesLocked->erase(it);
+        }
+    }
+}
+
+TriggerableWindows StreamJoinOperatorHandler::checkSlicesTrigger(const uint64_t watermarkTs,
+                                                                const uint64_t sequenceNumber,
+                                                                const OriginId originId) {
+    // The watermark processor handles the minimal watermark across both streams
+    uint64_t newGlobalWatermark = watermarkProcessorBuild->updateWatermark(watermarkTs, sequenceNumber, originId);
+    NES_DEBUG("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originid {}",
+              newGlobalWatermark, watermarkTs, sequenceNumber, originId);
+
+    TriggerableWindows sliceIdentifiers;
     {
-        auto windowsLocked = windows.rlock();
-        for (auto& window : *windowsLocked) {
-            if (window->getWindowEnd() > newGlobalWatermark || window->isAlreadyEmitted()) {
+        auto [slicesLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
+        for (auto& curSlice : *slicesLocked) {
+            if (curSlice->getSliceEnd() > newGlobalWatermark) {
                 continue;
             }
+            auto allWindows = getAllWindowsForSlice(*curSlice);
+            for (auto& windowInfo : allWindows) {
+                const auto windowId = windowInfo.windowId;
+                auto& state = windowSliceIdToStateLocked->at(WindowSliceIdKey(curSlice->getSliceIdentifier(), windowId));
 
-            // Checking if the window has not been emitted and both sides (left and right) have at least one tuple in their windows.
-            auto expected = StreamWindow::WindowState::BOTH_SIDES_FILLING;
-            if (window->compareExchangeStrong(expected, StreamWindow::WindowState::EMITTED_TO_PROBE)
-                && window->getNumberOfTuplesLeft() > 0 && window->getNumberOfTuplesRight() > 0) {
-                triggerableWindowIdentifiers.emplace_back(window->getWindowIdentifier());
-                NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
-                          window->getWindowIdentifier(),
-                          window->getNumberOfTuplesLeft(),
-                          window->getNumberOfTuplesRight());
+                if (state == StreamSlice::SliceState::BOTH_SIDES_FILLING ||
+                    state == StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION) {
+                    state = StreamSlice::SliceState::EMITTED_TO_PROBE;
+                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].add(curSlice);
+                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].windowInfo = windowInfo;
+                }
             }
         }
     }
 
-    return triggerableWindowIdentifiers;
+    return sliceIdentifiers;
 }
+
+std::vector<std::pair<StreamSlicePtr, StreamSlicePtr>> StreamJoinOperatorHandler::getSlicesLeftRightForWindow(uint64_t windowId) {
+    std::vector<std::pair<WindowSliceIdKey, StreamSlice::SliceState>> allSlicesForWindow;
+    {
+        auto windowSliceIdToStateLocked = windowSliceIdToState.rlock();
+        std::copy_if(windowSliceIdToStateLocked->begin(),
+                     windowSliceIdToStateLocked->end(),
+                     std::back_inserter(allSlicesForWindow),
+                     [windowId](const auto& entry) {
+                         return entry.first.windowId == windowId;
+                     });
+    }
+
+    std::vector<std::pair<StreamSlicePtr, StreamSlicePtr>> retVector;
+    for (const auto& outer : allSlicesForWindow) {
+        for (const auto& inner : allSlicesForWindow) {
+            auto streamSliceOuter = getSliceBySliceIdentifier(outer.first.sliceId).value();
+            auto streamSliceInner = getSliceBySliceIdentifier(inner.first.sliceId).value();
+            retVector.emplace_back(streamSliceOuter, streamSliceInner);
+        }
+    }
+
+    return retVector;
+}
+
+std::vector<WindowInfo> StreamJoinOperatorHandler::getAllWindowsForSlice(StreamSlice& slice) {
+    std::vector<WindowInfo> allWindows;
+
+    const auto sliceStart = slice.getSliceStart();
+    const auto sliceEnd = slice.getSliceEnd();
+    const auto windowSize = sliceAssigner.getWindowSize();
+    const auto windowSlide = sliceAssigner.getWindowSlide();
+
+    /**
+     * To get all windows, we start with the window (firstWindow) that the current slice is the last slice in it.
+     * Or in other words: The sliceEnd is equal to the windowEnd.
+     * We then add all windows with a slide until we reach the window (lastWindow) that that current slice is the first slice.
+     * Or in other words: The sliceStart is equal to the windowStart;
+     */
+    const auto firstWindowEnd = sliceEnd;
+    const auto lastWindowEnd = sliceStart + windowSize;
+    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide) {
+        // For now, we expect the windowEnd to be the windowId
+        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
+    }
+
+    return allWindows;
+}
+
 }// namespace NES::Runtime::Execution::Operators

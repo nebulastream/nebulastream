@@ -14,15 +14,17 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
 
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-
+#include <Util/StdInt.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 #include <sys/mman.h>
@@ -35,19 +37,62 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace NES::Runtime::Execution {
 
-static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
+using StreamSlicePtr = std::shared_ptr<StreamSlice>;
 
+static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
 static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 
+/**
+ * @brief Stores the information of a window. The start, end, and the identifier
+ */
+struct WindowInfo {
+    WindowInfo(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd) {}
+    WindowInfo() : WindowInfo(0_u64, 0_u64) {};
+
+    uint64_t windowStart;
+    uint64_t windowEnd;
+    uint64_t windowId;
+
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << windowStart << ","
+            << windowEnd << ","
+            << windowId;
+        return oss.str();
+    }
+};
+
+/**
+ * @brief Stores triggerable slices for the windows to be triggered.
+ */
+struct TriggerableWindows {
+    struct TriggerableSlices {
+        std::vector<StreamSlicePtr> slicesToTrigger;
+        WindowInfo windowInfo;
+
+        /**
+         * @brief Adds the slice to be triggered for this window
+         * @param slice
+         */
+        void add(StreamSlicePtr slice) {
+            slicesToTrigger.emplace_back(slice);
+        }
+    };
+    std::map<uint64_t, TriggerableSlices> windowIdToTriggerableSlices;
+};
+
 namespace Operators {
-struct __attribute__((packed)) JoinPartitionIdTWindowIdentifier {
-    size_t partitionId;
-    size_t windowIdentifier;
+struct __attribute__((packed)) JoinPartitionIdSliceIdWindow {
+    uint64_t partitionId;
+    uint64_t sliceIdentifierLeft;
+    uint64_t sliceIdentifierRight;
+    WindowInfo windowInfo;
 };
 }// namespace Operators
+
 
 namespace Util {
 

@@ -32,6 +32,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     workerConfiguration->numWorkerThreads = numWorkerThreads;
+    workerConfiguration->bufferSizeInBytes = 8196;
     workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * 10240;
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * 512;
 

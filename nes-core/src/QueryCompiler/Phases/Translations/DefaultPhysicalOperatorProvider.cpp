@@ -341,9 +341,10 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
 
     const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
     const auto& windowSize = windowType->getSize().getTime();
-    //FIXME Once #3353 is merged, sliding window can be added
-    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
-               "Only a tumbling window is currently supported for StreamJoin");
+    const auto& windowSlide = windowType->getSlide().getTime();
+    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW ||
+               windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW,
+               "Only a tumbling or sliding window is currently supported for StreamJoin");
 
     const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
     const auto leftInputOperator =
@@ -356,6 +357,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
     const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft,
                                              joinFieldNameRight,
                                              windowSize,
+                                             windowSlide,
                                              timeStampFieldNameLeft,
                                              timeStampFieldNameRight,
                                              joinStrategy);
@@ -383,7 +385,8 @@ void DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJ
                                               joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
                                               Nautilus::Interface::PagedVector::PAGE_SIZE,
                                               Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                              streamJoinConfig.windowSize);
+                                              streamJoinConfig.windowSize,
+                                              streamJoinConfig.windowSlide);
 
     auto createNLJBuildOperator = [&](const SchemaPtr& inputSchema,
                                       JoinBuildSideType buildSideType,
@@ -440,6 +443,7 @@ void DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOpe
         Operators::StreamHashJoinOperatorHandler::create(logicalJoinOperatorNode->getAllInputOriginIds(),
                                                          logicalJoinOperatorNode->getOutputOriginIds()[0],
                                                          streamJoinConfig.windowSize,
+                                                         streamJoinConfig.windowSlide,
                                                          logicalJoinOperatorNode->getLeftInputSchema()->getSchemaSizeInBytes(),
                                                          logicalJoinOperatorNode->getRightInputSchema()->getSchemaSizeInBytes(),
                                                          options->getHashJoinOptions()->getTotalSizeForDataStructures(),

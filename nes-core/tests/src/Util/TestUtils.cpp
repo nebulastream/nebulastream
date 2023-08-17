@@ -821,6 +821,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
     numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
+    NES_DEBUG("Filling buffers with {} tuples per buffer", numTuplesPerBuffer);
 
     std::string line;
     while (std::getline(istream, line)) {
@@ -831,6 +832,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
         if (tupleCount >= numTuplesPerBuffer) {
             tupleBuffer.setNumberOfTuples(tupleCount);
             allBuffers.emplace_back(tupleBuffer);
+            NES_DEBUG("Emplaced buffer with {} tuples", tupleCount);
             tupleCount = 0;
 
             tupleBuffer = bufferManager->getBufferBlocking();
@@ -840,6 +842,7 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     if (tupleCount > 0) {
         tupleBuffer.setNumberOfTuples(tupleCount);
         allBuffers.emplace_back(tupleBuffer);
+        NES_DEBUG("Emplaced buffer with {} tuples", tupleCount);
     }
 
     return allBuffers;

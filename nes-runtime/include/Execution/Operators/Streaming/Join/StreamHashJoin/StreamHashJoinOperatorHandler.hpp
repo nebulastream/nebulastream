@@ -32,10 +32,10 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * This is a description of the StreamHashJoin and its data structure. The stream join consists of two phases, build and sink.
- * In the build phase, each thread builds a local hash table and once it is done, e.g., seen all tuples of a window, it
+ * In the build phase, each thread builds a local hash table and once it is done, e.g., seen all tuples of a slice, it
  * appends its buckets to a global hash table. Once both sides (left and right) have finished appending all buckets to
- * the global hash table, a buffer will be created with the bucket id (partition id) and the corresponding window id.
- * The join sink operates on the created buffers and performs a join for the corresponding window and bucket of the window.
+ * the global hash table, a buffer will be created with the bucket id (partition id) and the corresponding slice id.
+ * The join sink operates on the created buffers and performs a join for the corresponding slices and bucket of the slice.
  *
  * Both hash tables (LocalHashTable and SharedHashTable) consist of pages (FixedPage) that store the tuples belonging to
  * a certain bucket / partition. All pages are pre-allocated and moved from the LocalHashTable to the SharedHashTable and
@@ -52,6 +52,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @param inputOrigins
      * @param outputOriginId
      * @param windowSize
+     * @param windowSlide
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
      * @param totalSizeForDataStructures
@@ -62,13 +63,14 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      */
     explicit StreamHashJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                            const OriginId outputOriginId,
-                                           size_t windowSize,
-                                           size_t sizeOfRecordLeft,
-                                           size_t sizeOfRecordRight,
-                                           size_t totalSizeForDataStructures,
-                                           size_t pageSize,
-                                           size_t preAllocPageSizeCnt,
-                                           size_t numPartitions,
+                                           uint64_t windowSize,
+                                           uint64_t windowSlide,
+                                           uint64_t sizeOfRecordLeft,
+                                           uint64_t sizeOfRecordRight,
+                                           uint64_t totalSizeForDataStructures,
+                                           uint64_t pageSize,
+                                           uint64_t preAllocPageSizeCnt,
+                                           uint64_t numPartitions,
                                            QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
@@ -76,6 +78,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @param inputOrigins
      * @param outputOriginId
      * @param windowSize
+     * @param windowSlide
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
      * @param totalSizeForDataStructures
@@ -88,13 +91,14 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
     static StreamHashJoinOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
                                                    const OriginId outputOriginId,
-                                                   size_t windowSize,
-                                                   size_t sizeOfRecordLeft,
-                                                   size_t sizeOfRecordRight,
-                                                   size_t totalSizeForDataStructures,
-                                                   size_t pageSize,
-                                                   size_t preAllocPageSizeCnt,
-                                                   size_t numPartitions,
+                                                   uint64_t windowSize,
+                                                   uint64_t windowSlide,
+                                                   uint64_t sizeOfRecordLeft,
+                                                   uint64_t sizeOfRecordRight,
+                                                   uint64_t totalSizeForDataStructures,
+                                                   uint64_t pageSize,
+                                                   uint64_t preAllocPageSizeCnt,
+                                                   uint64_t numPartitions,
                                                    QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
@@ -114,7 +118,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief get the number of prealllcated pages per bucket
+     * @brief get the number of pre-allocated pages per bucket
      * @return
      */
     size_t getPreAllocPageSizeCnt() const;
@@ -126,7 +130,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
     size_t getPageSize() const;
 
     /**
-     * @brief get the number of partitins in the HT
+     * @brief get the number of partitions in the HT
      * @return
      */
     size_t getNumPartitions() const;
@@ -138,22 +142,22 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
     size_t getTotalSizeForDataStructures() const;
 
     /**
-     * @brief return number of tuples in window
-     * @param windowIdentifier
+     * @brief return number of tuples in a slice
+     * @param sliceIdentifier
      * @param workerId
      * @param joinBuildSide
      * @return
      */
     uint64_t
-    getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    getNumberOfTuplesInSlice(uint64_t sliceIdentifier, uint64_t workerId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
-     * @brief method to trigger the finished windows
-     * @param windowIdentifiersToBeTriggered
+     * @brief method to trigger the finished slices
+     * @param idsToBeTriggered
      * @param workerCtx
      * @param pipelineCtx
      */
-    void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
+    void triggerSlices(TriggerableWindows& idsToBeTriggered,
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 

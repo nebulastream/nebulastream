@@ -54,7 +54,7 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t preAllocPageSizeCnt,
                                            size_t numPartitions,
                                            QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamWindow(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+    : StreamSlice(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
 
@@ -117,7 +117,7 @@ bool StreamHashJoinWindow::markPartitionAsFinished() { return partitionFinishedC
 std::string StreamHashJoinWindow::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "StreamHashJoinWindow(windowState: "
-                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+                       << " sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
 

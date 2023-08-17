@@ -50,6 +50,18 @@ class SliceAssigner {
         return std::min(nextSlideEnd, nextWindowEnd);
     }
 
+    /**
+     * @brief Getter for the window size
+     * @return window size in uint64_t
+     */
+    uint64_t getWindowSize() const { return windowSize; }
+
+    /**
+     * @brief Getter for the window slide
+     * @return window slide in uint64_t
+     */
+    uint64_t getWindowSlide() const { return windowSlide; }
+
   private:
     const uint64_t windowSize;
     const uint64_t windowSlide;

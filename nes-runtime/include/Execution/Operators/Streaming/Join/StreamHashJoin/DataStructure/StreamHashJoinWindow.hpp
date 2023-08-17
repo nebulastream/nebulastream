@@ -19,7 +19,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/MergingHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
@@ -31,8 +31,9 @@ class StreamHashJoinWindow;
 using StreamHashJoinWindowPtr = std::shared_ptr<StreamHashJoinWindow>;
 /**
  * @brief This class is a data container for all the necessary objects in a window of the StreamJoin
+ * TODO rename this to StreamHashJoinSlice
  */
-class StreamHashJoinWindow : public StreamWindow {
+class StreamHashJoinWindow : public StreamSlice {
 
   public:
     /**

@@ -101,6 +101,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                          outputOriginId,
                                                          buildHelper.windowSize,
+                                                         buildHelper.windowSize,
                                                          buildHelper.schema->getSchemaSizeInBytes(),
                                                          buildHelper.schema->getSchemaSizeInBytes(),
                                                          buildHelper.joinSizeInByte,
@@ -145,7 +146,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = ::NES::Util::murmurHash(joinKey);
-        auto window = hashJoinOpHandler->getWindowByTimestampOrCreateIt(timeStamp);
+        auto window = hashJoinOpHandler->getSliceByTimestampOrCreateIt(timeStamp);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(window.get());
 
         auto hashTable = hashWindow->getHashTable(buildHelper.joinBuildSide, workerContext->getId());
@@ -263,6 +264,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1, 2}),
                                                          outputOriginId,
                                                          hashJoinProbeHelper.windowSize,
+                                                         hashJoinProbeHelper.windowSize,
                                                          hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
                                                          hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
                                                          hashJoinProbeHelper.joinSizeInByte,
@@ -359,7 +361,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         tmpRecordsRight.emplace_back(recordRight);
     }
 
-    NES_DEBUG("filling left side");
+    NES_DEBUG("filling left side with size = {}", leftRecords.size());
     //push buffers to build left
     //for all record buffers
     for (auto i = 0UL; i < leftRecords.size(); i++) {
@@ -378,7 +380,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setOrigin(uint64_t(1));
-        executionContext.setSequenceNumber(uint64_t(i));
+        executionContext.setSequenceNumber(uint64_t(i + 1));
         NES_DEBUG("trigger left with ts={}", leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft)->toString());
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
@@ -401,8 +403,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setWatermarkTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setOrigin(uint64_t(2));
-        executionContext.setSequenceNumber(uint64_t(i));
-        NES_DEBUG("trigger left with ts={}", rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
+        executionContext.setSequenceNumber(uint64_t(i + 1));
+        NES_DEBUG("trigger right with ts={}", rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
@@ -420,9 +422,9 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
-    if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows() != 1) {
+    if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices() != 1) {
         NES_ERROR("Not exactly one active window! {}",
-                  hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfWindows());
+                  hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices());
         //TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
         //        return false;
     }
@@ -430,6 +432,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     Value<UInt64> zeroValue((uint64_t) 0UL);
     auto maxWindowIdentifier = std::ceil((double) hashJoinProbeHelper.numberOfTuplesToProduce / hashJoinProbeHelper.windowSize)
         * hashJoinProbeHelper.windowSize;
+    // TODO rewrite this to use slices and add sliding windows tests for this
     for (auto windowIdentifier = hashJoinProbeHelper.windowSize; windowIdentifier < maxWindowIdentifier;
          windowIdentifier += hashJoinProbeHelper.windowSize) {
         auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(hashJoinProbeHelper.numberOfTuplesToProduce,
@@ -440,10 +443,10 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                                                 hashJoinProbeHelper.windowSize);
 
         auto existingNumberOfTuplesInWindowLeft =
-            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Left);
+            hashJoinOpHandler->getNumberOfTuplesInSlice(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Left);
 
         auto existingNumberOfTuplesInWindowRight =
-            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Right);
+            hashJoinOpHandler->getNumberOfTuplesInSlice(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Right);
 
         if (existingNumberOfTuplesInWindowLeft != expectedNumberOfTuplesInWindowLeft
             || existingNumberOfTuplesInWindowRight != expectedNumberOfTuplesInWindowRight) {
@@ -688,19 +691,19 @@ TEST_F(HashJoinOperatorTest, joinProbeTest) {
 
 TEST_F(HashJoinOperatorTest, joinProbeTestMultipleBuckets) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
                                  ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper
-        hashJoinProbeHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.windowSize = 10;
 
     ASSERT_TRUE(hashJoinProbeAndCheck(hashJoinProbeHelper));

@@ -240,8 +240,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
     struct ResultRecord {
         uint64_t test1test2Start;
         uint64_t test1test2End;
@@ -268,8 +267,8 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     auto query =
         Query::from("test1")
             .joinWith(Query::from("test2"))
-            .where(Attribute("id1"))
-            .equalsTo(Attribute("id2"))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
@@ -278,8 +277,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
+TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     struct ResultRecord {
         uint64_t test1test2Start;
         uint64_t test1test2End;

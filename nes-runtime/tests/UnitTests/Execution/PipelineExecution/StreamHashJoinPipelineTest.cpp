@@ -314,6 +314,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         Operators::StreamHashJoinOperatorHandler::create(std::vector<::OriginId>({1}),
                                                          outputOriginId,
                                                          windowSize,
+                                                         windowSize,
                                                          leftSchema->getSchemaSizeInBytes(),
                                                          rightSchema->getSchemaSizeInBytes(),
                                                          NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,

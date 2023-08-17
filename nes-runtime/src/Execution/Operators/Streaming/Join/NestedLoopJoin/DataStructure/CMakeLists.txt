@@ -11,4 +11,4 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        NLJWindow.cpp)
+        NLJSlice.cpp)

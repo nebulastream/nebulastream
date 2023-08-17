@@ -20,10 +20,11 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -239,7 +240,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                       expectedNumberOfTuplesInWindowRight);
 
             auto nljWindow =
-                std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler->getWindowByWindowIdentifier(windowIdentifier).value());
+                std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler.getSliceBySliceIdentifier(windowIdentifier).value());
+            Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
 
             auto leftPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));

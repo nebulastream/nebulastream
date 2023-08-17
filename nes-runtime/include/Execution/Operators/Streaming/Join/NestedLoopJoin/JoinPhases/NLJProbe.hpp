@@ -48,11 +48,13 @@ class NLJProbe : public Operator {
                       const std::string& windowKeyFieldName);
 
     /**
-     * @brief Receives a record buffer containing a window identifier for a window that is ready to be joined
+     * @brief Receives a record buffer containing a slice identifiers for a left and right slice that is ready to be joined
      * @param ctx
      * @param recordBuffer
      */
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
     const uint64_t operatorHandlerIndex;
@@ -61,6 +63,8 @@ class NLJProbe : public Operator {
     const SchemaPtr joinSchema;
     const uint64_t leftEntrySize;
     const uint64_t rightEntrySize;
+    const MemoryProvider::MemoryProviderPtr leftMemProvider;
+    const MemoryProvider::MemoryProviderPtr rightMemProvider;
 
     const std::string joinFieldNameLeft;
     const std::string joinFieldNameRight;

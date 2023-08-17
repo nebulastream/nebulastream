@@ -30,27 +30,27 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
- * corresponding window one after the other. Afterwards, the second phase (NLJProbe) will start joining the tuples
+ * corresponding slice one after the other. Afterwards, the second phase (NLJProbe) will start joining the tuples
  * via two nested loops.
  */
 class NLJBuild : public ExecutableOperator {
 
   public:
     /**
-     * @brief Local state, which stores the window start, window end, joinOpHandlerReference, windowReference, and pagedVectorRef
+     * @brief Local state, which stores the slice start, slice end, joinOpHandlerReference, sliceReference, and pagedVectorRef
      */
     class LocalNestedLoopJoinState : public Operators::OperatorState {
       public:
         LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
-                                 const Value<MemRef>& windowReference,
+                                 const Value<MemRef>& sliceReference,
                                  Nautilus::Interface::PagedVectorRef pagedVectorRef)
-            : joinOperatorHandler(operatorHandler), windowReference(windowReference), pagedVectorRef(std::move(pagedVectorRef)),
-              windowStart(0_u64), windowEnd(0_u64){};
+            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorRef(std::move(pagedVectorRef)),
+              sliceStart(0_u64), sliceEnd(0_u64) {};
         Value<MemRef> joinOperatorHandler;
-        Value<MemRef> windowReference;
+        Value<MemRef> sliceReference;
         Nautilus::Interface::PagedVectorRef pagedVectorRef;
-        Value<UInt64> windowStart;
-        Value<UInt64> windowEnd;
+        Value<UInt64> sliceStart;
+        Value<UInt64> sliceEnd;
     };
 
     /**
@@ -71,21 +71,21 @@ class NLJBuild : public ExecutableOperator {
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
     /**
-     * @brief Stores the record in the corresponding window
+     * @brief Stores the record in the corresponding slice
      * @param ctx: The RuntimeExecutionContext
      * @param record: Record that should be processed
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
-     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJProbe) for further processing
+     * @brief Updates the watermark and if needed, pass some slices to the second join phase (NLJProbe) for further processing
      * @param ctx: The RuntimeExecutionContext
      * @param recordBuffer: RecordBuffer
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
     /**
-     * @brief Triggers all windows that have been seen by both sides of the join
+     * @brief Triggers all slices that have been seen by both sides of the join
      * @param executionCtx
      */
     void terminate(ExecutionContext& executionCtx) const override;
@@ -94,7 +94,7 @@ class NLJBuild : public ExecutableOperator {
      * @brief Updates the localJoinState by getting the values via Nautilus::FunctionCalls()
      * @param localJoinState: The pointer to the joinstate that we want to update
      * @param operatorHandlerMemRef: Memref to the operator handler
-     * @param timestamp: Timestamp, for which to get the windowRef, windowStart, and windowEnd
+     * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
      * @param workerId: WorkerId necessary for getting the correct pagedVectorRef
      */
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,

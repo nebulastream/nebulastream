@@ -344,8 +344,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
+TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -387,8 +386,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSliding
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttributes) {
+TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;

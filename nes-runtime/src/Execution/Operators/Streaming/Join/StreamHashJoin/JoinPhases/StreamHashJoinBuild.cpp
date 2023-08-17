@@ -41,36 +41,36 @@ class LocalGlobalJoinState : public Operators::OperatorState {
     Value<UInt64> windowEnd;
 };
 
-void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
-    NES_DEBUG("getStreamHashJoinWindowProxy with ts={}", timeStamp);
+void* getStreamHashJoinSliceProxy(void* ptrOpHandler, uint64_t timeStamp) {
+    NES_DEBUG("getStreamHashJoinSliceProxy with ts={}", timeStamp);
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
-    NES_ASSERT2_FMT(currentWindow != nullptr, "invalid window");
-    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow.get());
-    return static_cast<void*>(hashWindow);
+    auto currentSlice = opHandler->getSliceByTimestampOrCreateIt(timeStamp);
+    NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
+    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(currentSlice.get());
+    return static_cast<void*>(hashSlice);
 }
 
-uint64_t getWindowStartProxy(void* ptrHashWindow) {
-    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
-    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
-    return hashWindow->getWindowStart();
+uint64_t getWindowStartProxy(void* ptrHashSlice) {
+    NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash slice handler context should not be null");
+    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashSlice);
+    return hashSlice->getSliceStart();
 }
 
 uint64_t getWindowEndProxy(void* ptrHashWindow) {
-    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
-    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
-    return hashWindow->getWindowEnd();
+    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash slice handler context should not be null");
+    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    return hashSlice->getSliceEnd();
 }
 
-void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, uint64_t joinBuildSideInt) {
-    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
-    auto* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+void* getLocalHashTableProxy(void* ptrHashSlice, size_t workerIdx, uint64_t joinBuildSideInt) {
+    NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash slice handler context should not be null");
+    auto* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashSlice);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
-              hashWindow->getWindowIdentifier(),
+              hashSlice->getSliceIdentifier(),
               magic_enum::enum_name(joinBuildSide),
               workerIdx);
-    auto ptr = hashWindow->getHashTable(joinBuildSide, workerIdx);
+    auto ptr = hashSlice->getHashTable(joinBuildSide, workerIdx);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
@@ -102,11 +102,11 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
+    auto sliceIdentifiersToBeTriggered = opHandler->checkSlicesTrigger(minWatermark, sequenceNumber, originId);
 
     //TODO I am not sure do we have to make sure that only one thread do this? issue #3909
-    if (windowIdentifiersToBeTriggered.size() > 0) {
-        opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
+    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
+        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
 }
 void* getDefaultMemRef() { return nullptr; }
@@ -127,8 +127,8 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     //check if we can reuse window
     if (!(joinState->windowStart <= tsValue && tsValue < joinState->windowEnd)) {
         //we need a new window
-        joinState->windowReference = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
-                                                            getStreamHashJoinWindowProxy,
+        joinState->windowReference = Nautilus::FunctionCall("getStreamHashJoinSliceProxy",
+                                                            getStreamHashJoinSliceProxy,
                                                             operatorHandlerMemRef,
                                                             Value<UInt64>(tsValue));
 

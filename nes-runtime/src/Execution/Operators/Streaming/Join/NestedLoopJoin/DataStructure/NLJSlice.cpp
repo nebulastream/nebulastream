@@ -11,22 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart,
+NLJSlice::NLJSlice(uint64_t windowStart,
                      uint64_t windowEnd,
                      uint64_t numberOfWorker,
                      uint64_t leftEntrySize,
                      uint64_t leftPageSize,
                      uint64_t rightEntrySize,
                      uint64_t rightPageSize)
-    : StreamWindow(windowStart, windowEnd) {
+    : StreamSlice(windowStart, windowEnd) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
         auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
         leftTuples.emplace_back(
@@ -39,13 +38,13 @@ NLJWindow::NLJWindow(uint64_t windowStart,
             std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), rightEntrySize, rightPageSize));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
-              NLJWindow::toString(),
+              NLJSlice::toString(),
               numberOfWorker,
               leftTuples.size(),
               rightTuples.size());
 }
 
-uint64_t NLJWindow::getNumberOfTuplesLeft() {
+uint64_t NLJSlice::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
     for (auto& pagedVec : leftTuples) {
         sum += pagedVec->getNumberOfEntries();
@@ -53,7 +52,7 @@ uint64_t NLJWindow::getNumberOfTuplesLeft() {
     return sum;
 }
 
-uint64_t NLJWindow::getNumberOfTuplesRight() {
+uint64_t NLJSlice::getNumberOfTuplesRight() {
     uint64_t sum = 0;
     for (auto& pagedVec : rightTuples) {
         sum += pagedVec->getNumberOfEntries();
@@ -61,26 +60,25 @@ uint64_t NLJWindow::getNumberOfTuplesRight() {
     return sum;
 }
 
-std::string NLJWindow::toString() {
+std::string NLJSlice::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "(windowStart: " << windowStart << " windowEnd: " << windowEnd
-                       << " windowState: " << std::string(magic_enum::enum_name<WindowState>(windowState))
+    basicOstringstream << "(windowStart: " << sliceStart << " windowEnd: " << sliceEnd
                        << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
     return basicOstringstream.str();
 }
 
-void* NLJWindow::getPagedVectorRefLeft(uint64_t workerId) {
+void* NLJSlice::getPagedVectorRefLeft(uint64_t workerId) {
     const auto pos = workerId % leftTuples.size();
     return leftTuples[pos].get();
 }
 
-void* NLJWindow::getPagedVectorRefRight(uint64_t workerId) {
+void* NLJSlice::getPagedVectorRefRight(uint64_t workerId) {
     const auto pos = workerId % rightTuples.size();
     return rightTuples[pos].get();
 }
 
-void NLJWindow::combinePagedVectors() {
+void NLJSlice::combinePagedVectors() {
     NES_TRACE("Combining pagedVectors for window: {}", this->toString());
 
     // Appending all PagedVectors for the left join side and removing all items except the first one

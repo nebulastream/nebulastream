@@ -26,9 +26,9 @@ using StreamHashJoinBuildPtr = std::shared_ptr<StreamHashJoinBuild>;
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
- * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the window is finished.
+ * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the slice is finished.
  * Then, each threads inserts the LocalHashTable into the SharedHashTable.
- * Afterwards, the second phase (StreamJoinSink) will start if both sides of the join have seen the end of the window.
+ * Afterwards, the second phase (StreamJoinSink) will start if both sides of the join have seen the end of the slice.
  */
 class StreamHashJoinBuild : public ExecutableOperator {
 
@@ -62,7 +62,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
-     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJProbe) for further processing
+     * @brief Updates the watermark and if needed, pass some slices to the second join phase (StreamHashJoinProbe) for further processing
      * @param ctx
      * @param recordBuffer
      */

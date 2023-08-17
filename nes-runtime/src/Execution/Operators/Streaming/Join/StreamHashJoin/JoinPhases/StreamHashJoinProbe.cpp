@@ -48,9 +48,9 @@ StreamHashJoinProbe::StreamHashJoinProbe(uint64_t handlerIndex,
  * @param sizeOfField
  * @return true if both fields are equal, false otherwise
  */
-bool compareField(uint8_t* fieldPtr1, uint8_t* fieldPtr2, size_t sizeOfField) {
-    return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
-}
+//bool compareField(uint8_t* fieldPtr1, uint8_t* fieldPtr2, size_t sizeOfField) {
+//    return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
+//}
 
 /**
  * @brief Returns a pointer to the field of the record (recordBase)
@@ -59,52 +59,52 @@ bool compareField(uint8_t* fieldPtr1, uint8_t* fieldPtr2, size_t sizeOfField) {
  * @param fieldName
  * @return pointer to the field
  */
-uint8_t* getField(uint8_t* recordBase, Schema* joinSchema, const std::string& fieldName) {
-    uint8_t* pointer = recordBase;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : joinSchema->fields) {
-        if (field->getName() == fieldName) {
-            break;
-        }
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        pointer += fieldType->size();
+//uint8_t* getField(uint8_t* recordBase, Schema* joinSchema, const std::string& fieldName) {
+//    uint8_t* pointer = recordBase;
+//    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+//    for (auto& field : joinSchema->fields) {
+//        if (field->getName() == fieldName) {
+//            break;
+//        }
+//        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+//        pointer += fieldType->size();
+//    }
+//    return pointer;
+//}
+
+uint64_t getWindowStartProxyForHashJoin(void* ptrJoinPartitionIdSliceId) {
+    NES_ASSERT2_FMT(ptrJoinPartitionIdSliceId != nullptr, "join partition id slice id should not be null");
+    return static_cast<JoinPartitionIdSliceIdWindow*>(ptrJoinPartitionIdSliceId)->windowInfo.windowStart;
+}
+
+uint64_t getWindowEndProxyForHashJoin(void* ptrJoinPartitionIdSliceId) {
+    NES_ASSERT2_FMT(ptrJoinPartitionIdSliceId != nullptr, "join partition id slice id should not be null");
+    return static_cast<JoinPartitionIdSliceIdWindow*>(ptrJoinPartitionIdSliceId)->windowInfo.windowEnd;
+}
+
+uint64_t getPartitionIdProxy(void* ptrJoinPartitionIdSliceId) {
+    NES_ASSERT2_FMT(ptrJoinPartitionIdSliceId != nullptr, "ptrJoinPartitionIdSliceId should not be null");
+    return static_cast<JoinPartitionIdSliceIdWindow*>(ptrJoinPartitionIdSliceId)->partitionId;
+}
+
+uint64_t getSliceIdHJProxy(void* ptrJoinPartitionIdSliceId, uint64_t joinBuildSideInt) {
+    NES_ASSERT2_FMT(ptrJoinPartitionIdSliceId != nullptr, "ptrJoinPartitionIdSliceId should not be null");
+    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
+
+    if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
+        return static_cast<JoinPartitionIdSliceIdWindow*>(ptrJoinPartitionIdSliceId)->sliceIdentifierLeft;
+    } else if (joinBuildSide == QueryCompilation::JoinBuildSideType::Right) {
+        return static_cast<JoinPartitionIdSliceIdWindow*>(ptrJoinPartitionIdSliceId)->sliceIdentifierRight;
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
-    return pointer;
 }
 
-uint64_t getWindowStartProxyForHashJoin(void* ptrOpHandler, uint64_t windowIdentifier) {
+void* getHashSliceProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getWindowStartEnd(windowIdentifier).first;
-}
-
-uint64_t getWindowEndProxyForHashJoin(void* ptrOpHandler, uint64_t windowIdentifier) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getWindowStartEnd(windowIdentifier).second;
-}
-
-uint64_t getPartitionId(void* windowIdentifierPtr) {
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "windowIdentifierPtr should not be null");
-    auto identifierStruct = static_cast<JoinPartitionIdTWindowIdentifier*>(windowIdentifierPtr);
-    return identifierStruct->partitionId;
-}
-
-uint64_t getWindowIdentifier(void* windowIdentifierPtr) {
-    NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "windowIdentifierPtr should not be null");
-    auto identifierStruct = static_cast<JoinPartitionIdTWindowIdentifier*>(windowIdentifierPtr);
-    return identifierStruct->windowIdentifier;
-}
-
-void* getHashWindow(void* ptrOpHandler, uint64_t windowIdentifier) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto streamWindow = opHandler->getWindowByWindowIdentifier(windowIdentifier).value();
-    auto hashWindow = static_cast<StreamHashJoinWindow*>(streamWindow.get());
-    return hashWindow;
+    return opHandler->getSliceBySliceIdentifier(sliceIdentifier).value().get();
 }
 
 void* getTupleFromBucketAtPosProxyForHashJoin(void* hashWindowPtr,
@@ -118,34 +118,21 @@ void* getTupleFromBucketAtPosProxyForHashJoin(void* hashWindowPtr,
     return hashWindow->getMergingHashTable(joinBuildSide).getTupleFromBucketAtPos(bucketPos, pageNo, recordPos);
 }
 
-uint64_t getSequenceNumberProxyForHashJoin(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getNextSequenceNumber();
-}
-uint64_t getOriginIdProxyForHashJoin(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getOutputOriginId();
-}
-
-uint64_t getNumberOfPagesProxyForHashJoin(void* hashWindowPtr, uint64_t joinBuildSideInt, uint64_t bucketPos) {
-    NES_ASSERT2_FMT(hashWindowPtr != nullptr, "hashWindowPtr should not be null");
-    const auto hashWindow = static_cast<StreamHashJoinWindow*>(hashWindowPtr);
+uint64_t getNumberOfPagesProxyForHashJoin(void* ptrHashSlice, uint64_t joinBuildSideInt, uint64_t bucketPos) {
+    NES_ASSERT2_FMT(ptrHashSlice != nullptr, "ptrHashSlice should not be null");
+    const auto hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashSlice);
     const auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
-    return hashWindow->getMergingHashTable(joinBuildSide).getNumPages(bucketPos);
+    return hashSlice->getMergingHashTable(joinBuildSide).getNumPages(bucketPos);
 }
 
-uint64_t getNumberOfTuplesForPage(void* hashWindowPtr, uint64_t joinBuildSideInt, uint64_t bucketPos, uint64_t pageNo) {
+uint64_t getNumberOfTuplesForPageProxy(void* hashWindowPtr, uint64_t joinBuildSideInt, uint64_t bucketPos, uint64_t pageNo) {
     NES_ASSERT2_FMT(hashWindowPtr != nullptr, "hashWindowPtr should not be null");
     const auto hashWindow = static_cast<StreamHashJoinWindow*>(hashWindowPtr);
     const auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     return hashWindow->getMergingHashTable(joinBuildSide).getNumberOfTuplesForPage(bucketPos, pageNo);
 }
 
-void markPartitionFinishProxyForHashJoin(void* hashWindowPtr, void* ptrOpHandler, uint64_t windowIdentifier) {
+void markPartitionFinishProxyForHashJoin(void* hashWindowPtr, void* ptrOpHandler, uint64_t sliceIdentifier) {
     NES_ASSERT2_FMT(hashWindowPtr != nullptr, "hashWindowPtr should not be null");
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "ptrOpHandler should not be null");
 
@@ -153,74 +140,66 @@ void markPartitionFinishProxyForHashJoin(void* hashWindowPtr, void* ptrOpHandler
     auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
 
     if (hashWindow->markPartitionAsFinished()) {
-        opHandler->deleteWindow(windowIdentifier);
+        opHandler->deleteSlice(sliceIdentifier);
     }
 }
 
 void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    child->open(ctx, recordBuffer);
+    // As this operator functions as a scan , we have to set the execution context for this pipeline
+    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+    ctx.setOrigin(recordBuffer.getOriginId());
+    Operator::open(ctx, recordBuffer);
 
+    // Getting all needed references or values
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    const auto joinPartitionIdTWindowIdentifier = recordBuffer.getBuffer();
-    const auto partitionId = Nautilus::FunctionCall("getPartitionId", getPartitionId, joinPartitionIdTWindowIdentifier);
-    const auto windowIdentifier =
-        Nautilus::FunctionCall("getWindowIdentifier", getWindowIdentifier, joinPartitionIdTWindowIdentifier);
+    const auto joinPartitionIdSliceIdMemRef = recordBuffer.getBuffer();
+    const auto windowStart = Nautilus::FunctionCall("getWindowStartProxyForHashJoin", getWindowStartProxyForHashJoin,
+                                                    joinPartitionIdSliceIdMemRef);
+    const auto windowEnd = Nautilus::FunctionCall("getWindowEndProxyForHashJoin", getWindowEndProxyForHashJoin,
+                                                  joinPartitionIdSliceIdMemRef);
+    const auto partitionId = Nautilus::FunctionCall("getPartitionIdProxy", getPartitionIdProxy, joinPartitionIdSliceIdMemRef);
+    const auto sliceIdLeft = Nautilus::FunctionCall("getSliceIdHJProxy", getSliceIdHJProxy, joinPartitionIdSliceIdMemRef,
+                                                       Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const auto sliceIdRight = Nautilus::FunctionCall("getSliceIdHJProxy", getSliceIdHJProxy, joinPartitionIdSliceIdMemRef,
+                                                        Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
-    Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxyForHashJoin",
-                                                    getWindowStartProxyForHashJoin,
-                                                    operatorHandlerMemRef,
-                                                    windowIdentifier);
-    Value<Any> windowEnd = Nautilus::FunctionCall("getWindowEndProxyForHashJoin",
-                                                  getWindowEndProxyForHashJoin,
-                                                  operatorHandlerMemRef,
-                                                  windowIdentifier);
-
-    ctx.setWatermarkTs(windowEnd.as<UInt64>());
-    const auto sequenceNumber =
-        Nautilus::FunctionCall("getSequenceNumberProxyForHashJoin", getSequenceNumberProxyForHashJoin, operatorHandlerMemRef);
-    ctx.setSequenceNumber(sequenceNumber);
-    const auto originId =
-        Nautilus::FunctionCall("getOriginIdProxyForHashJoin", getOriginIdProxyForHashJoin, operatorHandlerMemRef);
-    ctx.setOrigin(originId);
-
-    const auto leftMemProvider =
-        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaLeft);
-    const auto rightMemProvider =
-        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaRight);
-    const auto hashWindowRef = Nautilus::FunctionCall("getHashWindow", getHashWindow, operatorHandlerMemRef, windowIdentifier);
-    const auto numberOfPagesLeft =
-        Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                               getNumberOfPagesProxyForHashJoin,
-                               hashWindowRef,
-                               Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
-                               partitionId);
-    const auto numberOfPagesRight =
-        Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                               getNumberOfPagesProxyForHashJoin,
-                               hashWindowRef,
-                               Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
-                               partitionId);
-
+    const auto hashSliceRefLeft = Nautilus::FunctionCall("getHashSliceProxy", getHashSliceProxy, operatorHandlerMemRef, sliceIdLeft);
+    const auto hashSliceRefRight = Nautilus::FunctionCall("getHashSliceProxy", getHashSliceProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto numberOfPagesLeft = Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin", getNumberOfPagesProxyForHashJoin,
+                                                          hashSliceRefLeft,
+                                                          Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                          partitionId);
+    const auto numberOfPagesRight = Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin", getNumberOfPagesProxyForHashJoin,
+                                                          hashSliceRefRight,
+                                                          Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                          partitionId);
     //first check if one of the page is 0 then we can return
     if (numberOfPagesLeft == 0 || numberOfPagesRight == 0) {
-        Nautilus::FunctionCall("markPartitionFinishProxyForHashJoin",
-                               markPartitionFinishProxyForHashJoin,
-                               hashWindowRef,
-                               operatorHandlerMemRef,
-                               windowIdentifier);
+        Nautilus::FunctionCall("markPartitionFinishProxyForHashJoin", markPartitionFinishProxyForHashJoin,
+                               hashSliceRefLeft, operatorHandlerMemRef, sliceIdLeft);
+        Nautilus::FunctionCall("markPartitionFinishProxyForHashJoin", markPartitionFinishProxyForHashJoin,
+                               hashSliceRefRight, operatorHandlerMemRef, sliceIdRight);
         NES_TRACE("Mark partition for done numberOfPagesLeft={} numberOfPagesRight={}",
                   numberOfPagesLeft->toString(),
                   numberOfPagesRight->toString());
         return;
     }
 
+    // TODO this can be a member that gets created during creation of this class
+    const auto leftMemProvider =
+        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaLeft);
+    const auto rightMemProvider =
+        Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchemaRight);
+
+    //TODO we should write an iterator in nautilus over the pages to make it more elegant #4067
     //for every left page
     for (Value<UInt64> leftPageNo((uint64_t) 0); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
         auto numberOfTuplesLeft =
-            Nautilus::FunctionCall("getNumberOfTuplesForPage",
-                                   getNumberOfTuplesForPage,
-                                   hashWindowRef,
-                                   Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
+            Nautilus::FunctionCall("getNumberOfTuplesForPageProxy",
+                                   getNumberOfTuplesForPageProxy,
+                                   hashSliceRefLeft,
+                                   Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
                                    partitionId,
                                    leftPageNo);
         //for every key in left page
@@ -228,8 +207,8 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
             auto leftRecordRef = Nautilus::FunctionCall(
                 "getTupleFromBucketAtPosProxyForHashJoin",
                 getTupleFromBucketAtPosProxyForHashJoin,
-                hashWindowRef,
-                Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Left)),
+                hashSliceRefLeft,
+                Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
                 partitionId,
                 leftPageNo,
                 leftKeyPos);
@@ -237,14 +216,14 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
             Value<UInt64> zeroValue = (uint64_t) 0;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
-            //TODO we should write an iterator in nautilus over the pages to make it more elegant
+            //TODO we should write an iterator in nautilus over the pages to make it more elegant #4067
             //for every right page
             for (Value<UInt64> rightPageNo((uint64_t) 0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
                 auto numberOfTuplesRight = Nautilus::FunctionCall(
-                    "getNumberOfTuplesForPage",
-                    getNumberOfTuplesForPage,
-                    hashWindowRef,
-                    Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
+                    "getNumberOfTuplesForPageProxy",
+                    getNumberOfTuplesForPageProxy,
+                    hashSliceRefRight,
+                    Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                     partitionId,
                     rightPageNo);
                 if (numberOfTuplesRight == 0) {
@@ -261,8 +240,8 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
                     auto rightRecordRef = Nautilus::FunctionCall(
                         "getTupleFromBucketAtPosProxyForHashJoin",
                         getTupleFromBucketAtPosProxyForHashJoin,
-                        hashWindowRef,
-                        Value<UInt64>((uint64_t) magic_enum::enum_integer(QueryCompilation::JoinBuildSideType::Right)),
+                        hashSliceRefRight,
+                        Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                         partitionId,
                         rightPageNo,
                         rightKeyPos);
@@ -271,19 +250,19 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
                     if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                         Record joinedRecord;
 
-                        // TODO replace this with a more useful version
+                        // TODO replace this with a more useful version, similar to NLJProbe, maybe create an issue for this
                         joinedRecord.write(joinSchemaOutput->get(0)->getName(), windowStart);
                         joinedRecord.write(joinSchemaOutput->get(1)->getName(), windowEnd);
                         joinedRecord.write(joinSchemaOutput->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
 
                         /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then
-                     * the left schema */
+                         * the left schema */
                         for (auto& field : joinSchemaLeft->fields) {
                             joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
                         }
 
                         /* Writing the rightSchema fields, expect the join schema to have the fields in the same order then
-                     * the right schema */
+                         * the right schema */
                         for (auto& field : joinSchemaRight->fields) {
                             joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                         }
@@ -303,9 +282,14 @@ void StreamHashJoinProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer
     if (withDeletion) {
         Nautilus::FunctionCall("markPartitionFinishProxyForHashJoin",
                                markPartitionFinishProxyForHashJoin,
-                               hashWindowRef,
+                               hashSliceRefLeft,
                                operatorHandlerMemRef,
-                               windowIdentifier);
+                               sliceIdLeft);
+        Nautilus::FunctionCall("markPartitionFinishProxyForHashJoin",
+                               markPartitionFinishProxyForHashJoin,
+                               hashSliceRefRight,
+                               operatorHandlerMemRef,
+                               sliceIdRight);
     }
 }
 }//namespace NES::Runtime::Execution::Operators

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJSLICE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJSLICE_HPP_
 
-#include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <atomic>
 #include <cstdint>
@@ -26,30 +26,30 @@
 namespace NES::Runtime::Execution {
 
 /**
- * @brief This class represents a single window for the nested loop join. It stores all values for the left and right stream.
+ * @brief This class represents a single slice for the nested loop join. It stores all values for the left and right stream.
  * Later on this class can be reused for a slice.
  */
-class NLJWindow : public StreamWindow {
+class NLJSlice : public StreamSlice {
   public:
     /**
-     * @brief Constructor for creating a window
-     * @param windowStart: Start timestamp of this window
-     * @param windowEnd: End timestamp of this window
-     * @param numWorkerThreads: The number of worker threads that will operate on this window
+     * @brief Constructor for creating a slice
+     * @param sliceStart: Start timestamp of this slice
+     * @param sliceEnd: End timestamp of this slice
+     * @param numWorkerThreads: The number of worker threads that will operate on this slice
      * @param leftEntrySize: Size of the tuple on the left
      * @param rightEntrySize: Size of the tuple on the right tuple
      * @param leftPageSize: Size of a single page for the left paged vectors
      * @param rightPageSize: Size of a singe page for the right paged vectors
      */
-    explicit NLJWindow(uint64_t windowStart,
-                       uint64_t windowEnd,
+    explicit NLJSlice(uint64_t sliceStart,
+                       uint64_t sliceEnd,
                        uint64_t numWorkerThreads,
                        uint64_t leftEntrySize,
                        uint64_t leftPageSize,
                        uint64_t rightEntrySize,
                        uint64_t rightPageSize);
 
-    ~NLJWindow() = default;
+    ~NLJSlice() = default;
 
     /**
      * @brief Retrieves the pointer to paged vector for the left or right side
@@ -72,19 +72,19 @@ class NLJWindow : public StreamWindow {
     void combinePagedVectors();
 
     /**
-     * @brief Returns the number of tuples in this window for the left side
+     * @brief Returns the number of tuples in this slice for the left side
      * @return uint64_t
      */
     uint64_t getNumberOfTuplesLeft() override;
 
     /**
-     * @brief Returns the number of tuples in this window for the right side
+     * @brief Returns the number of tuples in this slice for the right side
      * @return uint64_t
      */
     uint64_t getNumberOfTuplesRight() override;
 
     /**
-     * @brief Creates a string representation of this window
+     * @brief Creates a string representation of this slice
      * @return String
      */
     std::string toString() override;
@@ -95,4 +95,4 @@ class NLJWindow : public StreamWindow {
 };
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJSLICE_HPP_
