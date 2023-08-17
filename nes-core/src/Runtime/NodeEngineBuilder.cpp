@@ -316,11 +316,10 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     queryCompilationOptions->setStreamJoinStratgy(queryCompilerConfiguration.joinStrategy);
 
-    queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
-
     auto vectorizationOptions = queryCompilationOptions->getVectorizationOptions();
     vectorizationOptions->useVectorization(queryCompilerConfiguration.useVectorization.getValue());
     vectorizationOptions->setStageBufferSize(queryCompilerConfiguration.stageBufferSize.getValue());
+    vectorizationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
 
     return queryCompilationOptions;
 }
