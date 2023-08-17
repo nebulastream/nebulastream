@@ -250,7 +250,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
             while (isRunning) {
                 auto ts = std::chrono::system_clock::now();
                 auto timeNow = std::chrono::system_clock::to_time_t(ts);
-                std::vector<Runtime::QueryStatistics> stats = worker->getNodeEngine()->getQueryStatistics(false);
+                std::vector<Runtime::QueryStatistics> stats = worker->getNodeEngine()->getQueryStatistics(true);
                 for (auto& query : stats) {
                     statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
                                    << query.getQueryStatisticsAsString() << "\n";
