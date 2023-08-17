@@ -17,19 +17,42 @@
 
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 
 namespace NES::Runtime::Execution::Operators {
     class Operator;
 } // namespace NES::Runtime::Execution::Operators;
 
+namespace NES::Nautilus::Tracing {
+    class ExecutionTrace;
+} // namespace NES::Nautilus::Tracing;
+
+namespace NES::Nautilus::CodeGen {
+    class CodeGenerator;
+} // namespace NES::Nautilus::CodeGen;
+
+namespace NES::Nautilus::IR {
+    class IRGraph;
+} // namespace NES::Nautilus::IR;
+
 namespace NES::Nautilus::Backends {
 
 /**
- * @brief The `KernelCompiler` class is responsible for creating the execution trace of a vectorized Nautilus operator pipeline.
+ * @brief The `KernelCompiler` class is responsible for creating the kernel executable of a vectorized Nautilus operator pipeline.
  */
 class KernelCompiler {
 public:
-    static std::shared_ptr<Nautilus::Tracing::ExecutionTrace> createTraceFromNautilusOperator(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator);
+    std::unique_ptr<KernelExecutable> compile(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator, const CompilationOptions& options, const DumpHelper& dumpHelper);
+
+private:
+    virtual std::shared_ptr<Nautilus::Tracing::ExecutionTrace> createTrace(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator) = 0;
+
+    virtual std::shared_ptr<IR::IRGraph> createIR(const std::shared_ptr<Nautilus::Tracing::ExecutionTrace>& trace) = 0;
+
+    virtual std::unique_ptr<CodeGen::CodeGenerator> createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) = 0;
+
+    virtual std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
 };
 
 } // namespace NES::Nautilus::Backends
