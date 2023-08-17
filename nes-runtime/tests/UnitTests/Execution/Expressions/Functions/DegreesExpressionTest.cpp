@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class DegreesExpressionTest : public Testing::NESBaseTest {
+class DegreesExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

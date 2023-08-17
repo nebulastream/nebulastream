@@ -25,7 +25,7 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class LoopCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class LoopCompilationTest : public Testing::TestWithErrorHandling, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

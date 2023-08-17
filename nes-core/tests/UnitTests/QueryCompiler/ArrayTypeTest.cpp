@@ -20,7 +20,7 @@
 
 namespace NES {
 
-class ArrayTypeTest : public Testing::NESBaseTest {
+class ArrayTypeTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ArrayTypeTest.log", NES::LogLevel::LOG_DEBUG);

@@ -20,7 +20,7 @@
 #include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface {
-class Fixed2DArrayTest : public Testing::NESBaseTest {
+class Fixed2DArrayTest : public Testing::TestWithErrorHandling {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -29,7 +29,7 @@ class Fixed2DArrayTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("FixedArrayTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup FixedArrayTest test class.");
     }
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
+    void SetUp() override { Testing::TestWithErrorHandling::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down FixedArrayTest test class."); }

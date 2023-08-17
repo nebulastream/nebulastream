@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class Log2ExpressionTest : public Testing::NESBaseTest {
+class Log2ExpressionTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */

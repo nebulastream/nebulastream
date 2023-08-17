@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class GreaterEqualsExpressionTest : public Testing::NESBaseTest {
+class GreaterEqualsExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

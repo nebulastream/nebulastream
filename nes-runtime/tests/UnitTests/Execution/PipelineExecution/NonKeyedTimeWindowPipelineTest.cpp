@@ -46,7 +46,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class NonKeyedTimeWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NonKeyedTimeWindowPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -60,7 +60,7 @@ class NonKeyedTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstr
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }

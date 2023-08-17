@@ -22,7 +22,7 @@
 
 namespace NES {
 
-class PolygonTest : public Testing::NESBaseTest {
+class PolygonTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PolygonTest.log", NES::LogLevel::LOG_DEBUG);

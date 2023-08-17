@@ -25,7 +25,7 @@
 
 namespace NES::Nautilus {
 
-class MemoryAccessCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class MemoryAccessCompilationTest : public Testing::TestWithErrorHandling, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

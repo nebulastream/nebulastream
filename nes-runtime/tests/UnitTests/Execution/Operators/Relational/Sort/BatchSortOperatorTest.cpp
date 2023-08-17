@@ -33,25 +33,13 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<typename T>
-class BatchSortOperatorTest : public Testing::NESBaseTest {
+class BatchSortOperatorTest : public Testing::TestWithErrorHandling {
   public:
-    std::shared_ptr<BufferManager> bm;
-    std::shared_ptr<WorkerContext> wc;
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BatchSortOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BatchSortOperatorTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        bm = std::make_shared<BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
-    }
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BatchSortOperatorTest test class."); }
 };
 
 using TestTypes = ::testing::Types<std::pair<uint32_t, uint32_t>,

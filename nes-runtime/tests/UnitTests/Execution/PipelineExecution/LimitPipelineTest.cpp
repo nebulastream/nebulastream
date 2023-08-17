@@ -34,7 +34,7 @@
 
 namespace NES::Runtime::Execution {
 
-class LimitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class LimitPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
@@ -49,7 +49,7 @@ class LimitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineEx
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup LimitPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

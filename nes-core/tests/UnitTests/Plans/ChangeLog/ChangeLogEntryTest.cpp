@@ -28,7 +28,7 @@
 
 namespace NES {
 
-class ChangeLogEntryTest : public Testing::NESBaseTest {
+class ChangeLogEntryTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ChangeLogEntryTest.log", NES::LogLevel::LOG_DEBUG);
@@ -36,7 +36,7 @@ class ChangeLogEntryTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

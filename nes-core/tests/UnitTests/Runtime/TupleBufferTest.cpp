@@ -29,7 +29,7 @@
 using namespace std;
 namespace NES {
 
-class TupleBufferTest : public Testing::NESBaseTest {
+class TupleBufferTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -41,14 +41,14 @@ class TupleBufferTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024);
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
         bufferManager->destroy();
-        Testing::NESBaseTest::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 };
 

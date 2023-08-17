@@ -35,7 +35,7 @@
 
 namespace NES::Runtime::Execution {
 
-class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class TextPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -49,7 +49,7 @@ class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup TextPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

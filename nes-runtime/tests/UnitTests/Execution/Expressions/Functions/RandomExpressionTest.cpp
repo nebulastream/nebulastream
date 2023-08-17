@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class RandomExpressionTest : public Testing::NESBaseTest {
+class RandomExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

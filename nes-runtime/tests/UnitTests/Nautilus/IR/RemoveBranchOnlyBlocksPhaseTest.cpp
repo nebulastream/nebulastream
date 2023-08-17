@@ -30,7 +30,7 @@
 
 namespace NES::Nautilus {
 
-class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class RemoveBranchOnlyBlocksPhaseTest : public Testing::TestWithErrorHandling, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

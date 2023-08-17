@@ -40,7 +40,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricCollectorTest : public Testing::NESBaseTest {
+class MetricCollectorTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Monitoring::AbstractSystemResourcesReaderPtr reader;
@@ -53,7 +53,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;

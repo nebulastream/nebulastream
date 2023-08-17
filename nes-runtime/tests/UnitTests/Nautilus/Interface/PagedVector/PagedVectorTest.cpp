@@ -27,7 +27,7 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class PagedVectorTest : public Testing::NESBaseTest {
+class PagedVectorTest : public Testing::TestWithErrorHandling {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
@@ -37,7 +37,7 @@ class PagedVectorTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("PagedVectorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PagedVectorTest test class.");
     }
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
+    void SetUp() override { Testing::TestWithErrorHandling::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down PagedVectorTest test class."); }

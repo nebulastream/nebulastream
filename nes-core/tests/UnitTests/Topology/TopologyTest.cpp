@@ -26,7 +26,7 @@
 using namespace NES;
 
 /* - TopologyTest ---------------------------------------------------- */
-class TopologyTest : public Testing::NESBaseTest {
+class TopologyTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before a test is executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("NesTopologyManager.log", NES::LogLevel::LOG_DEBUG); }

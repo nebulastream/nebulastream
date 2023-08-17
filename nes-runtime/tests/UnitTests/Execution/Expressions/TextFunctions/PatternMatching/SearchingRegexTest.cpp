@@ -24,7 +24,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SearchingRegexTest : public Testing::NESBaseTest {
+class SearchingRegexTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -33,7 +33,7 @@ class SearchingRegexTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
         NES_DEBUG("Setup SearchingRegexTest test case.")

@@ -23,7 +23,7 @@
 
 namespace NES {
 
-class OperatorPropertiesTest : public Testing::NESBaseTest {
+class OperatorPropertiesTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

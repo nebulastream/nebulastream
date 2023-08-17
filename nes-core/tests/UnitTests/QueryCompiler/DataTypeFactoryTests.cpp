@@ -26,7 +26,7 @@ using namespace std;
 
 namespace NES {
 
-class DataTypeFactoryTests : public Testing::NESBaseTest {
+class DataTypeFactoryTests : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);

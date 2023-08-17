@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 namespace NES {
-class TimerTest : public Testing::NESBaseTest {
+class TimerTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);

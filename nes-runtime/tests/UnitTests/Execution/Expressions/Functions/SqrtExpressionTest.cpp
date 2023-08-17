@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SqrtExpressionTest : public Testing::NESBaseTest {
+class SqrtExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

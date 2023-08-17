@@ -29,7 +29,7 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
+class FlatMapJavaUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlatMapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -37,14 +37,14 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down FlatMapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }

@@ -25,7 +25,7 @@
 
 namespace NES {
 
-class TopologyIteratorTest : public Testing::NESBaseTest {
+class TopologyIteratorTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
 
@@ -34,7 +34,7 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;

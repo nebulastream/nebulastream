@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SinExpressionTest : public Testing::NESBaseTest {
+class SinExpressionTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */

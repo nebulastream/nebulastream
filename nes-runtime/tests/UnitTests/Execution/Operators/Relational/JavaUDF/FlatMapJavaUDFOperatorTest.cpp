@@ -29,7 +29,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class FlatMapJavaUDFOperatorTest : public Testing::NESBaseTest {
+class FlatMapJavaUDFOperatorTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

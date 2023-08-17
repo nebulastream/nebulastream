@@ -36,7 +36,7 @@ struct Output {
     float iris2;
 };
 
-class InferModelOperatorTest : public Testing::NESBaseTest {
+class InferModelOperatorTest : public Testing::TestWithErrorHandling {
   public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;

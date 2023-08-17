@@ -23,7 +23,7 @@
 
 namespace NES {
 
-class TopologyPropertiesTest : public Testing::NESBaseTest {
+class TopologyPropertiesTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

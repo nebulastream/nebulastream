@@ -21,7 +21,7 @@
 
 namespace NES {
 
-class RectangleTest : public Testing::NESBaseTest {
+class RectangleTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RectangleTest.log", NES::LogLevel::LOG_DEBUG);

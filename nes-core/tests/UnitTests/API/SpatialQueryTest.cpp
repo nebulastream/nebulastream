@@ -26,7 +26,7 @@
 
 namespace NES {
 
-class SpatialQueryTest : public Testing::NESBaseTest {
+class SpatialQueryTest : public Testing::TestWithErrorHandling {
   protected:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SpatialQueryTest.log", NES::LogLevel::LOG_DEBUG);

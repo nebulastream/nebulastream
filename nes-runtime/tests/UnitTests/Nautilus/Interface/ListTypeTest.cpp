@@ -27,7 +27,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class ListTypeTest : public Testing::NESBaseTest {
+class ListTypeTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -37,7 +37,7 @@ class ListTypeTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
         NES_DEBUG("Setup ListTypeTest test case.");

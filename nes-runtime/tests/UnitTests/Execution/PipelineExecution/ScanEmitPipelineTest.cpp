@@ -32,7 +32,7 @@
 
 namespace NES::Runtime::Execution {
 
-class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class ScanEmitPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
@@ -47,7 +47,7 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup ScanEmitPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -24,7 +24,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class DataTypeTest : public Testing::NESBaseTest {
+class DataTypeTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

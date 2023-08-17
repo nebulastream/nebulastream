@@ -33,7 +33,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class UserDefinedMonitoringTest : public Testing::NESBaseTest {
+class UserDefinedMonitoringTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -45,7 +45,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();

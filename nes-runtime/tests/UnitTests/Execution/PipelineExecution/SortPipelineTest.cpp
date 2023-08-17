@@ -33,7 +33,7 @@
 
 namespace NES::Runtime::Execution {
 
-class SortPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class SortPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
@@ -48,7 +48,7 @@ class SortPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup SortPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

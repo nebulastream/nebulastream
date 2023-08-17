@@ -40,7 +40,7 @@
 
 namespace NES {
 
-class GeographyExpressionNodeTest : public Testing::NESBaseTest {
+class GeographyExpressionNodeTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
@@ -49,7 +49,7 @@ class GeographyExpressionNodeTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

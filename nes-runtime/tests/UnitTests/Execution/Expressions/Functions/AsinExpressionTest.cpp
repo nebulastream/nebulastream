@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class AsinExpressionTest : public Testing::NESBaseTest {
+class AsinExpressionTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */

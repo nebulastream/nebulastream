@@ -70,7 +70,7 @@ class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
             {nljOperatorHandler}) {}
 };
 
-class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
+class NestedLoopJoinOperatorTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     SchemaPtr leftSchema;
@@ -90,7 +90,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        TestWithErrorHandling::SetUp();
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
         leftSchema = Schema::create()
                          ->addField("id", BasicType::UINT64)

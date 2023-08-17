@@ -21,7 +21,7 @@
 using namespace std;
 namespace NES::Windowing::Experimental {
 
-class WindowAssignerTest : public Testing::NESBaseTest {
+class WindowAssignerTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

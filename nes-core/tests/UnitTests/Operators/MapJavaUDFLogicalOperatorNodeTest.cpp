@@ -30,7 +30,7 @@ using namespace std::string_literals;
 
 namespace NES {
 
-class MapJavaUDFLogicalOperatorNodeTest : public Testing::NESBaseTest {
+class MapJavaUDFLogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("MapJavaUDFLogicalOperatorNodeTest", NES::LogLevel::LOG_DEBUG); }
 };

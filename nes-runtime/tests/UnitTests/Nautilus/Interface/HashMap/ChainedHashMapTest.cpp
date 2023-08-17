@@ -31,7 +31,7 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class ChainedHashMapTest : public Testing::NESBaseTest {
+class ChainedHashMapTest : public Testing::TestWithErrorHandling {
   public:
     std::unique_ptr<HashFunction> hf;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -42,7 +42,7 @@ class ChainedHashMapTest : public Testing::NESBaseTest {
         NES_INFO("Setup HashTest test class.");
     }
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         hf = std::make_unique<MurMur3HashFunction>();
     }
 

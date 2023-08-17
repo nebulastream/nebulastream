@@ -39,7 +39,7 @@
 
 namespace NES {
 
-class ExpressionNodeTest : public Testing::NESBaseTest {
+class ExpressionNodeTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
@@ -47,7 +47,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
