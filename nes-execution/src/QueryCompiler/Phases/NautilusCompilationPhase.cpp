@@ -85,8 +85,6 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
 
     options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
 
-    options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
-
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);
     auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);

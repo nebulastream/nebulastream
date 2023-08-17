@@ -50,6 +50,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     QueryCompilerOptions::VectorizationOptionsPtr vectorizationOptions = std::make_shared<QueryCompilerOptions::VectorizationOptions>();
     vectorizationOptions->useVectorization(false);
     vectorizationOptions->setStageBufferSize(NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE);
+    vectorizationOptions->setCUDASdkPath(NES::Runtime::Execution::Experimental::Vectorization::CUDA_SDK_PATH);
     options.setVectorizationOptions(vectorizationOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
@@ -124,9 +125,6 @@ void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(
     this->totalSizeForDataStructures = totalSizeForDataStructures;
 }
 
-void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
-const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
-
 QueryCompilerOptions::VectorizationOptionsPtr QueryCompilerOptions::getVectorizationOptions() const {
     return vectorizationOptions;
 }
@@ -149,6 +147,14 @@ uint64_t QueryCompilerOptions::VectorizationOptions::getStageBufferSize() const 
 
 void QueryCompilerOptions::VectorizationOptions::setStageBufferSize(uint64_t size) {
     this->stageBufferSize = size;
+}
+
+void QueryCompilerOptions::VectorizationOptions::setCUDASdkPath(const std::string& cudaSdkPath) {
+    QueryCompilerOptions::VectorizationOptions::cudaSdkPath = cudaSdkPath;
+}
+
+const std::string QueryCompilerOptions::VectorizationOptions::getCUDASdkPath() const {
+    return cudaSdkPath;
 }
 
 }// namespace NES::QueryCompilation
