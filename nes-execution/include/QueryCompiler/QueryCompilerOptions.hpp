@@ -125,6 +125,17 @@ class QueryCompilerOptions {
         void setStageBufferSize(uint64_t size);
 
         /**
+         * @return Whether the query compiler should use the CUDA back-end for vectorization
+         */
+        bool isUsingCUDA() const;
+
+        /**
+         * @brief Specify if the query compiler should use the CUDA back-end
+         * @param enable
+         */
+        void useCUDA(bool enable);
+
+        /**
         * @brief Set the path to the CUDA SDK
         * @param cudaSdkPath the CUDA SDK path
         */
@@ -138,6 +149,7 @@ class QueryCompilerOptions {
     private:
         bool enabled;
         uint64_t stageBufferSize;
+        bool cudaEnabled;
         std::string cudaSdkPath;
     };
 

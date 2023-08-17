@@ -271,6 +271,7 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     auto vectorizationOptions = queryCompilationOptions->getVectorizationOptions();
     vectorizationOptions->useVectorization(queryCompilerConfiguration.useVectorization.getValue());
     vectorizationOptions->setStageBufferSize(queryCompilerConfiguration.stageBufferSize.getValue());
+    vectorizationOptions->useCUDA(queryCompilerConfiguration.useCUDA.getValue());
     vectorizationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
 
     return queryCompilationOptions;
