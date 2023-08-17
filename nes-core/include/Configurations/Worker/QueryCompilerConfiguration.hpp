@@ -146,6 +146,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Path to the CUDA SDK"
     };
 
+    BoolOption useCUDA = {CUDA_ENABLED, false, "Enable the CUDA back-end of the query compiler"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {
@@ -163,6 +165,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &joinStrategy,
             &useVectorization,
             &stageBufferSize,
+            &useCUDA,
             &cudaSdkPath,
         };
     }
