@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.198](https://github.com/nebulastream/nebulastream/tree/v0.5.198) (2023-08-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.197...v0.5.198)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Random failing test in MonitoringIntegrationTest [\#3237](https://github.com/nebulastream/nebulastream/issues/3237)
+
 ## [v0.5.197](https://github.com/nebulastream/nebulastream/tree/v0.5.197) (2023-08-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.196...v0.5.197)
