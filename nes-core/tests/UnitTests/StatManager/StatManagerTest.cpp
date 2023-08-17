@@ -19,6 +19,17 @@
 #include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <API/QueryAPI.hpp>
+#include <Services/QueryService.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 namespace NES {
 
@@ -102,5 +113,56 @@ namespace NES {
 
     statManager->deleteStat(*StatCollectorConfig);
     EXPECT_EQ(statManager->getStatCollectors().empty(), true);
+  }
+
+  TEST_F(StatManagerTest, executeExemplaryQueryTest) {
+
+    // create coordinator
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("Starting coordinator");
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+
+    // create schema
+    auto testSchema = Schema::create()
+        ->addField(createField("f1", BasicType::UINT64));
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    NES_DEBUG("Coordinator started successfully");
+
+    // create test csv
+    std::string testCSV = "1\n"
+                          "2\n"
+                          "3";
+    std::string testCSVFileName = "testCSV.csv";
+    std::ofstream outCsv(testCSVFileName);
+    outCsv << testCSV;
+    outCsv.close();
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("testCSV.csv");
+    csvSourceType1->setGatheringInterval(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
+
+    // create worker
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("Worker started successfully");
+
+    crd->createStat(*StatCollectorConfig);
+
+    auto nodeEngine = crd->getNodeEngine();
   }
 }

@@ -100,6 +100,13 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
+namespace Experimental::Statistics {
+  class StatManager;
+  using StatManagerPtr = std::unique_ptr<StatManager>;
+
+  class StatCollectorConfig;
+}
+
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
@@ -220,6 +227,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
+    void createStat(const Experimental::Statistics::StatCollectorConfig& config);
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -255,6 +264,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
     LocationServicePtr locationService;
+    Experimental::Statistics::StatManagerPtr statManager;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

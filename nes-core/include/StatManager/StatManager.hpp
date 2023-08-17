@@ -20,7 +20,14 @@
 #include <memory>
 #include <math.h>
 
-namespace NES::Experimental::Statistics {
+namespace NES {
+
+namespace Runtime {
+  class NodeEngine;
+  using NodeEnginePtr = std::shared_ptr<NodeEngine>;
+}
+
+namespace Experimental::Statistics {
 
   class StatCollectorConfig;
 
@@ -38,12 +45,14 @@ namespace NES::Experimental::Statistics {
 
     void createStat(const StatCollectorConfig& config);
 
+    void createStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
+
     double queryStat(const StatCollectorConfig& config,
                      const uint32_t key);
 
     void deleteStat(const StatCollectorConfig& config);
   };
 
-}
-
+} // Experimental::Statistics
+} // NES
 #endif //NES_CORE_INCLUDE_STATMANAGER_STATMANAGER_HPP

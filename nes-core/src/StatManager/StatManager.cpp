@@ -17,12 +17,75 @@
 #include <StatManager/StatCollectors/StatCollectorConfiguration.hpp>
 #include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 #include <StatManager/StatCollectors/StatCollector.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <API/QueryAPI.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 
 namespace NES::Experimental::Statistics {
 
 	std::vector<StatCollectorPtr>& StatManager::getStatCollectors() {
 		return statCollectors;
 	}
+
+  void StatManager::createStat (const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine) {
+    auto physicalSourceName = config.getPhysicalSourceName();
+    auto field = config.getField();
+    auto duration = config.getDuration();
+    auto frequency = config.getFrequency();
+
+    bool found = false;
+
+    // check if the stat is already being tracked passively
+    for (const auto &collector: statCollectors) {
+      // could add a hashmap or something here that first checks if a statCollector can even generate the according statistic
+      if (collector->getPhysicalSourceName() == physicalSourceName && collector->getField() == field &&
+          collector->getDuration() == duration && collector->getFrequency() == frequency) {
+        found = true;
+        break;
+      }
+    }
+
+    auto statMethodName = config.getStatMethodName();
+
+    // if the stat is not yet tracked, then create it
+    if (!found) {
+      if (statMethodName.compare("FrequencyCM")) {
+        // get config values
+        auto error = static_cast<double>(config.getError());
+        auto probability = static_cast<double>(config.getProbability());
+        auto depth = static_cast<uint32_t>(config.getDepth());
+        auto width = static_cast<uint32_t>(config.getWidth());
+
+        // check that only error and probability or depth and width are set
+        if (((depth != 0 && width != 0) && (error == 0.0 && probability == 0.0)) ||
+            ((depth == 0 && width == 0) && (error != 0.0 && probability != 0.0))) {
+          // check if error and probability are set and within valid value ranges and if so, create a CM Sketch
+          if (error != 0.0 && probability != 0.0) {
+            if (error <= 0 || error >= 1) {
+              NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.");
+
+            } else if (probability <= 0 || probability >= 1) {
+              NES_DEBUG("Sketch error hat invalid value. Must be greater than zero, but smaller than 1.");
+
+            } else {
+              // create stat
+              std::unique_ptr<CountMin> cm = std::make_unique<CountMin>(config);
+
+              statCollectors.push_back(std::move(cm));
+
+              auto query = Query::from("testStream").filter(Attribute("f1") <= 2).sink(PrintSinkDescriptor::create());
+
+              bool success = nodeEngine->registerQueryInNodeEngine(query.getQueryPlan());
+
+            }
+          }
+        }
+      // TODO: Potentially add more Synopses here dependent on Nautilus integration.
+      } else {
+        NES_DEBUG("statMethodName is not defined!");
+      }
+    }
+  }
 
   void StatManager::createStat (const StatCollectorConfig& config) {
     auto physicalSourceName = config.getPhysicalSourceName();
@@ -69,17 +132,15 @@ namespace NES::Experimental::Statistics {
               std::unique_ptr<CountMin> cm = std::make_unique<CountMin>(config);
 
               statCollectors.push_back(std::move(cm));
-
             }
           }
         }
-      // TODO: Potentially add more Synopses here dependent on Nautilus integration.
+        // TODO: Potentially add more Synopses here dependent on Nautilus integration.
       } else {
         NES_DEBUG("statMethodName is not defined!");
       }
     }
   }
-
 
   double StatManager::queryStat (const StatCollectorConfig& config,
                                  const uint32_t key) {

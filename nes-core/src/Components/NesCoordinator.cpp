@@ -41,6 +41,8 @@
 #include <memory>
 #include <thread>
 #include <z3++.h>
+#include <StatManager/StatManager.hpp>
+#include <StatManager/StatCollectors/StatCollector.hpp>
 
 //GRPC Includes
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -77,7 +79,8 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
-      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring),
+      statManager(std::make_unique<NES::Experimental::Statistics::StatManager>()) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -360,6 +363,14 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
     NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
+
+void NesCoordinator::createStat(const Experimental::Statistics::StatCollectorConfig& config) {
+
+  this->statManager->createStat(config, this->getNodeEngine());
+
+  return;
+}
+
 
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
