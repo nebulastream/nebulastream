@@ -278,6 +278,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     generatorThread = std::thread([&] {
         generateAsync(started, workingTimeDeltaInMillSeconds, ingestionRatePerSecond, bufferQueue, preAllocatedBuffers, numberOfTuplesToProduce);
     });
+    generatorThread.join();
 
     //TODO somewhere you have to do generatorThread.join()and also clear the bufferManager
 
