@@ -18,9 +18,10 @@
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Exceptions/InvalidLogicalOperatorException.hpp>
-#include <Exceptions/InvalidNodeException.hpp>
 #include <Exceptions/InvalidQueryStateException.hpp>
+#include <Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
+#include <Exceptions/OperatorNotFoundException.hpp>
 #include <Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
@@ -28,7 +29,6 @@
 #include <Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include <Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -106,7 +106,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
                    || exception.instanceOf<SignatureComputationException>()
                    || exception.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
                    || exception.instanceOf<Exceptions::SharedQueryPlanNotFoundException>() || exception.instanceOf<UDFException>()
-                   || exception.instanceOf<Exceptions::InvalidNodeException>()
+                   || exception.instanceOf<Exceptions::OperatorNotFoundException>()
                    || exception.instanceOf<Exceptions::InvalidLogicalOperatorException>()
                    || exception.instanceOf<GlobalQueryPlanUpdateException>()) {
             NES_ERROR("{}", exception.what());
