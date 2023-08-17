@@ -40,7 +40,7 @@ using namespace std;
 
 namespace NES {
 
-class QueryPlanIteratorTest : public Testing::NESBaseTest {
+class QueryPlanIteratorTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryPlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -48,7 +48,7 @@ class QueryPlanIteratorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

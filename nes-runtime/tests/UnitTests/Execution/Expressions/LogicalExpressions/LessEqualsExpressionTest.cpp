@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class LessEqualsExpressionTest : public Testing::NESBaseTest {
+class LessEqualsExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

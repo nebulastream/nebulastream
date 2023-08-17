@@ -25,7 +25,7 @@ using namespace std::string_literals;
 
 namespace NES::Catalogs::UDF {
 
-class JavaUDFDescriptorTest : public Testing::NESBaseTest {
+class JavaUDFDescriptorTest : public Testing::TestWithErrorHandling {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 };

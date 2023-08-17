@@ -23,7 +23,7 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class HashTest : public Testing::NESBaseTest {
+class HashTest : public Testing::TestWithErrorHandling {
   public:
     std::unique_ptr<HashFunction> hf;
     /* Will be called before any test in this class are executed. */
@@ -32,7 +32,7 @@ class HashTest : public Testing::NESBaseTest {
         NES_INFO("Setup HashTest test class.");
     }
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         hf = std::make_unique<MurMur3HashFunction>();
     }
 

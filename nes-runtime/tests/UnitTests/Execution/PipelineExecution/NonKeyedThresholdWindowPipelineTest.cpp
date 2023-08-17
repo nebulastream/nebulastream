@@ -43,7 +43,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class NonKeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NonKeyedThresholdWindowPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
@@ -59,7 +59,7 @@ class NonKeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public 
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 using namespace NES;
 using namespace NES::Compiler;
-class SharedLibraryTest : public Testing::NESBaseTest {
+class SharedLibraryTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before a test is executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG); }

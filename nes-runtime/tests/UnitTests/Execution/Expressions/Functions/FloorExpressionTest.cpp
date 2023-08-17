@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class FloorExpressionTest : public Testing::NESBaseTest {
+class FloorExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

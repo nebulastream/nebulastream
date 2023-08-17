@@ -60,7 +60,7 @@
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
-class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class TPCH_Q3 : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
 
   public:
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
@@ -80,7 +80,7 @@ class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup TPCH_Q3 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

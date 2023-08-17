@@ -27,7 +27,7 @@ using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
 using OriginId = uint64_t;
 
-class MultiOriginWatermarkProcessorTest : public Testing::NESBaseTest {
+class MultiOriginWatermarkProcessorTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

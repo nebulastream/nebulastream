@@ -25,7 +25,7 @@ using Exceptions::InvalidQueryStateException;
 using Exceptions::QueryNotFoundException;
 using Exceptions::RequestExecutionException;
 
-class RequestExecutionExceptionTest : public Testing::NESBaseTest {
+class RequestExecutionExceptionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);

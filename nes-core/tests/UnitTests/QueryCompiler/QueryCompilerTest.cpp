@@ -71,7 +71,7 @@ using namespace NES::API;
 using namespace NES::QueryCompilation;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class QueryCompilerTest : public Testing::NESBaseTest {
+class QueryCompilerTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
@@ -82,7 +82,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

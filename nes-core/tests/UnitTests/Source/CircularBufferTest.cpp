@@ -20,7 +20,7 @@
 
 namespace NES {
 
-class CircularBufferTest : public Testing::NESBaseTest {
+class CircularBufferTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

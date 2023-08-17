@@ -33,7 +33,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricStoreTest : public Testing::NESBaseTest {
+class MetricStoreTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -45,7 +45,7 @@ class MetricStoreTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();

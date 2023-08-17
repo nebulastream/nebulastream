@@ -40,7 +40,7 @@ std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
 const std::string defaultLogicalSourceName = "default_logical";
 
 /* - nesTopologyManager ---------------------------------------------------- */
-class SourceCatalogTest : public Testing::NESBaseTest {
+class SourceCatalogTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 
@@ -52,7 +52,7 @@ class SourceCatalogTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);

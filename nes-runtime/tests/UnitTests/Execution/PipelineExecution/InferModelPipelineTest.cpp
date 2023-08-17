@@ -33,7 +33,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class InferModelPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -47,7 +47,7 @@ class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipel
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup InferModelPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

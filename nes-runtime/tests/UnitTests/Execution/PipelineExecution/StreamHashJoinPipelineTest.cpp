@@ -61,7 +61,7 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class HashJoinPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -76,7 +76,7 @@ class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        TestWithErrorHandling::SetUp();
         NES_INFO("Setup HashJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
@@ -89,7 +89,7 @@ class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down HashJoinPipelineTest test case.");
-        NESBaseTest::TearDown();
+        TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

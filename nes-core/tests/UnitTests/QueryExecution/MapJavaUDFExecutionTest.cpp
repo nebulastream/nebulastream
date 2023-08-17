@@ -32,7 +32,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
+class MapJavaUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -40,7 +40,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
             dumpMode);
@@ -48,7 +48,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down MapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }

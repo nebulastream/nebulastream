@@ -22,7 +22,7 @@
 
 namespace NES {
 
-class CircleTest : public Testing::NESBaseTest {
+class CircleTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CircleTest.log", NES::LogLevel::LOG_DEBUG);

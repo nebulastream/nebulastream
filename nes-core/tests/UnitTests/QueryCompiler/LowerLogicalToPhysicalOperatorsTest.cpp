@@ -75,7 +75,7 @@ using namespace std;
 
 namespace NES {
 
-class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
+class LowerLogicalToPhysicalOperatorsTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -83,7 +83,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));

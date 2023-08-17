@@ -24,7 +24,7 @@
 
 namespace NES {
 
-class SpatialExpressionNodeTest : public Testing::NESBaseTest {
+class SpatialExpressionNodeTest : public Testing::TestWithErrorHandling {
   protected:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SpatialExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);

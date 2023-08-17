@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class LnExpressionTest : public Testing::NESBaseTest {
+class LnExpressionTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */

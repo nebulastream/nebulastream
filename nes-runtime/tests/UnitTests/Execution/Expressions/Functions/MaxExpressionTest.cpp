@@ -20,7 +20,7 @@
 #include <memory>
 namespace NES::Runtime::Execution::Expressions {
 
-class MaxExpressionTest : public Testing::NESBaseTest {
+class MaxExpressionTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

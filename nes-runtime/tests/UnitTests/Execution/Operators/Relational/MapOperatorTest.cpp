@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class MapOperatorTest : public Testing::NESBaseTest {
+class MapOperatorTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

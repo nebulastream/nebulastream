@@ -35,7 +35,7 @@
 
 namespace NES::Runtime::Execution {
 
-class HashJoinOperatorTest : public Testing::NESBaseTest {
+class HashJoinOperatorTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     std::vector<TupleBuffer> emittedBuffers;
@@ -48,7 +48,7 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        TestWithErrorHandling::SetUp();
         NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
@@ -56,7 +56,7 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down HashJoinOperatorTest test case.");
-        NESBaseTest::TearDown();
+        TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

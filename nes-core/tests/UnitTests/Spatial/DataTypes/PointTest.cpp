@@ -20,7 +20,7 @@
 
 namespace NES {
 
-class PointTest : public Testing::NESBaseTest {
+class PointTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PointTest.log", NES::LogLevel::LOG_DEBUG);

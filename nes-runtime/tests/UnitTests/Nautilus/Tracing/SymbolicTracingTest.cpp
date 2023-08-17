@@ -25,7 +25,7 @@
 #include <memory>
 
 namespace NES::Nautilus::Tracing {
-class SymbolicTracingTest : public Testing::NESBaseTest {
+class SymbolicTracingTest : public Testing::TestWithErrorHandling {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     /* Will be called before any test in this class are executed. */

@@ -39,7 +39,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-class KeyedThresholdWindowOperatorTest : public Testing::NESBaseTest {
+class KeyedThresholdWindowOperatorTest : public Testing::TestWithErrorHandling {
   public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;

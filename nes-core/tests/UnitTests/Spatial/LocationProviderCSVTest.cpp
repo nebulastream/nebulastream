@@ -22,7 +22,7 @@
 
 namespace NES {
 
-class LocationProviderCSVTest : public Testing::NESBaseTest {
+class LocationProviderCSVTest : public Testing::TestWithErrorHandling {
 
   public:
     static void SetUpTestCase() {
@@ -32,7 +32,7 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Testing::NESBaseTest::SetUp();
+        NES::Testing::TestWithErrorHandling::SetUp();
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints;
         waypoints.push_back({{52.55227464714949, 13.351743136322877}, 0});
         waypoints.push_back({{2.574709862890394, 13.419206057808077}, 1000000000});

@@ -47,7 +47,7 @@
 
 namespace NES::Runtime::Execution {
 
-class BatchAggregationPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class BatchAggregationPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
@@ -62,7 +62,7 @@ class BatchAggregationPipelineTest : public Testing::NESBaseTest, public Abstrac
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup BatchAggregationPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -62,7 +62,7 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NestedLoopJoinPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -80,7 +80,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        TestWithErrorHandling::SetUp();
         NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

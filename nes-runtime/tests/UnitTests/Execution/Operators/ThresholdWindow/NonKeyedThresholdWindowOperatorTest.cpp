@@ -39,7 +39,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-class NonKeyedThresholdWindowOperatorTest : public Testing::NESBaseTest {
+class NonKeyedThresholdWindowOperatorTest : public Testing::TestWithErrorHandling {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;

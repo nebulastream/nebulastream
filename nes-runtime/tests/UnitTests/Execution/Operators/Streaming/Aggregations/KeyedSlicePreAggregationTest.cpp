@@ -46,7 +46,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
+class KeyedSlicePreAggregationTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -57,7 +57,7 @@ class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bm = std::make_shared<BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }

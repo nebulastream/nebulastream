@@ -26,7 +26,7 @@
 
 namespace NES::Nautilus {
 
-class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class FunctionCompilationTest : public Testing::TestWithErrorHandling, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

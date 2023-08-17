@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
-class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::testing::WithParamInterface<std::string> {
+class AggregationFunctionDataTypeTest : public Testing::TestWithErrorHandling, public ::testing::WithParamInterface<std::string> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

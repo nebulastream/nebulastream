@@ -23,7 +23,7 @@
 
 namespace NES::Nautilus::Tracing {
 
-class TagCreationTest : public Testing::NESBaseTest {
+class TagCreationTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

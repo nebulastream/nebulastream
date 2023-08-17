@@ -34,7 +34,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class EmitOperatorTest : public Testing::NESBaseTest {
+class EmitOperatorTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

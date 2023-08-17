@@ -61,7 +61,7 @@ class DummyStorageHandler : public StorageHandler {
     UDFCatalogHandle getUDFCatalogHandle(RequestId) override { return nullptr; };
 };
 
-class AbstractRequestTest : public Testing::NESBaseTest {
+class AbstractRequestTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("AbstractRequestTest.log", NES::LogLevel::LOG_DEBUG); }
 };
