@@ -17,6 +17,7 @@
 #include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>
 
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -28,6 +29,7 @@ class Kernel : public VectorizableOperator {
 public:
     struct Descriptor {
         std::shared_ptr<Operator> pipeline;
+        Nautilus::CompilationOptions compileOptions;
         uint64_t inputSchemaSize;
     };
 

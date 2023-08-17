@@ -1177,10 +1177,26 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
         NES_ERROR("Failed to build a Nautilus operator pipeline");
         return std::nullopt;
     }
-
     auto vectorizedPipeline = vectorizedPipelineOpt.value();
+
+    auto compileOptions = Nautilus::CompilationOptions();
+    compileOptions.setIdentifier("KernelCompilation");
+    auto dumpToFile = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE;
+    auto dumpToConsole = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+    auto dumpToBoth = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
+    compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
+    compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
+
+    auto cudaEnabled = options->getVectorizationOptions()->isUsingCUDA();
+    if (!cudaEnabled) {
+        NES_ERROR("Kernel compilation was requested but CUDA is not enabled");
+        return std::nullopt;
+    }
+
     auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
         .pipeline = vectorizedPipeline,
+        .compileOptions = compileOptions,
         .inputSchemaSize = *schemaSizeIt,
     };
     return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
