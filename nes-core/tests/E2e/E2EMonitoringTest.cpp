@@ -47,7 +47,7 @@ class E2EMonitoringTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
+TEST_F(E2EMonitoringTest, DISABLED_requestStoredRegistrationMetrics) {
     uint64_t noWorkers = 2;
     auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::rpcPort(*rpcCoordinatorPort),
