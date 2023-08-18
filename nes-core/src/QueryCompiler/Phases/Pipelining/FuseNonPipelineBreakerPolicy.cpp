@@ -41,7 +41,7 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()
-        //            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>() //Enable with #4018
+        || physicalOperator->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()

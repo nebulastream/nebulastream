@@ -434,7 +434,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
                                                                                           buildOperator->getInputSchema(),
                                                                                           buildOperator->getJoinFieldName(),
-                                                                                          buildOperator->getTimeStampFieldName(),
                                                                                           joinBuildSide,
                                                                                           std::move(timeFunction));
         } else {
@@ -444,11 +443,9 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
                                                                                           buildOperator->getInputSchema(),
                                                                                           buildOperator->getJoinFieldName(),
-                                                                                          buildOperator->getTimeStampFieldName(),
                                                                                           joinBuildSide,
                                                                                           std::move(timeFunction));
         }
-
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
     }

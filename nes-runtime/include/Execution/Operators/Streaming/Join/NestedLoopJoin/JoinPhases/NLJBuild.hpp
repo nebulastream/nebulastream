@@ -58,13 +58,11 @@ class NLJBuild : public ExecutableOperator {
      * @param operatorHandlerIndex
      * @param schema
      * @param joinFieldName
-     * @param timeStampField
      * @param joinBuildSide
      */
     NLJBuild(uint64_t operatorHandlerIndex,
              const SchemaPtr& schema,
              const std::string& joinFieldName,
-             const std::string& timeStampField,
              const QueryCompilation::JoinBuildSideType joinBuildSide,
              TimeFunctionPtr timeFunction);
 
@@ -108,7 +106,6 @@ class NLJBuild : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const SchemaPtr schema;
     const std::string joinFieldName;
-    const std::string timeStampField;
     const QueryCompilation::JoinBuildSideType joinBuildSide;
     const uint64_t entrySize;
     const TimeFunctionPtr timeFunction;
