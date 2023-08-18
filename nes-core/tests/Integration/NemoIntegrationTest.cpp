@@ -77,6 +77,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .enableNautilus()
+                                      .enableDistributedWindowOptimization()
                                       .addLogicalSource("car", inputSchema);
 
         std::vector<uint64_t> nodes;

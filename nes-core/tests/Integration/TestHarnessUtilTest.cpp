@@ -305,9 +305,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
 /**
  * Testing testHarness utility for query with a join operator on different sources
- * TODO #4076 Fix Join Operator test in test harness util
  */
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
+TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -342,12 +341,12 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
                                   .attachWorkerWithMemorySourceToCoordinator("window2")
                                   //Source1
                                   .pushElement<Window1>({1, 1000}, 2)
-                                  .pushElement<Window2>({12, 1001}, 2)
-                                  .pushElement<Window2>({4, 1002}, 2)
-                                  .pushElement<Window2>({1, 2000}, 2)
-                                  .pushElement<Window2>({11, 2001}, 2)
-                                  .pushElement<Window2>({16, 2002}, 2)
-                                  .pushElement<Window2>({1, 3000}, 2)
+                                  .pushElement<Window1>({12, 1001}, 2)
+                                  .pushElement<Window1>({4, 1002}, 2)
+                                  .pushElement<Window1>({1, 2000}, 2)
+                                  .pushElement<Window1>({11, 2001}, 2)
+                                  .pushElement<Window1>({16, 2002}, 2)
+                                  .pushElement<Window1>({1, 3000}, 2)
                                   //Source2
                                   .pushElement<Window2>({21, 1003}, 3)
                                   .pushElement<Window2>({12, 1011}, 3)
@@ -380,7 +379,8 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 4, 1002, 4, 1102},
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
-                                          {2000, 3000, 11, 11, 2001, 11, 2301}};
+                                          {2000, 3000, 11, 11, 2001, 11, 2301},
+                                          {2000, 3000, 1, 1, 2000, 1, 2010}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
