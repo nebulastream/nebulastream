@@ -14,8 +14,8 @@
 
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalSourceConfig.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/PhysicalSourceConfig.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>

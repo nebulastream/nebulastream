@@ -13,8 +13,8 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
