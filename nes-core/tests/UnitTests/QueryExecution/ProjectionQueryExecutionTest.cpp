@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -28,7 +28,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
+class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -37,7 +37,7 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
@@ -46,7 +46,7 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
     void TearDown() override {
         NES_DEBUG("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

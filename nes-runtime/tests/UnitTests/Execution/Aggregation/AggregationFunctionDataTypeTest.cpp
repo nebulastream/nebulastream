@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -22,12 +23,11 @@
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
-class AggregationFunctionDataTypeTest : public Testing::TestWithErrorHandling, public ::testing::WithParamInterface<std::string> {
+class AggregationFunctionDataTypeTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::string> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

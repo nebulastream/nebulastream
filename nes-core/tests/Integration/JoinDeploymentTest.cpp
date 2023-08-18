@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -33,7 +33,7 @@ static SchemaPtr createValueIdTimeStamp() {
         ->addField("timestamp", BasicType::UINT64);
 }
 
-class JoinDeploymentTest : public Testing::NESBaseTest,
+class JoinDeploymentTest : public Testing::BaseIntegrationTest,
                            public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
     static void SetUpTestCase() {
@@ -44,7 +44,7 @@ class JoinDeploymentTest : public Testing::NESBaseTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
 
         joinStrategy = NES::Runtime::Execution::JoinDeploymentTest::GetParam();
         bufferManager = std::make_shared<BufferManager>();

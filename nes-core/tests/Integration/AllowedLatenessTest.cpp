@@ -13,7 +13,7 @@
 */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -32,7 +32,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class AllowedLatenessTest : public Testing::NESBaseTest {
+class AllowedLatenessTest : public Testing::BaseIntegrationTest {
   public:
     CSVSourceTypePtr inOrderConf;
     CSVSourceTypePtr outOfOrderConf;
@@ -44,7 +44,7 @@ class AllowedLatenessTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         // window-out-of-order.csv contains 12 rows
         outOfOrderConf = CSVSourceType::create();
         outOfOrderConf->setFilePath("../tests/test_data/window-out-of-order.csv");

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Prediction/Edge.hpp>
@@ -26,7 +26,7 @@
 namespace NES {
 using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyTimeline;
-class TopologyTimelineTest : public Testing::NESBaseTest {
+class TopologyTimelineTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyTimelineTest.log", NES::LogLevel::LOG_DEBUG);

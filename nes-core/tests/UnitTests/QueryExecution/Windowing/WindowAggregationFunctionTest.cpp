@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -34,7 +34,7 @@ const static uint64_t recordsPerBuffer = 100;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class WindowAggregationFunctionTest
-    : public Testing::TestWithErrorHandling,
+    : public Testing::BaseUnitTest,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -43,7 +43,7 @@ class WindowAggregationFunctionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
         sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
@@ -53,7 +53,7 @@ class WindowAggregationFunctionTest
     void TearDown() override {
         NES_DEBUG("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

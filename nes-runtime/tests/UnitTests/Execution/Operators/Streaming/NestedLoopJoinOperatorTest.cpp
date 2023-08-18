@@ -13,6 +13,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -25,7 +26,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -70,7 +70,7 @@ class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
             {nljOperatorHandler}) {}
 };
 
-class NestedLoopJoinOperatorTest : public Testing::TestWithErrorHandling {
+class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     SchemaPtr leftSchema;
@@ -90,7 +90,7 @@ class NestedLoopJoinOperatorTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        TestWithErrorHandling::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
         leftSchema = Schema::create()
                          ->addField("id", BasicType::UINT64)

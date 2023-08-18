@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class OrOperatorTest : public Testing::NESBaseTest {
+class OrOperatorTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coordinatorConfiguration;
 
@@ -46,7 +46,7 @@ class OrOperatorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         coordinatorConfiguration = CoordinatorConfiguration::createDefault();
         coordinatorConfiguration->rpcPort = (*rpcCoordinatorPort);
         coordinatorConfiguration->restPort = *restPort;

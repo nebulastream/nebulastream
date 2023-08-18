@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
-class NesCoordinatorTest : public Testing::NESBaseTest {
+class NesCoordinatorTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("CoordinatorTest.log", NES::LogLevel::LOG_DEBUG); }
 };

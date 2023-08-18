@@ -13,12 +13,12 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -33,7 +33,7 @@
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
-class TPCH_Q1 : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
+class TPCH_Q1 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
   public:
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
@@ -53,7 +53,7 @@ class TPCH_Q1 : public Testing::TestWithErrorHandling, public AbstractPipelineEx
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup TPCH_Q1 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

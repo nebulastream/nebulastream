@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
 
-class PointTest : public Testing::TestWithErrorHandling {
+class PointTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PointTest.log", NES::LogLevel::LOG_DEBUG);

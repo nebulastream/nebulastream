@@ -22,7 +22,7 @@
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <fstream>
@@ -30,7 +30,7 @@
 #include <vector>
 namespace NES {
 
-class AdaptiveKFTest : public Testing::NESBaseTest {
+class AdaptiveKFTest : public Testing::BaseIntegrationTest {
   public:
     SchemaPtr schema;
     PhysicalSourcePtr sourceConf;
@@ -47,9 +47,9 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down AdaptiveKFTest test class."); }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup AdaptiveKFTest class.");
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", BasicType::UINT32);
         auto workerConfiguration = WorkerConfiguration::create();
@@ -78,7 +78,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
         NES_INFO("Tear down AdaptiveKFTest class.");
         NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     std::string getTsInRfc3339(std::chrono::milliseconds gatheringInterval = std::chrono::milliseconds{0}) {

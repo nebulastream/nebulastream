@@ -16,13 +16,13 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -37,7 +37,7 @@
 
 using namespace NES;
 
-class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandling {
+class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;
@@ -52,7 +52,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }

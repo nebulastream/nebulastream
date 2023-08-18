@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -27,7 +27,7 @@ namespace NES {
 /// Due to the order of overload resolution, the implicit conversion of 0 to a nullptr has got a higher priority
 /// as an build-in conversion than the user-defined implicit conversions to the type ExpressionItem.
 /// Check that this does not cause any issues for any logical expression
-class LogicalExpressionTest : public Testing::TestWithErrorHandling {
+class LogicalExpressionTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     static void SetUpTestCase() {
@@ -36,7 +36,7 @@ class LogicalExpressionTest : public Testing::TestWithErrorHandling {
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 namespace NES {
 
-class ArrayTypeTest : public Testing::TestWithErrorHandling {
+class ArrayTypeTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ArrayTypeTest.log", NES::LogLevel::LOG_DEBUG);

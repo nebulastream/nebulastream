@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -32,7 +32,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class AndOperatorTest : public Testing::NESBaseTest {
+class AndOperatorTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
     CSVSourceTypePtr srcConf1;
@@ -45,7 +45,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
         srcConf1 = CSVSourceType::create();
         srcConf2 = CSVSourceType::create();

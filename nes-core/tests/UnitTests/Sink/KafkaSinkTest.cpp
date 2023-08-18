@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <BaseIntegrationTest.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -52,7 +52,7 @@ namespace NES {
 /**
 * NOTE: this test requires a running kafka instance
 */
-class KafkaSinkTest : public Testing::NESBaseTest {
+class KafkaSinkTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -61,8 +61,8 @@ class KafkaSinkTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         NES_DEBUG("Setup KafkaSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -80,7 +80,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

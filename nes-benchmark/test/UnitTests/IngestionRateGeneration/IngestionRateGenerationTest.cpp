@@ -12,22 +12,22 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <IngestionRateGeneration/CustomIngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/CustomIngestionRateGenerator.hpp>
-#include <NesBaseTest.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <typeinfo>
-#include <Util/BenchmarkUtils.hpp>
 
 namespace NES::Benchmark {
-    class IngestionRateGenerationTest : public Testing::NESBaseTest {
+    class IngestionRateGenerationTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -37,7 +37,7 @@ namespace NES::Benchmark {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             bufferManager =  std::make_shared<Runtime::BufferManager>();
             NES_INFO("Setup IngestionRateGenerationTest test case.");
         }
@@ -45,7 +45,7 @@ namespace NES::Benchmark {
         /* Will be called before a test is executed. */
         void TearDown() override {
             NES_INFO("Tear down IngestionRateGenerationTest test case.");
-            Testing::NESBaseTest::TearDown();
+            Testing::BaseIntegrationTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */

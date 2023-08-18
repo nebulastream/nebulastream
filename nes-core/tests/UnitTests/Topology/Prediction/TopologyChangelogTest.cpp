@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Prediction/Edge.hpp>
 #include <Topology/Prediction/TopologyChangeLog.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
@@ -22,7 +22,7 @@ using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyChangeLog;
 using Experimental::TopologyPrediction::TopologyDelta;
 
-class TopologyChangeLogTest : public Testing::NESBaseTest {
+class TopologyChangeLogTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyChangelogTest.log", NES::LogLevel::LOG_DEBUG);

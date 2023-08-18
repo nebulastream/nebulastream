@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -21,7 +22,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -77,7 +77,7 @@ static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 
 namespace Network {
-class NetworkStackIntegrationTest : public Testing::NESBaseTest {
+class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -87,9 +87,9 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     }
 
     void SetUp() {
-        Testing::NESBaseTest::SetUp();
-        dataPort1 = Testing::NESBaseTest::getAvailablePort();
-        dataPort2 = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort1 = Testing::BaseIntegrationTest::getAvailablePort();
+        dataPort2 = Testing::BaseIntegrationTest::getAvailablePort();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
@@ -97,7 +97,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     void TearDown() {
         dataPort1.reset();
         dataPort2.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackIntegrationTest."); }

@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Prediction/Edge.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
 using Experimental::TopologyPrediction::Edge;
 
-class EdgeTest : public Testing::NESBaseTest {
+class EdgeTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("EdgeTest.log", NES::LogLevel::LOG_DEBUG); }
 };

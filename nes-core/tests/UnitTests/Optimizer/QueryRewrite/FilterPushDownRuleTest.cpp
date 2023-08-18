@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -41,7 +41,7 @@
 
 using namespace NES;
 
-class FilterPushDownRuleTest : public Testing::NESBaseTest {
+class FilterPushDownRuleTest : public Testing::BaseIntegrationTest {
 
   public:
     SchemaPtr schema;
@@ -53,7 +53,7 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };

@@ -13,8 +13,8 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
+#include <BaseIntegrationTest.hpp>
 #include <Common/Identifiers.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -29,7 +29,7 @@ namespace NES {
 
 uint16_t timeout = 5;
 
-class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
+class E2ECoordinatorSingleWorkerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);

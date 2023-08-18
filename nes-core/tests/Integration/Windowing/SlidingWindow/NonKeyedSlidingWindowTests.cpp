@@ -14,7 +14,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -45,7 +45,7 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the non-keyed sliding window
  */
-class NonKeyedSlidingWindowTests : public Testing::NESBaseTest {
+class NonKeyedSlidingWindowTests : public Testing::BaseIntegrationTest {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
@@ -54,7 +54,7 @@ class NonKeyedSlidingWindowTests : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;

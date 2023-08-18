@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -24,14 +25,13 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class ChainedHashMapTest : public Testing::TestWithErrorHandling {
+class ChainedHashMapTest : public Testing::BaseUnitTest {
   public:
     std::unique_ptr<HashFunction> hf;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -42,7 +42,7 @@ class ChainedHashMapTest : public Testing::TestWithErrorHandling {
         NES_INFO("Setup HashTest test class.");
     }
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         hf = std::make_unique<MurMur3HashFunction>();
     }
 

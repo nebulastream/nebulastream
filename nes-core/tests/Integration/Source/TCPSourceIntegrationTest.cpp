@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 #include <iostream>    // For cout
 #include <netinet/in.h>// For sockaddr_in
@@ -37,7 +37,7 @@
 
 namespace NES {
 
-class TCPSourceIntegrationTest : public Testing::NESBaseTest {
+class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     /**
      * @brief Set up test cases, starts a TCP server before all tests are run
@@ -48,7 +48,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_TRACE("TCPSourceIntegrationTest: Start TCPServer.");
         tcpServerPort = getAvailablePort();
         startServer();
@@ -57,7 +57,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     void TearDown() override {
         stopServer();
         NES_TRACE("TCPSourceIntegrationTest: Stop TCPServer.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /**

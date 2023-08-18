@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
 #include <Catalogs/PhysicalSourceConfig.hpp>
@@ -39,7 +39,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSourceTest : public Testing::TestWithErrorHandling {
+class OPCSourceTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

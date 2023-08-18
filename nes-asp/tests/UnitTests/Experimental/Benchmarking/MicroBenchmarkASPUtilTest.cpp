@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <iostream>
 
 namespace NES::ASP::Util {
-    class MicroBenchmarkASPUtilTest : public Testing::NESBaseTest {
+    class MicroBenchmarkASPUtilTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -28,7 +28,7 @@ namespace NES::ASP::Util {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             NES_INFO("Setup MicroBenchmarkASPUtilTest test case.");
         }
     };

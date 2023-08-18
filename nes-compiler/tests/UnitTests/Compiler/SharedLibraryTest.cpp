@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 using namespace NES;
 using namespace NES::Compiler;
-class SharedLibraryTest : public Testing::TestWithErrorHandling {
+class SharedLibraryTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before a test is executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG); }

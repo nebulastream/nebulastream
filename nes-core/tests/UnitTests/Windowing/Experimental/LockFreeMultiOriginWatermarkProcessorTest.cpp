@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
@@ -27,7 +27,7 @@ using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
 using OriginId = uint64_t;
 
-class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling {
+class LockFreeWatermarkManagerTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

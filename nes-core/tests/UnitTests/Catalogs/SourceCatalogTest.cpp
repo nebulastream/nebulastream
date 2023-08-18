@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -20,7 +21,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -40,7 +40,7 @@ std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
 const std::string defaultLogicalSourceName = "default_logical";
 
 /* - nesTopologyManager ---------------------------------------------------- */
-class SourceCatalogTest : public Testing::TestWithErrorHandling {
+class SourceCatalogTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 
@@ -52,7 +52,7 @@ class SourceCatalogTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);

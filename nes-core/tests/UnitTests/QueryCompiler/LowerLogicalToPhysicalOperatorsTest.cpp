@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -75,7 +75,7 @@ using namespace std;
 
 namespace NES {
 
-class LowerLogicalToPhysicalOperatorsTest : public Testing::TestWithErrorHandling {
+class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -83,7 +83,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::TestWithErrorHandlin
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));

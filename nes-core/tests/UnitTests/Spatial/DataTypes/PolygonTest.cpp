@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Polygon.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
@@ -22,7 +22,7 @@
 
 namespace NES {
 
-class PolygonTest : public Testing::TestWithErrorHandling {
+class PolygonTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PolygonTest.log", NES::LogLevel::LOG_DEBUG);

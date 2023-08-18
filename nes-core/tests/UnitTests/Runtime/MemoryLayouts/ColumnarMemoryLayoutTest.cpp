@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling {
+class ColumnarMemoryLayoutTest : public Testing::BaseUnitTest {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
@@ -36,7 +36,7 @@ class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling {
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
 };

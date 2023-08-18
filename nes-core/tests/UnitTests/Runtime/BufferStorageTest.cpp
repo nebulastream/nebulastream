@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,14 +24,14 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 5;
 
-class BufferStorageTest : public Testing::TestWithErrorHandling {
+class BufferStorageTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Runtime::BufferStoragePtr bufferStorage;
 
   protected:
     virtual void SetUp() {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
         bufferStorage = std::make_shared<Runtime::BufferStorage>();
     }

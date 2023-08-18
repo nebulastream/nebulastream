@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -26,7 +27,6 @@
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -39,7 +39,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
-class KeyedThresholdWindowOperatorTest : public Testing::TestWithErrorHandling {
+class KeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest {
   public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;

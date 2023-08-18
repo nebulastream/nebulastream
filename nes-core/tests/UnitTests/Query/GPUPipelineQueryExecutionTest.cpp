@@ -14,11 +14,11 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -58,12 +58,12 @@ using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
+class GPUQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);
         testSchemaMultipleFields = Schema::create()
                                        ->addField("test$id", BasicType::INT64)
@@ -89,7 +89,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

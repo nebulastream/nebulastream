@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -41,7 +41,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling {
+class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;
@@ -54,7 +54,7 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };

@@ -20,8 +20,8 @@ include(GoogleTest)
 
 add_library(nes-test-util SHARED
         "Util/src/BorrowedPort.cpp"
-        "Util/src/NesBaseTest.cpp"
-        "Util/src/TestWithErrorHandling.cpp"
+        "Util/src/BaseIntegrationTest.cpp"
+        "Util/src/BaseUnitTest.cpp"
         "Util/src/detail/PortDispatcher.cpp")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")

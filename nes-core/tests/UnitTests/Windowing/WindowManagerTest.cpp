@@ -14,9 +14,9 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
@@ -51,8 +51,8 @@
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
@@ -60,7 +60,7 @@ using namespace NES::Windowing;
 namespace NES {
 using Runtime::TupleBuffer;
 
-class WindowManagerTest : public Testing::NESBaseTest {
+class WindowManagerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowManagerTest.log", NES::LogLevel::LOG_DEBUG);

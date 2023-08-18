@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Prediction/Edge.hpp>
 #include <Topology/Prediction/TopologyDelta.hpp>
 #include <gtest/gtest.h>
@@ -19,7 +19,7 @@ namespace NES {
 using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyDelta;
 
-class TopologyDeltaTest : public Testing::NESBaseTest {
+class TopologyDeltaTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyDeltaTest.log", NES::LogLevel::LOG_DEBUG);

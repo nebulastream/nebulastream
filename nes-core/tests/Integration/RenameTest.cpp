@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class RenameTest : public Testing::NESBaseTest {
+class RenameTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameTest.log", NES::LogLevel::LOG_DEBUG);

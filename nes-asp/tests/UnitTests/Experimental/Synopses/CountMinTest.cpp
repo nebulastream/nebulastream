@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger/Logger.hpp>
-#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Experimental/Synopses/Sketches/CountMinOperatorHandler.hpp>
-#include <Experimental/Synopses/Sketches/CountMin.hpp>
-#include <Util/StdInt.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Synopses/Sketches/CountMin.hpp>
+#include <Experimental/Synopses/Sketches/CountMinOperatorHandler.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
+#include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::ASP {
@@ -44,7 +44,7 @@ public:
             handlers){};
 };
 
-class CountMinTest : public Testing::NESBaseTest {
+class CountMinTest : public Testing::BaseIntegrationTest {
  public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -54,7 +54,7 @@ class CountMinTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
         NES_INFO("Setup CountMinTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
         readKeyExpression = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);

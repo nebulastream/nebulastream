@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Benchmark {
-    class E2EBenchmarkConfigPerRunTest : public Testing::NESBaseTest {
+    class E2EBenchmarkConfigPerRunTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -28,14 +28,14 @@ namespace NES::Benchmark {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             NES_INFO("Setup E2EBenchmarkConfigPerRunTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
             NES_INFO("Tear down E2EBenchmarkConfigPerRunTest test case.");
-            Testing::NESBaseTest::TearDown();
+            Testing::BaseIntegrationTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */

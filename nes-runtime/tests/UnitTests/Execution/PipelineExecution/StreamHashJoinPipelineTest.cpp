@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -22,7 +23,6 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -61,7 +61,7 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class HashJoinPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
+class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -76,7 +76,7 @@ class HashJoinPipelineTest : public Testing::TestWithErrorHandling, public Abstr
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        TestWithErrorHandling::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
@@ -89,7 +89,7 @@ class HashJoinPipelineTest : public Testing::TestWithErrorHandling, public Abstr
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down HashJoinPipelineTest test case.");
-        TestWithErrorHandling::TearDown();
+        BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

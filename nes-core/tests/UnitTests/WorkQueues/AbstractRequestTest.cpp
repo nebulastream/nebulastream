@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
@@ -61,7 +61,7 @@ class DummyStorageHandler : public StorageHandler {
     UDFCatalogHandle getUDFCatalogHandle(RequestId) override { return nullptr; };
 };
 
-class AbstractRequestTest : public Testing::TestWithErrorHandling {
+class AbstractRequestTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("AbstractRequestTest.log", NES::LogLevel::LOG_DEBUG); }
 };

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
@@ -38,7 +38,7 @@ std::string ip = "127.0.0.1";
 
 using allMobileResponse = std::map<std::string, std::vector<std::map<std::string, nlohmann::json>>>;
 
-class LocationServiceTest : public Testing::NESBaseTest {
+class LocationServiceTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);

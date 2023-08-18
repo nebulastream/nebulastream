@@ -12,21 +12,20 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <Util/Logger/Logger.hpp>
-#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
-#include <E2E/E2ESingleRun.hpp>
-#include <NesBaseTest.hpp>
-#include <Version/version.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
-#include <fstream>
-#include <string>
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <E2E/E2ERunner.hpp>
-
+#include <E2E/E2ESingleRun.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Version/version.hpp>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <string>
 
 namespace NES::Benchmark {
-    class E2ESingleRunTest : public Testing::NESBaseTest {
+    class E2ESingleRunTest : public Testing::BaseIntegrationTest {
     public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {

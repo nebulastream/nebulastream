@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -49,7 +49,7 @@ namespace NES {
 /**
  * NOTE: this test requires a running kafka instance
  */
-class KafkaSourceTest : public Testing::NESBaseTest {
+class KafkaSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -58,7 +58,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         kafkaSourceType = KafkaSourceType::create();
@@ -71,7 +71,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     /* Will be called after a test is executed. */
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
 

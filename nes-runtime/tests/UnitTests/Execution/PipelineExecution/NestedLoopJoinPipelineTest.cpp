@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -25,7 +26,6 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -62,7 +62,7 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class NestedLoopJoinPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
+class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -80,7 +80,7 @@ class NestedLoopJoinPipelineTest : public Testing::TestWithErrorHandling, public
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        TestWithErrorHandling::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -59,7 +59,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry {
 };
 
 class Z3SignatureBasedBottomUpQueryContainmentRuleTest
-    : public Testing::TestWithErrorHandling,
+    : public Testing::BaseUnitTest,
       public testing::WithParamInterface<std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>> {
 
   public:

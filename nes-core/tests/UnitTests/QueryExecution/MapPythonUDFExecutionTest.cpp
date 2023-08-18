@@ -14,7 +14,7 @@
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PythonUDFDescriptorBuilder.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -27,7 +27,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class MapPythonUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
+class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapPythonUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -35,7 +35,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setting up Nautilus Compiler");
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
@@ -44,7 +44,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down MapPythonUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }

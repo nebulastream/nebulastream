@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -20,7 +21,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -43,7 +43,7 @@ const uint64_t numberOfTupleBuffers = 4;
 const uint64_t numberOfBuffersToProduceInTuples = 50000000;
 const uint64_t ingestionRate = 10;
 
-class UpstreamBackupTest : public Testing::NESBaseTest {
+class UpstreamBackupTest : public Testing::BaseIntegrationTest {
   public:
     std::string ipAddress = "127.0.0.1";
     CoordinatorConfigurationPtr coordinatorConfig;
@@ -59,7 +59,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
 
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
 

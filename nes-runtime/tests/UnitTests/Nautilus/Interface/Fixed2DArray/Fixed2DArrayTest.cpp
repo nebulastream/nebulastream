@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArray.hpp>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface {
-class Fixed2DArrayTest : public Testing::TestWithErrorHandling {
+class Fixed2DArrayTest : public Testing::BaseUnitTest {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -29,7 +29,7 @@ class Fixed2DArrayTest : public Testing::TestWithErrorHandling {
         NES::Logger::setupLogging("FixedArrayTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup FixedArrayTest test class.");
     }
-    void SetUp() override { Testing::TestWithErrorHandling::SetUp(); }
+    void SetUp() override { Testing::BaseUnitTest::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down FixedArrayTest test class."); }

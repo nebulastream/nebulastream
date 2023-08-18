@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -35,7 +35,7 @@ namespace NES {
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling {
+class ConvertLogicalToPhysicalSourceTest : public Testing::BaseUnitTest {
   public:
     Runtime::NodeEnginePtr engine;
 
@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -62,7 +62,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
         ASSERT_TRUE(engine->stop());
         engine.reset();
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 };
 

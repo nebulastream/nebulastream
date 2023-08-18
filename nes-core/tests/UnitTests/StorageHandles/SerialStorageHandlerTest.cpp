@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Topology.hpp>
 #include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
@@ -25,7 +25,7 @@
 #include <Topology/TopologyNode.hpp>
 
 namespace NES {
-class SerialStorageHandlerTest : public Testing::TestWithErrorHandling {
+class SerialStorageHandlerTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerialStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);

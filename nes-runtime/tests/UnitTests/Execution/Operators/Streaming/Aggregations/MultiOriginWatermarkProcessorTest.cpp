@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <atomic>
@@ -27,7 +27,7 @@ using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
 using OriginId = uint64_t;
 
-class MultiOriginWatermarkProcessorTest : public Testing::TestWithErrorHandling {
+class MultiOriginWatermarkProcessorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class RowMemoryLayoutTest : public Testing::TestWithErrorHandling {
+class RowMemoryLayoutTest : public Testing::BaseUnitTest {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
@@ -35,7 +35,7 @@ class RowMemoryLayoutTest : public Testing::TestWithErrorHandling {
         NES_INFO("Setup RowMemoryLayoutTest test class.");
     }
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
 };

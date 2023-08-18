@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -23,7 +23,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::MemoryLayouts {
 
-class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandling,
+class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
                                              public testing::WithParamInterface<Schema::MemoryLayoutType> {
   public:
     BufferManagerPtr bufferManager;
@@ -36,7 +36,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandli
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
 
         schema = Schema::create()

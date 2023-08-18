@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
@@ -245,7 +245,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
  *  - long running queryIdAndCatalogEntryMapping
  *
  */
-class NodeEngineTest : public Testing::NESBaseTest {
+class NodeEngineTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EngineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -255,15 +255,15 @@ class NodeEngineTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

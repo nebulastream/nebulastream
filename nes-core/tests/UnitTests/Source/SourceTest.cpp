@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -509,10 +509,10 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
     }
 };
 
-class SourceTest : public Testing::NESBaseTest {
+class SourceTest : public Testing::BaseIntegrationTest {
   public:
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(sourceConf);
@@ -574,7 +574,7 @@ class SourceTest : public Testing::NESBaseTest {
     void TearDown() override {
         free(singleMemoryArea);
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferBlocking(); }

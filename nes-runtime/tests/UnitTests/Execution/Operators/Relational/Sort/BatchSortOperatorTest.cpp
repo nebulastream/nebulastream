@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -20,7 +21,6 @@
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -33,7 +33,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<typename T>
-class BatchSortOperatorTest : public Testing::TestWithErrorHandling {
+class BatchSortOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

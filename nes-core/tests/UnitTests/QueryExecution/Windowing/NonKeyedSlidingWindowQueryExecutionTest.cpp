@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -31,7 +31,7 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class NonKeyedSlidingWindowQueryExecutionTest
-    : public Testing::TestWithErrorHandling,
+    : public Testing::BaseUnitTest,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::WindowingStrategy> {
   public:
     static void SetUpTestCase() {
@@ -40,7 +40,7 @@ class NonKeyedSlidingWindowQueryExecutionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
@@ -54,7 +54,7 @@ class NonKeyedSlidingWindowQueryExecutionTest
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest.cpp test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

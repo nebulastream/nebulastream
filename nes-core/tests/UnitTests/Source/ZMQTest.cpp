@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <array>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -21,8 +21,8 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -36,7 +36,7 @@ using namespace NES;
 #define LOCAL_ADDRESS "127.0.0.1"
 #endif
 
-class ZMQTest : public Testing::NESBaseTest {
+class ZMQTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -46,7 +46,7 @@ class ZMQTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
@@ -69,7 +69,7 @@ class ZMQTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup ZMQTest test case.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

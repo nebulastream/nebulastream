@@ -19,7 +19,7 @@ using namespace NES;
 
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
+class UnionQueryExecutionTest : public Testing::BaseUnitTest,
                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     struct __attribute__((packed)) DefaultRecord {
@@ -33,7 +33,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
 
@@ -55,7 +55,7 @@ class UnionQueryExecutionTest : public Testing::TestWithErrorHandling,
     void TearDown() override {
         NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

@@ -15,7 +15,7 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalSourceConfig.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -42,7 +42,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSinkTest : public Testing::TestWithErrorHandling {
+class OPCSinkTest : public Testing::BaseUnitTest {
   public:
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 
