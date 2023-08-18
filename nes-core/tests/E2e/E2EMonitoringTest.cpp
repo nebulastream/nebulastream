@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
@@ -32,7 +32,7 @@ namespace NES {
 
 uint16_t timeout = 15;
 
-class E2EMonitoringTest : public Testing::NESBaseTest {
+class E2EMonitoringTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -42,7 +42,7 @@ class E2EMonitoringTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
     }
 };

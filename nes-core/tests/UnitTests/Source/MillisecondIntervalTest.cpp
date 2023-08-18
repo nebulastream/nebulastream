@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -73,7 +73,7 @@ struct __attribute__((packed)) ysbRecord {
  * First we check for sub-second unit-tests on a soruce and its behavior. Then,
  * we include an E2Etest with a source that samples at sub-second interval.
  */
-class MillisecondIntervalTest : public Testing::NESBaseTest {
+class MillisecondIntervalTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr wrkConf;
@@ -87,7 +87,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
 
     void SetUp() override {
 
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
 
         csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(550);
@@ -115,7 +115,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         NES_INFO("Tear down MillisecondIntervalTest test case.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};

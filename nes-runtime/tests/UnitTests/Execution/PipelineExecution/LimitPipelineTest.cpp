@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
@@ -20,7 +21,6 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -34,7 +34,7 @@
 
 namespace NES::Runtime::Execution {
 
-class LimitPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
+class LimitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
@@ -49,7 +49,7 @@ class LimitPipelineTest : public Testing::TestWithErrorHandling, public Abstract
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup LimitPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

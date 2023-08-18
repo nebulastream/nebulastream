@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -26,7 +26,7 @@
 #include <nlohmann/json.hpp>
 
 namespace NES {
-class QueryCatalogControllerTest : public Testing::NESBaseTest {
+class QueryCatalogControllerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);

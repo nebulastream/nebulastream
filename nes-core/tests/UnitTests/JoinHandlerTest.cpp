@@ -13,8 +13,8 @@
 */
 
 #include <API/Windowing.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -42,7 +42,7 @@
 #include <vector>
 
 namespace NES {
-class JoinHandlerTest : public Testing::TestWithErrorHandling {
+class JoinHandlerTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);

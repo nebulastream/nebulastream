@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 using namespace std::string_literals;
@@ -25,7 +25,7 @@ using namespace std::string_literals;
 
 namespace NES::Catalogs::UDF {
 
-class JavaUDFDescriptorTest : public Testing::TestWithErrorHandling {
+class JavaUDFDescriptorTest : public Testing::BaseUnitTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 };

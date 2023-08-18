@@ -13,7 +13,7 @@
 */
 
 // clang-format: off
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 // clang-format: on
 
@@ -40,7 +40,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricCollectorTest : public Testing::TestWithErrorHandling {
+class MetricCollectorTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Monitoring::AbstractSystemResourcesReaderPtr reader;
@@ -53,7 +53,7 @@ class MetricCollectorTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;

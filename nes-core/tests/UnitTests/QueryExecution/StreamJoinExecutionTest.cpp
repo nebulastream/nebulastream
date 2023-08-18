@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution {
 
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
+class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                      public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
@@ -39,7 +39,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto joinStrategy = NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
@@ -51,7 +51,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     void TearDown() override {
         NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /**

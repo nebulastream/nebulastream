@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
@@ -20,7 +21,6 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -36,7 +36,7 @@
 
 namespace NES::Runtime::Execution {
 
-class ArrowScanEmitPipelineTest : public Testing::TestWithErrorHandling, public AbstractPipelineExecutionTest {
+class ArrowScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
@@ -51,7 +51,7 @@ class ArrowScanEmitPipelineTest : public Testing::TestWithErrorHandling, public 
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup ArrowScanEmitPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

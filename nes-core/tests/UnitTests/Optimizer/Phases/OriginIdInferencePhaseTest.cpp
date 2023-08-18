@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -47,7 +47,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling {
+class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
 
   public:
     Optimizer::OriginIdInferencePhasePtr originIdInferenceRule;
@@ -61,7 +61,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         Catalogs::Source::SourceCatalogPtr sourceCatalog =

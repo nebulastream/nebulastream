@@ -15,10 +15,10 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -48,7 +48,7 @@ using NES::Runtime::TupleBuffer;
 
 namespace NES {
 
-class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling {
+class MemoryLayoutSelectionPhaseTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -58,7 +58,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()

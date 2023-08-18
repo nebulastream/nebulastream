@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -24,7 +25,6 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
@@ -52,7 +52,7 @@ using std::string;
 uint16_t timeout = 5;
 namespace NES::Spatial {
 
-class LocationIntegrationTests : public Testing::NESBaseTest {
+class LocationIntegrationTests : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationIntegrationTests.log", NES::LogLevel::LOG_DEBUG);

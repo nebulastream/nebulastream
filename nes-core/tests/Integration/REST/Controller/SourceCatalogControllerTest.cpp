@@ -14,11 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <NesBaseTest.hpp>
 #include <REST/ServerTypes.hpp>
 #include <SerializableOperator.pb.h>
 #include <Services/QueryParsingService.hpp>
@@ -34,7 +34,7 @@ using namespace std;
 namespace NES {
 using namespace Configurations;
 
-class SourceCatalogControllerTest : public Testing::NESBaseTest {
+class SourceCatalogControllerTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -46,8 +46,8 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
 
     /**
      * Starts a coordinator with the following configurations
-     * rpcPort = rpcCoordinatorPort specified in NESBaseTest
-     * restPort = restPort specified in NESBaseTest
+     * rpcPort = rpcCoordinatorPort specified in BaseIntegrationTest
+     * restPort = restPort specified in BaseIntegrationTest
      */
     void startCoordinator() {
         NES_INFO("SourceCatalogControllerTest: Start coordinator");

@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
-#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,7 +31,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class DeepHierarchyTopologyTest : public Testing::NESBaseTest {
+class DeepHierarchyTopologyTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DeepTopologyHierarchyTest.log", NES::LogLevel::LOG_DEBUG);

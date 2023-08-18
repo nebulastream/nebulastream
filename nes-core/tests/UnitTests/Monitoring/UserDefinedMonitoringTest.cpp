@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Monitoring/MonitoringCatalog.hpp>
@@ -33,7 +33,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class UserDefinedMonitoringTest : public Testing::TestWithErrorHandling {
+class UserDefinedMonitoringTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -45,7 +45,7 @@ class UserDefinedMonitoringTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();

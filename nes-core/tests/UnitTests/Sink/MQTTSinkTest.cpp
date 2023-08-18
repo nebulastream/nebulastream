@@ -14,7 +14,7 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -46,7 +46,7 @@ using namespace NES;
 //FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
 // - find a way to fully automate tests (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
-class MQTTTSinkTest : public Testing::NESBaseTest {
+class MQTTTSinkTest : public Testing::BaseIntegrationTest {
   public:
     // constants used throughout the tests
     const std::string LOCAL_ADDRESS = "127.0.0.1:1883";
@@ -65,8 +65,8 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -84,7 +84,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup MQTT test case.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     static NES::Runtime::TupleBuffer createTupleBuffer(uint64_t bufferSize,

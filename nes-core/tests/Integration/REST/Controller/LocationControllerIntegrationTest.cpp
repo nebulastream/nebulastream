@@ -13,8 +13,8 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -29,7 +29,7 @@
 using allMobileResponse = std::map<std::string, std::vector<std::map<std::string, nlohmann::json>>>;
 
 namespace NES {
-class LocationControllerIntegrationTest : public Testing::NESBaseTest {
+class LocationControllerIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationControllerIntegrationTest.log", NES::LogLevel::LOG_DEBUG);

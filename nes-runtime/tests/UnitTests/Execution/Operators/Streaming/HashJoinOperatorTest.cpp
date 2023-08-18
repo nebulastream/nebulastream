@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -24,7 +25,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -35,7 +35,7 @@
 
 namespace NES::Runtime::Execution {
 
-class HashJoinOperatorTest : public Testing::TestWithErrorHandling {
+class HashJoinOperatorTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     std::vector<TupleBuffer> emittedBuffers;
@@ -48,7 +48,7 @@ class HashJoinOperatorTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        TestWithErrorHandling::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
@@ -56,7 +56,7 @@ class HashJoinOperatorTest : public Testing::TestWithErrorHandling {
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down HashJoinOperatorTest test case.");
-        TestWithErrorHandling::TearDown();
+        BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

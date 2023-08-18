@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -20,7 +21,6 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -54,7 +54,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class QueryAPITest : public Testing::TestWithErrorHandling {
+class QueryAPITest : public Testing::BaseUnitTest {
   public:
     PhysicalSourcePtr physicalSource;
     LogicalSourcePtr logicalSource;
@@ -66,7 +66,7 @@ class QueryAPITest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create();
         physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
         logicalSource = LogicalSource::create("test2", Schema::create());

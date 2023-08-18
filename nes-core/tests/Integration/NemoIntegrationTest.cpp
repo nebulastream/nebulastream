@@ -15,7 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,7 +29,7 @@ using namespace Configurations;
  * @brief Test the NEMO placement on different topologies to check if shared nodes contain the window operator based on the configs
  * of setDistributedWindowChildThreshold and setDistributedWindowCombinerThreshold.
  */
-class NemoIntegrationTest : public Testing::NESBaseTest {
+class NemoIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -39,7 +39,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
     }
 

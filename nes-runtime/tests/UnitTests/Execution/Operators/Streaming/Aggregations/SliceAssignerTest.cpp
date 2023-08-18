@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
 namespace NES::Runtime::Execution::Operators {
 
-class SliceAssignerTest : public Testing::TestWithErrorHandling {
+class SliceAssignerTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

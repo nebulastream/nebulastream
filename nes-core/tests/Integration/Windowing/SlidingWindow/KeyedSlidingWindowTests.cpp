@@ -14,7 +14,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -39,7 +39,7 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class KeyedSlidingWindowTests : public Testing::NESBaseTest, public ::testing::WithParamInterface<int> {
+class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int> {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
@@ -48,7 +48,7 @@ class KeyedSlidingWindowTests : public Testing::NESBaseTest, public ::testing::W
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;

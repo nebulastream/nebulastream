@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -22,7 +22,7 @@
 using namespace std;
 namespace NES {
 
-class PapiProfilerTest : public Testing::TestWithErrorHandling {
+class PapiProfilerTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

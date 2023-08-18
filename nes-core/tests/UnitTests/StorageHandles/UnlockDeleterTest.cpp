@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
-class UnlockDeleterTest : public Testing::TestWithErrorHandling {
+class UnlockDeleterTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnlockDeleterTest.log", NES::LogLevel::LOG_DEBUG);

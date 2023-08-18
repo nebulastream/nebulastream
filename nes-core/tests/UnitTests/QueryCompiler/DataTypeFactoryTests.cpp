@@ -13,11 +13,11 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <limits>
@@ -26,7 +26,7 @@ using namespace std;
 
 namespace NES {
 
-class DataTypeFactoryTests : public Testing::TestWithErrorHandling {
+class DataTypeFactoryTests : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);

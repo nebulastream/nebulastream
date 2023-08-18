@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
@@ -19,7 +20,6 @@
 #include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -34,7 +34,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<typename T>
-class BatchSortScanOperatorTest : public Testing::TestWithErrorHandling {
+class BatchSortScanOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <gmock/gmock.h>
@@ -20,8 +20,8 @@
 
 namespace NES {
 
-class AsyncTaskExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
-    using Base = Testing::TestWithErrorHandling;
+class AsyncTaskExecutorTest : public Testing::BaseUnitTest, public testing::WithParamInterface<int> {
+    using Base = Testing::BaseUnitTest;
 
   protected:
     Runtime::AsyncTaskExecutorPtr executor{nullptr};

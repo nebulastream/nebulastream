@@ -13,11 +13,11 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -33,7 +33,7 @@ using namespace Catalogs::Query;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
+class QueryCatalogServiceTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -45,7 +45,7 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();

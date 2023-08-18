@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
@@ -73,10 +73,10 @@ class DummyConcatRequest : public AbstractRequest {
     uint32_t min;
 };
 
-class AsyncRequestExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
+class AsyncRequestExecutorTest : public Testing::BaseUnitTest, public testing::WithParamInterface<int> {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("AsyncRequestExecutorTest.log", NES::LogLevel::LOG_DEBUG); }
-    using Base = Testing::TestWithErrorHandling;
+    using Base = Testing::BaseUnitTest;
 
   protected:
     Experimental::AsyncRequestExecutorPtr<TwoPhaseLockingStorageHandler> executor{nullptr};

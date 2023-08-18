@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
@@ -31,7 +32,6 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -46,7 +46,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class KeyedSlicePreAggregationTest : public Testing::TestWithErrorHandling {
+class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -57,7 +57,7 @@ class KeyedSlicePreAggregationTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }

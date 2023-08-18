@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/InMemoryLineageManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -24,7 +24,7 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 21;
 
-class LineageManagerTest : public Testing::TestWithErrorHandling {
+class LineageManagerTest : public Testing::BaseUnitTest {
 
   protected:
     /* Will be called before any test in this class are executed. */

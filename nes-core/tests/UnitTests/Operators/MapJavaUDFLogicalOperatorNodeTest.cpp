@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -30,7 +30,7 @@ using namespace std::string_literals;
 
 namespace NES {
 
-class MapJavaUDFLogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
+class MapJavaUDFLogicalOperatorNodeTest : public Testing::BaseUnitTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("MapJavaUDFLogicalOperatorNodeTest", NES::LogLevel::LOG_DEBUG); }
 };

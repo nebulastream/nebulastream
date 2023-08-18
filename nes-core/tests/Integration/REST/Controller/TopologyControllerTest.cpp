@@ -13,9 +13,9 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,7 +26,7 @@
 #include <nlohmann/json.hpp>
 
 namespace NES {
-class TopologyControllerTest : public Testing::NESBaseTest {
+class TopologyControllerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
@@ -37,8 +37,8 @@ class TopologyControllerTest : public Testing::NESBaseTest {
 
     /**
      * Starts a coordinator with the following configurations
-     * rpcPort = rpcCoordinatorPort specified in NESBaseTest
-     * restPort = restPort specified in NESBaseTest
+     * rpcPort = rpcCoordinatorPort specified in BaseIntegrationTest
+     * restPort = restPort specified in BaseIntegrationTest
      */
     void startCoordinator() {
         NES_INFO("SourceCatalogControllerTest: Start coordinator");

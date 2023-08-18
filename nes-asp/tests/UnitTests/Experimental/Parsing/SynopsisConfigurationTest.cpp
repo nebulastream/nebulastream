@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Util/Logger/LogLevel.hpp>
 
 namespace NES::ASP::Parsing {
-    class SynopsisConfigurationTest : public Testing::NESBaseTest {
+    class SynopsisConfigurationTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -27,7 +27,7 @@ namespace NES::ASP::Parsing {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             NES_INFO("Setup SynopsisConfigurationTest test case.");
         }
     };

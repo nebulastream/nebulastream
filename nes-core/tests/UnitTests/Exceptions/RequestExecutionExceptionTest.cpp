@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -25,7 +25,7 @@ using Exceptions::InvalidQueryStateException;
 using Exceptions::QueryNotFoundException;
 using Exceptions::RequestExecutionException;
 
-class RequestExecutionExceptionTest : public Testing::TestWithErrorHandling {
+class RequestExecutionExceptionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);

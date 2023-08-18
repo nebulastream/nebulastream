@@ -25,7 +25,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class LimitQueryExecutionTest : public Testing::TestWithErrorHandling {
+class LimitQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LimitQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -33,7 +33,7 @@ class LimitQueryExecutionTest : public Testing::TestWithErrorHandling {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
@@ -42,7 +42,7 @@ class LimitQueryExecutionTest : public Testing::TestWithErrorHandling {
     void TearDown() override {
         NES_DEBUG("LimitQueryExecutionTest: Tear down LimitQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

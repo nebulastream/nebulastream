@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -31,7 +31,7 @@ using namespace std;
 namespace NES {
 
 using namespace Configurations;
-class MultipleWindowsTest : public Testing::NESBaseTest {
+class MultipleWindowsTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleWindowsTest.log", NES::LogLevel::LOG_DEBUG);

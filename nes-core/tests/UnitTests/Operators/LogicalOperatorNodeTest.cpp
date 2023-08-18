@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>//
+#include <BaseIntegrationTest.hpp>//
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
@@ -39,7 +39,7 @@
 using namespace std;
 namespace NES {
 
-class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
+class LogicalOperatorNodeTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalOperatorNodeTest.log", NES::LogLevel::LOG_DEBUG);
@@ -47,7 +47,7 @@ class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

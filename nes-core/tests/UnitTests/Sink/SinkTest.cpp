@@ -13,10 +13,10 @@
 */
 
 #include "SerializableOperator.pb.h"
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -50,7 +50,7 @@ using namespace std;
  */
 namespace NES {
 using Runtime::TupleBuffer;
-class SinkTest : public Testing::NESBaseTest {
+class SinkTest : public Testing::BaseIntegrationTest {
   public:
     SchemaPtr test_schema;
     std::array<uint32_t, 8> test_data{};
@@ -68,7 +68,7 @@ class SinkTest : public Testing::NESBaseTest {
 
     /* Called before a single test. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         test_schema =
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
@@ -89,7 +89,7 @@ class SinkTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         borrowedZmqPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};

@@ -13,7 +13,7 @@
 */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -28,7 +28,7 @@ using namespace std;
 
 namespace NES {
 
-class ComplexSequenceTest : public Testing::NESBaseTest {
+class ComplexSequenceTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ComplexSequenceTest.log", NES::LogLevel::LOG_DEBUG);

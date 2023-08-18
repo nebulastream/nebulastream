@@ -13,7 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -30,7 +30,7 @@ using namespace std;
 
 namespace NES::Runtime::Execution {
 
-class MultipleJoinsTest : public Testing::NESBaseTest,
+class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                           public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
     Runtime::BufferManagerPtr bufferManager;
@@ -43,7 +43,7 @@ class MultipleJoinsTest : public Testing::NESBaseTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup MultipleJoinsTest test class.");
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
 
         joinStrategy = NES::Runtime::Execution::MultipleJoinsTest::GetParam();
         bufferManager = std::make_shared<Runtime::BufferManager>();

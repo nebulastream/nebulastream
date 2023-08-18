@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
@@ -20,7 +21,6 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/File.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -43,7 +43,7 @@ static constexpr auto TEST_FILE_BODY = "/*\n"
                                        "*/\n"
                                        "int mul(int x, int y) { return x * y; }";
 
-class JITCompilerTest : public Testing::TestWithErrorHandling {
+class JITCompilerTest : public Testing::BaseUnitTest {
   public:
     uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */
@@ -54,7 +54,7 @@ class JITCompilerTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         std::cout << "Setup JITCompilerTest test case." << std::endl;
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();

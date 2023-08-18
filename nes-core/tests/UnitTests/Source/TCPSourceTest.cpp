@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -58,7 +58,7 @@
 
 namespace NES {
 
-class TCPSourceTest : public Testing::NESBaseTest {
+class TCPSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -67,7 +67,7 @@ class TCPSourceTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         tcpSourceType = TCPSourceType::create();
@@ -81,7 +81,7 @@ class TCPSourceTest : public Testing::NESBaseTest {
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("TCPSOURCETEST::TearDown() Tear down TCPSOURCETEST");
     }

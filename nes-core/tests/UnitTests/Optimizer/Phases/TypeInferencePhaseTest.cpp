@@ -13,13 +13,13 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
@@ -58,7 +58,7 @@ using namespace NES::Windowing;
 
 namespace NES {
 
-class TypeInferencePhaseTest : public Testing::TestWithErrorHandling {
+class TypeInferencePhaseTest : public Testing::BaseUnitTest {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     /* Will be called before any test in this class are executed. */

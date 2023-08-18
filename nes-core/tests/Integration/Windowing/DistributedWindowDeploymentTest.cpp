@@ -14,7 +14,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -44,7 +44,7 @@ using namespace Configurations;
 
 static uint64_t workerThreads = 4;
 
-class DistributedWindowDeploymentTest : public Testing::NESBaseTest {
+class DistributedWindowDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowDeploymentTest.log", NES::LogLevel::LOG_DEBUG);

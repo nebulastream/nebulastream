@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -39,7 +39,7 @@
 
 using namespace NES;
 
-class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
+class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;

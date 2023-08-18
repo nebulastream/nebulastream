@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -63,7 +63,7 @@
 
 namespace NES {
 
-class MQTTSourceTest : public Testing::NESBaseTest {
+class MQTTSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -72,7 +72,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         mqttSourceType = MQTTSourceType::create();
@@ -86,7 +86,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
     }

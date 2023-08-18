@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>//
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 using namespace Configurations;
 
 // Todo: #4069 addresses re-writing this test using the TestHarness
-class UnionDeploymentTest : public Testing::NESBaseTest {
+class UnionDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnionDeploymentTest.log", NES::LogLevel::LOG_DEBUG);

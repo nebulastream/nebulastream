@@ -13,8 +13,8 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
@@ -27,7 +27,7 @@
 
 using namespace NES;
 
-class GlobalQueryPlanTest : public Testing::TestWithErrorHandling {
+class GlobalQueryPlanTest : public Testing::BaseUnitTest {
 
   public:
     static void SetUpTestCase() {

@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -31,7 +31,7 @@
 #include <Util/TestUtils.hpp>
 
 namespace NES {
-class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
+class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
@@ -39,7 +39,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
@@ -58,7 +58,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
         ASSERT_TRUE(nodeEngine->stop());
         nodeEngine.reset();
         port.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Testing::BorrowedPortPtr port{nullptr};

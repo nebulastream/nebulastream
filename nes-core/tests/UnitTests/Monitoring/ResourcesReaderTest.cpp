@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Util/MetricValidator.hpp>
@@ -31,7 +31,7 @@
 
 namespace NES {
 
-class ResourcesReaderTest : public Testing::TestWithErrorHandling {
+class ResourcesReaderTest : public Testing::BaseUnitTest {
   public:
     Monitoring::AbstractSystemResourcesReaderPtr resourcesReader;
 
@@ -42,7 +42,7 @@ class ResourcesReaderTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         resourcesReader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }
 };

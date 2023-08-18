@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -25,7 +26,6 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -54,7 +54,7 @@
 
 namespace NES {
 
-class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
+class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
@@ -71,7 +71,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);

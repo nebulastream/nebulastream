@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
@@ -21,7 +22,6 @@
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -37,7 +37,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ArrowScanOperatorTest : public Testing::TestWithErrorHandling {
+class ArrowScanOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

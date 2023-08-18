@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -26,7 +27,6 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <NesBaseTest.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -54,7 +54,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class FailQueryRequestTest : public Testing::NESBaseTest {
+class FailQueryRequestTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
     static void TearDownTestCase() {

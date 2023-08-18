@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -34,7 +34,7 @@
 using namespace std;
 using namespace NES;
 
-class TopologyManagerServiceTest : public Testing::NESBaseTest {
+class TopologyManagerServiceTest : public Testing::BaseIntegrationTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -49,7 +49,7 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup NES TopologyManagerService test case.");
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();

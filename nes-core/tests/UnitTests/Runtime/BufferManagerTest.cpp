@@ -15,7 +15,7 @@
 #include <map>
 #include <vector>
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -34,12 +34,12 @@ using Runtime::TupleBuffer;
 const size_t buffers_managed = 1024;
 const size_t buffer_size = 32 * 1024;
 
-class BufferManagerTest : public Testing::TestWithErrorHandling {
+class BufferManagerTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("BufferManagerTest.log", NES::LogLevel::LOG_DEBUG); }
 
-    void SetUp() { Testing::TestWithErrorHandling::SetUp(); }
+    void SetUp() { Testing::BaseUnitTest::SetUp(); }
 };
 
 TEST_F(BufferManagerTest, initializedBufferManager) {

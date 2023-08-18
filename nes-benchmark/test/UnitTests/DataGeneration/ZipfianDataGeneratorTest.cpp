@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
-#include <DataGeneration/ZipfianDataGenerator.hpp>
-#include <Util/ZipfianGenerator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <NesBaseTest.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
+#include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/ZipfianGenerator.hpp>
 #include <random>
 #include <vector>
 
 namespace NES::Benchmark::DataGeneration {
-    class ZipfianDataGeneratorTest : public Testing::NESBaseTest {
+    class ZipfianDataGeneratorTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -34,14 +34,14 @@ namespace NES::Benchmark::DataGeneration {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             NES_INFO("Setup ZipfianDataGeneratorTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
             NES_INFO("Tear down ZipfianDataGeneratorTest test case.");
-            Testing::NESBaseTest::TearDown();
+            Testing::BaseIntegrationTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */

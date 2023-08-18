@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,7 +26,7 @@
 #include <iostream>
 
 namespace NES {
-class MultiThreadedTest : public Testing::NESBaseTest,
+class MultiThreadedTest : public Testing::BaseIntegrationTest,
                           public Runtime::BufferRecycler,
                           public ::testing::WithParamInterface<uint64_t> {
   public:
@@ -43,7 +43,7 @@ class MultiThreadedTest : public Testing::NESBaseTest,
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
 
         // Creating the execution engine
         const uint64_t numberOfWorkerThreads = this->GetParam();
@@ -56,7 +56,7 @@ class MultiThreadedTest : public Testing::NESBaseTest,
 
         // Stopping the execution engine
         EXPECT_TRUE(executionEngine->stop());
-        NES::Testing::NESBaseTest::TearDown();
+        NES::Testing::BaseIntegrationTest::TearDown();
     }
 
     void recyclePooledBuffer(Runtime::detail::MemorySegment*) override {}

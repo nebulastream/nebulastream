@@ -14,6 +14,7 @@
 
 #include "Common/DataTypes/DataTypeFactory.hpp"
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -23,7 +24,6 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -34,7 +34,7 @@
 
 namespace NES {
 
-class SemanticQueryValidationTest : public Testing::TestWithErrorHandling {
+class SemanticQueryValidationTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     std::shared_ptr<QueryParsingService> queryParsingService;
@@ -47,7 +47,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling {
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

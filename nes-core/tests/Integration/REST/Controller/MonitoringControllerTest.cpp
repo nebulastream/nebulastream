@@ -13,12 +13,12 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -33,7 +33,7 @@
 
 namespace NES {
 
-class MonitoringControllerTest : public Testing::NESBaseTest {
+class MonitoringControllerTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint16_t timeout = 15;
@@ -43,7 +43,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         NES_INFO("Setup MonitoringControllerTest test class.");
     }

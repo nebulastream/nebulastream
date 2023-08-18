@@ -14,6 +14,7 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -24,7 +25,6 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
@@ -66,15 +66,15 @@
 namespace NES {
 using namespace QueryCompilation;
 
-class CodeGenerationTest : public Testing::NESBaseTest {
+class CodeGenerationTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("CodeGenerationTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
@@ -94,7 +94,7 @@ class CodeGenerationTest : public Testing::NESBaseTest {
     void TearDown() override {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine;

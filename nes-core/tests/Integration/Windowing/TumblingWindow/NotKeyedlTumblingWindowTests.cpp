@@ -13,10 +13,10 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -32,7 +32,7 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the non keyed tumbling window
  */
-class NonKeyedTumblingWindowTests : public Testing::NESBaseTest {
+class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest {
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
@@ -41,7 +41,7 @@ class NonKeyedTumblingWindowTests : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
