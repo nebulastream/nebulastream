@@ -14,9 +14,9 @@
 #ifndef NES_TESTS_UTIL_BaseIntegrationTest_HPP_
 #define NES_TESTS_UTIL_BaseIntegrationTest_HPP_
 
+#include <BaseUnitTest.hpp>
 #include <BorrowedPort.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <BaseUnitTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <filesystem>
