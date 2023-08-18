@@ -34,21 +34,20 @@ namespace NES::QueryCompilation {
 OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create() { return std::make_shared<FuseNonPipelineBreakerPolicy>(); }
 
 bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) {
-    return (
-        physicalOperator->instanceOf<PhysicalOperators::PhysicalMapOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalFilterOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedTumblingWindowSink>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>());
+    return (physicalOperator->instanceOf<PhysicalOperators::PhysicalMapOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalFilterOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedTumblingWindowSink>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>());
 }
 }// namespace NES::QueryCompilation

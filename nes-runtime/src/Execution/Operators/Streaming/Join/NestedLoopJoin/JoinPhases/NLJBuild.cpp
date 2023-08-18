@@ -203,7 +203,7 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const std::string& joinFieldName,
                    const QueryCompilation::JoinBuildSideType joinBuildSide,
                    TimeFunctionPtr timeFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName),
-      joinBuildSide(joinBuildSide), entrySize(schema->getSchemaSizeInBytes()), timeFunction(std::move(timeFunction)) {}
+    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), joinBuildSide(joinBuildSide),
+      entrySize(schema->getSchemaSizeInBytes()), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
