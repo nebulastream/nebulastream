@@ -34,9 +34,9 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
       useNautilus(false), performDistributedWindowOptimization(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-      physicalSourceCount(0), topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-      validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
+      testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness::TestHarness(Query queryWithoutSink,
                          uint16_t restPort,
@@ -47,9 +47,9 @@ TestHarness::TestHarness(Query queryWithoutSink,
     : queryWithoutSinkStr(""), queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
       coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNautilus(false),
       performDistributedWindowOptimization(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
-      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false),
-      topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
+      testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
@@ -289,7 +289,6 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
             QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
         coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
         coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
-
 
         // Only this is currently supported in Nautilus
         coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
