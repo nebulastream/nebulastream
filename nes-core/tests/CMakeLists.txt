@@ -393,7 +393,7 @@ add_nes_unit_test(query-placement-test "UnitTests/Optimizer/QueryPlacement/Query
 
 add_nes_unit_test(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp")
 
-if (NES_USE_TF)
+if (NES_USE_TF OR NES_USE_ONNX)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
 endif ()
 
@@ -602,7 +602,7 @@ add_nes_integration_test(complex-sequence-test "Integration/ComplexSequenceTest.
 add_nes_integration_test(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 
 
-if (NES_USE_TF)
+if (NES_USE_TF OR NES_USE_ONNX)
     ### InferModelDeploymentTest ###
     add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
 endif ()

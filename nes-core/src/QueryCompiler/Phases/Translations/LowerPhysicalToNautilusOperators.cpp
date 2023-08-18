@@ -449,7 +449,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
     }
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
         auto inferModel = lowerInferModelOperator(operatorNode, operatorHandlers);
         parentOperator->setChild(inferModel);
@@ -1068,7 +1068,7 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
     }
 }
 
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
@@ -1098,7 +1098,7 @@ LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperator
     //build nautilus infer model operator
     return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
 }
-#endif
+#endif// INFERENCE_OPERATOR_DEF
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 

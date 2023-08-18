@@ -209,7 +209,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
 
     auto inferModelOperators = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperatorNode>();
     if (!inferModelOperators.empty()) {
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
         DataTypePtr commonStamp;
         for (const auto& inferModelOperator : inferModelOperators) {
             for (const auto& inputField : inferModelOperator->getInputFields()) {
@@ -233,7 +233,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         }
 #else
         throw InvalidQueryException("SemanticQueryValidation: this binary does not support infer model operator. Use "
-                                    "-DNES_USE_TF=1 to compile the project.");
+                                    "-DNES_USE_TF=1 / -DNES_USE_ONNX=1 to compile the project.");
 #endif
     }
 }

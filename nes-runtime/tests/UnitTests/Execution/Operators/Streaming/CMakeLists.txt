@@ -14,6 +14,6 @@ add_nes_runtime_test(runtime-stream-hash-join-operator-test "HashJoinOperatorTes
 add_nes_runtime_test(runtime-stream-nested-loop-join-operator-test "NestedLoopJoinOperatorTest.cpp")
 
 add_subdirectory(Aggregations)
-IF (NES_USE_TF)
+IF (NES_USE_TF OR NES_USE_ONNX)
     add_subdirectory(InferModel)
 ENDIF ()

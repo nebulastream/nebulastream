@@ -190,11 +190,11 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         lowerMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
         lowerInferModelOperator(queryPlan, operatorNode);
 #else
-        NES_THROW_RUNTIME_ERROR("TFDEF is not defined but InferModelLogicalOperatorNode is used!");
-#endif// TFDEF
+        NES_THROW_RUNTIME_ERROR("TFDEF/ONNXDEF is not defined but InferModelLogicalOperatorNode is used!");
+#endif// INFERENCE_OPERATOR_DEF
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
@@ -250,8 +250,8 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
     operatorNode->replace(physicalProjectOperator);
 }
 
-#ifdef TFDEF
-void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+#ifdef INFERENCE_OPERATOR_DEF
+void DefaultPhysicalOperatorProvider::lowerInferModelOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
     auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
     auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
@@ -262,7 +262,7 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, Logi
                                                                                             inferModelOperatorHandler);
     operatorNode->replace(physicalInferModelOperator);
 }
-#endif// TFDEF
+#endif// INFERENCE_OPERATOR_DEF
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();

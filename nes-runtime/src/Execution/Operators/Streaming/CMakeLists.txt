@@ -12,7 +12,7 @@
 
 add_subdirectory(Aggregations)
 add_subdirectory(Join)
-if (NES_USE_TF)
+if (NES_USE_TF OR NES_USE_ONNX)
     add_subdirectory(InferModel)
 endif ()
 

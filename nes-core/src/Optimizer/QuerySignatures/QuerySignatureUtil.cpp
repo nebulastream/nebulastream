@@ -112,13 +112,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
 #else
-            NES_THROW_RUNTIME_ERROR("Trying to use InferModelLogicalOperatorNode but TFDEF not defined!");
-#endif// TFDEF
+            NES_THROW_RUNTIME_ERROR("Trying to use InferModelLogicalOperatorNode but TFDEF/ONNXDEF not defined!");
+#endif// INFERENCE_OPERATOR_DEF
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     } catch (const std::exception& ex) {
@@ -219,7 +219,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                                   std::move(unionExpressions));
 }
 
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
     const z3::ContextPtr& context,
     const NES::InferModel::InferModelLogicalOperatorNodePtr& inferModelOperator) {
@@ -279,7 +279,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
                                   std::move(windowsExpressions),
                                   std::move(unionExpressions));
 }
-#endif// TFDEF
+#endif// INFERENCE_OPERATOR_DEF
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::ContextPtr& context,
                                                                  const MapLogicalOperatorNodePtr& mapOperator) {

@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        InferModelOperator.cpp
-        InferModelHandler.cpp
-        TensorflowAdapter.cpp
-        )
+if (NES_USE_TF)
+    add_source_files(nes-runtime TensorflowAdapter.cpp)
+endif ()
+
+add_source_files(nes-runtime InferenceAdapter.cpp InferModelOperator.cpp InferModelHandler.cpp)

@@ -143,10 +143,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializeMapOperator(*operatorNode->as<MapLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
         // serialize infer model
         serializeInferModelOperator(*operatorNode->as<InferModel::InferModelLogicalOperatorNode>(), serializedOperator);
-#endif// TFDEF
+#endif// INFERENCE_OPERATOR_DEF
 
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
@@ -313,13 +313,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         operatorNode = deserializeMapOperator(serializedMapOperator);
 
     } else if (details.Is<SerializableOperator_InferModelDetails>()) {
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
         // de-serialize infer model operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
         auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
         details.UnpackTo(&serializedInferModelOperator);
         operatorNode = deserializeInferModelOperator(serializedInferModelOperator);
-#endif// TFDEF
+#endif// INFERENCE_OPERATOR_DEF
 
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator

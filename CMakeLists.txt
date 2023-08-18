@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v30)
+set(VCPKG_BINARY_VERSION vls-onnx-10)
 set(LLVM_BINARY_VERSION v2)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -664,6 +664,93 @@ if (NES_USE_TF)
     # Include tensorflow library in the deb package and install it in the lib folder
     install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION lib)
     add_compile_definitions(TFDEF)
+    add_compile_definitions(INFERENCE_OPERATOR_DEF)
+endif ()
+
+# Check if we build with ONNX
+if (NES_USE_ONNX)
+    find_package(unofficial-nsync CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} unofficial::nsync::nsync_cpp)
+
+    find_package(ONNX CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} onnx)
+
+    find_package(unofficial-cpuinfo CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} unofficial::cpuinfo::cpuinfo)
+
+    add_library(onnxruntime::common UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::common PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_common.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_common.a)
+
+    add_library(onnxruntime::flatbuffers UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::flatbuffers PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_flatbuffers.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_flatbuffers.a)
+
+    add_library(onnxruntime::framework UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::framework PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_framework.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_framework.a)
+
+    add_library(onnxruntime::graph UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::graph PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_graph.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_graph.a)
+
+    add_library(onnxruntime::mlas UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::mlas PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_mlas.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_mlas.a)
+
+    add_library(onnxruntime::optimizer UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::optimizer PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_optimizer.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_optimizer.a)
+
+    add_library(onnxruntime::providers UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::providers PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_providers.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_providers.a)
+
+    add_library(onnxruntime::session UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::session PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_session.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_session.a)
+
+    add_library(onnxruntime::util UNKNOWN IMPORTED)
+    set_target_properties(onnxruntime::util PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/onnxruntime
+            IMPORTED_LOCATION ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/libonnxruntime_util.a
+            IMPORTED_LOCATION_DEBUG ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib/libonnxruntime_util.a)
+
+    add_library(onnxruntime::onnxruntime INTERFACE IMPORTED)
+    set_property(TARGET onnxruntime::onnxruntime PROPERTY
+            INTERFACE_LINK_LIBRARIES
+            onnxruntime::common
+            onnxruntime::flatbuffers
+            onnxruntime::framework
+            onnxruntime::graph
+            onnxruntime::mlas
+            onnxruntime::optimizer
+            onnxruntime::providers
+            onnxruntime::session
+            onnxruntime::util
+            )
+
+    set(LIBRARIES ${LIBRARIES} onnxruntime::onnxruntime)
+
+    # Include tensorflow library in the deb package and install it in the lib folder
+    add_compile_definitions(ONNXDEF)
+    add_compile_definitions(INFERENCE_OPERATOR_DEF)
 endif ()
 
 # $ORIGIN is to read the shared object from the installation directory

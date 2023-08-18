@@ -144,14 +144,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     */
     void lowerProjectOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
     /**
     * @brief Lowers an infer model operator
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerInferModelOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
-#endif// TFDEF
+    void lowerInferModelOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+#endif// INFERENCE_OPERATOR_DEF
 
     /**
     * @brief Lowers a map operator

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#ifdef TFDEF
+#ifdef INFERENCE_OPERATOR_DEF
 
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -55,4 +55,4 @@ const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() co
 
 }// namespace NES::InferModel
 
-#endif// TFDEF
+#endif// INFERENCE_OPERATOR_DEF
