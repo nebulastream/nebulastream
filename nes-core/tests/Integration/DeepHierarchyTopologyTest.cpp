@@ -794,6 +794,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
                      .apply(Sum(Attribute("value")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerToCoordinator()                                        //2
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//3
@@ -819,7 +820,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
         bool operator==(Output const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 2000, 24}, {2000, 4000, 96}, {4000, 6000, 80}};
+    std::vector<Output> expectedOutput = {{0, 2000, 16}, {2000, 4000, 96}, {4000, 6000, 80},
+                                          {6000, 8000, 112}, {8000, 10000, 32}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 

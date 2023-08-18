@@ -105,6 +105,11 @@ class TestHarness {
     TestHarness& enableNautilus();
 
     /**
+     * @brief Enables the distributed window optimization
+     */
+    TestHarness& enableDistributedWindowOptimization();
+
+    /**
      * @brief Sets the join strategy
      * @param joinStrategy
      * @return Self
@@ -385,6 +390,7 @@ class TestHarness {
     uint16_t restPort;
     uint16_t rpcPort;
     bool useNautilus;
+    bool performDistributedWindowOptimization;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
     uint64_t bufferSize;
