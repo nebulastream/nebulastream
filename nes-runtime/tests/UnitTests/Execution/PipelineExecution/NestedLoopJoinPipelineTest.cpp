@@ -143,7 +143,6 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             handlerIndex,
             leftSchema,
             joinFieldNameLeft,
-            timeStampFieldLeft,
             QueryCompilation::JoinBuildSideType::Left,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
 
@@ -151,7 +150,6 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             handlerIndex,
             rightSchema,
             joinFieldNameRight,
-            timeStampFieldRight,
             QueryCompilation::JoinBuildSideType::Right,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 

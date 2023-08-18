@@ -369,14 +369,12 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
         handlerIndex,
         leftSchema,
         joinFieldnameLeft,
-        timestampFieldLeft,
         QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldnameRight,
-        timestampFieldRight,
         QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
@@ -422,14 +420,12 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
         handlerIndex,
         leftSchema,
         joinFieldnameLeft,
-        timestampFieldLeft,
         QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldnameRight,
-        timestampFieldRight,
         QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
@@ -473,14 +469,12 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
         handlerIndex,
         leftSchema,
         joinFieldNameLeft,
-        timestampFieldLeft,
         QueryCompilation::JoinBuildSideType::Left,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
         handlerIndex,
         rightSchema,
         joinFieldNameRight,
-        timestampFieldRight,
         QueryCompilation::JoinBuildSideType::Right,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
