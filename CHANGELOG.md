@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.200](https://github.com/nebulastream/nebulastream/tree/v0.5.200) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.199...v0.5.200)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix test harness join test  [\#4076](https://github.com/nebulastream/nebulastream/issues/4076)
+
 ## [v0.5.199](https://github.com/nebulastream/nebulastream/tree/v0.5.199) (2023-08-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.198...v0.5.199)
