@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.202](https://github.com/nebulastream/nebulastream/tree/v0.5.202) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.201...v0.5.202)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Reduce Port Quering in Tests [\#4142](https://github.com/nebulastream/nebulastream/issues/4142)
+
 ## [v0.5.201](https://github.com/nebulastream/nebulastream/tree/v0.5.201) (2023-08-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.200...v0.5.201)
