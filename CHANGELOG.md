@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.199](https://github.com/nebulastream/nebulastream/tree/v0.5.199) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.198...v0.5.199)
+
+**Implemented enhancements:**
+
+- \[TASK\] Run CI on all PRs that want to merge into branch named "feature/\*" [\#4143](https://github.com/nebulastream/nebulastream/issues/4143)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NemoPlacemenTest and NemoIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Disable Distributed Windows [\#3324](https://github.com/nebulastream/nebulastream/issues/3324)
+
 ## [v0.5.198](https://github.com/nebulastream/nebulastream/tree/v0.5.198) (2023-08-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.197...v0.5.198)
