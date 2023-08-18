@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.201](https://github.com/nebulastream/nebulastream/tree/v0.5.201) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.200...v0.5.201)
+
+**Implemented enhancements:**
+
+- \[TASK\] Declare `NLJBuild` as fusible operator [\#4018](https://github.com/nebulastream/nebulastream/issues/4018)
+
 ## [v0.5.200](https://github.com/nebulastream/nebulastream/tree/v0.5.200) (2023-08-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.199...v0.5.200)
