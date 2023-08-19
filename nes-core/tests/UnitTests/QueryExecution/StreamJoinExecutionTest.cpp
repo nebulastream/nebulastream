@@ -570,11 +570,10 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-                        //TODO Enable the disabled test and fix them #3926
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+                        ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

@@ -144,11 +144,9 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     /**
      * @brief method to trigger the finished windows
      * @param windowIdentifiersToBeTriggered
-     * @param workerCtx
      * @param pipelineCtx
      */
     virtual void triggerSlices(TriggerableWindows& windowIdentifiersToBeTriggered,
-                                WorkerContext* workerCtx,
                                 PipelineExecutionContext* pipelineCtx) = 0;
 
     /**
@@ -212,6 +210,24 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;
 };
+
+/**
+ * @brief Deletes all slices that are not valid anymore
+ * @param ptrOpHandler
+ * @param watermarkTs
+ * @param sequenceNumber
+ * @param originId
+ */
+void deleteAllSlicesProxy(void* ptrOpHandler, uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
+
+/*
+ * @brief Sets the number of worker threads for this pipeline
+ * @param ptrOpHandler
+ * @param ptrPipelineContext
+ */
+void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext);
+
+
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

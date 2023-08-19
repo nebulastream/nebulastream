@@ -65,18 +65,6 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
     }
 }
 
-void deleteAllSlices(void* ptrOpHandler, uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    opHandler->deleteSlices(watermarkTs, sequenceNumber, originId);
-}
-
-void deleteSliceProxyForNestedLoopJoin(void* ptrOpHandler, uint64_t sliceIdentifier) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    opHandler->deleteSlice(sliceIdentifier);
-}
-
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
@@ -152,8 +140,12 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 void NLJProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Update the watermark for the nlj probe and delete all slices that can be deleted
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("deleteAllSlices", deleteAllSlices, operatorHandlerMemRef,
-                           ctx.getWatermarkTs(), ctx.getSequenceNumber(), ctx.getOriginId());
+    Nautilus::FunctionCall("deleteAllSlicesProxy",
+                           deleteAllSlicesProxy,
+                           operatorHandlerMemRef,
+                           ctx.getWatermarkTs(),
+                           ctx.getSequenceNumber(),
+                           ctx.getOriginId());
 
     // Now close for all children
     Operator::close(ctx, recordBuffer);

@@ -46,25 +46,25 @@ void* getStreamHashJoinSliceProxy(void* ptrOpHandler, uint64_t timeStamp) {
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
     auto currentSlice = opHandler->getSliceByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
-    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(currentSlice.get());
+    StreamHashJoinSlice* hashSlice = static_cast<StreamHashJoinSlice*>(currentSlice.get());
     return static_cast<void*>(hashSlice);
 }
 
 uint64_t getWindowStartProxy(void* ptrHashSlice) {
     NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash slice handler context should not be null");
-    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashSlice);
+    StreamHashJoinSlice* hashSlice = static_cast<StreamHashJoinSlice*>(ptrHashSlice);
     return hashSlice->getSliceStart();
 }
 
 uint64_t getWindowEndProxy(void* ptrHashWindow) {
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash slice handler context should not be null");
-    StreamHashJoinWindow* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    StreamHashJoinSlice* hashSlice = static_cast<StreamHashJoinSlice*>(ptrHashWindow);
     return hashSlice->getSliceEnd();
 }
 
 void* getLocalHashTableProxy(void* ptrHashSlice, size_t workerIdx, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash slice handler context should not be null");
-    auto* hashSlice = static_cast<StreamHashJoinWindow*>(ptrHashSlice);
+    auto* hashSlice = static_cast<StreamHashJoinSlice*>(ptrHashSlice);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
               hashSlice->getSliceIdentifier(),
@@ -77,8 +77,32 @@ void* getLocalHashTableProxy(void* ptrHashSlice, size_t workerIdx, uint64_t join
 
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
-    LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
+    auto* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
     return localHashTable->insert(key);
+}
+
+void triggerWindowsHashJoinProxy(TriggerableWindows& sliceIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
+        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, pipelineCtx);
+    }
+}
+
+void triggerAllWindowsHashJoinProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_DEBUG("Triggering all slices for pipelineId {}!", pipelineCtx->getPipelineID());
+
+    auto sliceIdentifiersToBeTriggered = opHandler->triggerAllSlices();
+    triggerWindowsHashJoinProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 /**
@@ -95,7 +119,6 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
     auto* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     //update last seen watermark by this worker
@@ -103,11 +126,7 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
     auto sliceIdentifiersToBeTriggered = opHandler->checkSlicesTrigger(minWatermark, sequenceNumber, originId);
-
-    //TODO I am not sure do we have to make sure that only one thread do this? issue #3909
-    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
-        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, workerCtx, pipelineCtx);
-    }
+    triggerWindowsHashJoinProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 void* getDefaultMemRef() { return nullptr; }
 
@@ -177,19 +196,18 @@ void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            ctx.getOriginId());
 }
 
-void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
-    NES_ASSERT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-
-    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
+void StreamHashJoinBuild::terminate(ExecutionContext& ctx) const {
+    // Trigger all slices, as the query has ended
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    Nautilus::FunctionCall("triggerAllWindowsHashJoinProxy", triggerAllWindowsHashJoinProxy,
+                           operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
 void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getPipelineContext());
+    Nautilus::FunctionCall("setNumberOfWorkerThreadsProxy",
+                           setNumberOfWorkerThreadsProxy,
+                           ctx.getGlobalOperatorHandler(handlerIndex),
+                           ctx.getPipelineContext());
 }
 
 StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,

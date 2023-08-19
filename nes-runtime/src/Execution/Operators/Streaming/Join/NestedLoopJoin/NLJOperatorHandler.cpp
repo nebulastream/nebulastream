@@ -58,7 +58,6 @@ uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t sliceIdentifier,
 void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop NLJOperatorHandler"); }
 
 void NLJOperatorHandler::triggerSlices(TriggerableWindows& triggerableSlices,
-                                        WorkerContext*,
                                         PipelineExecutionContext* pipelineCtx) {
     /**
      * We expect the sliceIdentifiersToBeTriggered to be sorted.

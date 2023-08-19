@@ -25,13 +25,13 @@ void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList
     auto& numPages = bucketNumPages[bucketPos];
 
     for (auto&& page : pagesLinkedList->getPages()) {
-        auto oldHead = head.load(std::memory_order::relaxed);
+        auto oldHead = head.load(std::memory_order::seq_cst);
         auto node = new InternalNode{std::make_unique<FixedPage>(page.get()), oldHead};
-        while (!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::relaxed)) {
+        while (!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::seq_cst)) {
         }
-        numItems.fetch_add(page->size(), std::memory_order::relaxed);
+        numItems.fetch_add(page->size(), std::memory_order::seq_cst);
     }
-    numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);
+    numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::seq_cst);
 }
 
 //We should really think of unite this in the same layout as the other hash table

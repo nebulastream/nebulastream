@@ -109,6 +109,9 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
     auto numberOfTuplesInBuffer = 0UL;
     auto lastTimeStamp = windowSize - 1;
     for (auto buf : buffers) {
+        NES_INFO("Buffer to be merged is:\n{}", Util::printTupleBufferAsCSV(buf, schema));
+
+
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
 
@@ -121,6 +124,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
                 }
 
                 curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+                NES_INFO("Merged buffer is:\n{}", Util::printTupleBufferAsCSV(curBuffer, schema));
                 retVector.emplace_back(std::move(curBuffer));
 
                 curBuffer = bufferManager->getBufferBlocking();
@@ -137,7 +141,12 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
 
     if (numberOfTuplesInBuffer > 0) {
         curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+        NES_INFO("Merged buffer is:\n{}", Util::printTupleBufferAsCSV(curBuffer, schema));
         retVector.emplace_back(std::move(curBuffer));
+    }
+
+    for (auto& buf : retVector) {
+        NES_INFO("RetVector buffer is:\n{}", Util::printTupleBufferAsCSV(buf, schema));
     }
 
     return retVector;

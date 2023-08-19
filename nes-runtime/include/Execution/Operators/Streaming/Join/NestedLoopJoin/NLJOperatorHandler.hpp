@@ -84,7 +84,6 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param pipelineCtx
      */
     void triggerSlices(TriggerableWindows& sliceIdentifiersToBeTriggered,
-                        WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,

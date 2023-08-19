@@ -51,15 +51,15 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
     }
 
     template<typename ResultRecord>
-    void runJoinQueryTwoLogicalStreams(const Query& query,
-                                       const TestUtils::CsvFileParams& csvFileParams,
-                                       const TestUtils::JoinParams& joinParams) {
+    std::vector<ResultRecord> runJoinQueryTwoLogicalStreams(const Query& query,
+                                                            const TestUtils::CsvFileParams& csvFileParams,
+                                                            const TestUtils::JoinParams& joinParams) {
         auto sourceConfig1 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[0]);
         auto sourceConfig2 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[1]);
         auto expectedSinkBuffer =
             TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
-        ASSERT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
+        EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .enableNautilus()
@@ -73,8 +73,11 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 
         auto actualResult = testHarness.getOutput<ResultRecord>(expectedSinkBuffer.getNumberOfTuples());
 
-        ASSERT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
+
+        EXPECT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
         EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));
+
+        return actualResult;
     }
 
     BufferManagerPtr bufferManager;
@@ -359,11 +362,10 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
 INSTANTIATE_TEST_CASE_P(
     testJoinQueries,
     JoinDeploymentTest,
-    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-    //                                          TODO Enable the disabled test and fix them #3926
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
+                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
+                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
     [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
         return std::string(magic_enum::enum_name(info.param));
     });

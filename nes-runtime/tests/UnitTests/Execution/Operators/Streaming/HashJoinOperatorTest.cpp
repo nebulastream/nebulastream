@@ -147,7 +147,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = ::NES::Util::murmurHash(joinKey);
         auto window = hashJoinOpHandler->getSliceByTimestampOrCreateIt(timeStamp);
-        auto hashWindow = static_cast<StreamHashJoinWindow*>(window.get());
+        auto hashWindow = static_cast<StreamHashJoinSlice*>(window.get());
 
         auto hashTable = hashWindow->getHashTable(buildHelper.joinBuildSide, workerContext->getId());
 

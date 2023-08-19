@@ -69,6 +69,12 @@ class StreamHashJoinBuild : public ExecutableOperator {
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
     /**
+     * @brief Triggers all slices that have been seen by both sides of the join
+     * @param executionCtx
+     */
+    void terminate(ExecutionContext& executionCtx) const override;
+
+    /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
      * @param recordBuffer
      */

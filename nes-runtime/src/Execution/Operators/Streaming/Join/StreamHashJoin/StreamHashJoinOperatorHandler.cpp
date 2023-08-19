@@ -52,8 +52,17 @@ void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecution
 }
 
 void StreamHashJoinOperatorHandler::triggerSlices(TriggerableWindows& idsToBeTriggered,
-                                                   WorkerContext* workerCtx,
                                                    PipelineExecutionContext* pipelineCtx) {
+
+    // This is not the most efficient implementation but good enough for now, as this should not be on the hottest code path
+    // We merge all hash tables to a global hash table
+    for (const auto& [windowId, triggerableSlicesForWindow] : idsToBeTriggered.windowIdToTriggerableSlices) {
+        for (const auto& curSlice : triggerableSlicesForWindow.slicesToTrigger) {
+            auto hashSlice = std::dynamic_pointer_cast<StreamHashJoinSlice>(curSlice);
+            hashSlice->mergeLocalToGlobalHashTable();
+        }
+    }
+
     /**
      * We expect the idsToBeTriggered to be sorted.
      * Otherwise, it can happen that the buffer <seq 2, ts 1000> gets processed after <seq 1, ts 20000>, which will lead to wrong results upstream
@@ -63,44 +72,37 @@ void StreamHashJoinOperatorHandler::triggerSlices(TriggerableWindows& idsToBeTri
     for (const auto& [windowId, sliceIdsForWindow] : idsToBeTriggered.windowIdToTriggerableSlices) {
         // for every left and right slice id combination
         for (auto& [curSliceLeft, curSliceRight] : getSlicesLeftRightForWindow(windowId)) {
+            if (curSliceLeft->getNumberOfTuplesLeft() > 0 && curSliceRight->getNumberOfTuplesRight() > 0) {
 
-            // Retrieving the left and right hash table
-            auto leftHashSlice = std::dynamic_pointer_cast<StreamHashJoinWindow>(curSliceLeft);
-            auto rightHashSlice = std::dynamic_pointer_cast<StreamHashJoinWindow>(curSliceRight);
-            auto& sharedJoinHashTableLeft = leftHashSlice->getMergingHashTable(QueryCompilation::JoinBuildSideType::Left);
-            auto& sharedJoinHashTableRight = rightHashSlice->getMergingHashTable(QueryCompilation::JoinBuildSideType::Right);
+                for (auto i = 0UL; i < getNumPartitions(); ++i) {
 
-            for (auto i = 0UL; i < getNumPartitions(); ++i) {
-                //for local, we have to merge the tables first
-                if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
-                    //push actual bucket from local to global hash table for left side
+                    //create task for current window and current partition
+                    auto buffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+                    auto bufferAs = buffer.getBuffer<JoinPartitionIdSliceIdWindow>();
+                    bufferAs->partitionId = i;
+                    bufferAs->sliceIdentifierLeft = curSliceLeft->getSliceIdentifier();
+                    bufferAs->sliceIdentifierRight = curSliceRight->getSliceIdentifier();
+                    bufferAs->windowInfo = sliceIdsForWindow.windowInfo;
+                    buffer.setNumberOfTuples(1);
 
-                    //page before merging:
-                    auto localHashTableLeft = leftHashSlice->getHashTable(QueryCompilation::JoinBuildSideType::Left, workerCtx->getId());
-                    sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
+                    /** As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
+                     * As we emit one buffer for each partition, the watermark can not be the slice end as some buffer might be
+                     * still waiting for getting processed.
+                     */
+                    buffer.setOriginId(getOutputOriginId());
+                    buffer.setSequenceNumber(getNextSequenceNumber());
+                    buffer.setWatermark(std::min(curSliceLeft->getSliceStart(), curSliceRight->getSliceStart()));
 
-                    //push actual bucket from local to global hash table for right side
-                    auto localHashTableRight = rightHashSlice->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
-                    sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+                    pipelineCtx->dispatchBuffer(buffer);
+                    NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples {} and no. right tuples {}",
+                             bufferAs->sliceIdentifierLeft,
+                             bufferAs->sliceIdentifierRight,
+                             buffer.getWatermark(),
+                             buffer.getSequenceNumber(),
+                             buffer.getOriginId(),
+                             curSliceLeft->getNumberOfTuplesLeft(),
+                             curSliceRight->getNumberOfTuplesRight());
                 }
-
-                //create task for current window and current partition
-                auto buffer = workerCtx->allocateTupleBuffer();
-                auto bufferAs = buffer.getBuffer<JoinPartitionIdSliceIdWindow>();
-                bufferAs->partitionId = i;
-                bufferAs->sliceIdentifierLeft = curSliceLeft->getSliceIdentifier();
-                bufferAs->sliceIdentifierRight = curSliceRight->getSliceIdentifier();
-                bufferAs->windowInfo = sliceIdsForWindow.windowInfo;
-                buffer.setNumberOfTuples(1);
-
-                // As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
-                // As we have a global watermark that is larger than the slice end, we can set the watermarkTs to be the slice end.
-                buffer.setOriginId(getOutputOriginId());
-                buffer.setSequenceNumber(getNextSequenceNumber());
-                buffer.setWatermark(std::min(curSliceLeft->getSliceEnd(), curSliceRight->getSliceEnd()));
-
-                pipelineCtx->dispatchBuffer(buffer);
-                NES_DEBUG("Emitted windowIdentifier {}", windowId);
             }
         }
     }
@@ -111,7 +113,7 @@ uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInSlice(uint64_t sliceI
                                                                   QueryCompilation::JoinBuildSideType joinBuildSide) {
     const auto window = getSliceBySliceIdentifier(sliceIdentifier);
     if (window.has_value()) {
-        auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(window.value().get());
+        auto hashWindow = dynamic_cast<StreamHashJoinSlice*>(window.value().get());
         return hashWindow->getNumberOfTuplesOfWorker(joinBuildSide, workerId);
     }
 

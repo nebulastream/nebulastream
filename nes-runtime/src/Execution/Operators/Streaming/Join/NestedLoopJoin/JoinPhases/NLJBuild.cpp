@@ -44,15 +44,6 @@ uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
     return nljWindow->getSliceEnd();
 }
 
-void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
-    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineContext);
-
-    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
-}
-
 void* getCurrentWindowProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
@@ -67,7 +58,7 @@ void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     return opHandler->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
-void triggerWindowsProxy(TriggerableWindows& sliceIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+void triggerWindowsNLJProxy(TriggerableWindows& sliceIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
@@ -75,11 +66,11 @@ void triggerWindowsProxy(TriggerableWindows& sliceIdentifiersToBeTriggered, void
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
 
     if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
-        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, nullptr, pipelineCtx);
+        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, pipelineCtx);
     }
 }
 
-void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
+void triggerAllWindowsNLJProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
@@ -88,7 +79,7 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_DEBUG("Triggering all slices for pipelineId {}!", pipelineCtx->getPipelineID());
 
     auto sliceIdentifiersToBeTriggered = opHandler->triggerAllSlices();
-    triggerWindowsProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
+    triggerWindowsNLJProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 /**
@@ -112,7 +103,7 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
     auto sliceIdentifiersToBeTriggered = opHandler->checkSlicesTrigger(minWatermark, sequenceNumber, originId);
-    triggerWindowsProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
+    triggerWindowsNLJProxy(sliceIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
 void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
@@ -162,11 +153,11 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-void NLJBuild::setup(ExecutionContext& executionCtx) const {
+void NLJBuild::setup(ExecutionContext& ctx) const {
     Nautilus::FunctionCall("setNumberOfWorkerThreadsProxy",
                            setNumberOfWorkerThreadsProxy,
-                           executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
-                           executionCtx.getPipelineContext());
+                           ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+                           ctx.getPipelineContext());
 }
 
 void NLJBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
@@ -208,7 +199,10 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
 void NLJBuild::terminate(ExecutionContext& ctx) const {
     // Trigger all slices, as the query has ended
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("triggerAllWindowsProxy", triggerAllWindowsProxy, operatorHandlerMemRef, ctx.getPipelineContext());
+    Nautilus::FunctionCall("triggerAllWindowsNLJProxy",
+                           triggerAllWindowsNLJProxy,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext());
 }
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,

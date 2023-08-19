@@ -17,7 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -51,7 +51,7 @@ StreamSlicePtr StreamJoinOperatorHandler::getSliceByTimestampOrCreateIt(uint64_t
                                               nljOpHandler->getRightPageSize());
     } else {
         auto* ptr = dynamic_cast<StreamHashJoinOperatorHandler*>(this);
-        newSlice = std::make_shared<StreamHashJoinWindow>(numberOfWorkerThreads,
+        newSlice = std::make_shared<StreamHashJoinSlice>(numberOfWorkerThreads,
                                                           sliceStart,
                                                           sliceEnd,
                                                           sizeOfRecordLeft,
@@ -270,6 +270,21 @@ std::vector<WindowInfo> StreamJoinOperatorHandler::getAllWindowsForSlice(StreamS
     }
 
     return allWindows;
+}
+
+void deleteAllSlicesProxy(void* ptrOpHandler, uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    opHandler->deleteSlices(watermarkTs, sequenceNumber, originId);
+}
+
+void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineContext);
+
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 }// namespace NES::Runtime::Execution::Operators

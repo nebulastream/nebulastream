@@ -18,4 +18,4 @@ add_source_files(nes-runtime
         FixedPagesLinkedList.cpp
         LocalHashTable.cpp
         MergingHashTable.cpp
-        StreamHashJoinWindow.cpp)
+        StreamHashJoinSlice.cpp)

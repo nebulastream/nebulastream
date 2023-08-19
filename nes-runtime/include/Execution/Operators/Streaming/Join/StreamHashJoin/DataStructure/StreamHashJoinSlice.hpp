@@ -27,13 +27,10 @@
 
 namespace NES::Runtime::Execution {
 
-class StreamHashJoinWindow;
-using StreamHashJoinWindowPtr = std::shared_ptr<StreamHashJoinWindow>;
 /**
  * @brief This class is a data container for all the necessary objects in a window of the StreamJoin
- * TODO rename this to StreamHashJoinSlice
  */
-class StreamHashJoinWindow : public StreamSlice {
+class StreamHashJoinSlice : public StreamSlice {
 
   public:
     /**
@@ -48,7 +45,7 @@ class StreamHashJoinWindow : public StreamSlice {
      * @param preAllocPageSizeCnt
      * @param numPartitions
      */
-    explicit StreamHashJoinWindow(size_t numberOfWorkerThreads,
+    explicit StreamHashJoinSlice(size_t numberOfWorkerThreads,
                                   uint64_t windowStart,
                                   uint64_t windowEnd,
                                   size_t sizeOfRecordLeft,
@@ -59,7 +56,7 @@ class StreamHashJoinWindow : public StreamSlice {
                                   size_t numPartitions,
                                   QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    ~StreamHashJoinWindow() = default;
+    ~StreamHashJoinSlice() override = default;
 
     /**
      * @brief Returns the number of tuples in this window for the left side
@@ -103,10 +100,10 @@ class StreamHashJoinWindow : public StreamSlice {
     Operators::MergingHashTable& getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
-     * @brief this method marks that one partition of this window was finally processed by the sink
-     * @param bool indicating if all partitions are done
+     * @brief Merges all local hash tables to the global one
      */
-    bool markPartitionAsFinished();
+    void mergeLocalToGlobalHashTable();
+
 
   protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
@@ -114,7 +111,8 @@ class StreamHashJoinWindow : public StreamSlice {
     Operators::MergingHashTable mergingHashTableLeftSide;
     Operators::MergingHashTable mergingHashTableRightSide;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
-    std::atomic<uint64_t> partitionFinishedCounter;
+    std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
+    std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;
 };
 

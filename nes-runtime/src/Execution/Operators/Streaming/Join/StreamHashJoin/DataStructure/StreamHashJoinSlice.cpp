@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinSlice.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution {
 
-Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+Operators::StreamJoinHashTable* StreamHashJoinSlice::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
                                                                    uint64_t workerId) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
@@ -32,11 +32,11 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(QueryCompilat
     }
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) {
+uint64_t StreamHashJoinSlice::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) {
     return getHashTable(joinBuildSide, workerIdx)->getNumberOfTuples();
 }
 
-Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide) {
+Operators::MergingHashTable& StreamHashJoinSlice::getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide) {
     if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
         return mergingHashTableLeftSide;
     } else {
@@ -44,7 +44,30 @@ Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(QueryComp
     }
 }
 
-StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
+void StreamHashJoinSlice::mergeLocalToGlobalHashTable() {
+    std::lock_guard lock(mutexMergeLocalToGlobalHashTable);
+    if (alreadyMergedLocalToGlobalHashTable) {
+        return;
+    }
+    alreadyMergedLocalToGlobalHashTable = true;
+
+    // Merging all buckets for all local hash tables for the left side
+    for (const auto& workerHashTableLeft : hashTableLeftSide) {
+        for (auto bucketPos = 0_u64; bucketPos < workerHashTableLeft->getNumBuckets(); ++bucketPos) {
+            mergingHashTableLeftSide.insertBucket(bucketPos, workerHashTableLeft->getBucketLinkedList(bucketPos));
+        }
+    }
+
+    // Merging all buckets for all local hash tables for the right side
+    for (const auto& workerHashTableRight : hashTableRightSide) {
+        for (auto bucketPos = 0_u64; bucketPos < workerHashTableRight->getNumBuckets(); ++bucketPos) {
+            mergingHashTableRightSide.insertBucket(bucketPos, workerHashTableRight->getBucketLinkedList(bucketPos));
+        }
+    }
+
+}
+
+StreamHashJoinSlice::StreamHashJoinSlice(size_t numberOfWorker,
                                            uint64_t windowStart,
                                            uint64_t windowEnd,
                                            size_t sizeOfRecordLeft,
@@ -56,7 +79,7 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            QueryCompilation::StreamJoinStrategy joinStrategy)
     : StreamSlice(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
-      partitionFinishedCounter(numPartitions), joinStrategy(joinStrategy) {
+      joinStrategy(joinStrategy) {
 
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
         //TODO they all take the same allocator
@@ -112,16 +135,14 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
               sizeOfRecordRight);
 }
 
-bool StreamHashJoinWindow::markPartitionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
-
-std::string StreamHashJoinWindow::toString() {
+std::string StreamHashJoinSlice::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "StreamHashJoinWindow(windowState: "
                        << " sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuplesLeft() {
+uint64_t StreamHashJoinSlice::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
     for (auto& hashTable : hashTableLeftSide) {
         sum += hashTable->getNumberOfTuples();
@@ -129,7 +150,7 @@ uint64_t StreamHashJoinWindow::getNumberOfTuplesLeft() {
     return sum;
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuplesRight() {
+uint64_t StreamHashJoinSlice::getNumberOfTuplesRight() {
     uint64_t sum = 0;
     for (auto& hashTable : hashTableRightSide) {
         sum += hashTable->getNumberOfTuples();

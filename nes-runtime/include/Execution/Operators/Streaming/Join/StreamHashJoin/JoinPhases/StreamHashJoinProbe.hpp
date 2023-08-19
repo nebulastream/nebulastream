@@ -56,6 +56,8 @@ class StreamHashJoinProbe : public Operator {
      */
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
     void setDeletion(bool deletion) { withDeletion = deletion; }
 
   protected:
