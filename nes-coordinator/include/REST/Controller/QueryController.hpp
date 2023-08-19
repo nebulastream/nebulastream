@@ -264,6 +264,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+
     ENDPOINT("POST", "/explain", explainQuery, BODY_STRING(String, request)) {
         try {
             std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
@@ -303,6 +304,11 @@ class QueryController : public oatpp::web::server::api::ApiController {
             NES_ERROR("RestServer: unknown exception.");
             return errorHandler->handleError(Status::CODE_500, "unknown exception");
         }
+    }
+
+    ENDPOINT("OPTIONS", "/stop-query", catchPreflightMessageForStopRequest) {
+        nlohmann::json response;
+        return createResponse(Status::CODE_202, "Query Stop Request Accepted");
     }
 
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
