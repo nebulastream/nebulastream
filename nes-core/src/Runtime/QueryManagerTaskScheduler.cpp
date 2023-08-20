@@ -313,7 +313,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
             statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
-        NES_DEBUG("pipelineId {}", pipelineId);
+        //NES_DEBUG("pipelineId {}", pipelineId);
 
         //statistics->incTasksPerPipelineId(pipelineId);
 
