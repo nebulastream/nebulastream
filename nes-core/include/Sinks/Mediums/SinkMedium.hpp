@@ -53,7 +53,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         QuerySubPlanId querySubPlanId,
                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                         uint64_t numberOfOrigins = 1,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr,
+                        bool addTimestamp = false);
 
     /**
      * @brief virtual method to setup sink
@@ -118,18 +119,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     std::string getSinkFormat();
 
-    /**T
-     * @brief method to return if the sink is appended
-     * @return bool indicating append
-     */
-    bool getAppendAsBool() const;
-
-    /**
-     * @brief method to return if the sink is append or overwrite
-     * @return string of mode
-     */
-    std::string getAppendAsString() const;
-
     /**
      * @brief method passes current safe to trim timestamp to coordinator via RPC
      * @param epochBarrier max epoch timestamp
@@ -169,6 +158,12 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t getCurrentEpochBarrier();
 
     /**
+     * @brief getter for addTimestamp flag
+     * @return addTimestamp
+     */
+    bool getAddTimestamp();
+
+    /**
      * @brief update watermark and propagate timestamp
      * @param inputBuffer
      */
@@ -178,9 +173,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
     uint32_t buffersPerEpoch;
-    bool append{
-        false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
-    std::atomic_bool schemaWritten{false};// TODO same here
+    bool schemaWritten;
 
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
@@ -191,6 +184,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
+    bool addTimestamp;
 
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};

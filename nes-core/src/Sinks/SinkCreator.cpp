@@ -44,7 +44,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                const std::string& filePath,
                                bool append,
                                FaultToleranceType faultToleranceType,
-                               uint64_t numberOfOrigins) {
+                               uint64_t numberOfOrigins,
+                               bool addTimestamp) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format,
@@ -55,7 +56,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                       queryId,
                                       querySubPlanId,
                                       faultToleranceType,
-                                      numberOfOrigins);
+                                      numberOfOrigins,
+                                      addTimestamp);
 }
 
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,

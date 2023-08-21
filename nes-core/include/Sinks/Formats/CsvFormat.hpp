@@ -38,12 +38,6 @@ class CsvFormat : public SinkFormat {
     FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
-    */
-    std::optional<Runtime::TupleBuffer> getSchema() override;
-
-    /**
      * @brief method to return the format as a string
      * @return format as string
      */

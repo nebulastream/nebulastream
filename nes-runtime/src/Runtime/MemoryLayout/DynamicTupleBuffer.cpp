@@ -119,22 +119,12 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
                   std::to_string(physicalType->size()));
     }
 
-    str << "+----------------------------------------------------+" << std::endl;
-    str << "|";
-    for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->getName() << ":"
-            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
-    }
-    str << std::endl;
-    str << "+----------------------------------------------------+" << std::endl;
-
     for (auto it = this->begin(); it != this->end(); ++it) {
         str << "|";
         DynamicTuple dynamicTuple = (*it);
         str << dynamicTuple.toString(schema);
         str << std::endl;
     }
-    str << "+----------------------------------------------------+";
     return str.str();
 }
 

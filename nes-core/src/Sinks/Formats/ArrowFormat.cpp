@@ -33,12 +33,6 @@ namespace NES {
 ArrowFormat::ArrowFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::optional<Runtime::TupleBuffer> ArrowFormat::getSchema() {
-    // since arrow writes it owns file separately along with the schema we do not need
-    // getSchema for Arrow
-    NES_NOT_IMPLEMENTED();
-}
-
 std::vector<Runtime::TupleBuffer> ArrowFormat::getData(Runtime::TupleBuffer& inputBuffer) {
     auto numberOfTuples = inputBuffer.getNumberOfTuples();
     // since arrow writes it owns file separately along with the schema we do not need

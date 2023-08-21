@@ -269,6 +269,7 @@ message SerializableOperator{
       string filePath = 1;
       bool append = 2;
       string sinkFormat = 3;
+      bool addTimestamp = 4;
     }
 
     message SerializableKafkaSinkDescriptor {

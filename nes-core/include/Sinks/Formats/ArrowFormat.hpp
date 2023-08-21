@@ -45,12 +45,6 @@ class ArrowFormat : public SinkFormat {
     FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
-    */
-    std::optional<Runtime::TupleBuffer> getSchema() override;
-
-    /**
     * @brief method to get the schema from the arrow format
     * @return return the arrow schema
     */

@@ -30,12 +30,14 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        QuerySubPlanId querySubPlanId,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
-                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
+                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor,
+                       bool addTimestamp)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
-      watermarkProcessor(std::move(watermarkProcessor)) {
+      watermarkProcessor(std::move(watermarkProcessor)), addTimestamp(addTimestamp) {
     bufferCount = 0;
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
+    schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -76,18 +78,9 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-bool SinkMedium::getAppendAsBool() const { return append; }
-
 QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
 QueryId SinkMedium::getQueryId() const { return queryId; }
-
-std::string SinkMedium::getAppendAsString() const {
-    if (append) {
-        return "APPEND";
-    }
-    return "OVERWRITE";
-}
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
@@ -106,6 +99,8 @@ void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::
 }
 
 uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
+
+bool SinkMedium::getAddTimestamp() { return addTimestamp; }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);

@@ -79,46 +79,6 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         return false;
     }
 
-    if (!schemaWritten && !internal) {//TODO:atomic
-        NES_DEBUG("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            NES_DEBUG("ZmqSink writes schema buffer");
-            try {
-
-                // Send Header
-                std::array<uint64_t, 2> const envelopeData{schemaBuffer->getNumberOfTuples(), schemaBuffer->getWatermark()};
-                constexpr auto envelopeSize = sizeof(uint64_t) * 2;
-                static_assert(envelopeSize == sizeof(envelopeData));
-                zmq::message_t envelope{&(envelopeData[0]), envelopeSize};
-                if (auto const sentEnvelopeSize = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
-                    sentEnvelopeSize != envelopeSize) {
-                    NES_DEBUG("ZmqSink: schema send NOT successful");
-                    return false;
-                }
-
-                // Send payload
-                zmq::mutable_buffer payload{schemaBuffer->getBuffer(), schemaBuffer->getBufferSize()};
-                if (auto const sentPayloadSize = socket.send(payload, zmq::send_flags::none).value_or(0);
-                    sentPayloadSize != payload.size()) {
-                    NES_DEBUG("ZmqSink: sending payload failed.");
-                    return false;
-                }
-                NES_DEBUG("ZmqSink: schema send successful");
-
-            } catch (const zmq::error_t& ex) {
-                if (ex.num() != ETERM) {
-                    NES_ERROR("ZmqSink: schema write  {}", ex.what());
-                }
-            }
-            schemaWritten = true;
-            NES_DEBUG("ZmqSink::writeData: schema written");
-        }
-        { NES_DEBUG("ZmqSink::writeData: no schema written"); }
-    } else {
-        NES_DEBUG("ZmqSink::getData: schema already written");
-    }
-
     NES_DEBUG("ZmqSink: writes buffer with tupleCnt ={} watermark={}",
               inputBuffer.getNumberOfTuples(),
               inputBuffer.getWatermark());
@@ -165,7 +125,8 @@ std::string ZmqSink::toString() const {
     ss << "ZMQ_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     ss << "HOST=" << host << ", ";
-    ss << "PORT=" << port;
+    ss << "PORT=" << port << ", ";
+    ss << "INTERNAL=" << internal;
     ss << ")";
     return ss.str();
 }

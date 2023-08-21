@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <utility>
 
@@ -35,7 +36,8 @@ FileSink::FileSink(SinkFormatPtr format,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
                    FaultToleranceType faultToleranceType,
-                   uint64_t numberOfOrigins)
+                   uint64_t numberOfOrigins,
+                   bool addTimestamp)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
@@ -43,7 +45,8 @@ FileSink::FileSink(SinkFormatPtr format,
                  querySubPlanId,
                  faultToleranceType,
                  numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins),
+                 addTimestamp) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -108,40 +111,20 @@ std::string FileSink::getFilePath() const { return filePath; }
 
 bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
+    NES_DEBUG("FileSink: getSchema medium {} format {} mode {} addTimestamp {}",
               toString(),
               sinkFormat->toString(),
-              this->getAppendAsString());
+              this->getAppendAsString(),
+              addTimestamp);
 
     if (!inputBuffer) {
         NES_ERROR("FileSink::writeDataToFile input buffer invalid");
         return false;
     }
     if (!schemaWritten) {
-        NES_TRACE("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            std::ofstream outputFile;
-            if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-                uint64_t idx = filePath.rfind('.');
-                std::string shrinkedPath = filePath.substr(0, idx + 1);
-                std::string schemaFile = shrinkedPath + "schema";
-                NES_TRACE("FileSink::writeDataToFile: schema is ={} to file={}",
-                          sinkFormat->getSchemaPtr()->toString(),
-                          schemaFile);
-                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
-            } else {
-                outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-            }
-
-            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            outputFile.close();
-
-            schemaWritten = true;
-            NES_TRACE("FileSink::writeDataToFile: schema written");
-        } else {
-            NES_TRACE("FileSink::writeDataToFile: no schema written");
-        }
+        auto schemaStr = sinkFormat->getSchemaPtr()->toString("|") + "\n";
+        outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+        schemaWritten = true;
     } else {
         NES_TRACE("FileSink::getData: schema already written");
     }
@@ -149,11 +132,23 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     NES_TRACE("FileSink::getData: write data to file= {}", filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
+    uint64_t timestamp = 0;
+    if (addTimestamp) {
+        timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
     for (auto& buffer : dataBuffers) {
         NES_TRACE("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        } else if (sinkFormat->getSinkFormat() == FormatTypes::TEXT_FORMAT && this->getAppendAsString() == "OVERWRITE"
+                   && addTimestamp) {
+            std::string str;
+            str.assign((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+            std::string repReg = std::to_string(timestamp) + "|\n";
+            str = std::regex_replace(str, std::regex(R"(\n)"), repReg);
+            outputFile.write(str.c_str(), str.length());
         } else {
             outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
         }
@@ -161,6 +156,15 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     outputFile.flush();
     updateWatermarkCallback(inputBuffer);
     return true;
+}
+
+bool FileSink::getAppend() const { return append; }
+
+std::string FileSink::getAppendAsString() const {
+    if (append) {
+        return "APPEND";
+    }
+    return "OVERWRITE";
 }
 
 #ifdef ENABLE_ARROW_BUILD
