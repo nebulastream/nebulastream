@@ -12,21 +12,18 @@
     limitations under the License.
 */
 #include <BaseUnitTest.hpp>
-#include <Topology/Topology.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ResourceLockingException.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 class TwoPhaseLockingStorageHandlerTest : public Testing::BaseUnitTest {
@@ -367,4 +364,4 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
         thread.join();
     }
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
