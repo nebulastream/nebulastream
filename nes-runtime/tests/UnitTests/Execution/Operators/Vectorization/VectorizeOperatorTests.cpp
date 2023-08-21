@@ -87,11 +87,10 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto stageBuffer = std::make_unique<TupleBuffer>(bm->getBufferBlocking());
-    auto stageBufferMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    // Set the stage buffer capacity to half of the tuple buffer's capacity. Hence, the number of invocations should be two.
-    auto stageBufferCapacity = dynamicBufferCapacity / 2;
-    auto handler = std::make_shared<StagingHandler>(std::move(stageBuffer), stageBufferCapacity);
+    // Set the stage buffer size to half of the tuple buffer's size. Hence, the number of invocations should be two.
+    auto schemaSize = schema->getSchemaSizeInBytes();
+    auto stageBufferSize = (dynamicBufferCapacity * schemaSize) / 2;
+    auto handler = std::make_shared<StagingHandler>(stageBufferSize, schemaSize);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -113,7 +112,7 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
     }
 
     ASSERT_EQ(collectOperator->records.size(), numberOfRecords);
-    ASSERT_EQ(collectOperator->invocations, dynamicBufferCapacity / stageBufferCapacity);
+    ASSERT_EQ(collectOperator->invocations, 2);
     for (uint64_t i = 0; i < collectOperator->records.size(); i++) {
         auto& record = collectOperator->records[i];
         ASSERT_EQ(record.numberOfFields(), 2);

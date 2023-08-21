@@ -423,15 +423,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
         auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
 
-        // TODO Get the capacity from a configuration option.
-        //      The actual size depends on the schema.
-        //      Hence, stageBufferSize needs to be calculated dynamically.
-        auto stageBufferSize = 1;
-        auto stageBuffer = std::make_unique<Runtime::TupleBuffer>(nodeEngine->getBufferManager()->getBufferBlocking());
-        auto stageBufferMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        // TODO Make this configurable.
+        auto stageBufferSize = 256;
+        auto schemaSize = schema->getSchemaSizeInBytes();
         auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
-            std::move(stageBuffer),
-            stageBufferSize
+            stageBufferSize,
+            schemaSize
         );
         operatorHandlers.push_back(handler);
         uint64_t handlerIndex = operatorHandlers.size() - 1;

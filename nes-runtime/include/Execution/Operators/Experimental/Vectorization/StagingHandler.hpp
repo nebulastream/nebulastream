@@ -29,10 +29,10 @@ class StagingHandler : public OperatorHandler {
 public:
     /**
      * @brief Constructor.
-     * @param tupleBuffer the tuple buffer.
-     * @param stageBufferCapacity the maximum number of tuples to store in the tuple buffer.
+     * @param stageBufferSize the size of the stage buffer in bytes
+     * @param schemaSize the size of the schema in bytes
      */
-    StagingHandler(std::unique_ptr<TupleBuffer> tupleBuffer, uint64_t stageBufferCapacity);
+    StagingHandler(uint64_t stageBufferSize, uint64_t schemaSize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
@@ -68,9 +68,9 @@ public:
     void incrementWritePosition();
 
 private:
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    std::unique_ptr<TupleBuffer> tupleBuffer;
+    uint64_t stageBufferSize;
     uint64_t stageBufferCapacity;
+    std::unique_ptr<TupleBuffer> tupleBuffer;
     uint64_t currentWritePosition;
 };
 
