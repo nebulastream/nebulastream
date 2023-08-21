@@ -15,6 +15,7 @@
 #define NES_ASYNCREQUESTPROCESSOR_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <limits.h>
 
 namespace NES::RequestProcessor::Experimental {
 
