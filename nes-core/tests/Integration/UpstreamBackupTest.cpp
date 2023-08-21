@@ -66,9 +66,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->worker.enableStatisticOutput = true;
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->enableStatisticOutput = true;
 
         auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {

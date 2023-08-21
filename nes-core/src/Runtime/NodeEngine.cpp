@@ -496,7 +496,6 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
         std::vector<QuerySubPlanId> querySubPlanIds = plan.second;
         for (auto querySubPlanId : querySubPlanIds) {
             NES_TRACE("querySubPlanId={}, stat={}", querySubPlanId, queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
-
             queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
             if (withReset) {
                 queryManager->getQueryStatistics(querySubPlanId)->clear();

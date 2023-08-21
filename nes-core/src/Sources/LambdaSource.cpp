@@ -90,11 +90,12 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     //NES_TRACE("LambdaSource: Current buffer content {}", buffer.toString(schema));
 
     NES_TRACE("LambdaSource::receiveData filled buffer with tuples={}, outOrgID={}", buffer.getNumberOfTuples()
-                                                                                         , buffer.getOriginId());
+                                                                     , buffer.getOriginId());
 
-    //    NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
-    //              buffer.getNumberOfTuples(),
-    //              rawBuffer.getOriginId());
+//    NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
+//              buffer.getNumberOfTuples(),
+//              rawBuffer.getOriginId());
+
     return buffer;
 }
 
