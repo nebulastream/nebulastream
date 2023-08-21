@@ -39,7 +39,7 @@ class UDFCatalogControllerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES_INFO("Setup ConnectivityControllerTest test class.");
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }

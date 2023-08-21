@@ -609,8 +609,8 @@ message SerializableOperator{
   /**
     Properties of a java window udf
   */
-  message JavaUDFWindowDetails {
-    JavaUdfDescriptorMessage javaUDFDescriptor = 1;
+  message JavaUdfWindowDetails {
+    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
 
     google.protobuf.Any windowType = 2;
     DistributionCharacteristic distrChar = 3;
