@@ -18,7 +18,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseUnitTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -29,7 +29,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class UnvectorizeOperatorTest : public Testing::NESBaseTest {
+class UnvectorizeOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
