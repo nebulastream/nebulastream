@@ -1554,3 +1554,5 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(srcOperatorSrc1->equal((*itr)));
     ++itr;
 }
+
+//todo: write test for new filter push down below map functionality

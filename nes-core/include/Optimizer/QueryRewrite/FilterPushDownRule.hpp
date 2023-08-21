@@ -137,10 +137,9 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @brief tries to push the filter below a map operator. This is possible as long as the map operator doesn't change any attribute that the filter uses
      * @param filterOperator the filter operator that we try to push down
      * @param mapOperator the map operator to which we want to push the filter down below. (it is currently the child of the filter)
-     * @param parOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * mapOperator and parOperator
      */
-    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator, NodePtr parOperator);
+    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator);
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
@@ -215,6 +214,9 @@ class FilterPushDownRule : public BaseRewriteRule {
      */
     static void
     renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
+
+    void substituteFilterAttributeWithMapTransformation(FilterLogicalOperatorNodePtr const& filterOperator,
+                                                                            const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName)
 };
 
 }// namespace NES::Optimizer
