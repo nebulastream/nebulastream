@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.203](https://github.com/nebulastream/nebulastream/tree/v0.5.203) (2023-08-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.202...v0.5.203)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add Error handling to Add Request [\#4038](https://github.com/nebulastream/nebulastream/issues/4038)
+
 ## [v0.5.202](https://github.com/nebulastream/nebulastream/tree/v0.5.202) (2023-08-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.201...v0.5.202)
