@@ -26,7 +26,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 

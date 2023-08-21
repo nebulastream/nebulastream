@@ -57,8 +57,8 @@ class QueryDeploymentPhase {
      * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                          QueryCatalogServicePtr queryCatalogService,
+    static QueryDeploymentPhasePtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                          const QueryCatalogServicePtr& queryCatalogService,
                                           const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
     /**
@@ -69,10 +69,10 @@ class QueryDeploymentPhase {
     void execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
-    explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                  QueryCatalogServicePtr queryCatalogService,
+    explicit QueryDeploymentPhase(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                  const QueryCatalogServicePtr& queryCatalogService,
                                   bool accelerateJavaUDFs,
-                                  std::string accelerationServiceURL);
+                                  const std::string& accelerationServiceURL);
     /**
      * @brief method send query to nodes
      * @param queryId

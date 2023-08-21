@@ -37,10 +37,10 @@ class LocationController : public oatpp::web::server::api::ApiController {
      */
     LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        const oatpp::String& completeRouterPrefix,
-                       LocationServicePtr locationService,
-                       ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(std::move(locationService)),
-          errorHandler(std::move(errorHandler)) {}
+                       const LocationServicePtr& locationService,
+                       const ErrorHandlerPtr& errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -49,9 +49,9 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      LocationServicePtr locationService,
-                                                      std::string routerPrefixAddition,
-                                                      ErrorHandlerPtr errorHandler) {
+                                                      const LocationServicePtr& locationService,
+                                                      const std::string& routerPrefixAddition,
+                                                      const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, locationService, errorHandler);
     }

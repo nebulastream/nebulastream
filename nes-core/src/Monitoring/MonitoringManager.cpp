@@ -45,8 +45,8 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
-MonitoringManager::MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr catalogService)
-    : MonitoringManager(topology, queryService, catalogService, true) {}
+MonitoringManager::MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr queryCatalogService)
+    : MonitoringManager(topology, queryService, queryCatalogService, true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,
