@@ -27,6 +27,6 @@ class OperatorNotFoundException : public RequestExecutionException {
   public:
     explicit OperatorNotFoundException(const std::string& message);
 };
-}// namespace NES
+}// namespace NES::Exceptions
 
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_

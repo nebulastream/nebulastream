@@ -14,7 +14,6 @@
 #include <Exceptions/LogicalSourceNotFoundException.hpp>
 namespace NES::Exceptions {
 
-LogicalSourceNotFoundException::LogicalSourceNotFoundException(const std::string& message)
-    : RequestExecutionException(message) {}
+LogicalSourceNotFoundException::LogicalSourceNotFoundException(const std::string& message) : RequestExecutionException(message) {}
 
 }// namespace NES::Exceptions

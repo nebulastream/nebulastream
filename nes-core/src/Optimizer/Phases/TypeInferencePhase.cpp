@@ -13,8 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
 #include <Exceptions/LogicalSourceNotFoundException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -57,7 +57,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             SchemaPtr schema = Schema::create();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
                 NES_ERROR("Source name: {} not registered.", logicalSourceName);
-                throw Exceptions::LogicalSourceNotFoundException("Logical source not registered. Source Name: " + logicalSourceName);
+                throw Exceptions::LogicalSourceNotFoundException("Logical source not registered. Source Name: "
+                                                                 + logicalSourceName);
             }
             auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
             schema = schema->copyFields(originalSchema);

@@ -28,7 +28,6 @@ class LogicalSourceNotFoundException : public RequestExecutionException {
      * @param message: A string to indicate to the user what caused the exception
      */
     explicit LogicalSourceNotFoundException(const std::string& message);
-
 };
 }// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

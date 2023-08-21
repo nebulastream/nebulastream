@@ -17,8 +17,7 @@
 
 namespace NES {
 
-UDFException::UDFException(const std::string& message)
-    : Exceptions::RequestExecutionException(message), message(message) {
+UDFException::UDFException(const std::string& message) : Exceptions::RequestExecutionException(message), message(message) {
     NES_ERROR("{}", message);
 }
 
