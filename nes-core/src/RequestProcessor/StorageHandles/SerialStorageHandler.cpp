@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Topology/Topology.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <Topology/Topology.hpp>
 #include <memory>
 #include <utility>
 
@@ -52,4 +52,4 @@ UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(const RequestId) { re
 CoordinatorConfigurationHandle SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

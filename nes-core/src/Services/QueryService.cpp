@@ -150,8 +150,12 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         }
         throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
     } else {
-        auto addRequest =
-            RequestProcessor::Experimental::AddQueryRequest::create(queryPlan, placementStrategy, faultTolerance, lineage, 1, z3Context);
+        auto addRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
+                                                                                  placementStrategy,
+                                                                                  faultTolerance,
+                                                                                  lineage,
+                                                                                  1,
+                                                                                  z3Context);
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
         return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;

@@ -40,6 +40,6 @@ const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
                                                     ResourceType::GlobalExecutionPlan,
                                                     ResourceType::GlobalQueryPlan,
                                                     ResourceType::UdfCatalog};
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
 
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_RESOURCETYPE_HPP_

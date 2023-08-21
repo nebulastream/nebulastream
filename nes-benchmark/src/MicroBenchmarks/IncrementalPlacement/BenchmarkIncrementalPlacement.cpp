@@ -419,7 +419,10 @@ int main(int argc, const char* argv[]) {
             for (uint64_t i = 0; i < numOfQueries; i++) {
 
                 auto queryPlan = queryObjects[i];
-                queryCatalogService->createNewEntry("", queryPlan, magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value());
+                queryCatalogService->createNewEntry(
+                    "",
+                    queryPlan,
+                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value());
                 Optimizer::PlacementStrategy queryPlacementStrategy =
                     magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
                 auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);

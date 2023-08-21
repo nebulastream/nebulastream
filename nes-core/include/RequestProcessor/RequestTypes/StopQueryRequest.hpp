@@ -74,7 +74,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
-namespace RequestProcessor::Experimental  {
+namespace RequestProcessor::Experimental {
 
 class StopQueryRequest;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
@@ -161,7 +161,7 @@ class StopQueryRequest : public AbstractRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };
-}// namespace Experimental
+}// namespace RequestProcessor::Experimental
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_

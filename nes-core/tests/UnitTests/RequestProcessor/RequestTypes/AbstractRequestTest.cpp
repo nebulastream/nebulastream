@@ -83,4 +83,4 @@ TEST_F(AbstractRequestTest, testPromise) {
     thread->join();
     EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

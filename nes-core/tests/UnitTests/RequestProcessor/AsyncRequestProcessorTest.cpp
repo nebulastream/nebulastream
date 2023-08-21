@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <BaseUnitTest.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
@@ -157,4 +157,4 @@ TEST_P(AsyncRequestProcessorTest, submitFollowUpRequest) {
 
 INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestProcessorTest, ::testing::Values(1, 4, 8));
 
-}// namespace NES::RequestProcessor
+}// namespace NES::RequestProcessor::Experimental

@@ -43,8 +43,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                             const SourceCatalogServicePtr& sourceCatalogService,
                             const ErrorHandlerPtr& eHandler,
                             const oatpp::String& completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          sourceCatalogService(sourceCatalogService), errorHandler(eHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), sourceCatalogService(sourceCatalogService),
+          errorHandler(eHandler) {}
 
     /**
      * Create a shared object of the API controller

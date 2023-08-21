@@ -165,8 +165,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                coordinatorConfig,
                                                                udfCatalog,
                                                                globalExecutionPlan);
-    auto catalogEntry1 =
-        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", Optimizer::PlacementStrategy::TopDown, q1.getQueryPlan(), QueryState::OPTIMIZING);
+    auto catalogEntry1 = Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID,
+                                                            "",
+                                                            Optimizer::PlacementStrategy::TopDown,
+                                                            q1.getQueryPlan(),
+                                                            QueryState::OPTIMIZING);
     auto request = AddQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert

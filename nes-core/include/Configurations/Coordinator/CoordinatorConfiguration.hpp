@@ -94,9 +94,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Storage handler for request executor
      */
-    EnumOption<RequestProcessor::Experimental::StorageHandlerType> storageHandlerType = {STORAGE_HANDLER_TYPE_CONFIG,
-                                                        RequestProcessor::Experimental::StorageHandlerType::TwoPhaseLocking,
-                                                         "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
+    EnumOption<RequestProcessor::Experimental::StorageHandlerType> storageHandlerType = {
+        STORAGE_HANDLER_TYPE_CONFIG,
+        RequestProcessor::Experimental::StorageHandlerType::TwoPhaseLocking,
+        "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     /**
      * @brief Enable reconfiguration of running query plans.

@@ -19,11 +19,11 @@
 #include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Util/RequestType.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Util/RequestType.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -87,4 +87,4 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     //no follow up requests
     return {};
 }
-}// namespace NES::Experimental
+}// namespace NES::RequestProcessor::Experimental

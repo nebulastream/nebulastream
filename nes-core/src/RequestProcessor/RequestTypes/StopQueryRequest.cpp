@@ -26,11 +26,11 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
-#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <string>
 #include <utility>
 
@@ -209,5 +209,5 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionExcep
     }
     return failRequest;
 }
-} // namespace NES::RequestProcessor::Experimental
-// namespace NES
+}// namespace NES::RequestProcessor::Experimental
+ // namespace NES

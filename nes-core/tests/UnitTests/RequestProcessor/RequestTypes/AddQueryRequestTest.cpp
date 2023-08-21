@@ -35,13 +35,13 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <z3++.h>
@@ -122,11 +122,11 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Create add request
     auto addQueryRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
-                                                   TEST_PLACEMENT_STRATEGY,
-                                                   TEST_FAULT_TOLERANCE_TYPE,
-                                                   TEST_LINEAGE_TYPE,
-                                                   ZERO_RETRIES,
-                                                   z3Context);
+                                                                                   TEST_PLACEMENT_STRATEGY,
+                                                                                   TEST_FAULT_TOLERANCE_TYPE,
+                                                                                   TEST_LINEAGE_TYPE,
+                                                                                   ZERO_RETRIES,
+                                                                                   z3Context);
     addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase

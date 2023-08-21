@@ -14,10 +14,10 @@
 #include <Exceptions/AccessNonLockedResourceException.hpp>
 #include <Exceptions/ResourceLockingException.hpp>
 #include <Exceptions/StorageHandlerAcquireResourcesException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::RequestProcessor::Experimental {
@@ -145,4 +145,4 @@ CoordinatorConfigurationHandle TwoPhaseLockingStorageHandler::getCoordinatorConf
     }
     return coordinatorConfiguration;
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

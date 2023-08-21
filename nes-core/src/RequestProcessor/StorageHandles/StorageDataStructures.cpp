@@ -24,4 +24,4 @@ StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigur
       queryCatalogService(std::move(queryCatalogService)), sourceCatalog(std::move(sourceCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), globalQueryPlan(std::move(globalQueryPlan)),
       udfCatalog(std::move(udfCatalog)) {}
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

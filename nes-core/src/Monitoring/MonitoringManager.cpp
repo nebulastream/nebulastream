@@ -45,7 +45,9 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
-MonitoringManager::MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr queryCatalogService)
+MonitoringManager::MonitoringManager(TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr queryCatalogService)
     : MonitoringManager(topology, queryService, queryCatalogService, true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
@@ -219,8 +221,10 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
         // create new monitoring query
         NES_INFO("MonitoringManager: Creating query for {}", monitoringStream);
-        queryId =
-            queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                Optimizer::PlacementStrategy::BottomUp,
+                                                                FaultToleranceType::NONE,
+                                                                LineageType::IN_MEMORY);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
