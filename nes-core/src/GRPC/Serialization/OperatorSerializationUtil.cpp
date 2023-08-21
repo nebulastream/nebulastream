@@ -1659,6 +1659,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
 
         serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
         serializedSinkDescriptor.set_append(fileSinkDescriptor->getAppend());
+        serializedSinkDescriptor.set_addtimestamp(fileSinkDescriptor->getAddTimestamp());
 
         auto format = fileSinkDescriptor->getSinkFormatAsString();
         if (format == "JSON_FORMAT") {
@@ -1787,6 +1788,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(),
                                           serializedSinkDescriptor.sinkformat(),
                                           serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE",
+                                          serializedSinkDescriptor.addtimestamp(),
                                           FaultToleranceType(deserializedFaultTolerance),
                                           deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor>()) {

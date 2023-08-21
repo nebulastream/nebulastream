@@ -29,11 +29,6 @@ namespace NES {
 TextFormat::TextFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::optional<Runtime::TupleBuffer> TextFormat::getSchema() {
-    //noting to do as this is part of pretty print
-    return std::nullopt;
-}
-
 std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inputBuffer) {
     std::vector<Runtime::TupleBuffer> buffers;
 
@@ -47,7 +42,7 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
 
     std::string bufferContent = buffer.toString(schema);
     uint64_t contentSize = bufferContent.length();
-    NES_TRACE("TextFormat::getData content size={} content={}", contentSize, bufferContent);
+    NES_DEBUG("TextFormat::getData size={} content:\n{}", contentSize, bufferContent);
 
     if (inputBuffer.getBufferSize() < contentSize) {
         NES_TRACE("TextFormat::getData: content is larger than one buffer");

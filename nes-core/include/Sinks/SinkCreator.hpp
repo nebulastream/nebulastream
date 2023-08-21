@@ -75,7 +75,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                const std::string& filePath,
                                bool append,
                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                               uint64_t numberOfOrigins = 1);
+                               uint64_t numberOfOrigins = 1,
+                               bool addTimestamp = false);
 
 /**
  * @brief create a binary test sink with a schema into the nes

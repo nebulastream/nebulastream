@@ -29,8 +29,10 @@ class FileSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Factory method to create a new file sink descriptor
-     * @param schema output schema of this sink descriptor
-     * @param filePath the path to the output file
+     * @param fileName the path to the output file
+     * @param sinkFormat the sink format
+     * @param append flag to indicate if to append to file
+     * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
      * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
@@ -38,16 +40,38 @@ class FileSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(std::string fileName,
                                     std::string sinkFormat,
                                     const std::string& append,
+                                    bool addTimestamp,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
+     * @brief Factory method to create a new file sink descriptor
+     * @param fileName the path to the output file
+     * @param sinkFormat the sink format
+     * @param append flag to indicate if to append to file
+     * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfOrigins: number of origins of a given query
+     * @return descriptor for file sink
+     */
+    static SinkDescriptorPtr create(std::string fileName,
+                                    std::string sinkFormat,
+                                    const std::string& append);
+
+    /**
      * @brief Factory method to create a new file sink descriptor as default
-     * @param schema output schema of this sink descriptor
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
     static SinkDescriptorPtr create(std::string fileName);
+
+    /**
+     * @brief Factory method to create a new file sink descriptor as default
+     * @param filePath the path to the output file
+     * @param addTimestamp specify to add a timestamp when writing to file
+     * @return descriptor for file sink
+     */
+    static SinkDescriptorPtr create(std::string fileName, bool addTimestamp);
 
     /**
      * @brief Get the file name where the data is to be written
@@ -65,6 +89,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     explicit FileSinkDescriptor(std::string fileName,
                                 std::string sinkFormat,
                                 bool append,
+                                bool addTimestamp,
                                 FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins);
     std::string fileName;

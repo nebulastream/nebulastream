@@ -185,7 +185,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       fileSinkDescriptor->getFileName(),
                                       fileSinkDescriptor->getAppend(),
                                       fileSinkDescriptor->getFaultToleranceType(),
-                                      fileSinkDescriptor->getNumberOfOrigins());
+                                      fileSinkDescriptor->getNumberOfOrigins(),
+                                      fileSinkDescriptor->getAddTimestamp());
         }
 #ifdef ENABLE_ARROW_BUILD
         else if (fileSinkDescriptor->getSinkFormatAsString() == "ARROW_FORMAT") {

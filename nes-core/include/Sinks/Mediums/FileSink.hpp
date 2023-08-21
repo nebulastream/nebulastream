@@ -43,6 +43,7 @@ class FileSink : public SinkMedium {
      * @param modus of writting (overwrite or append)
      * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
+     * @param addTimestamp: bool to add a timestamp when writing to file as text
      */
     explicit FileSink(SinkFormatPtr format,
                       Runtime::NodeEnginePtr nodeEngine,
@@ -52,7 +53,8 @@ class FileSink : public SinkMedium {
                       QueryId queryId,
                       QuerySubPlanId querySubPlanId,
                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                      uint64_t numberOfOrigins = 1);
+                      uint64_t numberOfOrigins = 1,
+                      bool addTimestamp = false);
 
     /**
      * @brief dtor
@@ -95,9 +97,17 @@ class FileSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  protected:
-    std::string filePath;
-    std::ofstream outputFile;
+    /**T
+     * @brief method to return if the sink is appended
+     * @return bool indicating append
+     */
+    bool getAppend() const;
+
+    /**
+     * @brief method to return if the sink is append or overwrite
+     * @return string of mode
+     */
+    std::string getAppendAsString() const;
 
   private:
     /**
@@ -106,6 +116,11 @@ class FileSink : public SinkMedium {
      * @return bool indicating if the write was complete
      */
     bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
+
+  protected:
+    std::string filePath;
+    std::ofstream outputFile;
+    bool append{false};
 
 #ifdef ENABLE_ARROW_BUILD
     /**

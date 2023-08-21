@@ -27,27 +27,6 @@ namespace NES {
 CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::optional<Runtime::TupleBuffer> CsvFormat::getSchema() {
-    auto buf = this->bufferManager->getBufferBlocking();
-    std::stringstream ss;
-    uint64_t numberOfFields = schema->fields.size();
-    for (uint64_t i = 0; i < numberOfFields; i++) {
-        ss << schema->fields[i]->toString();
-        if (i < numberOfFields - 1) {
-            ss << ',';
-        }
-    }
-    ss << std::endl;
-    ss.seekg(0, std::ios::end);
-    if (std::streamoff const tg = ss.tellg(); tg > 0 && static_cast<uint64_t>(tg) > buf.getBufferSize()) {
-        NES_THROW_RUNTIME_ERROR("Schema buffer is too large");
-    }
-    std::string schemaString = ss.str();
-    std::memcpy(buf.getBuffer(), schemaString.c_str(), ss.tellg());
-    buf.setNumberOfTuples(ss.tellg());
-    return buf;
-}
-
 std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& inputBuffer) {
     std::vector<Runtime::TupleBuffer> buffers;
 

@@ -29,7 +29,9 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    explicit SinkDescriptor(FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
+    SinkDescriptor();
+    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp);
 
     virtual ~SinkDescriptor() = default;
 
@@ -65,6 +67,12 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     uint64_t getNumberOfOrigins() const;
 
     /**
+     * @brief getter for addTimestamp field
+     * @return addTimestamp
+     */
+    bool getAddTimestamp() const;
+
+    /**
     * @brief Dynamically casts the node to a NodeType
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
@@ -87,6 +95,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   protected:
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
+    bool addTimestamp;
 };
 
 }// namespace NES

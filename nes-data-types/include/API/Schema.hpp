@@ -167,7 +167,7 @@ class Schema {
      * @brief returns a string representation
      * @return
      */
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string toString(std::string prefix="", std::string sep=" ", std::string suffix=" ") const;
 
     /**
      * @brief returns the string representation of layout

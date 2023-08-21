@@ -26,8 +26,6 @@ JsonFormat::JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager
 
 std::vector<Runtime::TupleBuffer> JsonFormat::getData(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
-std::optional<Runtime::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
-
 std::string JsonFormat::toString() { return "JSON_FORMAT"; }
 FormatTypes JsonFormat::getSinkFormat() { return FormatTypes::JSON_FORMAT; }
 
