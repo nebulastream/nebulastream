@@ -24,12 +24,12 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseUnitTest.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Operators {
 
-class VectorizeOperatorTest : public Testing::NESBaseTest {
+class VectorizeOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
