@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.204](https://github.com/nebulastream/nebulastream/tree/v0.5.204) (2023-08-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.203...v0.5.204)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrage new request executor service [\#4078](https://github.com/nebulastream/nebulastream/issues/4078)
+
 ## [v0.5.203](https://github.com/nebulastream/nebulastream/tree/v0.5.203) (2023-08-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.202...v0.5.203)
