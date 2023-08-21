@@ -19,6 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -153,8 +154,31 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
 }
 
 /**
+* @brief Test simple UDF with string objects as input and output
+* The UDF sets incoming tuples to false.
+*/
+TEST_F(MapPythonUdfOperatorTest, StringUDFTest) {
+    inputSchema = Schema::create()->addField("id",  BasicType::TEXT);
+    outputSchema = Schema::create()->addField("id",  BasicType::TEXT);
+    function = "def string_test(x):\n\tx = \"new value\"\n\treturn x\n";
+    functionName = "string_test";
+
+    auto initialValue = "old value";
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<Text>(initialValue)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), Value<Text>("new value"));
+}
+
+/**
 * @brief Test simple UDF with loaded java classes as input and output
 * The UDF sets the bool to false, numerics +10 and appends to strings the postfix 'appended'.
+ * TODO #3980 Add string to this test
 */
 TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();

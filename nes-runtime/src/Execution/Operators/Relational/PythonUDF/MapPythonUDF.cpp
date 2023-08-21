@@ -86,6 +86,17 @@ void createBooleanPythonObject(void* state, bool value) {
 }
 
 /**
+ * @brief Creates the string object for the python udf argument
+ * @param state PythonUDFOperatorHandler
+ * @param value TextValue value
+ */
+void createStringPythonObject(void* state, TextValue* value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    handler->setPythonVariable(PyUnicode_FromString(value->strn_copy().data()));
+}
+
+/**
  * @brief Creates the float object for the python udf argument
  * @param state PythonUDFOperatorHandler
  * @param value float value
@@ -201,11 +212,10 @@ void setPythonArgumentAtPosition(void* state, int position) {
 }
 /**
  * @brief Transforms python object output into c++ data types
- * @tparam T
- * @param state
- * @param outputPtr
- * @param position
- * @param tupleSize
+ * @tparam T data type to transform output into
+ * @param outputPtr pointer of the output python object
+ * @param position n-th value in the output python object, which is a tuple in case the user returns multiple variables
+ * @param tupleSize size of the output tuple
  * @return
  */
 template<typename T>
@@ -240,6 +250,9 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
         value = PyLong_AsLong(output);
     } else if constexpr (std::is_same<T, int8_t>::value) {
         value = PyLong_AsLong(output);
+    } else if constexpr (std::is_same<T, TextValue*>::value) {
+        auto string = PyUnicode_AsUTF8(output);
+        value = TextValue::create(string);  // TODO check whether it is ok that string is a const char
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
@@ -331,6 +344,18 @@ int8_t transformByteType(void* outputPtr, int position, int tupleSize) {
 }
 
 /**
+ * @brief Transforms the PyObject into a byte
+ * @param outputPtr pyObject as a python tuple
+ * @param position position in the pyObject tuple
+ * @param tupleSize size of the tuple
+ * @return transformed output as a c++  data type
+ */
+TextValue* transformStringType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+    return transformOutputType<TextValue*>(outputPtr, position, tupleSize);
+}
+
+/**
  * @brief Undo initialization of the python interpreter
  * @param state
  */
@@ -367,13 +392,15 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
             FunctionCall("createIntegerPythonObject",
                          createIntegerPythonObject,
                          handler,
-                         record.read(fieldName).as<Int32>());// Integer
+                         record.read(fieldName).as<Int32>()); // Integer
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-            FunctionCall("createLongPythonObject", createLongPythonObject, handler, record.read(fieldName).as<Int64>());// Long
+            FunctionCall("createLongPythonObject", createLongPythonObject, handler, record.read(fieldName).as<Int64>()); // Long
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-            FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>());// Short
+            FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>()); // Short
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-            FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>());// Byte
+            FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>()); // Byte
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+            FunctionCall<>("createStringPythonObject", createStringPythonObject, handler, record.read(fieldName).as<Text>()->getReference()); // String
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
@@ -416,6 +443,9 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
             Value<> val =
                 FunctionCall("transformByteType", transformByteType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
             record.write(fieldName, val);// Byte
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+            Value<> val = FunctionCall<>("transformStringType", transformStringType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
+            record.write(fieldName, val);// String
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
