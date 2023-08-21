@@ -81,7 +81,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     if (curOperator->instanceOf<ProjectionLogicalOperatorNode>()) {
         pushBelowProjection(filterOperator, curOperator);
     } else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
-        pushFilterBelowMap(filterOperator, curOperator, parOperator);
+        pushFilterBelowMap(filterOperator, curOperator);
     } else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
         pushFilterBelowJoin(filterOperator, curOperator, parOperator);
     } else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
@@ -193,20 +193,11 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
 }
 
 void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator,
-                                            NodePtr mapOperator,
-                                            NodePtr parOperator) {
+                                            NodePtr mapOperator) {
     std::string mapFieldName = getFieldNameUsedByMapOperator(mapOperator);
-    bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
-    if (!predicateFieldManipulated) {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Map operator does not manipulate the same field that the filter uses, "
-                  "so we are able to push the filter below this operator.");
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Pushing filter below map operator...");
-        pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
-    } else {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Filter cant be pushed below map operator, "
-                  "inserting filter into new position...");
-        insertFilterIntoNewPosition(filterOperator, mapOperator, parOperator);
-    }
+    MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = mapOperator->as<MapLogicalOperatorNode>();
+    substituteFilterAttributeWithMapTransformation(filterOperator, mapLogicalOperatorNodePtr, mapFieldName);
+    pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
 }
 
 void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator) {
@@ -354,6 +345,7 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLog
     filterOperator->setPredicate(predicateCopy);
 }
 
+//todo: evaluate if we still need this method
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
                                                       const std::string& fieldName) {
     std::vector<FieldAccessExpressionNodePtr> filterAttributeNames = getFilterAccessExpressions(filterOperator->getPredicate());
@@ -370,5 +362,18 @@ std::string FilterPushDownRule::getFieldNameUsedByMapOperator(const NodePtr& nod
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
     return field->getFieldName();
+}
+//todo: add documentation
+void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(FilterLogicalOperatorNodePtr const& filterOperator,
+                                                                           const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName) {
+    NES_TRACE("Substitute filter attribute with map transformation.");
+    const FieldAssignmentExpressionNodePtr mapExpression = mapOperator->getMapExpression();
+    const ExpressionNodePtr mapTransformation = mapExpression->getAssignment();
+    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions = getFilterAccessExpressions(filterOperator->getPredicate());
+    for (auto& filterAccessExpression : filterAccessExpressions) {
+        if (filterAccessExpression->getFieldName() == fieldName) {
+            filterAccessExpression->replace(mapTransformation);
+        }
+    }
 }
 }// namespace NES::Optimizer
