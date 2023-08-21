@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -35,4 +35,4 @@ UDFCatalogHandle StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEM
 
 CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

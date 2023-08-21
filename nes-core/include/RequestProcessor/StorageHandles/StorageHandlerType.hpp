@@ -23,6 +23,6 @@ namespace NES::RequestProcessor::Experimental {
  */
 enum class StorageHandlerType : uint8_t { SerialHandler = 0, TwoPhaseLocking };
 
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
 
 #endif// NES_CORE_INCLUDE_UTIL_STORAGEHANDLERTYPE_HPP_

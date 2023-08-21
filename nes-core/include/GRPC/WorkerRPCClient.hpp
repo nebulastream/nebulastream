@@ -148,9 +148,9 @@ class WorkerRPCClient {
      * @param cq: completion queue of grpc requests
      */
     void stopQueryAsync(const std::string& address,
-                               QueryId queryId,
-                               Runtime::QueryTerminationType terminationType,
-                               const CompletionQueuePtr& cq);
+                        QueryId queryId,
+                        Runtime::QueryTerminationType terminationType,
+                        const CompletionQueuePtr& cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
@@ -189,11 +189,11 @@ class WorkerRPCClient {
      * @return true if successful, else false
      */
     bool updateNetworkSink(const std::string& address,
-                                  uint64_t newNodeId,
-                                  const std::string& newHostname,
-                                  uint32_t newPort,
-                                  uint64_t querySubPlanId,
-                                  uint64_t uniqueNetworkSinDescriptorId);
+                           uint64_t newNodeId,
+                           const std::string& newHostname,
+                           uint32_t newPort,
+                           uint64_t querySubPlanId,
+                           uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

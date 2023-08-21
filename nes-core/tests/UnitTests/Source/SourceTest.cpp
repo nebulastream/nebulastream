@@ -1915,8 +1915,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp, FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                 Optimizer::PlacementStrategy::BottomUp,
+                                                                 FaultToleranceType::NONE,
+                                                                 LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 

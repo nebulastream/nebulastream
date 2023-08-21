@@ -35,16 +35,16 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -220,17 +220,16 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
     deployQuery();
 
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest =
-        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     auto future = failQueryRequest->getFuture();
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                  topology,
-                                                  globalExecutionPlan,
-                                                  queryCatalogService,
-                                                  globalQueryPlan,
-                                                  sourceCatalog,
-                                                  udfCatalog});
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 queryCatalogService,
+                                                                 globalQueryPlan,
+                                                                 sourceCatalog,
+                                                                 udfCatalog});
     auto thread = std::make_shared<std::thread>([&failQueryRequest, &storageHandler, this]() {
         try {
             failQueryRequest->execute(storageHandler);
@@ -269,16 +268,15 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest =
-        Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                  topology,
-                                                  globalExecutionPlan,
-                                                  queryCatalogService,
-                                                  globalQueryPlan,
-                                                  sourceCatalog,
-                                                  udfCatalog});
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 queryCatalogService,
+                                                                 globalQueryPlan,
+                                                                 sourceCatalog,
+                                                                 udfCatalog});
     EXPECT_THROW(failQueryRequest->execute(storageHandler), Exceptions::QueryNotFoundException);
 }
 
@@ -295,16 +293,15 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest =
-        Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                  topology,
-                                                  globalExecutionPlan,
-                                                  queryCatalogService,
-                                                  globalQueryPlan,
-                                                  sourceCatalog,
-                                                  udfCatalog});
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 queryCatalogService,
+                                                                 globalQueryPlan,
+                                                                 sourceCatalog,
+                                                                 udfCatalog});
     EXPECT_THROW(failQueryRequest->execute(storageHandler), Exceptions::InvalidQueryStateException);
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

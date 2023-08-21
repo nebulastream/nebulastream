@@ -53,8 +53,9 @@ class QueryCatalogService {
      * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
      * @return query catalog entry or nullptr
      */
-    Catalogs::Query::QueryCatalogEntryPtr
-    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, const Optimizer::PlacementStrategy placementStrategyName);
+    Catalogs::Query::QueryCatalogEntryPtr createNewEntry(const std::string& queryString,
+                                                         QueryPlanPtr const& queryPlan,
+                                                         const Optimizer::PlacementStrategy placementStrategyName);
 
     /**
      * Add sub query meta data to the query

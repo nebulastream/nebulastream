@@ -31,12 +31,12 @@
 namespace NES {
 
 QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan)
-    : topology(topology), globalExecutionPlan(globalExecutionPlan),
-      workerRPCClient(WorkerRPCClient::create()) {
+    : topology(topology), globalExecutionPlan(globalExecutionPlan), workerRPCClient(WorkerRPCClient::create()) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan) {
+QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topology,
+                                                         const GlobalExecutionPlanPtr& globalExecutionPlan) {
     return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan));
 }
 

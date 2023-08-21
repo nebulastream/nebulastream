@@ -20,11 +20,11 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <gtest/gtest.h>
 
 namespace z3 {
@@ -51,4 +51,4 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     auto stopQueryRequest = Experimental::StopQueryRequest::create(queryId, retries);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental

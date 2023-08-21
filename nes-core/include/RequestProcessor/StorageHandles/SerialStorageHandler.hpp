@@ -109,5 +109,5 @@ class SerialStorageHandler : public StorageHandler {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

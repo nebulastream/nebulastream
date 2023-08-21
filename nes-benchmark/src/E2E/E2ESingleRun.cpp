@@ -145,7 +145,8 @@ void E2ESingleRun::runQuery() {
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         NES_INFO("E2EBase: Submitting query = {}", configOverAllRuns.query->getValue());
-        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), Optimizer::PlacementStrategy::BottomUp);
+        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(),
+                                                                     Optimizer::PlacementStrategy::BottomUp);
         submittedIds.push_back(queryId);
 
         if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {

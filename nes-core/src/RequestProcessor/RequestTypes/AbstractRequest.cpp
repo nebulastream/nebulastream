@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <Common/Identifiers.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
@@ -61,4 +61,4 @@ void AbstractRequest::preExecution(const StorageHandlerPtr& storageHandle) {
 std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
 
 void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
