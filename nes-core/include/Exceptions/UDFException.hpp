@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 
-#include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 #include <string>
 

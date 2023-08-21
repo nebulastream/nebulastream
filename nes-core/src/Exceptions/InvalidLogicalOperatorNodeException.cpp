@@ -15,5 +15,6 @@
 #include <Exceptions/InvalidLogicalOperatorException.hpp>
 
 namespace NES::Exceptions {
-InvalidLogicalOperatorException::InvalidLogicalOperatorException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
-}// namespace NES
+InvalidLogicalOperatorException::InvalidLogicalOperatorException(const std::string& message)
+    : Exceptions::RequestExecutionException(message) {}
+}// namespace NES::Exceptions
