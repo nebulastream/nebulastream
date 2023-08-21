@@ -49,8 +49,7 @@ class QueryUndeploymentPhase {
      * @param globalExecutionPlan : global execution plan
      * @return shared pointer to the instance of QueryUndeploymentPhase
      */
-    static QueryUndeploymentPhasePtr
-    create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
+    static QueryUndeploymentPhasePtr create(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan);
 
     /**
      * @brief method for stopping and undeploying the shared query with the given id
@@ -61,8 +60,7 @@ class QueryUndeploymentPhase {
     void execute(SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus);
 
   private:
-    explicit QueryUndeploymentPhase(TopologyPtr topology,
-                                    GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit QueryUndeploymentPhase(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan);
     /**
      * @brief method remove query from nodes
      * @param sharedQueryId : the id of the shared query plan

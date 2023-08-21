@@ -60,10 +60,10 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 }// namespace Catalogs
 
-namespace Experimental {
-class AsyncRequestExecutor;
-using AsyncRequestExecutorPtr = std::shared_ptr<AsyncRequestExecutor>;
-}// namespace Experimental
+namespace RequestProcessor::Experimental {
+class AsyncRequestProcessor;
+using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
+}// namespace RequestProcessor::Experimental
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
@@ -78,7 +78,7 @@ class QueryService {
                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                           const QueryParsingServicePtr& queryParsingService,
                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                          const NES::Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
+                          const NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr& asyncRequestExecutor,
                           const z3::ContextPtr& z3Context);
 
     /**
@@ -147,7 +147,7 @@ class QueryService {
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    NES::Experimental::AsyncRequestExecutorPtr asyncRequestExecutor;
+    NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
 };

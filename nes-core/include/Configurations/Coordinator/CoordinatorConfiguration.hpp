@@ -21,7 +21,7 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <REST/ServerTypes.hpp>
-#include <Util/StorageHandlerType.hpp>
+#include <RequestProcessor/StorageHandles/StorageHandlerType.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -94,8 +94,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Storage handler for request executor
      */
-    EnumOption<StorageHandlerType> storageHandlerType = {STORAGE_HANDLER_TYPE_CONFIG,
-                                                         StorageHandlerType::TwoPhaseLocking,
+    EnumOption<RequestProcessor::Experimental::StorageHandlerType> storageHandlerType = {STORAGE_HANDLER_TYPE_CONFIG,
+                                                        RequestProcessor::Experimental::StorageHandlerType::TwoPhaseLocking,
                                                          "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     /**

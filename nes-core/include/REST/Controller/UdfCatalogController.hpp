@@ -55,11 +55,11 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     UDFCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                         UDFCatalogPtr udfCatalog,
+                         const UDFCatalogPtr& udfCatalog,
                          const oatpp::String& completeRouterPrefix,
-                         ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(std::move(udfCatalog)),
-          errorHandler(std::move(errorHandler)) {}
+                         const ErrorHandlerPtr& errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(udfCatalog),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller

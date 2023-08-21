@@ -32,21 +32,20 @@
 
 namespace NES {
 
-QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           QueryCatalogServicePtr catalogService,
+QueryDeploymentPhase::QueryDeploymentPhase(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const QueryCatalogServicePtr& catalogService,
                                            bool accelerateJavaUDFs,
-                                           std::string accelerationServiceURL)
-    : workerRPCClient(WorkerRPCClient::create()), globalExecutionPlan(std::move(globalExecutionPlan)),
-      queryCatalogService(std::move(catalogService)), accelerateJavaUDFs(accelerateJavaUDFs),
-      accelerationServiceURL(std::move(accelerationServiceURL)) {}
+                                           const std::string& accelerationServiceURL)
+    : workerRPCClient(WorkerRPCClient::create()), globalExecutionPlan(globalExecutionPlan), queryCatalogService(catalogService),
+      accelerateJavaUDFs(accelerateJavaUDFs), accelerationServiceURL(accelerationServiceURL) {}
 
 QueryDeploymentPhasePtr
-QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                             QueryCatalogServicePtr catalogService,
+QueryDeploymentPhase::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                             const QueryCatalogServicePtr& catalogService,
                              const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
     return std::make_shared<QueryDeploymentPhase>(
-        QueryDeploymentPhase(std::move(globalExecutionPlan),
-                             std::move(catalogService),
+        QueryDeploymentPhase(globalExecutionPlan,
+                             catalogService,
                              coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs,
                              coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));
 }

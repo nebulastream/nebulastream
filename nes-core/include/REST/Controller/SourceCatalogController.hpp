@@ -40,11 +40,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
     SourceCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                            SourceCatalogServicePtr sourceCatalogService,
-                            ErrorHandlerPtr eHandler,
+                            const SourceCatalogServicePtr& sourceCatalogService,
+                            const ErrorHandlerPtr& eHandler,
                             const oatpp::String& completeRouterPrefix)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          sourceCatalogService(std::move(sourceCatalogService)), errorHandler(std::move(eHandler)) {}
+          sourceCatalogService(sourceCatalogService), errorHandler(eHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -52,9 +52,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<SourceCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                           SourceCatalogServicePtr sourceCatalogService,
-                                                           ErrorHandlerPtr errorHandler,
-                                                           std::string routerPrefixAddition) {
+                                                           const SourceCatalogServicePtr& sourceCatalogService,
+                                                           const ErrorHandlerPtr& errorHandler,
+                                                           const std::string& routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<SourceCatalogController>(objectMapper, sourceCatalogService, errorHandler, completeRouterPrefix);
     }

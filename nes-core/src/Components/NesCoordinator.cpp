@@ -26,6 +26,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
+#include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -34,7 +35,6 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
 #include <memory>
@@ -115,7 +115,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                              this->coordinatorConfiguration,
                                                                              z3Context);
 
-    StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
+    RequestProcessor::Experimental::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
                                                    topology,
                                                    globalExecutionPlan,
                                                    queryCatalogService,
@@ -123,7 +123,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                    sourceCatalog,
                                                    udfCatalog};
 
-    auto asyncRequestExecutor = std::make_shared<Experimental::AsyncRequestExecutor>(storageDataStructures);
+    auto asyncRequestExecutor = std::make_shared<RequestProcessor::Experimental::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
     queryService = std::make_shared<QueryService>(enableNewRequestExecutor,
                                                   this->coordinatorConfiguration->optimizer,

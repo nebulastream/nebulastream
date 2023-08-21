@@ -13,8 +13,8 @@
 */
 #include <Exceptions/ResourceLockingException.hpp>
 namespace NES::Exceptions {
-ResourceLockingException::ResourceLockingException(const std::string& message, ResourceType resourceType)
+ResourceLockingException::ResourceLockingException(const std::string& message, RequestProcessor::Experimental::ResourceType resourceType)
     : RequestExecutionException(message), resourceType(resourceType) {}
 
-NES::ResourceType ResourceLockingException::getResourceType() const { return resourceType; }
+RequestProcessor::Experimental::ResourceType ResourceLockingException::getResourceType() const { return resourceType; }
 }// namespace NES::Exceptions

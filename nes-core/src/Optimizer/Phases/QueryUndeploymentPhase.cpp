@@ -30,14 +30,14 @@
 
 namespace NES {
 
-QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan)
-    : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)),
+QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan)
+    : topology(topology), globalExecutionPlan(globalExecutionPlan),
       workerRPCClient(WorkerRPCClient::create()) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
-QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan) {
-    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan)));
+QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan) {
+    return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan));
 }
 
 void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {

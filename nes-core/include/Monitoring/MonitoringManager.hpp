@@ -67,8 +67,7 @@ class MonitoringManager {
      * @param metricStore the metric store
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
-    MonitoringManager(
-                      TopologyPtr topology,
+    MonitoringManager(TopologyPtr topology,
                       QueryServicePtr queryService,
                       QueryCatalogServicePtr catalogService,
                       MetricStorePtr metricStore,
@@ -79,7 +78,7 @@ class MonitoringManager {
      * @param topology the topology
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
-    MonitoringManager(                      TopologyPtr topology,
+    MonitoringManager(TopologyPtr topology,
                       QueryServicePtr queryService,
                       QueryCatalogServicePtr catalogService,
                       bool enableMonitoring);
@@ -87,11 +86,10 @@ class MonitoringManager {
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
+     * @param queryService: the query service
+     * @param queryCatalogService: the query catalog service
      */
-    MonitoringManager(
-                      TopologyPtr topology,
-                      QueryServicePtr queryService,
-                      QueryCatalogServicePtr catalogService);
+    MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr queryCatalogService);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --

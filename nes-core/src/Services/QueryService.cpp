@@ -24,20 +24,20 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <RequestProcessor/AsyncRequestProcessor.hpp>
+#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <WorkQueues/AsyncRequestExecutor.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/Experimental/AddQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 
 namespace NES {
 
@@ -48,7 +48,7 @@ QueryService::QueryService(bool enableNewRequestExecutor,
                            const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                            const QueryParsingServicePtr& queryParsingService,
                            const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                           const Experimental::AsyncRequestExecutorPtr& asyncRequestExecutor,
+                           const RequestProcessor::Experimental::AsyncRequestProcessorPtr& asyncRequestExecutor,
                            const z3::ContextPtr& z3Context)
     : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
       queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
@@ -98,16 +98,16 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
     } else {
 
-        auto addRequest = Experimental::AddQueryRequest::create(queryString,
-                                                                placementStrategy,
-                                                                faultTolerance,
-                                                                lineage,
-                                                                1,
-                                                                z3Context,
-                                                                queryParsingService);
+        auto addRequest = RequestProcessor::Experimental ::AddQueryRequest::create(queryString,
+                                                                                   placementStrategy,
+                                                                                   faultTolerance,
+                                                                                   lineage,
+                                                                                   1,
+                                                                                   z3Context,
+                                                                                   queryParsingService);
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
-        return std::static_pointer_cast<Experimental::AddQueryResponse>(future.get())->queryId;
+        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
     }
 }
 
@@ -151,10 +151,10 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
     } else {
         auto addRequest =
-            Experimental::AddQueryRequest::create(queryPlan, placementStrategy, faultTolerance, lineage, 1, z3Context);
+            RequestProcessor::Experimental::AddQueryRequest::create(queryPlan, placementStrategy, faultTolerance, lineage, 1, z3Context);
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
-        return std::static_pointer_cast<Experimental::AddQueryResponse>(future.get())->queryId;
+        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
     }
 }
 
@@ -171,7 +171,7 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
         }
         return false;
     } else {
-        auto stopRequest = Experimental::StopQueryRequest::create(queryId, 1);
+        auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, 1);
         asyncRequestExecutor->runAsync(stopRequest);
         return true;
     }
@@ -185,7 +185,7 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
         return queryRequestQueue->add(request);
     } else {
-        auto stopRequest = Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
+        auto stopRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
         asyncRequestExecutor->runAsync(stopRequest);
         return true;
     }
