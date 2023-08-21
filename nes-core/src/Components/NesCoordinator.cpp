@@ -27,6 +27,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
