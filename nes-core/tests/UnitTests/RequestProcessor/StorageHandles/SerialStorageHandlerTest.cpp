@@ -11,22 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseUnitTest.hpp>
-#include <Topology/Topology.hpp>
-#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
-#include <WorkQueues/StorageHandles/StorageDataStructures.hpp>
 
+#include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 class SerialStorageHandlerTest : public Testing::BaseUnitTest {
@@ -65,4 +62,4 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(requestId).get());
 }
 
-}// namespace NES
+}// namespace NES::RequestProcessor::Experimental
