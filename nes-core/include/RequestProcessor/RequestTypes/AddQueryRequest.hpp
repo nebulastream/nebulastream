@@ -221,6 +221,7 @@ class AddQueryRequest : public AbstractRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
 
   private:
+    QueryId queryId;
     std::string queryString;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;

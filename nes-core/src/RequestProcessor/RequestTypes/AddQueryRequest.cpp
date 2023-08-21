@@ -52,14 +52,14 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/ResourceType.hpp>
+#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/ResourceType.hpp>
-#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <string>
 #include <utility>
 
@@ -80,7 +80,7 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                        ResourceType::SourceCatalog,
                        ResourceType::CoordinatorConfiguration},
                       maxRetries),
-      queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
+      queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(queryParsingService) {}
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
@@ -97,8 +97,8 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::SourceCatalog,
                        ResourceType::CoordinatorConfiguration},
                       maxRetries),
-      queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy), faultTolerance(faultTolerance),
-      lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
+      queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
+      faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
 
 AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -221,11 +221,12 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         } else if (queryPlan && queryString.empty()) {
             queryString = queryPlan->toString();
         } else {
-            //FIXME: error handling
+            NES_ERROR("Please supply either query string or query plan while creating this request.");
+            NES_NOT_IMPLEMENTED();
         }
 
         // Set unique identifier and additional properties to the query
-        auto queryId = PlanIdGenerator::getNextQueryId();
+        queryId = PlanIdGenerator::getNextQueryId();
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
         queryPlan->setFaultToleranceType(faultTolerance);
@@ -345,4 +346,4 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
     return {};
 }
 
-}// namespace NES::Experimental
+}// namespace NES::RequestProcessor::Experimental
