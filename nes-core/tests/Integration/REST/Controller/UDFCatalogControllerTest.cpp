@@ -225,6 +225,8 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
     JavaUdfDescriptorMessage descriptor;
     javaUdfRequest.mutable_udfdescriptor()->mutable_descriptormessage()->UnpackTo(&descriptor);
     descriptor.clear_classes();
+    // have to do this otherwise the classes are not cleared in the java udf request
+    javaUdfRequest.mutable_udfdescriptor()->mutable_descriptormessage()->PackFrom(descriptor);
 
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/udfCatalog/registerUdf"},
                                  cpr::Header{{"Content-Type", "text/plain"}},
@@ -263,7 +265,7 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsJavaUDF) 
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
-    ASSERT_EQ(response.text, "Registered Java UDF");
+    ASSERT_EQ(response.text, "Registered UDF");
     // check to see if a udf has been added to the udf catalog
     ASSERT_FALSE(udfCatalog->listUDFs().empty());
     // get udf catalog entry
@@ -301,7 +303,7 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsPythonUDF
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
-    ASSERT_EQ(response.text, "Registered Python UDF");
+    ASSERT_EQ(response.text, "Registered UDF");
     // check to see if a udf has been added to the udf catalog
     ASSERT_FALSE(udfCatalog->listUDFs().empty());
     // get udf catalog entry
