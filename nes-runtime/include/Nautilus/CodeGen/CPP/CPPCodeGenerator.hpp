@@ -18,6 +18,7 @@
 #include <Nautilus/CodeGen/CodeGenerator.hpp>
 
 #include <Nautilus/CodeGen/CPP/Function.hpp>
+#include <Nautilus/CodeGen/CPP/Struct.hpp>
 
 #include <set>
 #include <vector>
@@ -49,10 +50,17 @@ public:
      */
     void addFunction(const std::shared_ptr<Function>& fn);
 
+    /**
+     * @brief Add a struct code generator to the top-level code generator.
+     * @param strct the struct code generator
+     */
+    void addStruct(const std::shared_ptr<Struct>& strct);
+
 private:
     std::set<std::string> includes;
     std::set<std::string> declarations;
     std::vector<std::shared_ptr<Function>> functions;
+    std::vector<std::shared_ptr<Struct>> structs;
 };
 
 } // namespace NES::Nautilus::CodeGen::CPP
