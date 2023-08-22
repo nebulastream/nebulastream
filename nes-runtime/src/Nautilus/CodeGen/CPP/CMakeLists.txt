@@ -19,4 +19,5 @@ add_source_files(
     IfElseSegment.cpp
     LabeledSegment.cpp
     Statement.cpp
+    Struct.cpp
 )
