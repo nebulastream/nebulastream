@@ -20,7 +20,9 @@ void Map::execute(ExecutionContext& ctx, Record& record) const {
     // assume that map expression performs a field write
     mapExpression->execute(record);
     // call next operator
-    child->execute(ctx, record);
+    if (hasChild()) {
+        child->execute(ctx, record);
+    }
 }
 
 }// namespace NES::Runtime::Execution::Operators
