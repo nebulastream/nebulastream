@@ -56,11 +56,18 @@ public:
      */
     void addStruct(const std::shared_ptr<Struct>& strct);
 
+    /**
+     * @brief Add a macro to the top-level code generator.
+     * @param macro the macro
+     */
+    void addMacro(const std::string& macro);
+
 private:
     std::set<std::string> includes;
     std::set<std::string> declarations;
     std::vector<std::shared_ptr<Function>> functions;
     std::vector<std::shared_ptr<Struct>> structs;
+    std::vector<std::string> macros;
 };
 
 } // namespace NES::Nautilus::CodeGen::CPP
