@@ -153,6 +153,17 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getBuffer() {
     return fn;
 }
 
+std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getNumberOfTuples() {
+    std::vector<std::string> specifiers{"__device__"};
+    std::vector<std::string> arguments{"const TupleBuffer tupleBuffer"};
+    auto fn = std::make_shared<CodeGen::CPP::Function>(specifiers, "uint64_t", "NES__CUDA__TupleBuffer__getNumberOfTuples", arguments);
+    auto functionBody = std::make_shared<CodeGen::Segment>();
+    auto returnStmt = std::make_shared<CodeGen::CPP::Statement>("return tupleBuffer.numberOfTuples");
+    functionBody->add(returnStmt);
+    fn->addSegment(functionBody);
+    return fn;
+}
+
 std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) {
     auto codeGen = std::make_unique<CodeGen::CPP::CPPCodeGenerator>();
     codeGen->addInclude("<cstdint>");
@@ -169,6 +180,9 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
 
     auto bufferFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getBuffer());
     codeGen->addFunction(bufferFn);
+
+    auto numberOfTuplesFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getNumberOfTuples());
+    codeGen->addFunction(numberOfTuplesFn);
 
     auto functionOperation = irGraph->getRootOperation();
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();

@@ -51,6 +51,8 @@ private:
 
     std::shared_ptr<CodeGen::CPP::Function> getBuffer();
 
+    std::shared_ptr<CodeGen::CPP::Function> getNumberOfTuples();
+
     Descriptor descriptor;
 };
 
