@@ -1266,6 +1266,22 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
         // TODO Lower physical vectorizable operators to Nautilus operators
     }
 
+    auto schemaSizes = std::vector<uint64_t>(nodes.size());
+    std::transform(
+        nodes.cbegin(),
+        nodes.cend(),
+        schemaSizes.begin(),
+        [](const std::shared_ptr<Node>& node) {
+            auto physicalOperator = node->as<PhysicalOperators::PhysicalUnaryOperator>();
+            return physicalOperator->getInputSchema()->getSchemaSizeInBytes();
+        }
+    );
+    auto schemaSizeIt = std::min_element(schemaSizes.cbegin(), schemaSizes.cend());
+    if (schemaSizeIt != std::max_element(schemaSizes.cbegin(), schemaSizes.cend())) {
+        // TODO Handle different buffer size between input and output schema in between operators.
+        NES_NOT_IMPLEMENTED();
+    }
+
     auto vectorizedPipelineOpt = buildNautilusOperatorPipeline(operators);
     if (!vectorizedPipelineOpt) {
         NES_ERROR("Failed to build a Nautilus operator pipeline");
@@ -1280,7 +1296,7 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
     // TODO Compile the execution trace to a kernel
     auto kernelExecutable = nullptr;
 
-    return std::make_shared<Runtime::Execution::Operators::Kernel>(std::move(kernelExecutable));
+    return std::make_shared<Runtime::Execution::Operators::Kernel>(std::move(kernelExecutable), *schemaSizeIt);
 }
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>

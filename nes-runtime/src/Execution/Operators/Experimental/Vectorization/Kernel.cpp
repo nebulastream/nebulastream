@@ -19,22 +19,24 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void invokeKernel(void* kernelExecutable, void* recordBuffer) {
+void invokeKernel(void* kernelExecutable, void* recordBuffer, uint64_t schemaSize) {
     auto executable = static_cast<Backends::KernelExecutable*>(kernelExecutable);
-    auto kernel = executable->getKernelWrapperFunction();
-    kernel(recordBuffer);
+    auto kernelWrapper = executable->getKernelWrapperFunction();
+    kernelWrapper(recordBuffer, schemaSize);
 }
 
-Kernel::Kernel(std::unique_ptr<Backends::KernelExecutable> kernelExecutable)
+Kernel::Kernel(std::unique_ptr<Backends::KernelExecutable> kernelExecutable, uint64_t schemaSize)
     : kernelExecutable(std::move(kernelExecutable))
+    , schemaSize(schemaSize)
 {
 
 }
 
 void Kernel::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto recordBufferRef = recordBuffer.getReference();
     auto kernelExecutableRef = Value<MemRef>((int8_t*) kernelExecutable.get());
-    Nautilus::FunctionCall("invokeKernel", invokeKernel, kernelExecutableRef, recordBufferRef);
+    auto recordBufferRef = recordBuffer.getReference();
+    auto schemaSizeVal = Value<UInt64>(schemaSize);
+    Nautilus::FunctionCall("invokeKernel", invokeKernel, kernelExecutableRef, recordBufferRef, schemaSizeVal);
     auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
     vectorizedChild->execute(ctx, recordBuffer);
 }
