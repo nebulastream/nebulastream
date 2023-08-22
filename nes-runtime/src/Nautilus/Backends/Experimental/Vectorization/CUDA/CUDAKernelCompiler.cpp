@@ -78,7 +78,7 @@ std::shared_ptr<IR::IRGraph> CUDAKernelCompiler::createIR(const std::shared_ptr<
     return ir;
 }
 
-std::shared_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock) {
+std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock) {
     std::vector<std::string> specifiers{"extern \"C\""};
     std::vector<std::string> arguments;
     for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
@@ -132,6 +132,23 @@ std::shared_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::getCudaKernelWrapper
     return kernelWrapperFn;
 }
 
+std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::cudaErrorCheck() {
+    std::vector<std::string> specifiers{};
+    std::vector<std::string> arguments{"cudaError_t code", "const char *file", "int line"};
+    auto fn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", "cudaErrorCheck", arguments);
+    auto functionBody = std::make_shared<CodeGen::Segment>();
+    auto code = R"(
+        if (code != cudaSuccess) {
+            auto error_string = cudaGetErrorString(code);
+            std::cerr << "Error at " << file << ":" << line << ": " << error_string << std::endl;
+        }
+    )";
+    auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
+    functionBody->add(stmt);
+    fn->addSegment(functionBody);
+    return fn;
+}
+
 std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) {
     auto cudaLoweringPlugin = CUDALoweringInterface();
 
@@ -139,9 +156,13 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     codeGen->addInclude("<cstdint>");
     codeGen->addInclude("<iostream>");
 
+    auto cudaErrorCheckFn = cudaErrorCheck();
+    codeGen->addFunction(cudaErrorCheckFn);
+    codeGen->addMacro("cudaCheck(err) do { cudaErrorCheck((err), __FILE__, __LINE__); } while (false)");
+
     auto functionOperation = irGraph->getRootOperation();
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
-    auto kernelWrapperFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getCudaKernelWrapper(functionBasicBlock));
+    auto kernelWrapperFn = getCudaKernelWrapper(functionBasicBlock);
     codeGen->addFunction(kernelWrapperFn);
 
     auto kernelFunctionBody = cudaLoweringPlugin.lowerGraph(irGraph);

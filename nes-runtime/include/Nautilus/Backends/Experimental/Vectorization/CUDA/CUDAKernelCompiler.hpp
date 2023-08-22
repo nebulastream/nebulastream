@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CUDA_CUDAKERNELCOMPILER_HPP_
 
 #include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
+#include <Nautilus/CodeGen/CPP/Function.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 
 namespace NES::Nautilus::Backends::CUDA {
@@ -37,7 +38,9 @@ private:
 
     std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 
-    std::shared_ptr<CodeGen::CodeGenerator> getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock);
+    std::shared_ptr<CodeGen::CPP::Function> getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock);
+
+    std::shared_ptr<CodeGen::CPP::Function> cudaErrorCheck();
 
     std::string kernelWrapperName;
     std::string kernelName;
