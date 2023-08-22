@@ -90,44 +90,46 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
 
     auto kernelWrapperFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "auto", kernelWrapperName, arguments);
     auto kernelWrapperFunctionBody = std::make_shared<CodeGen::Segment>();
+
     auto inputBufferArg = functionBasicBlock->getArguments().at(0);
     auto inputBufferVar = CUDALoweringInterface::getVariable(inputBufferArg->getIdentifier());
-    auto inputBufferType = CUDALoweringInterface::getType(inputBufferArg->getStamp());
-    auto numberOfTuples = "number_of_tuples";
-    auto tupleBuffer = "tuple_buffer";
-    auto inputBufferSize = "input_buffer_size";
-    auto threadsPerBlock = "threads_per_block";
-    auto blocksPerGrid = "blocks_per_grid";
-    auto deviceInputBuffer = "device_input_buffer";
-    auto getNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getNumberOfTuples = (uint64_t(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples)));
-    auto numberOfTuplesStmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto {} = NES__Runtime__TupleBuffer__getNumberOfTuples({})", numberOfTuples, inputBufferVar));
-    auto getBuffer = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getBuffer = (void*(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer)));
-    auto tupleBufferStmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto {} = NES__Runtime__TupleBuffer__getBuffer({})", tupleBuffer, inputBufferVar));
-    auto inputBufferSizeStmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto {} = {} * sizeof(uint8_t)", inputBufferSize, numberOfTuples));
-    auto deviceInputBufferDecl = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} {}", inputBufferType, deviceInputBuffer));
-    auto cudaMallocCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("cudaMalloc(&{}, {})", deviceInputBuffer, inputBufferSize));
-    auto cudaMemcpyHtoDCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("cudaMemcpy({}, {}, {}, cudaMemcpyHostToDevice)", deviceInputBuffer, tupleBuffer, inputBufferSize));
+
+    auto schemaSizeArg = functionBasicBlock->getArguments().at(1);
+    auto schemaSizeVar = CUDALoweringInterface::getVariable(schemaSizeArg->getIdentifier());
+
     // TODO This should be a parameter for performance tuning.
-    auto threadsPerBlockStmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto {} = 32", threadsPerBlock));
-    auto blocksPerGridStmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto {} = ({} + {} - 1) / {}", blocksPerGrid, numberOfTuples, threadsPerBlock, threadsPerBlock));
-    auto printCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("std::cout << \"Number of tuples, threads per block, blocks per grid: \" << {} << \", \" << {} << \", \" << {} << std::endl", numberOfTuples, threadsPerBlock, blocksPerGrid));
-    auto kernelCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{}<<<{}, {}>>>({})", kernelName, blocksPerGrid, threadsPerBlock, deviceInputBuffer));
-    auto cudaMemcpyDtoHCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("cudaMemcpy({}, {}, {}, cudaMemcpyDeviceToHost)", tupleBuffer, deviceInputBuffer, inputBufferSize));
-    auto cudaFreeCall = std::make_shared<CodeGen::CPP::Statement>(fmt::format("cudaFree({})", deviceInputBuffer));
-    kernelWrapperFunctionBody->add(getNumberOfTuples);
-    kernelWrapperFunctionBody->add(numberOfTuplesStmt);
-    kernelWrapperFunctionBody->add(getBuffer);
-    kernelWrapperFunctionBody->add(tupleBufferStmt);
-    kernelWrapperFunctionBody->add(inputBufferSizeStmt);
-    kernelWrapperFunctionBody->add(deviceInputBufferDecl);
-    kernelWrapperFunctionBody->add(cudaMallocCall);
-    kernelWrapperFunctionBody->add(cudaMemcpyHtoDCall);
-    kernelWrapperFunctionBody->add(threadsPerBlockStmt);
-    kernelWrapperFunctionBody->add(blocksPerGridStmt);
-    kernelWrapperFunctionBody->add(printCall);
-    kernelWrapperFunctionBody->add(kernelCall);
-    kernelWrapperFunctionBody->add(cudaMemcpyDtoHCall);
-    kernelWrapperFunctionBody->add(cudaFreeCall);
+    auto threadsPerBlock = "32";
+
+    auto getNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getNumberOfTuples = (uint64_t(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples)));
+    auto getBuffer = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getBuffer = (void*(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer)));
+
+    auto code = fmt::format(R"(
+        auto number_of_tuples = NES__Runtime__TupleBuffer__getNumberOfTuples({0});
+        auto buffer = NES__Runtime__TupleBuffer__getBuffer({0});
+        auto tuple_buffer = reinterpret_cast<uint8_t*>(buffer);
+
+        auto gpu_tuple_buffer = TupleBuffer{{ tuple_buffer, number_of_tuples }};
+        auto input_buffer_size = number_of_tuples * {1};
+
+        cudaCheck(cudaMalloc(&gpu_tuple_buffer.buffer, input_buffer_size));
+
+        cudaCheck(cudaMemcpy(gpu_tuple_buffer.buffer, tuple_buffer, input_buffer_size, cudaMemcpyHostToDevice));
+
+        auto threads_per_block = {2};
+        auto blocks_per_grid = (number_of_tuples + threads_per_block - 1) / threads_per_block;
+        std::cout << "Number of tuples, threads per block, blocks per grid: " << number_of_tuples << ", " << threads_per_block << ", " << blocks_per_grid << std::endl;
+
+        {3}<<<blocks_per_grid, threads_per_block>>>(gpu_tuple_buffer);
+
+        cudaCheck(cudaMemcpy(tuple_buffer, gpu_tuple_buffer.buffer, input_buffer_size, cudaMemcpyDeviceToHost));
+        cudaCheck(cudaFree(gpu_tuple_buffer.buffer))
+    )", inputBufferVar, schemaSizeVar, threadsPerBlock, kernelName);
+
+    auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
+
+    kernelWrapperFunctionBody->addToProlog(getNumberOfTuples);
+    kernelWrapperFunctionBody->addToProlog(getBuffer);
+    kernelWrapperFunctionBody->add(stmt);
     kernelWrapperFn->addSegment(kernelWrapperFunctionBody);
     return kernelWrapperFn;
 }
@@ -156,6 +158,11 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     codeGen->addInclude("<cstdint>");
     codeGen->addInclude("<iostream>");
 
+    auto gpuTupleBuffer = std::make_shared<CodeGen::CPP::Struct>("TupleBuffer");
+    gpuTupleBuffer->addField("uint8_t*", "buffer");
+    gpuTupleBuffer->addField("uint64_t", "numberOfTuples");
+    codeGen->addStruct(gpuTupleBuffer);
+
     auto cudaErrorCheckFn = cudaErrorCheck();
     codeGen->addFunction(cudaErrorCheckFn);
     codeGen->addMacro("cudaCheck(err) do { cudaErrorCheck((err), __FILE__, __LINE__); } while (false)");
@@ -165,13 +172,12 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     auto kernelWrapperFn = getCudaKernelWrapper(functionBasicBlock);
     codeGen->addFunction(kernelWrapperFn);
 
-    auto kernelFunctionBody = cudaLoweringPlugin.lowerGraph(irGraph);
     std::vector<std::string> specifiers{"__global__"};
-    auto inputBufferArg = functionBasicBlock->getArguments().at(0);
-    auto inputBufferVar = CUDALoweringInterface::getVariable(inputBufferArg->getIdentifier());
-    auto inputBufferType = CUDALoweringInterface::getType(inputBufferArg->getStamp());
-    std::vector<std::string> kernelArguments{inputBufferType + " " + inputBufferVar};
+    auto tupleBufferArg = functionBasicBlock->getArguments().at(0);
+    auto tupleBufferVar = CUDALoweringInterface::getVariable(tupleBufferArg->getIdentifier());
+    std::vector<std::string> kernelArguments{fmt::format("const TupleBuffer {}", tupleBufferVar)};
     auto kernelFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", kernelName, kernelArguments);
+    auto kernelFunctionBody = cudaLoweringPlugin.lowerGraph(irGraph);
     kernelFn->addSegment(std::move(kernelFunctionBody));
     codeGen->addFunction(kernelFn);
 
