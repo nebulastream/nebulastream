@@ -192,8 +192,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
     return false;
 }
 
-void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator,
-                                            NodePtr mapOperator) {
+void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator) {
     std::string mapFieldName = getFieldNameUsedByMapOperator(mapOperator);
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = mapOperator->as<MapLogicalOperatorNode>();
     substituteFilterAttributeWithMapTransformation(filterOperator, mapLogicalOperatorNodePtr, mapFieldName);
@@ -345,17 +344,6 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLog
     filterOperator->setPredicate(predicateCopy);
 }
 
-//todo: evaluate if we still need this method
-bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                      const std::string& fieldName) {
-    std::vector<FieldAccessExpressionNodePtr> filterAttributeNames = getFilterAccessExpressions(filterOperator->getPredicate());
-    return std::any_of(filterAttributeNames.begin(),
-                       filterAttributeNames.end(),
-                       [&](const FieldAccessExpressionNodePtr& filterAttributeName) {
-                           return filterAttributeName->getFieldName() == fieldName;
-                       });
-}
-
 std::string FilterPushDownRule::getFieldNameUsedByMapOperator(const NodePtr& node) {
     NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
@@ -363,17 +351,22 @@ std::string FilterPushDownRule::getFieldNameUsedByMapOperator(const NodePtr& nod
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
     return field->getFieldName();
 }
-//todo: add documentation
+
 void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                                           const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName) {
-    NES_TRACE("Substitute filter attribute with map transformation.");
+                                                                        const MapLogicalOperatorNodePtr& mapOperator,
+                                                                        const std::string& fieldName) {
+    NES_TRACE("Substitute filter predicate's field access expression with map transformation.");
+    NES_TRACE("Current map transformation: {}", mapOperator->getMapExpression()->toString());
     const FieldAssignmentExpressionNodePtr mapExpression = mapOperator->getMapExpression();
     const ExpressionNodePtr mapTransformation = mapExpression->getAssignment();
-    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions = getFilterAccessExpressions(filterOperator->getPredicate());
+    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions =
+        getFilterAccessExpressions(filterOperator->getPredicate());
     for (auto& filterAccessExpression : filterAccessExpressions) {
         if (filterAccessExpression->getFieldName() == fieldName) {
             filterAccessExpression->replace(mapTransformation);
         }
     }
+    NES_TRACE("Substituted filter predicate's field access expression with map transformation. {}",
+              filterOperator->getPredicate()->toString());
 }
 }// namespace NES::Optimizer
