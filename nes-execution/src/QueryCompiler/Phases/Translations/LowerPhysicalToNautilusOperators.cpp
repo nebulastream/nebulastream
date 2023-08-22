@@ -29,6 +29,7 @@
 #include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizedMap.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
@@ -92,6 +93,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalKernelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
@@ -182,7 +184,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(limit);
         return limit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
-        auto map = lowerMap(pipeline, operatorNode);
+        auto map = lowerMap(operatorNode);
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>()) {
@@ -460,12 +462,41 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return unvectorize;
     }
 
+<<<<<<< HEAD
     // Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins()) {
         auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
         if (resultOperator.has_value()) {
             parentOperator->setChild(*resultOperator);
             return *resultOperator;
+=======
+        auto stageBufferSize = options->getVectorizationOptions()->getStageBufferSize();
+        auto schemaSize = schema->getSchemaSizeInBytes();
+        auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
+            stageBufferSize,
+            schemaSize
+        );
+        operatorHandlers.push_back(handler);
+        uint64_t handlerIndex = operatorHandlers.size() - 1;
+
+        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto vectorize = std::make_shared<Runtime::Execution::Operators::Vectorize>(handlerIndex, std::move(memoryProvider));
+        parentOperator->setChild(vectorize);
+        return vectorize;
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
+        auto schema = operatorNode->getOutputSchema();
+        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
+        parentOperator->setChild(unvectorize);
+        return unvectorize;
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
+        auto kernelOpt = lowerKernel(operatorNode, bufferSize);
+        if (!kernelOpt) {
+            NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
+            return nullptr;
+>>>>>>> 159ff880d5 ([#4159] Lower physical vectorized map operator to Nautilus operator)
         }
     }
 
@@ -959,8 +990,7 @@ LowerPhysicalToNautilusOperators::lowerLimit(Runtime::Execution::PhysicalOperato
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
-                                           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
+LowerPhysicalToNautilusOperators::lowerMap(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
     auto assignmentField = mapOperator->getMapExpression()->getField();
     auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
@@ -1278,6 +1308,110 @@ LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vecto
     return op;
 }
 
+<<<<<<< HEAD
+=======
+std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
+LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize) {
+    auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
+
+    auto physicalVectorizedPipeline = physicalKernel->getVectorizedPipeline();
+    auto nodes = physicalVectorizedPipeline->getPipelineOperators();
+    std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>> operators;
+    for (const auto& node : nodes) {
+        if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedMapOperator>()) {
+            auto physicalVectorizedMapOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedMapOperator>();
+
+            auto outputSchema = physicalVectorizedMapOperator->getOutputSchema();
+            NES_ASSERT(outputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+            auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(outputSchema, bufferSize);
+            auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+
+            auto inputSchemaSize = physicalVectorizedMapOperator->getInputSchema()->getSchemaSizeInBytes();
+            if (inputSchemaSize != outputSchema->getSchemaSizeInBytes()) {
+                // TODO Handle different buffer size between input and output schema.
+                NES_NOT_IMPLEMENTED();
+            }
+
+            auto physicalMapOperator = physicalVectorizedMapOperator->getPhysicalMapOperator();
+            auto loweredOperator = lowerMap(physicalMapOperator);
+            auto mapOperator = std::dynamic_pointer_cast<Runtime::Execution::Operators::Map>(loweredOperator);
+            auto vectorizedMapOperator = std::make_shared<Runtime::Execution::Operators::VectorizedMap>(mapOperator, std::move(memoryProvider));
+            operators.push_back(vectorizedMapOperator);
+        }
+    }
+
+    auto schemaSizes = std::vector<uint64_t>(nodes.size());
+    std::transform(
+        nodes.cbegin(),
+        nodes.cend(),
+        schemaSizes.begin(),
+        [](const std::shared_ptr<Node>& node) {
+            auto physicalOperator = node->as<PhysicalOperators::PhysicalUnaryOperator>();
+            return physicalOperator->getInputSchema()->getSchemaSizeInBytes();
+        }
+    );
+    auto schemaSizeIt = std::min_element(schemaSizes.cbegin(), schemaSizes.cend());
+    if (schemaSizeIt != std::max_element(schemaSizes.cbegin(), schemaSizes.cend())) {
+        // TODO Handle different buffer size between input and output schema in between operators.
+        NES_NOT_IMPLEMENTED();
+    }
+
+    auto vectorizedPipelineOpt = buildNautilusOperatorPipeline(operators);
+    if (!vectorizedPipelineOpt) {
+        NES_ERROR("Failed to build a Nautilus operator pipeline");
+        return std::nullopt;
+    }
+    auto vectorizedPipeline = vectorizedPipelineOpt.value();
+
+    auto compileOptions = Nautilus::CompilationOptions();
+    compileOptions.setIdentifier("KernelCompilation");
+    auto dumpToFile = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE;
+    auto dumpToConsole = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+    auto dumpToBoth = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
+    compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
+    compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
+
+    auto cudaEnabled = options->getVectorizationOptions()->isUsingCUDA();
+    if (!cudaEnabled) {
+        NES_ERROR("Kernel compilation was requested but CUDA is not enabled");
+        return std::nullopt;
+    }
+
+    auto cudaThreadsPerBlock = options->getVectorizationOptions()->getCUDAThreadsPerBlock();
+    auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
+        .pipeline = vectorizedPipeline,
+        .compileOptions = compileOptions,
+        .inputSchemaSize = *schemaSizeIt,
+        .threadsPerBlock = cudaThreadsPerBlock,
+    };
+    return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
+}
+
+std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
+LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
+    if (operators.empty()) {
+        return std::nullopt;
+    }
+
+    auto op = operators.at(0);
+    if (operators.size() == 1) {
+        return op;
+    }
+
+    auto span = std::span{operators};
+    auto subspan = span.subspan(1, operators.size());
+    auto subvector = std::vector(subspan.begin(), subspan.end());
+    auto childOpOpt = buildNautilusOperatorPipeline(subvector);
+    if (childOpOpt) {
+        auto childOp = childOpOpt.value();
+        auto executableChildOp = std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(childOp);
+        op->setChild(executableChildOp);
+    }
+    return op;
+}
+
+>>>>>>> 159ff880d5 ([#4159] Lower physical vectorized map operator to Nautilus operator)
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
 }// namespace NES::QueryCompilation
