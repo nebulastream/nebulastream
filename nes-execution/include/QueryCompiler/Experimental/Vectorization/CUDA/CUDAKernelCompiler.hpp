@@ -49,6 +49,8 @@ private:
 
     std::shared_ptr<CodeGen::CPP::Function> cudaErrorCheck();
 
+    std::shared_ptr<CodeGen::CPP::Function> getBuffer();
+
     Descriptor descriptor;
 };
 
