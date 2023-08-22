@@ -12,6 +12,7 @@
 
 add_source_files(nes-runtime
         RecordBuffer.cpp
+        TupleBufferProxyFunctions.cpp
         )
 
 add_subdirectory(Expressions)
