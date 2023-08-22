@@ -25,6 +25,9 @@ using NodePtr = std::shared_ptr<Node>;
 class FilterLogicalOperatorNode;
 using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 
+class MapLogicalOperatorNode;
+using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
+
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 }// namespace NES
@@ -49,12 +52,11 @@ class FilterPushDownRule : public BaseRewriteRule {
     virtual ~FilterPushDownRule() = default;
 
     /**
-     * @brief Validate if the input field is used in the filter predicate of the operator
-     * @param filterOperator : filter operator whose predicate need to be checked
-     * @param fieldName :  name of the field to be checked
-     * @return true if field use in the filter predicate else false
+     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
+     * @param filterOperator
+     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
-    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
+    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
 
   private:
     explicit FilterPushDownRule();
@@ -134,9 +136,10 @@ class FilterPushDownRule : public BaseRewriteRule {
     bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
 
     /**
-     * @brief tries to push the filter below a map operator. This is possible as long as the map operator doesn't change any attribute that the filter uses
-     * @param filterOperator the filter operator that we try to push down
-     * @param mapOperator the map operator to which we want to push the filter down below. (it is currently the child of the filter)
+     * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
+     * substitute the filter's field access expression by the map transformation.
+     * @param filterOperator the filter operator that we want to push down
+     * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator
      */
     void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator);
@@ -174,13 +177,6 @@ class FilterPushDownRule : public BaseRewriteRule {
     static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
 
     /**
-     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
-     * @param filterOperator
-     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
-     */
-    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
-
-    /**
      * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
      * the filter attribute name is renamed.
      *
@@ -215,8 +211,14 @@ class FilterPushDownRule : public BaseRewriteRule {
     static void
     renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
 
+    /**
+     * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed
+     * @param filterOperator filter operator node to be pushed down
+     * @param mapOperator map operator node where the filter should be pushed below
+     * @param fieldName field name of the attribute that is assigned a field by the map transformation
+     */
     void substituteFilterAttributeWithMapTransformation(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                                            const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName)
+                                                                            const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName);
 };
 
 }// namespace NES::Optimizer
