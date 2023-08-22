@@ -33,11 +33,15 @@ std::shared_ptr<Nautilus::Tracing::ExecutionTrace> KernelCompiler::createTraceFr
     memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto recordBuffer = Runtime::Execution::RecordBuffer(memRef);
 
+    auto schemaSize = Nautilus::Value<Nautilus::UInt64>((uint64_t)0);
+    schemaSize.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, NES::Nautilus::IR::Types::StampFactory::createUInt64Stamp());
+
     auto vectorizedOperator = std::dynamic_pointer_cast<Runtime::Execution::Operators::VectorizableOperator>(nautilusOperator);
 
     return Nautilus::Tracing::traceFunction([&]() {
         auto traceContext = Nautilus::Tracing::TraceContext::get();
         traceContext->addTraceArgument(recordBuffer.getReference().ref);
+        traceContext->addTraceArgument(schemaSize.ref);
         auto ctx = Runtime::Execution::ExecutionContext(workerContextRef, pipelineExecutionContextRef);
         vectorizedOperator->execute(ctx, recordBuffer);
     });

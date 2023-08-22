@@ -25,7 +25,8 @@ namespace NES::Nautilus::Backends {
 // Kernel Signature:
 // - void function
 // - first parameter: void* for tuple buffer
-using KernelInvocable = Executable::Invocable<void, void*>;
+// - second parameter: uint64_t for schema size (TODO Make it part of a kernel config class)
+using KernelInvocable = Executable::Invocable<void, void*, uint64_t>;
 
 /**
  * @brief Implements the kernel executable.
