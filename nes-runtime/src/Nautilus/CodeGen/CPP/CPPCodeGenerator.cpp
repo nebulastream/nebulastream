@@ -34,6 +34,11 @@ std::string CPPCodeGenerator::toString() const {
         code << decl << ";\n";
     }
     code << "\n";
+    code << "// Macros\n";
+    for (const auto& macro : macros) {
+        code << "#define " << macro << "\n";
+    }
+    code << "\n";
     code << "// Functions\n";
     for (const auto& fn : functions) {
         code << fn->toString() << "\n";
@@ -56,6 +61,10 @@ void CPPCodeGenerator::addFunction(const std::shared_ptr<Function>& fn) {
 
 void CPPCodeGenerator::addStruct(const std::shared_ptr<Struct>& strct) {
     structs.push_back(strct);
+}
+
+void CPPCodeGenerator::addMacro(const std::string& macro) {
+    macros.push_back(macro);
 }
 
 } // namespace NES::Nautilus::CodeGen::CPP
