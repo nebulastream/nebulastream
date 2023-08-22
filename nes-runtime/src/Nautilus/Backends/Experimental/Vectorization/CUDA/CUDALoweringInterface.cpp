@@ -36,6 +36,18 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(co
         auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__TupleBuffer__getBuffer({})", var, inputBufferVar));
         code->add(stmt);
         return std::move(code);
+    } else if (operation->getFunctionSymbol() == "NES__Runtime__TupleBuffer__getNumberOfTuples") {
+        auto code = std::make_unique<CodeGen::Segment>();
+        auto inputBufferVar = getVariable(operation->getInputArguments().at(0)->getIdentifier());
+        auto identifier = operation->getIdentifier();
+        auto var = getVariable(identifier);
+        auto type = getType(operation->getStamp());
+        frame.setValue(identifier, var);
+        auto decl = std::make_shared<CodeGen::CPP::Statement>(type + " " + var);
+        code->addToProlog(decl);
+        auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__TupleBuffer__getNumberOfTuples({})", var, inputBufferVar));
+        code->add(stmt);
+        return std::move(code);
     }
     NES_NOT_IMPLEMENTED();
 }
