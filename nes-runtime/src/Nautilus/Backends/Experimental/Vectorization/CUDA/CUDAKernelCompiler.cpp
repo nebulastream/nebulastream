@@ -151,6 +151,17 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::cudaErrorCheck() {
     return fn;
 }
 
+std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getBuffer() {
+    std::vector<std::string> specifiers{"__device__"};
+    std::vector<std::string> arguments{"const TupleBuffer tupleBuffer"};
+    auto fn = std::make_shared<CodeGen::CPP::Function>(specifiers, "uint8_t*", "NES__CUDA__TupleBuffer__getBuffer", arguments);
+    auto functionBody = std::make_shared<CodeGen::Segment>();
+    auto returnStmt = std::make_shared<CodeGen::CPP::Statement>("return tupleBuffer.buffer");
+    functionBody->add(returnStmt);
+    fn->addSegment(functionBody);
+    return fn;
+}
+
 std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) {
     auto cudaLoweringPlugin = CUDALoweringInterface();
 
@@ -166,6 +177,9 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     auto cudaErrorCheckFn = cudaErrorCheck();
     codeGen->addFunction(cudaErrorCheckFn);
     codeGen->addMacro("cudaCheck(err) do { cudaErrorCheck((err), __FILE__, __LINE__); } while (false)");
+
+    auto bufferFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getBuffer());
+    codeGen->addFunction(bufferFn);
 
     auto functionOperation = irGraph->getRootOperation();
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();

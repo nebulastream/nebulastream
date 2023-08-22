@@ -42,6 +42,8 @@ private:
 
     std::shared_ptr<CodeGen::CPP::Function> cudaErrorCheck();
 
+    std::shared_ptr<CodeGen::CPP::Function> getBuffer();
+
     std::string kernelWrapperName;
     std::string kernelName;
 };
