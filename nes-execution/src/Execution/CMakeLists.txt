@@ -12,6 +12,7 @@
 
 add_source_files(nes-execution
         RecordBuffer.cpp
+        TupleBufferProxyFunctions.cpp
         )
 
 add_subdirectory(Aggregation)
