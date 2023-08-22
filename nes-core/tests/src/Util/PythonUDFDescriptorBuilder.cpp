@@ -16,7 +16,7 @@
 
 namespace NES::Catalogs::UDF {
 PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::build() {
-    return PythonUDFDescriptor::create(functionName, functionString, inputSchema, outputSchema);
+    return PythonUDFDescriptor::create(functionName, functionString, modulesToImport, inputSchema, outputSchema);
 }
 
 PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const std::string& newFunctionName) {
@@ -28,6 +28,12 @@ PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionString(const 
     this->functionString = newFunctionString;
     return *this;
 }
+
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setModulesToImport(const std::map<std::string, std::string> newModulesToImport) {
+    this->modulesToImport = newModulesToImport;
+    return *this;
+}
+
 
 PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr& newInputSchema) {
     this->inputSchema = newInputSchema;

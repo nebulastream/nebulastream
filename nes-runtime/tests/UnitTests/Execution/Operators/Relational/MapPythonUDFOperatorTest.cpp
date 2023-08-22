@@ -41,6 +41,7 @@ class MapPythonUdfOperatorTest : public testing::Test {
 std::string method = "map";
 SchemaPtr inputSchema, outputSchema;
 std::string function, functionName;
+std::map<std::string, std::string> modulesToImport;
 
 /**
 * @brief Test simple UDF with integer objects as input and output
@@ -53,7 +54,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     functionName = "integer_test";
 
     int32_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -75,7 +76,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
     functionName = "long_test";
 
     int64_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -97,7 +98,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
     functionName = "double_test";
 
     double initialValue = 42.0;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -119,7 +120,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
     functionName = "float_test";
 
     float initialValue = 42.0;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -141,7 +142,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
     functionName = "boolean_test";
 
     auto initialValue = true;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -150,6 +151,56 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
     auto record = Record({{"id", Value<Boolean>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), false);
+}
+
+/**
+* @brief Test simple UDF with importing a module and using it
+* The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapPythonUdfOperatorTest, MathImportUDFTest) {
+    inputSchema = Schema::create()->addField("x", BasicType::INT32)->addField("y", BasicType::INT32);
+    outputSchema = Schema::create()->addField("z", BasicType::FLOAT32);
+    function = "def math_pow_test(x, y):\n\tz = math.pow(x, y)\n\treturn z\n";
+    functionName = "math_pow_test";
+    modulesToImport["math"] = "";
+
+    int32_t x = 3;
+    int32_t y = 2;
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"x", Value<Int32>(x)},
+                          {"y", Value<Int32>(y)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("z"), 9.0);
+}
+
+/**
+* @brief Test simple UDF with importing a module with an alias and using it
+* The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapPythonUdfOperatorTest, MathImportWithAliasUDFTest) {
+    inputSchema = Schema::create()->addField("x", BasicType::INT32)->addField("y", BasicType::INT32);
+    outputSchema = Schema::create()->addField("z", BasicType::FLOAT32);
+    function = "def math_pow_test(x, y):\n\tz = m.pow(x, y)\n\treturn z\n";
+    functionName = "math_pow_test";
+    modulesToImport["math"] = "m";
+
+    int32_t x = 3;
+    int32_t y = 2;
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"x", Value<Int32>(x)},
+                          {"y", Value<Int32>(y)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("z"), 9.0);
 }
 
 /**
@@ -193,7 +244,7 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     float initialFloat = 15.0;
     double initialDouble = 16.0;
     bool initialBool = true;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);

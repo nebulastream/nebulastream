@@ -18,6 +18,7 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Python.h>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <map>
 #include <mutex>
 #include <utility>
 
@@ -30,9 +31,10 @@ class PythonUDFOperatorHandler : public OperatorHandler {
   public:
     explicit PythonUDFOperatorHandler(const std::string& function,
                                       const std::string& functionName,
+                                      const std::map<std::string, std::string> modulesToImport,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema)
-        : function(function), functionName(functionName), inputSchema(inputSchema), outputSchema(outputSchema) {}
+        : function(function), functionName(functionName), modulesToImport(modulesToImport), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
     /**
      * @brief This method returns the udf as a string
@@ -115,6 +117,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
   private:
     const std::string function;
     const std::string functionName;
+    const std::map<std::string, std::string> modulesToImport;
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     std::string moduleName;

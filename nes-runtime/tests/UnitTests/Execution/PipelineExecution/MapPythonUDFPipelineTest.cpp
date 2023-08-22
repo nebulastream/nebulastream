@@ -109,8 +109,8 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
-    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, schema, schema);
+auto initMapHandler(std::string function, std::string functionName, std::map<std::string, std::string> modulesToImport, SchemaPtr schema) {
+    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, schema, schema);
 }
 
 /**
@@ -146,7 +146,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
 
     std::string function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "integer_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -169,7 +170,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def short_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "short_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -192,7 +194,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def byte_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "byte_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -215,7 +218,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "long_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -238,7 +242,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
     std::string functionName = "double_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -266,7 +271,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
     std::string functionName = "boolean_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -309,7 +315,8 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def string_test(x):\n\tx = x+\"X\"\n\treturn x\n";
     std::string functionName = "string_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -380,7 +387,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
                            "\n\tboolean_var = False"
                            "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
     std::string functionName = "complex_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

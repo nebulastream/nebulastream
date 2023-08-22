@@ -35,7 +35,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::BaseIntegrationTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setting up Nautilus Compiler");
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
@@ -44,7 +44,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::BaseIntegrationTest::TearDown();
+        Testing::BaseUnitTest::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down MapPythonUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }
@@ -78,6 +78,7 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
+    const std::map<std::string, std::string> modulesToImport;
 
     auto functionName = "integer_test";
     auto functionString = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
@@ -85,6 +86,7 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     auto pythonUDFDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder{}
                                    .setFunctionName(functionName)
                                    .setFunctionString(functionString)
+                                   .setModulesToImport(modulesToImport)
                                    .setOutputSchema(outputSchema)
                                    .build();
 

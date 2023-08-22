@@ -17,6 +17,7 @@
 
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -29,21 +30,29 @@ class PythonUDFDescriptor : public UDFDescriptor {
   public:
     PythonUDFDescriptor(const std::string& functionName,
                         const std::string& functionString,
+                        const std::map<std::string, std::string>& modulesToImport,
                         const SchemaPtr& inputSchema,
                         const SchemaPtr& outputSchema);
 
     static PythonUDFDescriptorPtr create(const std::string& functionName,
                                          const std::string& functionString,
+                                         const std::map<std::string, std::string> modulesToImport,
                                          const SchemaPtr inputSchema,
                                          const SchemaPtr outputSchema) {
-        return std::make_shared<PythonUDFDescriptor>(functionName, functionString, inputSchema, outputSchema);
+        return std::make_shared<PythonUDFDescriptor>(functionName, functionString, modulesToImport, inputSchema, outputSchema);
     }
 
     /**
-     * @brief Return the fully-qualified class name of the class implementing the UDF.
+     * @brief Return the fully-qualified function string of the UDF
      * @return Fully-qualified class name of the class implementing the UDF.
      */
     const std::string& getFunctionString() const { return functionString; }
+
+    /**
+     * @brief Return the map containing modules that we need to import
+     * @return Fully-qualified class name of the class implementing the UDF.
+     */
+    const std::map<std::string, std::string>& getModulesToImport() const { return modulesToImport; }
 
     /**
      * @brief Generates the infer string signature required for the logical operator
@@ -62,6 +71,7 @@ class PythonUDFDescriptor : public UDFDescriptor {
 
   private:
     const std::string functionString;
+    const std::map<std::string, std::string> modulesToImport;
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_

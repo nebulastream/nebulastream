@@ -20,9 +20,10 @@ namespace NES::Catalogs::UDF {
 
 PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
                                          const std::string& functionString,
+                                         const std::map<std::string, std::string>& modulesToImport,
                                          const SchemaPtr& inputSchema,
                                          const SchemaPtr& outputSchema)
-    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
+    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString), modulesToImport(modulesToImport) {
     if (functionString.empty()) {
         throw UDFException("Function String of Python UDF must not be empty");
     }
