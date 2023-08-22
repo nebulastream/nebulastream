@@ -29,13 +29,15 @@ public:
     /**
      * @brief Constructor.
      * @param kernelExecutable the kernel executable
+     * @param schemaSize the schema size
      */
-    explicit Kernel(std::unique_ptr<Backends::KernelExecutable> kernelExecutable);
+    explicit Kernel(std::unique_ptr<Backends::KernelExecutable> kernelExecutable, uint64_t schemaSize);
 
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
     std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
+    uint64_t schemaSize;
 };
 
 } // namespace NES::Runtime::Execution::Operators
