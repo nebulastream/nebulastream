@@ -23,9 +23,18 @@ std::string CPPCodeGenerator::toString() const {
     for (const auto& file : includes) {
         code << "#include " << file << "\n";
     }
+    code << "\n";
+    code << "// Structs\n";
+    for (const auto& strct : structs) {
+        code << strct->toString() << ";\n";
+    }
+    code << "\n";
+    code << "// Global declarations\n";
     for (const auto& decl : declarations) {
         code << decl << ";\n";
     }
+    code << "\n";
+    code << "// Functions\n";
     for (const auto& fn : functions) {
         code << fn->toString() << "\n";
     }
@@ -43,6 +52,10 @@ void CPPCodeGenerator::addDeclaration(const std::string& declaration) {
 void CPPCodeGenerator::addFunction(const std::shared_ptr<Function>& fn) {
     functions.push_back(fn);
     declarations.insert(fn->getSignature());
+}
+
+void CPPCodeGenerator::addStruct(const std::shared_ptr<Struct>& strct) {
+    structs.push_back(strct);
 }
 
 } // namespace NES::Nautilus::CodeGen::CPP
