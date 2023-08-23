@@ -39,6 +39,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @return shared pointer to the placement strategy
      */
     static std::unique_ptr<ElegantPlacementStrategy> create(const std::string& serviceURL,
+                                                            const float& timeWeightValue,
                                                             PlacementStrategy placementStrategy,
                                                             GlobalExecutionPlanPtr globalExecutionPlan,
                                                             TopologyPtr topology,

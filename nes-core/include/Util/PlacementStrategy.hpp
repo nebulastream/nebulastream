@@ -29,7 +29,7 @@ enum class PlacementStrategy : uint8_t {
     MlHeuristic = 5,
     ELEGANT_PERFORMANCE = 6,
     ELEGANT_ENERGY = 7,
-    ELEGANT_BALANCED = 8
+    ELEGANT = 8
     // FIXME: enable them with issue #755
     // LowLatency,
     //  HighThroughput,

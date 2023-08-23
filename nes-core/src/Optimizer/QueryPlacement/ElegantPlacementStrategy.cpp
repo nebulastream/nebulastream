@@ -29,18 +29,23 @@ namespace NES::Optimizer {
 
 std::unique_ptr<ElegantPlacementStrategy>
 ElegantPlacementStrategy::create(const std::string& serviceURL,
+                                 const float& timeWeightValue,
                                  PlacementStrategy placementStrategy,
                                  NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                  NES::TopologyPtr topology,
                                  NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
 
-    float timeWeight = 0.0;
+    float timeWeight = 1.0;
 
     switch (placementStrategy) {
-        case PlacementStrategy::ELEGANT_PERFORMANCE: timeWeight = 1; break;
-        case PlacementStrategy::ELEGANT_ENERGY: timeWeight = 0; break;
-        case PlacementStrategy::ELEGANT_BALANCED: timeWeight = 0.5; break;
+        case PlacementStrategy::ELEGANT_PERFORMANCE: timeWeight = 1.0; break;
+        case PlacementStrategy::ELEGANT_ENERGY: timeWeight = 0.0; break;
+        case PlacementStrategy::ELEGANT: timeWeight = timeWeightValue; break;
         default: NES_ERROR("Unknown placement strategy for elegant {}", magic_enum::enum_name(placementStrategy));
+    }
+
+    if (timeWeight > 1.0 || timeWeight < 0.0) {
+        NES_ERROR("TIME_WEIGHT not in range 0.0 - 1.0: {}", timeWeight);
     }
 
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,

@@ -171,7 +171,7 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     //8. Generate sample code for elegant planner
-    if (addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_BALANCED
+    if (addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT
         || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_PERFORMANCE
         || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_ENERGY) {
         queryPlan = sampleCodeGenerationPhase->execute(queryPlan);

@@ -266,7 +266,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = typeInferencePhase->execute(queryPlan);
 
         //8. Generate sample code for elegant planner
-        if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
+        if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT
             || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
             || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
             queryPlan = sampleCodeGenerationPhase->execute(queryPlan);

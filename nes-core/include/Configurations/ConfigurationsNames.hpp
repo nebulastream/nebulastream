@@ -88,6 +88,7 @@ const std::string ELEGANT = "elegant";                                // elegant
 const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";        // accelerate java udfs supplied in Map UDF operator
 const std::string PLANNER_SERVICE_URL = "plannerServiceURL";          // URL for ELEGANT planner
 const std::string ACCELERATION_SERVICE_URL = "accelerationServiceURL";// URL for acceleration service
+const std::string TIME_WEIGHT = "timeWeight";                         // weight between perf and energy efficiency
 
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";

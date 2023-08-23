@@ -35,6 +35,7 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                       const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
 
     std::string plannerURL = coordinatorConfiguration->elegantConfiguration.plannerServiceURL;
+    float timeWeightValue = coordinatorConfiguration->elegantConfiguration.timeWeight;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
@@ -43,8 +44,9 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
         case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
-        case PlacementStrategy::ELEGANT_BALANCED:
+        case PlacementStrategy::ELEGANT:
             return ElegantPlacementStrategy::create(plannerURL,
+                                                    timeWeightValue,
                                                     placementStrategy,
                                                     globalExecutionPlan,
                                                     topology,

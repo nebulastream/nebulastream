@@ -39,12 +39,26 @@ class ElegantConfigurations : public BaseConfiguration {
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
      */
-    StringOption plannerServiceURL = {PLANNER_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
+    StringOption plannerServiceURL = {
+            PLANNER_SERVICE_URL,
+            "https://localhost:8081/planner/schedule",
+            "Complete URL for connecting with the ELEGANT planner."
+    };
 
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
      */
     StringOption accelerationServiceURL = {ACCELERATION_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
+
+    /**
+     * @brief ELEGANT weight between performance (time) and energy efficiency. Example: time_weight = 0.95,
+     * energy_weight = (1 - time_weight) = 0.05
+     */
+    FloatOption timeWeight = {
+            TIME_WEIGHT,
+            0.5,
+            "Weight (range of 0-1) for Optimizer to choose between time and energy."
+    };
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
