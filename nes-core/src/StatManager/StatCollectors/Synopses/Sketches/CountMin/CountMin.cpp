@@ -94,7 +94,8 @@ namespace NES::Experimental::Statistics {
 
     // if we are checking whether two sketches are equal within the context of statistics collection, then their duration and frequency also needs to be identical
     if (statCollection) {
-      if ((leftCM->getDuration() != rightCM->getDuration()) || (leftCM->getFrequency() != rightCM->getFrequency())) {
+      if ((leftCM->getDuration() != rightCM->getDuration()) || (leftCM->getFrequency() != rightCM->getFrequency()) ||
+          (leftCM->getLogicalSourceName() != rightCM->getLogicalSourceName())) {
         return false;
       }
     }
@@ -133,8 +134,9 @@ namespace NES::Experimental::Statistics {
     // combinedStreamName
     auto PSN1 = leftCM->getPhysicalSourceName();
     auto PSN2 = rightCM->getPhysicalSourceName();
-    auto cmSketchConfig = new StatCollectorConfig(PSN1 + PSN2, leftCM->getField(), "FrequencyCM", leftCM->getDuration(),
-                                     leftCM->getFrequency(), error, prob, 0, 0);
+    auto cmSketchConfig = new StatCollectorConfig(leftCM->getLogicalSourceName(), PSN1 + PSN2, leftCM->getField(),
+                                                  "FrequencyCM", leftCM->getDuration(), leftCM->getFrequency(), error,
+                                                  prob, 0, 0);
 
     std::unique_ptr<CountMin> mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);
 //    CountMinPtr mergedSketch = std::make_unique<CountMin>(*cmSketchConfig);

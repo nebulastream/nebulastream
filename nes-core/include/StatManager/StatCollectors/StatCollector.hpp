@@ -40,6 +40,12 @@ namespace NES::Experimental::Statistics {
        * @brief gets the physicalSourceName over which the statistic object is constructed
        * @return physicalSourceName
        */
+      [[nodiscard]] const std::string& getLogicalSourceName() const;
+
+      /**
+       * @brief gets the physicalSourceName over which the statistic object is constructed
+       * @return physicalSourceName
+       */
       [[nodiscard]] const std::string& getPhysicalSourceName() const;
 
       /**
@@ -100,6 +106,7 @@ namespace NES::Experimental::Statistics {
       virtual StatCollectorPtr merge(StatCollectorPtr rightStatCollector, bool statCollection) = 0;
 
     private:
+      const std::string logicalSourceName;
       const std::string physicalSourceName;
       const std::string field;
       // TODO: rename to window size

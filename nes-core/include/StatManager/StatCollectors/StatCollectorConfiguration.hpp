@@ -18,21 +18,51 @@
 #include <math.h>
 #include <ctime>
 #include <string>
+#include <memory>
 
-namespace NES::Experimental::Statistics {
+namespace NES {
 
-  /**
-   * @brief a general purpose conficuration object for statCollectors
-   */
-  class StatCollectorConfig {
+  class Schema;
+  using SchemaPtr = std::shared_ptr<Schema>;
+
+  namespace Experimental::Statistics {
+
+    /**
+     * @brief a general purpose configuration object for statCollectors
+     */
+    class StatCollectorConfig {
 
     public:
+      /**
+       * @brief returns the logicalSourceName over which to construct the statCollector
+       * @return physicalSourceName
+       */
+      const std::string &getLogicalSourceName() const {
+        return logicalSourceName;
+      }
+
       /**
        * @brief returns the physicalSourceName over which to construct the statCollector
        * @return physicalSourceName
        */
       const std::string &getPhysicalSourceName() const {
         return physicalSourceName;
+      }
+
+      /**
+       * @brief returns the physicalSourceName over which to construct the statCollector
+       * @return physicalSourceName
+       */
+      SchemaPtr getSchema() const {
+        return schema;
+      }
+
+      /**
+       * @brief sets the schema of the config
+       * @param newSchema
+       */
+      void setSchema(const SchemaPtr& newSchema) {
+        schema = newSchema;
       }
 
       /**
@@ -102,6 +132,7 @@ namespace NES::Experimental::Statistics {
       /**
        * @brief the constructor of the statCollectorConfig, which defines which type of a statCollector to construct and
        * with which parametrization
+       * @param logicalSourceName the logicalSourceName
        * @param physicalSourceName the physicalSourceName over which to construct the statCollector
        * @param fieldName the fieldName over which to construct the statCollector
        * @param methodName the statCollector type to construct the statistic(s)
@@ -112,25 +143,30 @@ namespace NES::Experimental::Statistics {
        * @param dep the depth of a statCollector
        * @param wid the width of a statCollector
        */
-      StatCollectorConfig(const std::string& physicalSourceName = "defaultPhysicalSourceName", const std::string& fieldName = "defaultFieldName",
-                                           const std::string& methodName = "defaultStatMethodName", uint32_t dur = 1, uint32_t freq = 100,
-                                           double_t err = 0.0001, double_t prob = 0.0001, uint32_t dep = 0, uint32_t wid = 0)
-        : physicalSourceName(physicalSourceName), field(fieldName), statMethodName(methodName),
-          duration(dur), frequency(freq), error(err), probability(prob),
-          depth(dep), width(wid) {
+      StatCollectorConfig(const std::string &logicalSourceName = "defaultLogicalSourceName",
+                          const std::string &physicalSourceName = "defaultPhysicalSourceName",
+                          const std::string &fieldName = "defaultFieldName",
+                          const std::string &methodName = "defaultStatMethodName", uint32_t dur = 1,
+                          uint32_t freq = 100,
+                          double_t err = 0.0001, double_t prob = 0.0001, uint32_t dep = 0, uint32_t wid = 0)
+          : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName), field(fieldName),
+            statMethodName(methodName), duration(dur), frequency(freq), error(err), probability(prob),
+            depth(dep), width(wid) {
       }
 
-  private:
-    const std::string physicalSourceName;
-    const std::string field;
-    const std::string statMethodName;
-    const time_t duration;
-    const time_t frequency;
-    const double_t error;
-    const double_t probability;
-    const uint32_t depth;
-    const uint32_t width;
-  };
-} // NES::Experimental::Statistics
-
+    private:
+      const std::string logicalSourceName;
+      const std::string physicalSourceName;
+      SchemaPtr schema;
+      const std::string field;
+      const std::string statMethodName;
+      const time_t duration;
+      const time_t frequency;
+      const double_t error;
+      const double_t probability;
+      const uint32_t depth;
+      const uint32_t width;
+    };
+  } // Experimental::Statistics
+} // NES
 #endif //NES_CORE_INCLUDE_CONFIGURATIONS_STATMANAGERCONFIGURATION_HPP

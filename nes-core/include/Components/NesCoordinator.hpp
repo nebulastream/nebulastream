@@ -227,8 +227,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
-    void createStat(const Experimental::Statistics::StatCollectorConfig& config);
-
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient

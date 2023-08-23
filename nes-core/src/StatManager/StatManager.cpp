@@ -18,8 +18,15 @@
 #include <StatManager/StatCollectors/Synopses/Sketches/CountMin/CountMin.hpp>
 #include <StatManager/StatCollectors/StatCollector.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <API/QueryAPI.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 
 namespace NES::Experimental::Statistics {
 
@@ -27,7 +34,8 @@ namespace NES::Experimental::Statistics {
 		return statCollectors;
 	}
 
-  void StatManager::createStat (const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine) {
+
+  bool StatManager::createStat (const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine) {
     auto physicalSourceName = config.getPhysicalSourceName();
     auto field = config.getField();
     auto duration = config.getDuration();
@@ -49,6 +57,9 @@ namespace NES::Experimental::Statistics {
 
     // if the stat is not yet tracked, then create it
     if (!found) {
+      auto logicalStreamName = config.getLogicalSourceName();
+      auto schema = config.getSchema();
+
       if (statMethodName.compare("FrequencyCM")) {
         // get config values
         auto error = static_cast<double>(config.getError());
@@ -73,21 +84,63 @@ namespace NES::Experimental::Statistics {
 
               statCollectors.push_back(std::move(cm));
 
-              auto query = Query::from("testStream").filter(Attribute("f1") <= 2).sink(PrintSinkDescriptor::create());
+              Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
+              // We inject an invalid query parsing service as it is not used in the tests.
+              auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+              sourceCatalog->addLogicalSource(logicalStreamName, schema);
+              typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
+//              auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+
+              auto query = Query::from(logicalStreamName).filter(Attribute(field) <= 2).sink(PrintSinkDescriptor::create());
+              auto queryPlan = query.getQueryPlan();
+
+              queryPlan = typeInferencePhase->execute(queryPlan);
+//              queryPlan = originIdInferencePhase->execute(queryPlan);
+              auto queryId = queryPlan->getQueryId();
+
+              auto srcOperators = queryPlan->getSourceOperators();
+              srcOperators[0]->getSourceDescriptor()->setPhysicalSourceName(physicalSourceName);
+              srcOperators[0]->getSourceDescriptor()->setSchema(schema);
               bool success = nodeEngine->registerQueryInNodeEngine(query.getQueryPlan());
 
+              NES_INFO("Query register successfully: {}", success);
+
+              success = nodeEngine->startQuery(queryPlan->getQueryId());
+
+              NES_INFO("Query started successfully: {}", success);
+
+              success = nodeEngine->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running;
+
+              NES_INFO("Query is running: {}", success);
+
+              while (0) {
+                if (nodeEngine->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+                  success = nodeEngine->stopQuery(queryId);
+                  NES_INFO("Query stopped: {}", success);
+                  break;
+                }
+              }
+
+              success = nodeEngine->unregisterQuery(queryId);
+
+              NES_INFO("Query unregistered: {}", success);
+
+              return success;
             }
           }
         }
       // TODO: Potentially add more Synopses here dependent on Nautilus integration.
       } else {
         NES_DEBUG("statMethodName is not defined!");
+        return false;
       }
     }
+    NES_DEBUG("Statistic already exists!")
+    return true;
   }
 
-  void StatManager::createStat (const StatCollectorConfig& config) {
+  bool StatManager::createStat (const StatCollectorConfig& config) {
     auto physicalSourceName = config.getPhysicalSourceName();
     auto field = config.getField();
     auto duration = config.getDuration();
@@ -132,14 +185,19 @@ namespace NES::Experimental::Statistics {
               std::unique_ptr<CountMin> cm = std::make_unique<CountMin>(config);
 
               statCollectors.push_back(std::move(cm));
+
+              return true;
             }
           }
         }
         // TODO: Potentially add more Synopses here dependent on Nautilus integration.
       } else {
         NES_DEBUG("statMethodName is not defined!");
+        return false;
       }
     }
+    NES_DEBUG("Stat already exists!")
+    return true;
   }
 
   double StatManager::queryStat (const StatCollectorConfig& config,

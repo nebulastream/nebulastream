@@ -17,6 +17,10 @@
 
 namespace NES::Experimental::Statistics {
 
+  const std::string& StatCollector::getLogicalSourceName() const {
+    return logicalSourceName;
+  }
+
   const std::string& StatCollector::getPhysicalSourceName() const {
     return physicalSourceName;
   }
@@ -34,7 +38,8 @@ namespace NES::Experimental::Statistics {
   }
 
   StatCollector::StatCollector(const StatCollectorConfig config)
-    : physicalSourceName(static_cast<std::string>(config.getPhysicalSourceName())),
+    : logicalSourceName(static_cast<std::string>(config.getLogicalSourceName())),
+      physicalSourceName(static_cast<std::string>(config.getPhysicalSourceName())),
       field(static_cast<std::string>(config.getField())),
       duration(static_cast<time_t>(config.getDuration())),
       frequency(static_cast<time_t>(config.getFrequency())) {

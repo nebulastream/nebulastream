@@ -256,6 +256,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+    NES::Experimental::Statistics::StatManagerPtr& getStatManager();
+
   private:
     /**
      * @brief method to register physical source with the coordinator

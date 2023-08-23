@@ -442,6 +442,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("val1") < 2).sink(PrintSinkDescriptor::create());
+    query.getQueryPlan();
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,

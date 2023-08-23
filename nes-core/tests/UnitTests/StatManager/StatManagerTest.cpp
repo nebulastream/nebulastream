@@ -131,9 +131,9 @@ namespace NES {
 
     // create schema
     auto testSchema = Schema::create()
-        ->addField(createField("f1", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("Coordinator started successfully");
+        ->addField(createField("defaultFieldName", BasicType::UINT64));
+    crd->getSourceCatalogService()->registerLogicalSource("defaultLogicalSourceName", testSchema);
+    StatCollectorConfig->setSchema(testSchema);
 
     // create test csv
     std::string testCSV = "1\n"
@@ -148,7 +148,7 @@ namespace NES {
     csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
+    auto physicalSource1 = PhysicalSource::create("defaultLogicalSourceName", "defaultPhysicalSourceName", csvSourceType1);
 
     // create worker
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -161,8 +161,10 @@ namespace NES {
     ASSERT_TRUE(retStart1);
     NES_INFO("Worker started successfully");
 
-    crd->createStat(*StatCollectorConfig);
+    auto& statManager = wrk1->getStatManager();
+    bool success = statManager->createStat(*StatCollectorConfig, wrk1->getNodeEngine());
 
-    auto nodeEngine = crd->getNodeEngine();
+    ASSERT_TRUE(success);
+
   }
 }

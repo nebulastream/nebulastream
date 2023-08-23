@@ -364,14 +364,6 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-void NesCoordinator::createStat(const Experimental::Statistics::StatCollectorConfig& config) {
-
-  this->statManager->createStat(config, this->getNodeEngine());
-
-  return;
-}
-
-
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }

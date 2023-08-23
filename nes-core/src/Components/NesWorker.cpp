@@ -577,4 +577,8 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
 
+NES::Experimental::Statistics::StatManagerPtr& NesWorker::getStatManager() {
+  return statManager;
+}
+
 }// namespace NES

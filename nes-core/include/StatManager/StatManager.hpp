@@ -27,6 +27,12 @@ namespace Runtime {
   using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 }
 
+namespace Optimizer {
+
+  class TypeInferencePhase;
+  using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+}
+
 namespace Experimental::Statistics {
 
   class StatCollectorConfig;
@@ -35,22 +41,23 @@ namespace Experimental::Statistics {
   using StatCollectorPtr = std::unique_ptr<StatCollector>;
 
   class StatManager {
-  private:
-    std::vector<StatCollectorPtr> statCollectors {};
+    private:
+      std::vector<StatCollectorPtr> statCollectors {};
+      Optimizer::TypeInferencePhasePtr typeInferencePhase;
 
-  public:
-    ~StatManager() = default;
+    public:
+      ~StatManager() = default;
 
-    std::vector<StatCollectorPtr>& getStatCollectors();
+      std::vector<StatCollectorPtr>& getStatCollectors();
 
-    void createStat(const StatCollectorConfig& config);
+      bool createStat(const StatCollectorConfig& config);
 
-    void createStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
+      bool createStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
 
-    double queryStat(const StatCollectorConfig& config,
-                     const uint32_t key);
+      double queryStat(const StatCollectorConfig& config,
+                       const uint32_t key);
 
-    void deleteStat(const StatCollectorConfig& config);
+      void deleteStat(const StatCollectorConfig& config);
   };
 
 } // Experimental::Statistics
