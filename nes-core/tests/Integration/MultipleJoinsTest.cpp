@@ -30,7 +30,7 @@ using namespace std;
 
 namespace NES::Runtime::Execution {
 
-class MultipleJoinsTest : public Testing::NESBaseTest,
+class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                           public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
   public:
     Runtime::BufferManagerPtr bufferManager;

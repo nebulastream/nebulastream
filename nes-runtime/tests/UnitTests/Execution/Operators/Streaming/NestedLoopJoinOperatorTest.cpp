@@ -123,7 +123,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
         nljOperatorHandler =
-            Operators::NLJOperatorHandler::create({0}, 1, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize);
+            Operators::NLJOperatorHandler::create({0}, 1, leftEntrySize, rightEntrySize, leftPageSize, rightPageSize, windowSize,
+                                                  windowSize);
         bm = std::make_shared<BufferManager>();
     }
 
@@ -240,7 +241,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                       expectedNumberOfTuplesInWindowRight);
 
             auto nljWindow =
-                std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler.getSliceBySliceIdentifier(windowIdentifier).value());
+                std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler->getSliceBySliceIdentifier(windowIdentifier).value());
             Nautilus::Value<UInt64> zeroVal((uint64_t) 0);
 
             auto leftPagedVectorRef =
@@ -421,8 +422,12 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                       expectedNumberOfTuplesInWindowRight);
 
             {
+
                 auto tupleBuffer = bm->getBufferBlocking();
-                std::memcpy(tupleBuffer.getBuffer(), &windowIdentifier, sizeof(windowIdentifier));
+                auto bufferMemory = tupleBuffer.getBuffer<Operators::EmittedNLJWindowTriggerTask>();
+                bufferMemory->leftSliceIdentifier = windowIdentifier;
+                bufferMemory->rightSliceIdentifier = windowIdentifier;
+                bufferMemory->windowInfo = WindowInfo(windowIdentifier - windowSize, windowIdentifier);
                 tupleBuffer.setNumberOfTuples(1);
 
                 RecordBuffer recordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
@@ -451,7 +456,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto timestamp = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
-            auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler->getWindowByTimestampOrCreateIt(timestamp));
+            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto leftPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
@@ -464,7 +469,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto timestamp = rightRecord.read(timestampFieldNameRight).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
-            auto nljWindow = std::dynamic_pointer_cast<NLJWindow>(nljOperatorHandler->getWindowByTimestampOrCreateIt(timestamp));
+            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto rightPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
             Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
