@@ -269,7 +269,7 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+    NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
     auto memorySourceType =

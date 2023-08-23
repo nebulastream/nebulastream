@@ -559,7 +559,9 @@ add_nes_integration_test(rename-test "Integration/RenameTest.cpp")
 add_nes_integration_test(join-deployment-test "Integration/JoinDeploymentTest.cpp")
 
 ### windowDeploymentTest ###
-add_nes_integration_test(window-deployment-test "Integration/WindowDeploymentTest.cpp")
+add_nes_integration_test(window-deployment-test "Integration/Windowing/WindowDeploymentTest.cpp")
+add_nes_integration_test(ysb-deployment-test "Integration/Windowing/YSBDeploymentTest.cpp")
+add_nes_integration_test(ktm-deployment-test "Integration/Windowing/KTMDeploymentTest.cpp")
 
 
 ### window integration tests ###
@@ -606,9 +608,9 @@ if (NES_USE_TF)
 endif ()
 
 if (NES_USE_ARROW)
-### ArrowSourceIntegrationTest ###
-add_nes_integration_test(arrow-source-integration-test "Integration/Source/ArrowSourceIntegrationTest.cpp")
-endif()
+    ### ArrowSourceIntegrationTest ###
+    add_nes_integration_test(arrow-source-integration-test "Integration/Source/ArrowSourceIntegrationTest.cpp")
+endif ()
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")

@@ -54,7 +54,7 @@ struct InputValue {
     uint64_t timestamp;
 };
 
-struct Output {
+struct __attribute__ ((__packed__)) Output {
     uint64_t start;
     uint64_t end;
     uint64_t id;
@@ -197,6 +197,65 @@ class DataGenerator {
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
+
+template<typename Key = uint64_t>
+struct __attribute__ ((__packed__)) KeyedWindowOutput {
+    uint64_t start;
+    uint64_t end;
+    Key id;
+    uint64_t value;
+
+    bool operator==(KeyedWindowOutput<Key> const& rhs) const {
+        return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
+    }
+
+    friend ostream& operator<<(ostream& os, const KeyedWindowOutput<Key>& output) {
+        os << "start: " << output.start << " end: " << output.end << " id: " << output.id << " value: " << output.value;
+        return os;
+    }
+};
+
+TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
+
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setGatheringInterval(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
+                                  .addLogicalSource("window", testSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .validate()
+                                  .setupTopology();
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+
+    std::vector<KeyedWindowOutput<>> expectedOutput = {{1000, 2000, 1, 1},
+                                                       {2000, 3000, 1, 2},
+                                                       {1000, 2000, 4, 1},
+                                                       {2000, 3000, 11, 2},
+                                                       {1000, 2000, 12, 1},
+                                                       {2000, 3000, 16, 2},
+                                                       {3000, 4000, 1, 6},
+                                                       {3000, 4000, 11, 3}};
+
+    auto actualOutput = testHarness.getOutput<KeyedWindowOutput<>>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 
 TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
     auto testSchema = Schema::create()
@@ -405,6 +464,47 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin) {
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * @brief Test if the min aggregation can be deployed
+ */
+TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
+    struct __attribute__ ((__packed__)) Car {
+        uint64_t key;
+        uint64_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
+
+
+    auto queryWithWindowOperator = Query::from("car")
+                                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                                       .byKey(Attribute("key"))
+                                       .apply(Min(Attribute("value")));
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+
+    testHarness.pushElement<Car>({1, 15, 1000}, 2);
+    testHarness.pushElement<Car>({1, 99, 1500}, 2);
+    testHarness.pushElement<Car>({1, 20, 2000}, 2);
+
+    testHarness.validate().setupTopology();
+
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 20}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowMax) {
