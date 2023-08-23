@@ -22,6 +22,8 @@
 
 namespace NES {
 
+  using QueryId = uint64_t;
+
   class Schema;
   using SchemaPtr = std::shared_ptr<Schema>;
 
@@ -50,8 +52,8 @@ namespace NES {
       }
 
       /**
-       * @brief returns the physicalSourceName over which to construct the statCollector
-       * @return physicalSourceName
+       * @brief returns the schema over which to construct the statCollector
+       * @return schema
        */
       SchemaPtr getSchema() const {
         return schema;
@@ -59,10 +61,26 @@ namespace NES {
 
       /**
        * @brief sets the schema of the config
-       * @param newSchema
+       * @param newSchema the schema of the data stream on which the statCollector is to be constructed on
        */
       void setSchema(const SchemaPtr& newSchema) {
         schema = newSchema;
+      }
+
+      /**
+       * @brief returns the queryId of the query which is launched or has been launched to generate the statCollector
+       * @return queryId
+       */
+      QueryId getQueryId() const {
+        return queryId;
+      }
+
+      /**
+       * @brief sets the value of the queryId, which is being used or will be used to generate a statCollector
+       * @param newQueryId a valid queryId
+       */
+      void setQueryId(QueryId newQueryId) {
+        queryId = newQueryId;
       }
 
       /**
@@ -158,6 +176,7 @@ namespace NES {
       const std::string logicalSourceName;
       const std::string physicalSourceName;
       SchemaPtr schema;
+      QueryId queryId;
       const std::string field;
       const std::string statMethodName;
       const time_t duration;

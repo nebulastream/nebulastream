@@ -46,6 +46,17 @@ namespace NES {
       Testing::NESBaseTest::SetUp();
       statManager = new NES::Experimental::Statistics::StatManager();
       StatCollectorConfig = new NES::Experimental::Statistics::StatCollectorConfig();
+
+      // create coordinator
+      CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+      coordinatorConfig->worker.queryCompiler.queryCompilerType =
+          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+      coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+      coordinatorConfig->restPort = *restPort;
+
+      NES_INFO("Starting coordinator");
+
+      crd = std::make_shared<NesCoordinator>(coordinatorConfig);
       NES_INFO("Setup StatManagerTest test case.");
     }
 
@@ -58,19 +69,51 @@ namespace NES {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StatManagerTest class."); }
 
+    NesCoordinatorPtr crd;
     NES::Experimental::Statistics::StatManager *statManager;
     NES::Experimental::Statistics::StatCollectorConfig *StatCollectorConfig;
   };
 
-  TEST_F(StatManagerTest, createStatTest) {
-    statManager->createStat(*StatCollectorConfig);
-    auto& statCollectors = statManager->getStatCollectors();
 
-    EXPECT_EQ(statCollectors.empty(), false);
-  }
 
-  TEST_F(StatManagerTest, queryStatTest) {
-    statManager->createStat(*StatCollectorConfig);
+  TEST_F(StatManagerTest, CreateAndqueryStatTest) {
+
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+
+    // create schema
+    auto testSchema = Schema::create()
+        ->addField(createField("defaultFieldName", BasicType::UINT64));
+    crd->getSourceCatalogService()->registerLogicalSource("defaultLogicalSourceName", testSchema);
+    StatCollectorConfig->setSchema(testSchema);
+
+    // create test csv
+    std::string testCSV = "1\n"
+                          "2\n"
+                          "3";
+    std::string testCSVFileName = "testCSV.csv";
+    std::ofstream outCsv(testCSVFileName);
+    outCsv << testCSV;
+    outCsv.close();
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("testCSV.csv");
+    csvSourceType1->setGatheringInterval(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("defaultLogicalSourceName", "defaultPhysicalSourceName", csvSourceType1);
+
+    // create worker
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_DEBUG("Worker started successfully");
+
+    statManager->createStat(*StatCollectorConfig, wrk1->getNodeEngine());
     auto& statCollectors = statManager->getStatCollectors();
     auto& cmStatCollector = statCollectors.at(0);
     auto cm = dynamic_cast<Experimental::Statistics::CountMin*>(cmStatCollector.get());
@@ -106,26 +149,9 @@ namespace NES {
     }
     EXPECT_EQ(correctCounterIncremented, true);
   }
-  
-  TEST_F(StatManagerTest, deleteStatTest) {
-    statManager->createStat(*StatCollectorConfig);
-    EXPECT_EQ(statManager->getStatCollectors().empty(), false);
 
-    statManager->deleteStat(*StatCollectorConfig);
-    EXPECT_EQ(statManager->getStatCollectors().empty(), true);
-  }
+  TEST_F(StatManagerTest, createAndDeleteStat) {
 
-  TEST_F(StatManagerTest, executeExemplaryQueryTest) {
-
-    // create coordinator
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    NES_INFO("Starting coordinator");
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
 
@@ -159,12 +185,25 @@ namespace NES {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("Worker started successfully");
+    NES_DEBUG("Worker started successfully");
 
+    auto nodeEngine = wrk1->getNodeEngine();
     auto& statManager = wrk1->getStatManager();
-    bool success = statManager->createStat(*StatCollectorConfig, wrk1->getNodeEngine());
+    uint64_t queryId = statManager->createStat(*StatCollectorConfig, wrk1->getNodeEngine());
+
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
+
+    while (0) {
+      if (nodeEngine->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        NES_DEBUG("Query finished")
+        break;
+      }
+    }
+
+    StatCollectorConfig->setQueryId(queryId);
+
+    bool success = statManager->deleteStat(*StatCollectorConfig, wrk1->getNodeEngine());
 
     ASSERT_TRUE(success);
-
   }
 }

@@ -41,25 +41,49 @@ namespace Experimental::Statistics {
   using StatCollectorPtr = std::unique_ptr<StatCollector>;
 
   class StatManager {
-    private:
-      std::vector<StatCollectorPtr> statCollectors {};
-      Optimizer::TypeInferencePhasePtr typeInferencePhase;
 
     public:
       ~StatManager() = default;
 
+      /**
+       * @brief returns a reference to unique pointer of a vector, which contains unique pointers to statCollectors
+       * @return statCollectors
+       */
       std::vector<StatCollectorPtr>& getStatCollectors();
 
-      bool createStat(const StatCollectorConfig& config);
+      /**
+       * @brief starts a statistic query from which statCollectors are generated
+       * @param config a configuration object specifying parameters such as the logicalSourceName, physicalSourceName, schema and more
+       * @param nodeEngine a nodeEngine of the coordinator or of a worker
+       * @return queryId of the launched query
+       */
+      uint64_t createStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
 
-      bool createStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
-
+      /**
+       * @brief queries a specific statistic
+       * @param config a configuration object specifying parameters such as the logicalSourceName, physicalSourceName, schema and more,
+       * such that the specific statCollector can be identified
+       * @param key a key to query the specific statistic for
+       * @return a double value for the specific statistic
+       */
       double queryStat(const StatCollectorConfig& config,
                        const uint32_t key);
 
-      void deleteStat(const StatCollectorConfig& config);
+      /**
+       * @brief
+       * @param config a configuration object specifying parameters such as the logicalSourceName, physicalSourceName, schema and more,
+       * such that the specific statCollector, which is to be deleted, can be identified
+       * @param nodeEngine a nodeEngine of the coordinator or of a worker
+       * @return a boolean describing wether the operation was successful or not
+       */
+      bool deleteStat(const StatCollectorConfig& config, const Runtime::NodeEnginePtr nodeEngine);
+
+    private:
+      std::vector<StatCollectorPtr> statCollectors {};
+      Optimizer::TypeInferencePhasePtr typeInferencePhase;
   };
 
 } // Experimental::Statistics
 } // NES
+
 #endif //NES_CORE_INCLUDE_STATMANAGER_STATMANAGER_HPP
