@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>

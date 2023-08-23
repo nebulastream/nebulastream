@@ -54,7 +54,7 @@ struct InputValue {
     uint64_t timestamp;
 };
 
-struct __attribute__ ((__packed__)) Output {
+struct __attribute__((__packed__)) Output {
     uint64_t start;
     uint64_t end;
     uint64_t id;
@@ -199,7 +199,7 @@ class DataGenerator {
 };
 
 template<typename Key = uint64_t>
-struct __attribute__ ((__packed__)) KeyedWindowOutput {
+struct __attribute__((__packed__)) KeyedWindowOutput {
     uint64_t start;
     uint64_t end;
     Key id;
@@ -470,7 +470,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin) {
  * @brief Test if the min aggregation can be deployed
  */
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
-    struct __attribute__ ((__packed__)) Car {
+    struct __attribute__((__packed__)) Car {
         uint64_t key;
         uint64_t value;
         uint64_t timestamp;
@@ -480,7 +480,6 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
                          ->addField("key", DataTypeFactory::createUInt64())
                          ->addField("value", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
-
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
@@ -498,7 +497,6 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
     testHarness.pushElement<Car>({1, 20, 2000}, 2);
 
     testHarness.validate().setupTopology();
-
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 20}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");

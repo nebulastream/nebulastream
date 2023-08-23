@@ -13,11 +13,11 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
