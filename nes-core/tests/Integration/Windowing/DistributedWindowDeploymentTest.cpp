@@ -55,9 +55,6 @@ class DistributedWindowDeploymentTest : public Testing::BaseIntegrationTest {
     }
 };
 
-
-
-
 /**
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
@@ -267,8 +264,6 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedTumblingWindowQu
     NES_INFO("DistributedWindowDeploymentTest: Test finished");
 }
 
-
-
 /**
  * for now disabled see issue #3324
  */
@@ -347,7 +342,6 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testMultipleAggregationFunction
     EXPECT_EQ(expected.size(), actual.size());
     EXPECT_THAT(actual, ::testing::UnorderedElementsAreArray(expected));
 };
-
 
 /**
  * @brief test central tumbling window and event time, for now disabled see issue #3324
@@ -439,7 +433,6 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     EXPECT_TRUE(retStopCord);
     NES_INFO("DistributedWindowDeploymentTest: Test finished");
 }
-
 
 /**
  * @brief tests window with ingestion time, for now disabled see issue #3324
@@ -535,8 +528,6 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedWindowIngestionT
     NES_INFO("DistributedWindowDeploymentTest: Test finished");
 }
 
-
-
 // TODO this test needs rethinking as we just check if the file sink creates a file, there is no ingestion time windowing currently
 TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTime) {
 
@@ -615,7 +606,6 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
     EXPECT_TRUE(retStopCord);
     NES_INFO("DistributedWindowDeploymentTest: Test finished");
 }
-
 
 /**
  * @brief test central sliding window and event time, for now disabled see issue #3324

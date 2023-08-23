@@ -13,11 +13,11 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -45,7 +45,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    
+
     //register logical source qnv
     auto ktmSchema = Schema::create()
                          ->addField(createField("Time", BasicType::UINT64))
