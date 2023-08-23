@@ -574,6 +574,7 @@ bool NesWorker::disconnect() {
         NES_DEBUG("NesWorker::stop health check");
         healthCheckService->stopHealthCheck();
         NES_DEBUG("NesWorker::stop health check successful");
+        unregisterPhysicalSource("A", "A1");
         return true;
     }
     NES_DEBUG("NesWorker::registerWorker rpc unregister failed");

@@ -61,7 +61,7 @@ void WorkerHealthCheckService::startHealthCheck() {
                 });
             }
         }
-        coordinatorRpcClient->unregisterPhysicalSource("A", "A1");
+        //coordinatorRpcClient->unregisterPhysicalSource("A", "A1");
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
         shutdownRPC->set_value(true);
         NES_DEBUG("NesWorker::healthCheck: stop health checking id= {}", id);
