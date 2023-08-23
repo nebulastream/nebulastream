@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.205](https://github.com/nebulastream/nebulastream/tree/v0.5.205) (2023-08-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.204...v0.5.205)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor NestedLoopJoinOperatorTest [\#3925](https://github.com/nebulastream/nebulastream/issues/3925)
+
 ## [v0.5.204](https://github.com/nebulastream/nebulastream/tree/v0.5.204) (2023-08-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.203...v0.5.204)
