@@ -16,6 +16,10 @@
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution::Operators {
+
+class CollectOperator;
+using CollectOperatorPtr = std::shared_ptr<CollectOperator>;
+
 class CollectOperator : public ExecutableOperator {
   public:
     CollectOperator() = default;
