@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.206](https://github.com/nebulastream/nebulastream/tree/v0.5.206) (2023-08-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.205...v0.5.206)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate WindowDeploymentTest to nautilus [\#4141](https://github.com/nebulastream/nebulastream/issues/4141)
+
 ## [v0.5.205](https://github.com/nebulastream/nebulastream/tree/v0.5.205) (2023-08-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.204...v0.5.205)
