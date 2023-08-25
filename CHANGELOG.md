@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.207](https://github.com/nebulastream/nebulastream/tree/v0.5.207) (2023-08-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.206...v0.5.207)
+
+**Implemented enhancements:**
+
+- \[TASK\] Print timestamps during query execution to determine runtime [\#4172](https://github.com/nebulastream/nebulastream/issues/4172)
+- \[TASK\] StreamHashJoin Sliding Window Support [\#4125](https://github.com/nebulastream/nebulastream/issues/4125)
+
 ## [v0.5.206](https://github.com/nebulastream/nebulastream/tree/v0.5.206) (2023-08-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.205...v0.5.206)
