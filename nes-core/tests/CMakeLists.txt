@@ -302,6 +302,10 @@ add_nes_unit_test(filter-merge-rule-test "UnitTests/Optimizer/QueryRewrite/Filte
 add_nes_unit_test(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
 
 
+# Eliminate Duplicate Operator Test
+add_nes_unit_test(eliminate-duplicate-operator-test "UnitTests/Optimizer/QueryRewrite/DuplicateOperatorEliminationRuleTest.cpp")
+
+
 # PredicateReorderingTest
 add_nes_unit_test(predicate-reordering-rule-test "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp")
 

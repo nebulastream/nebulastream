@@ -21,6 +21,7 @@
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
+#include <Optimizer/QueryRewrite/DuplicateOperatorEliminationRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
@@ -62,6 +63,7 @@ QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool apply
     predicateReorderingRule = PredicateReorderingRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
+    duplicateOperatorEliminationRule = DuplicateOperatorEliminationRule::create();
 }
 
 QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
@@ -91,7 +93,9 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     // Apply rule for filter merge
     duplicateQueryPlan = filterMergeRule->apply(duplicateQueryPlan);
     // Apply rule for filter reordering optimization
-    return predicateReorderingRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = predicateReorderingRule->apply(duplicateQueryPlan);
+    // Apply rule for duplicate operator elimination
+    return duplicateOperatorEliminationRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES::Optimizer

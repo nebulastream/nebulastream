@@ -66,6 +66,9 @@ using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProje
 class RedundancyEliminationRule;
 using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 
+class DuplicateOperatorEliminationRule;
+using DuplicateOperatorEliminationRulePtr = std::shared_ptr<DuplicateOperatorEliminationRule>;
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
@@ -95,6 +98,7 @@ class QueryRewritePhase {
     PredicateReorderingRulePtr predicateReorderingRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
+    DuplicateOperatorEliminationRulePtr duplicateOperatorEliminationRule;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_
