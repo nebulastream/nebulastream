@@ -45,7 +45,7 @@ void WorkerHealthCheckService::startHealthCheck() {
     healthCheckingOnCoordinatorThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
         NES_DEBUG("NesWorker: start health checking on coordinator");
-        auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue() * 2);
+        auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
         while (isRunning) {
             NES_DEBUG("NesWorker::healthCheck on coordinator for worker id=  {}", coordinatorRpcClient->getId());
             bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
