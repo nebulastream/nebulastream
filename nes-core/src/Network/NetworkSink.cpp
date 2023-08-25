@@ -66,46 +66,27 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWO
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context {} writing data", workerContext.getId());
-    //todo: remove buffering flag and replace it with combination of nullptr check for network channel and try retrieving future if channel is null
-    // if (!channel && f.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { set channel in worker context = future.get(), future.reset};
-    // if channel and future are null -> fail query
-    // else
-
-    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    //todo: the changing of channel logic hase moved to the reconfigure function
-        if (connectAsync && !channel && networkChannelFuture.valid()) {
-            //todo: keeping this in the workercontext is impractical because that way its not easy to check if the future has been fullfilled yet
-            //todo: nullptr could mean no channel established or still waiting
-            //auto newChannel = workerContext.getNetworkChannelFuture(nesPartition.getOperatorId());
-
-            if (networkChannelFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-                //if the connection has been established, store the new network channel
-                auto channelUniquePtr = networkChannelFuture.get();
-                channel = channelUniquePtr.get();
-                workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channelUniquePtr));
-                //todo: do we need to perform some other operation on future here?
-            } else {
-                //if no connection could be established, store the incoming tuples
-                NES_TRACE("context {} buffering data", workerContext.getId());
-                workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-                return true;
-            }
-        }
-
-    //todo: extract function and make the whole thing if else
-    if (!reconnectBuffering) {
-        auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        if (success) {
-            insertIntoStorageCallback(inputBuffer, workerContext);
-        }
-        //todo: else case here which detects disconnect
-        return success;
-    } else {
-        //if no connection could be established, store the incoming tuples
+    //todo: wait here if draining
+    auto currentBufferState = reconnectBuffering.load();
+    //TODO: check the logic here, just because we protect the beginning with an atomic, does not mean the var can't change during execution
+    //todo: we probably need an unbuffer mutex here
+    if (currentBufferState != NOT_BUFFERING) {
         NES_TRACE("context {} buffering data", workerContext.getId());
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         return true;
+    }
+
+
+
+    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+    if (channel) {
+        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        if (success) {
+            insertIntoStorageCallback(inputBuffer, workerContext);
+        } else {
+            //todo: initiate reconnect here
+        }
+        return success;
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
@@ -232,30 +213,36 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
-//            if (!networkChannelFuture.valid()) {
-//                NES_THROW_RUNTIME_ERROR("Trying to asynchronously establish connection, but future is not valid");
-//            }
-//            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), networkChannelFuture.get());
+            if (!networkChannelFuture.valid()) {
+                NES_THROW_RUNTIME_ERROR("Trying to asynchronously establish connection, but future is not valid");
+            }
+            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), networkChannelFuture.get());
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
             unbuffer*/
-            reconnectBuffering = false;
-            NES_INFO("stop buffering data for context {}", workerContext.getId());
-            auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            NES_INFO("sending buffered data");
-            while (topBuffer) {
-                /*this will only work if guarantees are not set to at least once,
+
+            //todo: use function for atomic update here
+            auto expected = BUFFERING;
+            auto desired = UNBUFFERING;
+            if (reconnectBuffering.compare_exchange_strong(expected, desired)) {
+
+                NES_INFO("stop buffering data for context {}", workerContext.getId());
+                auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
+                NES_INFO("sending buffered data");
+                while (topBuffer) {
+                    /*this will only work if guarantees are not set to at least once,
                 otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
-                if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING("buffer does not exist");
-                    break;
+                    if (!topBuffer.value().getBuffer()) {
+                        NES_WARNING("buffer does not exist");
+                        break;
+                    }
+                    if (!writeData(topBuffer.value(), workerContext)) {
+                        NES_WARNING("could not send all data from buffer");
+                        break;
+                    }
+                    NES_TRACE("buffer sent");
+                    workerContext.removeTopTupleFromStorage(nesPartition);
+                    topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
                 }
-                if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer");
-                    break;
-                }
-                NES_TRACE("buffer sent");
-                workerContext.removeTopTupleFromStorage(nesPartition);
-                topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
             }
             break;
         }
@@ -278,6 +265,13 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), querySubPlanId);
+    //todo: use this function for threadsage reconfig
+    if (task.getType() == Runtime::ReconfigurationType::StopBuffering) {
+        //todo: error handling, check for correct state
+        reconnectBuffering = NOT_BUFFERING;
+        //todo: can we use = operator or do we need a special atomic function?
+        return;
+    }
     inherited0::postReconfigurationCallback(task);
 }
 
