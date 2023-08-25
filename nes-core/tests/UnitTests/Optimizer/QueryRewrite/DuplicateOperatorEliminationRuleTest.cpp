@@ -153,7 +153,7 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateFilter) {
  *                      F(name = "dan")
  *                      |
  *        --------------J----------------
- *        |
+ *        |                             |
  *        F (id > 9999)               F (id > 9999)
  *        |                             |
  *        Src1(id, name, age)         Src2(id, name, number)
