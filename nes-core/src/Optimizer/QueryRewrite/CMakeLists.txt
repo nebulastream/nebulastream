@@ -26,4 +26,5 @@ add_source_files(nes-core
         ProjectBeforeUnionOperatorRule.cpp
         RedundancyEliminationRule.cpp
         RenameSourceToProjectOperatorRule.cpp
+        DuplicateOperatorEliminationRule.cpp
 )
