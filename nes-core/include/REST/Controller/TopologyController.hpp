@@ -87,6 +87,23 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("GET", "/startTopologicalNeighborsHealthcheckService", startTopologicalNeighborsHealthcheckService) {
+        try {
+            topologyManagerService->startTopologicalNeighborsHealthcheckService();
+            return createResponse(Status::CODE_200, "");
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (const std::exception& exc) {
+            NES_ERROR("TopologyController: handleGet -getTopology: Exception occurred while splitting the "
+                      "topology: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_500,
+                                             "Exception occurred while splitting topology" + std::string(exc.what()));
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+        }
+    }
+
     ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");

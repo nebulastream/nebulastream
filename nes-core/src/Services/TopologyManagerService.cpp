@@ -379,4 +379,12 @@ void TopologyManagerService::removeAnnouncedFailedWorker(TopologyNodeId workerId
     }
 }
 
+void TopologyManagerService::startTopologicalNeighborsHealthcheckService() {
+    isHealthCheckOn = true;
+}
+
+bool TopologyManagerService::getIsHealthCheckOn() {
+    return isHealthCheckOn;
+}
+
 }// namespace NES

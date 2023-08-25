@@ -474,21 +474,27 @@ Status CoordinatorRPCServer::GetChildrenData(ServerContext*,
                                              const GetChildrenDataRequest* request,
                                              GetChildrenDataReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::GetChildrenData: request ={}", request->DebugString());
-    auto workerId = request->workerid();
-    auto worker = topologyManagerService->findNodeWithId(workerId);
-    if (worker) {
-        auto children = worker->getChildren();
-        for (auto child : children) {
-            int i = 0;
-            uint64_t childWorkerId = child->as<TopologyNode>()->getId();
-            std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
-            auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
-            std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
-            reply->add_childrendata(childData);
-            //reply->set_childrendata(i, childData);
-            i++;
+    if (topologyManagerService->getIsHealthCheckOn() == true) {
+        auto workerId = request->workerid();
+        auto worker = topologyManagerService->findNodeWithId(workerId);
+        if (worker) {
+            auto children = worker->getChildren();
+            for (auto child : children) {
+                int i = 0;
+                uint64_t childWorkerId = child->as<TopologyNode>()->getId();
+                std::string childIpAddress = child->as<TopologyNode>()->getIpAddress();
+                auto childGrpcPort = child->as<TopologyNode>()->getGrpcPort();
+                std::string childData = std::to_string(childWorkerId) + ":" + childIpAddress + ":" + std::to_string(childGrpcPort);
+                reply->add_childrendata(childData);
+                //reply->set_childrendata(i, childData);
+                i++;
+            }
+            return Status::OK;
         }
-        return Status::OK;
+        return Status::CANCELLED;
+    } else {
+        NES_INFO("CoordinatorRPCServer::GetChildrenData: not answering request ={} because HC is not on yet.", request->DebugString());
+        return Status::CANCELLED;
     }
-    return Status::CANCELLED;
+
 }

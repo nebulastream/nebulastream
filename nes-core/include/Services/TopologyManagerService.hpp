@@ -181,6 +181,10 @@ class TopologyManagerService {
      */
     void removeAnnouncedFailedWorker(TopologyNodeId workerId);
 
+    void startTopologicalNeighborsHealthcheckService();
+
+    bool getIsHealthCheckOn();
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
@@ -188,6 +192,7 @@ class TopologyManagerService {
     HealthCheckServicePtr healthCheckService;
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     std::set<TopologyNodeId> announcedFailedWorkers;
+    bool isHealthCheckOn = false;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
