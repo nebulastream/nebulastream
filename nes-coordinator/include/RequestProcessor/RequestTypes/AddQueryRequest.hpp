@@ -204,6 +204,12 @@ class AddQueryRequest : public AbstractRequest {
      */
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
 
+    /**
+     * @brief Assign new operator ids to the input query plan
+     * @param queryPlan : the input query plan
+     */
+    void assignOperatorIds(const QueryPlanPtr& queryPlan);
+
   private:
     QueryId queryId;
     std::string queryString;
