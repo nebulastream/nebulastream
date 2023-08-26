@@ -54,6 +54,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
@@ -219,6 +220,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
             // Checking the syntactic validity and compiling the query string to an object
             queryPlan = syntacticQueryValidation->validate(queryString);
         } else if (queryPlan && queryString.empty()) {
+            // assign unique operator identifier to the operators in the query plan
+            assignOperatorIds(queryPlan);
             queryString = queryPlan->toString();
         } else {
             NES_ERROR("Please supply either query string or query plan while creating this request.");
@@ -342,6 +345,15 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         handleError(std::current_exception(), storageHandler);
     }
     return {};
+}
+
+void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
+    // Iterate over all operators in the query and replace the client-provided ID
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        visitingOp->setId(Util::getNextOperatorId());
+    }
 }
 
 }// namespace NES::RequestProcessor::Experimental

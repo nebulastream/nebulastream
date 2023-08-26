@@ -51,6 +51,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
@@ -179,16 +180,9 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                        coordinatorConfiguration->optimizer.performAdvanceSemanticValidation,
                                                        udfCatalog);
 
-        // Compile and perform syntactic check if necessary
-        if (!queryString.empty() && !queryPlan) {
-            // Checking the syntactic validity and compiling the query string to an object
-            queryPlan = syntacticQueryValidation->validate(queryString);
-        } else if (queryPlan && queryString.empty()) {
-            queryString = queryPlan->toString();
-        } else {
-            NES_ERROR("Please supply either query string or query plan while creating this request.");
-            NES_NOT_IMPLEMENTED();
-        }
+        // assign unique operator identifier to the operators in the query plan
+        assignOperatorIds(queryPlan);
+        queryString = queryPlan->toString();
 
         // Set unique identifier and additional properties to the query
         queryId = PlanIdGenerator::getNextQueryId();
@@ -291,11 +285,24 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                           + std::to_string(sharedQueryId));
         }
 
+        auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+
+        //TODO: create the json response
+
     } catch (RequestExecutionException exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(exception, storageHandler);
     }
     return {};
+}
+
+void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
+    // Iterate over all operators in the query and replace the client-provided ID
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        visitingOp->setId(Util::getNextOperatorId());
+    }
 }
 
 }// namespace NES::RequestProcessor::Experimental
