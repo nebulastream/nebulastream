@@ -221,8 +221,6 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateFilterFromD
     const QueryPlanPtr updatedPlan = duplicateOperatorEliminationRule -> apply(queryPlan);
     NES_DEBUG("Updated Query Plan: {}", (updatedPlan)->toString());
 
-
-    // TODO: method for checking equality of an QueryPlan
     // check if the query plan remains the same
     DepthFirstNodeIterator updatedQueryPlanIterator(updatedPlan->getRootOperators()[0]);
     auto updatedItr = updatedQueryPlanIterator.begin();
@@ -243,6 +241,100 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateFilterFromD
     EXPECT_TRUE(srcOperatorSrc1->equal(*updatedItr));
 }
 
+TEST_F(DuplicateOperatorEliminationRuleTest, testSameProjectionsInDifferentBranchesGetNotEliminated) {
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+
+    //setup source 1
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("orderId", NES::BasicType::UINT64)
+                                ->addField("duplicate", NES::BasicType::UINT64)
+                                ->addField("ts", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("src2", schema);
+
+    //setup source two
+    NES::SchemaPtr schema2 = NES::Schema::create()
+                                 ->addField("id", NES::BasicType::UINT64)
+                                 ->addField("price", NES::BasicType::UINT64)
+                                 ->addField("duplicate", NES::BasicType::UINT64)
+                                 ->addField("ts", NES::BasicType::UINT64);
+
+    sourceCatalog->addLogicalSource("src1", schema2);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query subQuery = Query::from("src2")
+                         .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                         .filter(Attribute("id") < 1000);
+
+    Query query = Query::from("src1")
+                      .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                      .filter(Attribute("id") < 1000)
+                      .joinWith(subQuery)
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                      .sink(printSinkDescriptor);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    //type inference
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
+    typeInferencePhase->execute(queryPlan);
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr filterOperatorAboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr projectOperator1AboveSrc2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc2 = (*itr);
+    ++itr;
+    const NodePtr watermarkOperatorAboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr filterOperatorAboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr projectOperator1AboveSrc1 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSrc1 = (*itr);
+
+    auto duplicateOperatorEliminationRule = Optimizer::DuplicateOperatorEliminationRule::create();
+    // Execute
+    NES_DEBUG("Input Query Plan: {}", (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = duplicateOperatorEliminationRule -> apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: {}", (updatedPlan)->toString());
+
+    // check if the query plan remains the same
+    DepthFirstNodeIterator updatedQueryPlanIterator(updatedPlan->getRootOperators()[0]);
+    auto updatedItr = updatedQueryPlanIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(joinOperator->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc2->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(filterOperatorAboveSrc2->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(projectOperator1AboveSrc2->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(srcOperatorSrc2->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(watermarkOperatorAboveSrc1->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(filterOperatorAboveSrc1->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(projectOperator1AboveSrc1->equal(*updatedItr));
+    ++updatedItr;
+    EXPECT_TRUE(srcOperatorSrc1->equal(*updatedItr));
+}
+
 TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections) {
 
         Catalogs::Source::SourceCatalogPtr sourceCatalog =
@@ -252,6 +344,7 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections
         NES::SchemaPtr schema = NES::Schema::create()
                                     ->addField("id", NES::BasicType::UINT64)
                                     ->addField("orderId", NES::BasicType::UINT64)
+                                    ->addField("duplicate", NES::BasicType::UINT64)
                                     ->addField("ts", NES::BasicType::UINT64);
         sourceCatalog->addLogicalSource("src2", schema);
 
@@ -259,6 +352,7 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections
         NES::SchemaPtr schema2 = NES::Schema::create()
                                      ->addField("id", NES::BasicType::UINT64)
                                      ->addField("price", NES::BasicType::UINT64)
+                                     ->addField("duplicate", NES::BasicType::UINT64)
                                      ->addField("ts", NES::BasicType::UINT64);
 
         sourceCatalog->addLogicalSource("src1", schema2);
@@ -266,16 +360,21 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections
         // Prepare
         SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
         Query subQuery = Query::from("src2")
+                             .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                             .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                             .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
                              .filter(Attribute("id") < 1000);
 
         Query query = Query::from("src1")
+                          .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                          .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
+                          .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
                           .filter(Attribute("id") < 1000)
                           .joinWith(subQuery)
                           .where(Attribute("id"))
-                          .equalsTo(Attribute("orderId"))
+                          .equalsTo(Attribute("id"))
                           .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                          .project(Attribute("id"), Attribute("orderId"))
-                          .project(Attribute("id"), Attribute("orderId"))
+                          .project(Attribute("id"), Attribute("duplicate"), Attribute("ts"))
                           .sink(printSinkDescriptor);
         const QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -295,11 +394,23 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections
         ++itr;
         const NodePtr filterOperatorAboveSrc2 = (*itr);
         ++itr;
+        const NodePtr projectOperator1AboveSrc2 = (*itr);
+        ++itr;
+        const NodePtr projectOperator2AboveSrc2 = (*itr);
+        ++itr;
+        const NodePtr projectOperator3AboveSrc2 = (*itr);
+        ++itr;
         const NodePtr srcOperatorSrc2 = (*itr);
         ++itr;
         const NodePtr watermarkOperatorAboveSrc1 = (*itr);
         ++itr;
         const NodePtr filterOperatorAboveSrc1 = (*itr);
+        ++itr;
+        const NodePtr projectOperator1AboveSrc1 = (*itr);
+        ++itr;
+        const NodePtr projectOperator2AboveSrc1 = (*itr);
+        ++itr;
+        const NodePtr projectOperator3AboveSrc1 = (*itr);
         ++itr;
         const NodePtr srcOperatorSrc1 = (*itr);
 
@@ -308,4 +419,27 @@ TEST_F(DuplicateOperatorEliminationRuleTest, testEliminatingDuplicateProjections
         NES_DEBUG("Input Query Plan: {}", (queryPlan)->toString());
         const QueryPlanPtr updatedPlan = duplicateOperatorEliminationRule -> apply(queryPlan);
         NES_DEBUG("Updated Query Plan: {}", (updatedPlan)->toString());
+
+        // check if the query plan remains the same
+        DepthFirstNodeIterator updatedQueryPlanIterator(updatedPlan->getRootOperators()[0]);
+        auto updatedItr = updatedQueryPlanIterator.begin();
+        EXPECT_TRUE(sinkOperator->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(joinOperator->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(watermarkOperatorAboveSrc2->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(filterOperatorAboveSrc2->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(projectOperator3AboveSrc2->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(srcOperatorSrc2->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(watermarkOperatorAboveSrc1->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(filterOperatorAboveSrc1->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(projectOperator3AboveSrc1->equal(*updatedItr));
+        ++updatedItr;
+        EXPECT_TRUE(srcOperatorSrc1->equal(*updatedItr));
 }

@@ -16,6 +16,7 @@
 #include "Optimizer/QueryRewrite/DuplicateOperatorEliminationRule.hpp"
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES::Optimizer {
@@ -46,10 +47,10 @@ namespace NES::Optimizer {
                 auto nodeComparison = *it2;
                 if (areDuplicates(nodeToCompare, nodeComparison)) {
                     NES_DEBUG("found duplicate node {} removing from query plan...", nodeComparison->toString())
-                    nodeToCompare->removeAndJoinParentAndChildren();
-                    nodeComparison->setInputSchema(nodeComparison->getChildren()[0]-> template as<OperatorNode>()->getOutputSchema()->copy());
-                    nodeComparison-> template as<OperatorNode>()->setOutputSchema(
-                        nodeComparison->getChildren()[0]-> template as<OperatorNode>()->getOutputSchema()->copy());
+                    nodeComparison->removeAndJoinParentAndChildren();
+                    nodeToCompare->setInputSchema(nodeToCompare->getChildren()[0]-> template as<OperatorNode>()->getOutputSchema()->copy());
+                    nodeToCompare-> template as<OperatorNode>()->setOutputSchema(
+                        nodeToCompare->getChildren()[0]-> template as<OperatorNode>()->getOutputSchema()->copy());
                     break; // Assuming we only need to remove one duplicate.
                 }
             }
@@ -62,6 +63,7 @@ namespace NES::Optimizer {
         std::set<FilterLogicalOperatorNodePtr> filterOperators;
         std::set<ProjectionLogicalOperatorNodePtr> projectionOperators;
 
+        // Get all filter and projection operators.
         for(const OperatorNodePtr& rootOperator : rootOperators) {
             std::vector<FilterLogicalOperatorNodePtr> filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
             filterOperators.insert(filters.begin(), filters.end());
@@ -70,10 +72,24 @@ namespace NES::Optimizer {
             projectionOperators.insert(projections.begin(), projections.end());
         }
 
+        // Group projections by source.
+        std::map<uint64_t, std::vector<ProjectionLogicalOperatorNodePtr>> projectionMap;
+        for (const auto& projection :  projectionOperators) {
+            std::vector<SourceLogicalOperatorNodePtr> srcDescriptors = projection->getNodesByType<SourceLogicalOperatorNode>();
+            for (const auto& srcLogicalOperatorNode :  srcDescriptors) {
+                projectionMap[srcLogicalOperatorNode->getId()].push_back(projection);
+            }
+        }
+
+        // Eliminate duplicate projection nodes for every branch separately.
+        for (const auto& pair : projectionMap) {
+            const std::vector<ProjectionLogicalOperatorNodePtr>& projections = pair.second;
+            DuplicateOperatorEliminationRule::eliminateDuplicateNodes(projections,
+                                                                      DuplicateOperatorEliminationRule::areProjectionsDuplicates);
+        }
+
         DuplicateOperatorEliminationRule::eliminateDuplicateNodes(filterOperators,
                                                                   DuplicateOperatorEliminationRule::areFiltersDuplicates);
-        DuplicateOperatorEliminationRule::eliminateDuplicateNodes(projectionOperators,
-                                                                  DuplicateOperatorEliminationRule::areProjectionsDuplicates);
         return queryPlan;
     }
 
