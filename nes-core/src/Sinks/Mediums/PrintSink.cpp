@@ -48,22 +48,13 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
 
     if (!inputBuffer) {
-        // TODO throw exception here?
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
     }
 
     NES_TRACE("PrintSink::getData: write data");
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto buffer : dataBuffers) {
-        NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
-        std::string ret;
-        char* bufferAsChar = buffer.getBuffer<char>();
-        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-            ret = ret + bufferAsChar[i];
-        }
-        NES_TRACE("PrintSink::getData: write buffer str=  {}", ret);
-        outputStream << ret << std::endl;
-    }
+    auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
+    outputStream << buffer << std::endl;
     updateWatermarkCallback(inputBuffer);
     return true;
 }

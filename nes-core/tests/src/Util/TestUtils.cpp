@@ -869,15 +869,11 @@ std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema
 
 uint64_t countOccurrences(const std::string& searchString, const std::string& targetString) {
     uint64_t count = 0;
-    uint64_t start_idx = 0;
+    size_t pos = 0;
 
-    while (true) {
-        uint64_t index = targetString.find(searchString, start_idx);
-        if (index == std::string::npos) {
-            break;
-        }
-        count++;
-        start_idx = index + searchString.length();
+    while ((pos = searchString.find(targetString, pos)) != std::string::npos) {
+        ++count;
+        pos += targetString.length();// Move past the found occurrence
     }
 
     return count;

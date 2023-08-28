@@ -50,11 +50,32 @@ class SinkMedium : public Runtime::Reconfigurable {
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
                         QueryId queryId,
+                        QuerySubPlanId querySubPlanId);
+
+    /**
+     * @brief public constructor for data sink
+     */
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        Runtime::NodeEnginePtr nodeEngine,
+                        uint32_t numOfProducers,
+                        QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                        uint64_t numberOfOrigins = 1,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr,
-                        bool addTimestamp = false);
+                        FaultToleranceType faultToleranceType,
+                        uint64_t numberOfOrigins,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
+
+    /**
+     * @brief public constructor for data sink
+     */
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        Runtime::NodeEnginePtr nodeEngine,
+                        uint32_t numOfProducers,
+                        QueryId queryId,
+                        QuerySubPlanId querySubPlanId,
+                        bool addTimestamp,
+                        FaultToleranceType faultToleranceType,
+                        uint64_t numberOfOrigins,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
 
     /**
      * @brief virtual method to setup sink

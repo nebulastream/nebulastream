@@ -24,13 +24,20 @@ using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 class NesFormat : public SinkFormat {
   public:
     NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    virtual ~NesFormat() noexcept = default;
+
+    /**
+     * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.
+     * @return The formatted schema as string
+     */
+    std::string getFormattedSchema() override;
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer

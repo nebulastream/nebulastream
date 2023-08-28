@@ -12,54 +12,23 @@
     limitations under the License.
 */
 
-#include <Common/Identifiers.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Sinks/Formats/ArrowFormat.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Sinks/Formats/TextFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
-#include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
-#include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/FaultToleranceType.hpp>
 
 namespace NES {
-
-DataSinkPtr createTextFileSink(const SchemaPtr& schema,
-                               QueryId queryId,
-                               QuerySubPlanId querySubPlanId,
-                               const Runtime::NodeEnginePtr& nodeEngine,
-                               uint32_t activeProducers,
-                               const std::string& filePath,
-                               bool append,
-                               FaultToleranceType faultToleranceType,
-                               uint64_t numberOfOrigins,
-                               bool addTimestamp) {
-    //TODO: this is not nice and should be fixed such that we only provide the paramter once
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format,
-                                      nodeEngine,
-                                      activeProducers,
-                                      filePath,
-                                      append,
-                                      queryId,
-                                      querySubPlanId,
-                                      faultToleranceType,
-                                      numberOfOrigins,
-                                      addTimestamp);
-}
-
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               QueryId queryId,
                               QuerySubPlanId querySubPlanId,
@@ -67,6 +36,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
+                              bool addTimestamp,
                               FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
@@ -77,6 +47,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
+                                      addTimestamp,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
@@ -98,6 +69,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
+                                      false,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
@@ -119,6 +91,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
+                                      false,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
@@ -146,7 +119,7 @@ DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
 }
 #endif
 
-DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
+DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
                               QueryId queryId,
                               QuerySubPlanId querySubPlanId,
                               const Runtime::NodeEnginePtr& nodeEngine,
@@ -155,7 +128,7 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               uint16_t port,
                               FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins) {
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format,
                                      nodeEngine,
                                      activeProducers,
@@ -213,7 +186,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                      numberOfOrigins);
 }
 
-DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
+DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
                                 QueryId queryId,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
@@ -221,7 +194,7 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 std::ostream& out,
                                 FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins) {
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format,
                                        nodeEngine,
                                        activeProducers,
@@ -342,7 +315,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 
 }// namespace Experimental::MaterializedView
 #ifdef ENABLE_KAFKA_BUILD
-DataSinkPtr createTextKafkaSink(SchemaPtr schema,
+DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
                                 QueryId queryId,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
@@ -352,7 +325,7 @@ DataSinkPtr createTextKafkaSink(SchemaPtr schema,
                                 uint64_t kafkaProducerTimeout,
                                 FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins) {
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
 
     return std::make_shared<KafkaSink>(format,
                                        nodeEngine,
@@ -376,7 +349,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
                           std::string user,
                           std::string password) {
     NES_DEBUG("plz fix me {}", querySubPlanId);
-    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, nodeEngine->getQueryManager(), url, nodeId, user, password, queryId, querySubPlanId);
 }
 #endif

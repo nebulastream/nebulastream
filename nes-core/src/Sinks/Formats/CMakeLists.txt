@@ -16,7 +16,6 @@ add_source_files(nes-core
         JsonFormat.cpp
         NesFormat.cpp
         SinkFormat.cpp
-        TextFormat.cpp
 )
 
 if (NES_USE_ARROW)

@@ -64,7 +64,6 @@ class Iterator {
     std::string operator*() {
         switch (sinkFormatType) {
             case FormatTypes::JSON_FORMAT: return dataJson();
-            case FormatTypes::TEXT_FORMAT:
             case FormatTypes::NES_FORMAT:
             case FormatTypes::CSV_FORMAT:
             default: throw Exceptions::NotImplementedException("SinkFormat not implemented");
