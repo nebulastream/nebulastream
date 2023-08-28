@@ -35,7 +35,6 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
-                   bool addTimestamp,
                    FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
@@ -43,13 +42,11 @@ FileSink::FileSink(SinkFormatPtr format,
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 addTimestamp,
                  faultToleranceType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     this->filePath = filePath;
     this->append = append;
-    this->sinkFormat->setAddTimestamp(addTimestamp);
     if (!append) {
         if (std::filesystem::exists(filePath.c_str())) {
             bool success = std::filesystem::remove(filePath.c_str());

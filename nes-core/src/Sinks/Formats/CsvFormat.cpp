@@ -27,6 +27,9 @@ namespace NES {
 CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
+CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp)
+    : SinkFormat(std::move(schema), std::move(bufferManager), addTimestamp) {}
+
 std::string CsvFormat::getFormattedSchema() {
     std::string out = Util::toCSVString(schema);
     if (addTimestamp) {

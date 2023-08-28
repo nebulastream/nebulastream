@@ -65,19 +65,6 @@ class SinkMedium : public Runtime::Reconfigurable {
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
 
     /**
-     * @brief public constructor for data sink
-     */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId,
-                        bool addTimestamp,
-                        FaultToleranceType faultToleranceType,
-                        uint64_t numberOfOrigins,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
-
-    /**
      * @brief virtual method to setup sink
      * @Note this method will be overwritten by derived classes
      */
@@ -179,12 +166,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t getCurrentEpochBarrier();
 
     /**
-     * @brief getter for addTimestamp flag
-     * @return addTimestamp
-     */
-    bool getAddTimestamp();
-
-    /**
      * @brief update watermark and propagate timestamp
      * @param inputBuffer
      */
@@ -205,7 +186,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
-    bool addTimestamp;
 
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};

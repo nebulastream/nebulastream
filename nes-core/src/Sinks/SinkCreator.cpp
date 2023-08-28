@@ -39,7 +39,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               bool addTimestamp,
                               FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins) {
-    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager(), addTimestamp);
     return std::make_shared<FileSink>(format,
                                       nodeEngine,
                                       activeProducers,
@@ -47,7 +47,6 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
-                                      addTimestamp,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
@@ -69,7 +68,6 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
-                                      false,
                                       faultToleranceType,
                                       numberOfOrigins);
 }
@@ -91,7 +89,6 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
-                                      false,
                                       faultToleranceType,
                                       numberOfOrigins);
 }

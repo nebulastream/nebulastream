@@ -21,6 +21,7 @@ namespace NES {
 class CsvFormat : public SinkFormat {
   public:
     CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
     virtual ~CsvFormat() noexcept = default;
 
     /**
