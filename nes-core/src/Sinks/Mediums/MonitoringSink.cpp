@@ -58,20 +58,17 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
         throw Exceptions::RuntimeException("MonitoringSink::writeData input buffer invalid");
     }
 
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto& buffer : dataBuffers) {
-        Monitoring::MetricPtr parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
-        Monitoring::readFromBuffer(parsedMetric, buffer, 0);
-        auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
-        uint64_t nodeId = nodeIdPtr[0];
-        NES_TRACE("MonitoringSink: Received buffer for {} with {} tuple and size {}:{}",
-                  nodeId,
-                  inputBuffer.getNumberOfTuples(),
-                  getSchemaPtr()->getSchemaSizeInBytes(),
-                  asJson(parsedMetric));
+    Monitoring::MetricPtr parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
+    Monitoring::readFromBuffer(parsedMetric, inputBuffer, 0);
+    auto nodeIdPtr = (uint64_t*) inputBuffer.getBuffer();
+    uint64_t nodeId = nodeIdPtr[0];
+    NES_TRACE("MonitoringSink: Received buffer for {} with {} tuple and size {}:{}",
+              nodeId,
+              inputBuffer.getNumberOfTuples(),
+              getSchemaPtr()->getSchemaSizeInBytes(),
+              asJson(parsedMetric));
 
-        metricStore->addMetrics(nodeId, std::move(parsedMetric));
-    }
+    metricStore->addMetrics(nodeId, std::move(parsedMetric));
 
     updateWatermarkCallback(inputBuffer);
 

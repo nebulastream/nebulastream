@@ -320,7 +320,7 @@ TEST_F(SinkTest, testTextPrintSink) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    const DataSinkPtr binSink = createTextPrintSink(test_schema, 0, 0, nodeEngine, 1, os);
+    const DataSinkPtr binSink = createCsvPrintSink(test_schema, 0, 0, nodeEngine, 1, os);
     for (uint64_t i = 0; i < 5; ++i) {
         for (uint64_t j = 0; j < 5; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -408,7 +408,7 @@ TEST_F(SinkTest, testTextZMQSink) {
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort);
+    const DataSinkPtr zmq_sink = createCsvZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;

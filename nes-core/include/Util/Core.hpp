@@ -125,6 +125,18 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
+
+/**
+ * @brief Trim leading and trailing whitespace characters from a string.
+ *
+ * This function removes leading and trailing whitespace characters (space,
+ * tab, newline, and carriage return) from the input string.
+ *
+ * @param str The input string to be trimmed.
+ * @return A new string with leading and trailing whitespace removed.
+ */
+std::string trim(const std::string& str);
+
 };// namespace Util
 }// namespace NES
 

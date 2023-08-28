@@ -52,9 +52,9 @@ class FileSink : public SinkMedium {
                       bool append,
                       QueryId queryId,
                       QuerySubPlanId querySubPlanId,
+                      bool addTimestamp,
                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                      uint64_t numberOfOrigins = 1,
-                      bool addTimestamp = false);
+                      uint64_t numberOfOrigins = 1);
 
     /**
      * @brief dtor

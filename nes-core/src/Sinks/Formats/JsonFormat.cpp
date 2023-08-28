@@ -21,10 +21,12 @@
 
 namespace NES {
 
+std::string JsonFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
+
 JsonFormat::JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::vector<Runtime::TupleBuffer> JsonFormat::getData(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+std::string JsonFormat::getFormattedBuffer(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
 std::string JsonFormat::toString() { return "JSON_FORMAT"; }
 FormatTypes JsonFormat::getSinkFormat() { return FormatTypes::JSON_FORMAT; }

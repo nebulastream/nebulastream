@@ -46,14 +46,14 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
-        return createTextPrintSink(schema,
-                                   querySubPlan->getQueryId(),
-                                   querySubPlan->getQuerySubPlanId(),
-                                   nodeEngine,
-                                   numOfProducers,
-                                   std::cout,
-                                   printSinkDescriptor->getFaultToleranceType(),
-                                   printSinkDescriptor->getNumberOfOrigins());
+        return createCsvPrintSink(schema,
+                                  querySubPlan->getQueryId(),
+                                  querySubPlan->getQuerySubPlanId(),
+                                  nodeEngine,
+                                  numOfProducers,
+                                  std::cout,
+                                  printSinkDescriptor->getFaultToleranceType(),
+                                  printSinkDescriptor->getNumberOfOrigins());
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
@@ -95,17 +95,17 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
 
-        if (kafkaSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
-            return createTextKafkaSink(schema,
-                                       querySubPlan->getQueryId(),
-                                       querySubPlan->getQuerySubPlanId(),
-                                       nodeEngine,
-                                       numOfProducers,
-                                       kafkaSinkDescriptor->getBrokers(),
-                                       kafkaSinkDescriptor->getTopic(),
-                                       kafkaSinkDescriptor->getTimeout(),
-                                       kafkaSinkDescriptor->getFaultToleranceType(),
-                                       kafkaSinkDescriptor->getNumberOfOrigins());
+        if (kafkaSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
+            return createCsvKafkaSink(schema,
+                                      querySubPlan->getQueryId(),
+                                      querySubPlan->getQuerySubPlanId(),
+                                      nodeEngine,
+                                      numOfProducers,
+                                      kafkaSinkDescriptor->getBrokers(),
+                                      kafkaSinkDescriptor->getTopic(),
+                                      kafkaSinkDescriptor->getTimeout(),
+                                      kafkaSinkDescriptor->getFaultToleranceType(),
+                                      kafkaSinkDescriptor->getNumberOfOrigins());
         } else {
             NES_THROW_RUNTIME_ERROR("Sinkformat " << kafkaSinkDescriptor->getSinkFormatAsString()
                                                   << " currently not supported for Kafka");
@@ -154,7 +154,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink for format={}",
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating file sink for format={}",
                  fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
@@ -164,6 +164,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                      numOfProducers,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend(),
+                                     fileSinkDescriptor->getAddTimestamp(),
                                      fileSinkDescriptor->getFaultToleranceType(),
                                      fileSinkDescriptor->getNumberOfOrigins());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
@@ -176,17 +177,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                            fileSinkDescriptor->getAppend(),
                                            fileSinkDescriptor->getFaultToleranceType(),
                                            fileSinkDescriptor->getNumberOfOrigins());
-        } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
-            return createTextFileSink(schema,
-                                      querySubPlan->getQueryId(),
-                                      querySubPlan->getQuerySubPlanId(),
-                                      nodeEngine,
-                                      numOfProducers,
-                                      fileSinkDescriptor->getFileName(),
-                                      fileSinkDescriptor->getAppend(),
-                                      fileSinkDescriptor->getFaultToleranceType(),
-                                      fileSinkDescriptor->getNumberOfOrigins(),
-                                      fileSinkDescriptor->getAddTimestamp());
         }
 #ifdef ENABLE_ARROW_BUILD
         else if (fileSinkDescriptor->getSinkFormatAsString() == "ARROW_FORMAT") {

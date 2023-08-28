@@ -113,7 +113,7 @@ class KafkaSinkTest : public Testing::BaseIntegrationTest {
 */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 }
 
 /**
@@ -121,7 +121,7 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
 */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 

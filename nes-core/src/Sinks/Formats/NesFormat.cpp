@@ -28,18 +28,9 @@ NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     serializedSchema = std::make_shared<SerializableSchema>();
 }
 
-std::vector<Runtime::TupleBuffer> NesFormat::getData(Runtime::TupleBuffer& inputBuffer) {
-    std::vector<Runtime::TupleBuffer> buffers;
-
-    if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("NesFormat::getData: write watermark-only buffer");
-        buffers.push_back(inputBuffer);
-        return buffers;
-    }
-
-    //in this case we don't need to
-    buffers.push_back(inputBuffer);
-    return buffers;
+std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
+    std::string out((char*) inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples());
+    return out;
 }
 
 std::string NesFormat::toString() { return "NES_FORMAT"; }
@@ -47,4 +38,6 @@ std::string NesFormat::toString() { return "NES_FORMAT"; }
 FormatTypes NesFormat::getSinkFormat() { return FormatTypes::NES_FORMAT; }
 
 FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+
+std::string NesFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

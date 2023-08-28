@@ -27,11 +27,36 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        QueryId queryId,
+                       QuerySubPlanId querySubPlanId)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, false, FaultToleranceType::NONE, 1, nullptr) {}
+
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+                       Runtime::NodeEnginePtr nodeEngine,
+                       uint32_t numOfProducers,
+                       QueryId queryId,
                        QuerySubPlanId querySubPlanId,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
-                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor,
-                       bool addTimestamp)
+                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
+    : SinkMedium(sinkFormat,
+                 nodeEngine,
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 false,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::move(watermarkProcessor)) {}
+
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+                       Runtime::NodeEnginePtr nodeEngine,
+                       uint32_t numOfProducers,
+                       QueryId queryId,
+                       QuerySubPlanId querySubPlanId,
+                       bool addTimestamp,
+                       FaultToleranceType faultToleranceType,
+                       uint64_t numberOfOrigins,
+                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
       watermarkProcessor(std::move(watermarkProcessor)), addTimestamp(addTimestamp) {
