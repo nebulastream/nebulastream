@@ -214,7 +214,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         for (const auto& inferModelOperator : inferModelOperators) {
             for (const auto& inputField : inferModelOperator->getInputFields()) {
                 auto field = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
-                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
+                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText()) {
                     throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for "
                                                 "tensorflow model not supported: "
                                                 + field->getStamp()->toString());
