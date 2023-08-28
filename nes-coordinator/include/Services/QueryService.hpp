@@ -99,9 +99,20 @@ class QueryService {
      * @param placementStrategy : Name of the placement strategy
      * @return query id
      */
-    QueryId addQueryRequest(const std::string& queryString,
+    QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
                             const Optimizer::PlacementStrategy placementStrategy);
+
+    /**
+     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @param queryPlan : Query Plan Pointer Object
+     * @param placementStrategy : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
+     * @return query id
+     */
+    QueryId validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
+                                                const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

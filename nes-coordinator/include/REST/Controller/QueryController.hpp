@@ -243,7 +243,51 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             std::string* queryString = protobufMessage->mutable_querystring();
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
+            QueryId queryId = queryService->validateAndQueueAddQueryRequest(*queryString, queryPlan, placementStrategy);
+
+            //Prepare the response
+            nlohmann::json response;
+            response["queryId"] = queryId;
+            return createResponse(Status::CODE_202, response.dump());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (...) {
+            NES_ERROR("RestServer: unknown exception.");
+            return errorHandler->handleError(Status::CODE_500, "unknown exception");
+        }
+    }
+
+    ENDPOINT("POST", "/explain-query", explainQuery, BODY_STRING(String, request)) {
+        try {
+            std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
+            auto optional = validateProtobufMessage(protobufMessage, request);
+            if (optional.has_value()) {
+                return optional.value();
+            }
+            SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
+            QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
+            auto* context = protobufMessage->mutable_context();
+
+            std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
+            if (context->contains("placement")) {
+                if (!validatePlacementStrategy(placementStrategyString = context->at("placement").value())) {
+                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
+                              placementStrategyString);
+                    std::string errorMessage = "Invalid Placement Strategy Type provided: " + placementStrategyString
+                        + ". Valid Placement Strategies are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                } else {
+                    placementStrategyString = context->at("placement").value();
+                }
+            }
+
+            QueryId queryId =
+                queryService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
 
             //Prepare the response
             nlohmann::json response;

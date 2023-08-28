@@ -104,7 +104,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -202,7 +202,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -309,7 +309,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

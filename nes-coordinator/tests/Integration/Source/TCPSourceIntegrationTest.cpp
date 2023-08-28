@@ -289,7 +289,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -383,7 +383,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -477,7 +477,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -571,7 +571,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -665,7 +665,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -759,7 +759,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -853,7 +853,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -947,7 +947,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
