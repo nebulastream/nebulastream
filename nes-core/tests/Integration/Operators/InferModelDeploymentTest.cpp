@@ -115,7 +115,74 @@ class InferModelDeploymentTest
                                                    {0.43428239, 0.31287873, 0.25283894}});
     }
 };
+#ifdef ONNXDEF
+/**
+ * Tests the deployment of a simple ONNX model using base64 encoded input data
+ */
+TEST_F(InferModelDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase64Encoding) {
+    struct IrisData {
+        uint64_t id;
+        std::string data;
+        uint64_t target;
+    };
 
+    auto irisSchema = Schema::create()
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("data", DataTypeFactory::createText())
+                          ->addField("target", DataTypeFactory::createUInt64());
+
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_base64.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType->setNumberOfBuffersToProduce(10);
+    csvSourceType->setSkipHeader(false);
+
+    //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
+    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.onnx",
+                        {Attribute("data")},
+                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
+                                  .addLogicalSource("irisData", irisSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        float iris0;
+        float iris1;
+        float iris2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
+    };
+
+    std::vector<Output> expectedOutput{
+        {0.8635288, 0.12861131, 0.00785995},
+        {0.8248063, 0.16215266, 0.01304107},
+        {0.8458433, 0.14335841, 0.01079828},
+        {0.8178819, 0.16869366, 0.01342443},
+        {0.8635288, 0.12861131, 0.00785995},
+        {0.8248063, 0.16215266, 0.01304107},
+        {0.8458433, 0.14335841, 0.01079828},
+        {0.8178819, 0.16869366, 0.01342443},
+        {0.8635288, 0.12861131, 0.00785995},
+        {0.8178819, 0.16869366, 0.01342443},
+    };
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    for (size_t i = 0; i < actualOutput.size(); ++i) {
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+    }
+}
+
+#endif
+
+#if TFDEF
 /**
  * tests mixed input to ml inference operator
  *
@@ -231,5 +298,5 @@ INSTANTIATE_TEST_CASE_P(TestInputs,
                             std::string name = std::get<0>(info.param);
                             return name;
                         });
-
+#endif
 }// namespace NES
