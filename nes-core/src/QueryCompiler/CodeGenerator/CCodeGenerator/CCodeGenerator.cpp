@@ -47,9 +47,6 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#ifdef TFDEF
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
-#endif//TFDEF
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
@@ -413,79 +410,23 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
         VarDeclStatement(inferModelOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
-    auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tensorflowAdapter");
+    auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto *"), "tensorflowAdapter");
     auto tensorflowDeclStatement =
         VarDeclStatement(tensorflowDeclaration).assign(call("inferModelOperatorHandler->getTensorflowAdapter"));
     code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
 
-    auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
-
-    bool firstIter = false;
-    std::shared_ptr<DataType> commonStamp;
     for (auto f : inputFields) {
-        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
-        if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
-            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
-                      field->getStamp()->toString());
-        }
-        if (!firstIter) {
-            commonStamp = field->getStamp();
-        } else {
-            commonStamp = commonStamp->join(field->getStamp());
-        }
-    }
-    NES_DEBUG("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: {}", commonStamp->toString());
-    if (commonStamp->isInteger()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-            BasicType::UINT8,
-            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::INT_64))))));
-    } else if (commonStamp->isFloat()) {
-        std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
-        if (floatStamp->getBits() == 32) {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-                BasicType::UINT8,
-                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::FLOAT))))));
-        } else {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-                BasicType::UINT8,
-                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::DOUBLE))))));
-        }
-    } else if (commonStamp->isBoolean()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-            BasicType::UINT8,
-            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::BOOLEAN))))));
-    } else {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-            BasicType::UINT8,
-            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::UNDEFINED))))));
-    }
-    generateTensorFlowInferCall->addParameter(
-        Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
-
-    for (auto f : inputFields) {
+        auto appendToArray = call("tensorflowAdapter->appendToByteArray");
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
-        if (commonStamp->isInteger()) {
-            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createInt64(), attrField->getName());
-            generateTensorFlowInferCall->addParameter(
-                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                    VarRef(variableDeclaration)));
-        } else if (commonStamp->isFloat()) {
-            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createDouble(), attrField->getName());
-            generateTensorFlowInferCall->addParameter(
-                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                    VarRef(variableDeclaration)));
-        } else if (commonStamp->isBoolean()) {
-            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createBoolean(), attrField->getName());
-            generateTensorFlowInferCall->addParameter(
-                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                    VarRef(variableDeclaration)));
-        } else {
-            NES_ERROR("CCodeGenerator: common data type for tensorflow model not supported: {}", commonStamp->toString());
-        }
+        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createInt64(), attrField->getName());
+        appendToArray->addParameter(
+            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                VarRef(variableDeclaration)));
+        code->currentCodeInsertionPoint->addStatement(appendToArray);
     }
 
-    code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
+    code->currentCodeInsertionPoint->addStatement(call("tensorflowAdapter->infer"));
 
     for (unsigned long i = 0; i < outputFields.size(); ++i) {
         auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();

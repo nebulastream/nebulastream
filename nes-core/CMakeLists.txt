@@ -113,7 +113,6 @@ register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/glog/ glo
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/boost/ boost)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/gflags/ gflags)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-conversion/ double-conversion)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)

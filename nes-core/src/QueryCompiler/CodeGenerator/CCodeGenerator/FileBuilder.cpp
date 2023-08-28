@@ -26,8 +26,8 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>\n"
                           "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n";
-#ifdef TFDEF
-    builder.declations << "#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>\n";
+#ifdef INFERENCE_OPERATOR_DEF
+    builder.declations << "#include <Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp>\n";
 #endif
     builder.declations
         << "#include <cstdint>\n"

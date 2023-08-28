@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 
@@ -28,9 +28,9 @@ using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
  */
 class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
-    InferModelOperatorHandler(std::string model);
+    explicit InferModelOperatorHandler(const std::string& model);
 
-    static InferModelOperatorHandlerPtr create(std::string model);
+    static InferModelOperatorHandlerPtr create(const std::string& model);
 
     ~InferModelOperatorHandler() override = default;
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
@@ -46,11 +46,11 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     const std::string& getModel() const;
 
-    const TensorflowAdapterPtr& getTensorflowAdapter() const;
+    NES::Runtime::Execution::Operators::InferenceAdapter* getTensorflowAdapter() const;
 
   private:
     std::string model;
-    TensorflowAdapterPtr tfAdapter;
+    NES::Runtime::Execution::Operators::InferenceAdapterPtr adapter;
 };
 }// namespace NES::InferModel
 

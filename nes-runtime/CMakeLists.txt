@@ -237,6 +237,7 @@ register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runt
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Network/NetworkForwardRefs.hpp Network/NetworkForwardRefs.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/BufferAccessException.hpp Runtime/MemoryLayout/BufferAccessException.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayout.hpp Runtime/MemoryLayout/MemoryLayout.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp)
 
 #Add the nes common and headers to cpack
 install(TARGETS nes-runtime

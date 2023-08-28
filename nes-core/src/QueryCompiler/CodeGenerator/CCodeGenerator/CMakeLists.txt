@@ -14,7 +14,6 @@
 add_source_files(nes-core
         CCodeGenerator.cpp
         FileBuilder.cpp
-        TensorflowAdapter.cpp
 )
 add_subdirectory(Declarations)
 add_subdirectory(Statements)

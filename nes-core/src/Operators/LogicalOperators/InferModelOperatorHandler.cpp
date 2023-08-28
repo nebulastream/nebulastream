@@ -14,6 +14,9 @@
 
 #ifdef INFERENCE_OPERATOR_DEF
 
+#include <Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp>
+#include <Execution/Operators/Streaming/InferModel/ONNXAdapter.hpp>
+#include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -22,14 +25,26 @@
 
 namespace NES::InferModel {
 
-InferModelOperatorHandlerPtr InferModelOperatorHandler::create(std::string model) {
+InferModelOperatorHandlerPtr InferModelOperatorHandler::create(const std::string& model) {
     return std::make_shared<InferModelOperatorHandler>(model);
 }
 
-InferModelOperatorHandler::InferModelOperatorHandler(std::string model) {
+InferModelOperatorHandler::InferModelOperatorHandler(const std::string& model) {
     this->model = model;
-    tfAdapter = TensorflowAdapter::create();
-    tfAdapter->initializeModel(model);
+    if (model.ends_with(".tflite")) {
+#ifdef TFDEF
+        adapter = Runtime::Execution::Operators::TensorflowAdapter::create();
+#else
+        throw std::runtime_error("TensorflowAdapter not supported, Compile with NES_USE_TF");
+#endif
+    } else if (model.ends_with(".onnx")) {
+#ifdef ONNXDEF
+        adapter = Runtime::Execution::Operators::ONNXAdapter::create();
+#else
+        throw std::runtime_error("ONNXAdapter not supported, Compile with NES_USE_ONNX");
+#endif
+    }
+    adapter->initializeModel(model);
 }
 
 void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
@@ -51,7 +66,7 @@ void InferModelOperatorHandler::postReconfigurationCallback(Runtime::Reconfigura
 
 const std::string& InferModelOperatorHandler::getModel() const { return model; }
 
-const TensorflowAdapterPtr& InferModelOperatorHandler::getTensorflowAdapter() const { return tfAdapter; }
+Runtime::Execution::Operators::InferenceAdapter* InferModelOperatorHandler::getTensorflowAdapter() const { return adapter.get(); }
 
 }// namespace NES::InferModel
 

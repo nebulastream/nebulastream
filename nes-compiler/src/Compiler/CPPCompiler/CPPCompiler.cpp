@@ -105,6 +105,14 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DFMT_HEADER_ONLY"s);
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
+#ifdef INFERENCE_OPERATOR_DEF
+    compilationFlags.addFlag("-DINFERENCE_OPERATOR_DEF=1");
+#endif// INFERENCE_OPERATOR_DEF
+
+#ifdef ONNXDEF
+    compilationFlags.addFlag("-DONNXDEF=1");
+#endif// ONNXDEF
+
 #ifdef TFDEF
     compilationFlags.addFlag("-DTFDEF=1");
 #endif// TFDEF
