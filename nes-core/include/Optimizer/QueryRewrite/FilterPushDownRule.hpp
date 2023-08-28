@@ -138,6 +138,11 @@ class FilterPushDownRule : public BaseRewriteRule {
     /**
      * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
      * substitute the filter's field access expression by the map transformation.
+     * Example:
+     *          Filter(a <= 5)                             Map(a = 5*b)
+     *               |                           ====>          |
+     *         Map(a = 5*b)                               Filter(5*b <= 5)
+     *
      * @param filterOperator the filter operator that we want to push down
      * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator

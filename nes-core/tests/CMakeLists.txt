@@ -195,6 +195,8 @@ if (NES_USE_MQTT)
     add_nes_unit_test(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
 endif (NES_USE_MQTT)
 
+### Filter Push Down Test ###
+add_nes_integration_test(filter-push-down-test "Integration/Optimizer/FilterPushDownTest.cpp")
 
 ### Row Layout Tests ###
 add_nes_unit_test(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")

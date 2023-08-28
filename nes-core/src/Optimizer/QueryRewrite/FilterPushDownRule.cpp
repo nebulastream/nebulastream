@@ -16,6 +16,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -363,10 +364,9 @@ void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(FilterLo
         getFilterAccessExpressions(filterOperator->getPredicate());
     for (auto& filterAccessExpression : filterAccessExpressions) {
         if (filterAccessExpression->getFieldName() == fieldName) {
-            filterAccessExpression->replace(mapTransformation);
+            filterAccessExpression->replace(mapTransformation->copy());
         }
     }
-    NES_TRACE("Substituted filter predicate's field access expression with map transformation. {}",
-              filterOperator->getPredicate()->toString());
+    NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());
 }
 }// namespace NES::Optimizer
