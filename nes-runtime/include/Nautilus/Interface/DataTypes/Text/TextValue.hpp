@@ -95,6 +95,13 @@ class TextValue final : public BaseVariableSizeType {
     [[nodiscard]] std::string strn_copy() const;
 
     /**
+     * @brief Returns a non-nullterminated string_view to the text value.
+     * Caution: string_view does not keep the TextValue alive. Ensure that TextValue outlives the string_view.
+     * @return std::string_view
+     */
+    [[nodiscard]] std::string_view view() const;
+
+    /**
      * @brief Retrieves the underling buffer of this text value.
      * @return Runtime::TupleBuffer
      */

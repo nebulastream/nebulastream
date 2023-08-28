@@ -65,6 +65,8 @@ std::string TextValue::strn_copy() const {
     return resultString;
 }
 
+std::string_view TextValue::view() const { return {c_str(), length()}; }
+
 Runtime::TupleBuffer TextValue::getBuffer() const { return Runtime::TupleBuffer::reinterpretAsTupleBuffer((void*) this); }
 
 TextValue::~TextValue() {
