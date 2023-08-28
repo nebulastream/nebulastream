@@ -106,7 +106,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     }
 }
 
-QueryId QueryService::addQueryRequest(const std::string& queryString,
+QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
                                       const Optimizer::PlacementStrategy placementStrategy) {
 
@@ -146,6 +146,22 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
         return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
+    }
+}
+
+QueryId QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
+                                                          const Optimizer::PlacementStrategy placementStrategy) {
+
+    if (enableNewRequestExecutor) {
+        auto addRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
+                                                                                  placementStrategy,
+                                                                                  1,
+                                                                                  z3Context);
+        asyncRequestExecutor->runAsync(addRequest);
+        auto future = addRequest->getFuture();
+        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 }
 
