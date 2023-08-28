@@ -84,8 +84,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
                  fileSink->getSinkFormat());
         return FileSinkDescriptor::create(fileSink->getFilePath(),
                                           fileSink->getSinkFormat(),
-                                          fileSink->getAppendAsString(),
-                                          fileSink->getAddTimestamp());
+                                          fileSink->getAppendAsString());
     } else if (sinkType == "MATERIALIZED_VIEW_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating materialized view sink");
         Experimental::MaterializedView::MaterializedViewSinkPtr materializedViewSink =

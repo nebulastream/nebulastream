@@ -28,38 +28,19 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, false, FaultToleranceType::NONE, 1, nullptr) {}
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1, nullptr) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
-                       FaultToleranceType faultToleranceType,
-                       uint64_t numberOfOrigins,
-                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
-    : SinkMedium(sinkFormat,
-                 nodeEngine,
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 false,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::move(watermarkProcessor)) {}
-
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
-                       Runtime::NodeEnginePtr nodeEngine,
-                       uint32_t numOfProducers,
-                       QueryId queryId,
-                       QuerySubPlanId querySubPlanId,
-                       bool addTimestamp,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
-      watermarkProcessor(std::move(watermarkProcessor)), addTimestamp(addTimestamp) {
+      watermarkProcessor(std::move(watermarkProcessor)) {
     bufferCount = 0;
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     schemaWritten = false;
@@ -124,8 +105,6 @@ void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::
 }
 
 uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
-
-bool SinkMedium::getAddTimestamp() { return addTimestamp; }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
