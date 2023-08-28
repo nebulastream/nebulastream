@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_INFERMODEL_INFERMODELHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_INFERMODEL_INFERMODELHANDLER_HPP_
 
-#include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
+#include "InferenceAdapter.hpp"
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 
@@ -48,11 +48,11 @@ class InferModelHandler : public OperatorHandler {
 
     const std::string& getModel() const;
 
-    const TensorflowAdapterPtr& getTensorflowAdapter() const;
+    const InferenceAdapterPtr& getTensorflowAdapter() const;
 
   private:
     std::string model;
-    TensorflowAdapterPtr tfAdapter;
+    InferenceAdapterPtr tfAdapter;
 };
 }// namespace NES::Runtime::Execution::Operators
 

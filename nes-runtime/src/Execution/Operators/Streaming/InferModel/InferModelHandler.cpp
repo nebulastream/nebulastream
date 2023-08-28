@@ -13,7 +13,16 @@
 */
 
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferenceAdapter.hpp>
+
+#ifdef ONNXDEF
+#include <Execution/Operators/Streaming/InferModel/ONNXAdapter.hpp>
+#endif
+
+#ifdef TFDEF
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
+#endif
+
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -22,7 +31,20 @@ InferModelHandlerPtr InferModelHandler::create(const std::string& model) { retur
 
 InferModelHandler::InferModelHandler(const std::string& model) {
     this->model = model;
-    tfAdapter = TensorflowAdapter::create();
+
+    if (model.ends_with(".onnx")) {
+#ifdef ONNXDEF
+        tfAdapter = ONNXAdapter::create();
+#else
+        throw std::runtime_error("ONNXAdapter not supported, Compile with NES_USE_ONNX");
+#endif
+    } else if (model.ends_with(".tflite")) {
+#ifdef TFDEF
+        tfAdapter = TensorflowAdapter::create();
+#else
+        throw std::runtime_error("TensorflowAdapter not supported, Compile with NES_USE_TF");
+#endif
+    }
     tfAdapter->initializeModel(model);
 }
 
@@ -36,6 +58,6 @@ void InferModelHandler::postReconfigurationCallback(Runtime::ReconfigurationMess
 
 const std::string& InferModelHandler::getModel() const { return model; }
 
-const TensorflowAdapterPtr& InferModelHandler::getTensorflowAdapter() const { return tfAdapter; }
+const InferenceAdapterPtr& InferModelHandler::getTensorflowAdapter() const { return tfAdapter; }
 
 }// namespace NES::Runtime::Execution::Operators

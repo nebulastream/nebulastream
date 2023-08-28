@@ -12,25 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_INFERMODEL_TENSORFLOWADAPTER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_INFERMODEL_TENSORFLOWADAPTER_HPP_
-
 #include "InferenceAdapter.hpp"
-#include <any>
-#include <memory>
-#include <vector>
 
-class TfLiteInterpreter;
-class TfLiteTensor;
+#ifdef ONNXDEF
+#include <string>
+#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
+#include <optional>
+#endif// ONNXDEF
 
 namespace NES::Runtime::Execution::Operators {
-
-class TensorflowAdapter : public InferenceAdapter {
-#ifdef TFDEF
+class ONNXAdapter : public InferenceAdapter {
+#ifdef ONNXDEF
   public:
     static InferenceAdapterPtr create();
-    TensorflowAdapter() = default;
-    ~TensorflowAdapter() override = default;
+    ONNXAdapter() = default;
+    ~ONNXAdapter() override;
 
   protected:
     void inferInternal(std::span<int8_t>&& input, std::span<int8_t>&& output) override;
@@ -39,12 +35,11 @@ class TensorflowAdapter : public InferenceAdapter {
     size_t getModelInputSizeInBytes() override;
 
   private:
-    TfLiteInterpreter* interpreter{};
-    const TfLiteTensor* outputTensor = nullptr;
-    TfLiteTensor* inputTensor = nullptr;
-#endif// TFDEF
+    std::optional<Ort::Env> env;
+    std::optional<Ort::Session> session;
+    std::vector<int64_t> input_shape;
+    std::vector<int64_t> output_shape;
+    OrtAllocator* allocator = nullptr;
+#endif// ONNXDEF
 };
-
 }// namespace NES::Runtime::Execution::Operators
-
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_INFERMODEL_TENSORFLOWADAPTER_HPP_

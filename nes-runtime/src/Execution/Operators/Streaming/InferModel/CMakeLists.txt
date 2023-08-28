@@ -14,4 +14,8 @@ if (NES_USE_TF)
     add_source_files(nes-runtime TensorflowAdapter.cpp)
 endif ()
 
+if (NES_USE_ONNX)
+    add_source_files(nes-runtime ONNXAdapter.cpp)
+endif ()
+
 add_source_files(nes-runtime InferenceAdapter.cpp InferModelOperator.cpp InferModelHandler.cpp)
