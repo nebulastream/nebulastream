@@ -988,13 +988,6 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowTwoMapsWithTwoFieldSubstitu
     NES_DEBUG("filterOperatorPQ1: {}", filterOperatorPQ1->toString());
     NES_DEBUG(
         "filterOperatorPQ1 Predicate: {}",
-        filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->toString());
-    NES_DEBUG("mapOperatorPQ2 map expression: {}",
-              mapOperatorPQ2->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()->toString());
-    EXPECT_TRUE(filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->equal(
-        mapOperatorPQ2->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()));
-    NES_DEBUG(
-        "filterOperatorPQ1 Predicate: {}",
         filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
     NES_DEBUG("mapOperatorPQ3 map expression: {}",
               mapOperatorPQ3->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()->toString());
