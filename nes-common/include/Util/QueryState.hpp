@@ -48,7 +48,8 @@ enum class QueryState : uint8_t {
     MARKED_FOR_FAILURE,
     FAILED,
     RESTARTING,
-    MIGRATING
+    MIGRATING,
+    EXPLAINED
 };
 
 }// namespace NES

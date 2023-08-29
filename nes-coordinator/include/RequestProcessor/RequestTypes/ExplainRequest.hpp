@@ -180,6 +180,14 @@ class ExplainRequest : public AbstractRequest {
      */
     void assignOperatorIds(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief create json from the execution plan
+     * @param SharedQueryId : the shared query id
+     * @param globalExecutionPlan : the global execution plan
+     * @return json representing the global execution plan
+     */
+    nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId, const GlobalExecutionPlanPtr& globalExecutionPlan);
+
   private:
     QueryId queryId;
     std::string queryString;

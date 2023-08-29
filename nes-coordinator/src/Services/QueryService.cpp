@@ -31,6 +31,7 @@
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <Services/QueryService.hpp>
@@ -38,6 +39,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES {
 
@@ -153,13 +155,13 @@ QueryId QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPt
                                                           const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
-        auto addRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
-                                                                                  placementStrategy,
-                                                                                  1,
-                                                                                  z3Context);
-        asyncRequestExecutor->runAsync(addRequest);
-        auto future = addRequest->getFuture();
-        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
+        auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan,
+                                                                                     placementStrategy,
+                                                                                     1,
+                                                                                     z3Context);
+        asyncRequestExecutor->runAsync(explainRequest);
+        auto future = explainRequest->getFuture();
+        return std::static_pointer_cast<RequestProcessor::Experimental::ExplainResponse>(future.get())->jsonResponse;
     } else {
         NES_NOT_IMPLEMENTED();
     }
