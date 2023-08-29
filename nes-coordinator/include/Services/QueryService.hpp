@@ -19,6 +19,7 @@
 #include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <future>
+#include <nlohmann/json.hpp>
 
 namespace z3 {
 class context;

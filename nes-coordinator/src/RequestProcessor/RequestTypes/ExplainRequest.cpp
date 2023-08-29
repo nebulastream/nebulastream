@@ -287,10 +287,19 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
-        //TODO: create the json response
+        auto response = getExecutionPlanForSharedQueryAsJson(queryId, globalExecutionPlan);
 
+        // respond to the calling service with the query id
+        responsePromise.set_value(std::make_shared<ExplainResponse>(response));
+
+        // clean up the data structure
+        globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
+        globalExecutionPlan->removeQuerySubPlans(queryId);
+
+        //2. Set query status as Explained
+        queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
     } catch (RequestExecutionException exception) {
-        NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
+        NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
         handleError(exception, storageHandler);
     }
     return {};
@@ -303,6 +312,43 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(Util::getNextOperatorId());
     }
+}
+
+nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
+                                                                    const GlobalExecutionPlanPtr& globalExecutionPlan) {
+    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+
+    nlohmann::json executionPlanJson{};
+    std::vector<nlohmann::json> nodes = {};
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    for (const ExecutionNodePtr& executionNode : executionNodes) {
+        nlohmann::json executionNodeMetaData{};
+
+        executionNodeMetaData["nodeId"] = executionNode->getId();
+        // loop over all query sub plans inside the current executionNode
+        nlohmann::json scheduledSubQueries{};
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+
+            // prepare json object to hold information on current query sub plan
+            nlohmann::json currentQuerySubPlan{};
+
+            // id of current query sub plan
+            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+
+            // add the string containing operator to the json object of current query sub plan
+            currentQuerySubPlan["querySubPlan"] = querySubPlan->toString();
+
+            scheduledSubQueries.push_back(currentQuerySubPlan);
+        }
+        executionNodeMetaData["querySubPlans"] = scheduledSubQueries;
+        nodes.push_back(executionNodeMetaData);
+    }
+
+    // add `executionNodes` JSON array to the final JSON result
+    executionPlanJson["executionNodes"] = nodes;
+
+    return executionPlanJson;
 }
 
 }// namespace NES::RequestProcessor::Experimental
