@@ -157,7 +157,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
 #endif
         ptr += offsetBetweenBuffers;
     }
-    NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
+    NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfAvailableBuffers);
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
@@ -173,6 +173,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
 #else
     detail::MemorySegment* memSegment = nullptr;
     availableBuffers.blockingRead(memSegment);
+    std::cout << "numOfAvailableBuffers" << numOfAvailableBuffers << std::endl;
     numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {

@@ -219,7 +219,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig6->ingestionRate = 900;
 
         workerConfig7 = WorkerConfiguration::create();
-        workerConfig7->numberOfBuffersInSourceLocalBufferPool = 110;
+        workerConfig7->numberOfBuffersInSourceLocalBufferPool = 1024;
         workerConfig7->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig7->coordinatorPort = *rpcCoordinatorPort;
         workerConfig7->enableStatisticOutput = true;
@@ -232,7 +232,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig7->networkCapacity = 100;
         workerConfig7->mtbfValue = 15000;
         workerConfig7->launchTime = 1652692028;
-        workerConfig7->ingestionRate = 900;
+        workerConfig7->sourceGatheringInterval = 900;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -507,8 +507,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Submit query");
 //    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
-    string query = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
-                   "Seconds(1))).apply(Min(Attribute(\"timestamp1\"))).sink(PrintSinkDescriptor::create());";
+    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,

@@ -321,6 +321,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     void handleRpcs(WorkerRPCServer& service);
 
+    void generateAsync(uint64_t workingTimeDeltaInMillSeconds,
+                       uint64_t ingestionRatePerSecond,
+                  folly::MPMCQueue<TupleBufferHolder>& bufferQueue,
+                  std::vector<Runtime::TupleBuffer>& preAllocatedBuffers,
+                       uint64_t numberOfTuplesToProduce);
+
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<uint16_t> localWorkerRpcPort;
     std::string rpcAddress;
@@ -343,10 +349,11 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
-    std::thread generatorThread;
+    std::shared_ptr<std::thread> generatorThread;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     std::shared_ptr<Runtime::BufferManager> bufferManager;
+    std::atomic<bool> started = false;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

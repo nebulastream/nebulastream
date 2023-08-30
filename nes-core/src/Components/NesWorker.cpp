@@ -129,37 +129,38 @@ uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 uint64_t NesWorker::getNumberOfBuffersPerEpoch() { return numberOfBuffersPerEpoch; }
 
-void generateAsync(bool* started,
-                   uint64_t workingTimeDeltaInMillSeconds,
-                   size_t ingestionRatePerSecond,
+void NesWorker::generateAsync(uint64_t workingTimeDeltaInMillSeconds,
+                              uint64_t ingestionRatePerSecond,
                    folly::MPMCQueue<TupleBufferHolder>& bufferQueue,
                    std::vector<Runtime::TupleBuffer>& preAllocatedBuffers,
-                   size_t numberOfTuplesToProduce) {
-    while (*started) {
-        std::cout << "proudce" << std::endl;
-        auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
-        auto buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec;
-        NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
+                              uint64_t numberOfTuplesToProduce) {
 
-        auto lastSecond = 0L;
-        auto runningOverAllCount = 0L;
-        auto ingestionRateIndex = 0L;
+//    NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
 
-        //        started = true;
+    while (!started) {
+        sleep(1);
+    }
+    auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
+    auto buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec;
+    NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
 
-        // continue producing buffers as long as the generator is running
-        while (started) {
-            // get the timestamp of the current period
-            std::cout << "produce buffer" << std::endl;
-            auto periodStartTime =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                    .count();
-            auto buffersProcessedCount = 0;
+    auto lastSecond = 0L;
+    auto runningOverAllCount = 0L;
+    auto ingestionRateIndex = 0L;
 
-            // produce the required number of buffers for the current period
-            while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
-                auto currentSecond =
-                    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    started = true;
+
+    // continue producing buffers as long as the generator is running
+    while (started) {
+        // get the timestamp of the current period
+        auto periodStartTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        auto buffersProcessedCount = 0;
+
+        // produce the required number of buffers for the current period
+        while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
+            auto currentSecond =
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
                 // get the buffer to produce
                 auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
@@ -183,28 +184,26 @@ void generateAsync(bool* started,
                         buffersToProducePerWorkingTimeDelta = 1;
                     }
 
-                    lastSecond = currentSecond;
-                    ingestionRateIndex++;
-                }
-
-                buffersProcessedCount++;
+                lastSecond = currentSecond;
+                ingestionRateIndex++;
             }
 
-            // get the current time and wait until the next period start time
-            size_t currentTime =
+            buffersProcessedCount++;
+        }
+
+        // get the current time and wait until the next period start time
+        uint64_t currentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        uint64_t nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
+
+        if (nextPeriodStartTime < currentTime) {
+            NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
+        }
+
+        while (currentTime < nextPeriodStartTime) {
+            currentTime =
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
                     .count();
-            auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
-
-            if (nextPeriodStartTime < currentTime) {
-                NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
-            }
-
-            while (currentTime < nextPeriodStartTime) {
-                currentTime =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                        .count();
-            }
         }
     }
 };
@@ -221,9 +220,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
-    bool* started = new bool(false);
-    auto preAllocatedBufferCnt = 100;
-    bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto preAllocatedBufferCnt = workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue();
+
     struct Record {
         uint64_t a;
         uint64_t b;
@@ -235,17 +233,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         uint64_t timestamp2;
     };
 
-    auto numberOfTuplesToProduce = bufferManager->getBufferSize() / sizeof(Record);
+    auto numberOfBuffersToSpawnOverall = workerConfig->numberOfBuffersToProduce.getValue();
+    auto ingestionRatePerSecond = workerConfig->sourceGatheringInterval.getValue();
+    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(numberOfBuffersToSpawnOverall);
+    auto numberOfTuplesToProduce = numberOfBuffersToSpawnOverall / ingestionRatePerSecond;
 
-    for (auto i = 0; i < preAllocatedBufferCnt; i++) {
+    bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto recordSize = bufferManager->getBufferSize() / sizeof(Record);
+    for (uint64_t i = 0; i < preAllocatedBufferCnt; i++) {
 
-        auto buffer = bufferManager->getBufferBlocking();
-        auto* records = buffer.getBuffer<Record>();
+        auto buffer = bufferManager->getUnpooledBuffer(workerConfig->bufferSizeInBytes.getValue());
+        auto* records = buffer.value().getBuffer<Record>();
         auto now = std::chrono::system_clock::now();
         auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
         auto epoch = now_ms.time_since_epoch();
         auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < recordSize; ++u) {
             records[u].a = u;
             records[u].b = u % 2;
             records[u].c = u % 3;
@@ -255,37 +258,44 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
-        preAllocatedBuffers.push_back(buffer);
+        preAllocatedBuffers.push_back(buffer.value());
     }
 
-    auto numberOfBuffersToSpawnOverall = 1000;
-    auto ingestionRatePerSecond = 100;
-    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(numberOfBuffersToSpawnOverall);
 
-    auto readerFunc = [this, &started](NES::Runtime::TupleBuffer&, uint64_t) {
+
+    auto readerFunc = [this](NES::Runtime::TupleBuffer&, uint64_t) -> std::optional<Runtime::TupleBuffer> {
         NES::TupleBufferHolder bufferHolder;
         auto res = false;
 
-        if (!started) {
-            *started = true;
+
+        bool isStarted = started;
+        if (!isStarted) {
+            started = true;
         }
-        std::cout << "try to read buffer" << std::endl;
-        bufferQueue.blockingRead(bufferHolder);
-        return bufferHolder.bufferToHold;
+
+        while (isStarted && !res) {
+            res = bufferQueue.read(bufferHolder);
+        }
+
+
+        std::cout << "SIZE" << bufferQueue.size() << std::endl;
+        if (res) {
+            return bufferHolder.bufferToHold;
+        } else if (!isStarted) {
+            return std::nullopt;
+        } else {
+            NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
+        }
     };
 
-    auto constexpr workingTimeDeltaInMillSeconds = 10;
-    generatorThread = std::thread([&] {
-        generateAsync(started, workingTimeDeltaInMillSeconds, ingestionRatePerSecond, bufferQueue, preAllocatedBuffers, numberOfTuplesToProduce);
-    });
-    generatorThread.join();
-
-    //TODO somewhere you have to do generatorThread.join()and also clear the bufferManager
+    auto workingTimeDeltaInSeconds = numberOfBuffersToSpawnOverall / ingestionRatePerSecond;
 
     auto lambdaSourceType1 = LambdaSourceType::create(std::move(readerFunc),
-                                                      workerConfig->numberOfBuffersToProduce,
-                                                      workerConfig->sourceGatheringInterval,
+                                                      numberOfBuffersToSpawnOverall,
+                                                      ingestionRatePerSecond,
                                                       GatheringMode::INGESTION_RATE_MODE);
+
+
     auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
     workerConfig->physicalSources.add(physicalSource1);
 
@@ -340,8 +350,12 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
-
     if (workerConfig->enableStatisticOutput) {
+
+        generatorThread = std::make_shared<std::thread>(([this, workingTimeDeltaInSeconds, ingestionRatePerSecond, numberOfTuplesToProduce]() {
+            generateAsync(workingTimeDeltaInSeconds * 1000, ingestionRatePerSecond, bufferQueue, preAllocatedBuffers, numberOfTuplesToProduce);
+        }));
+
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             std::ofstream statisticsFile;
@@ -374,6 +388,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             statisticsFile.close();
         }));
     }
+
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);
@@ -399,6 +414,7 @@ bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
 
+    started = false;
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NesWorker::stopping health check");
@@ -440,6 +456,12 @@ bool NesWorker::stop(bool) {
         }
         statisticOutputThread.reset();
 
+        if (generatorThread && generatorThread->joinable()) {
+            NES_DEBUG("NesWorker: statistic collection thread join");
+            generatorThread->join();
+        }
+        generatorThread.reset();
+        bufferManager->destroy();
         return successShutdownNodeEngine;
     }
     NES_WARNING("NesWorker::stop: already stopped");
