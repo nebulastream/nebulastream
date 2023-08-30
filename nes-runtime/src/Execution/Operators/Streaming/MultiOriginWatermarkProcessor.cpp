@@ -27,6 +27,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
+// TODO use here the BufferMetaData class for the params #4177
 uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {

@@ -19,9 +19,9 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
@@ -139,43 +139,50 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
         const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-        auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        auto nljBuildLeft = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             leftSchema,
             joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+            leftEntrySize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+            QueryCompilation::WindowingStrategy::SLICING);
 
-        auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             rightSchema,
             joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+            rightEntrySize,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+            QueryCompilation::WindowingStrategy::SLICING);
+
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
+        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
-                                                              leftSchema,
-                                                              rightSchema,
-                                                              joinSchema,
-                                                              leftEntrySize,
-                                                              rightEntrySize,
+                                                              joinSchemaStruct,
                                                               joinFieldNameLeft,
                                                               joinFieldNameRight,
-                                                              windowStartFieldName,
-                                                              windowEndFieldName,
-                                                              windowKeyFieldName);
+                                                              windowMetaData,
+                                                              leftEntrySize,
+                                                              rightEntrySize,
+                                                              QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+                                                              QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
         OriginId outputOriginId = 1;
-        auto nljOperatorHandler = Operators::NLJOperatorHandler::create(originIds,
-                                                                        outputOriginId,
-                                                                        leftEntrySize,
-                                                                        rightEntrySize,
-                                                                        leftPageSize,
-                                                                        rightPageSize,
-                                                                        windowSize,
-                                                                        windowSize);
+        auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(originIds,
+                                                                               outputOriginId,
+                                                                               windowSize,
+                                                                               windowSize,
+                                                                               leftEntrySize,
+                                                                               rightEntrySize,
+                                                                               leftPageSize,
+                                                                               rightPageSize);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

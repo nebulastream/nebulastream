@@ -11,112 +11,48 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
 
-#include <API/Schema.hpp>
-#include <Execution/Operators/OperatorState.hpp>
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
+
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Util/Common.hpp>
-#include <list>
-#include <optional>
 
 namespace NES::Runtime::Execution::Operators {
+
 /**
- * @brief This operator handler stores multiple slices (NLJWindow) with each slice containing the left and right stream tuples.
- * This class provides the two join phases (NLJBuild and NLJProbe) with methods for performing a nested loop join.
+ * @brief This task models the information for a join window trigger, so what left and right slice identifier to join together
  */
+struct EmittedNLJWindowTriggerTask {
+    uint64_t leftSliceIdentifier;
+    uint64_t rightSliceIdentifier;
+    WindowInfo windowInfo;
+};
+
 class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
-class NLJOperatorHandler : public StreamJoinOperatorHandler {
+
+class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
   public:
-    /**
-     * @brief Constructor for a NLJOperatorHandler
-     * @param origins
-     * @param sizeOfTupleInByteLeft
-     * @param sizeOfTupleInByteRight
-     * @param sizePageLeft
-     * @param sizePageRight
-     * @param windowSize
-     */
-    explicit NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                                const OriginId outputOriginId,
-                                uint64_t sizeOfTupleInByteLeft,
-                                uint64_t sizeOfTupleInByteRight,
-                                uint64_t sizePageLeft,
-                                uint64_t sizePageRight,
-                                uint64_t windowSize,
-                                uint64_t windowSlide);
+    NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,
+                       const OriginId outputOriginId,
+                       const uint64_t windowSize,
+                       const uint64_t windowSlide,
+                       const uint64_t sizeOfRecordLeft,
+                       const uint64_t sizeOfRecordRight,
+                       const uint64_t pageSizeLeft,
+                       const uint64_t pageSizeRight);
 
-    ~NLJOperatorHandler() = default;
-    /**
-     * @brief Starts the operator handler
-     * @param pipelineExecutionContext
-     * @param stateManager
-     * @param localStateVariableId
-     */
-    void start(PipelineExecutionContextPtr pipelineExecutionContext,
-               StateManagerPtr stateManager,
-               uint32_t localStateVariableId) override;
+    ~NLJOperatorHandler() override = default;
 
-    /**
-     * @brief Stops the operator handler
-     * @param terminationType
-     * @param pipelineExecutionContext
-     */
-    void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
+    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
 
-    /**
-     * @brief Retrieves the number of tuples for a stream (left or right) and a window
-     * @param windowIdentifier
-     * @param joinBuildSide
-     * @return Number of tuples or -1 if no window exists for the window identifier
-     */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, QueryCompilation::JoinBuildSideType joinBuildSide);
+    void emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo,
+                             PipelineExecutionContext* pipelineCtx) override;
 
-    /**
-     * @brief method to trigger the finished windows
-     * @param sliceIdentifiersToBeTriggered
-     * @param workerCtx
-     * @param pipelineCtx
-     */
-    void triggerSlices(TriggerableWindows& sliceIdentifiersToBeTriggered,
-                        PipelineExecutionContext* pipelineCtx) override;
-
-    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                        const OriginId outputOriginId,
-                                        const uint64_t sizeOfTupleInByteLeft,
-                                        const uint64_t sizeOfTupleInByteRight,
-                                        const uint64_t sizePageLeft,
-                                        const uint64_t sizePageRight,
-                                        const uint64_t windowSize,
-                                        const uint64_t windowSlide);
-
-    /**
-     * @brief Returns the current window, by current we mean the last added window to the list. If no slice exists,
-     * a slice with the timestamp 0 will be created
-     * @return StreamSlice*
-     */
-    StreamSlice* getCurrentWindowOrCreate();
-
-    /**
-     * @brief Returns the page size of the left PagedVector
-     * @return uint64_t
-     */
-    uint64_t getLeftPageSize() const;
-
-    /**
-     * @brief Returns the page size of the right PagedVector
-     * @return uint64_t
-     */
-    uint64_t getRightPageSize() const;
-
-  private:
-    const uint64_t leftPageSize;
-    const uint64_t rightPageSize;
+  protected:
+    const uint64_t pageSizeLeft;
+    const uint64_t pageSizeRight;
 };
 
 /**
@@ -124,9 +60,11 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
  * @param ptrNljWindow
  * @param workerId
  * @param joinBuildSide
- * @return void*
+ * @return void* that will be translated to a MemRef
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
-}// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_
+
+
+}; // namespace NES::Runtime::Execution::Operators
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

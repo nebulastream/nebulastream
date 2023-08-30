@@ -13,11 +13,9 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
 namespace NES::Runtime::Execution {
-
 uint64_t StreamSlice::getSliceIdentifier() const { return getSliceEnd(); }
 
 uint64_t StreamSlice::getSliceStart() const { return sliceStart; }
@@ -38,4 +36,4 @@ std::string StreamSlice::toString() {
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

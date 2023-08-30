@@ -22,7 +22,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
-                                         const QueryCompilation::QueryCompilerOptions::WindowingStrategy& windowingStrategy) {
+                                         const QueryCompilation::WindowingStrategy& windowingStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;

@@ -18,8 +18,9 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinProbe.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -107,9 +108,9 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                               const std::string& joinFieldNameRight,
                               const std::string& timeStampFieldLeft,
                               const std::string& timeStampFieldRight,
-                              const std::string&,
-                              const std::string&,
-                              const std::string&) {
+                              const std::string& windowStartFieldName,
+                              const std::string& windowEndFieldName,
+                              const std::string& windowKeyFieldName) {
         bool hashJoinWorks = true;
 
         // Creating the input left and right buffers and the expected output buffer
@@ -144,42 +145,51 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
         const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-        auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(
+        auto joinBuildLeft = std::make_shared<Operators::HJBuildSlicing>(
             handlerIndex,
-            QueryCompilation::JoinBuildSideType::Left,
-            joinFieldNameLeft,
-            timeStampFieldLeft,
             leftSchema,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
-        auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(
+            joinFieldNameLeft,
+            QueryCompilation::JoinBuildSideType::Left,
+            leftSchema->getSchemaSizeInBytes(),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft),
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            QueryCompilation::WindowingStrategy::SLICING);
+        auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
             handlerIndex,
-            QueryCompilation::JoinBuildSideType::Right,
-            joinFieldNameRight,
-            timeStampFieldRight,
             rightSchema,
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
-        auto joinProbe = std::make_shared<Operators::StreamHashJoinProbe>(handlerIndex,
-                                                                         leftSchema,
-                                                                         rightSchema,
-                                                                         joinSchema,
-                                                                         joinFieldNameLeft,
-                                                                         joinFieldNameRight);
+            joinFieldNameRight,
+            QueryCompilation::JoinBuildSideType::Right,
+            rightSchema->getSchemaSizeInBytes(),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight),
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            QueryCompilation::WindowingStrategy::SLICING);
+
+        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
+        Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
+
+        auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
+                                                              joinSchemaStruct,
+                                                              joinFieldNameLeft,
+                                                              joinFieldNameRight,
+                                                              windowMetaData,
+                                                              QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+                                                              QueryCompilation::WindowingStrategy::SLICING);
 
         // Creating the hash join operator
         std::vector<OriginId> originIds{0, 1};
         OriginId outputOriginId = 2;
         auto hashJoinOpHandler =
-            Operators::StreamHashJoinOperatorHandler::create(originIds,
-                                                             outputOriginId,
-                                                             windowSize,
-                                                             windowSlide,
-                                                             leftSchema->getSchemaSizeInBytes(),
-                                                             rightSchema->getSchemaSizeInBytes(),
-                                                             NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                             NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
-                                                             NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                             NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
-                                                             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
+            Operators::HJOperatorHandlerSlicing::create(originIds,
+                                                        outputOriginId,
+                                                        windowSize,
+                                                        windowSlide,
+                                                        leftSchema->getSchemaSizeInBytes(),
+                                                        rightSchema->getSchemaSizeInBytes(),
+                                                        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+                                                        NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                                        NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                                        NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
+                                                        NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
 
 
         // Building the pipeline

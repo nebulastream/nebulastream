@@ -51,4 +51,5 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
     return retSchema;
 }
 
-}// namespace NES::Runtime::Execution::Util
+}
+// namespace NES::Runtime::Execution::Util

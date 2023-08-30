@@ -77,7 +77,7 @@ struct TriggerableWindows {
          * @brief Adds the slice to be triggered for this window
          * @param slice
          */
-        void add(StreamSlicePtr slice) {
+        void add(const StreamSlicePtr& slice) {
             slicesToTrigger.emplace_back(slice);
         }
     };
@@ -91,6 +91,77 @@ struct __attribute__((packed)) JoinPartitionIdSliceIdWindow {
     uint64_t sliceIdentifierRight;
     WindowInfo windowInfo;
 };
+
+/**
+ * @brief This stores a sliceId and a corresponding windowId
+ */
+class WindowSliceIdKey {
+  public:
+    explicit WindowSliceIdKey(uint64_t sliceId, uint64_t windowId) : sliceId(sliceId), windowId(windowId) {}
+
+    bool operator<(const WindowSliceIdKey& other) const {
+        // For now, this should be fine as the sliceId is monotonically increasing
+        if (sliceId != other.sliceId) {
+            return sliceId < other.sliceId;
+        } else {
+            return windowId < other.windowId;
+        }
+    }
+
+    uint64_t sliceId;
+    uint64_t windowId;
+};
+
+/**
+ * @brief Stores the meta date for a RecordBuffer
+ */
+struct BufferMetaData {
+  public:
+    BufferMetaData(const uint64_t watermarkTs, const uint64_t seqNumber, const OriginId originId)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
+
+    std::string toString() const {
+        std::ostringstream oss;
+        oss <<"waterMarkTs: " << watermarkTs << ","
+            << "seqNumber: " << seqNumber << ","
+            << "originId: " << originId;
+        return oss.str();
+    }
+
+    const uint64_t watermarkTs;
+    const uint64_t seqNumber;
+    const OriginId originId;
+};
+
+/**
+ * @brief This stores the left, right and output schema for a binary join
+ */
+struct JoinSchema {
+  public:
+    JoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& joinSchema)
+        : leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema) {}
+
+    const SchemaPtr leftSchema;
+    const SchemaPtr rightSchema;
+    const SchemaPtr joinSchema;
+};
+
+/**
+ * @brief Stores window start, window end and join key field name
+ */
+struct WindowMetaData {
+  public:
+    WindowMetaData(const std::string& windowStartFieldName,
+                   const std::string& windowEndFieldName,
+                   const std::string& windowKeyFieldName)
+        : windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
+          windowKeyFieldName(windowKeyFieldName) {}
+
+    std::string  windowStartFieldName;
+    std::string  windowEndFieldName;
+    std::string  windowKeyFieldName;
+};
+
 }// namespace Operators
 
 

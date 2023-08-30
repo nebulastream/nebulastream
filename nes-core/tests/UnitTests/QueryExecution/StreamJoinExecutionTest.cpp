@@ -26,7 +26,8 @@ namespace NES::Runtime::Execution {
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
-                                     public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
+                                     public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
+                                                                                     QueryCompilation::WindowingStrategy>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -39,11 +40,12 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::BaseUnitTest::SetUp();
-        auto joinStrategy = NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam();
-        auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        const auto joinStrategy = std::get<0>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        const auto windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
-        executionEngine =
-            std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads, joinStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads,
+                                                                         joinStrategy, windowingStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -90,6 +92,9 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                 source->emitBuffer(buf);
             }
         }
+
+        // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // Stopping query and waiting until the test sink has received the expected number of tuples
         NES_INFO("Stopping query now!!!");
@@ -461,7 +466,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
-// TODO can be revisited once #3966 has been merged
+// TODO #3844 can be revisited once #3966 has been merged
 TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
@@ -569,12 +574,10 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+                        JOIN_STRATEGIES_WINDOW_STRATEGIES,
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
+                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
+                                std::string(magic_enum::enum_name(std::get<1>(info.param)));
                         });
 
 }// namespace NES::Runtime::Execution

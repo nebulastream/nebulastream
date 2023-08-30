@@ -27,6 +27,13 @@ enum class StreamJoinStrategy : uint8_t {
     NESTED_LOOP_JOIN
 };
 
+enum class WindowingStrategy : uint8_t {
+    // Applies default windowing strategy.
+    DEFAULT,
+    SLICING,
+    BUCKET
+};
+
 enum class JoinBuildSideType : uint8_t { Right, Left };
 template<typename E = JoinBuildSideType, typename Out = uint64_t>
 constexpr Out to_underlying(E e) noexcept {

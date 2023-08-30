@@ -13,6 +13,7 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
@@ -289,16 +290,20 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @brief Lowers the stream hash join
      * @param streamJoinOperatorNodes
      * @param streamJoinConfig
+     * @return StreamJoinOperatorHandlerPtr
      */
-    void lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
+    lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
                                 const StreamJoinConfigs& streamJoinConfig);
 
     /**
      * @brief Lowers the stream nested loop join
      * @param streamJoinOperatorNodes
      * @param streamJoinConfig
+     * @return StreamJoinOperatorHandlerPtr
      */
-    void lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
+    lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
                                       const StreamJoinConfigs& streamJoinConfig);
 };
 

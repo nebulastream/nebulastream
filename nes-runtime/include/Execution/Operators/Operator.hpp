@@ -26,6 +26,9 @@ using namespace Nautilus;
 class ExecutableOperator;
 using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 
+class Operator;
+using OperatorPtr = std::shared_ptr<Operators::Operator>;
+
 /**
  * @brief Base operator for all specific operators.
  * Each operator can implement setup, open, close, and terminate.

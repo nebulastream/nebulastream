@@ -30,11 +30,15 @@ using namespace std;
 
 namespace NES::Runtime::Execution {
 
+
 class MultipleJoinsTest : public Testing::BaseIntegrationTest,
-                          public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
+                          public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
+                                                                          QueryCompilation::WindowingStrategy>>{
   public:
+
     Runtime::BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy;
+    QueryCompilation::WindowingStrategy windowingStrategy;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleJoinsTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MultipleJoinsTest test class.");
@@ -45,7 +49,8 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
         NES_INFO("QueryExecutionTest: Setup MultipleJoinsTest test class.");
         BaseIntegrationTest::SetUp();
 
-        joinStrategy = NES::Runtime::Execution::MultipleJoinsTest::GetParam();
+        joinStrategy = std::get<0>(NES::Runtime::Execution::MultipleJoinsTest::GetParam());
+        windowingStrategy = std::get<1>(NES::Runtime::Execution::MultipleJoinsTest::GetParam());
         bufferManager = std::make_shared<Runtime::BufferManager>();
     }
 
@@ -57,13 +62,14 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
         EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .enableNautilus()
-                                      .setJoinStrategy(joinStrategy);
+                                      .setJoinStrategy(joinStrategy)
+                                      .setWindowingStrategy(windowingStrategy);
 
         for (auto i = 0_u64; i < joinParams.inputSchemas.size(); ++i) {
             auto sourceConfig = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[i]);
-            std::string logicalSourceName = "window" + std::to_string(i + 1);
+            std::string logicalSourceName = "window" + std::to_string(i+1);
             testHarness.addLogicalSource(logicalSourceName, joinParams.inputSchemas[i])
-                .attachWorkerWithCSVSourceToCoordinator(logicalSourceName, sourceConfig);
+                       .attachWorkerWithCSVSourceToCoordinator(logicalSourceName, sourceConfig);
         }
 
         auto actualResult = testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedRecords.size());
@@ -687,11 +693,9 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
 INSTANTIATE_TEST_CASE_P(
     testJoinQueries,
     MultipleJoinsTest,
-    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+    JOIN_STRATEGIES_WINDOW_STRATEGIES,
     [](const testing::TestParamInfo<MultipleJoinsTest::ParamType>& info) {
-        return std::string(magic_enum::enum_name(info.param));
+        return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
+            std::string(magic_enum::enum_name(std::get<1>(info.param)));
     });
 }// namespace NES::Runtime::Execution

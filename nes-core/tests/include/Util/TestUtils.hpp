@@ -55,6 +55,22 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 }// namespace Runtime
 
 /**
+ * @brief This combines all join strategies and window strategies.
+ */
+#define JOIN_STRATEGIES_WINDOW_STRATEGIES  ::testing::Combine(\
+    ::testing::Values(\
+        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,\
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,\
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,\
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL\
+        ),\
+    ::testing::Values(\
+        QueryCompilation::WindowingStrategy::SLICING,\
+        QueryCompilation::WindowingStrategy::BUCKET\
+        )\
+        )
+
+/**
  * @brief this is a util class for the tests
  */
 namespace TestUtils {

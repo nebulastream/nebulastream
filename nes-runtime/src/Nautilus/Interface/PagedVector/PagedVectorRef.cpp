@@ -81,7 +81,7 @@ void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) {
     getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val);
 }
 
-PagedVectorRefIter PagedVectorRef::begin() { return {*this}; }
+PagedVectorRefIter PagedVectorRef::begin() { return at(0_u64); }
 
 PagedVectorRefIter PagedVectorRef::at(Value<UInt64> pos) {
     PagedVectorRefIter pagedVectorRefIter(*this);

@@ -282,7 +282,7 @@ uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control) {
 }
 
 bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) {
-    NES_ASSERT2_FMT(index < children.size(), "Invalid index");
+    NES_ASSERT2_FMT(index < children.size(), "Invalid index " + std::to_string(index) + " of children.size() " + std::to_string(children.size()));
 
     auto* child = children[index];
     control = child->controlBlock->retain();
