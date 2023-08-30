@@ -113,7 +113,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator, NodePtr parentOperator);
+    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
+                             JoinLogicalOperatorNodePtr joinOperator, NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -133,7 +134,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
      * @return true if we pushed the filter to both branches of this joinOperator
      */
-    bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
+    bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, JoinLogicalOperatorNodePtr joinOperator);
 
     /**
      * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
@@ -147,7 +148,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator
      */
-    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator);
+    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, MapLogicalOperatorNodePtr mapOperator);
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
@@ -179,7 +180,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param node the map operator node
      * @return name of the field
      */
-    static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
+    static std::string getAssignmentFieldFromMapOperator(const NodePtr& node);
 
     /**
      * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
@@ -222,7 +223,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param mapOperator map operator node where the filter should be pushed below
      * @param fieldName field name of the attribute that is assigned a field by the map transformation
      */
-    void substituteFilterAttributeWithMapTransformation(FilterLogicalOperatorNodePtr const& filterOperator,
+    void substituteFilterAttributeWithMapTransformation(const FilterLogicalOperatorNodePtr& filterOperator,
                                                                             const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName);
 };
 
