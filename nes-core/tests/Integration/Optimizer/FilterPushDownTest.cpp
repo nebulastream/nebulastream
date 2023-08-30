@@ -14,6 +14,7 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -36,6 +37,7 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
     CSVSourceTypePtr srcConf1;
+    SchemaPtr schema;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AndOperatorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -49,26 +51,25 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
 
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
+
+        schema = Schema::create()
+                     ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                     ->addField(createField("timestamp", BasicType::UINT64))
+                     ->addField(createField("velocity", BasicType::UINT64))
+                     ->addField(createField("quantity", BasicType::UINT64));
     }
 
-    string removeRandomKey(string contentString) {
-        std::regex r2("cep_rightKey([0-9]+)");
-        contentString = std::regex_replace(contentString, r2, "cep_rightKey");
+    struct Output {
+        uint64_t QnV1$timestamp;
+        uint64_t QnV1$velocity;
+        uint64_t QnV1$quantity;
 
-        uint64_t start = contentString.find("|QnV1QnV2$start:UINT64");
-        uint64_t end = contentString.find("QnV2$cep_rightKey:INT32|\n");
-        // Repeat till end is reached
-        while (start != std::string::npos) {
-            // Replace this occurrence of Sub String
-            contentString = contentString.replace(start, end, "");
-            // Get the next occurrence from the current position
-            start = contentString.find("|QnV1QnV2$start:UINT64", end);
+        bool operator==(Output const& rhs) const {
+            return (QnV1$timestamp == rhs.QnV1$timestamp && QnV1$velocity == rhs.QnV1$velocity
+                    && QnV1$quantity == rhs.QnV1$quantity);
         }
+    };
 
-        std::regex r3("\\+?[-]+\\+\\n?");
-        contentString = std::regex_replace(contentString, r3, "");
-        return contentString;
-    }
 };
 
 /* 1.Test
@@ -76,78 +77,42 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
  * followed by a map with a multiplication
  */
 TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
-    // Setup Coordinator
-    std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
-                                         ->addField(createField("quantity", BasicType::UINT64));)";
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
-    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("FilterPushDownTest: Coordinator started successfully");
 
-    // Setup Worker 1
-    NES_INFO("FilterPushDownTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
+
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
-    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("FilterPushDownTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("FilterPushDownTest: Submit andWith pattern");
-
     std::string query =
         R"(Query::from("QnV1").map(Attribute("velocity") = Attribute("velocity") - 5)
         .map(Attribute("velocity") = 5 * Attribute("velocity"))
-        .filter(Attribute("velocity") < 100).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
+        .filter(Attribute("velocity") < 100)
+        .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity")))";
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
+                                  .addLogicalSource("QnV1", schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .validate()
+                                  .setupTopology();
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
+                                          {1543625520000, 95, 3},
+                                          {1543625940000, 80, 1},
+                                          {1543626120000, 75, 1},
+                                          {1543626420000, 75, 2}};
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             actualOutput.size());
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    string expectedContent =
-        "|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|R2000070|1543624260000|95."
-        "000000|2|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|R2000070|"
-        "1543625520000|98.333328|3|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|"
-        "R2000070|1543625940000|80.952377|1|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:"
-        "UINT64|\n|R2000070|1543626120000|77.380951|1|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$"
-        "quantity:UINT64|\n|R2000070|1543626420000|78.571426|2|\n";
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents={}", content);
-
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
-
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /* 2.Test
@@ -155,77 +120,80 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
  * in parentheses and a multiplication
  */
 TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
-    // Setup Coordinator
-    std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
-                                         ->addField(createField("quantity", BasicType::UINT64));)";
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
-    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("FilterPushDownTest: Coordinator started successfully");
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
-    // Setup Worker 1
-    NES_INFO("FilterPushDownTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
-    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("FilterPushDownTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("FilterPushDownTest: Submit andWith pattern");
+    std::string query =
+        R"(Query::from("QnV1").map(Attribute("velocity") = 5 * (Attribute("velocity") - 5))
+        .filter(Attribute("velocity") < 100)
+        .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity")))";
+
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
+                                  .addLogicalSource("QnV1", schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .validate()
+                                  .setupTopology();
+
+    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
+                                          {1543625520000, 95, 3},
+                                          {1543625940000, 80, 1},
+                                          {1543626120000, 75, 1},
+                                          {1543626420000, 75, 2}};
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             actualOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/* 2.Test
+ * This test checks if the filter push down below a map with a new field name works correctly
+ */
+TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
+    NES_INFO("FilterPushDownTest: Start testSameResultsForPushDownBelowMapWithNewField");
+
+    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf1->setNumberOfBuffersToProduce(20);
+
+    std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
+    remove(outputFilePath.c_str());
 
     std::string query =
-        R"(Query::from("QnV1")
-        .map(Attribute("velocity") = 5 * (Attribute("velocity") - 5)).filter(Attribute("velocity") < 100).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
+        R"(Query::from("QnV1").map(Attribute("NewVelocity") = 5 * (Attribute("velocity") - 5))
+        .filter(Attribute("NewVelocity") < 100)
+        .project(Attribute("timestamp"), Attribute("NewVelocity"), Attribute("quantity")))";
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
+                                  .addLogicalSource("QnV1", schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .validate()
+                                  .setupTopology();
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
+                                          {1543625520000, 95, 3},
+                                          {1543625940000, 80, 1},
+                                          {1543626120000, 75, 1},
+                                          {1543626420000, 75, 2}};
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
+             actualOutput.size());
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    string expectedContent =
-        "|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|R2000070|1543624260000|95."
-        "000000|2|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|R2000070|"
-        "1543625520000|98.333328|3|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n|"
-        "R2000070|1543625940000|80.952377|1|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:"
-        "UINT64|\n|R2000070|1543626120000|77.380951|1|\n|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$"
-        "quantity:UINT64|\n|R2000070|1543626420000|78.571426|2|\n";
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents={}", content);
-
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
-
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 }// namespace NES
