@@ -32,11 +32,11 @@ void* getProbeHashMapProxy(void* op) {
 AbstractBatchJoinProbe::AbstractBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
+                                               const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                                               const std::vector<PhysicalTypePtr>& valueDataTypes,
                                std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
     : operatorHandlerIndex(operatorHandlerIndex), keyExpressions(keyExpressions), keyDataTypes(keyDataTypes),
-      probeFieldIdentifiers(probeFieldIdentifiers), valueDataTypes(valueDataTypes), hashFunction(std::move(hashFunction)),
+      buildFieldIdentifiers(buildFieldIdentifiers), valueDataTypes(valueDataTypes), hashFunction(std::move(hashFunction)),
       keySize(0), valueSize(0) {
 
     for (auto& keyType : keyDataTypes) {

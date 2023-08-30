@@ -20,7 +20,6 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <utility>
 
@@ -29,10 +28,15 @@ namespace NES::Runtime::Execution::Operators {
 InnerBatchJoinProbe::InnerBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
+                                         const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                                         const std::vector<PhysicalTypePtr>& valueDataTypes,
                                std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
-    : AbstractBatchJoinProbe(operatorHandlerIndex, keyExpressions, keyDataTypes, probeFieldIdentifiers, valueDataTypes, std::move(hashFunction)) {}
+    : AbstractBatchJoinProbe(operatorHandlerIndex,
+                             keyExpressions,
+                             keyDataTypes,
+                             buildFieldIdentifiers,
+                             valueDataTypes,
+                             std::move(hashFunction)) {}
 
 void InnerBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     // Get matches iterator
@@ -41,11 +45,11 @@ void InnerBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
     // Iterate through matches from build hash table
     for (; entry != nullptr; ++entry) {
         // Create result record
-        // load values from the probe side and store them in the record.
+        // load values from the build side and store them in the record.
         auto valuePtr = (*entry).getValuePtr();
-        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
+        for (size_t i = 0; i < buildFieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-            record.write(probeFieldIdentifiers[i], value);
+            record.write(buildFieldIdentifiers[i], value);
             valuePtr = valuePtr + valueDataTypes[i]->size();
         }
         this->child->execute(ctx, record);

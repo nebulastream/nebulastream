@@ -34,15 +34,15 @@ class AbstractBatchJoinProbe : public ExecutableOperator {
      * @param operatorHandlerIndex index of the operator handler.
      * @param keyExpressions expressions that extract the key fields from the input record.
      * @param keyDataTypes data types of the key fields.
-     * @param probeFieldIdentifiers record identifier of the value field in the probe table
+     * @param buildFieldIdentifiers record identifier of the value field in the built table
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
      */
     AbstractBatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
+                           const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                           const std::vector<PhysicalTypePtr>& valueDataTypes,
                    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -59,8 +59,8 @@ class AbstractBatchJoinProbe : public ExecutableOperator {
   protected:
     /**
      * @brief Finds the matching entry in the hash map.
-     * @param ctx
-     * @param record
+     * @param ctx execution context
+     * @param record record
      * @return KeyEntryIterator
      */
     Interface::ChainedHashMapRef::KeyEntryIterator findMatches(NES::Runtime::Execution::ExecutionContext& ctx,
@@ -69,7 +69,7 @@ class AbstractBatchJoinProbe : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<Record::RecordFieldIdentifier> probeFieldIdentifiers;
+    const std::vector<Record::RecordFieldIdentifier> buildFieldIdentifiers;
     const std::vector<PhysicalTypePtr> valueDataTypes;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;

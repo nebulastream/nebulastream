@@ -108,9 +108,7 @@ class ChainedHashMapRef {
     class KeyEntryIterator {
       public:
         KeyEntryIterator(ChainedHashMapRef& hashTableRef,
-                         const Value<UInt64>& hash,
-                         const std::vector<Value<>>& keys,
-                         const Value<UInt64>& currentIndex);
+                         const Value<UInt64>& hash, const std::vector<Value<>>& keys);
         KeyEntryIterator& operator++();
         bool operator==(KeyEntryIterator other) const;
         bool operator==(std::nullptr_t) const;
@@ -118,7 +116,6 @@ class ChainedHashMapRef {
 
       private:
         ChainedHashMapRef& hashTableRef;
-        Value<UInt64> currentIndex;
         std::vector<Value<>> keys;
         EntryRef currentEntry;
     };

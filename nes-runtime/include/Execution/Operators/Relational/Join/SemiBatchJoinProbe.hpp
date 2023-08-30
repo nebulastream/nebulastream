@@ -33,19 +33,21 @@ class SemiBatchJoinProbe : public AbstractBatchJoinProbe {
      * @param operatorHandlerIndex index of the operator handler.
      * @param keyExpressions expressions that extract the key fields from the input record.
      * @param keyDataTypes data types of the key fields.
-     * @param probeFieldIdentifiers record identifier of the value field in the probe table
+     * @param buildFieldIdentifiers record identifier of the value field in the built table
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
      */
     SemiBatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
+                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                       const std::vector<PhysicalTypePtr>& valueDataTypes,
                        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
   private:
+    Interface::ChainedHashMapRef::KeyEntryIterator findMatches(NES::Runtime::Execution::ExecutionContext& ctx,
+                                                               NES::Nautilus::Record& record) const;
     /**
      * @brief Marks the entry as matched.
      * @param entry entry to mark.

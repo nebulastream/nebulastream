@@ -29,14 +29,14 @@ namespace NES::Runtime::Execution::Operators {
 OuterBatchJoinProbe::OuterBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
+                                         const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                                         const std::vector<PhysicalTypePtr>& valueDataTypes,
                                          std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
                                          const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers)
     : AbstractBatchJoinProbe(operatorHandlerIndex,
                              keyExpressions,
                              keyDataTypes,
-                             probeFieldIdentifiers,
+                             buildFieldIdentifiers,
                              valueDataTypes,
                              std::move(hashFunction)),
       resultRecordFieldIdentifiers(resultRecordFieldIdentifiers) {}
@@ -49,10 +49,10 @@ void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
     if (entry != nullptr) {
         // No match: build record with NULL values
         auto valuePtr = (*entry).getValuePtr();
-        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
+        for (size_t i = 0; i < buildFieldIdentifiers.size(); i++) {
             // For now, we use '0' as NULL, but in the future we need a holistic approach for this
             // See issue #4064
-            record.write(probeFieldIdentifiers[i], 0);
+            record.write(buildFieldIdentifiers[i], 0);
             valuePtr = valuePtr + valueDataTypes[i]->size();
         }
         this->child->execute(ctx, record);
@@ -61,9 +61,9 @@ void OuterBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx
         for (; entry != nullptr; ++entry) {
             mark(*entry);
             auto valuePtr = (*entry).getValuePtr();
-            for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
+            for (size_t i = 0; i < buildFieldIdentifiers.size(); i++) {
                 auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-                record.write(probeFieldIdentifiers[i], value);
+                record.write(buildFieldIdentifiers[i], value);
                 valuePtr = valuePtr + valueDataTypes[i]->size();
             }
             this->child->execute(ctx, record);

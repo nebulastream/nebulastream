@@ -30,26 +30,46 @@ namespace NES::Runtime::Execution::Operators {
 SemiBatchJoinProbe::SemiBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
+                                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                                       const std::vector<PhysicalTypePtr>& valueDataTypes,
                                        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
     : AbstractBatchJoinProbe(operatorHandlerIndex,
                              keyExpressions,
                              keyDataTypes,
-                             probeFieldIdentifiers,
+                             buildFieldIdentifiers,
                              valueDataTypes,
-                             std::move(hashFunction)) {
-    // Add space for boolean to enable marking occurrences in the hash map
-    keySize = keySize + 1;
-}
+                             std::move(hashFunction)) {}
 
 void SemiBatchJoinProbe::mark(Interface::ChainedHashMapRef::EntryRef entry) const {
-    auto mark = Value<Boolean>(false);
+    auto mark = Value<UInt8>(1_u8);
     auto keyPtr = entry.getKeyPtr();
-    for (size_t i = 0; i < keyDataTypes.size(); i++) {
+    for (size_t i = 0; i < keyDataTypes.size() - 1; i++) {
         keyPtr = keyPtr + keyDataTypes[i]->size();
     }
     keyPtr.store(mark);
+}
+
+Interface::ChainedHashMapRef::KeyEntryIterator SemiBatchJoinProbe::findMatches(NES::Runtime::Execution::ExecutionContext& ctx,
+                                                                               NES::Nautilus::Record& record) const {
+    // 1. derive key values
+    std::vector<Value<>> keyValues;
+    for (const auto& exp : keyExpressions) {
+        keyValues.emplace_back(exp->execute(record));
+    }
+
+    // 2. add mark
+    auto mark = Value<UInt8>(0_u8);
+    keyValues.emplace_back(mark);
+
+    // 3. load the reference to the global hash map.
+    auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
+    auto& hashMap = state->hashMap;
+
+    // 4. calculate hash
+    auto hash = hashFunction->calculate(keyValues);
+
+    // 5. lookup the key in the hashmap
+    return hashMap.findAll(hash, keyValues);
 }
 
 void SemiBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {

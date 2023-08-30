@@ -19,6 +19,7 @@
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -28,20 +29,25 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+void* getProbeHashMapProxyAntiJoin(void* op) {
+    auto handler = static_cast<BatchJoinHandler*>(op);
+    return handler->getGlobalHashMap();
+}
+
 AntiBatchJoinProbe::AntiBatchJoinProbe(uint64_t operatorHandlerIndex,
                                const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
+                                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                                       const std::vector<PhysicalTypePtr>& valueDataTypes,
                                        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
-                                       const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers)
+                                       std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
     : AbstractBatchJoinProbe(operatorHandlerIndex,
                              keyExpressions,
                              keyDataTypes,
-                             probeFieldIdentifiers,
+                             buildFieldIdentifiers,
                              valueDataTypes,
                              std::move(hashFunction)),
-      resultRecordFieldIdentifiers(resultRecordFieldIdentifiers) {}
+      maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
 
 void AntiBatchJoinProbe::mark(const Interface::ChainedHashMapRef::EntryRef& entry) {
     entry.getKeyPtr().store(Value<Boolean>(true));
@@ -53,21 +59,18 @@ bool AntiBatchJoinProbe::isMarked(const Interface::ChainedHashMapRef::EntryRef& 
 
 void AntiBatchJoinProbe::writeEntryIntoRecord(const Interface::ChainedHashMapRef::EntryRef& entry,
                                               NES::Nautilus::Record& record) const {
-    auto keyPtr = entry.getKeyPtr();
-    // skip the mark boolean
-    keyPtr = keyPtr + 1;
     // write the key
     auto KeyPtr = entry.getKeyPtr();
-    for (size_t i = 0; i < keyDataTypes.size(); i++) {
+    for (size_t i = 0; i < keyDataTypes.size() - 1; i++) {// -1 because the last key is the mark
         auto key = MemRefUtils::loadValue(KeyPtr, keyDataTypes[i]);
-        record.write(resultRecordFieldIdentifiers[i], key);
+        record.write(buildFieldIdentifiers[i], key);
         KeyPtr = KeyPtr + keyDataTypes[i]->size();
     }
     // write the value
     auto valuePtr = entry.getValuePtr();
     for (size_t i = 0; i < valueDataTypes.size(); i++) {
         auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
-        record.write(resultRecordFieldIdentifiers[i + keyDataTypes.size()], value);
+        record.write(buildFieldIdentifiers[i + keyDataTypes.size() - 1], value);
         valuePtr = valuePtr + valueDataTypes[i]->size();
     }
 }
@@ -85,17 +88,51 @@ void AntiBatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx,
 void AntiBatchJoinProbe::terminate(NES::Runtime::Execution::ExecutionContext& executionCtx) const {
     // for now, this execution is very slow as we do not create code for the termination
 
+    // For now hard-code this
+    auto maxRecordsPerBuffer = 1000_u64;
+
+    // For now, we have to create a record buffer here to pass it to the child.
+    // This is suboptimal as we do not expect to create a record buffer here.
+    // In the best cases, we devise a way to pass the record buffer from the parents open call to this terminated call
+    executionCtx.allocateBuffer();
+    auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
+    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+    auto rb = RecordBuffer(memRef);
+
+    // Get the global hash map during the terminate phase
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto state = Nautilus::FunctionCall("getProbeHashMapProxyAntiJoin", getProbeHashMapProxyAntiJoin, globalOperatorHandler);
+    auto hashMap = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
+
+    auto outputIndex = Value<UInt64>(0_u64);
+
     // emit all unseen entries
-    auto state = reinterpret_cast<LocalJoinProbeState*>(executionCtx.getLocalState(this));
-    auto& hashMap = state->hashMap;
     for (auto entry : hashMap) {
         if (!isMarked(entry)) {
             auto record = Record();
             writeEntryIntoRecord(entry, record);
-            child->execute(executionCtx, record);
+
+            // For now, we emulate the emit operator here
+            auto ref = rb.getBuffer();
+            memoryProvider->write(outputIndex, ref, record);
+            outputIndex = outputIndex + 1_u64;
+            // emit buffer if it reached the maximal capacity
+            if (outputIndex >= maxRecordsPerBuffer) {
+                rb.setNumRecords(outputIndex);
+                rb.setWatermarkTs(executionCtx.getWatermarkTs());
+                rb.setOriginId(executionCtx.getOriginId());
+                rb.setSequenceNr(executionCtx.getSequenceNumber());
+                executionCtx.emitBuffer(rb);
+
+                // new record buffer
+                memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
+                memRef.ref =
+                    Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+                rb = RecordBuffer(memRef);
+                outputIndex = 0_u64;
+            }
         }
     }
-    child->terminate(executionCtx);
 }
 
 }// namespace NES::Runtime::Execution::Operators

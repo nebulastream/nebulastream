@@ -53,7 +53,7 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                uint64_t entrySize,
                uint64_t keySize,
                uint64_t valueSize,
-               bool markBool);
+               bool markBool = false);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,

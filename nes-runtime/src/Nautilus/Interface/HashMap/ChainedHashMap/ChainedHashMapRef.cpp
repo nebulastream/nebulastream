@@ -60,6 +60,7 @@ ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef,
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const Value<UInt64>& hash) {
     auto entry = FunctionCall<>("findChainProxy", findChainProxy, hashTableRef, hash);
+    auto i = ChainedHashMapRef::EntryRef(entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
@@ -94,7 +95,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const Value<UInt64>& hash, c
 }
 
 ChainedHashMapRef::KeyEntryIterator ChainedHashMapRef::findAll(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
-    return {*this, hash, keys, 0_u64};
+    return {*this, hash, keys};
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
@@ -205,15 +206,17 @@ Value<UInt64> ChainedHashMapRef::getEntriesPerPage() {
 
 ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTableRef,
                                                       const Value<UInt64>& hash,
-                                                      const std::vector<Value<>>& keys,
-                                                      const Value<UInt64>& currentIndex)
-    : hashTableRef(hashTableRef), currentIndex(currentIndex), keys(keys), currentEntry(hashTableRef.findChain(hash)) {}
+                                                      const std::vector<Value<>>& keys)
+    : hashTableRef(hashTableRef), keys(keys), currentEntry(hashTableRef.find(hash, keys)) {}
 
 ChainedHashMapRef::KeyEntryIterator& ChainedHashMapRef::KeyEntryIterator::operator++() {
     Value<Boolean> equals = false;
-    for (; currentEntry != nullptr && !equals; currentEntry = currentEntry.getNext()) {
-        currentIndex = currentIndex + 1_u64;
-        equals = hashTableRef.compareKeys(currentEntry, keys);
+    // Iterate while there's a valid entry and keys are not equal.
+    while (currentEntry != nullptr && !equals) {
+        currentEntry = currentEntry.getNext();
+        if (currentEntry != nullptr) {
+            equals = hashTableRef.compareKeys(currentEntry, keys);
+        }
     }
     return *this;
 }

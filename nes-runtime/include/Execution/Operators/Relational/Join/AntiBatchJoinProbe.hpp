@@ -16,9 +16,11 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_ANTIBATCHJOINPROBE_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Relational/Join/AbstractBatchJoinProbe.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -33,18 +35,17 @@ class AntiBatchJoinProbe : public AbstractBatchJoinProbe {
      * @param operatorHandlerIndex index of the operator handler.
      * @param keyExpressions expressions that extract the key fields from the input record.
      * @param keyDataTypes data types of the key fields.
-     * @param probeFieldIdentifiers record identifier of the value field in the probe table
+     * @param buildFieldIdentifiers record identifier of the value field in the built table
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
-     * @param resultFieldIdentifiers record identifier of the result fields
      */
     AntiBatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
+                       const std::vector<Record::RecordFieldIdentifier>& buildFieldIdentifiers,
+                       const std::vector<PhysicalTypePtr>& valueDataTypes,
                        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
-                       const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers);
+                       std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(NES::Runtime::Execution::ExecutionContext& executionCtx) const override;
@@ -54,7 +55,8 @@ class AntiBatchJoinProbe : public AbstractBatchJoinProbe {
     static bool isMarked(const Interface::ChainedHashMapRef::EntryRef& entry);
     void writeEntryIntoRecord(const Interface::ChainedHashMapRef::EntryRef& entry, NES::Nautilus::Record& record) const;
 
-    const std::vector<Record::RecordFieldIdentifier>& resultRecordFieldIdentifiers;
+    uint64_t maxRecordsPerBuffer;
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_ANTIBATCHJOINPROBE_HPP_

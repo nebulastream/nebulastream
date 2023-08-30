@@ -135,10 +135,6 @@ class TPCH_Query3 {
         std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
 
-        std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_custkey",
-                                                                       "o_orderkey",
-                                                                       "o_orderdate",
-                                                                       "o_shippriority"};
         auto customersJoinProbe = std::make_shared<InnerBatchJoinProbe>(0 /*handler index*/,
                                                                    ordersProbeKeys,
                                                                    std::vector<PhysicalTypePtr>{integerType},
@@ -206,13 +202,13 @@ class TPCH_Query3 {
         auto l_orderkey = std::make_shared<ReadFieldExpression>("l_orderkey");
         std::vector<ExpressionPtr> lineitemProbeKeys = {l_orderkey};
 
-        std::vector<Record::RecordFieldIdentifier> orderProbeFieldNames = {"o_shippriority", "o_orderdate"};
+        std::vector<Record::RecordFieldIdentifier> orderBuildFieldNames = {"o_shippriority", "o_orderdate"};
 
         auto lineitemJoinProbe = std::make_shared<InnerBatchJoinProbe>(0 /*handler index*/,
                                                                   lineitemProbeKeys,
                                                                   std::vector<PhysicalTypePtr>{integerType},
-                                                                  orderProbeFieldNames,
-                                                                  std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                  orderBuildFieldNames,
+                                                  std::vector<PhysicalTypePtr>{integerType, integerType},
                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         shipDateSelection->setChild(lineitemJoinProbe);
 
