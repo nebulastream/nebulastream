@@ -116,7 +116,7 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
         return false;
     }
 
-    if (!schemaWritten) {
+    if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
         auto schemaStr = sinkFormat->getFormattedSchema();
         outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
         schemaWritten = true;

@@ -13,14 +13,15 @@
 */
 
 #include "SerializableOperator.pb.h"
-#include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <utility>
+
 namespace NES {
 
 NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
@@ -29,7 +30,7 @@ NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
 }
 
 std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
-    std::string out((char*) inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples());
+    std::string out((char*) inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * getSchemaPtr()->getSchemaSizeInBytes());
     return out;
 }
 
@@ -39,5 +40,9 @@ FormatTypes NesFormat::getSinkFormat() { return FormatTypes::NES_FORMAT; }
 
 FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
-std::string NesFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
+std::string NesFormat::getFormattedSchema() {
+    SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
+    return protoBuff->SerializeAsString();
+}
+
 }// namespace NES
