@@ -221,47 +221,37 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "testStream$campaign_id:INTEGER(64 bits)\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n";
 
     cout << "content=" << content << endl;
     cout << "expContent=" << expectedContent << endl;
@@ -337,47 +327,37 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|testStream$campaign_id:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "testStream$campaign_id:INTEGER(64 bits)\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n";
 
     cout << "content=" << content << endl;
     cout << "expContent=" << expectedContent << endl;
@@ -531,13 +511,10 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|testStream$val1:UINT64|testStream$val2:UINT64|testStream$val3:UINT64|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1|2|3|\n"
-                             "|1|2|4|\n"
-                             "|4|3|6|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "testStream$val1:INTEGER(64 bits),testStream$val2:INTEGER(64 bits),testStream$val3:INTEGER(64 bits)\n"
+                             "1,2,3\n"
+                             "1,2,4\n"
+                             "4,3,6\n";
     NES_INFO("ContinuousSourceTest: content={}", content);
     NES_INFO("ContinuousSourceTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -615,9 +592,9 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    auto lCount = countOccurrences(content, "\n");
     NES_INFO("ContinuousSourceTest: content=\n{}", content);
-    EXPECT_EQ(lCount, 4);
+    EXPECT_EQ(countOccurrences(content, "\n"), 4);
+    EXPECT_EQ(countOccurrences(content, ","), 3 * 4);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
