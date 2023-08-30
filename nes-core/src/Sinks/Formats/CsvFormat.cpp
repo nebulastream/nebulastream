@@ -40,7 +40,7 @@ std::string CsvFormat::getFormattedSchema() {
 }
 
 std::string CsvFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
-    std::string bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
+    std::string bufferContent;
     if (addTimestamp) {
         auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
@@ -48,6 +48,8 @@ std::string CsvFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
         std::string repReg = "," + std::to_string(timestamp) + "\n";
         bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
         schema->addField("timestamp", BasicType::UINT64);
+    } else {
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
     }
     return bufferContent;
 }

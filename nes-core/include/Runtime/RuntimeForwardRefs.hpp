@@ -139,6 +139,10 @@ using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
 }// namespace Runtime
 
+namespace Network {
+class NesPartition;
+}
+
 namespace Experimental::MaterializedView {
 class MaterializedViewMananger;
 using MaterializedViewManangerPtr = std::shared_ptr<MaterializedViewMananger>;

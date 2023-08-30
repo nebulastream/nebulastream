@@ -109,7 +109,7 @@ std::string FileSink::getFilePath() const { return filePath; }
 
 bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
+    NES_DEBUG("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
 
     if (!inputBuffer) {
         NES_ERROR("FileSink::writeDataToFile input buffer invalid");
@@ -120,12 +120,14 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
         auto schemaStr = sinkFormat->getFormattedSchema();
         outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
         schemaWritten = true;
+    } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+        NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
     } else {
-        NES_TRACE("FileSink::getData: schema already written");
+        NES_DEBUG("FileSink::getData: schema already written");
     }
 
-    NES_TRACE("FileSink::getData: write data to file= {}", filePath);
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
     updateWatermarkCallback(inputBuffer);

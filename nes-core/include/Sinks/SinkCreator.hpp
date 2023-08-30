@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_SINKS_SINKCREATOR_HPP_
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/FaultToleranceType.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -44,7 +45,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
-                              bool addTimestamp,
+                              bool addTimestamp = false,
                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1);
 

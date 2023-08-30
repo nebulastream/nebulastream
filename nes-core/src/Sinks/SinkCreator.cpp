@@ -117,14 +117,14 @@ DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
 #endif
 
 DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
-                              QueryId queryId,
-                              QuerySubPlanId querySubPlanId,
-                              const Runtime::NodeEnginePtr& nodeEngine,
-                              uint32_t activeProducers,
-                              const std::string& host,
-                              uint16_t port,
-                              FaultToleranceType faultToleranceType,
-                              uint64_t numberOfOrigins) {
+                             QueryId queryId,
+                             QuerySubPlanId querySubPlanId,
+                             const Runtime::NodeEnginePtr& nodeEngine,
+                             uint32_t activeProducers,
+                             const std::string& host,
+                             uint16_t port,
+                             FaultToleranceType faultToleranceType,
+                             uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format,
                                      nodeEngine,
@@ -184,13 +184,13 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
 }
 
 DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
-                                QueryId queryId,
-                                QuerySubPlanId querySubPlanId,
-                                const Runtime::NodeEnginePtr& nodeEngine,
-                                uint32_t activeProducers,
-                                std::ostream& out,
-                                FaultToleranceType faultToleranceType,
-                                uint64_t numberOfOrigins) {
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t activeProducers,
+                               std::ostream& out,
+                               FaultToleranceType faultToleranceType,
+                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format,
                                        nodeEngine,
@@ -313,15 +313,15 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 }// namespace Experimental::MaterializedView
 #ifdef ENABLE_KAFKA_BUILD
 DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
-                                QueryId queryId,
-                                QuerySubPlanId querySubPlanId,
-                                const Runtime::NodeEnginePtr& nodeEngine,
-                                uint32_t activeProducers,
-                                const std::string& brokers,
-                                const std::string& topic,
-                                uint64_t kafkaProducerTimeout,
-                                FaultToleranceType faultToleranceType,
-                                uint64_t numberOfOrigins) {
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t activeProducers,
+                               const std::string& brokers,
+                               const std::string& topic,
+                               uint64_t kafkaProducerTimeout,
+                               FaultToleranceType faultToleranceType,
+                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
 
     return std::make_shared<KafkaSink>(format,
