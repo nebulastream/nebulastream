@@ -283,10 +283,13 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<uint64_t, z3::expr>& nodeUtilizationMap,
                                  std::map<uint64_t, double>& nodeMileageMap) {
 
+    std::vector<z3::expr> P_IJ_stored;
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
-
+        if (i>1){
+            P_IJ_stored.erase(P_IJ_stored.begin(), P_IJ_stored.begin()+topologyNodePath.size());
+        }
         if (operatorMap.find(operatorID) != operatorMap.end()) {
             // Initialize the path constraint variable to 0
             auto pathConstraint = z3Context->int_val(0);
@@ -316,9 +319,25 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             auto P_IJ = z3Context->int_const(variableID.c_str());
             if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
                 opt.add(P_IJ == 1);// Fix the placement of source and sink
-            } else {
+                if (i==0){
+                    P_IJ_stored.emplace_back(P_IJ);
+                    NES_INFO("the {}. operator node added to PIJ Variable", i+1);
+                }
+            } else if (i == 0 && j != 0){
+                opt.add(P_IJ == 0);// Fix the placement of source and sink
+                P_IJ_stored.emplace_back(P_IJ);
+                NES_INFO("the {}. operator node added to PIJ Variable", i+1);
+            }
+            else {
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
-                opt.add(P_IJ == 0 || P_IJ == 1);
+                // with the additional constraint of keeping order of operator nodes
+                z3::expr check_previous_expression = (P_IJ_stored[0] == 1);
+                for (uint64_t k = 1; k<=j; ++k) {
+                    check_previous_expression = check_previous_expression || (P_IJ_stored[k] == 1);
+                }
+                opt.add(P_IJ==0 || (P_IJ==1 && check_previous_expression));
+                P_IJ_stored.emplace_back(P_IJ);
+                NES_INFO("the {}. operator node added to PIJ Variable", i+1);
             }
             placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
