@@ -103,7 +103,7 @@ std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
 DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() { return TupleIterator(*this); }
 DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() { return TupleIterator(*this, getNumberOfTuples()); }
 
-std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
+std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeader) {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
@@ -119,11 +119,25 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
                   std::to_string(physicalType->size()));
     }
 
-    for (auto it = this->begin(); it != this->end(); ++it) {
+    if (showHeader) {
+        str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        DynamicTuple dynamicTuple = (*it);
+        for (uint32_t i = 0; i < schema->getSize(); ++i) {
+            str << schema->get(i)->getName() << ":"
+                << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
+        }
+        str << std::endl;
+        str << "+----------------------------------------------------+" << std::endl;
+    }
+
+    for (auto&& it : *this) {
+        str << "|";
+        DynamicTuple dynamicTuple = (it);
         str << dynamicTuple.toString(schema);
         str << std::endl;
+    }
+    if (showHeader) {
+        str << "+----------------------------------------------------+";
     }
     return str.str();
 }

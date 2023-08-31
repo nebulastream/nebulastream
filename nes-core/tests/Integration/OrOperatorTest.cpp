@@ -225,7 +225,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     NES_DEBUG("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
     NES_DEBUG("TUPLE NUMBER={}", n);
-    size_t expResult = 130L;
+    size_t expResult = 119L;
 
     EXPECT_EQ(n, expResult);
 
@@ -427,29 +427,21 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
+    std::string resultContent;
     std::string line;
-    bool resultWrk1 = false;
-    bool resultWrk2 = false;
-
     while (std::getline(ifs, line)) {
-        NES_INFO("print line from content{}", line);
-        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
-        if (content.size() > 1 && content.at(1) == "R2000073") {
-            NES_INFO("First content={}", content.at(2));
-            NES_INFO("First: expContent= 102.629631");
-            if (content.at(3) == "102.629631") {
-                resultWrk1 = true;
-            }
-        } else if (content.size() > 1 && content.at(1) == "R2000070") {
-            NES_INFO("Second: content={}", content.at(2));
-            NES_INFO("Second: expContent= 108.166664");
-            if (content.at(3) == "108.166664") {
-                resultWrk2 = true;
-            }
-        }
+        resultContent += line + "\n";
     }
+    ifs.close();
 
-    EXPECT_TRUE((resultWrk1 && resultWrk2));
+    NES_DEBUG("OrOperatorTest: Result produced content {}", resultContent);
+
+    std::string expectedContent =
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "R2000070,1543625280000,108.166664,5\n"
+        "R2000073,1543624020000,102.629631,8\n";
+
+    ASSERT_EQ(expectedContent, resultContent);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);

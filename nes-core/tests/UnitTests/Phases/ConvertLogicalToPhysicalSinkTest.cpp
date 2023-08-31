@@ -83,11 +83,11 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     DataSinkPtr zmqSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
-    EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
+    EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000, INTERNAL=0)");
 }
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("TEXT_FORMAT", "test", "localhost:9092", 1000);
+    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("CSV_FORMAT", "test", "localhost:9092", 1000);
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);

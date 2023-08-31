@@ -69,7 +69,7 @@ TEST_F(SourceCatalogTest, testAddGetLogSource) {
     EXPECT_NE(sPtr, nullptr);
 
     map<std::string, SchemaPtr> allLogicalSource = sourceCatalog->getAllLogicalSource();
-    string exp = "id:INTEGER(32 bits) value:INTEGER(64 bits) ";
+    string exp = "id:INTEGER(32 bits) value:INTEGER(64 bits)";
     EXPECT_EQ(allLogicalSource.size(), 2U);
 
     SchemaPtr testSchema = allLogicalSource["test_stream"];

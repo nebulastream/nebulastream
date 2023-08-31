@@ -327,7 +327,7 @@ class DynamicTupleBuffer {
      * @brief Creates a string representation of the dynamic tuple buffer
      * @return a string representation
      */
-    std::string toString(const SchemaPtr& schema);
+    std::string toString(const SchemaPtr& schema, bool showHeader = true);
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
