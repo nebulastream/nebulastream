@@ -11,24 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Common.hpp>
 #include <atomic>
-#include <cstring>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Nautilus::Interface {
 
-FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
-    : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord) {
+FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
+    : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord), bloomFalsePosRate(bloomFalsePosRate) {
     NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
 
-    bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+    bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
     currentPos = 0;
 }
 
@@ -36,14 +34,18 @@ uint8_t* FixedPage::append(const uint64_t hash) {
     if (currentPos >= capacity) {
         return nullptr;
     }
+    addHashToBloomFilter(hash);
 
+    uint8_t* ptr = &data[currentPos * sizeOfRecord];
+    currentPos++;
+    return ptr;
+}
+
+void FixedPage::addHashToBloomFilter(const uint64_t hash) {
     if (bloomFilter == nullptr) {
         NES_ERROR("Bloomfilter become empty")
     }
     bloomFilter->add(hash);
-    uint8_t* ptr = &data[currentPos * sizeOfRecord];
-    currentPos++;
-    return ptr;
 }
 
 std::string FixedPage::getContentAsString(SchemaPtr schema) const {
@@ -69,21 +71,13 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
     return ss.str();
 }
 
-bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
-    uint64_t totalKey;
-    memcpy(&totalKey, keyPtr, sizeOfKey);
-    uint64_t hash = NES::Util::murmurHash(totalKey);
-
+bool FixedPage::bloomFilterCheck(const uint64_t hash) const {
     return bloomFilter->checkContains(hash);
 }
 
 uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
 
-uint8_t* FixedPage::getRecord(size_t index) const { return &(data[index * sizeOfRecord]); }
-
 size_t FixedPage::size() const { return currentPos; }
-
-bool FixedPage::isSizeLeft(uint64_t requiredSpace) const { return currentPos + requiredSpace < capacity; }
 
 FixedPage::FixedPage(FixedPage&& otherPage)
     : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos.load()),
@@ -92,7 +86,7 @@ FixedPage::FixedPage(FixedPage&& otherPage)
     otherPage.data = nullptr;
     otherPage.currentPos = 0;
     otherPage.capacity = 0;
-    otherPage.bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+    otherPage.bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
 }
 FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
     if (this == std::addressof(otherPage)) {
@@ -114,6 +108,6 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
 FixedPage::FixedPage(FixedPage* otherPage)
     : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos.load()),
       capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
-    otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+    otherPage->bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
 }
-}// namespace NES::Runtime::Execution::Operators
+}// namespace NES::Nautilus::Interface

@@ -15,10 +15,11 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_MERGINGHASHTABLE_HPP_
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPage.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/BloomFilter.hpp>
+#include <folly/Synchronized.h>
 #include <atomic>
 #include <vector>
 
@@ -29,17 +30,7 @@ namespace NES::Runtime::Execution::Operators {
  * consisting of a linked list of FixedPages
  */
 class MergingHashTable {
-  private:
-    /**
-     * @brief class that stores all pages for a single bucket
-     */
-    class InternalNode {
-      public:
-        std::unique_ptr<FixedPage> dataPage;
-        std::atomic<InternalNode*> next{nullptr};
-    };
-
-  public:
+   public:
     /**
      * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
      * @param numBuckets
@@ -52,13 +43,6 @@ class MergingHashTable {
      * @param pagesLinkedList
      */
     void insertBucket(size_t bucketPos, FixedPagesLinkedList const* pagesLinkedList);
-
-    /**
-     * @brief returns all fixed pages
-     * @param bucket
-     * @return vector of fixed pages
-     */
-    const std::vector<std::unique_ptr<FixedPage>> getPagesForBucket(size_t bucketPos) const;
 
     /**
      * @brief retrieves the number of items in the bucket
@@ -81,10 +65,10 @@ class MergingHashTable {
     size_t getNumBuckets() const;
 
     /**
-     * @brief get the bucket at pos
-     * @return pointer to bucket
+     * @brief get the page at pos
+     * @return pointer to page
      */
-    uint8_t* getTupleFromBucketAtPos(size_t bucket, size_t page, size_t pos);
+    Nautilus::Interface::FixedPage* getPageFromBucketAtPos(size_t bucket, size_t page);
 
     /**
      * @brief get number of tuples for a page
@@ -99,7 +83,7 @@ class MergingHashTable {
     std::string getContentAsString(SchemaPtr schema) const;
 
   private:
-    std::vector<std::atomic<InternalNode*>> bucketHeads;
+    std::vector<folly::Synchronized<std::vector<Nautilus::Interface::FixedPagePtr>>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;
     std::vector<std::atomic<size_t>> bucketNumPages;
 };

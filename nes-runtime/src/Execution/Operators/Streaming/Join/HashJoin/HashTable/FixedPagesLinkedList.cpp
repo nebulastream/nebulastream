@@ -28,7 +28,7 @@ uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
             //we need a new page
             allocateNewPageCnt++;
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
-            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+            pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
         } else {
             //we still have an empty page left
             emptyPageStillExistsCnt++;
@@ -65,7 +65,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
         if (pos + 1 >= pages.size()) {
             //we need a new page
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
-            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+            pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
             std::stringstream idAsString;
             idAsString << std::this_thread::get_id();
             NES_TRACE("Adding a new page for {} thread={}", hash, idAsString.str());
@@ -80,8 +80,8 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
         pos.fetch_add(1);
 
         //Make the new page the current page where threads try to insert
-        FixedPage* oldPtr = pages[pos - 1].get();
-        FixedPage* newPtr = pages[pos].get();
+        auto oldPtr = pages[pos - 1].get();
+        auto newPtr = pages[pos].get();
         while (!currentPage.compare_exchange_strong(oldPtr, newPtr, std::memory_order::release, std::memory_order::relaxed)) {
         }
 
@@ -90,7 +90,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
     return nullptr;
 }
 
-const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
+const std::vector<Nautilus::Interface::FixedPagePtr>& FixedPagesLinkedList::getPages() const { return pages; }
 
 FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
                                            size_t sizeOfRecord,
@@ -103,7 +103,7 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         //        pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
-        pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+        pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
     }
     currentPage = pages[0].get();
 }

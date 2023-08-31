@@ -11,6 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
@@ -64,18 +70,17 @@ void* getHashSliceProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
     return opHandler->getSliceBySliceIdentifier(sliceIdentifier).value().get();
 }
 
-void* getTupleFromBucketAtPosProxyForHashJoin(void* hashWindowPtr,
+void* getPageFromBucketAtPosProxyForHashJoin(void* hashWindowPtr,
                                               uint64_t joinBuildSideInt,
                                               uint64_t bucketPos,
-                                              uint64_t pageNo,
-                                              uint64_t recordPos) {
+                                              uint64_t pageNo) {
     NES_ASSERT2_FMT(hashWindowPtr != nullptr, "hashWindowPtr should not be null");
     auto hashWindow = static_cast<HJSlice*>(hashWindowPtr);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     NES_INFO("Probing for {} tuples {} with start {} end {}", magic_enum::enum_name(joinBuildSide),
              hashWindow->getMergingHashTable(joinBuildSide).getNumItems(bucketPos),
              hashWindow->getSliceStart(), hashWindow->getSliceEnd());
-    return hashWindow->getMergingHashTable(joinBuildSide).getTupleFromBucketAtPos(bucketPos, pageNo, recordPos);
+    return hashWindow->getMergingHashTable(joinBuildSide).getPageFromBucketAtPos(bucketPos, pageNo);
 }
 
 uint64_t getNumberOfPagesProxyForHashJoin(void* ptrHashSlice, uint64_t joinBuildSideInt, uint64_t bucketPos) {
@@ -127,57 +132,40 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                            Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                                                            partitionId);
 
-    //TODO we should write an iterator in nautilus over the pages to make it more elegant #4067
     //for every left page
     for (Value<UInt64> leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
-        auto numberOfTuplesLeft =
-            Nautilus::FunctionCall("getNumberOfTuplesForPageProxy",
-                                   getNumberOfTuplesForPageProxy,
-                                   hashSliceRefLeft,
-                                   Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                                   partitionId,
-                                   leftPageNo);
         //for every key in left page
-        for (Value<UInt64> leftKeyPos(0_u64); leftKeyPos < numberOfTuplesLeft; leftKeyPos = leftKeyPos + 1) {
-            auto leftRecordRef = Nautilus::FunctionCall(
-                "getTupleFromBucketAtPosProxyForHashJoin",
-                getTupleFromBucketAtPosProxyForHashJoin,
-                hashSliceRefLeft,
-                Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                partitionId,
-                leftPageNo,
-                leftKeyPos);
+        auto leftPageRef = Nautilus::FunctionCall(
+            "getPageFromBucketAtPosProxyForHashJoin",
+            getPageFromBucketAtPosProxyForHashJoin,
+            hashSliceRefLeft,
+            Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+            partitionId,
+            leftPageNo);
+        Nautilus::Interface::FixedPageRef leftFixedPageRef(leftPageRef);
 
+        for (auto leftRecordRef : leftFixedPageRef) {
             Value<UInt64> zeroValue = 0_u64;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
-            //TODO we should write an iterator in nautilus over the pages to make it more elegant #4067
             //for every right page
             for (Value<UInt64> rightPageNo((uint64_t) 0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
-                auto numberOfTuplesRight = Nautilus::FunctionCall(
-                    "getNumberOfTuplesForPageProxy",
-                    getNumberOfTuplesForPageProxy,
-                    hashSliceRefRight,
-                    Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                    partitionId,
-                    rightPageNo);
-
                 //TODO: introduce Bloomfilter here #3909
                 //                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
                 //                    continue;
                 //                }
 
                 //for every key in right page
-                for (Value<UInt64> rightKeyPos((uint64_t) 0); rightKeyPos < numberOfTuplesRight; rightKeyPos = rightKeyPos + 1) {
-                    auto rightRecordRef = Nautilus::FunctionCall(
-                        "getTupleFromBucketAtPosProxyForHashJoin",
-                        getTupleFromBucketAtPosProxyForHashJoin,
-                        hashSliceRefRight,
-                        Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                        partitionId,
-                        rightPageNo,
-                        rightKeyPos);
+                auto rightPageRef = Nautilus::FunctionCall(
+                    "getPageFromBucketAtPosProxyForHashJoin",
+                    getPageFromBucketAtPosProxyForHashJoin,
+                    hashSliceRefRight,
+                    Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                    partitionId,
+                    rightPageNo);
+                Nautilus::Interface::FixedPageRef rightFixedPageRef(rightPageRef);
 
+                for (auto rightRecordRef : rightFixedPageRef) {
                     auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
                     if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                         Record joinedRecord;

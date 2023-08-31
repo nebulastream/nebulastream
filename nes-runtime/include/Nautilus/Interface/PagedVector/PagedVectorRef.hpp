@@ -96,6 +96,13 @@ class PagedVectorRef {
      */
     PagedVectorRefIter end();
 
+    /**
+     * @brief Equality operator
+     * @param other
+     * @return Boolean
+     */
+    bool operator==(const PagedVectorRef& other) const;
+
   private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> pagedVectorRef;

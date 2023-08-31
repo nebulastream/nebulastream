@@ -11,13 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//#include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPage.hpp>
+
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
-#include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
 StreamJoinHashTable::StreamJoinHashTable(size_t sizeOfRecord,
@@ -84,12 +82,12 @@ std::string StreamJoinHashTable::getStatistics() {
     return ss.str();
 }
 
-const std::vector<std::unique_ptr<FixedPage>>& StreamJoinHashTable::getPagesForBucket(size_t bucketPos) const {
+const std::vector<Nautilus::Interface::FixedPagePtr>& StreamJoinHashTable::getPagesForBucket(size_t bucketPos) const {
     return buckets[bucketPos]->getPages();
 }
 
 size_t StreamJoinHashTable::getNumItems(size_t bucketPos) const {
-    const std::vector<std::unique_ptr<FixedPage>>& pages = getPagesForBucket(bucketPos);
+    auto pages = getPagesForBucket(bucketPos);
     uint64_t cnt = 0;
     for (auto& elem : pages) {
         cnt += elem->size();

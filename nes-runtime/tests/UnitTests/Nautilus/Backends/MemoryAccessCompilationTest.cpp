@@ -115,23 +115,23 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest) {
     memRefLHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     memRefRHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memRefLHS, &memRefRHS]() {
-        return checkEqualityMemRefs(memRefLHS, memRefRHS);
+       return checkEqualityMemRefs(memRefLHS, memRefRHS);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<bool, void*, void*>("execute");
 
     // Testing memRef == memRef for different options
-    int i = 42, i2 = 42, i3 = 42;
-    EXPECT_EQ(function(&i, &i), true);
-    EXPECT_EQ(function(&i2, &i2), true);
-    EXPECT_EQ(function(&i3, &i3), true);
+    int i, i2, i3;
+    ASSERT_EQ(function(&i, &i), true);
+    ASSERT_EQ(function(&i2, &i2), true);
+    ASSERT_EQ(function(&i3, &i3), true);
 
-    EXPECT_EQ(function(&i, &i2), false);
-    EXPECT_EQ(function(&i2, &i), false);
-    EXPECT_EQ(function(&i, &i3), false);
-    EXPECT_EQ(function(&i3, &i), false);
-    EXPECT_EQ(function(&i3, &i2), false);
-    EXPECT_EQ(function(&i2, &i3), false);
+    ASSERT_EQ(function(&i, &i2), false);
+    ASSERT_EQ(function(&i2, &i), false);
+    ASSERT_EQ(function(&i, &i3), false);
+    ASSERT_EQ(function(&i3, &i), false);
+    ASSERT_EQ(function(&i3, &i2), false);
+    ASSERT_EQ(function(&i2, &i3), false);
 }
 
 // Tests all registered compilation backends.

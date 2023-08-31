@@ -11,13 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(nautilus-data-type-test "DataTypeTest.cpp")
-add_nes_runtime_test(nautilus-custom-data-type-test "CustomDataTypeTest.cpp")
-add_nes_runtime_test(nautilus-list-type-test "ListTypeTest.cpp")
-add_nes_runtime_test(nautilus-text-type-test "TextTypeTest.cpp")
-
-add_subdirectory(Hash)
-add_subdirectory(HashMap)
-add_subdirectory(PagedVector)
-add_subdirectory(Fixed2DArray)
-add_subdirectory(FixedPage)
+add_nes_runtime_test(nautilus-fixed-page-test "FixedPageTest.cpp")

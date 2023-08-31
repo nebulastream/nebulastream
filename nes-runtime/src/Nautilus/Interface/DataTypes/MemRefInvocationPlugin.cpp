@@ -47,6 +47,7 @@ class MemRefInvocationPlugin : public InvocationPlugin {
             auto result = left.getValue().staticCast<MemRef>().value == right.getValue().staticCast<MemRef>().value;
             return Value(std::make_shared<Boolean>(result));
         }
+
         return InvocationPlugin::Equals(left, right);
     }
 };

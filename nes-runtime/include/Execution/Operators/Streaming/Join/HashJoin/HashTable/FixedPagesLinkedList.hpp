@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGESLINKEDLIST_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGESLINKEDLIST_HPP_
 
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPage.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <vector>
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -60,7 +62,7 @@ class FixedPagesLinkedList {
      * @brief Returns all pages belonging to this list
      * @return Vector containing pointer to the FixedPages
      */
-    const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
+    const std::vector<Nautilus::Interface::FixedPagePtr>& getPages() const;
 
     /**
      * @brief debug method to print the statistics of the Linked list
@@ -72,7 +74,7 @@ class FixedPagesLinkedList {
 
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
-    std::vector<std::unique_ptr<FixedPage>> pages;
+    std::vector<Nautilus::Interface::FixedPagePtr> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
     std::mutex pageAddMutex;
@@ -82,7 +84,7 @@ class FixedPagesLinkedList {
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
-    std::atomic<FixedPage*> currentPage;
+    std::atomic<Nautilus::Interface::FixedPage*> currentPage;
 };
 }// namespace NES::Runtime::Execution::Operators
 

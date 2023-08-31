@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMJOINHASHTABLE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_STREAMJOINHASHTABLE_HPP_
 
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -90,7 +90,7 @@ class StreamJoinHashTable {
      * @param bucket
      * @return vector of fixed pages
      */
-    const std::vector<std::unique_ptr<FixedPage>>& getPagesForBucket(size_t bucketPos) const;
+    const std::vector<Nautilus::Interface::FixedPagePtr>& getPagesForBucket(size_t bucketPos) const;
 
     /**
      * @brief Returns the number of pages belonging to the bucketPos

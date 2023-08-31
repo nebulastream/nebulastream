@@ -11,8 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_
+
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
 
 #include <Runtime/BloomFilter.hpp>
 #include <atomic>
@@ -24,7 +25,11 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 }// namespace NES
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Nautilus::Interface {
+class FixedPageRef;
+
+class FixedPage;
+using FixedPagePtr = std::shared_ptr<FixedPage>;
 
 /**
  * @brief class that stores the tuples on a page.
@@ -32,14 +37,20 @@ namespace NES::Runtime::Execution::Operators {
  */
 class FixedPage {
   public:
+    static constexpr double BLOOM_FALSE_POSITIVE_RATE = 1e-2;
+    static constexpr uint64_t PAGE_SIZE = 4096;
+
     /**
      * @brief Constructor for a FixedPage
-     * @param tail
-     * @param overrunAddress
+     * @param dataPtr
      * @param sizeOfRecord
      * @param pageSize
+     * @param bloomFalsePosRate
      */
-    explicit FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize);
+    explicit FixedPage(uint8_t* dataPtr,
+                       size_t sizeOfRecord,
+                       size_t pageSize = PAGE_SIZE,
+                       double bloomFalsePosRate = BLOOM_FALSE_POSITIVE_RATE);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
@@ -67,13 +78,6 @@ class FixedPage {
     uint8_t* operator[](size_t index) const;
 
     /**
-     * @brief returns a pointer to the record at the given index
-     * @param index
-     * @return pointer to the record
-     */
-    uint8_t* getRecord(size_t index) const;
-
-    /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
      * @return null pointer if there is no more space left on the page, otherwise the pointer
@@ -81,11 +85,17 @@ class FixedPage {
     uint8_t* append(const uint64_t hash);
 
     /**
+     * @brief adds the hash to the BloomFilter
+     * @param hash
+     */
+    void addHashToBloomFilter(const uint64_t hash);
+
+    /**
      * @brief checks if the key might be in this page
-     * @param keyPtr
+     * @param hash
      * @return true or false
      */
-    bool bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const;
+    bool bloomFilterCheck(const uint64_t hash) const;
 
     /**
      * @brief returns the number of items on this page
@@ -94,18 +104,14 @@ class FixedPage {
     size_t size() const;
 
     /**
-     * @brief this methods tests if requiredSpace is left on page
-     * @return bool
-     */
-    bool isSizeLeft(uint64_t requiredSpace) const;
-
-    /**
      * @brief this methods returnds the content of the page as a string
      * @return string
      */
     std::string getContentAsString(SchemaPtr schema) const;
 
   private:
+    friend FixedPageRef;
+
     /**
      * @brief Swapping lhs FixedPage with rhs FixedPage
      * @param lhs
@@ -113,13 +119,13 @@ class FixedPage {
      */
     void swap(FixedPage& lhs, FixedPage& rhs) noexcept;
 
-  private:
     size_t sizeOfRecord;
     uint8_t* data;
     std::atomic<size_t> currentPos;
     size_t capacity;
-    std::unique_ptr<BloomFilter> bloomFilter;
+    std::unique_ptr<Runtime::BloomFilter> bloomFilter;
+    double bloomFalsePosRate;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGE_HPP_
+}// namespace NES::Nautilus::Interface
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_

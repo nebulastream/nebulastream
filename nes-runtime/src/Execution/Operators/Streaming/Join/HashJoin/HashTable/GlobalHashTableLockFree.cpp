@@ -14,9 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLockFree.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
-#include <zlib.h>
 
 namespace NES::Runtime::Execution::Operators {
 
